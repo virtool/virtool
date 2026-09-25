@@ -5,6 +5,7 @@ import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { type LabelRow, labels as labelsTable } from "../db/schema/labels";
 import { legacySampleLabels } from "../db/schema/samples";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -63,7 +64,7 @@ function selectLabelsWithCount(db: Db) {
 
 export async function findLabels(db: Db, term = ""): Promise<Label[]> {
 	const rows = await selectLabelsWithCount(db)
-		.where(term ? ilike(labelsTable.name, `%${term}%`) : undefined)
+		.where(term ? ilike(labelsTable.name, toSearchPattern(term)) : undefined)
 		.orderBy(asc(labelsTable.name));
 
 	return rows.map((row) => toLabel(row.label, row.sampleCount));

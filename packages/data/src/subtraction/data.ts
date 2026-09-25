@@ -16,6 +16,7 @@ import type { StorageBackend } from "@virtool/storage";
 import { deleteKeys } from "@virtool/storage";
 import { and, asc, count, eq, ilike, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { jobs } from "../db/schema/jobs";
@@ -23,6 +24,7 @@ import { legacySampleSubtractions } from "../db/schema/samples";
 import { subtractionFiles, subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -89,12 +91,6 @@ export class SubtractionNotOwnedError extends AppError {}
 
 /** Thrown when the upload a subtraction is created from does not exist. */
 export class SubtractionUploadNotFoundError extends AppError {}
-
-// LIKE wildcards in the search term are escaped so a user's `%` or `_` matches
-// literally rather than acting as a pattern.
-function escapeLike(term: string): string {
-	return term.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
 
 const jobUser = alias(users, "job_user");
 
@@ -191,8 +187,8 @@ export async function findSubtractions(
 
 	const findFilter = term
 		? or(
-				ilike(subtractions.name, `%${escapeLike(term)}%`),
-				ilike(subtractions.nickname, `%${escapeLike(term)}%`),
+				ilike(subtractions.name, toSearchPattern(term)),
+				ilike(subtractions.nickname, toSearchPattern(term)),
 			)
 		: undefined;
 
@@ -221,7 +217,7 @@ export async function findSubtractions(
 			selectSubtractionsWithResources(db)
 				.where(foundFilter)
 				.orderBy(asc(subtractions.name), asc(subtractions.id))
-				.offset((page - 1) * perPage)
+				.offset(getPageOffset(page, perPage))
 				.limit(perPage),
 		]);
 
@@ -235,7 +231,7 @@ export async function findSubtractions(
 		totalCount,
 		readyCount: takeFirstOrThrow(readyCountRows).value,
 		page,
-		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		items: rows.map(toMinimal),
 	};

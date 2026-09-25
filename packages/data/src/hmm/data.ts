@@ -18,6 +18,7 @@ import {
 	type StorageBackend,
 } from "@virtool/storage";
 import { and, asc, count, eq, gt, sql } from "drizzle-orm";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -30,6 +31,7 @@ import {
 } from "../db/schema/hmms";
 import { tasks } from "../db/schema/tasks";
 import { users } from "../db/schema/users";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 
 /** The task type the runner matches to run an HMM install. */
@@ -96,15 +98,9 @@ function hmmMinimal(row: HmmRow): HmmMinimal {
 }
 
 // `names` is a JSONB array, so the match succeeds when any element contains the
-// term. LIKE wildcards in the term are escaped so it matches literally.
+// term.
 function nameMatches(term: string) {
-	const escaped = term
-		.replace(/\\/g, "\\\\")
-		.replace(/%/g, "\\%")
-		.replace(/_/g, "\\_");
-	const pattern = `%${escaped}%`;
-
-	return sql`exists (select 1 from jsonb_array_elements_text(${hmms.names}) as element(value) where element.value ilike ${pattern})`;
+	return sql`exists (select 1 from jsonb_array_elements_text(${hmms.names}) as element(value) where element.value ilike ${toSearchPattern(term)})`;
 }
 
 async function readTask(db: Db, taskId: number): Promise<Task | null> {
@@ -170,7 +166,7 @@ export async function findHmms(
 			.from(hmms)
 			.where(where)
 			.orderBy(asc(hmms.cluster), asc(hmms.id))
-			.offset((page - 1) * perPage)
+			.offset(getPageOffset(page, perPage))
 			.limit(perPage),
 		getHmmStatus(db),
 	]);
@@ -181,7 +177,7 @@ export async function findHmms(
 		items: rows.map(hmmMinimal),
 		foundCount,
 		page,
-		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		status,
 		totalCount: takeFirstOrThrow(totalRows).value,

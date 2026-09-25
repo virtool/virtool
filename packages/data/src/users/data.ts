@@ -35,6 +35,7 @@ import {
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { authAccounts, authSessions } from "../db/schema/auth";
@@ -43,6 +44,7 @@ import {
 	userGroups as userGroupsTable,
 } from "../db/schema/groups";
 import { type UserRow, users as usersTable } from "../db/schema/users";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -370,10 +372,9 @@ export async function findUsers(
 		conditions.push(isNull(usersTable.administratorRole));
 	}
 	if (term) {
-		conditions.push(ilike(usersTable.handle, `%${term}%`));
+		conditions.push(ilike(usersTable.handle, toSearchPattern(term)));
 	}
 	const filter = and(...conditions);
-	const skip = page > 1 ? (page - 1) * perPage : 0;
 
 	const [[totalRow], [foundRow], rows] = await Promise.all([
 		db.select({ value: count() }).from(usersTable),
@@ -384,7 +385,7 @@ export async function findUsers(
 			.where(filter)
 			.orderBy(asc(sql`lower(${usersTable.handle})`))
 			.limit(perPage)
-			.offset(skip),
+			.offset(getPageOffset(page, perPage)),
 	]);
 
 	const foundCount = foundRow?.value ?? 0;
@@ -394,7 +395,7 @@ export async function findUsers(
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,
-		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 	};
 }

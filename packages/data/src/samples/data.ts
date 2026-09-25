@@ -38,6 +38,7 @@ import {
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses, analysisFiles } from "../db/schema/analyses";
@@ -55,6 +56,7 @@ import { subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
 import { sampleViews } from "../db/schema/views";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
@@ -227,11 +229,6 @@ type WorkflowTags = {
 	pathoscope: boolean | string;
 	workflows: SampleWorkflows;
 };
-
-// Escape LIKE wildcards so a user's `%` or `_` matches literally.
-function escapeLike(term: string): string {
-	return term.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
 
 // `None` (no analyses) is a `false` tag, a ready analysis is `true`, and an
 // unfinished analysis is `"ip"` — the legacy top-level tag encoding.
@@ -665,7 +662,7 @@ export async function findSamples(
 	const narrowing: SQL[] = [];
 
 	if (options.term) {
-		narrowing.push(ilike(legacySamples.name, `%${escapeLike(options.term)}%`));
+		narrowing.push(ilike(legacySamples.name, toSearchPattern(options.term)));
 	}
 
 	if (options.users.length > 0) {
@@ -719,7 +716,7 @@ export async function findSamples(
 			.leftJoin(users, eq(users.id, legacySamples.user_id))
 			.where(where)
 			.orderBy(...buildOrderBy(options.sort))
-			.offset((options.page - 1) * options.perPage)
+			.offset(getPageOffset(options.page, options.perPage))
 			.limit(options.perPage),
 	]);
 
@@ -746,7 +743,7 @@ export async function findSamples(
 		totalCount,
 		page: options.page,
 		perPage: options.perPage,
-		pageCount: foundCount ? Math.ceil(foundCount / options.perPage) : 0,
+		pageCount: getPageCount(foundCount, options.perPage),
 		items: rows.map(({ sample, ownerHandle }) =>
 			mapMinimal(
 				sample,
@@ -836,7 +833,7 @@ export async function findRecentlyViewedSamples(
 		totalCount,
 		page: 1,
 		perPage,
-		pageCount: totalCount ? Math.ceil(totalCount / perPage) : 0,
+		pageCount: getPageCount(totalCount, perPage),
 		items: rows.map(({ sample, ownerHandle }) =>
 			mapMinimal(
 				sample,

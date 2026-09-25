@@ -9,6 +9,7 @@ import {
 } from "@virtool/contracts";
 import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { hashToken, newJobKey } from "../auth/tokens";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses } from "../db/schema/analyses";
@@ -155,8 +156,8 @@ export async function findJobs(
 			.from(jobs)
 			.innerJoin(users, eq(jobs.user_id, users.id))
 			.where(stateFilter)
-			.orderBy(desc(jobs.created_at))
-			.offset((page - 1) * perPage)
+			.orderBy(desc(jobs.created_at), desc(jobs.id))
+			.offset(getPageOffset(page, perPage))
 			.limit(perPage),
 	]);
 
@@ -179,7 +180,7 @@ export async function findJobs(
 		foundCount,
 		items,
 		page,
-		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		totalCount,
 	};

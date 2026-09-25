@@ -41,10 +41,12 @@ import {
 	or,
 	sql,
 } from "drizzle-orm";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { legacyHistory } from "../db/schema/history";
 import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { legacyReferences } from "../db/schema/references";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import {
 	addHistory,
@@ -765,12 +767,6 @@ function formatOtu(
 	};
 }
 
-// Escape the ILIKE metacharacters so a term containing `%` or `_` matches
-// literally rather than as a wildcard.
-function toSearchPattern(term: string): string {
-	return `%${term.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
-}
-
 /** The filters and page a {@link findOtus} call reads. */
 export type FindOtusOptions = {
 	page: number;
@@ -846,7 +842,7 @@ export async function findOtus(
 			// deliberately not the byte-order sort the Mongo query used.
 			.orderBy(sql`lower(${legacyOtus.name})`, legacyOtus.id)
 			.limit(perPage)
-			.offset(perPage * (page - 1)),
+			.offset(getPageOffset(page, perPage)),
 		db
 			.select({ value: countDistinct(legacyHistory.otu) })
 			.from(legacyHistory)
@@ -880,7 +876,7 @@ export async function findOtus(
 		foundCount,
 		modifiedCount: modified?.value ?? 0,
 		page,
-		pageCount: Math.ceil(foundCount / perPage),
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		totalCount: Number(counts.total),
 	};

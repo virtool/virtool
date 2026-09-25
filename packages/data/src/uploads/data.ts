@@ -10,6 +10,7 @@ import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { mintRootStorageKey, StorageKeyNotFoundError } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, lt, notExists } from "drizzle-orm";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { sampleReads, sampleUploads } from "../db/schema/samples";
@@ -146,8 +147,6 @@ export async function findUploads(
 		filters.push(eq(uploadsTable.type, uploadType));
 	}
 
-	const skip = page > 1 ? (page - 1) * perPage : 0;
-
 	const [[foundRow], [totalRow], rows] = await Promise.all([
 		db
 			.select({ value: count() })
@@ -167,7 +166,7 @@ export async function findUploads(
 			.where(and(...filters))
 			.orderBy(...buildOrderBy(sort))
 			.limit(perPage)
-			.offset(skip),
+			.offset(getPageOffset(page, perPage)),
 	]);
 
 	const foundCount = foundRow?.value ?? 0;
@@ -179,7 +178,7 @@ export async function findUploads(
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,
-		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 	};
 }
