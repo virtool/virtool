@@ -128,6 +128,12 @@ describe("parseHmmerTblout", () => {
 		],
 		["a negative E-value", "-1e-10 10.0 0.1 2e-10 9.0 0.2", /non-negative/],
 		[
+			"an underflowing negative E-value",
+			"1e-10 10.0 0.1 -1e-999 9.0 0.2",
+			/non-negative/,
+		],
+		["a negative zero E-value", "-0 10.0 0.1 2e-10 9.0 0.2", /non-negative/],
+		[
 			"a non-numeric E-value",
 			"1e-10 10.0 0.1 nan 9.0 0.2",
 			/best-domain E-value/,

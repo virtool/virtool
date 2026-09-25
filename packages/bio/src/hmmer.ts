@@ -53,7 +53,8 @@ function parseValue(raw: string | undefined, name: string): number {
 function parseEValue(raw: string | undefined, name: string): number {
 	const parsed = parseValue(raw, name);
 
-	if (parsed < 0) {
+	// Check the raw sign: `-1e-999` parses to `-0`, which is not less than zero.
+	if (raw?.startsWith("-")) {
 		throw new Error(
 			`Malformed hmmscan --tblout ${name}: expected a non-negative number, got ${raw}`,
 		);
