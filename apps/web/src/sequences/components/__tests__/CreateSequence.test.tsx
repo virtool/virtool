@@ -112,12 +112,8 @@ describe("<CreateSequence>", () => {
 
 		renderCreateSequence();
 
-		await userEvent.click(await screen.findByRole("combobox"));
-		await userEvent.click(
-			await screen.findByRole("option", { name: segment.name }),
-		);
 		await userEvent.type(
-			screen.getByRole("textbox", { name: "Accession (ID)" }),
+			await screen.findByRole("textbox", { name: "Accession (ID)" }),
 			"user_typed_accession",
 		);
 		await userEvent.type(
@@ -129,8 +125,14 @@ describe("<CreateSequence>", () => {
 			"atgr{Enter}yk m",
 		);
 
-		expect(screen.getByRole("textbox", { name: "Sequence 7" })).toBeVisible();
+		expect(
+			await screen.findByRole("textbox", { name: "Sequence 7" }),
+		).toBeVisible();
 
+		await userEvent.click(screen.getByRole("combobox"));
+		await userEvent.click(
+			await screen.findByRole("option", { name: segment.name }),
+		);
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
 		await waitFor(() =>
