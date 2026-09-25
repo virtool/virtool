@@ -1,5 +1,6 @@
 import Fuse from "fuse.js";
 import { useMemo, useState } from "react";
+import { normalizeSearchTerm } from "./search";
 
 /**
  * Create a Fuse object.
@@ -27,8 +28,9 @@ export function useFuse<T extends object>(
 
 	const fuse = useMemo(() => createFuse(collection, keys), [collection, keys]);
 
-	const items = term
-		? fuse.search(term).map((result) => result.item)
+	const normalizedTerm = normalizeSearchTerm(term);
+	const items = normalizedTerm
+		? fuse.search(normalizedTerm).map((result) => result.item)
 		: collection;
 
 	return [items, term, setTerm];

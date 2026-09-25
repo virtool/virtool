@@ -19,7 +19,6 @@ import {
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
-	updateAccountEmail,
 	updateUser,
 } from "@virtool/data/users/data";
 import { z } from "zod";
@@ -91,10 +90,6 @@ const accountHandleSchema = z.object({
 	handle: z.string().trim().min(1),
 });
 
-const accountEmailSchema = z.object({
-	email: z.string().trim(),
-});
-
 // Password length is enforced by checkConfiguredPasswordLength in the handler,
 // not here. `oldPassword` carries no length rule at all: it authenticates the
 // password the user already has, and if the minimum were raised, checking it
@@ -104,17 +99,6 @@ const changePasswordSchema = z.object({
 	oldPassword: z.string().min(1),
 	password: z.string(),
 });
-
-// An empty string clears the address; anything else has to parse. Checked here
-// rather than in the validator because a zod rejection surfaces as a 500
-// carrying the issue list, which is not something a form can put in front of a
-// user.
-function checkEmail(email: string): void {
-	if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-		setResponseStatus(400);
-		throw new ClientError("The format of the email is invalid", 400);
-	}
-}
 
 const setAdministratorRoleSchema = userIdSchema.extend({
 	role: administratorRoleSchema.nullable(),
@@ -272,19 +256,6 @@ export const updateAccountHandleFn = createServerFn({ method: "POST" })
 			return await updateUser(db, context.principal.userId, {
 				handle: data.handle,
 			});
-		} catch (err) {
-			throw rethrowAsHttp(err);
-		}
-	});
-
-export const updateAccountEmailFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.accountEmailChange)])
-	.validator(accountEmailSchema)
-	.handler(async ({ context, data }) => {
-		checkEmail(data.email);
-
-		try {
-			return await updateAccountEmail(db, context.principal.userId, data.email);
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}

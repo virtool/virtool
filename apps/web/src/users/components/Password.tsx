@@ -12,6 +12,7 @@ import SectionHeader from "@base/SectionHeader";
 import { usePasswordRules } from "@forms/password";
 import { useUpdateUser } from "@users/queries";
 import { useForm } from "react-hook-form";
+import RecoveryLink from "./RecoveryLink";
 
 type PasswordProps = {
 	/** The users unique id */
@@ -102,6 +103,7 @@ export default function Password({
 					</form>
 				</BoxGroupSection>
 			</BoxGroup>
+			<RecoveryLink userId={id} />
 		</section>
 	);
 }

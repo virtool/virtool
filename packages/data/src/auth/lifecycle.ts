@@ -16,7 +16,7 @@ import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getUser } from "../users/data";
-import { isValidEmail } from "./email";
+import { isValidEmail, normalizeEmail } from "./email";
 import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
 import { hashPassword } from "./password";
 import {
@@ -41,16 +41,7 @@ export class EmailRemediationRateLimitedError extends AppError {}
 /** Thrown when TOTP enrollment has not actually happened. */
 export class TotpNotEnrolledError extends AppError {}
 
-/**
- * Fold an address to the one form it is compared and stored in.
- *
- * Lower-cased and trimmed, because a person who typed `Ada@Example.com` and a
- * person who typed `ada@example.com` are one person as far as recovery mail is
- * concerned.
- */
-export function normalizeEmail(email: string): string {
-	return email.trim().toLowerCase();
-}
+export { normalizeEmail } from "./email";
 
 /**
  * Claim `email` for `userId`, or throw {@link EmailInUseError}.
@@ -65,7 +56,7 @@ export function normalizeEmail(email: string): string {
  * what makes exactly one of them the winner. `hashtext` is applied in
  * Postgres, so the key is derived the same way every session derives it.
  */
-async function claimEmail(
+export async function claimEmail(
 	tx: DbOrTx,
 	userId: number,
 	email: string,

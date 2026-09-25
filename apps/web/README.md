@@ -173,8 +173,9 @@ own origin check against `VT_PUBLIC_ORIGIN`.
 
 Recent-authentication challenges pass through Better Auth's HTTP handler at
 `/api/auth/virtool-session/challenge`. Password and TOTP share a limit of five
-attempts per minute per IP. Better Auth stores rate limits in `auth_rate_limits`
-so all web instances share the budget. Direct `auth.api` calls bypass this
+attempts per minute per IP. An atomic database-backed counter in
+`auth_rate_limits` shares the budget across web instances, including concurrent
+requests. Direct `auth.api` calls bypass this
 limiter; challenge verification must enter through the handler.
 
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
@@ -182,6 +183,23 @@ A user with `force_reset` receives a session that resolves to a
 `password_reset` principal, which can only inspect or end its session and
 replace the password. Virtool signs in by handle; email sign-in is off because
 `users.email` isn't globally unique.
+
+Account email changes queue a verification link and leave the current address
+and verified state in place until the new mailbox proves control. The link is
+single use and checks that the original address is still current. Repeated
+requests are rate limited. Verification links for an unverified
+current address use the same route. Changing an address supersedes outstanding
+recovery links; an existing browser session remains active.
+
+Public password recovery accepts a handle and always acknowledges requests
+the same way. Only an eligible account with a verified email receives a queued
+link. Requester and target budgets limit attempts, and disabled email delivery
+does not expose an anonymous recovery URL. An administrator with recent
+authentication can issue a one-time recovery URL, including a copy-only URL
+when delivery is unavailable. Consuming either recovery link changes the
+password and revokes browser and setup sessions and tokens; the user signs in
+again. The minimal `/recover` and `/verify-email` routes consume links now;
+the broader wall experience belongs to the later authentication UX work.
 
 Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
 compatible with existing foreign keys. `auth_sessions` is the target browser
