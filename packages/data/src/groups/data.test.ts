@@ -192,6 +192,21 @@ describe("updateGroup", () => {
 		expect((await readGroup(groupId))?.permissions).toEqual(group.permissions);
 	});
 
+	it("applies concurrent permission toggles without losing either", async () => {
+		const groupId = await seedGroup(db);
+
+		await Promise.all([
+			updateGroup(db, groupId, { permissions: { create_ref: true } }),
+			updateGroup(db, groupId, { permissions: { upload_file: true } }),
+		]);
+
+		expect((await readGroup(groupId))?.permissions).toEqual({
+			...NO_PERMISSIONS,
+			create_ref: true,
+			upload_file: true,
+		});
+	});
+
 	it("returns the current group unchanged when given nothing to change", async () => {
 		const groupId = await seedGroup(db, {
 			name: "technicians",

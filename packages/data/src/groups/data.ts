@@ -6,7 +6,7 @@ import {
 	type Permissions,
 	type UserNested,
 } from "@virtool/contracts";
-import { asc, count, eq, ilike } from "drizzle-orm";
+import { asc, count, eq, ilike, sql } from "drizzle-orm";
 import type { PostgresError } from "postgres";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -157,34 +157,33 @@ export async function updateGroup(
 	groupId: number,
 	values: GroupUpdateValues,
 ): Promise<Group> {
-	const [existing] = await db
-		.select()
-		.from(groupsTable)
-		.where(eq(groupsTable.id, groupId));
-
-	if (!existing) {
-		throw new GroupNotFoundError();
-	}
-
-	const patch: Partial<typeof groupsTable.$inferInsert> = {};
-	if (values.name !== undefined) {
-		patch.name = values.name;
-	}
-	if (values.permissions !== undefined) {
-		patch.permissions = { ...existing.permissions, ...values.permissions };
-	}
+	// Merge in Postgres so concurrent toggles on the same group can't overwrite
+	// each other with a stale copy of the permissions.
+	const patch = {
+		...(values.name !== undefined && { name: values.name }),
+		...(values.permissions !== undefined && {
+			permissions: sql`${groupsTable.permissions} || ${JSON.stringify(values.permissions)}::jsonb`,
+		}),
+	};
 
 	if (Object.keys(patch).length === 0) {
 		return getGroup(db, groupId);
 	}
 
-	try {
-		await db.update(groupsTable).set(patch).where(eq(groupsTable.id, groupId));
-	} catch (error) {
-		if (isUniqueViolation(error)) {
-			throw new GroupConflictError();
-		}
-		throw error;
+	const [row] = await db
+		.update(groupsTable)
+		.set(patch)
+		.where(eq(groupsTable.id, groupId))
+		.returning({ id: groupsTable.id })
+		.catch((error: unknown) => {
+			if (isUniqueViolation(error)) {
+				throw new GroupConflictError();
+			}
+			throw error;
+		});
+
+	if (!row) {
+		throw new GroupNotFoundError();
 	}
 
 	await emit("groups", groupId, "update");
