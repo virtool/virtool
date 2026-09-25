@@ -288,3 +288,45 @@ describe("handleSequenceFasta", () => {
 		).toBe(401);
 	});
 });
+
+// A caller who cannot see the OTU's reference gets the same 404 as for a
+// missing OTU, so the response does not reveal that it exists.
+describe("reference visibility", () => {
+	async function stranger(): Promise<Request> {
+		const userId = await seedUser(db, { handle: "stranger" });
+		const { sessionId, token } = await seedSession(db, userId);
+
+		return new Request("https://virtool.test/otus/otu/fasta", {
+			headers: { cookie: sessionCookie({ sessionId, token }) },
+		});
+	}
+
+	it("404s an OTU download", async () => {
+		await seed();
+
+		const response = await handleOtuFasta(await stranger(), "otu");
+
+		expect(response.status).toBe(404);
+	});
+
+	it("404s an isolate download", async () => {
+		await seed();
+
+		const response = await handleIsolateFasta(await stranger(), "otu", "iso_a");
+
+		expect(response.status).toBe(404);
+	});
+
+	it("404s a sequence download", async () => {
+		await seed();
+
+		const response = await handleSequenceFasta(
+			await stranger(),
+			"otu",
+			"iso_a",
+			"seq_a0",
+		);
+
+		expect(response.status).toBe(404);
+	});
+});

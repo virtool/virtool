@@ -33,6 +33,7 @@ import {
 } from "@virtool/data/otus/data";
 import {
 	checkReferenceRight,
+	checkReferenceVisibility,
 	ReferenceArchivedError,
 	ReferenceNotFoundError,
 	resolveReferenceActor,
@@ -42,6 +43,10 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
+import {
+	assertOtuVisible,
+	assertReferenceVisible,
+} from "../references/visibility";
 import {
 	pageSchema,
 	perPageSchema,
@@ -126,7 +131,9 @@ const notFound = createServerOnlyFn((message: string): never => {
  * Naming an isolate scopes the lookup to it, so an isolate the OTU does not
  * carry surfaces as a 404 rather than passing the rights check and failing
  * later. A missing OTU is a 404 for everyone, administrators included — there is
- * no reference to hold a right on.
+ * no reference to hold a right on. An OTU on a reference the caller cannot see
+ * is the same 404, so only a caller who can see the reference learns from a 403
+ * that they lack the right.
  *
  * An archived reference accepts no writes at all, so it is refused even from a
  * member who still holds the right. The check follows the rights check so that
@@ -152,6 +159,14 @@ const authorizeOtu = createServerOnlyFn(
 
 		const actor = await resolveReferenceActor(db, userId);
 
+		if (!(await checkReferenceVisibility(db, reference.id, actor))) {
+			return notFound(
+				isolateId === undefined
+					? "OTU not found."
+					: "OTU or isolate not found.",
+			);
+		}
+
 		if (!(await checkReferenceRight(db, reference.id, "modifyOtu", actor))) {
 			setResponseStatus(403);
 			throw new ForbiddenError();
@@ -168,8 +183,10 @@ const authorizeOtu = createServerOnlyFn(
 export const findOtusFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findOtusSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
+			await assertReferenceVisible(data.referenceId, context.principal.userId);
+
 			return await findOtus(db, data.referenceId, {
 				page: data.page,
 				perPage: data.perPage,
@@ -183,8 +200,10 @@ export const findOtusFn = createServerFn({ method: "POST" })
 export const getOtuFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(otuIdSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
+			await assertOtuVisible(data.otuId, context.principal.userId);
+
 			return await getOtu(db, data.otuId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -194,8 +213,10 @@ export const getOtuFn = createServerFn({ method: "GET" })
 export const listOtuHistoryFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(otuIdSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
+			await assertOtuVisible(data.otuId, context.principal.userId);
+
 			return await listByOtu(db, data.otuId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -212,6 +233,10 @@ export const createOtuFn = createServerFn({ method: "POST" })
 			// The reference comes from the request rather than from an OTU that does
 			// not exist yet, so the right is checked against it directly.
 			const actor = await resolveReferenceActor(db, context.principal.userId);
+
+			if (!(await checkReferenceVisibility(db, referenceId, actor))) {
+				throw new ReferenceNotFoundError();
+			}
 
 			if (!(await checkReferenceRight(db, referenceId, "modifyOtu", actor))) {
 				setResponseStatus(403);

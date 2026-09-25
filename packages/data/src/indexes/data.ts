@@ -51,8 +51,10 @@ import {
 	patchOtusToVersions,
 } from "../history/data";
 import {
+	type ReferenceActor,
 	ReferenceArchivedError,
 	ReferenceNotFoundError,
+	visibleReferenceFilter,
 } from "../references/data";
 import { createTask } from "../tasks/data";
 import { type OtuChunk, streamArtifact } from "./artifact";
@@ -308,7 +310,7 @@ export async function findIndexes(
 }
 
 /**
- * List every finished index, oldest first.
+ * List every finished index on a reference `actor` may see, oldest first.
  *
  * Unpaginated by design: the caller is a selector offering the indexes an
  * analysis can run against, and it groups them by reference to pick the newest
@@ -316,12 +318,14 @@ export async function findIndexes(
  */
 export async function listReadyIndexes(
 	db: Db,
+	actor: ReferenceActor,
 	archived?: boolean,
 ): Promise<IndexMinimal[]> {
-	const filter =
-		archived === undefined
-			? eq(indexes.ready, true)
-			: and(eq(indexes.ready, true), archivedFilter(db, archived));
+	const filter = and(
+		eq(indexes.ready, true),
+		visibleReferenceFilter(db, indexes.reference_id, actor),
+		archived === undefined ? undefined : archivedFilter(db, archived),
+	);
 
 	const rows = await selectIndexes(db)
 		.where(filter)

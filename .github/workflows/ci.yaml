@@ -482,8 +482,8 @@ jobs:
             # the harness skips them; VT_REQUIRE_BOWTIE2 below turns that skip
             # into a failure so CI can never quietly stop checking them. It is
             # built from the root Dockerfile's own target rather than apt, so
-            # this job and the workflow images can only ever run the build the
-            # goldens were generated against.
+            # this job and the workflow images always run the same bowtie2
+            # build.
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
             - name: Build bowtie2
@@ -689,9 +689,6 @@ jobs:
                       target: internal
                       workspace: apps/internal
                       images: ghcr.io/virtool/internal
-                    # These four names previously came from separate legacy
-                    # repositories shipping the Python workflow of the same
-                    # name; this repository's release supersedes them.
                     - image: create-sample
                       target: create-sample
                       workspace: apps/create-sample

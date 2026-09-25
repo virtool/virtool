@@ -446,7 +446,7 @@ it("shows progress while a workflow toggle request is pending", async () => {
 	expect(screen.queryByText("Request accepted.")).not.toBeInTheDocument();
 });
 
-it("sorts ready and failed environments above uncreated worktrees", async () => {
+it("lists uncreated worktrees in their own section", async () => {
 	const base = getEnvironment();
 	snapshot.environments = [
 		{
@@ -483,8 +483,17 @@ it("sorts ready and failed environments above uncreated worktrees", async () => 
 			.getAllByRole("link", { name: /View details for/ })
 			.map((link) => link.textContent),
 	).toEqual(["feature/test", "failed", "stopped", "uncreated"]);
-	expect(screen.getByText("Not created")).toBeVisible();
-	await userEvent.setup().click(screen.getByRole("button", { name: "Create" }));
+	const uncreated = screen.getByRole("region", { name: "No environment" });
+	expect(within(uncreated).getByText("uncreated")).toBeVisible();
+	expect(within(uncreated).queryByText("not created")).not.toBeInTheDocument();
+	expect(
+		within(screen.getByRole("region", { name: "Environments" })).queryByText(
+			"uncreated",
+		),
+	).not.toBeInTheDocument();
+	await userEvent
+		.setup()
+		.click(within(uncreated).getByRole("button", { name: "Create" }));
 	expect(fetch).toHaveBeenLastCalledWith(
 		"/api/environments",
 		expect.objectContaining({
