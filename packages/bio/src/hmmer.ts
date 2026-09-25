@@ -18,6 +18,51 @@ export type HmmerHit = {
 	sequenceIndex: number;
 };
 
+const TARGET_PATTERN = /^vFam_(\d+)$/;
+
+const QUERY_PATTERN = /^sequence_(\d+)\.(\d+)$/;
+
+/** Matches a decimal number with an optional exponent, and nothing more. */
+const NUMBER_PATTERN = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+function parseIndex(raw: string | undefined, token: string): number {
+	const parsed = Number(raw);
+
+	if (!Number.isSafeInteger(parsed)) {
+		throw new Error(
+			`Malformed hmmscan --tblout name: index out of range in ${token}`,
+		);
+	}
+
+	return parsed;
+}
+
+function parseValue(raw: string | undefined, name: string): number {
+	const parsed =
+		raw !== undefined && NUMBER_PATTERN.test(raw) ? Number(raw) : Number.NaN;
+
+	if (!Number.isFinite(parsed)) {
+		throw new Error(
+			`Malformed hmmscan --tblout ${name}: expected a finite number, got ${raw}`,
+		);
+	}
+
+	return parsed;
+}
+
+function parseEValue(raw: string | undefined, name: string): number {
+	const parsed = parseValue(raw, name);
+
+	// Check the raw sign: `-1e-999` parses to `-0`, which is not less than zero.
+	if (raw?.startsWith("-")) {
+		throw new Error(
+			`Malformed hmmscan --tblout ${name}: expected a non-negative number, got ${raw}`,
+		);
+	}
+
+	return parsed;
+}
+
 /**
  * Parse `hmmscan --tblout` rows, keeping vFam hits in file order.
  *
@@ -47,37 +92,33 @@ export function parseHmmerTblout(lines: Iterable<string>): HmmerHit[] {
 			);
 		}
 
-		// The guard above proves indices 0 through 9 are present. Re-testing each
-		// would be nine dead branches, and an empty string parses to the same NaN
-		// an absent one would.
-		const field = (index: number): string => fields[index] ?? "";
+		const target = fields[0] ?? "";
+		const query = fields[2] ?? "";
 
 		// The target name is formatted `vFam_<cluster>` and the query name
 		// `sequence_<contig>.<orf>`. Those two names are the *only* thing carrying
-		// a hit back to the ORF it belongs to, so a name that does not fit fails
-		// here for the same reason a short row does: the alternative is a NaN index
-		// silently addressing the wrong ORF, or none.
-		const rawCluster = field(0).split("_")[1];
+		// a hit back to the ORF it belongs to, so the whole token must match:
+		// `Number.parseInt` would read `sequence_1x.2` as contig 1 and silently
+		// address the wrong ORF.
+		const clusterMatch = TARGET_PATTERN.exec(target);
 
-		if (rawCluster === undefined) {
+		if (clusterMatch === null) {
 			throw new Error(
-				`Malformed hmmscan --tblout target name: expected vFam_<cluster>, got ${field(0)}`,
+				`Malformed hmmscan --tblout target name: expected vFam_<cluster>, got ${target}`,
 			);
 		}
 
-		const cluster = Number.parseInt(rawCluster, 10);
+		const queryMatch = QUERY_PATTERN.exec(query);
 
-		const [rawSequenceIndex, rawOrfIndex] =
-			field(2).split("_")[1]?.split(".") ?? [];
-
-		if (rawSequenceIndex === undefined || rawOrfIndex === undefined) {
+		if (queryMatch === null) {
 			throw new Error(
-				`Malformed hmmscan --tblout query name: expected sequence_<contig>.<orf>, got ${field(2)}`,
+				`Malformed hmmscan --tblout query name: expected sequence_<contig>.<orf>, got ${query}`,
 			);
 		}
 
-		const sequenceIndex = Number.parseInt(rawSequenceIndex, 10);
-		const orfIndex = Number.parseInt(rawOrfIndex, 10);
+		const cluster = parseIndex(clusterMatch[1], target);
+		const sequenceIndex = parseIndex(queryMatch[1], query);
+		const orfIndex = parseIndex(queryMatch[2], query);
 
 		hits.push({
 			// SWAPPED ON PURPOSE. `best_bias` is read from column 8, which hmmscan
@@ -87,13 +128,13 @@ export function parseHmmerTblout(lines: Iterable<string>): HmmerHit[] {
 			// `NuvsOrfHit` in `@virtool/contracts`. Unswapping them here alone would
 			// silently disagree with every record written so far; it means a
 			// coordinated change to the stored blobs and the UI.
-			best_bias: Number.parseFloat(field(8)),
-			best_e: Number.parseFloat(field(7)),
-			best_score: Number.parseFloat(field(9)),
+			best_bias: parseValue(fields[8], "best-domain score"),
+			best_e: parseEValue(fields[7], "best-domain E-value"),
+			best_score: parseValue(fields[9], "best-domain bias"),
 			cluster,
-			full_bias: Number.parseFloat(field(6)),
-			full_e: Number.parseFloat(field(4)),
-			full_score: Number.parseFloat(field(5)),
+			full_bias: parseValue(fields[6], "full-sequence bias"),
+			full_e: parseEValue(fields[4], "full-sequence E-value"),
+			full_score: parseValue(fields[5], "full-sequence score"),
 			orfIndex,
 			sequenceIndex,
 		});
