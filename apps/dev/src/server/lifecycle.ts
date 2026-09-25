@@ -22,7 +22,8 @@ function actionFor(desired: DesiredState): "remove" | "start" | "stop" {
 	return desired === "up" ? "start" : desired === "stopped" ? "stop" : "remove";
 }
 
-/** Reconciles durable desired state with Docker Compose. */
+// No timer of its own: the daemon refresh drives ticks through observe(), so an
+// idle repository costs one `docker ps` per refresh.
 export class Reconciler {
 	private readonly active = new Map<string, Promise<void>>();
 	private readonly observer: DockerObserver;
@@ -144,6 +145,8 @@ export class Reconciler {
 	}
 
 	private async reconcile(environment: DesiredEnvironment): Promise<boolean> {
+		// A worktree is marked absent only after a successful Git listing omits it,
+		// which covers worktrees deleted without the Worktrunk removal hook.
 		if (!environment.present && environment.desired !== "absent") {
 			await this.observer.validateProjectOwnership(
 				this.environmentProject(environment.id),
@@ -571,7 +574,6 @@ export class Reconciler {
 		return `virtool-dev-${this.store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`;
 	}
 
-	/** Observe all environments and shared services, then reconcile any drift. */
 	async observe(includeStorage: boolean): Promise<{
 		environments: Map<string, EnvironmentObservation>;
 		shared: RepositoryObservation["shared"];

@@ -16,7 +16,6 @@ const SERVICE: Record<Workflow, string> = {
 
 type Executor = { environmentId: string; workflow: Workflow };
 
-/** Repository-wide, capacity-limited launcher for one-shot workflow containers. */
 export class WorkflowCoordinator {
 	private active: Executor[] = [];
 	private buildQueue: SchedulerState["buildQueue"] = [];

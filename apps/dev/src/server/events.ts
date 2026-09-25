@@ -12,7 +12,6 @@ const LIFECYCLE_EVENTS = [
 	"unpause",
 ];
 
-/** Persistent Docker event stream with bounded reconnect delay. */
 export class DockerEvents {
 	private child: ChildProcessWithoutNullStreams | undefined;
 	private reconnect: NodeJS.Timeout | undefined;

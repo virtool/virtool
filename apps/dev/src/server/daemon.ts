@@ -74,7 +74,6 @@ function emptySnapshot(repositoryId: string, concurrency: number): Snapshot {
 	};
 }
 
-/** Start the repository-scoped coordinator until it receives shutdown. */
 export async function runDaemon(
 	cwd: string,
 	socketPath: string,

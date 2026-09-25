@@ -142,13 +142,11 @@ function parseVolumeUsage(
 	return usage;
 }
 
-/** Docker and Compose observation through their installed CLIs. */
 export class DockerObserver {
 	private storageUsageCache: StorageUsageCache | null = null;
 
 	constructor(private readonly run: CommandRunner) {}
 
-	/** Observe every container labelled for a repository with one Docker call. */
 	async observeRepository(
 		repositoryId: string,
 		sharedProject: string,
@@ -227,6 +225,8 @@ export class DockerObserver {
 		return parseContainers(stdout);
 	}
 
+	// `docker system df` walks every image and volume, so only refresh it while
+	// the UI is open.
 	private async getStorage(
 		repositoryId: string,
 		refresh: boolean,
