@@ -7,7 +7,8 @@ import {
 } from "@server/auth/recoveryFunctions";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useCapturedUrlParams } from "../hooks";
 import { rootQueryKeys } from "../keys";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
@@ -25,7 +26,6 @@ type VerificationState =
 /** Minimal token-safe mailbox verification screen. */
 export default function EmailVerificationWall() {
 	const [state, setState] = useState<VerificationState>({ status: "loading" });
-	const captured = useRef(false);
 	const queryClient = useQueryClient();
 
 	async function verify(token: string, mode: "current" | "change") {
@@ -61,25 +61,13 @@ export default function EmailVerificationWall() {
 		}
 	}
 
-	useLayoutEffect(() => {
-		if (captured.current) {
-			return;
-		}
-		captured.current = true;
-		const fragment = new URLSearchParams(window.location.hash.slice(1));
-		const query = new URLSearchParams(window.location.search);
-		const token = fragment.get("token") ?? query.get("token");
-		window.history.replaceState(
-			window.history.state,
-			"",
-			window.location.pathname,
-		);
+	useCapturedUrlParams(["token"], ({ token }) => {
 		if (!token || !/^[0-9a-f]{64}$/.test(token)) {
 			setState({ status: "unusable" });
 			return;
 		}
 		void inspectAndVerify(token);
-	}, []);
+	});
 
 	return (
 		<WallContainer>

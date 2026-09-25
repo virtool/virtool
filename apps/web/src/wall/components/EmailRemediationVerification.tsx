@@ -6,12 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { EmailRemediationVerificationResult } from "@virtool/contracts";
 import { CircleCheck, TriangleAlert } from "lucide-react";
-import {
-	type Dispatch,
-	type SetStateAction,
-	useLayoutEffect,
-	useState,
-} from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
+import { useCapturedUrlParams } from "../hooks";
 import { rootQueryKeys } from "../keys";
 import { completeEmailRemediation } from "../queries";
 import { WallContainer } from "./WallContainer";
@@ -42,18 +38,9 @@ export default function EmailRemediationVerification() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 
-	useLayoutEffect(() => {
-		const fragment = new URLSearchParams(window.location.hash.slice(1));
-		const query = new URLSearchParams(window.location.search);
-		const token = fragment.get("token") ?? query.get("token");
-		const redirect = safeRedirect(
-			fragment.get("redirect") ?? query.get("redirect"),
-		);
-		window.history.replaceState(
-			window.history.state,
-			"",
-			window.location.pathname,
-		);
+	useCapturedUrlParams(["token", "redirect"], (params) => {
+		const token = params.token;
+		const redirect = safeRedirect(params.redirect);
 
 		if (!token || !/^[0-9a-f]{64}$/.test(token)) {
 			setState({
@@ -66,7 +53,7 @@ export default function EmailRemediationVerification() {
 		}
 
 		verifyToken(token, redirect, setState);
-	}, []);
+	});
 
 	function continueJourney() {
 		if (state.status === "loading" || state.status === "interrupted") {
