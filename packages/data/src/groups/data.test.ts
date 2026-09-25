@@ -3,9 +3,16 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
+import { takeFirstOrThrow } from "../db/rows";
 import { groups, userGroups } from "../db/schema/groups";
+import {
+	legacyReferenceGroups,
+	legacyReferences,
+} from "../db/schema/references";
+import { legacySamples } from "../db/schema/samples";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedReference } from "../indexes/test/fixtures";
 import {
 	createGroup,
 	deleteGroup,
@@ -31,6 +38,9 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(legacySamples);
+	await db.delete(legacyReferenceGroups);
+	await db.delete(legacyReferences);
 	await db.delete(users);
 	await db.delete(groups);
 });
@@ -225,6 +235,58 @@ describe("deleteGroup", () => {
 		// The user itself survives; only the membership is gone.
 		expect(
 			await db.select().from(users).where(eq(users.id, userId)),
+		).toHaveLength(1);
+	});
+
+	it("deletes a group that owns samples and leaves them without a group", async () => {
+		const groupId = await seedGroup(db);
+		const userId = await seedUser(db);
+		const sampleId = takeFirstOrThrow(
+			await db
+				.insert(legacySamples)
+				.values({
+					name: "Sample",
+					library_type: "normal",
+					created_at: new Date(),
+					group_id: groupId,
+					user_id: userId,
+				})
+				.returning({ id: legacySamples.id }),
+		).id;
+
+		await deleteGroup(db, groupId);
+
+		expect(await readGroup(groupId)).toBeUndefined();
+		expect(
+			await db
+				.select({ groupId: legacySamples.group_id })
+				.from(legacySamples)
+				.where(eq(legacySamples.id, sampleId)),
+		).toEqual([{ groupId: null }]);
+	});
+
+	it("deletes a group with reference rights and removes the rights", async () => {
+		const groupId = await seedGroup(db);
+		const userId = await seedUser(db);
+		const referenceId = await seedReference(db, userId);
+		await db
+			.insert(legacyReferenceGroups)
+			.values({ reference_id: referenceId, group_id: groupId, build: true });
+
+		await deleteGroup(db, groupId);
+
+		expect(await readGroup(groupId)).toBeUndefined();
+		expect(
+			await db
+				.select()
+				.from(legacyReferenceGroups)
+				.where(eq(legacyReferenceGroups.reference_id, referenceId)),
+		).toHaveLength(0);
+		expect(
+			await db
+				.select()
+				.from(legacyReferences)
+				.where(eq(legacyReferences.id, referenceId)),
 		).toHaveLength(1);
 	});
 

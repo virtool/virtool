@@ -1,4 +1,6 @@
 import { groupQueryKeys } from "@groups/keys";
+import { referenceQueryKeys } from "@references/keys";
+import { samplesQueryKeys } from "@samples/keys";
 import {
 	createGroupFn,
 	deleteGroupFn,
@@ -113,6 +115,8 @@ export function useDeleteGroup() {
 			deleteGroupFn({ data: { groupId: Number(id) } }) as Promise<null>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: groupQueryKeys.all() });
+			queryClient.invalidateQueries({ queryKey: samplesQueryKeys.all() });
+			queryClient.invalidateQueries({ queryKey: referenceQueryKeys.all() });
 		},
 	});
 }
