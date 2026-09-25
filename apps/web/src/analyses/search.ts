@@ -79,17 +79,16 @@ const DEFAULT_MIN_COVERAGE = 0.5;
  * its filters at their defaults has no search params at all, and only the ones
  * a person actually changed are carried in a shared link.
  *
- * The two coverage filters and the two Nuvs filters are named for what they
- * *keep* rather than what they hide, so that the filtering state — the one a
- * viewer opens in — is the absent one.
+ * Pathoscope opens with every hit and isolate shown, so a person sees what the
+ * analysis found before choosing to narrow it. Nuvs opens with its filters on.
  */
 export const DEFAULT_ANALYSIS_SEARCH: AnalysisSearch = {
 	dir: "desc",
 	find: "",
 	minCoverage: DEFAULT_MIN_COVERAGE,
 	reads: false,
-	showLowIsolates: false,
-	showLowOtus: false,
+	showLowIsolates: true,
+	showLowOtus: true,
 	showUnhitOrfs: false,
 	showUnhitSequences: false,
 	table: false,

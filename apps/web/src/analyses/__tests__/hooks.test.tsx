@@ -67,11 +67,7 @@ function renderSort(
 
 	const { result } = renderHook(
 		() => useSortAndFilterPathoscopeHits(analysis),
-		{
-			// Sorting only, so nothing is held back by the coverage filter the
-			// viewer opens with.
-			wrapper: createWrapper({ sort, dir, showLowOtus: true }),
-		},
+		{ wrapper: createWrapper({ sort, dir }) },
 	);
 
 	return result.current.map((hit) => hit.id);
@@ -105,10 +101,7 @@ describe("useSortAndFilterPathoscopeHits()", () => {
 		expect(renderSort()).toEqual(["b", "c", "a"]);
 	});
 
-	// The switch that turns this off draws itself pressed on an untouched URL,
-	// so an untouched URL has to filter — the two read one resolved param now
-	// rather than defaulting apart.
-	it("should hold hits to the cutoff when the URL says nothing", () => {
+	it("should keep every hit when the URL says nothing", () => {
 		const analysis = {
 			results: { hits, readCount: 1000, subtractedCount: 0 },
 		} as FormattedPathoscopeAnalysis;
@@ -116,6 +109,19 @@ describe("useSortAndFilterPathoscopeHits()", () => {
 		const { result } = renderHook(
 			() => useSortAndFilterPathoscopeHits(analysis),
 			{ wrapper: createWrapper({}) },
+		);
+
+		expect(result.current.map((hit) => hit.id)).toEqual(["b", "c", "a"]);
+	});
+
+	it("should hold hits to the cutoff once the filter is on", () => {
+		const analysis = {
+			results: { hits, readCount: 1000, subtractedCount: 0 },
+		} as FormattedPathoscopeAnalysis;
+
+		const { result } = renderHook(
+			() => useSortAndFilterPathoscopeHits(analysis),
+			{ wrapper: createWrapper({ showLowOtus: false }) },
 		);
 
 		// Only "a", at 0.1 coverage, is under the 0.5 default.
