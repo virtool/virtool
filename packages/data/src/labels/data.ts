@@ -1,9 +1,10 @@
 import { DEFAULT_LABEL_COLOR, type Label } from "@virtool/contracts";
-import { asc, eq, ilike } from "drizzle-orm";
+import { asc, count, eq, ilike } from "drizzle-orm";
 import type { PostgresError } from "postgres";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { type LabelRow, labels as labelsTable } from "../db/schema/labels";
+import { legacySampleLabels } from "../db/schema/samples";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -35,39 +36,49 @@ function normalizeColor(color: string | null): string {
 	return color.startsWith("#") ? color : `#${color}`;
 }
 
-function toLabel(row: LabelRow): Label {
+function toLabel(row: LabelRow, sampleCount: number): Label {
 	return {
 		id: row.id,
 		color: normalizeColor(row.color),
-		// Stubbed to 0 until the sample-label join is wired into the TS
-		// server; the count would come from legacy_sample_labels.
-		count: 0,
+		count: sampleCount,
 		description: row.description ?? "",
 		name: row.name ?? "",
 	};
 }
 
-export async function findLabels(db: Db, term = ""): Promise<Label[]> {
-	const rows = await db
-		.select()
+function selectLabelsWithCount(db: Db) {
+	return db
+		.select({
+			label: labelsTable,
+			sampleCount: count(legacySampleLabels.sample_id),
+		})
 		.from(labelsTable)
+		.leftJoin(
+			legacySampleLabels,
+			eq(legacySampleLabels.label_id, labelsTable.id),
+		)
+		.groupBy(labelsTable.id)
+		.$dynamic();
+}
+
+export async function findLabels(db: Db, term = ""): Promise<Label[]> {
+	const rows = await selectLabelsWithCount(db)
 		.where(term ? ilike(labelsTable.name, `%${term}%`) : undefined)
 		.orderBy(asc(labelsTable.name));
 
-	return rows.map((row) => toLabel(row));
+	return rows.map((row) => toLabel(row.label, row.sampleCount));
 }
 
 export async function getLabel(db: Db, labelId: number): Promise<Label> {
-	const [row] = await db
-		.select()
-		.from(labelsTable)
-		.where(eq(labelsTable.id, labelId));
+	const [row] = await selectLabelsWithCount(db).where(
+		eq(labelsTable.id, labelId),
+	);
 
 	if (!row) {
 		throw new LabelNotFoundError();
 	}
 
-	return toLabel(row);
+	return toLabel(row.label, row.sampleCount);
 }
 
 export async function createLabel(db: Db, values: LabelValues): Promise<Label> {
@@ -85,7 +96,7 @@ export async function createLabel(db: Db, values: LabelValues): Promise<Label> {
 
 	await emit("labels", row.id, "create");
 
-	return toLabel(row);
+	return toLabel(row, 0);
 }
 
 export async function updateLabel(
@@ -117,7 +128,7 @@ export async function updateLabel(
 
 	await emit("labels", row.id, "update");
 
-	return toLabel(row);
+	return getLabel(db, row.id);
 }
 
 export async function deleteLabel(db: Db, labelId: number): Promise<void> {
