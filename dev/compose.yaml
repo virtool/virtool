@@ -93,7 +93,7 @@ services:
       start_interval: 1s
       start_period: 60s
       timeout: 2s
-      retries: 30
+      retries: 3
     volumes: *volumes
 
   tasks:

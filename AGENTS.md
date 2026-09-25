@@ -287,7 +287,7 @@ type(scope): description
 
 #### Issue conventions
 
-- Capitalize issue titles.
+- Write issue titles in sentence case.
 - Place issues in **Todo** by default; use **Backlog** only when explicitly
   asked. If an issue seems like it should be Backlog, say so and ask.
 - Never assign issues to anyone.
