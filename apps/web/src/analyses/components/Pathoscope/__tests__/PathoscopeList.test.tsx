@@ -45,7 +45,6 @@ function renderList(
 			<AnalysisSearchProvider
 				search={{
 					...DEFAULT_ANALYSIS_SEARCH,
-					showLowOtus: true,
 					sort: "coverage",
 					dir: "asc",
 					...search,

@@ -69,7 +69,6 @@ function renderExport(search: Partial<AnalysisSearch> = {}) {
 		<AnalysisSearchProvider
 			search={{
 				...DEFAULT_ANALYSIS_SEARCH,
-				showLowOtus: true,
 				dir: "asc",
 				...search,
 			}}
