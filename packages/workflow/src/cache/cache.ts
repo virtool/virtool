@@ -6,9 +6,8 @@
  * asking for it. The blob is an **uncompressed tar of one directory**, whose
  * single top-level entry is the directory's own basename, exactly as
  * `writePathAsTar` produces and `extractTarToDir` expects. That layout is not
- * an implementation detail: the `reference_mapping_index` and
- * `subtraction_mapping_index` namespaces are shared across workflows, and
- * blobs already in the bucket are laid out this way.
+ * an implementation detail: blobs already in the bucket are laid out this way,
+ * and every later run of a workflow restores what earlier runs archived.
  *
  * ## No endpoint carries bytes
  *
@@ -27,15 +26,18 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { extractTarToDir, writePathAsTar } from "@virtool/archive/tar";
 import { Cache, CacheRegistered } from "@virtool/contracts";
+import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { cacheKey, StorageKeyNotFoundError } from "@virtool/storage";
 import type { JobsApiClient } from "../client/client";
 import { NotFoundError } from "../client/errors";
+import type { BuildContextInput } from "../context";
+import { WorkflowError } from "../errors";
 import { downloadToPath, uploadFromPath } from "../files/transfer";
-import { type CacheParams, toJsonCacheParams } from "./key";
+import { type CacheParams, deriveCacheKey, toJsonCacheParams } from "./key";
 
 /** The workflow cache, over one run's jobs API client and storage backend. */
 export type WorkflowCache = {
@@ -168,4 +170,83 @@ export function createWorkflowCache({
 			});
 		},
 	};
+}
+
+/**
+ * The run's cache, built from the handles already on its context.
+ *
+ * Archives are staged under the work path, not the OS temp directory — a mapping
+ * index runs to gigabytes and the work path is the only volume a pod is sized
+ * for.
+ */
+export function cacheFor(
+	context: Pick<BuildContextInput, "client" | "storage" | "workPath">,
+): WorkflowCache {
+	return createWorkflowCache({
+		client: context.client,
+		storage: context.storage,
+		stagingPath: join(context.workPath, "caches"),
+	});
+}
+
+/** What {@link restoreOrBuild} needs. */
+export type RestoreOrBuildOptions = {
+	cache: WorkflowCache;
+	/** The artifact's namespace, for logs and errors. */
+	kind: string;
+	params: CacheParams;
+	/** The artifact's directory, which the blob archives whole. */
+	directory: string;
+	logger: Logger;
+	/** Write the artifact into `directory`, called only once the cache has missed. */
+	build: () => Promise<void>;
+};
+
+/**
+ * Restore an artifact directory from the cache, or build it and cache it.
+ *
+ * The blob is restored into the directory's parent, so its one top-level entry
+ * recreates the directory itself.
+ */
+export async function restoreOrBuild({
+	build,
+	cache,
+	directory,
+	kind,
+	logger,
+	params,
+}: RestoreOrBuildOptions): Promise<void> {
+	const key = deriveCacheKey(params);
+	const log = logger.child({ cacheKind: kind, key });
+
+	const restored = await cache.get(key, dirname(directory));
+
+	if (restored !== null) {
+		// A blob's one top-level entry is named after the directory its writer
+		// archived, so a blob archived from a differently named directory unpacks
+		// *beside* the artifact rather than onto it. Thrown rather than treated as
+		// a miss: `cache.put` cannot replace a registered key, so rebuilding would
+		// hand the same blob back to every later run while leaving the stray tree
+		// on a disk sized for one copy of the artifact.
+		if (restored !== directory) {
+			throw new WorkflowError(
+				`Cached ${kind} restored to ${restored}, not ${directory}`,
+			);
+		}
+
+		log.info("restored cached artifact");
+
+		return;
+	}
+
+	log.info("building uncached artifact");
+
+	await build();
+
+	// An already-registered key is success, not an error: another run can have
+	// derived the same key and built the same artifact while this one was
+	// working.
+	const created = await cache.put(key, directory, params);
+
+	log.info({ created }, "cached artifact");
 }

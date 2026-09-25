@@ -72,14 +72,22 @@ ownership boundary between this package and the jobs API (`@virtool/internal`).
   and send them back in the finalization manifest; never derive them from row IDs.
 - `createWorkflowCache()` stores an uncompressed tar containing one top-level
   directory. Upload the blob before registering the cache row.
+- Build a run's cache with `cacheFor(context)`, which stages archives under the
+  work path. Use `restoreOrBuild()` for every cached artifact; it rejects a
+  blob that restores to a different directory.
+- Analysis workflows resolve their inputs with `fetchAnalysisMetadata()`,
+  `resolveAnalysisInputs()`, and `transferAnalysisInputs()`. Read other job
+  arguments with `readIdArg()`.
 
 `runWorkflowApp()` constructs the storage backend once from configuration and
 passes it through the context. The workflow package never constructs a
 database connection or a module-level storage singleton.
 
-The cache archive's one top-level entry is the cached directory's basename.
-That layout is what lets every workflow share the `reference_mapping_index` and
-`subtraction_mapping_index` namespaces. Registering an already-existing cache
+The cache archive's one top-level entry is the cached directory's basename,
+so a workflow's work-path layout is part of its cache contract. Every cache
+key includes the workflow name and version, so each workflow has its own
+namespaces and never restores an artifact another workflow built from
+different input. Registering an already-existing cache
 key is success. `deriveCacheKey()` serialises params as JSON with keys sorted
 by code point, `,` and `:` separators, and every character outside
 `0x20`-`0x7E` escaped, then takes the SHA-256 of the result; mark floats with

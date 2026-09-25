@@ -1,11 +1,11 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import {
+	cacheFor,
 	createMappingIndex,
 	downloadToPath,
 	gunzipFile,
 } from "@virtool/workflow";
-import { cacheFor } from "../cache";
 import {
 	REFERENCE_INDEX_EXTRA_PARAMS,
 	REFERENCE_INDEX_KIND,
@@ -61,7 +61,8 @@ export const createReferenceIndexStep: NuvsStep = {
  * keeps this workflow's shards byte-identical to them.
  *
  * Both the download and the decompression are deferred until the cache has
- * missed. The namespace is shared, so a hit is the common outcome, and a host
+ * missed. Every analysis against the same subtraction reuses one cached index,
+ * so a hit is the common outcome, and a host
  * genome is gigabytes that would otherwise be pulled out of storage, expanded,
  * and never opened.
  */
