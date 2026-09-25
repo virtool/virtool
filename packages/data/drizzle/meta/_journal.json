@@ -285,15 +285,15 @@
     {
       "idx": 40,
       "version": "7",
-      "when": 1790274418598,
-      "tag": "0040_add_invitations",
+      "when": 1790370910079,
+      "tag": "0040_cascade_label_and_group_deletes",
       "breakpoints": true
     },
     {
       "idx": 41,
       "version": "7",
-      "when": 1790274418599,
-      "tag": "0041_invitee_handles",
+      "when": 1790376639530,
+      "tag": "0041_add_invitations",
       "breakpoints": true
     }
   ]

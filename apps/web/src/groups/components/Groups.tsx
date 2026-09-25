@@ -1,5 +1,6 @@
 import Button from "@base/Button";
 import DeleteAlert from "@base/DeleteAlert";
+import DeleteDialog from "@base/DeleteDialog";
 import { InputHeader } from "@base/Input";
 import ListEmpty from "@base/ListEmpty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -25,6 +26,11 @@ export default function Groups() {
 	const deleteMutation = useDeleteGroup();
 
 	const [openCreateGroup, setOpenCreateGroup] = useState(false);
+	const [openDeleteGroup, setOpenDeleteGroup] = useState(false);
+	const [groupToDelete, setGroupToDelete] = useState<{
+		id: number;
+		name: string;
+	} | null>(null);
 	const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 	const [prevGroups, setPrevGroups] = useState<
 		GroupMinimal[] | undefined | null
@@ -113,7 +119,13 @@ export default function Groups() {
 							outerClassName="!mb-0"
 							message="Permanently delete this group."
 							buttonText="Delete"
-							onClick={() => deleteMutation.mutate({ id: selectedGroup.id })}
+							onClick={() => {
+								setGroupToDelete({
+									id: selectedGroup.id,
+									name: selectedGroup.name,
+								});
+								setOpenDeleteGroup(true);
+							}}
 						/>
 					</TabsContent>
 				</Tabs>
@@ -122,6 +134,23 @@ export default function Groups() {
 					icon={Users}
 					title="No groups found"
 					description="No groups have been created yet."
+				/>
+			)}
+
+			{groupToDelete && (
+				<DeleteDialog
+					name={groupToDelete.name}
+					noun="Group"
+					message={
+						<>
+							Are you sure you want to delete{" "}
+							<strong>{groupToDelete.name}</strong>? Its samples will have no
+							group, and its reference rights will be removed.
+						</>
+					}
+					open={openDeleteGroup}
+					onOpenChange={setOpenDeleteGroup}
+					onConfirm={() => deleteMutation.mutateAsync({ id: groupToDelete.id })}
 				/>
 			)}
 

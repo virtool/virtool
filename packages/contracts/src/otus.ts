@@ -332,16 +332,23 @@ export const IsolateUpdateRequest = z.object({
 export type IsolateUpdateRequest = z.infer<typeof IsolateUpdateRequest>;
 
 /**
+ * Remove whitespace from a nucleotide sequence and make it uppercase, so pasted
+ * multi-line or lowercase input matches the stored form.
+ */
+export function normalizeSequence(sequence: string): string {
+	return sequence.replace(/\s+/g, "").toUpperCase();
+}
+
+/**
  * The characters a stored nucleotide sequence may use: the four bases plus the
  * IUPAC ambiguity codes Virtool accepts.
- *
- * The sequence field enforces the pattern client-side too, so nothing reaching
- * here has whitespace to lose.
  */
+export const SEQUENCE_PATTERN = /^[ATCGNRYKM]*$/;
+
 const sequenceSchema = z
 	.string()
-	.min(1)
-	.regex(/^[ATCGNRYKM]+$/);
+	.transform(normalizeSequence)
+	.pipe(z.string().min(1).regex(SEQUENCE_PATTERN));
 
 /** Fields accepted when creating a sequence. */
 export const SequenceCreateRequest = z.object({

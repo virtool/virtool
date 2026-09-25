@@ -1,4 +1,5 @@
 import { labelQueryKeys } from "@labels/keys";
+import { samplesQueryKeys } from "@samples/keys";
 import {
 	createLabelFn,
 	deleteLabelFn,
@@ -74,6 +75,7 @@ export function useDeleteLabel() {
 		mutationFn: ({ labelId }) => deleteLabelFn({ data: { labelId } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: labelQueryKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: samplesQueryKeys.all() });
 		},
 	});
 }

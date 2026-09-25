@@ -27,6 +27,7 @@ import {
 	type SQL,
 } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { groups, userGroups } from "../db/schema/groups";
@@ -41,6 +42,7 @@ import {
 import { tasks } from "../db/schema/tasks";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getSettings } from "../settings/data";
@@ -83,12 +85,6 @@ export class ReferenceMemberNotFoundError extends AppError {}
 
 /** Thrown when a membership operation conflicts (unknown or duplicate member). */
 export class ReferenceMemberConflictError extends AppError {}
-
-// LIKE wildcards in the search term are escaped so a user's `%` or `_` matches
-// literally rather than acting as a pattern.
-function escapeLike(term: string): string {
-	return term.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
 
 const ownerUser = alias(users, "owner_user");
 const uploadUser = alias(users, "upload_user");
@@ -522,7 +518,7 @@ export async function findReferences(
 			? undefined
 			: eq(legacyReferences.archived, archived);
 	const searchFilter = term
-		? ilike(legacyReferences.name, `%${escapeLike(term)}%`)
+		? ilike(legacyReferences.name, toSearchPattern(term))
 		: undefined;
 
 	const baseFilter = and(visibility, archivedFilter);
@@ -538,7 +534,7 @@ export async function findReferences(
 		selectReferences(db)
 			.where(foundFilter)
 			.orderBy(asc(legacyReferences.name), asc(legacyReferences.id))
-			.offset((page - 1) * perPage)
+			.offset(getPageOffset(page, perPage))
 			.limit(perPage),
 	]);
 
@@ -555,7 +551,7 @@ export async function findReferences(
 		foundCount,
 		totalCount,
 		page,
-		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		items: rows.map((row) =>
 			mapMinimal(

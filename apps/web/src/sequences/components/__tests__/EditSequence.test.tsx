@@ -130,6 +130,36 @@ describe("<SequenceEdit>", () => {
 		expect(screen.getAllByText("Required Field").length).toBe(3);
 	});
 
+	it("should submit lowercase multi-line sequence input as one uppercase line", async () => {
+		const updateSequence = mockUpdateSequence({
+			accession: activeSequence.accession,
+			definition: activeSequence.definition,
+			host: activeSequence.host,
+			segment: activeSequence.segment,
+			sequence: "ACGRYKM",
+		});
+
+		renderSequenceEdit();
+
+		const sequenceField = await screen.findByRole("textbox", {
+			name: /Sequence [0-9]/,
+		});
+		await userEvent.clear(sequenceField);
+		await userEvent.type(sequenceField, "acgr{Enter}yk m");
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() =>
+			expect(updateSequence).toHaveBeenCalledWith({
+				data: expect.objectContaining({ sequence: "ACGRYKM" }),
+			}),
+		);
+		expect(
+			screen.queryByText(
+				"Sequence should only contain the characters: ATCGNRYKM",
+			),
+		).toBeNull();
+	});
+
 	it("should display specific error when sequence contains chars !== ATCGNRYKM", async () => {
 		renderSequenceEdit();
 

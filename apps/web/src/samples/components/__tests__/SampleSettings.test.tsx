@@ -42,6 +42,25 @@ describe("<SampleSettings />", () => {
 		expect(screen.getByLabelText("All Users' Rights")).toBeInTheDocument();
 	});
 
+	it("should describe each sample group policy", async () => {
+		renderWithProviders(<SampleSettings />);
+
+		await waitFor(() =>
+			expect(screen.getByText("Sample Settings")).toBeInTheDocument(),
+		);
+
+		expect(
+			screen.getByRole("radio", { name: /Force choice/ }),
+		).toHaveTextContent(
+			"Samples are assigned by the user in the creation form",
+		);
+		expect(
+			screen.getByRole("radio", { name: /User's primary group/ }),
+		).toHaveTextContent(
+			"Samples are automatically assigned the creating user's primary group",
+		);
+	});
+
 	it("should update settings when force choice is selected", async () => {
 		const settings = createFakeSettings({ sampleGroup: "force_choice" });
 		const updateSettings = mockUpdateSettings(settings);

@@ -161,7 +161,52 @@ describe("reactQueryHandler", () => {
 		for (const { message, queryKey } of cases) {
 			it(`${message.domain} on ${message.operation}`, () => {
 				reactQueryHandler(queryClient)(message);
-				expect(invalidate).toHaveBeenCalledExactlyOnceWith({ queryKey });
+				expect(invalidate).toHaveBeenNthCalledWith(1, { queryKey });
+			});
+		}
+	});
+
+	describe("marks cached data in other domains that the change alters", () => {
+		const cases: Array<{
+			message: SseMessage;
+			queryKeys: (readonly unknown[])[];
+		}> = [
+			{
+				message: { domain: "samples", operation: "insert", id: 4 },
+				queryKeys: [samplesQueryKeys.lists(), labelQueryKeys.lists()],
+			},
+			{
+				message: { domain: "samples", operation: "update", id: 4 },
+				queryKeys: [samplesQueryKeys.detail(4), labelQueryKeys.lists()],
+			},
+			{
+				message: { domain: "labels", operation: "delete", id: 7 },
+				queryKeys: [labelQueryKeys.lists(), samplesQueryKeys.all()],
+			},
+			{
+				message: { domain: "labels", operation: "update", id: 7 },
+				queryKeys: [labelQueryKeys.lists()],
+			},
+			{
+				message: { domain: "groups", operation: "delete", id: 3 },
+				queryKeys: [
+					groupQueryKeys.lists(),
+					samplesQueryKeys.all(),
+					referenceQueryKeys.all(),
+				],
+			},
+			{
+				message: { domain: "groups", operation: "update", id: 3 },
+				queryKeys: [groupQueryKeys.detail(3)],
+			},
+		];
+
+		for (const { message, queryKeys } of cases) {
+			it(`${message.domain} on ${message.operation}`, () => {
+				reactQueryHandler(queryClient)(message);
+				expect(invalidate.mock.calls).toEqual(
+					queryKeys.map((queryKey) => [{ queryKey }]),
+				);
 			});
 		}
 	});

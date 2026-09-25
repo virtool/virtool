@@ -1,6 +1,6 @@
 {
-  "id": "29b801b6-8d11-4858-b720-4235679db559",
-  "prevId": "5e32917c-bf94-4694-bab2-91706237ddde",
+  "id": "c4e3dc0a-c85b-4e29-bce0-caf96d9f5a6c",
+  "prevId": "dfbc12b5-f8c0-4e2a-b04b-1ed656a5717f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3374,7 +3374,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -3675,7 +3675,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -3982,7 +3982,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "legacy_samples_user_id_fkey": {
