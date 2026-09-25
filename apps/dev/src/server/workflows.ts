@@ -128,6 +128,7 @@ export class WorkflowCoordinator {
 			this.lastError = null;
 		} catch (error) {
 			this.buildQueue = [];
+			this.errors = {};
 			this.lastError = error instanceof Error ? error.message : String(error);
 			this.logger.error({ err: error }, "workflow scheduler tick failed");
 		} finally {

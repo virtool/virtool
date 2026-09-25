@@ -152,3 +152,28 @@ it("clears an environment error after a successful tick", async () => {
 	await workflows.tick(environments);
 	expect(workflows.getState().errors).toEqual({});
 });
+
+it("clears environment errors when the scheduler tick fails", async () => {
+	let dockerAvailable = true;
+	const run = vi.fn<CommandRunner>(async (_command, args) => {
+		if (!dockerAvailable) {
+			throw new Error("Docker is unavailable");
+		}
+		if (args.includes("exec")) {
+			throw new Error("Jobs API unavailable");
+		}
+		return { stderr: "", stdout: "" };
+	});
+	const workflows = createCoordinator(run);
+	const environments = [createEnvironment("flaky")];
+
+	await workflows.tick(environments);
+	expect(workflows.getState().errors).toEqual({
+		flaky: "Jobs API unavailable",
+	});
+
+	dockerAvailable = false;
+	await workflows.tick(environments);
+	expect(workflows.getState().lastError).toBe("Docker is unavailable");
+	expect(workflows.getState().errors).toEqual({});
+});
