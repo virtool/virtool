@@ -29,8 +29,10 @@ export type RunWorkflowOptions<TData, TState> = {
 	 * The only seam the run loop needs into the job lifecycle, and the reason it
 	 * is a callback rather than a return value: it fires mid-run, where every
 	 * other outcome this function reports is terminal and rides back on
-	 * {@link RunOutcome}. A rejection is a failed run — the jobs API not
-	 * knowing which step is executing is not something to continue past.
+	 * {@link RunOutcome}. A rejection fails the run unless cancellation or
+	 * termination has already aborted the signal; that outcome takes precedence.
+	 * The jobs API not knowing which step is executing is not something to
+	 * continue past.
 	 *
 	 * It takes the wire shape the runner declared its steps in at claim time,
 	 * so the callback cannot be handed a step the jobs API has never heard of.
@@ -192,6 +194,11 @@ export async function runWorkflow<TData, TState>({
 
 			await onStepStart?.(step);
 
+			if (signals.signal.aborted) {
+				aborted = true;
+				break;
+			}
+
 			logger.info(
 				{ stepId: step.id, name: step.name },
 				"running workflow step",
@@ -203,10 +210,17 @@ export async function runWorkflow<TData, TState>({
 			}
 		}
 	} catch (caught) {
-		// Tracked separately from `error` because a step is free to throw a falsy
-		// value, and `error !== undefined` would then read as a clean run.
-		failed = true;
-		error = caught;
+		// Step reporting uses the run's signal, so cancellation can make its
+		// request reject before control returns here. The cancellation remains the
+		// run's terminal outcome regardless of how that in-flight request settles.
+		if (signals.signal.aborted) {
+			aborted = true;
+		} else {
+			// Tracked separately from `error` because a step is free to throw a falsy
+			// value, and `error !== undefined` would then read as a clean run.
+			failed = true;
+			error = caught;
+		}
 	}
 
 	if (aborted) {

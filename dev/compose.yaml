@@ -108,7 +108,9 @@ services:
     labels: *labels
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:9950/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 2s
       retries: 30
     volumes: *volumes
@@ -122,7 +124,9 @@ services:
     labels: *labels
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:9900/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 2s
       retries: 30
     volumes: *volumes
@@ -143,7 +147,9 @@ services:
     labels: *labels
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:9900/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 2s
       retries: 30
     networks:

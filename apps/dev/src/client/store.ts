@@ -67,7 +67,6 @@ function subscribe(listener: () => void): () => void {
 	};
 }
 
-/** Subscribe to the daemon's cached live snapshot. */
 export function useSnapshot() {
 	return useSyncExternalStore(
 		subscribe,

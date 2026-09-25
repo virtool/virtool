@@ -108,6 +108,7 @@ export const legacySamples = pgTable(
 		}),
 		unique("legacy_samples_legacy_id_key").on(table.legacy_id),
 		unique("legacy_samples_job_id_key").on(table.job_id),
+		unique("legacy_samples_name_key").on(table.name),
 		index("ix_legacy_samples_all_read")
 			.on(table.all_read)
 			.where(sql`${table.all_read} = true`),

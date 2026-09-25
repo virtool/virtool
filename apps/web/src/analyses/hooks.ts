@@ -1,6 +1,7 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { DEFAULT_SORT_KEY } from "@analyses/search";
 import { createFuse } from "@app/fuse";
+import { normalizeSearchTerm } from "@app/search";
 import { useListReadyIndexes } from "@indexes/queries";
 import { useFetchSample } from "@samples/queries";
 import { useFetchSubtractionsShortlist } from "@subtraction/queries";
@@ -74,9 +75,10 @@ export function useSortAndFilterPathoscopeHits(
 	} = useAnalysisSearch();
 
 	const fuse = createFuse(hits, ["name", "abbreviation"]);
+	const normalizedFind = normalizeSearchTerm(find);
 
-	if (find) {
-		hits = fuse.search(find).map((result) => result.item);
+	if (normalizedFind) {
+		hits = fuse.search(normalizedFind).map((result) => result.item);
 	}
 
 	// Measured breadth, not a read budget: reads piled onto one conserved locus
@@ -107,9 +109,10 @@ export function useSortAndFilterNuvsHits(detail: FormattedNuvsAnalysis) {
 	} = useAnalysisSearch();
 
 	const fuse = createFuse(hits, ["names", "families"]);
+	const normalizedFind = normalizeSearchTerm(find);
 
-	if (find) {
-		hits = fuse.search(find).map((result) => result.item);
+	if (normalizedFind) {
+		hits = fuse.search(normalizedFind).map((result) => result.item);
 	}
 
 	if (!showUnhitSequences) {

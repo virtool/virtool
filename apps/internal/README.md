@@ -425,7 +425,7 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/internal test` | Run the Vitest suite. It needs Docker for the Postgres testcontainer. |
 | `pnpm --filter @virtool/internal typecheck` | Run `tsc --noEmit`. |
 
-Migrations remain a one-shot startup step; see [the development guide](../../dev/README.md#builds-dependencies-and-rollout).
+Migrations remain a one-shot startup step.
 
 Run a subcommand from the built bundle with `node dist/index.mjs serve`,
 `node dist/index.mjs run`, `node dist/index.mjs migrate`, or

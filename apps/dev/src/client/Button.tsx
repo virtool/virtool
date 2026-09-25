@@ -18,7 +18,6 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 	variant?: ButtonVariant;
 };
 
-/** Return shared button classes for controls rendered as links. */
 export function buttonClassName(
 	variant: ButtonVariant = "secondary",
 	className?: string,
@@ -26,7 +25,6 @@ export function buttonClassName(
 	return [BASE, VARIANTS[variant], className].filter(Boolean).join(" ");
 }
 
-/** Render a compact management UI button. */
 export function Button({
 	className,
 	type = "button",

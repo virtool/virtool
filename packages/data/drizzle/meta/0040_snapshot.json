@@ -1,6 +1,6 @@
 {
-  "id": "29b801b6-8d11-4858-b720-4235679db559",
-  "prevId": "5e32917c-bf94-4694-bab2-91706237ddde",
+  "id": "5e32917c-bf94-4694-bab2-91706237ddde",
+  "prevId": "b1c633ab-02f3-4265-915b-467ba61319c2",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -4027,6 +4027,13 @@
           "columns": [
             "job_id"
           ]
+        },
+        "legacy_samples_name_key": {
+          "name": "legacy_samples_name_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
         }
       },
       "policies": {},
@@ -5577,7 +5584,6 @@
             }
           ],
           "isUnique": true,
-          "where": "\"users\".\"handle\" <> ''",
           "concurrently": false,
           "method": "btree",
           "with": {}

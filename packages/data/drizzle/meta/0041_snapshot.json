@@ -1,6 +1,6 @@
 {
-  "id": "b1c633ab-02f3-4265-915b-467ba61319c2",
-  "prevId": "efad1367-2a9f-431c-a50b-eb59f8ae2d45",
+  "id": "29b801b6-8d11-4858-b720-4235679db559",
+  "prevId": "5e32917c-bf94-4694-bab2-91706237ddde",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -4720,11 +4720,36 @@
           "primaryKey": false,
           "notNull": true
         },
+        "issuer_user_id": {
+          "name": "issuer_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "purpose": {
           "name": "purpose",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "delivery": {
+          "name": "delivery",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outbox_id": {
+          "name": "outbox_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "candidate_email": {
           "name": "candidate_email",
@@ -4768,6 +4793,12 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -4806,6 +4837,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "uq_setup_tokens_live_account_completion": {
+          "name": "uq_setup_tokens_live_account_completion",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"setup_tokens\".\"purpose\" = 'account_completion' and \"setup_tokens\".\"consumed_at\" is null and \"setup_tokens\".\"superseded_at\" is null and \"setup_tokens\".\"revoked_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -4820,6 +4867,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "setup_tokens_outbox_id_fkey": {
+          "name": "setup_tokens_outbox_id_fkey",
+          "tableFrom": "setup_tokens",
+          "tableTo": "email_outbox",
+          "columnsFrom": [
+            "outbox_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -4838,6 +4898,18 @@
         "setup_tokens_purpose_valid": {
           "name": "setup_tokens_purpose_valid",
           "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
+        },
+        "setup_tokens_generation_positive": {
+          "name": "setup_tokens_generation_positive",
+          "value": "\"setup_tokens\".\"generation\" > 0"
+        },
+        "setup_tokens_invitation_metadata_valid": {
+          "name": "setup_tokens_invitation_metadata_valid",
+          "value": "\"setup_tokens\".\"purpose\" <> 'account_completion' or (\"setup_tokens\".\"issuer_user_id\" is not null and \"setup_tokens\".\"delivery\" in ('copy_only', 'queued'))"
+        },
+        "setup_tokens_delivery_outbox_valid": {
+          "name": "setup_tokens_delivery_outbox_valid",
+          "value": "\"setup_tokens\".\"outbox_id\" is null or \"setup_tokens\".\"delivery\" = 'queued'"
         }
       },
       "isRLSEnabled": false
@@ -5512,6 +5584,7 @@
             }
           ],
           "isUnique": true,
+          "where": "\"users\".\"handle\" <> ''",
           "concurrently": false,
           "method": "btree",
           "with": {}

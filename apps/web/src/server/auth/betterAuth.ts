@@ -25,6 +25,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
+import { createRateLimitStorage } from "./rateLimitStorage";
 import { recentAuthenticationPlugin } from "./recentAuthenticationChallenge";
 import {
 	AUTH_IP_ADDRESS_OPTIONS,
@@ -193,7 +194,10 @@ export function createAuth({
 		baseURL: publicOrigin,
 		basePath: AUTH_BASE_PATH,
 		secret,
-		rateLimit: { enabled: true, storage: "database" },
+		rateLimit: {
+			enabled: true,
+			customStorage: createRateLimitStorage(db),
+		},
 		// The one origin this instance answers on. Better Auth otherwise trusts
 		// whatever `Host` says, and every callback and WebAuthn ceremony would
 		// then validate against an attacker-supplied value.

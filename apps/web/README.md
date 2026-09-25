@@ -173,8 +173,9 @@ own origin check against `VT_PUBLIC_ORIGIN`.
 
 Recent-authentication challenges pass through Better Auth's HTTP handler at
 `/api/auth/virtool-session/challenge`. Password and TOTP share a limit of five
-attempts per minute per IP. Better Auth stores rate limits in `auth_rate_limits`
-so all web instances share the budget. Direct `auth.api` calls bypass this
+attempts per minute per IP. An atomic database-backed counter in
+`auth_rate_limits` shares the budget across web instances, including concurrent
+requests. Direct `auth.api` calls bypass this
 limiter; challenge verification must enter through the handler.
 
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
