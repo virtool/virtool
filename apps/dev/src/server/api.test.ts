@@ -1,3 +1,4 @@
+import { SSEStreamingApi } from "hono/streaming";
 import { describe, expect, it, vi } from "vitest";
 import type { Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
@@ -32,6 +33,70 @@ describe("snapshot feed", () => {
 		expect(onFirstSubscriber).toHaveBeenCalledTimes(1);
 		unsubscribe();
 		expect(onFirstSubscriber).toHaveBeenCalledTimes(1);
+	});
+});
+
+async function readUntil(
+	reader: ReadableStreamDefaultReader<Uint8Array>,
+	marker: string,
+): Promise<string> {
+	const decoder = new TextDecoder();
+	let text = "";
+	while (!text.includes(marker)) {
+		const { done, value } = await reader.read();
+		if (done) {
+			break;
+		}
+		text += decoder.decode(value, { stream: true });
+	}
+	return text;
+}
+
+function readUpdatedAt(text: string): number[] {
+	return text
+		.split("\n")
+		.filter((line) => line.startsWith("data: "))
+		.map((line) => (JSON.parse(line.slice(6)) as Snapshot).updatedAt);
+}
+
+describe("event stream", () => {
+	it("sends only the latest snapshot to a slow client", async () => {
+		const feed = new SnapshotFeed(snapshot);
+		const app = createApi(feed, vi.fn(), vi.fn(), "/missing");
+		const response = await app.request("http://127.0.0.1/api/events");
+		const reader = (response.body as ReadableStream<Uint8Array>).getReader();
+
+		expect(readUpdatedAt(await readUntil(reader, "\n\n"))).toEqual([1]);
+
+		for (let updatedAt = 2; updatedAt <= 100; updatedAt++) {
+			feed.set({ ...snapshot, updatedAt });
+		}
+		const updates = readUpdatedAt(await readUntil(reader, '"updatedAt":100'));
+
+		expect(updates.at(-1)).toBe(100);
+		expect(updates.length).toBeLessThanOrEqual(2);
+		await reader.cancel();
+	});
+
+	it("ends the handler when the client disconnects", async () => {
+		const close = vi.spyOn(SSEStreamingApi.prototype, "close");
+		const write = vi.spyOn(SSEStreamingApi.prototype, "writeSSE");
+		const feed = new SnapshotFeed(snapshot);
+		const app = createApi(feed, vi.fn(), vi.fn(), "/missing");
+		const response = await app.request("http://127.0.0.1/api/events");
+		const reader = (response.body as ReadableStream<Uint8Array>).getReader();
+		await readUntil(reader, "\n\n");
+		expect(feed.hasSubscribers()).toBe(true);
+		// The handler awaited this write first, so it is waiting for a wake
+		// when this await resumes.
+		await write.mock.results[0]?.value;
+
+		await reader.cancel();
+
+		await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
+		expect(feed.hasSubscribers()).toBe(false);
+		close.mockRestore();
+		write.mockRestore();
 	});
 });
 
