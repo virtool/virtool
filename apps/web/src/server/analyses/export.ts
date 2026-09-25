@@ -45,10 +45,17 @@ function calculateMedianDepths(hits: unknown[]): Map<string, number> {
 	return depths;
 }
 
+/** How an exported spreadsheet names its OTUs. */
+type ExportOptions = {
+	/** Whether to name an OTU by its abbreviation, when it has one */
+	preferAbbreviation: boolean;
+};
+
 async function composeRows(
 	db: DbOrTx,
 	workflow: string,
 	results: JsonObject,
+	{ preferAbbreviation }: ExportOptions,
 ): Promise<Row[]> {
 	const depths = calculateMedianDepths(asArray(results.hits));
 	const formatted = await formatAnalysis(db, workflow, results);
@@ -61,6 +68,10 @@ async function composeRows(
 		if (!otu) {
 			continue;
 		}
+
+		const abbreviation = asText(otu.abbreviation);
+		const otuName =
+			preferAbbreviation && abbreviation ? abbreviation : asText(otu.name);
 
 		for (const isolateEntry of asArray(otu.isolates)) {
 			const isolate = asRecord(isolateEntry);
@@ -77,7 +88,7 @@ async function composeRows(
 				}
 
 				rows.push([
-					asText(otu.name),
+					otuName,
 					// Composed by the formatter, so the spreadsheet and the analysis
 					// view cannot disagree about what an isolate is called.
 					asText(isolate.name),
@@ -113,8 +124,9 @@ export async function formatAnalysisToCsv(
 	db: DbOrTx,
 	workflow: string,
 	results: JsonObject,
+	options: ExportOptions,
 ): Promise<string> {
-	const rows = await composeRows(db, workflow, results);
+	const rows = await composeRows(db, workflow, results, options);
 
 	// Every row is terminated with CRLF, including the last.
 	return `${[HEADERS, ...rows].map(toCsvRow).join("\r\n")}\r\n`;
@@ -126,8 +138,9 @@ export async function formatAnalysisToExcel(
 	workflow: string,
 	results: JsonObject,
 	sampleId: number | null,
+	options: ExportOptions,
 ): Promise<Uint8Array<ArrayBuffer>> {
-	const rows = await composeRows(db, workflow, results);
+	const rows = await composeRows(db, workflow, results, options);
 
 	// Imported here rather than at module scope: the workbook writer is a large
 	// dependency and only the xlsx branch of one download route needs it.

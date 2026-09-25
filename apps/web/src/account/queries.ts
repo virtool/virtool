@@ -13,9 +13,15 @@ import { requestAccountEmailChangeFn } from "@server/auth/recoveryFunctions";
 import {
 	changePasswordFn,
 	updateAccountHandleFn,
+	updateAccountSettingsFn,
 } from "@server/users/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ApiKey, Permissions } from "@virtool/contracts";
+import type {
+	Account,
+	AccountSettings,
+	ApiKey,
+	Permissions,
+} from "@virtool/contracts";
 
 /**
  * Initializes a mutator for requesting verification of a new email address.
@@ -53,6 +59,57 @@ export function useUpdateHandle() {
 		mutationFn: ({ handle }) => updateAccountHandleFn({ data: { handle } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+		},
+	});
+}
+
+/**
+ * Initializes a mutator for changing the current account's settings.
+ *
+ * The cached account takes the change at once, so a control bound to a setting
+ * does not wait on the round trip. A failed change puts the old settings back.
+ *
+ * @returns A mutator for changing the account settings
+ */
+export function useUpdateAccountSettings() {
+	const queryClient = useQueryClient();
+
+	return useMutation<
+		AccountSettings,
+		Error,
+		Partial<AccountSettings>,
+		{ previous: Account | undefined }
+	>({
+		mutationFn: (settings) => updateAccountSettingsFn({ data: settings }),
+		onMutate: async (settings) => {
+			await queryClient.cancelQueries({
+				exact: true,
+				queryKey: accountQueryKeys.all(),
+			});
+
+			const previous = queryClient.getQueryData<Account>(
+				accountQueryKeys.all(),
+			);
+
+			if (previous) {
+				queryClient.setQueryData<Account>(accountQueryKeys.all(), {
+					...previous,
+					settings: { ...previous.settings, ...settings },
+				});
+			}
+
+			return { previous };
+		},
+		onError: (_error, _settings, context) => {
+			if (context?.previous) {
+				queryClient.setQueryData(accountQueryKeys.all(), context.previous);
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({
+				exact: true,
+				queryKey: accountQueryKeys.all(),
+			});
 		},
 	});
 }

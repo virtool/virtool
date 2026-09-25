@@ -1,12 +1,14 @@
 import { AnalysisSearchProvider } from "@analyses/components/AnalysisSearchContext";
 import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
 import {
 	createFakeAnalysisMinimal,
 	createFakePathoscopeHit,
 } from "@tests/fake/analyses";
+import { mockGetAccount, userServerFnMocks } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
 import type { PathoscopeIsolate } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,6 +36,7 @@ const analysis: FormattedPathoscopeAnalysis = {
 	results: {
 		hits: [
 			createFakePathoscopeHit({
+				abbreviation: "AV",
 				id: "a",
 				isolates: [
 					createIsolate({ id: "a1", name: "Isolate A" }),
@@ -48,6 +51,7 @@ const analysis: FormattedPathoscopeAnalysis = {
 				name: "Alpha virus",
 			}),
 			createFakePathoscopeHit({
+				abbreviation: "",
 				coverage: 0.25,
 				depth: 7,
 				id: "b",
@@ -85,6 +89,7 @@ async function openMenu() {
 
 beforeEach(() => {
 	writeText.mockClear();
+	mockGetAccount(createFakeAccount());
 
 	vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
 	vi.stubGlobal("isSecureContext", true);
@@ -157,6 +162,66 @@ describe("<PathoscopeExport />", () => {
 				"\n",
 			),
 		);
+	});
+
+	it("should name OTUs by abbreviation when the account prefers it", async () => {
+		mockGetAccount(
+			createFakeAccount({
+				settings: { ...createFakeAccount().settings, preferAbbreviation: true },
+			}),
+		);
+
+		renderExport({ sort: "coverage" });
+		await openMenu();
+
+		expect(
+			await screen.findByRole("menuitemcheckbox", {
+				name: "Prefer abbreviation",
+			}),
+		).toBeChecked();
+		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
+			"href",
+			"/analyses/documents/5.xlsx?preferAbbreviation=true",
+		);
+		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
+			"href",
+			"/analyses/documents/5.csv?preferAbbreviation=true",
+		);
+
+		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
+
+		expect(writeText).toHaveBeenCalledWith(
+			[
+				"Name\tWeight\tDepth\tCoverage",
+				"Beta virus\t0.500\t7\t0.250",
+				"AV\t0.250\t12\t0.500",
+			].join("\n"),
+		);
+	});
+
+	it("should save the abbreviation preference to the account", async () => {
+		const account = createFakeAccount();
+		const settings = { ...account.settings, preferAbbreviation: true };
+
+		mockGetAccount(account);
+		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(settings);
+
+		renderExport();
+		await openMenu();
+
+		const toggle = await screen.findByRole("menuitemcheckbox", {
+			name: "Prefer abbreviation",
+		});
+		expect(toggle).not.toBeChecked();
+
+		// The account is read again once the change settles.
+		mockGetAccount({ ...account, settings });
+		await userEvent.click(toggle);
+
+		expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
+			data: { preferAbbreviation: true },
+		});
+		await waitFor(() => expect(toggle).toBeChecked());
 	});
 
 	// The menu closes on a copy, so the trigger is the only place left to say it
