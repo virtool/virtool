@@ -50,8 +50,8 @@ export default function Password({
 
 	return (
 		<section>
-			<SectionHeader>
-				<h2>Change Password</h2>
+			<SectionHeader level={3}>
+				<h3>Change Password</h3>
 				<p>
 					Last changed <RelativeTime time={lastPasswordChange} />
 				</p>

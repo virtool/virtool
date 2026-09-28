@@ -187,6 +187,8 @@ export async function seedSetupToken(
 		consumedAt,
 		expiresAt,
 		purpose,
+		issuerUserId: purpose === "account_completion" ? userId : undefined,
+		delivery: purpose === "account_completion" ? "queued" : undefined,
 		supersededAt,
 		tokenHash: hashToken(token),
 		userId,

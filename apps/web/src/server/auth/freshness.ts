@@ -21,6 +21,8 @@ export const PROTECTED_OPERATIONS = {
 	invitationLinkIssue: "invitation_link.issue",
 	setupLinkIssue: "setup_link.issue",
 	recoveryLinkIssue: "recovery_link.issue",
+	userUpdate: "user.update",
+	administratorRoleSet: "administrator_role.set",
 } as const;
 
 /** A mutation covered by the recent-authentication policy. */
@@ -30,4 +32,15 @@ export type ProtectedOperation =
 /** Whether `createdAt` is inside Better Auth's inclusive freshness boundary. */
 export function isSessionFresh(createdAt: Date, now = Date.now()): boolean {
 	return now - createdAt.getTime() < SESSION_FRESH_AGE_SECONDS * 1000;
+}
+
+/** Milliseconds until `createdAt` leaves the freshness boundary, or 0 once it has. */
+export function getSessionFreshRemainingMs(
+	createdAt: Date,
+	now = Date.now(),
+): number {
+	return Math.max(
+		0,
+		createdAt.getTime() + SESSION_FRESH_AGE_SECONDS * 1000 - now,
+	);
 }

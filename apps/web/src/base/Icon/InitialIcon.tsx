@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import type { LucideIcon } from "lucide-react";
 
 const iconSize = {
 	xs: "12px",
@@ -24,18 +25,49 @@ function hashColor(hash: number, newChar: string) {
 
 type InitialIconProps = {
 	className?: string;
-	handle: string;
 	size: "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
-};
+} & (
+	| { handle: string; icon?: never; label?: never }
+	| { handle?: never; icon: LucideIcon; label: string }
+);
 
 export default function InitialIcon({
 	className,
 	handle,
+	icon: Glyph,
+	label,
 	size,
 }: InitialIconProps) {
-	const hash = handle.split("").reduce(hashColor, 0) % 360;
 	const sizeValue = iconSize[size];
 	const fontSizeValue = fontSize[size];
+
+	if (Glyph) {
+		return (
+			<svg
+				role="img"
+				aria-label={label}
+				className={cn("overflow-visible", className)}
+				style={{ height: sizeValue, width: sizeValue }}
+			>
+				<circle
+					cx={fontSizeValue}
+					cy={fontSizeValue}
+					r={fontSizeValue}
+					className="fill-gray-500"
+				/>
+				<Glyph
+					aria-hidden
+					x="20%"
+					y="20%"
+					width="60%"
+					height="60%"
+					className="text-white"
+				/>
+			</svg>
+		);
+	}
+
+	const hash = handle.split("").reduce(hashColor, 0) % 360;
 
 	return (
 		<svg

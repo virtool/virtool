@@ -54,6 +54,13 @@ const postgresConnections = new Gauge({
 	registers: [registry],
 });
 
+const accountLifecycleOperations = new Counter({
+	name: "virtool_account_lifecycle_operations_total",
+	help: "Invitation and bootstrap operations, by bounded operation and outcome.",
+	labelNames: ["operation", "outcome"],
+	registers: [registry],
+});
+
 // Static, but it is the denominator: pool saturation is only legible as
 // `virtool_postgres_connections / virtool_postgres_pool_max`.
 new Gauge({
@@ -99,6 +106,19 @@ export function setPostgresConnections(counts: ConnectionCounts): void {
 		counts.idleInTransaction,
 	);
 	postgresConnections.set({ state: "other" }, counts.other);
+}
+
+/** Record one invitation or bootstrap lifecycle outcome. */
+export function recordAccountLifecycleOperation(
+	operation:
+		| "invitation_create"
+		| "invitation_regenerate"
+		| "invitation_delete"
+		| "invitation_accept"
+		| "bootstrap",
+	outcome: "success" | "failure" | "copy_only" | "queued",
+): void {
+	accountLifecycleOperations.inc({ operation, outcome });
 }
 
 /** The `Content-Type` a Prometheus scrape expects for the rendered body. */

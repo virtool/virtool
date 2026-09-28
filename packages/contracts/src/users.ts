@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { AdministratorRoleName } from "./administrators";
+import { ADMINISTRATOR_ROLE_NAMES } from "./administrators";
 import type { GroupMinimal } from "./groups";
 import type { Permissions } from "./permissions";
 import type { SearchResult } from "./search";
@@ -36,8 +37,9 @@ export type User = UserNested & {
 	/**
 	 * Whether the account is usable as an application account yet.
 	 *
-	 * Separate from {@link User.active}: a `pending` account has a handle, a
-	 * role and group memberships but no credential, and a deactivated account
+	 * Separate from {@link User.active}: a `pending` account has a role and
+	 * group memberships but no credential. Its handle is empty until acceptance.
+	 * A deactivated account
 	 * is unusable whatever this says.
 	 */
 	lifecycleState: AccountLifecycleState;
@@ -82,4 +84,37 @@ export type Account = User & {
 /** A page of users. */
 export type UserSearchResult = SearchResult & {
 	items: User[];
+};
+
+/**
+ * The account states the user administration list can filter by.
+ *
+ * `invited` is an active account still waiting on its invitation. A
+ * deactivated account is `deactivated` whatever its lifecycle state.
+ */
+export const USER_STATUSES = ["active", "invited", "deactivated"] as const;
+
+/** An account state as the user administration list shows it. */
+export type UserStatus = (typeof USER_STATUSES)[number];
+
+/** The role filters of the user administration list: each role, or none. */
+export const USER_ROLE_FILTERS = [...ADMINISTRATOR_ROLE_NAMES, "none"] as const;
+
+/** A role filter of the user administration list. */
+export type UserRoleFilter = (typeof USER_ROLE_FILTERS)[number];
+
+/** The columns the user administration list can be sorted by. */
+export const USER_SORT_FIELDS = ["handle", "email", "role", "status"] as const;
+
+/** A column the user administration list can be sorted by. */
+export type UserSortField = (typeof USER_SORT_FIELDS)[number];
+
+/** A user as the user administration list reads them, with their email. */
+export type AdministeredUser = User & {
+	email: string;
+};
+
+/** A page of the user administration list. */
+export type AdministeredUserSearchResult = SearchResult & {
+	items: AdministeredUser[];
 };

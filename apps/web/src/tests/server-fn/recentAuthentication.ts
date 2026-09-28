@@ -4,4 +4,5 @@ import { vi } from "vitest";
 export const recentAuthenticationServerFnMocks = {
 	challengeRecentAuthenticationFn: vi.fn(),
 	getRecentAuthenticationMethodsFn: vi.fn(),
+	getRecentAuthenticationRemainingFn: vi.fn(),
 };

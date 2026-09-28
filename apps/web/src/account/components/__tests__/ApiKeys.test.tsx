@@ -70,9 +70,13 @@ describe("<ApiKeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Save" }));
 
 		// Test that the secret key is displayed in the dialog after creation.
-		expect(await screen.findByText("Here is your key.")).toBeInTheDocument();
-		expect(screen.getByText(/Make note of it now/)).toBeInTheDocument();
-		expect(screen.getByDisplayValue("testKey")).toBeInTheDocument();
+		expect(
+			await screen.findByRole("heading", { name: "API Key Created" }),
+		).toBeInTheDocument();
+		expect(screen.getByText(/It won’t be shown again/)).toBeInTheDocument();
+		expect(screen.getByRole("textbox", { name: "API key" })).toHaveValue(
+			"testKey",
+		);
 
 		await user.keyboard("{Escape}");
 

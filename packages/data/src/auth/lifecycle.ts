@@ -1,4 +1,5 @@
 import {
+	type AccountSetupInspection,
 	EMAIL_REMEDIATION_RESEND_DELAY_SECONDS,
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	type EmailRemediationState,
@@ -12,11 +13,19 @@ import { emailOutbox } from "../db/schema/emailOutbox";
 import { sessions } from "../db/schema/sessions";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
+import { nowUtc } from "../db/time";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getUser } from "../users/data";
-import { isValidEmail, normalizeEmail } from "./email";
+import {
+	claimEmail,
+	EmailInUseError,
+	isValidEmail,
+	normalizeEmail,
+} from "./email";
+import { queueEmailVerificationInTransaction } from "./emailVerification";
+import { isReservedHandle, isValidHandle } from "./handle";
 import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
 import { hashPassword } from "./password";
 import {
@@ -32,8 +41,10 @@ import { hashToken } from "./tokens";
 /** Thrown when a completion is aimed at an account that is not eligible. */
 export class SetupNotEligibleError extends AppError {}
 
-/** Thrown when the address a completion would establish is already in use. */
-export class EmailInUseError extends AppError {}
+/** Thrown when a chosen account handle is already in use. */
+export class AccountSetupHandleInUseError extends AppError {}
+
+export { EmailInUseError } from "./email";
 
 /** Thrown when a remediation message is requested before the resend window. */
 export class EmailRemediationRateLimitedError extends AppError {}
@@ -42,44 +53,6 @@ export class EmailRemediationRateLimitedError extends AppError {}
 export class TotpNotEnrolledError extends AppError {}
 
 export { normalizeEmail } from "./email";
-
-/**
- * Claim `email` for `userId`, or throw {@link EmailInUseError}.
- *
- * Migrated rows are protected by a partial unique index over their normalized
- * addresses. Legacy rows can still share blank or duplicate addresses, so the
- * claim must also check every row before admitting an identity to that index.
- *
- * A `SELECT` alone would not hold it: two transactions claiming one address
- * would both find it free and both commit. So the claim runs under a
- * transaction-scoped advisory lock keyed on the normalized address, which is
- * what makes exactly one of them the winner. `hashtext` is applied in
- * Postgres, so the key is derived the same way every session derives it.
- */
-export async function claimEmail(
-	tx: DbOrTx,
-	userId: number,
-	email: string,
-): Promise<void> {
-	await tx.execute(
-		sql`select pg_advisory_xact_lock(hashtext(${`account_email:${email}`}))`,
-	);
-
-	const taken = await tx
-		.select({ id: users.id })
-		.from(users)
-		.where(
-			and(
-				sql`lower(trim(${users.email})) = ${email}`,
-				sql`${users.id} <> ${userId}`,
-			),
-		)
-		.limit(1);
-
-	if (taken.length > 0) {
-		throw new EmailInUseError();
-	}
-}
 
 /**
  * Give a user the Better Auth credential identity that lets the interactive
@@ -136,7 +109,21 @@ async function establishAuthIdentity(
 			)
 			.limit(1);
 
-		if (existing?.userId !== userId || existing.password !== passwordHash) {
+		if (existing?.userId !== userId) {
+			throw new SetupCredentialError();
+		}
+		if (existing.password === null) {
+			await tx
+				.update(authAccounts)
+				.set({ password: passwordHash, updatedAt: now })
+				.where(
+					and(
+						eq(authAccounts.userId, userId),
+						eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
+						isNull(authAccounts.password),
+					),
+				);
+		} else if (existing.password !== passwordHash) {
 			throw new SetupCredentialError();
 		}
 	}
@@ -156,8 +143,18 @@ export type CompleteAccountSetupInput = {
 	token: string;
 	/** The password the holder chose. Never one an administrator picked. */
 	password: string;
-	/** The address the holder confirmed. */
-	email: string;
+	/** The handle selected by the invitation holder. */
+	handle?: string;
+	/** Whether mailbox verification mail can be queued for a copied link. */
+	deliveryAvailable?: boolean;
+	/** Build a public verification URL if copied-link acceptance needs one. */
+	getVerificationUrl?: (token: string) => string;
+};
+
+/** A completed pending-account transition and its follow-up requirement. */
+export type CompletedAccountSetup = {
+	user: User;
+	emailVerificationRequired: boolean;
 };
 
 /**
@@ -183,68 +180,212 @@ export type CompleteAccountSetupInput = {
  */
 export async function completeAccountSetup(
 	db: Db,
-	{ token, password, email }: CompleteAccountSetupInput,
-): Promise<User> {
-	const normalized = normalizeEmail(email);
+	{
+		token,
+		password,
+		handle: requestedHandle,
+		deliveryAvailable = false,
+		getVerificationUrl = () => "",
+	}: CompleteAccountSetupInput,
+): Promise<CompletedAccountSetup> {
+	const [preflight] = await db
+		.select({ id: setupTokens.id })
+		.from(setupTokens)
+		.where(
+			and(
+				eq(setupTokens.tokenHash, hashToken(token)),
+				eq(setupTokens.purpose, "account_completion"),
+				isNull(setupTokens.consumedAt),
+				isNull(setupTokens.supersededAt),
+				sql`${setupTokens.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.limit(1);
+	if (!preflight) {
+		throw new SetupCredentialError();
+	}
 
 	// Hashing is CPU-bound and slow by design, so it happens before the
 	// transaction opens rather than holding one idle for the duration.
 	const hashed = await hashPassword(password);
 
-	const userId = await db.transaction(async (tx) => {
-		const consumed = await consumeSetupToken(tx, token, "account_completion");
+	const completed = await db
+		.transaction(async (tx) => {
+			const [target] = await tx
+				.select({ userId: setupTokens.userId })
+				.from(setupTokens)
+				.where(
+					and(
+						eq(setupTokens.tokenHash, hashToken(token)),
+						eq(setupTokens.purpose, "account_completion"),
+					),
+				)
+				.limit(1);
+			if (!target) {
+				throw new SetupCredentialError();
+			}
+			await lockUserSetupCredentials(tx, target.userId);
+			const consumed = await consumeSetupToken(tx, token, "account_completion");
 
-		const [row] = await tx
-			.select({
-				handle: users.handle,
-				lifecycleState: users.lifecycleState,
-			})
-			.from(users)
-			.where(eq(users.id, consumed.userId))
-			.limit(1);
+			const [row] = await tx
+				.select({
+					active: users.active,
+					email: users.email,
+					handle: users.handle,
+					lifecycleState: users.lifecycleState,
+				})
+				.from(users)
+				.where(eq(users.id, consumed.userId))
+				.limit(1);
 
-		if (!row) {
-			throw new SetupCredentialError();
-		}
+			if (!row) {
+				throw new SetupCredentialError();
+			}
 
-		if (row.lifecycleState !== "pending") {
-			throw new SetupNotEligibleError();
-		}
+			if (
+				!row.active ||
+				row.lifecycleState !== "pending" ||
+				!consumed.candidateEmail
+			) {
+				throw new SetupNotEligibleError();
+			}
+			const handle = requestedHandle?.trim() || row.handle;
+			if (!isValidHandle(handle) || isReservedHandle(handle)) {
+				throw new SetupNotEligibleError();
+			}
+			const [conflict] = await tx
+				.select({ id: users.id })
+				.from(users)
+				.where(
+					and(
+						sql`lower(${users.handle}) = ${handle.toLowerCase()}`,
+						sql`${users.id} <> ${consumed.userId}`,
+					),
+				)
+				.limit(1);
+			if (conflict) {
+				throw new AccountSetupHandleInUseError();
+			}
 
-		await claimEmail(tx, consumed.userId, normalized);
+			const email = normalizeEmail(consumed.candidateEmail);
+			if (email !== normalizeEmail(row.email)) {
+				throw new SetupNotEligibleError();
+			}
+			await claimEmail(tx, consumed.userId, email);
+			const verified = consumed.delivery === "queued";
 
-		await tx
-			.update(users)
-			.set({
-				password: hashed,
-				email: normalized,
-				emailVerified: true,
-				forceReset: false,
-				lastPasswordChange: new Date(),
-				lifecycleState: "normal",
-			})
-			.where(eq(users.id, consumed.userId));
+			await tx
+				.update(users)
+				.set({
+					handle,
+					password: hashed,
+					email,
+					emailVerified: verified,
+					forceReset: false,
+					lastPasswordChange: new Date(),
+					lifecycleState: "normal",
+				})
+				.where(eq(users.id, consumed.userId));
 
-		await establishAuthIdentity(
-			tx,
-			consumed.userId,
-			row.handle,
-			hashed.toString("utf8"),
-		);
+			await establishAuthIdentity(
+				tx,
+				consumed.userId,
+				handle,
+				hashed.toString("utf8"),
+			);
 
-		// The token just spent is gone, but a second outstanding link for the
-		// same purpose would still work. Completion has to close every door it
-		// opened, not just the one it came through.
-		await supersedeSetupTokens(tx, consumed.userId, "account_completion");
-		await invalidateUserSetupSessions(tx, consumed.userId);
+			// The token just spent is gone, but a second outstanding link for the
+			// same purpose would still work. Completion has to close every door it
+			// opened, not just the one it came through.
+			await tx
+				.update(setupTokens)
+				.set({ supersededAt: sql`${nowUtc()}` })
+				.where(
+					and(
+						eq(setupTokens.userId, consumed.userId),
+						isNull(setupTokens.consumedAt),
+						isNull(setupTokens.supersededAt),
+					),
+				);
+			await invalidateUserSetupSessions(tx, consumed.userId);
+			await Promise.all([
+				tx.delete(authSessions).where(eq(authSessions.userId, consumed.userId)),
+				tx.delete(sessions).where(eq(sessions.userId, consumed.userId)),
+			]);
 
-		return consumed.userId;
-	});
+			let emailVerificationRequired = false;
+			if (!verified && deliveryAvailable) {
+				const verification = await queueEmailVerificationInTransaction(tx, {
+					userId: consumed.userId,
+					candidateEmail: email,
+					sourceEmail: email,
+					handle,
+					getVerificationUrl,
+				});
+				emailVerificationRequired = verification.queued;
+			}
+
+			return { userId: consumed.userId, emailVerificationRequired };
+		})
+		.catch((error: unknown) => {
+			const cause =
+				error && typeof error === "object" && "cause" in error
+					? error.cause
+					: error;
+			if (
+				cause &&
+				typeof cause === "object" &&
+				"constraint_name" in cause &&
+				(cause.constraint_name === "users_handle_lower_unique" ||
+					cause.constraint_name === "users_username_key")
+			) {
+				throw new AccountSetupHandleInUseError();
+			}
+			throw error;
+		});
 
 	// An administrator watching the user list sees the account leave pending.
-	await emit("users", userId, "update");
+	await emit("users", completed.userId, "update");
 
-	return getUser(db, userId);
+	const user = await getUser(db, completed.userId);
+	return {
+		user,
+		emailVerificationRequired: completed.emailVerificationRequired,
+	};
+}
+
+/** Inspect a usable invitation without revealing why any other token failed. */
+export async function inspectAccountSetup(
+	db: Db,
+	token: string,
+): Promise<AccountSetupInspection> {
+	const [row] = await db
+		.select({
+			active: users.active,
+			email: users.email,
+			expiresAt: setupTokens.expiresAt,
+			lifecycleState: users.lifecycleState,
+		})
+		.from(setupTokens)
+		.innerJoin(users, eq(users.id, setupTokens.userId))
+		.where(
+			and(
+				eq(setupTokens.tokenHash, hashToken(token)),
+				eq(setupTokens.purpose, "account_completion"),
+				isNull(setupTokens.consumedAt),
+				isNull(setupTokens.supersededAt),
+				sql`${setupTokens.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.limit(1);
+	if (!row?.active || row.lifecycleState !== "pending") {
+		return { status: "unusable" };
+	}
+	return {
+		status: "valid",
+		email: row.email,
+		expiresAt: row.expiresAt,
+	};
 }
 
 /** What {@link completeEmailRemediation} accepts. */
@@ -476,6 +617,7 @@ async function startEmailRemediationInTransaction(
 	const delivery = await enqueueEmail(tx, {
 		idempotencyKey: `email_remediation/${userId}/${issued.tokenId}`,
 		recipient: prepared.email,
+		setupTokenId: issued.tokenId,
 		template: {
 			type: "email_verification",
 			username: prepared.handle,

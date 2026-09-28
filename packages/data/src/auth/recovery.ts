@@ -160,6 +160,7 @@ export async function issueRecoveryLink(
 		const queued = await enqueueEmail(tx, {
 			idempotencyKey: `${input.purpose}/${input.userId}/${issued.tokenId}`,
 			recipient: user.email,
+			setupTokenId: issued.tokenId,
 			template: {
 				type: "password_recovery",
 				username: user.handle,

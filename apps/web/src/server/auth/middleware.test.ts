@@ -71,8 +71,10 @@ const {
 	UnauthorizedError,
 } = await import("./middleware");
 const {
+	acceptAccountSetupFn,
 	completeEmailRemediationFn,
 	createFirstUserFn,
+	inspectAccountSetupFn,
 	loginFn,
 	logoutFn,
 	resetPasswordFn,
@@ -159,11 +161,13 @@ describe("authentication exceptions", () => {
 	it("exempts exactly the open functions", () => {
 		expect(authenticationExceptions.map((fn) => fn.url).sort()).toEqual(
 			[
+				acceptAccountSetupFn,
 				completeEmailRemediationFn,
 				completePasswordRecoveryFn,
 				createFirstUserFn,
 				getPasswordPolicyFn,
 				getRootFn,
+				inspectAccountSetupFn,
 				loginFn,
 				logoutFn,
 				inspectEmailVerificationFn,

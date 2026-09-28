@@ -1,4 +1,5 @@
 import { analysesQueryKeys } from "@analyses/keys";
+import { RecentAuthenticationProvider } from "@app/recentAuthentication";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createFakeUser } from "@tests/fake/user";
@@ -18,7 +19,9 @@ describe("useUpdateUser()", () => {
 		function wrapper({ children }: { children: ReactNode }) {
 			return (
 				<QueryClientProvider client={queryClient}>
-					{children}
+					<RecentAuthenticationProvider>
+						{children}
+					</RecentAuthenticationProvider>
 				</QueryClientProvider>
 			);
 		}

@@ -9,6 +9,7 @@ import { WallTitle } from "./WallTitle";
 
 type FormValues = {
 	username: string;
+	email: string;
 	password: string;
 };
 
@@ -28,7 +29,7 @@ export default function FirstUser() {
 
 	function onSubmit(data: FormValues) {
 		mutation.mutate(
-			{ handle: data.username, password: data.password },
+			{ handle: data.username, email: data.email, password: data.password },
 			{ onSuccess: () => navigate({ to: "/" }) },
 		);
 	}
@@ -58,6 +59,24 @@ export default function FirstUser() {
 						<InputError id="username-error">
 							{errors.username.message}
 						</InputError>
+					)}
+				</InputGroup>
+				<InputGroup>
+					<InputLabel htmlFor="email">Email</InputLabel>
+					<InputSimple
+						aria-label="email"
+						id="email"
+						type="email"
+						autoComplete="email"
+						aria-required
+						aria-invalid={Boolean(errors.email) || undefined}
+						aria-describedby={errors.email ? "email-error" : undefined}
+						{...register("email", {
+							required: "Please provide an email address",
+						})}
+					/>
+					{errors.email?.message && (
+						<InputError id="email-error">{errors.email.message}</InputError>
 					)}
 				</InputGroup>
 				<InputGroup>

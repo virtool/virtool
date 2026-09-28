@@ -15,3 +15,11 @@ export function isValidHandle(handle: string): boolean {
 		HANDLE_PATTERN.test(handle)
 	);
 }
+
+/** The handle the system account holds, which no user may take. */
+const RESERVED_HANDLE = "virtool";
+
+/** Report whether a handle is reserved, ignoring case. */
+export function isReservedHandle(handle: string): boolean {
+	return handle.toLowerCase() === RESERVED_HANDLE;
+}

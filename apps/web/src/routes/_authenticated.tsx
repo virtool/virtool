@@ -19,6 +19,7 @@ import {
 	Outlet,
 	redirect,
 	useLocation,
+	useMatch,
 } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect } from "react";
 
@@ -62,6 +63,10 @@ function AuthenticatedLayout() {
 	const queryClient = useQueryClient();
 	const { data, isPending } = useFetchAccount();
 	const location = useLocation();
+	const administrationMatch = useMatch({
+		from: "/_authenticated/administration",
+		shouldThrow: false,
+	});
 
 	useEffect(() => {
 		if (data) {
@@ -88,6 +93,10 @@ function AuthenticatedLayout() {
 		return (
 			<Navigate to="/login" replace search={{ redirect: location.href }} />
 		);
+	}
+
+	if (administrationMatch?.context.recentAuthenticationFresh === false) {
+		return <Outlet />;
 	}
 
 	return (

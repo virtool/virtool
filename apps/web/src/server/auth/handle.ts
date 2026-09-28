@@ -2,6 +2,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	HANDLE_MAX_LENGTH,
 	HANDLE_MIN_LENGTH,
+	isReservedHandle,
 	isValidHandle,
 } from "@virtool/data/auth/handle";
 import { ClientError } from "../errors";
@@ -32,7 +33,7 @@ export function checkHandle(handle: string): void {
  * `" virtool"` cannot slip past a caller that skips the schema's trim.
  */
 export function checkReservedHandle(handle: string): void {
-	if (handle.trim().toLowerCase() === "virtool") {
+	if (isReservedHandle(handle.trim())) {
 		setResponseStatus(400);
 		throw new ClientError("Reserved user name: virtool");
 	}

@@ -7,10 +7,18 @@ import InputIconButton from "./InputIconButton";
 type InputPasswordProps = Omit<InputProps, "type"> & {
 	id: string;
 	name: string;
+	showVisibilityToggle?: boolean;
 };
 
-export default function InputPassword(props: InputPasswordProps) {
+export default function InputPassword({
+	showVisibilityToggle = true,
+	...props
+}: InputPasswordProps) {
 	const [show, setShow] = useState(false);
+
+	if (!showVisibilityToggle) {
+		return <Input {...props} type="password" />;
+	}
 
 	return (
 		<InputContainer className="flex flex-grow-1">
