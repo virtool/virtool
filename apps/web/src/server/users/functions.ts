@@ -71,6 +71,7 @@ const searchUsersSchema = z
 
 const accountSettingsSchema = z
 	.object({
+		pathoscopeColumnOrder: z.enum(["name-first", "name-last"]),
 		preferAbbreviation: z.boolean(),
 		quickAnalyzeWorkflow: z.enum(["nuvs", "pathoscope"]),
 		showIds: z.boolean(),

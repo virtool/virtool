@@ -1,8 +1,11 @@
 import { toScientificNotation } from "@app/format";
-import type { PathoscopeHit } from "@virtool/contracts";
+import type { PathoscopeColumnOrder, PathoscopeHit } from "@virtool/contracts";
 
 /** Options describing how a copied table is presented. */
 type PathoscopeTableOptions = {
+	/** Whether the naming columns come before or after the metrics */
+	columnOrder: PathoscopeColumnOrder;
+
 	/** Whether to lead with a header row */
 	headers: boolean;
 
@@ -47,10 +50,28 @@ function formatWeight(
 		: toScientificNotation(pi);
 }
 
-function toTsv(header: string[], rows: string[][], headers: boolean): string {
+// A row is a pair of naming fields and metric fields, so the header and every
+// row are arranged by the same rule.
+type Row = { names: string[]; metrics: string[] };
+
+function arrange({ names, metrics }: Row, order: PathoscopeColumnOrder) {
+	return order === "name-first"
+		? [...names, ...metrics]
+		: [...metrics, ...names];
+}
+
+function toTsv(
+	header: Row,
+	rows: Row[],
+	{ columnOrder, headers }: PathoscopeTableOptions,
+): string {
 	return (headers ? [header, ...rows] : rows)
-		.map((row) => row.join("\t"))
+		.map((row) => arrange(row, columnOrder).join("\t"))
 		.join("\n");
+}
+
+function getMetricHeaders({ showReads }: PathoscopeTableOptions): string[] {
+	return [showReads ? "Reads" : "Weight", "Depth", "Coverage"];
 }
 
 /**
@@ -64,17 +85,19 @@ export function formatPathoscopeHitsAsTsv(
 	hits: PathoscopeHit[],
 	options: PathoscopeTableOptions,
 ): string {
-	const rows = hits.map((hit) => [
-		formatWeight(hit.pi, options),
-		String(hit.depth),
-		hit.coverage.toFixed(3),
-		formatOtuName(hit, options),
-	]);
+	const rows = hits.map((hit) => ({
+		names: [formatOtuName(hit, options)],
+		metrics: [
+			formatWeight(hit.pi, options),
+			String(hit.depth),
+			hit.coverage.toFixed(3),
+		],
+	}));
 
 	return toTsv(
-		[options.showReads ? "Reads" : "Weight", "Depth", "Coverage", "Name"],
+		{ names: ["Name"], metrics: getMetricHeaders(options) },
 		rows,
-		options.headers,
+		options,
 	);
 }
 
@@ -90,24 +113,19 @@ export function formatPathoscopeIsolatesAsTsv(
 	options: PathoscopeTableOptions,
 ): string {
 	const rows = hits.flatMap((hit) =>
-		hit.isolates.map((isolate) => [
-			formatWeight(isolate.pi, options),
-			String(isolate.depth),
-			isolate.coverage.toFixed(3),
-			formatOtuName(hit, options),
-			sanitize(isolate.name),
-		]),
+		hit.isolates.map((isolate) => ({
+			names: [formatOtuName(hit, options), sanitize(isolate.name)],
+			metrics: [
+				formatWeight(isolate.pi, options),
+				String(isolate.depth),
+				isolate.coverage.toFixed(3),
+			],
+		})),
 	);
 
 	return toTsv(
-		[
-			options.showReads ? "Reads" : "Weight",
-			"Depth",
-			"Coverage",
-			"Name",
-			"Isolate",
-		],
+		{ names: ["Name", "Isolate"], metrics: getMetricHeaders(options) },
 		rows,
-		options.headers,
+		options,
 	);
 }

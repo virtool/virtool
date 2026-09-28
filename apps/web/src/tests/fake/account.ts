@@ -4,6 +4,7 @@ import { createFakePermissions } from "./permissions";
 import { createFakeUser } from "./user";
 
 const defaultSettings: AccountSettings = {
+	pathoscopeColumnOrder: "name-first",
 	preferAbbreviation: false,
 	quickAnalyzeWorkflow: "pathoscope",
 	showIds: true,

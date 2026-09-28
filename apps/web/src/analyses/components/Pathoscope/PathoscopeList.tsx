@@ -25,6 +25,7 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 	const showTable = search.table;
 
 	const { data: account } = useFetchAccount();
+	const columnOrder = account?.settings.pathoscopeColumnOrder ?? "name-first";
 	const preferAbbreviation = account?.settings.preferAbbreviation ?? false;
 
 	// Every hit is on screen at once, so a selection that outlived a filter would
@@ -51,6 +52,7 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 	function copySelected() {
 		return writeToClipboard(
 			formatPathoscopeHitsAsTsv(hits.filter(selection.isSelected), {
+				columnOrder,
 				headers: true,
 				mappedCount: analysis.results.readCount,
 				preferAbbreviation,

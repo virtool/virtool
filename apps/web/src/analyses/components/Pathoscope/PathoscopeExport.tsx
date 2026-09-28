@@ -13,12 +13,14 @@ import Dropdown, {
 	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
 	DropdownMenuSeparator,
 } from "@base/Dropdown";
 import Icon from "@base/Icon";
 import Tooltip from "@base/Tooltip";
 import * as Sentry from "@sentry/tanstackstart-react";
-import type { PathoscopeHit } from "@virtool/contracts";
+import type { PathoscopeColumnOrder, PathoscopeHit } from "@virtool/contracts";
 import { Check, ClipboardCopy, Download, FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
 import { collapsingLabel } from "./collapsingLabel";
@@ -31,6 +33,7 @@ type CopyItem = {
 	format: (
 		hits: PathoscopeHit[],
 		options: {
+			columnOrder: PathoscopeColumnOrder;
 			headers: boolean;
 			mappedCount: number;
 			preferAbbreviation: boolean;
@@ -75,6 +78,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const { data: account } = useFetchAccount();
 	const { mutate: updateSettings } = useUpdateAccountSettings();
 
+	const columnOrder = account?.settings.pathoscopeColumnOrder ?? "name-first";
 	const preferAbbreviation = account?.settings.preferAbbreviation ?? false;
 	const downloadQuery = preferAbbreviation ? "?preferAbbreviation=true" : "";
 
@@ -87,6 +91,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	function handleCopy({ format, headers }: CopyItem) {
 		writeToClipboard(
 			format(hits, {
+				columnOrder,
 				headers,
 				mappedCount: analysis.results.readCount,
 				preferAbbreviation,
@@ -129,6 +134,34 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 									<Icon icon={ClipboardCopy} /> {item.label}
 								</DropdownMenuItem>
 							))}
+						</DropdownMenuGroup>
+						<DropdownMenuSeparator />
+						<DropdownMenuGroup aria-labelledby="PathoscopeExportColumnOrder">
+							<DropdownMenuLabel id="PathoscopeExportColumnOrder">
+								Copy column order
+							</DropdownMenuLabel>
+							<DropdownMenuRadioGroup
+								value={columnOrder}
+								onValueChange={(value) =>
+									updateSettings({
+										pathoscopeColumnOrder: value as PathoscopeColumnOrder,
+									})
+								}
+							>
+								{/* Stay open when chosen, as the abbreviation toggle does. */}
+								<DropdownMenuRadioItem
+									onSelect={(e) => e.preventDefault()}
+									value="name-first"
+								>
+									Name first
+								</DropdownMenuRadioItem>
+								<DropdownMenuRadioItem
+									onSelect={(e) => e.preventDefault()}
+									value="name-last"
+								>
+									Name last
+								</DropdownMenuRadioItem>
+							</DropdownMenuRadioGroup>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 					</>

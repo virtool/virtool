@@ -52,6 +52,9 @@ export type User = UserNested & {
 /** The workflow the quick-analyze dialog runs by default. */
 export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
 
+/** The placement of the naming columns in a copied Pathoscope table. */
+export type PathoscopeColumnOrder = "name-first" | "name-last";
+
 /**
  * A signed-in user's client-side preferences.
  *
@@ -59,6 +62,8 @@ export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
  * between the two spellings.
  */
 export type AccountSettings = {
+	/** Whether Pathoscope copies put the naming columns before or after the metrics */
+	pathoscopeColumnOrder: PathoscopeColumnOrder;
 	/** Whether pathoscope exports name an OTU by its abbreviation, when it has one */
 	preferAbbreviation: boolean;
 	quickAnalyzeWorkflow: QuickAnalyzeWorkflow;

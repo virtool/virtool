@@ -48,4 +48,36 @@ describe("<AccountSettings />", () => {
 		);
 		expect(toggle).toBeChecked();
 	});
+
+	it("should save the Pathoscope column order when one is chosen", async () => {
+		const account = createFakeAccount();
+		mockGetAccount(account);
+		const saved = {
+			...account.settings,
+			pathoscopeColumnOrder: "name-last" as const,
+		};
+		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(saved);
+
+		renderWithProviders(<AccountSettings />);
+
+		expect(
+			await screen.findByRole("radio", {
+				name: "Name, Weight, Depth, Coverage",
+			}),
+		).toBeChecked();
+
+		mockGetAccount({ ...account, settings: saved });
+
+		const nameLast = screen.getByRole("radio", {
+			name: "Weight, Depth, Coverage, Name",
+		});
+		await userEvent.click(nameLast);
+
+		await waitFor(() =>
+			expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
+				data: { pathoscopeColumnOrder: "name-last" },
+			}),
+		);
+		expect(nameLast).toBeChecked();
+	});
 });

@@ -61,6 +61,7 @@ import { emit } from "../events/emit";
  * and every existing user's preferences silently reading `undefined`.
  */
 type StoredAccountSettings = {
+	pathoscope_column_order: "name-first" | "name-last";
 	prefer_abbreviation: boolean;
 	quick_analyze_workflow: "nuvs" | "pathoscope";
 	show_ids: boolean;
@@ -79,6 +80,9 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 	const blob = (stored ?? {}) as Partial<StoredAccountSettings>;
 
 	return {
+		pathoscopeColumnOrder:
+			blob.pathoscope_column_order ??
+			DEFAULT_USER_SETTINGS.pathoscopeColumnOrder,
 		preferAbbreviation:
 			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAbbreviation,
 		quickAnalyzeWorkflow:
@@ -96,6 +100,7 @@ function toStoredAccountSettings(
 	settings: AccountSettings,
 ): StoredAccountSettings {
 	return {
+		pathoscope_column_order: settings.pathoscopeColumnOrder,
 		prefer_abbreviation: settings.preferAbbreviation,
 		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
 		show_ids: settings.showIds,
@@ -192,6 +197,7 @@ export class PendingAccountError extends AppError {}
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
 const DEFAULT_USER_SETTINGS: AccountSettings = {
+	pathoscopeColumnOrder: "name-first",
 	preferAbbreviation: false,
 	skipQuickAnalyzeDialog: true,
 	showIds: true,
@@ -443,6 +449,7 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 const STORED_ACCOUNT_SETTINGS_KEYS: {
 	[K in keyof AccountSettings]: keyof StoredAccountSettings;
 } = {
+	pathoscopeColumnOrder: "pathoscope_column_order",
 	preferAbbreviation: "prefer_abbreviation",
 	quickAnalyzeWorkflow: "quick_analyze_workflow",
 	showIds: "show_ids",

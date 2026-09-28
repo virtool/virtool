@@ -120,9 +120,9 @@ describe("<PathoscopeExport />", () => {
 
 		expect(writeText).toHaveBeenCalledWith(
 			[
-				"Weight\tDepth\tCoverage\tName",
-				"0.500\t7\t0.250\tBeta virus",
-				"0.250\t12\t0.500\tAlpha virus",
+				"Name\tWeight\tDepth\tCoverage",
+				"Beta virus\t0.500\t7\t0.250",
+				"Alpha virus\t0.250\t12\t0.500",
 			].join("\n"),
 		);
 	});
@@ -130,6 +130,35 @@ describe("<PathoscopeExport />", () => {
 	it("should copy the isolates of every shown virus", async () => {
 		renderExport({ sort: "coverage" });
 		await openMenu();
+		await userEvent.click(screen.getByRole("menuitem", { name: "Isolates" }));
+
+		expect(writeText).toHaveBeenCalledWith(
+			[
+				"Name\tIsolate\tWeight\tDepth\tCoverage",
+				"Beta virus\tIsolate C\t0.250\t12\t0.500",
+				"Alpha virus\tIsolate A\t0.250\t12\t0.500",
+				"Alpha virus\tIsolate B\t0.100\t4\t0.250",
+			].join("\n"),
+		);
+	});
+
+	it("should put the names last when the account prefers it", async () => {
+		mockGetAccount(
+			createFakeAccount({
+				settings: {
+					...createFakeAccount().settings,
+					pathoscopeColumnOrder: "name-last",
+				},
+			}),
+		);
+
+		renderExport({ sort: "coverage" });
+		await openMenu();
+
+		expect(
+			await screen.findByRole("menuitemradio", { name: "Name last" }),
+		).toBeChecked();
+
 		await userEvent.click(screen.getByRole("menuitem", { name: "Isolates" }));
 
 		expect(writeText).toHaveBeenCalledWith(
@@ -142,6 +171,35 @@ describe("<PathoscopeExport />", () => {
 		);
 	});
 
+	it("should save the column order to the account", async () => {
+		const account = createFakeAccount();
+		const settings = {
+			...account.settings,
+			pathoscopeColumnOrder: "name-last" as const,
+		};
+
+		mockGetAccount(account);
+		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(settings);
+
+		renderExport();
+		await openMenu();
+
+		expect(
+			await screen.findByRole("menuitemradio", { name: "Name first" }),
+		).toBeChecked();
+
+		const nameLast = screen.getByRole("menuitemradio", { name: "Name last" });
+
+		// The account is read again once the change settles.
+		mockGetAccount({ ...account, settings });
+		await userEvent.click(nameLast);
+
+		expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
+			data: { pathoscopeColumnOrder: "name-last" },
+		});
+		await waitFor(() => expect(nameLast).toBeChecked());
+	});
+
 	it("should leave the header row out when it is not wanted", async () => {
 		renderExport({ find: "Beta" });
 		await openMenu();
@@ -149,7 +207,7 @@ describe("<PathoscopeExport />", () => {
 			screen.getByRole("menuitem", { name: "OTUs without headers" }),
 		);
 
-		expect(writeText).toHaveBeenCalledWith("0.500\t7\t0.250\tBeta virus");
+		expect(writeText).toHaveBeenCalledWith("Beta virus\t0.500\t7\t0.250");
 	});
 
 	it("should copy read pseudo-counts when reads are shown", async () => {
@@ -158,7 +216,7 @@ describe("<PathoscopeExport />", () => {
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
 		expect(writeText).toHaveBeenCalledWith(
-			["Reads\tDepth\tCoverage\tName", "250\t12\t0.500\tAlpha virus"].join(
+			["Name\tReads\tDepth\tCoverage", "Alpha virus\t250\t12\t0.500"].join(
 				"\n",
 			),
 		);
@@ -192,9 +250,9 @@ describe("<PathoscopeExport />", () => {
 
 		expect(writeText).toHaveBeenCalledWith(
 			[
-				"Weight\tDepth\tCoverage\tName",
-				"0.500\t7\t0.250\tBeta virus",
-				"0.250\t12\t0.500\tAV",
+				"Name\tWeight\tDepth\tCoverage",
+				"Beta virus\t0.500\t7\t0.250",
+				"AV\t0.250\t12\t0.500",
 			].join("\n"),
 		);
 	});

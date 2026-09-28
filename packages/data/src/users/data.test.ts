@@ -71,6 +71,7 @@ describe("getAccount", () => {
 
 		expect(account.email).toBe("alice@example.com");
 		expect(account.settings).toEqual({
+			pathoscopeColumnOrder: "name-first",
 			preferAbbreviation: false,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
@@ -91,6 +92,7 @@ describe("getAccount", () => {
 		const account = await getAccount(db, userId);
 
 		expect(account.settings).toEqual({
+			pathoscopeColumnOrder: "name-first",
 			preferAbbreviation: false,
 			quickAnalyzeWorkflow: "pathoscope",
 			showIds: false,
@@ -137,6 +139,7 @@ describe("updateAccountSettings", () => {
 		});
 
 		expect(settings).toEqual({
+			pathoscopeColumnOrder: "name-first",
 			preferAbbreviation: true,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
@@ -149,6 +152,19 @@ describe("updateAccountSettings", () => {
 			...storedSettings,
 			prefer_abbreviation: true,
 		});
+	});
+
+	it("reads back the Pathoscope column order it writes", async () => {
+		const userId = await seedUser(db, { handle: "bob" });
+
+		const settings = await updateAccountSettings(db, userId, {
+			pathoscopeColumnOrder: "name-last",
+		});
+
+		expect(settings.pathoscopeColumnOrder).toBe("name-last");
+		expect((await getAccount(db, userId)).settings.pathoscopeColumnOrder).toBe(
+			"name-last",
+		);
 	});
 
 	it("throws when the user does not exist", async () => {
@@ -657,6 +673,7 @@ describe("createPendingUser", () => {
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.password).toBeNull();
 		expect(row?.settings).toEqual({
+			pathoscope_column_order: "name-first",
 			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
 			show_ids: true,
@@ -696,6 +713,7 @@ describe("createUser", () => {
 		// stored blob already uses.
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.settings).toEqual({
+			pathoscope_column_order: "name-first",
 			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
 			show_ids: true,

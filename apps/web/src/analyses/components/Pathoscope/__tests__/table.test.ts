@@ -20,6 +20,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				}),
 			],
 			{
+				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
 				preferAbbreviation: false,
@@ -36,10 +37,30 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		);
 	});
 
+	it("should put the name first when that order is chosen", () => {
+		const table = formatPathoscopeHitsAsTsv(
+			[createFakePathoscopeHit({ name: "Alpha virus" })],
+			{
+				columnOrder: "name-first",
+				headers: true,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: false,
+			},
+		);
+
+		expect(table).toBe(
+			["Name\tWeight\tDepth\tCoverage", "Alpha virus\t0.250\t12\t0.500"].join(
+				"\n",
+			),
+		);
+	});
+
 	it("should render read pseudo-counts when reads are shown", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha virus", pi: 0.25 })],
 			{
+				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
 				preferAbbreviation: false,
@@ -59,6 +80,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha virus" })],
 			{
+				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
 				preferAbbreviation: false,
@@ -84,6 +106,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				}),
 			],
 			{
+				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
 				preferAbbreviation: true,
@@ -99,6 +122,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 	it("should render only the header row when nothing is selected", () => {
 		expect(
 			formatPathoscopeHitsAsTsv([], {
+				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
 				preferAbbreviation: false,
@@ -113,6 +137,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha\tvirus\nstrain" })],
 			{
+				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
 				preferAbbreviation: false,
@@ -165,6 +190,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				}),
 			],
 			{
+				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
 				preferAbbreviation: false,
@@ -182,6 +208,31 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 		);
 	});
 
+	it("should put the names first when that order is chosen", () => {
+		const table = formatPathoscopeIsolatesAsTsv(
+			[
+				createFakePathoscopeHit({
+					isolates: [createIsolate({ id: "a1", name: "Isolate A" })],
+					name: "Alpha virus",
+				}),
+			],
+			{
+				columnOrder: "name-first",
+				headers: true,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: false,
+			},
+		);
+
+		expect(table).toBe(
+			[
+				"Name\tIsolate\tWeight\tDepth\tCoverage",
+				"Alpha virus\tIsolate A\t0.250\t12\t0.500",
+			].join("\n"),
+		);
+	});
+
 	it("should render read pseudo-counts when reads are shown", () => {
 		const table = formatPathoscopeIsolatesAsTsv(
 			[
@@ -191,6 +242,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				}),
 			],
 			{
+				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
 				preferAbbreviation: false,
@@ -213,6 +265,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				}),
 			],
 			{
+				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
 				preferAbbreviation: true,
@@ -228,6 +281,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 			formatPathoscopeIsolatesAsTsv(
 				[createFakePathoscopeHit({ isolates: [] })],
 				{
+					columnOrder: "name-last",
 					headers: false,
 					mappedCount: 1000,
 					preferAbbreviation: false,
