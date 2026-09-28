@@ -43,7 +43,7 @@ describe("SseMessageSchema", () => {
 
 	it("accepts a frame for every domain in the enum", () => {
 		for (const domain of SseDomainSchema.options) {
-			const stringId = domain === "roles";
+			const stringId = domain === "roles" || domain === "otus";
 			const result = SseMessageSchema.safeParse({
 				domain,
 				operation: "update",

@@ -1,4 +1,5 @@
 import { settingsQueryKeys } from "@administration/keys";
+import { invalidateChange } from "@app/invalidate";
 
 import { referenceQueryKeys } from "@references/keys";
 import {
@@ -98,9 +99,11 @@ export function useCloneReference() {
 			createReferenceFn({
 				data: { name, description, cloneFrom: refId },
 			}) as Promise<Reference>,
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.lists(),
+		onSuccess: (reference) => {
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "insert",
+				id: reference.id,
 			});
 		},
 	});
@@ -123,9 +126,11 @@ export function useImportReference() {
 			createReferenceFn({
 				data: { name, description, importFrom },
 			}) as Promise<Reference>,
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.lists(),
+		onSuccess: (reference) => {
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "insert",
+				id: reference.id,
 			});
 		},
 	});
@@ -176,9 +181,11 @@ export function useCreateReference() {
 			createReferenceFn({
 				data: { name, description, organism },
 			}) as Promise<Reference>,
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.lists(),
+		onSuccess: (reference) => {
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "insert",
+				id: reference.id,
 			});
 		},
 	});
@@ -198,11 +205,11 @@ export function useUpdateReference(refId: number, onSuccess?: () => void) {
 				data: { referenceId: refId, ...data },
 			}) as Promise<Reference>,
 		onSuccess: () => {
-			queryClient
-				.invalidateQueries({
-					queryKey: referenceQueryKeys.detail(refId),
-				})
-				.then(() => onSuccess?.());
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "update",
+				id: refId,
+			}).then(() => onSuccess?.());
 		},
 	});
 
@@ -224,8 +231,10 @@ export function useUpdateReferenceSourceTypes(refId: number) {
 				data: { referenceId: refId, sourceTypes },
 			}) as Promise<Reference>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.detail(refId),
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "update",
+				id: refId,
 			});
 		},
 	});
@@ -271,8 +280,10 @@ export function useAddReferenceMember(
 						data: { referenceId: refId, groupId: id },
 					}) as Promise<ReferenceGroup>),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.detail(refId),
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "update",
+				id: refId,
 			});
 		},
 	});
@@ -285,6 +296,8 @@ export function useAddReferenceMember(
  * @returns A mutator for updating a reference members modifying rights
  */
 export function useUpdateReferenceMember(noun: ReferenceMemberNoun) {
+	const queryClient = useQueryClient();
+
 	return useMutation<
 		ReferenceUser | ReferenceGroup,
 		Error,
@@ -298,6 +311,13 @@ export function useUpdateReferenceMember(noun: ReferenceMemberNoun) {
 				: (updateReferenceGroupFn({
 						data: { referenceId: refId, groupId: id, ...update },
 					}) as Promise<ReferenceGroup>),
+		onSuccess: (_data, { refId }) => {
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "update",
+				id: refId,
+			});
+		},
 	});
 }
 
@@ -324,8 +344,10 @@ export function useRemoveReferenceUser(
 						data: { referenceId: refId, groupId: id },
 					}) as Promise<null>),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.detail(refId),
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "update",
+				id: refId,
 			});
 		},
 	});
@@ -377,11 +399,10 @@ export function useArchiveReference(refId: number) {
 				data: { referenceId: refId },
 			}) as Promise<Reference>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.detail(refId),
-			});
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.lists(),
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "update",
+				id: refId,
 			});
 		},
 	});
@@ -402,11 +423,10 @@ export function useUnarchiveReference(refId: number) {
 				data: { referenceId: refId },
 			}) as Promise<Reference>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.detail(refId),
-			});
-			queryClient.invalidateQueries({
-				queryKey: referenceQueryKeys.lists(),
+			invalidateChange(queryClient, {
+				domain: "references",
+				operation: "update",
+				id: refId,
 			});
 		},
 	});

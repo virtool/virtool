@@ -33,17 +33,18 @@ let userId: number;
 
 const statements: string[] = [];
 
-// `BEGIN`/`COMMIT` are counted separately from the statements that do the work,
-// so a budget describes reads and writes rather than transaction framing.
-function isTransactionControl(query: string): boolean {
-	return /^\s*(begin|commit|rollback)/i.test(query);
+// `BEGIN`/`COMMIT` and the client-event `pg_notify` are left out of the count,
+// so a budget describes the reads and writes that do the work rather than
+// transaction framing or change publication.
+function isOverhead(query: string): boolean {
+	return /^\s*(begin|commit|rollback|select pg_notify)/i.test(query);
 }
 
 async function countQueries(run: () => Promise<unknown>): Promise<number> {
 	statements.length = 0;
 	await run();
 
-	return statements.filter((query) => !isTransactionControl(query)).length;
+	return statements.filter((query) => !isOverhead(query)).length;
 }
 
 beforeAll(async () => {

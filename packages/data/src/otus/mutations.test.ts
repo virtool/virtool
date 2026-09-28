@@ -1,13 +1,24 @@
 import { asc, eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { Db } from "../db/pg";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+import type { Db, PgClient } from "../db/pg";
 import { legacyHistory, legacyHistoryDiff } from "../db/schema/history";
 import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { legacyReferences } from "../db/schema/references";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { createEmitter } from "../events/emit";
 import { listByOtu, patchOtusToVersions } from "../history/data";
 import { ReferenceNotFoundError } from "../references/data";
+import { testLogger } from "../test/logger";
 import {
 	createIsolate,
 	createOtu,
@@ -785,6 +796,57 @@ describe("deleteOtu", () => {
 		});
 
 		expect(history.at(-1)?.diff).toMatchObject({ _id: otu.id, name: "Doomed" });
+	});
+});
+
+describe("client events", () => {
+	let notify: ReturnType<typeof vi.fn>;
+
+	beforeEach(() => {
+		// The fixture's emitter really NOTIFYs, so a published frame would be
+		// invisible. Restored in `afterEach` for the rest of the file.
+		notify = vi.fn().mockResolvedValue(undefined);
+		createEmitter({
+			client: { notify } as unknown as PgClient,
+			logger: testLogger,
+		});
+	});
+
+	afterEach(() => {
+		createEmitter({ client: database.client, logger: testLogger });
+	});
+
+	function published() {
+		return notify.mock.calls.map(([, payload]) => JSON.parse(payload));
+	}
+
+	it("publishes an OTU's creation, edits, and removal", async () => {
+		const otu = await seedOtu("Tobacco mosaic virus", "TMV");
+		await updateOtu(db, otu.id, { name: "Tomato mosaic virus" }, userId);
+		const isolate = await createIsolate(
+			db,
+			otu.id,
+			{ sourceType: "isolate", sourceName: "A", default: false },
+			userId,
+		);
+		await deleteIsolate(db, otu.id, isolate.id, userId);
+		await deleteOtu(db, otu.id, userId);
+
+		expect(published()).toEqual([
+			{ domain: "otus", resource_id: otu.id, operation: "create" },
+			{ domain: "otus", resource_id: otu.id, operation: "update" },
+			{ domain: "otus", resource_id: otu.id, operation: "update" },
+			{ domain: "otus", resource_id: otu.id, operation: "update" },
+			{ domain: "otus", resource_id: otu.id, operation: "delete" },
+		]);
+	});
+
+	it("publishes nothing when the change is refused", async () => {
+		await expect(deleteOtu(db, "missing", userId)).rejects.toThrow(
+			OtuNotFoundError,
+		);
+
+		expect(notify).not.toHaveBeenCalled();
 	});
 });
 

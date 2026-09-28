@@ -83,8 +83,25 @@ error statuses with `getErrorStatus` from `@app/queryErrors`.
 
 Put invalidation in `useMutation` callbacks so it runs even after the component
 unmounts. Put navigation, toasts, and other view effects in `mutate` callbacks.
-Invalidate the narrowest hierarchical key; reserve `setQueryData` for frequent
-updates where repeated requests are too expensive.
+Reserve `setQueryData` for frequent updates where repeated requests are too
+expensive.
+
+A mutation that creates, updates, or deletes a record reports the change to
+`invalidateChange` (or `invalidateChanges` for a batch) in `@app/invalidate`.
+Don't invalidate a record's keys by hand. The SSE handler uses the same
+function, so a local change and a pushed change refresh the same queries:
+
+- A create refreshes the domain's `lists()`.
+- An update or delete refreshes the record's `detail(id)` and the domain's
+  `lists()`.
+- A domain that caches outside those two keys, such as the account or the
+  active banner, refreshes `all()`.
+- Every change also refreshes the other domains that show the record or a
+  value derived from it. For example, a label change refreshes samples, and an
+  OTU change refreshes references and unbuilt index changes.
+
+When a record starts to embed another domain's data, add that domain to the
+dependents in `@app/invalidate`.
 
 ### Styling
 
@@ -415,8 +432,8 @@ Postgres `client_events` channel; the route converts each event to the id-only
 `{ domain, operation, id }` wire shape. The client then refetches through the
 normal API so authorization remains at the request boundary.
 
-Adding a domain requires all three of `SseDomainSchema`, `SseMessageSchema`,
-and `reactQueryHandler`'s `domains` record. A frame that fails validation—an
+Adding a domain requires both `SseMessageSchema` and the `domains` record in
+`@app/invalidate`. A frame that fails validation—an
 unknown domain, a bad operation, a wrong id type—is contract drift and is
 reported to Sentry.
 
@@ -427,7 +444,7 @@ Because an `EventSource` error exposes no HTTP status, the client probes
 backoff. A reconnect invalidates active queries to recover events missed while
 the stream was down.
 
-Most frames invalidate the narrowest matching React Query key. `jobs` and
+Frames go through `invalidateChange`, the rule that mutations use. `jobs` and
 `tasks` update frames instead go through `createJobRefreshQueue` and
 `createTaskRefreshQueue`, which deduplicate ids, batch reads, and serialize
 waves so an older response cannot overwrite newer progress. Keep the
@@ -442,6 +459,7 @@ ordering, and counts; tasks have no collection query to invalidate.
 | `src/server/events/` | Listener, wire-shape conversion, and session revocation |
 | `src/routes/events.ts` | Authenticated SSE route, keepalive, and framing |
 | `src/app/sse/` | Connection lifecycle, validation, and query routing |
+| `src/app/invalidate.ts` | Keys each change refreshes, shared with mutations |
 | `src/jobs/refresh.ts` | Batched job refresh queue |
 | `src/tasks/refresh.ts` | Batched task refresh queue |
 

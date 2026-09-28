@@ -48,6 +48,7 @@ import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { legacyReferences } from "../db/schema/references";
 import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
+import { emit } from "../events/emit";
 import {
 	addHistory,
 	composeCreateDescription,
@@ -1065,7 +1066,7 @@ export async function createOtu(
 	values: OtuCreateRequest,
 	userId: number,
 ): Promise<Otu> {
-	return db.transaction(async (tx) => {
+	const otu = await db.transaction(async (tx) => {
 		const [reference] = await tx
 			.select({ archived: legacyReferences.archived })
 			.from(legacyReferences)
@@ -1113,6 +1114,10 @@ export async function createOtu(
 
 		return getOtuInTransaction(tx, String(document._id));
 	});
+
+	await emit("otus", otu.id, "create");
+
+	return otu;
 }
 
 /**
@@ -1127,7 +1132,7 @@ export async function updateOtu(
 	values: OtuUpdateRequest,
 	userId: number,
 ): Promise<Otu> {
-	return db.transaction(async (tx) => {
+	const otu = await db.transaction(async (tx) => {
 		const { document: old, reference } = await readOtuWithReference(
 			tx,
 			otuId,
@@ -1223,6 +1228,10 @@ export async function updateOtu(
 
 		return getOtuInTransaction(tx, otuId);
 	});
+
+	await emit("otus", otuId, "update");
+
+	return otu;
 }
 
 /** Remove an OTU. Its sequences cascade; the change records the whole document. */
@@ -1251,6 +1260,8 @@ export async function deleteOtu(
 			userId,
 		});
 	});
+
+	await emit("otus", otuId, "delete");
 }
 
 /**
@@ -1267,7 +1278,7 @@ export async function createIsolate(
 ): Promise<OtuIsolate> {
 	const sourceType = values.sourceType.toLowerCase();
 
-	return db.transaction(async (tx) => {
+	const isolate = await db.transaction(async (tx) => {
 		const { document: old, reference } = await readOtuWithReference(
 			tx,
 			otuId,
@@ -1331,6 +1342,10 @@ export async function createIsolate(
 
 		return formatIsolate({ ...isolate, sequences: [] });
 	});
+
+	await emit("otus", otuId, "update");
+
+	return isolate;
 }
 
 /** Rename an isolate. */
@@ -1343,7 +1358,7 @@ export async function updateIsolate(
 ): Promise<OtuIsolate> {
 	const sourceType = values.sourceType?.toLowerCase();
 
-	return db.transaction(async (tx) => {
+	const isolate = await db.transaction(async (tx) => {
 		const { document: old, reference } = await readOtuWithReference(
 			tx,
 			otuId,
@@ -1398,6 +1413,10 @@ export async function updateIsolate(
 
 		return formatIsolate(findIsolate(updated, isolateId));
 	});
+
+	await emit("otus", otuId, "update");
+
+	return isolate;
 }
 
 /**
@@ -1412,7 +1431,7 @@ export async function setIsolateAsDefault(
 	isolateId: string,
 	userId: number,
 ): Promise<OtuIsolate> {
-	return db.transaction(async (tx) => {
+	const isolate = await db.transaction(async (tx) => {
 		const { document: old, reference } = await readOtuWithReference(
 			tx,
 			otuId,
@@ -1459,6 +1478,10 @@ export async function setIsolateAsDefault(
 
 		return formatIsolate(findIsolate(updated, isolateId));
 	});
+
+	await emit("otus", otuId, "update");
+
+	return isolate;
 }
 
 /**
@@ -1531,6 +1554,8 @@ export async function deleteIsolate(
 			userId,
 		});
 	});
+
+	await emit("otus", otuId, "update");
 }
 
 /** Add a sequence to an isolate. */
@@ -1541,7 +1566,7 @@ export async function createSequence(
 	values: SequenceCreateRequest,
 	userId: number,
 ): Promise<OtuSequence> {
-	return db.transaction(async (tx) => {
+	const sequence = await db.transaction(async (tx) => {
 		const { document: old, reference } = await readOtuWithReference(
 			tx,
 			otuId,
@@ -1590,6 +1615,10 @@ export async function createSequence(
 
 		return formatSequence(document);
 	});
+
+	await emit("otus", otuId, "update");
+
+	return sequence;
 }
 
 /** Update a sequence. */
@@ -1601,7 +1630,7 @@ export async function updateSequence(
 	values: SequenceUpdateRequest,
 	userId: number,
 ): Promise<OtuSequence> {
-	return db.transaction(async (tx) => {
+	const sequence = await db.transaction(async (tx) => {
 		const { document: old, reference } = await readOtuWithReference(
 			tx,
 			otuId,
@@ -1665,6 +1694,10 @@ export async function updateSequence(
 
 		return formatSequence(document);
 	});
+
+	await emit("otus", otuId, "update");
+
+	return sequence;
 }
 
 /** Delete a sequence. The gap it leaves in `position` is never renumbered. */
@@ -1723,4 +1756,6 @@ export async function deleteSequence(
 			userId,
 		});
 	});
+
+	await emit("otus", otuId, "update");
 }
