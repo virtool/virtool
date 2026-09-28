@@ -61,6 +61,7 @@ import { emit } from "../events/emit";
  * and every existing user's preferences silently reading `undefined`.
  */
 type StoredAccountSettings = {
+	prefer_abbreviation: boolean;
 	quick_analyze_workflow: "nuvs" | "pathoscope";
 	show_ids: boolean;
 	show_versions: boolean;
@@ -78,6 +79,8 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 	const blob = (stored ?? {}) as Partial<StoredAccountSettings>;
 
 	return {
+		preferAbbreviation:
+			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAbbreviation,
 		quickAnalyzeWorkflow:
 			blob.quick_analyze_workflow ?? DEFAULT_USER_SETTINGS.quickAnalyzeWorkflow,
 		showIds: blob.show_ids ?? DEFAULT_USER_SETTINGS.showIds,
@@ -93,6 +96,7 @@ function toStoredAccountSettings(
 	settings: AccountSettings,
 ): StoredAccountSettings {
 	return {
+		prefer_abbreviation: settings.preferAbbreviation,
 		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
@@ -188,6 +192,7 @@ export class PendingAccountError extends AppError {}
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
 const DEFAULT_USER_SETTINGS: AccountSettings = {
+	preferAbbreviation: false,
 	skipQuickAnalyzeDialog: true,
 	showIds: true,
 	showVersions: true,
@@ -433,6 +438,52 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 		email: row.email,
 		settings: fromStoredAccountSettings(row.settings),
 	};
+}
+
+const STORED_ACCOUNT_SETTINGS_KEYS: {
+	[K in keyof AccountSettings]: keyof StoredAccountSettings;
+} = {
+	preferAbbreviation: "prefer_abbreviation",
+	quickAnalyzeWorkflow: "quick_analyze_workflow",
+	showIds: "show_ids",
+	showVersions: "show_versions",
+	skipQuickAnalyzeDialog: "skip_quick_analyze_dialog",
+};
+
+/**
+ * Merge a partial change into the signed-in user's own settings and return
+ * the settings that result.
+ *
+ * The merge happens in one statement, so two changes to different keys made
+ * at the same time cannot overwrite each other.
+ */
+export async function updateAccountSettings(
+	db: Db,
+	userId: number,
+	settings: Partial<AccountSettings>,
+): Promise<AccountSettings> {
+	const patch = Object.fromEntries(
+		Object.entries(settings)
+			.filter(([, value]) => value !== undefined)
+			.map(([key, value]) => [
+				STORED_ACCOUNT_SETTINGS_KEYS[key as keyof AccountSettings],
+				value,
+			]),
+	);
+
+	const [row] = await db
+		.update(usersTable)
+		.set({
+			settings: sql`${usersTable.settings} || ${JSON.stringify(patch)}::jsonb`,
+		})
+		.where(eq(usersTable.id, userId))
+		.returning({ settings: usersTable.settings });
+
+	if (!row) {
+		throw new UserNotFoundError();
+	}
+
+	return fromStoredAccountSettings(row.settings);
 }
 
 /**

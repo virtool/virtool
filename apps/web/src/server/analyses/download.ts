@@ -28,6 +28,9 @@ function isExtension(value: string): value is Extension {
  * it with a plain `<a href>` — the browser has to see a real response with a
  * `Content-Disposition`, which an RPC call cannot produce.
  *
+ * A `preferAbbreviation=true` query parameter names each OTU by its
+ * abbreviation, where it has one.
+ *
  * Being a route means no policy middleware runs, so the authorization floor is
  * enforced here: a valid session, then the read right on the analysis's parent
  * sample, which is where an analysis's visibility comes from.
@@ -86,6 +89,11 @@ export async function handleAnalysisDocument(
 		return textResponse("Not found", 404);
 	}
 
+	const options = {
+		preferAbbreviation:
+			new URL(request.url).searchParams.get("preferAbbreviation") === "true",
+	};
+
 	const headers = {
 		"content-disposition": contentDisposition(`${analysisId}.${extension}`),
 		"content-type": CONTENT_TYPES[extension],
@@ -93,7 +101,12 @@ export async function handleAnalysisDocument(
 
 	if (extension === "csv") {
 		return new Response(
-			await formatAnalysisToCsv(db, analysis.workflow, analysis.results),
+			await formatAnalysisToCsv(
+				db,
+				analysis.workflow,
+				analysis.results,
+				options,
+			),
 			{ headers },
 		);
 	}
@@ -104,6 +117,7 @@ export async function handleAnalysisDocument(
 			analysis.workflow,
 			analysis.results,
 			analysis.sample_id,
+			options,
 		),
 		{ headers },
 	);

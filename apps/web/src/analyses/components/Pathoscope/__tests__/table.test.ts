@@ -19,7 +19,12 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 					pi: 0.0001234,
 				}),
 			],
-			{ headers: true, mappedCount: 1000, showReads: false },
+			{
+				headers: true,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: false,
+			},
 		);
 
 		expect(table).toBe(
@@ -34,7 +39,12 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 	it("should render read pseudo-counts when reads are shown", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha virus", pi: 0.25 })],
-			{ headers: true, mappedCount: 1000, showReads: true },
+			{
+				headers: true,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: true,
+			},
 		);
 
 		expect(table).toBe(
@@ -48,10 +58,42 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 	it("should render the rows alone when headers are not wanted", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha virus" })],
-			{ headers: false, mappedCount: 1000, showReads: false },
+			{
+				headers: false,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: false,
+			},
 		);
 
 		expect(table).toBe("Alpha virus\t0.250\t12\t0.500");
+	});
+
+	it("should name an OTU by its abbreviation when one is preferred", () => {
+		const table = formatPathoscopeHitsAsTsv(
+			[
+				createFakePathoscopeHit({
+					abbreviation: "AV",
+					id: "a",
+					name: "Alpha virus",
+				}),
+				createFakePathoscopeHit({
+					abbreviation: "",
+					id: "b",
+					name: "Beta virus",
+				}),
+			],
+			{
+				headers: false,
+				mappedCount: 1000,
+				preferAbbreviation: true,
+				showReads: false,
+			},
+		);
+
+		expect(table).toBe(
+			["AV\t0.250\t12\t0.500", "Beta virus\t0.250\t12\t0.500"].join("\n"),
+		);
 	});
 
 	it("should render only the header row when nothing is selected", () => {
@@ -59,6 +101,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 			formatPathoscopeHitsAsTsv([], {
 				headers: true,
 				mappedCount: 1000,
+				preferAbbreviation: false,
 				showReads: false,
 			}),
 		).toBe("Name\tWeight\tDepth\tCoverage");
@@ -69,7 +112,12 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 	it("should collapse tabs and newlines in a name", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha\tvirus\nstrain" })],
-			{ headers: false, mappedCount: 1000, showReads: false },
+			{
+				headers: false,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: false,
+			},
 		);
 
 		expect(table).toBe("Alpha virus strain\t0.250\t12\t0.500");
@@ -116,7 +164,12 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 					name: "Beta virus",
 				}),
 			],
-			{ headers: true, mappedCount: 1000, showReads: false },
+			{
+				headers: true,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: false,
+			},
 		);
 
 		expect(table).toBe(
@@ -137,7 +190,12 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 					name: "Alpha virus",
 				}),
 			],
-			{ headers: false, mappedCount: 1000, showReads: true },
+			{
+				headers: false,
+				mappedCount: 1000,
+				preferAbbreviation: false,
+				showReads: true,
+			},
 		);
 
 		expect(table).toBe("Alpha virus\tIsolate A\t250\t12\t0.500");
@@ -145,6 +203,26 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 
 	// A hit whose isolates were all filtered out contributes nothing rather than
 	// an empty row.
+	it("should name each isolate's OTU by its abbreviation when one is preferred", () => {
+		const table = formatPathoscopeIsolatesAsTsv(
+			[
+				createFakePathoscopeHit({
+					abbreviation: "AV",
+					isolates: [createIsolate({ id: "a1", name: "Isolate A" })],
+					name: "Alpha virus",
+				}),
+			],
+			{
+				headers: false,
+				mappedCount: 1000,
+				preferAbbreviation: true,
+				showReads: false,
+			},
+		);
+
+		expect(table).toBe("AV\tIsolate A\t0.250\t12\t0.500");
+	});
+
 	it("should render nothing for a hit with no isolates", () => {
 		expect(
 			formatPathoscopeIsolatesAsTsv(
@@ -152,6 +230,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				{
 					headers: false,
 					mappedCount: 1000,
+					preferAbbreviation: false,
 					showReads: false,
 				},
 			),

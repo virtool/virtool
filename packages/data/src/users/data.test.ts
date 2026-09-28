@@ -28,6 +28,7 @@ import {
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
+	updateAccountSettings,
 	updateUser,
 } from "./data";
 
@@ -70,6 +71,7 @@ describe("getAccount", () => {
 
 		expect(account.email).toBe("alice@example.com");
 		expect(account.settings).toEqual({
+			preferAbbreviation: false,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
 			showVersions: true,
@@ -89,6 +91,7 @@ describe("getAccount", () => {
 		const account = await getAccount(db, userId);
 
 		expect(account.settings).toEqual({
+			preferAbbreviation: false,
 			quickAnalyzeWorkflow: "pathoscope",
 			showIds: false,
 			showVersions: true,
@@ -119,6 +122,39 @@ describe("getAccount", () => {
 	// is signed in", so this must throw rather than resolve undefined.
 	it("throws when the user does not exist", async () => {
 		await expect(getAccount(db, 404)).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+});
+
+describe("updateAccountSettings", () => {
+	it("writes the changed key in its stored spelling and keeps the others", async () => {
+		const userId = await seedUser(db, {
+			handle: "alice",
+			settings: storedSettings,
+		});
+
+		const settings = await updateAccountSettings(db, userId, {
+			preferAbbreviation: true,
+		});
+
+		expect(settings).toEqual({
+			preferAbbreviation: true,
+			quickAnalyzeWorkflow: "nuvs",
+			showIds: false,
+			showVersions: true,
+			skipQuickAnalyzeDialog: false,
+		});
+
+		const [row] = await db.select().from(users).where(eq(users.id, userId));
+		expect(row?.settings).toEqual({
+			...storedSettings,
+			prefer_abbreviation: true,
+		});
+	});
+
+	it("throws when the user does not exist", async () => {
+		await expect(
+			updateAccountSettings(db, 404, { preferAbbreviation: true }),
+		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
 });
 
@@ -621,6 +657,7 @@ describe("createPendingUser", () => {
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.password).toBeNull();
 		expect(row?.settings).toEqual({
+			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
 			show_ids: true,
 			show_versions: true,
@@ -659,6 +696,7 @@ describe("createUser", () => {
 		// stored blob already uses.
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.settings).toEqual({
+			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
 			show_ids: true,
 			show_versions: true,
