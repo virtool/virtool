@@ -360,6 +360,27 @@ describe("deleteExpiredSetupState", () => {
 		expect(await db.select().from(setupSessions)).toHaveLength(0);
 	});
 
+	it("keeps a pending user's live invitation after it expires", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		const past = new Date(Date.now() - 60_000);
+
+		await seedSetupToken(db, userId, "account_completion", {
+			expiresAt: past,
+			supersededAt: past,
+		});
+		const live = await seedSetupToken(db, userId, "account_completion", {
+			expiresAt: past,
+		});
+
+		expect(await deleteExpiredSetupState(db)).toEqual({
+			tokens: 1,
+			sessions: 0,
+		});
+		expect(
+			await db.select({ tokenHash: setupTokens.tokenHash }).from(setupTokens),
+		).toEqual([{ tokenHash: hashToken(live.token) }]);
+	});
+
 	it("sweeps in more than one batch", async () => {
 		const userId = await seedUser(db);
 		const past = new Date(Date.now() - 60_000);
