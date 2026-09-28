@@ -512,8 +512,8 @@ export async function findAdministeredUsers(
 	const filter = and(
 		term
 			? or(
-					ilike(usersTable.handle, `%${term}%`),
-					ilike(usersTable.email, `%${term}%`),
+					ilike(usersTable.handle, toSearchPattern(term)),
+					ilike(usersTable.email, toSearchPattern(term)),
 				)
 			: undefined,
 		statuses.length ? or(...statuses.map(getStatusCondition)) : undefined,
@@ -932,6 +932,16 @@ export async function createFirstAdministrator(
 	db: Db,
 	input: CreateFirstAdministratorInput,
 ): Promise<{ user: User; emailVerificationRequired: boolean }> {
+	// The endpoint is unauthenticated, so refuse before the costly hash. The
+	// locked count below still decides concurrent attempts.
+	const [anyUser] = await db
+		.select({ id: usersTable.id })
+		.from(usersTable)
+		.limit(1);
+	if (anyUser) {
+		throw new FirstAdministratorExistsError();
+	}
+
 	const password = await hashPassword(input.password);
 	const result = await db.transaction(async (tx) => {
 		await tx.execute(

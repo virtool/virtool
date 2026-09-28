@@ -648,6 +648,14 @@ describe("findAdministeredUsers", () => {
 		expect(result.foundCount).toBe(4);
 	});
 
+	it("matches search wildcards literally", async () => {
+		await seedUser(db, { handle: "a_b", email: "one@example.com" });
+		await seedUser(db, { handle: "acb", email: "two@example.com" });
+
+		expect(await getEmails({ term: "a_b" })).toEqual(["one@example.com"]);
+		expect(await getEmails({ term: "%" })).toEqual([]);
+	});
+
 	it("filters by status", async () => {
 		await seedMixedUsers();
 
