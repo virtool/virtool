@@ -31,6 +31,7 @@ import {
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
 import { claimEmail, normalizeEmail } from "../auth/email";
+import { queueEmailVerificationInTransaction } from "../auth/emailVerification";
 import {
 	CREDENTIAL_PROVIDER_ID,
 	updateAuthPassword,
@@ -41,7 +42,6 @@ import { invalidateUserSessions } from "../auth/session";
 import {
 	invalidateUserSetupSessions,
 	invalidateUserSetupTokens,
-	issueSetupTokenInTransaction,
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
@@ -55,7 +55,6 @@ import {
 } from "../db/schema/groups";
 import { type UserRow, users as usersTable } from "../db/schema/users";
 import { toSearchPattern } from "../db/search";
-import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -967,25 +966,14 @@ export async function createFirstAdministrator(
 
 		let emailVerificationRequired = false;
 		if (input.deliveryAvailable) {
-			const issued = await issueSetupTokenInTransaction(tx, {
+			const verification = await queueEmailVerificationInTransaction(tx, {
 				userId,
-				purpose: "email_verification",
 				candidateEmail: normalizeEmail(input.email),
 				sourceEmail: normalizeEmail(input.email),
-				lifetimeMs: 24 * 60 * 60 * 1000,
+				handle: input.handle,
+				getVerificationUrl: input.getVerificationUrl,
 			});
-			const queued = await enqueueEmail(tx, {
-				idempotencyKey: `email_verification/${userId}/${issued.tokenId}`,
-				recipient: normalizeEmail(input.email),
-				setupTokenId: issued.tokenId,
-				template: {
-					type: "email_verification",
-					username: input.handle,
-					verifyUrl: input.getVerificationUrl(issued.token),
-					expiresInHours: 24,
-				},
-			});
-			emailVerificationRequired = queued.status === "queued";
+			emailVerificationRequired = verification.queued;
 		}
 		return { userId, emailVerificationRequired };
 	});

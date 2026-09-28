@@ -24,6 +24,7 @@ import {
 	isValidEmail,
 	normalizeEmail,
 } from "./email";
+import { queueEmailVerificationInTransaction } from "./emailVerification";
 import { isValidHandle } from "./handle";
 import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
 import { hashPassword } from "./password";
@@ -319,24 +320,14 @@ export async function completeAccountSetup(
 
 			let emailVerificationRequired = false;
 			if (!verified && deliveryAvailable) {
-				const verification = await issueSetupTokenInTransaction(tx, {
+				const verification = await queueEmailVerificationInTransaction(tx, {
 					userId: consumed.userId,
-					purpose: "email_verification",
 					candidateEmail: email,
 					sourceEmail: email,
+					handle,
+					getVerificationUrl,
 				});
-				const queued = await enqueueEmail(tx, {
-					idempotencyKey: `email_verification/${consumed.userId}/${verification.tokenId}`,
-					recipient: email,
-					setupTokenId: verification.tokenId,
-					template: {
-						type: "email_verification",
-						username: handle,
-						verifyUrl: getVerificationUrl(verification.token),
-						expiresInHours: 24,
-					},
-				});
-				emailVerificationRequired = queued.status === "queued";
+				emailVerificationRequired = verification.queued;
 			}
 
 			return { userId: consumed.userId, emailVerificationRequired };

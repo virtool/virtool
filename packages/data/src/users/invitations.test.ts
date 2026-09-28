@@ -259,6 +259,32 @@ describe("account invitations", () => {
 		).rejects.toThrow();
 	});
 
+	it("queues a 24-hour verification after accepting a copied link", async () => {
+		const created = await createInvitation();
+		await db.update(settings).set({ emailEnabled: true });
+		const accepted = await completeAccountSetup(db, {
+			token: created.setupToken,
+			handle: "Ada",
+			password: "a-real-password",
+			deliveryAvailable: true,
+			getVerificationUrl: (token) =>
+				`https://virtool.test/verify-email?token=${token}`,
+		});
+		expect(accepted.emailVerificationRequired).toBe(true);
+		const [verification] = await db
+			.select()
+			.from(setupTokens)
+			.where(eq(setupTokens.purpose, "email_verification"));
+		const lifetimeMs = (verification?.expiresAt.getTime() ?? 0) - Date.now();
+		expect(lifetimeMs).toBeGreaterThan(23 * 60 * 60 * 1000);
+		expect(lifetimeMs).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
+		const [message] = await db.select().from(emailOutbox);
+		expect(message?.template).toMatchObject({
+			type: "email_verification",
+			expiresInHours: 24,
+		});
+	});
+
 	it("serializes acceptance against regeneration", async () => {
 		const created = await createInvitation();
 		const other = database.connect();
