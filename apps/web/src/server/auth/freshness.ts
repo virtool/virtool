@@ -21,6 +21,8 @@ export const PROTECTED_OPERATIONS = {
 	invitationLinkIssue: "invitation_link.issue",
 	setupLinkIssue: "setup_link.issue",
 	recoveryLinkIssue: "recovery_link.issue",
+	userUpdate: "user.update",
+	administratorRoleSet: "administrator_role.set",
 } as const;
 
 /** A mutation covered by the recent-authentication policy. */

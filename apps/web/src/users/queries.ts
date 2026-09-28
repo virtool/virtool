@@ -236,13 +236,16 @@ export type UserUpdate = {
  */
 export function useUpdateUser() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ userId, update }: { userId: number; update: UserUpdate }) =>
+			updateUserFn({ data: { userId, ...update } }),
+	);
 	return useMutation<
 		Awaited<ReturnType<typeof updateUserFn>>,
 		Error,
 		{ userId: number; update: UserUpdate }
 	>({
-		mutationFn: ({ userId, update }) =>
-			updateUserFn({ data: { userId, ...update } }),
+		mutationFn,
 		onSuccess: (result) => {
 			if (result) {
 				queryClient.setQueryData(userQueryKeys.detail(result.id), result);
@@ -262,13 +265,21 @@ export function useUpdateUser() {
  */
 export function useSetAdministratorRole() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({
+			role,
+			user_id,
+		}: {
+			role: AdministratorRoleName | null;
+			user_id: number;
+		}) => setAdministratorRoleFn({ data: { userId: user_id, role } }),
+	);
 	return useMutation<
 		Awaited<ReturnType<typeof setAdministratorRoleFn>>,
 		Error,
 		{ role: AdministratorRoleName | null; user_id: number }
 	>({
-		mutationFn: ({ role, user_id }) =>
-			setAdministratorRoleFn({ data: { userId: user_id, role } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: userQueryKeys.all() });
 		},

@@ -397,7 +397,10 @@ export const deletePendingUserFn = createServerFn({ method: "POST" })
 	});
 
 export const updateUserFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("users")])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.userUpdate),
+	])
 	.validator(updateUserSchema)
 	.handler(async ({ context, data }) => {
 		// A policy states the floor. This one depends on the target row, so it can
@@ -483,7 +486,10 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 	});
 
 export const setAdministratorRoleFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("full")])
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.administratorRoleSet),
+	])
 	.validator(setAdministratorRoleSchema)
 	.handler(async ({ context, data }) => {
 		if (context.principal.userId === data.userId) {
