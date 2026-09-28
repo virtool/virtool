@@ -1,7 +1,10 @@
+import { accountQueryKeys } from "@account/keys";
+import { QueryClient } from "@tanstack/react-query";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { authServerFnMocks } from "@tests/server-fn/auth";
 import { renderWithRouter } from "@tests/setup";
+import { rootQueryKeys } from "@wall/keys";
 import { beforeEach, expect, it, vi } from "vitest";
 import AccountSetup from "../AccountSetup";
 
@@ -21,6 +24,7 @@ it("scrubs, inspects, and accepts a usable invitation", async () => {
 	});
 	authServerFnMocks.acceptAccountSetupFn.mockResolvedValue({ nextRoute: "/" });
 
+	const removeQueries = vi.spyOn(QueryClient.prototype, "removeQueries");
 	await renderWithRouter(<AccountSetup />, "/account-setup");
 	await screen.findByRole("heading", { name: "Set up your account" });
 	expect(window.location.hash).toBe("");
@@ -29,6 +33,12 @@ it("scrubs, inspects, and accepts a usable invitation", async () => {
 	await userEvent.click(screen.getByRole("button", { name: "Create account" }));
 	expect(authServerFnMocks.acceptAccountSetupFn).toHaveBeenCalledWith({
 		data: { token, handle: "Ada", password: "a-real-password" },
+	});
+	expect(removeQueries).toHaveBeenCalledWith({
+		queryKey: rootQueryKeys.all(),
+	});
+	expect(removeQueries).toHaveBeenCalledWith({
+		queryKey: accountQueryKeys.all(),
 	});
 });
 

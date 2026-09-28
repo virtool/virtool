@@ -1,3 +1,4 @@
+import { accountQueryKeys } from "@account/keys";
 import Button from "@base/Button";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { usePasswordRules } from "@forms/password";
@@ -5,8 +6,10 @@ import {
 	acceptAccountSetupFn,
 	inspectAccountSetupFn,
 } from "@server/auth/functions";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { AccountSetupInspection } from "@virtool/contracts";
+import { rootQueryKeys } from "@wall/keys";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { WallContainer } from "./WallContainer";
@@ -23,6 +26,7 @@ export default function AccountSetup() {
 	const [submissionError, setSubmissionError] = useState("");
 	const captured = useRef(false);
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const passwordRules = usePasswordRules();
 	const {
 		formState: { errors, isSubmitting },
@@ -62,6 +66,8 @@ export default function AccountSetup() {
 				data: { token, handle, password },
 			});
 			setToken(null);
+			queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
+			queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
 			await navigate({ to: result.nextRoute });
 		} catch (error) {
 			setSubmissionError(
