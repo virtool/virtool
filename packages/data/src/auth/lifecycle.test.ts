@@ -79,15 +79,17 @@ describe("normalizeEmail", () => {
 describe("completeAccountSetup", () => {
 	it("credentials a pending account and moves it to normal", async () => {
 		const userId = await seedUser(db, {
+			email: "Ada@Example.com",
 			handle: "Ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "Ada@Example.com",
+		});
 
 		const result = await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
-			email: "Ada@Example.com",
 		});
 
 		expect(result.user.lifecycleState).toBe("normal");
@@ -105,13 +107,17 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("writes one Better Auth credential identity", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
-			email: "ada@example.com",
 		});
 
 		const accounts = await db.select().from(authAccounts);
@@ -122,14 +128,18 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("revokes every setup credential the account held", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 		await seedSetupSession(db, userId, "account_completion");
 
 		await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
-			email: "ada@example.com",
 		});
 
 		expect(await db.select().from(setupSessions)).toHaveLength(0);
@@ -146,27 +156,27 @@ describe("completeAccountSetup", () => {
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 	});
 
 	it("refuses an account that is not pending", async () => {
 		const userId = await seedUser(db);
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(SetupNotEligibleError);
 	});
 
-	it("refuses a deactivated account", async () => {
+	it("refuses a token without a bound address", async () => {
 		const userId = await seedUser(db, {
-			active: false,
+			email: "ada@example.com",
 			lifecycleState: "pending",
 		});
 		const { token } = await seedSetupToken(db, userId, "account_completion");
@@ -175,7 +185,27 @@ describe("completeAccountSetup", () => {
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
+			}),
+		).rejects.toBeInstanceOf(SetupNotEligibleError);
+
+		const row = await readUser(userId);
+		expect(row.lifecycleState).toBe("pending");
+	});
+
+	it("refuses a deactivated account", async () => {
+		const userId = await seedUser(db, {
+			active: false,
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
+
+		await expect(
+			completeAccountSetup(db, {
+				token,
+				password: "a-good-password",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 	});
@@ -183,16 +213,18 @@ describe("completeAccountSetup", () => {
 	it("refuses an address another account already holds", async () => {
 		await seedUser(db, { handle: "bob", email: "ada@example.com" });
 		const userId = await seedUser(db, {
+			email: "ada@example.com",
 			handle: "ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ADA@example.com",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
@@ -207,16 +239,18 @@ describe("completeAccountSetup", () => {
 			.set({ authMigratedAt: new Date() })
 			.where(eq(users.id, existing));
 		const userId = await seedUser(db, {
+			email: "ada@example.com",
 			handle: "ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
@@ -226,16 +260,18 @@ describe("completeAccountSetup", () => {
 	it("rolls the whole transition back when it fails", async () => {
 		await seedUser(db, { handle: "bob", email: "ada@example.com" });
 		const userId = await seedUser(db, {
+			email: "ada@example.com",
 			handle: "ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 
@@ -249,20 +285,23 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("cannot be replayed after it commits", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
-			email: "ada@example.com",
 		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "another-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 
@@ -270,8 +309,13 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("gives exactly one winner under concurrent completion", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		const other = database.connect();
 
@@ -280,12 +324,10 @@ describe("completeAccountSetup", () => {
 				completeAccountSetup(db, {
 					token,
 					password: "a-good-password",
-					email: "ada@example.com",
 				}),
 				completeAccountSetup(other.db, {
 					token,
 					password: "a-good-password",
-					email: "ada@example.com",
 				}),
 			]);
 

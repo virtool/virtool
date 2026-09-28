@@ -149,8 +149,6 @@ export type CompleteAccountSetupInput = {
 	deliveryAvailable?: boolean;
 	/** Build a public verification URL if copied-link acceptance needs one. */
 	getVerificationUrl?: (token: string) => string;
-	/** Legacy test-only fallback for tokens issued before addresses were bound. */
-	email?: string;
 };
 
 /** A completed pending-account transition and its follow-up requirement. */
@@ -188,7 +186,6 @@ export async function completeAccountSetup(
 		handle: requestedHandle,
 		deliveryAvailable = false,
 		getVerificationUrl = () => "",
-		email: fallbackEmail,
 	}: CompleteAccountSetupInput,
 ): Promise<CompletedAccountSetup> {
 	const [preflight] = await db
@@ -248,7 +245,7 @@ export async function completeAccountSetup(
 			if (
 				!row.active ||
 				row.lifecycleState !== "pending" ||
-				!(consumed.candidateEmail ?? fallbackEmail)
+				!consumed.candidateEmail
 			) {
 				throw new SetupNotEligibleError();
 			}
@@ -270,10 +267,8 @@ export async function completeAccountSetup(
 				throw new AccountSetupHandleInUseError();
 			}
 
-			const email = normalizeEmail(
-				consumed.candidateEmail ?? fallbackEmail ?? "",
-			);
-			if (consumed.candidateEmail && email !== normalizeEmail(row.email)) {
+			const email = normalizeEmail(consumed.candidateEmail);
+			if (email !== normalizeEmail(row.email)) {
 				throw new SetupNotEligibleError();
 			}
 			await claimEmail(tx, consumed.userId, email);
