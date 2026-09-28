@@ -101,7 +101,7 @@ beforeEach(async () => {
 	});
 });
 
-async function signIn({ totp = false } = {}) {
+async function signIn({ totp = false, createdAt = new Date() } = {}) {
 	const password = await hashPassword("correct-password");
 	const userId = await seedUser(db, { password });
 	const now = new Date();
@@ -121,7 +121,7 @@ async function signIn({ totp = false } = {}) {
 			verified: true,
 		});
 	}
-	const session = await seedSession(db, userId);
+	const session = await seedSession(db, userId, { createdAt });
 	currentUserId = userId;
 	currentSessionId = session.sessionId;
 	return { session, userId };
@@ -139,6 +139,23 @@ describe("getRecentAuthenticationMethodsFn", () => {
 			password: true,
 			totp: true,
 		});
+	});
+});
+
+describe("getRecentAuthenticationRemainingFn", () => {
+	it("reports the time left in a fresh session", async () => {
+		await signIn({ createdAt: new Date(Date.now() - 60_000) });
+
+		const remaining = await call("getRecentAuthenticationRemainingFn");
+
+		expect(remaining).toBeGreaterThan(0);
+		expect(remaining).toBeLessThanOrEqual(15 * 60 * 1000 - 60_000);
+	});
+
+	it("reports 0 for a session outside the freshness window", async () => {
+		await signIn({ createdAt: new Date(Date.now() - 16 * 60 * 1000) });
+
+		await expect(call("getRecentAuthenticationRemainingFn")).resolves.toBe(0);
 	});
 });
 

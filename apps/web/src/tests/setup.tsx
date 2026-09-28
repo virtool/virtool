@@ -239,8 +239,8 @@ beforeEach(() => {
 
 	// Resolving fresh lets route tests render the administration views rather
 	// than the authentication gate in front of them.
-	recentAuthenticationServerFnMocks.isRecentAuthenticationFreshFn.mockResolvedValue(
-		true,
+	recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
+		15 * 60 * 1000,
 	);
 
 	// Every upload begins by asking the server which transport to take. Default

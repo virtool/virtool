@@ -22,17 +22,19 @@ import { useState } from "react";
 export const Route = createFileRoute("/_authenticated/administration")({
 	beforeLoad: async ({ context }) => {
 		const { queryClient } = context;
-		const { accountQueryOptions } = await import("@account/account");
+		const [{ accountQueryOptions }, { resolveRecentAuthenticationFresh }] =
+			await Promise.all([
+				import("@account/account"),
+				import("@administration/recentAuthentication"),
+			]);
 
 		const account = await queryClient.ensureQueryData(accountQueryOptions());
 
 		if (!hasSufficientAdminRole("users", account.administratorRole)) {
 			throw redirect({ to: "/" });
 		}
-		const { isRecentAuthenticationFreshFn } = await import(
-			"@server/auth/recentAuthentication"
-		);
-		const recentAuthenticationFresh = await isRecentAuthenticationFreshFn();
+		const recentAuthenticationFresh =
+			await resolveRecentAuthenticationFresh(queryClient);
 
 		return { account, recentAuthenticationFresh };
 	},

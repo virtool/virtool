@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	getSessionFreshRemainingMs,
 	isSessionFresh,
 	PROTECTED_OPERATIONS,
 	SESSION_FRESH_AGE_SECONDS,
@@ -45,5 +46,30 @@ describe("isSessionFresh", () => {
 		expect(
 			isSessionFresh(new Date(now - SESSION_FRESH_AGE_SECONDS * 1000), now),
 		).toBe(false);
+	});
+});
+
+describe("getSessionFreshRemainingMs", () => {
+	const now = Date.UTC(2026, 8, 18, 12);
+
+	it("returns the time left in the freshness window", () => {
+		expect(getSessionFreshRemainingMs(new Date(now - 60_000), now)).toBe(
+			SESSION_FRESH_AGE_SECONDS * 1000 - 60_000,
+		);
+	});
+
+	it("returns 0 at and beyond the stale boundary", () => {
+		expect(
+			getSessionFreshRemainingMs(
+				new Date(now - SESSION_FRESH_AGE_SECONDS * 1000),
+				now,
+			),
+		).toBe(0);
+		expect(
+			getSessionFreshRemainingMs(
+				new Date(now - SESSION_FRESH_AGE_SECONDS * 2000),
+				now,
+			),
+		).toBe(0);
 	});
 });
