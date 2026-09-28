@@ -6,9 +6,9 @@
  * them once (`const paths = workPaths(context.workPath)`) and reads fields from
  * there.
  *
- * The layout is a **contract, not a convention**: all three of this workflow's
- * cache namespaces are shared, and a restored blob's one top-level entry is
- * named after the directory its writer archived. `trimmed/`,
+ * The layout is a **contract, not a convention**: every later run restores what
+ * earlier runs archived, and a restored blob's one top-level entry is named
+ * after the directory its writer archived. `trimmed/`,
  * `reference_index/` and `subtraction_indexes/{id}/` are therefore fixed names,
  * not preferences.
  */
@@ -103,9 +103,6 @@ export type NuvsPaths = {
 	/** The gzipped annotations blob, as downloaded from object storage */
 	compressedHmmAnnotations: string;
 
-	/** Where cache archives are staged, on the volume the pod is sized for */
-	cacheStaging: string;
-
 	/** The run's work path, for the places that need it whole */
 	root: string;
 };
@@ -178,7 +175,5 @@ export function workPaths(workPath: string): NuvsPaths {
 		hmmsDir,
 		hmmProfiles: join(hmmsDir, "profiles.hmm"),
 		compressedHmmAnnotations: join(hmmsDir, "annotations.json.gz"),
-
-		cacheStaging: join(workPath, "caches"),
 	};
 }

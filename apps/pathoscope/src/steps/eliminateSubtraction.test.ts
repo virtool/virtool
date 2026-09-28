@@ -1,12 +1,16 @@
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { RunSubprocess, RunSubprocessOptions } from "@virtool/workflow";
+import type {
+	AnalysisSubtraction,
+	RunSubprocess,
+	RunSubprocessOptions,
+} from "@virtool/workflow";
 import {
 	createFakeContext,
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
-import type { PathoscopeData, PathoscopeSubtraction } from "../context";
+import type { PathoscopeData } from "../context";
 import { workPaths } from "../paths";
 import type { PathoscopeState } from "../state";
 import { eliminateSubtractionStep } from "./eliminateSubtraction";
@@ -121,7 +125,7 @@ function createFakeTools(eliminationsPerPass: readonly (readonly string[])[]) {
 	return { bowtie2Inputs, runSubprocess, scripts };
 }
 
-function createSubtraction(id: number): PathoscopeSubtraction {
+function createSubtraction(id: number): AnalysisSubtraction {
 	return {
 		id,
 		name: `subtraction ${id}`,

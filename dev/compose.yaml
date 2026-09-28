@@ -37,7 +37,7 @@ x-volumes: &volumes
   - ${VT_DEV_WORKTREE}/packages/data/drizzle:/repo/packages/data/drizzle:ro
 
 x-workflow-environment: &workflow-environment
-  VT_JOBS_API_URL: http://jobs-api:9950
+  VT_JOBS_API_URL: http://jobs-api-${VT_DEV_ENVIRONMENT_ID}:9950
   VT_TIMEOUT: "120"
   VT_WORK_PATH: /work
   VT_STORAGE_BACKEND: azure
@@ -94,6 +94,10 @@ services:
       start_period: 60s
       timeout: 2s
       retries: 3
+    networks:
+      default:
+        # All environments share one network, so the service name is not unique.
+        aliases: ["jobs-api-${VT_DEV_ENVIRONMENT_ID}"]
     volumes: *volumes
 
   tasks:
