@@ -94,10 +94,10 @@ describe("the shared mapping index namespaces", () => {
 });
 
 describe("buildCollapsedReferenceCacheParams", () => {
-	// FORKED from the shared namespace, deliberately: the artifact is a SQLite
+	// FORKED from the namespace older releases wrote, deliberately: the artifact is a SQLite
 	// index this code writes, and one this code did not write is not
 	// interchangeable with it.
-	it("differs from the shared namespace's key for the same inputs", () => {
+	it("differs from the older namespace's key for the same inputs", () => {
 		const params = buildCollapsedReferenceCacheParams({
 			indexId: 42,
 			toolVersion: "4.8.1",
@@ -107,7 +107,7 @@ describe("buildCollapsedReferenceCacheParams", () => {
 		expect(deriveCacheKey(params)).not.toBe(PINNED_KEYS.collapsed);
 	});
 
-	it("carries a discriminator the shared namespace's params do not", () => {
+	it("carries a discriminator the older namespace's params do not", () => {
 		const params = buildCollapsedReferenceCacheParams({
 			indexId: 42,
 			toolVersion: "4.8.1",
@@ -117,7 +117,7 @@ describe("buildCollapsedReferenceCacheParams", () => {
 		const { impl, ...withoutDiscriminator } = params;
 
 		expect(impl).toBeDefined();
-		// Removing it lands back on the shared namespace's key, which is what makes
+		// Removing it lands back on the older namespace's key, which is what makes
 		// the fork the discriminator's doing rather than an accident of some other
 		// field.
 		expect(deriveCacheKey(withoutDiscriminator)).toBe(PINNED_KEYS.collapsed);
