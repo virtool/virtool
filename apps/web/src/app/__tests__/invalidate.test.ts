@@ -77,11 +77,19 @@ describe("invalidateChange", () => {
 			);
 		});
 
-		it("refreshes the detail and every list on delete", async () => {
+		// A refetch of a deleted record fails, and a failed refetch keeps the old
+		// data. Dropping the data lets the not-found error reach the view.
+		it("drops the detail and refreshes every list on delete", async () => {
+			queryClient.setQueryData(samplesQueryKeys.detail(9), { id: 9 });
+
 			await check(
-				{ domain: "references", operation: "delete", id: 9 },
-				[referenceQueryKeys.detail(9), referenceQueryKeys.list([1, 25])],
-				[referenceQueryKeys.detail(8)],
+				{ domain: "samples", operation: "delete", id: 9 },
+				[samplesQueryKeys.list([1, 25])],
+				[samplesQueryKeys.detail(8)],
+			);
+
+			expect(queryClient.getQueryData(samplesQueryKeys.detail(9))).toBe(
+				undefined,
 			);
 		});
 
@@ -149,7 +157,11 @@ describe("invalidateChange", () => {
 			},
 			{
 				change: { domain: "samples", operation: "update", id: 4 },
-				stale: [labelQueryKeys.lists(), analysesQueryKeys.detail(5)],
+				stale: [
+					labelQueryKeys.lists(),
+					analysesQueryKeys.detail(5),
+					subtractionQueryKeys.detail(3),
+				],
 				fresh: [fileQueryKeys.list(["reads", 1, 25])],
 			},
 			{
@@ -174,8 +186,8 @@ describe("invalidateChange", () => {
 					analysesQueryKeys.detail(5),
 					indexQueryKeys.list([9, 1, 25]),
 					otuQueryKeys.list([9, 1, 25, ""]),
+					otuQueryKeys.detail("abc"),
 				],
-				fresh: [otuQueryKeys.list([8, 1, 25, ""])],
 			},
 			{
 				change: { domain: "otus", operation: "delete", id: "abc" },
@@ -184,7 +196,11 @@ describe("invalidateChange", () => {
 			},
 			{
 				change: { domain: "indexes", operation: "insert", id: 2 },
-				stale: [indexQueryKeys.unbuilt(9), referenceQueryKeys.detail(9)],
+				stale: [
+					indexQueryKeys.unbuilt(9),
+					otuQueryKeys.history("abc"),
+					referenceQueryKeys.detail(9),
+				],
 			},
 			{
 				change: { domain: "groups", operation: "update", id: 3 },
@@ -209,6 +225,7 @@ describe("invalidateChange", () => {
 					groupQueryKeys.detail(3),
 					indexQueryKeys.detail(2),
 					jobQueryKeys.list([1, 25]),
+					otuQueryKeys.detail("abc"),
 					referenceQueryKeys.detail(9),
 					samplesQueryKeys.detail(4),
 					subtractionQueryKeys.shortlist(),
@@ -228,8 +245,8 @@ describe("invalidateChange", () => {
 		const invalidate = vi.spyOn(queryClient, "invalidateQueries");
 
 		await invalidateChanges(queryClient, [
-			{ domain: "uploads", operation: "delete", id: 1 },
-			{ domain: "uploads", operation: "delete", id: 2 },
+			{ domain: "uploads", operation: "update", id: 1 },
+			{ domain: "uploads", operation: "update", id: 2 },
 		]);
 
 		expect(invalidate.mock.calls.map(([filters]) => filters?.queryKey)).toEqual(

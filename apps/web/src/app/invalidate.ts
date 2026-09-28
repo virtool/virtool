@@ -62,6 +62,7 @@ const userEmbedders: QueryKey[] = [
 	groupQueryKeys.all(),
 	indexQueryKeys.all(),
 	jobQueryKeys.all(),
+	otuQueryKeys.all(),
 	referenceQueryKeys.all(),
 	samplesQueryKeys.all(),
 	subtractionQueryKeys.all(),
@@ -72,11 +73,26 @@ function getOwnKeys(domain: DomainCache, change: Change): QueryKey[] {
 		return [domain.keys.all()];
 	}
 
-	if (change.operation === "insert") {
-		return [domain.keys.lists()];
+	if (change.operation === "update") {
+		return [domain.keys.detail(change.id), domain.keys.lists()];
 	}
 
-	return [domain.keys.detail(change.id), domain.keys.lists()];
+	return [domain.keys.lists()];
+}
+
+/**
+ * Get the detail a delete removes, if the domain caches one.
+ *
+ * Invalidating it would refetch a record that is gone, and a failed refetch
+ * keeps the old data on screen. Resetting it drops the data, so the refetch's
+ * not-found error reaches the view.
+ */
+function getDeletedKey(domain: DomainCache, change: Change): QueryKey | null {
+	if (domain.shape === "whole" || change.operation !== "delete") {
+		return null;
+	}
+
+	return domain.keys.detail(change.id);
 }
 
 /**
@@ -84,8 +100,9 @@ function getOwnKeys(domain: DomainCache, change: Change): QueryKey[] {
  *
  * Most are records that embed the changed one, such as a sample's labels or an
  * analysis's reference name. The rest are derived values: a label's sample
- * count, a reference's OTU count, the changes a reference's next index build
- * would include, and the read files a sample holds until it is deleted.
+ * count, a subtraction's sample count, a reference's OTU count, the changes a
+ * reference's next index build would include, and the read files a sample holds
+ * until it is deleted.
  */
 function getDependentKeys(change: Change): QueryKey[] {
 	const created = change.operation === "insert";
@@ -105,7 +122,11 @@ function getDependentKeys(change: Change): QueryKey[] {
 						userQueryKeys.all(),
 					];
 		case "indexes":
-			return [indexQueryKeys.allUnbuilt(), referenceQueryKeys.all()];
+			return [
+				indexQueryKeys.allUnbuilt(),
+				otuQueryKeys.all(),
+				referenceQueryKeys.all(),
+			];
 		case "labels":
 			return created ? [] : [samplesQueryKeys.all()];
 		case "otus":
@@ -113,14 +134,11 @@ function getDependentKeys(change: Change): QueryKey[] {
 		case "references":
 			return created
 				? []
-				: [
-						analysesQueryKeys.all(),
-						indexQueryKeys.all(),
-						otuQueryKeys.list([change.id]),
-					];
+				: [analysesQueryKeys.all(), indexQueryKeys.all(), otuQueryKeys.all()];
 		case "samples":
 			return [
 				labelQueryKeys.lists(),
+				subtractionQueryKeys.all(),
 				...(created ? [] : [analysesQueryKeys.all()]),
 				...(change.operation === "update" ? [] : [fileQueryKeys.lists()]),
 			];
@@ -136,9 +154,9 @@ function getDependentKeys(change: Change): QueryKey[] {
 /**
  * Get every query key a change must refresh.
  *
- * A created record reaches its domain's lists. An updated or deleted record
- * reaches its detail and its domain's lists. Each change also reaches the keys
- * of other domains that show the record or a value derived from it.
+ * Every change reaches its domain's lists, and an update also reaches the
+ * record's detail. Each change also reaches the keys of other domains that
+ * show the record or a value derived from it.
  */
 function getChangeKeys(change: Change): QueryKey[] {
 	return [
@@ -165,19 +183,27 @@ export async function invalidateChanges(
 	queryClient: QueryClient,
 	changes: Change[],
 ): Promise<void> {
+	const deletedKeys: QueryKey[] = [];
 	const queryKeys = new Map<string, QueryKey>();
 
 	for (const change of changes) {
+		const deletedKey = getDeletedKey(domains[change.domain], change);
+
+		if (deletedKey) {
+			deletedKeys.push(deletedKey);
+		}
+
 		for (const queryKey of getChangeKeys(change)) {
 			queryKeys.set(hashKey(queryKey), queryKey);
 		}
 	}
 
-	await Promise.all(
-		[...queryKeys.values()].map((queryKey) =>
+	await Promise.all([
+		...deletedKeys.map((queryKey) => queryClient.resetQueries({ queryKey })),
+		...[...queryKeys.values()].map((queryKey) =>
 			queryClient.invalidateQueries({ queryKey }),
 		),
-	);
+	]);
 }
 
 /** Check whether a domain name belongs to a domain the client caches. */

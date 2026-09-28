@@ -92,8 +92,10 @@ Don't invalidate a record's keys by hand. The SSE handler uses the same
 function, so a local change and a pushed change refresh the same queries:
 
 - A create refreshes the domain's `lists()`.
-- An update or delete refreshes the record's `detail(id)` and the domain's
-  `lists()`.
+- An update refreshes the record's `detail(id)` and the domain's `lists()`.
+- A delete resets the record's `detail(id)` and refreshes the domain's
+  `lists()`. A reset drops the cached data, so a view of the deleted record
+  shows its not-found state instead of stale data.
 - A domain that caches outside those two keys, such as the account or the
   active banner, refreshes `all()`.
 - Every change also refreshes the other domains that show the record or a
