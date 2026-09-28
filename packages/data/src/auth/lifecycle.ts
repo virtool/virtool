@@ -25,7 +25,7 @@ import {
 	normalizeEmail,
 } from "./email";
 import { queueEmailVerificationInTransaction } from "./emailVerification";
-import { isValidHandle } from "./handle";
+import { isReservedHandle, isValidHandle } from "./handle";
 import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
 import { hashPassword } from "./password";
 import {
@@ -253,7 +253,7 @@ export async function completeAccountSetup(
 				throw new SetupNotEligibleError();
 			}
 			const handle = requestedHandle?.trim() || row.handle;
-			if (!isValidHandle(handle) || handle.toLowerCase() === "virtool") {
+			if (!isValidHandle(handle) || isReservedHandle(handle)) {
 				throw new SetupNotEligibleError();
 			}
 			const [conflict] = await tx
