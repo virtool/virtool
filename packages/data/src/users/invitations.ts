@@ -6,12 +6,12 @@ import {
 	type InvitationDelivery,
 } from "@virtool/contracts";
 import { and, desc, eq, max } from "drizzle-orm";
-import type { PostgresError } from "postgres";
 import { normalizeEmail } from "../auth/email";
 import {
 	issueSetupTokenInTransaction,
 	lockUserSetupCredentials,
 } from "../auth/setup";
+import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupTokens } from "../db/schema/setup";
@@ -47,19 +47,6 @@ export type CreatePendingInvitationInput = InvitationIssueOptions & {
 	groups?: number[];
 	primaryGroup?: number | null;
 };
-
-function isUniqueViolation(error: unknown): boolean {
-	if (error === null || typeof error !== "object") {
-		return false;
-	}
-	const cause = (error as { cause?: unknown }).cause;
-	return (
-		(error as Partial<PostgresError>).code === "23505" ||
-		(cause !== null &&
-			typeof cause === "object" &&
-			(cause as Partial<PostgresError>).code === "23505")
-	);
-}
 
 async function issueInvitationInTransaction(
 	tx: DbOrTx,

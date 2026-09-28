@@ -1,6 +1,6 @@
 import { DEFAULT_LABEL_COLOR, type Label } from "@virtool/contracts";
 import { asc, count, eq, ilike } from "drizzle-orm";
-import type { PostgresError } from "postgres";
+import { isUniqueViolation } from "../db/errors";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { type LabelRow, labels as labelsTable } from "../db/schema/labels";
@@ -21,14 +21,6 @@ export class LabelNotFoundError extends AppError {}
 
 /** Thrown when a label name conflicts with an existing label. */
 export class LabelConflictError extends AppError {}
-
-function isUniqueViolation(error: unknown): boolean {
-	const cause = (error as { cause?: unknown }).cause;
-	return (
-		(error as Partial<PostgresError>).code === "23505" ||
-		(cause as Partial<PostgresError> | undefined)?.code === "23505"
-	);
-}
 
 function normalizeColor(color: string | null): string {
 	if (!color) {

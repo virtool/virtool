@@ -29,7 +29,6 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
-import type { PostgresError } from "postgres";
 import { claimEmail, normalizeEmail } from "../auth/email";
 import { queueEmailVerificationInTransaction } from "../auth/emailVerification";
 import {
@@ -45,6 +44,7 @@ import {
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
+import { isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -253,19 +253,6 @@ function mergePermissions(memberships: Permissions[]): Permissions {
 		}
 	}
 	return merged;
-}
-
-function isUniqueViolation(error: unknown): boolean {
-	if (error === null || typeof error !== "object") {
-		return false;
-	}
-	const cause = (error as { cause?: unknown }).cause;
-	return (
-		(error as Partial<PostgresError>).code === "23505" ||
-		(cause !== null &&
-			typeof cause === "object" &&
-			(cause as Partial<PostgresError>).code === "23505")
-	);
 }
 
 type GroupMembershipRow = {
