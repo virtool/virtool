@@ -209,6 +209,41 @@ async function runDrain(): Promise<void> {
 	expect(outcome).toEqual({ status: "completed" });
 }
 
+/**
+ * Run the drain with a send that aborts the run's signal while it is in flight,
+ * the way a shutdown lands mid-request.
+ */
+async function runAbortedDrain() {
+	const controller = new AbortController();
+
+	const fetchMock = vi.fn().mockImplementation(
+		(_url: string, init: RequestInit) =>
+			new Promise((_resolve, reject) => {
+				init.signal?.addEventListener("abort", () =>
+					reject(new DOMException("aborted", "AbortError")),
+				);
+				controller.abort();
+			}),
+	);
+
+	vi.stubGlobal("fetch", fetchMock);
+
+	const task = await claimTask(db, deliverEmailTask);
+
+	const outcome = await runTask({
+		db,
+		def: deliverEmailTask,
+		task,
+		ctx,
+		logger,
+		signal: controller.signal,
+	});
+
+	expect(outcome).toEqual({ status: "aborted" });
+
+	return fetchMock;
+}
+
 async function ageRow(outboxId: number, seconds: number): Promise<void> {
 	await db
 		.update(emailOutbox)
@@ -593,6 +628,54 @@ describe("deliverEmailTask", () => {
 				(item) => item.id !== first.outboxId,
 			)?.attempt_count,
 		).toBe(0);
+	});
+
+	it("releases every claimed row without spending an attempt when a send is aborted", async () => {
+		await seedEmailSettings();
+
+		await queue({ idempotencyKey: "a" });
+		await queue({ idempotencyKey: "b" });
+
+		const fetchMock = await runAbortedDrain();
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(recorded.attempts).toEqual([]);
+		expect(recorded.retries).toEqual([]);
+
+		const rows = await db.select().from(emailOutbox);
+
+		expect(rows).toHaveLength(2);
+
+		for (const row of rows) {
+			expect(row).toMatchObject({
+				attempt_count: 0,
+				claim_expires_at: null,
+				claim_token: null,
+				last_error: null,
+				status: "queued",
+			});
+		}
+	});
+
+	it("keeps a row on its final attempt queued when its send is aborted", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await queue({ idempotencyKey: "a" });
+
+		await db
+			.update(emailOutbox)
+			.set({ attempt_count: EMAIL_MAX_ATTEMPTS - 1 })
+			.where(eq(emailOutbox.id, outboxId));
+
+		await runAbortedDrain();
+
+		expect(recorded.attempts).toEqual([]);
+		expect(await readOutboxRow(outboxId)).toMatchObject({
+			attempt_count: EMAIL_MAX_ATTEMPTS - 1,
+			claim_token: null,
+			last_error: null,
+			status: "queued",
+		});
 	});
 
 	it("fails queued rows with unsupported template versions", async () => {
