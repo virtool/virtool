@@ -1,7 +1,10 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeUser } from "@tests/fake/user";
-import { mockCreateUser } from "@tests/server-fn/users";
+import {
+	mockCreateUser,
+	mockInvitationEmailAvailability,
+} from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it, vi } from "vitest";
 import CreateUser from "../CreateUser";
@@ -95,6 +98,27 @@ describe("<CreateUser />", () => {
 		await waitFor(() =>
 			expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
 		);
+	});
+
+	it("defaults to email once availability loads", async () => {
+		mockInvitationEmailAvailability(true);
+		const createUser = mockCreateUser(createFakeUser({ handle: "" }));
+		await renderWithRouter(<CreateUser />);
+
+		await userEvent.click(screen.getByRole("button"));
+		await waitFor(() =>
+			expect(
+				screen.getByRole("radio", { name: /Email invitation/ }),
+			).toBeChecked(),
+		);
+
+		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() => expect(createUser).toHaveBeenCalled());
+		expect(createUser.mock.calls[0]?.[0].data).toMatchObject({
+			deliveryIntent: "email",
+		});
 	});
 
 	it("requires an email address", async () => {

@@ -17,6 +17,11 @@ export type CreateUserFormValues = {
 	primaryGroup: number | null;
 };
 
+/** Form state, where a null delivery intent means none was chosen yet. */
+type CreateUserFormState = Omit<CreateUserFormValues, "deliveryIntent"> & {
+	deliveryIntent: DeliveryIntent | null;
+};
+
 type CreateUserFormProps = {
 	error: string;
 	onSubmit: (data: CreateUserFormValues) => void;
@@ -45,19 +50,29 @@ export function CreateUserForm({
 		getValues,
 		setValue,
 		watch,
-	} = useForm<CreateUserFormValues>({
+	} = useForm<CreateUserFormState>({
 		defaultValues: {
 			email: "",
-			deliveryIntent: emailDeliveryAvailable ? "email" : "copy_only",
+			deliveryIntent: null,
 			administratorRole: null,
 			groups: [],
 			primaryGroup: null,
 		},
 	});
 	const selectedGroups = watch("groups");
+	const defaultDeliveryIntent: DeliveryIntent = emailDeliveryAvailable
+		? "email"
+		: "copy_only";
+
+	function submit(values: CreateUserFormState) {
+		onSubmit({
+			...values,
+			deliveryIntent: values.deliveryIntent ?? defaultDeliveryIntent,
+		});
+	}
 
 	return (
-		<form onSubmit={handleSubmit(onSubmit)}>
+		<form onSubmit={handleSubmit(submit)}>
 			{groups.length > 0 && (
 				<InputGroup>
 					<InputLabel>Groups</InputLabel>
@@ -161,7 +176,7 @@ export function CreateUserForm({
 					render={({ field }) => (
 						<DeliveryIntentField
 							name={field.name}
-							value={field.value}
+							value={field.value ?? defaultDeliveryIntent}
 							onChange={field.onChange}
 							emailDeliveryAvailable={emailDeliveryAvailable}
 							canConfigureEmailDelivery={canConfigureEmailDelivery}
