@@ -5,11 +5,11 @@ import { useForm } from "react-hook-form";
 
 type FormValues = {
 	name: string;
-	abbreviation: string;
+	acronym: string;
 };
 
 type OtuFormProps = {
-	abbreviation?: string;
+	acronym?: string;
 	/** Error message to be displayed */
 	error?: string;
 	name?: string;
@@ -21,7 +21,7 @@ type OtuFormProps = {
  * A form component for creating an OTU
  */
 export default function OtuForm({
-	abbreviation,
+	acronym,
 	error,
 	name,
 	onSubmit,
@@ -31,7 +31,7 @@ export default function OtuForm({
 		register,
 		handleSubmit,
 	} = useForm<FormValues>({
-		defaultValues: { name: name || "", abbreviation: abbreviation || "" },
+		defaultValues: { name: name || "", acronym: acronym || "" },
 	});
 
 	return (
@@ -52,8 +52,8 @@ export default function OtuForm({
 				</InputGroup>
 
 				<InputGroup>
-					<InputLabel htmlFor="abbreviation">Abbreviation</InputLabel>
-					<InputSimple id="abbreviation" {...register("abbreviation")} />
+					<InputLabel htmlFor="acronym">Acronym</InputLabel>
+					<InputSimple id="acronym" {...register("acronym")} />
 				</InputGroup>
 			</div>
 			<DialogFooter>

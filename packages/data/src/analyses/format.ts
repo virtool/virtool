@@ -326,7 +326,7 @@ function formatHits(
 
 	return {
 		id: otuId,
-		abbreviation: asText(patchedOtu.abbreviation),
+		acronym: asText(patchedOtu.abbreviation),
 		coverage: measured.reduce(
 			(greatest, entry) => Math.max(greatest, entry.isolate.coverage),
 			0,

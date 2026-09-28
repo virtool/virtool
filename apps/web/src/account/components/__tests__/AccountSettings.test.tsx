@@ -7,33 +7,33 @@ import { describe, expect, it } from "vitest";
 import AccountSettings from "../AccountSettings";
 
 describe("<AccountSettings />", () => {
-	it("should show the current abbreviation preference", async () => {
+	it("should show the current acronym preference", async () => {
 		const account = createFakeAccount();
 		mockGetAccount({
 			...account,
-			settings: { ...account.settings, preferAbbreviation: true },
+			settings: { ...account.settings, preferAcronym: true },
 		});
 
 		renderWithProviders(<AccountSettings />);
 
 		expect(
 			await screen.findByRole("switch", {
-				name: "Prefer abbreviations in Pathoscope exports",
+				name: "Prefer acronyms in Pathoscope exports",
 			}),
 		).toBeChecked();
 	});
 
-	it("should save the abbreviation preference when toggled", async () => {
+	it("should save the acronym preference when toggled", async () => {
 		const account = createFakeAccount();
-		const settings = { ...account.settings, preferAbbreviation: false };
+		const settings = { ...account.settings, preferAcronym: false };
 		mockGetAccount({ ...account, settings });
-		const saved = { ...settings, preferAbbreviation: true };
+		const saved = { ...settings, preferAcronym: true };
 		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(saved);
 
 		renderWithProviders(<AccountSettings />);
 
 		const toggle = await screen.findByRole("switch", {
-			name: "Prefer abbreviations in Pathoscope exports",
+			name: "Prefer acronyms in Pathoscope exports",
 		});
 		expect(toggle).not.toBeChecked();
 
@@ -43,7 +43,7 @@ describe("<AccountSettings />", () => {
 
 		await waitFor(() =>
 			expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
-				data: { preferAbbreviation: true },
+				data: { preferAcronym: true },
 			}),
 		);
 		expect(toggle).toBeChecked();

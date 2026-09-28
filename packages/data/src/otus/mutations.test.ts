@@ -84,8 +84,8 @@ beforeEach(async () => {
 	referenceId = reference?.id as number;
 });
 
-async function seedOtu(name = "Squash browning spot virus", abbreviation = "") {
-	return createOtu(db, referenceId, { name, abbreviation, schema: [] }, userId);
+async function seedOtu(name = "Squash browning spot virus", acronym = "") {
+	return createOtu(db, referenceId, { name, acronym, schema: [] }, userId);
 }
 
 async function readHistory(otuId: string) {
@@ -114,7 +114,7 @@ describe("createOtu", () => {
 		const otu = await seedOtu("Squash browning spot virus", "SBSV");
 
 		expect(otu).toMatchObject({
-			abbreviation: "SBSV",
+			acronym: "SBSV",
 			name: "Squash browning spot virus",
 			version: 0,
 			verified: false,
@@ -178,7 +178,7 @@ describe("createOtu", () => {
 		await seedOtu("Duplicate", "DUP");
 
 		await expect(seedOtu("Duplicate", "DUP")).rejects.toThrow(
-			"Name and abbreviation already exist",
+			"Name and acronym already exist",
 		);
 	});
 });
@@ -198,7 +198,7 @@ describe("updateOtu", () => {
 		expect(history[1]).toMatchObject({
 			methodName: "edit",
 			otuVersion: "1",
-			// Only what changed is described. The abbreviation and schema were sent
+			// Only what changed is described. The acronym and schema were sent
 			// unchanged and go unmentioned.
 			description: "Changed name to Renamed",
 		});
@@ -207,22 +207,22 @@ describe("updateOtu", () => {
 		expect(Array.isArray(history[1]?.diff)).toBe(true);
 	});
 
-	it("describes an added, changed, and removed abbreviation differently", async () => {
+	it("describes an added, changed, and removed acronym differently", async () => {
 		const added = await seedOtu("Added");
 
-		await updateOtu(db, added.id, { abbreviation: "NEW" }, userId);
+		await updateOtu(db, added.id, { acronym: "NEW" }, userId);
 		expect((await readHistory(added.id)).at(-1)?.description).toBe(
-			"Added abbreviation NEW",
+			"Added acronym NEW",
 		);
 
-		await updateOtu(db, added.id, { abbreviation: "OTHER" }, userId);
+		await updateOtu(db, added.id, { acronym: "OTHER" }, userId);
 		expect((await readHistory(added.id)).at(-1)?.description).toBe(
-			"Changed abbreviation to OTHER",
+			"Changed acronym to OTHER",
 		);
 
-		await updateOtu(db, added.id, { abbreviation: "" }, userId);
+		await updateOtu(db, added.id, { acronym: "" }, userId);
 		expect((await readHistory(added.id)).at(-1)?.description).toBe(
-			"Removed abbreviation OTHER",
+			"Removed acronym OTHER",
 		);
 	});
 
@@ -235,7 +235,7 @@ describe("updateOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Segmented", abbreviation: "", schema },
+			{ name: "Segmented", acronym: "", schema },
 			userId,
 		);
 
@@ -255,7 +255,7 @@ describe("updateOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Segmented", abbreviation: "", schema: [first, second] },
+			{ name: "Segmented", acronym: "", schema: [first, second] },
 			userId,
 		);
 
@@ -292,14 +292,14 @@ describe("updateOtu", () => {
 			otu.id,
 			{
 				name: "Renamed",
-				abbreviation: "NEW",
+				acronym: "NEW",
 				schema: [{ molecule: null, name: "DNA A", required: true }],
 			},
 			userId,
 		);
 
 		expect((await readHistory(otu.id)).at(-1)?.description).toBe(
-			"Changed name to Renamed and changed abbreviation to NEW and modified schema",
+			"Changed name to Renamed and changed acronym to NEW and modified schema",
 		);
 	});
 
@@ -309,7 +309,7 @@ describe("updateOtu", () => {
 		const updated = await updateOtu(
 			db,
 			otu.id,
-			{ name: "Original", abbreviation: "ORI" },
+			{ name: "Original", acronym: "ORI" },
 			userId,
 		);
 
@@ -323,11 +323,11 @@ describe("updateOtu", () => {
 		const updated = await updateOtu(
 			db,
 			otu.id,
-			{ name: "Original", abbreviation: "NEW" },
+			{ name: "Original", acronym: "NEW" },
 			userId,
 		);
 
-		expect(updated.abbreviation).toBe("NEW");
+		expect(updated.acronym).toBe("NEW");
 	});
 
 	it("unsets the segment on sequences whose segment the schema drops", async () => {
@@ -336,7 +336,7 @@ describe("updateOtu", () => {
 			referenceId,
 			{
 				name: "Segmented",
-				abbreviation: "",
+				acronym: "",
 				schema: [{ molecule: null, name: "DNA A", required: true }],
 			},
 			userId,
@@ -940,7 +940,7 @@ describe("findOtus", () => {
 		expect(page.modifiedCount).toBe(2);
 	});
 
-	it("searches name and abbreviation, leaving totalCount unfiltered", async () => {
+	it("searches name and acronym, leaving totalCount unfiltered", async () => {
 		await seedOtu("Alpha", "ALP");
 		await seedOtu("Beta", "BET");
 

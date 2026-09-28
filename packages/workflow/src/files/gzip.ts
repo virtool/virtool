@@ -10,7 +10,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { RunSubprocess } from "../subprocess/types";
 
-/** What {@link gzipFile} and {@link gunzipFile} are told about one file. */
+/** What {@link gzipFile} is told about one file. */
 export type GzipFileOptions = {
 	/** The run's core allocation, passed to `pigz -p`. */
 	proc: number;
@@ -21,25 +21,18 @@ export type GzipFileOptions = {
 };
 
 /** Gzip `source` to `target` with `pigz`, leaving `source` in place. */
-export async function gzipFile(options: GzipFileOptions): Promise<void> {
-	await run(options, ["-c"]);
-}
-
-/** Gunzip `source` to `target` with `pigz`, leaving `source` in place. */
-export async function gunzipFile(options: GzipFileOptions): Promise<void> {
-	await run(options, ["-d", "-c"]);
-}
-
-// `-c` rather than pigz's in-place mode, which names its own output next to the
-// input and would leave every caller renaming a file.
-async function run(
-	{ proc, runSubprocess, source, target }: GzipFileOptions,
-	mode: readonly string[],
-): Promise<void> {
+export async function gzipFile({
+	proc,
+	runSubprocess,
+	source,
+	target,
+}: GzipFileOptions): Promise<void> {
 	await mkdir(dirname(target), { recursive: true });
 
+	// `-c` rather than pigz's in-place mode, which names its own output next to
+	// the input and would leave every caller renaming a file.
 	await runSubprocess({
-		command: ["pigz", "-p", String(proc), ...mode, source],
+		command: ["pigz", "-p", String(proc), "-c", source],
 		stdoutFile: target,
 	});
 }

@@ -142,10 +142,10 @@ export function useSuspenseOtuHistory(otuId: string) {
 export function useCreateOtu(refId: number) {
 	const queryClient = useQueryClient();
 
-	return useMutation<Otu, Error, { name: string; abbreviation: string }>({
-		mutationFn: ({ name, abbreviation }) =>
+	return useMutation<Otu, Error, { name: string; acronym: string }>({
+		mutationFn: ({ name, acronym }) =>
 			createOtuFn({
-				data: { referenceId: refId, name, abbreviation, schema: [] },
+				data: { referenceId: refId, name, acronym, schema: [] },
 			}) as Promise<Otu>,
 		onSuccess: (otu) => {
 			invalidateChange(queryClient, {
@@ -161,7 +161,7 @@ export function useCreateOtu(refId: number) {
 export type UpdateOtuProps = {
 	otuId: string;
 	name?: string;
-	abbreviation?: string;
+	acronym?: string;
 	schema?: OtuSegment[];
 };
 
@@ -174,11 +174,11 @@ export function useUpdateOtu(otuId: string) {
 	const queryClient = useQueryClient();
 
 	return useMutation<Otu, Error, UpdateOtuProps, { previousOtu?: Otu }>({
-		mutationFn: ({ otuId, name, abbreviation, schema }) =>
+		mutationFn: ({ otuId, name, acronym, schema }) =>
 			updateOtuFn({
-				data: { otuId, name, abbreviation, schema },
+				data: { otuId, name, acronym, schema },
 			}) as Promise<Otu>,
-		onMutate: async ({ name, abbreviation, schema }) => {
+		onMutate: async ({ name, acronym, schema }) => {
 			await queryClient.cancelQueries({
 				queryKey: otuQueryKeys.detail(otuId),
 			});
@@ -191,7 +191,7 @@ export function useUpdateOtu(otuId: string) {
 				queryClient.setQueryData<Otu>(otuQueryKeys.detail(otuId), {
 					...previousOtu,
 					...(name !== undefined && { name }),
-					...(abbreviation !== undefined && { abbreviation }),
+					...(acronym !== undefined && { acronym }),
 					...(schema !== undefined && { schema }),
 				});
 			}

@@ -9,8 +9,8 @@ type PathoscopeTableOptions = {
 	/** The total number of reads mapped to any OTU during the analysis */
 	mappedCount: number;
 
-	/** Whether to name an OTU by its abbreviation, when it has one */
-	preferAbbreviation: boolean;
+	/** Whether to name an OTU by its acronym, when it has one */
+	preferAcronym: boolean;
 
 	/** Whether to render read pseudo-counts instead of weights */
 	showReads: boolean;
@@ -29,11 +29,9 @@ function sanitize(text: string): string {
 
 function formatOtuName(
 	hit: PathoscopeHit,
-	{ preferAbbreviation }: PathoscopeTableOptions,
+	{ preferAcronym }: PathoscopeTableOptions,
 ): string {
-	return sanitize(
-		preferAbbreviation && hit.abbreviation ? hit.abbreviation : hit.name,
-	);
+	return sanitize(preferAcronym && hit.acronym ? hit.acronym : hit.name);
 }
 
 // Both number formatters this reaches have grouping disabled, which keeps every

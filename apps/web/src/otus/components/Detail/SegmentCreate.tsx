@@ -10,7 +10,7 @@ type FormValues = {
 };
 
 type SegmentCreateProps = {
-	abbreviation: string;
+	acronym: string;
 	name: string;
 	open?: boolean;
 	otuId: string;
@@ -25,7 +25,7 @@ type SegmentCreateProps = {
 export default function SegmentCreate({
 	otuId,
 	name,
-	abbreviation,
+	acronym,
 	open = false,
 	schema,
 	setOpen = () => {},
@@ -37,7 +37,7 @@ export default function SegmentCreate({
 			{
 				otuId,
 				name,
-				abbreviation,
+				acronym,
 				schema: [
 					...schema,
 					{ name: segmentName, molecule: molecule || null, required },

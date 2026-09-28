@@ -71,6 +71,7 @@ import { emit } from "../events/emit";
  * and every existing user's preferences silently reading `undefined`.
  */
 type StoredAccountSettings = {
+	/** Stored under its older name; the model calls it `preferAcronym`. */
 	prefer_abbreviation: boolean;
 	quick_analyze_workflow: "nuvs" | "pathoscope";
 	show_ids: boolean;
@@ -89,8 +90,8 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 	const blob = (stored ?? {}) as Partial<StoredAccountSettings>;
 
 	return {
-		preferAbbreviation:
-			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAbbreviation,
+		preferAcronym:
+			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAcronym,
 		quickAnalyzeWorkflow:
 			blob.quick_analyze_workflow ?? DEFAULT_USER_SETTINGS.quickAnalyzeWorkflow,
 		showIds: blob.show_ids ?? DEFAULT_USER_SETTINGS.showIds,
@@ -106,7 +107,7 @@ function toStoredAccountSettings(
 	settings: AccountSettings,
 ): StoredAccountSettings {
 	return {
-		prefer_abbreviation: settings.preferAbbreviation,
+		prefer_abbreviation: settings.preferAcronym,
 		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
@@ -208,7 +209,7 @@ export class FirstAdministratorExistsError extends AppError {}
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
 const DEFAULT_USER_SETTINGS: AccountSettings = {
-	preferAbbreviation: false,
+	preferAcronym: false,
 	skipQuickAnalyzeDialog: true,
 	showIds: true,
 	showVersions: true,
@@ -575,7 +576,7 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 const STORED_ACCOUNT_SETTINGS_KEYS: {
 	[K in keyof AccountSettings]: keyof StoredAccountSettings;
 } = {
-	preferAbbreviation: "prefer_abbreviation",
+	preferAcronym: "prefer_abbreviation",
 	quickAnalyzeWorkflow: "quick_analyze_workflow",
 	showIds: "show_ids",
 	showVersions: "show_versions",
