@@ -318,7 +318,10 @@ Copied invitations leave the assigned normalized email unverified. A queued
 invitation proves control of that exact address when accepted. Acceptance uses
 the token-bound address, invalidates every prior session and setup credential,
 and cannot race regeneration or deletion. The 72-hour lifetime is shared in
-`@virtool/contracts`; expired rows are removed by `cleanup_setup_state`.
+`@virtool/contracts`. `cleanup_setup_state` removes other expired setup state.
+It keeps the expired live invitation of a pending user, so the administration
+view can offer a reissue. A reissue supersedes it, and the next sweep removes
+it. Deleting the user also deletes it.
 
 ## Outbound requests
 
