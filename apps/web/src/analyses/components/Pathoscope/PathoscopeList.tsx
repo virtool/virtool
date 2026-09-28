@@ -1,3 +1,4 @@
+import { useFetchAccount } from "@account/account";
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { useSortAndFilterPathoscopeHits } from "@analyses/hooks";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
@@ -22,6 +23,9 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 	const { search } = useAnalysisSearch();
 	const showReads = search.reads;
 	const showTable = search.table;
+
+	const { data: account } = useFetchAccount();
+	const preferAbbreviation = account?.settings.preferAbbreviation ?? false;
 
 	// Every hit is on screen at once, so a selection that outlived a filter would
 	// be copied without ever being visible. The key is built from the hit ids
@@ -49,6 +53,7 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 			formatPathoscopeHitsAsTsv(hits.filter(selection.isSelected), {
 				headers: true,
 				mappedCount: analysis.results.readCount,
+				preferAbbreviation,
 				showReads,
 			}),
 		);

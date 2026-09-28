@@ -4,10 +4,10 @@ import type { Logger } from "@virtool/logger";
 import { openWorkflowIndex, writeFasta } from "@virtool/sqlite";
 import {
 	type BuildContextInput,
+	cacheFor,
 	createMappingIndex,
 	downloadToPath,
 } from "@virtool/workflow";
-import { cacheFor } from "../cache";
 import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
 import { workPaths } from "../paths";
 import { APP_VERSION } from "../version";
@@ -63,8 +63,8 @@ export const createReferenceIndexStep: PathoscopeStep = {
  * Write the collapsed reference's default isolates as one FASTA.
  *
  * Handed to {@link createMappingIndex} as a producer rather than run before it:
- * the `reference_mapping_index` namespace is shared, so a hit is the common
- * outcome and the whole collapsed reference would otherwise be scanned into a
+ * every analysis against the same index reuses one cached index, so a hit is the
+ * common outcome and the whole collapsed reference would otherwise be scanned into a
  * file nothing then reads.
  */
 async function writeDefaultIsolateFasta({
@@ -99,8 +99,8 @@ async function writeDefaultIsolateFasta({
  * unlike Nuvs there is nothing to decompress first.
  *
  * The genome is downloaded here rather than with the run's other inputs, and
- * only once the cache has missed. The `subtraction_mapping_index` namespace is
- * shared, so a hit is the common outcome, and a host genome is gigabytes that
+ * only once the cache has missed. Every analysis against the same subtraction
+ * reuses one cached index, so a hit is the common outcome, and a host genome is gigabytes that
  * would otherwise be pulled out of storage and never opened.
  */
 export const createSubtractionIndexStep: PathoscopeStep = {

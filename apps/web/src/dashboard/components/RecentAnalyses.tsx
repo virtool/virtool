@@ -142,7 +142,7 @@ function AnalysesTable({ analyses, remaining }: AnalysesTableProps) {
 					</DashboardTableCell>
 					<DashboardTableCell>
 						<span className="text-gray-600 text-sm truncate">
-							{getWorkflowVersionLabel(analysis.workflowVersion)}
+							{getWorkflowVersionLabel(analysis)}
 						</span>
 					</DashboardTableCell>
 					<DashboardTableCell>

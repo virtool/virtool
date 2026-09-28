@@ -34,9 +34,7 @@ describe("<ApiKeys />", () => {
 
 		await renderWithRouter(<ApiKeys />, "/account/api");
 
-		await screen.findByRole("heading", {
-			name: /Manage API keys for accessing the/,
-		});
+		await screen.findByRole("heading", { name: "API Keys" });
 
 		expect(screen.getByText("No API keys found")).toBeInTheDocument();
 

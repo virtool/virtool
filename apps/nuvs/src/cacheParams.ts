@@ -56,9 +56,8 @@ export const REFERENCE_INDEX_EXTRA_PARAMS = {
 /**
  * What this workflow's subtraction mapping index adds.
  *
- * The same `subtraction.fa.gz` either workflow starts from, so this matches
- * pathoscope's — the two differ only in the `workflow` field, which is enough to
- * separate them.
+ * Pathoscope sends no extra params for its subtraction index. The two keys are
+ * already separate because each carries its own `workflow` field.
  */
 export const SUBTRACTION_INDEX_EXTRA_PARAMS = { source: "subtraction_fasta" };
 
