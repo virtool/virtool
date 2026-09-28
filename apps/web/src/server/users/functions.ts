@@ -19,6 +19,7 @@ import {
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
+	updateAccountSettings,
 	updateUser,
 } from "@virtool/data/users/data";
 import { z } from "zod";
@@ -67,6 +68,16 @@ const searchUsersSchema = z
 		perPage: perPageSchema,
 	})
 	.optional();
+
+const accountSettingsSchema = z
+	.object({
+		preferAbbreviation: z.boolean(),
+		quickAnalyzeWorkflow: z.enum(["nuvs", "pathoscope"]),
+		showIds: z.boolean(),
+		showVersions: z.boolean(),
+		skipQuickAnalyzeDialog: z.boolean(),
+	})
+	.partial();
 
 // Password length is enforced by checkConfiguredPasswordLength in the handlers
 // below, not here — see that function for why the validator is the wrong place
@@ -256,6 +267,17 @@ export const updateAccountHandleFn = createServerFn({ method: "POST" })
 			return await updateUser(db, context.principal.userId, {
 				handle: data.handle,
 			});
+		} catch (err) {
+			throw rethrowAsHttp(err);
+		}
+	});
+
+export const updateAccountSettingsFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(accountSettingsSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			return await updateAccountSettings(db, context.principal.userId, data);
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}

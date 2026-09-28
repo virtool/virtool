@@ -33,7 +33,9 @@ import { Route as HealthReadyRouteImport } from './routes/health/ready'
 import { Route as UploadsUploadIdRouteImport } from './routes/uploads_.$uploadId'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
 import { Route as AuthenticatedAccountApiRouteImport } from './routes/_authenticated/account/api'
+import { Route as AuthenticatedAccountGroupsRouteImport } from './routes/_authenticated/account/groups'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAdministrationIndexRouteImport } from './routes/_authenticated/administration/index'
 import { Route as AuthenticatedAdministrationBannersRouteImport } from './routes/_authenticated/administration/banners'
 import { Route as AuthenticatedAdministrationCachingRouteImport } from './routes/_authenticated/administration/caching'
@@ -215,10 +217,22 @@ const AuthenticatedAccountApiRoute = AuthenticatedAccountApiRouteImport.update({
   path: '/api',
   getParentRoute: () => AuthenticatedAccountRoute,
 } as any)
+const AuthenticatedAccountGroupsRoute =
+  AuthenticatedAccountGroupsRouteImport.update({
+    id: '/groups',
+    path: '/groups',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 const AuthenticatedAccountProfileRoute =
   AuthenticatedAccountProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
 const AuthenticatedAdministrationIndexRoute =
@@ -585,7 +599,9 @@ export interface FileRoutesByFullPath {
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/account/api': typeof AuthenticatedAccountApiRoute
+  '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
   '/administration/email': typeof AuthenticatedAdministrationEmailRoute
@@ -661,7 +677,9 @@ export interface FileRoutesByTo {
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/api': typeof AuthenticatedAccountApiRoute
+  '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
   '/administration/email': typeof AuthenticatedAdministrationEmailRoute
@@ -743,7 +761,9 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/_authenticated/account/api': typeof AuthenticatedAccountApiRoute
+  '/_authenticated/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/_authenticated/administration/caching': typeof AuthenticatedAdministrationCachingRoute
   '/_authenticated/administration/email': typeof AuthenticatedAdministrationEmailRoute
@@ -829,7 +849,9 @@ export interface FileRouteTypes {
     | '/uploads/$uploadId'
     | '/refs/$refId'
     | '/account/api'
+    | '/account/groups'
     | '/account/profile'
+    | '/account/settings'
     | '/administration/banners'
     | '/administration/caching'
     | '/administration/email'
@@ -905,7 +927,9 @@ export interface FileRouteTypes {
     | '/uploads/$uploadId'
     | '/'
     | '/account/api'
+    | '/account/groups'
     | '/account/profile'
+    | '/account/settings'
     | '/administration/banners'
     | '/administration/caching'
     | '/administration/email'
@@ -986,7 +1010,9 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/refs/$refId'
     | '/_authenticated/account/api'
+    | '/_authenticated/account/groups'
     | '/_authenticated/account/profile'
+    | '/_authenticated/account/settings'
     | '/_authenticated/administration/banners'
     | '/_authenticated/administration/caching'
     | '/_authenticated/administration/email'
@@ -1243,11 +1269,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountApiRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/groups': {
+      id: '/_authenticated/account/groups'
+      path: '/groups'
+      fullPath: '/account/groups'
+      preLoaderRoute: typeof AuthenticatedAccountGroupsRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
     '/_authenticated/account/profile': {
       id: '/_authenticated/account/profile'
       path: '/profile'
       fullPath: '/account/profile'
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
     '/_authenticated/administration/': {
@@ -1792,13 +1832,17 @@ const AuthenticatedRefsRouteRouteWithChildren =
 
 interface AuthenticatedAccountRouteChildren {
   AuthenticatedAccountApiRoute: typeof AuthenticatedAccountApiRoute
+  AuthenticatedAccountGroupsRoute: typeof AuthenticatedAccountGroupsRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
   AuthenticatedAccountApiRoute: AuthenticatedAccountApiRoute,
+  AuthenticatedAccountGroupsRoute: AuthenticatedAccountGroupsRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
 }
 

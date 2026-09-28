@@ -9,6 +9,9 @@ type PathoscopeTableOptions = {
 	/** The total number of reads mapped to any OTU during the analysis */
 	mappedCount: number;
 
+	/** Whether to name an OTU by its abbreviation, when it has one */
+	preferAbbreviation: boolean;
+
 	/** Whether to render read pseudo-counts instead of weights */
 	showReads: boolean;
 };
@@ -22,6 +25,15 @@ type PathoscopeTableOptions = {
 // to be understood.
 function sanitize(text: string): string {
 	return text.replace(/[\t\r\n]+/g, " ");
+}
+
+function formatOtuName(
+	hit: PathoscopeHit,
+	{ preferAbbreviation }: PathoscopeTableOptions,
+): string {
+	return sanitize(
+		preferAbbreviation && hit.abbreviation ? hit.abbreviation : hit.name,
+	);
 }
 
 // Both number formatters this reaches have grouping disabled, which keeps every
@@ -56,7 +68,7 @@ export function formatPathoscopeHitsAsTsv(
 		formatWeight(hit.pi, options),
 		String(hit.depth),
 		hit.coverage.toFixed(3),
-		sanitize(hit.name),
+		formatOtuName(hit, options),
 	]);
 
 	return toTsv(
@@ -82,7 +94,7 @@ export function formatPathoscopeIsolatesAsTsv(
 			formatWeight(isolate.pi, options),
 			String(isolate.depth),
 			isolate.coverage.toFixed(3),
-			sanitize(hit.name),
+			formatOtuName(hit, options),
 			sanitize(isolate.name),
 		]),
 	);

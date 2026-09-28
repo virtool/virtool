@@ -9,13 +9,37 @@ import {
 	updateApiKeyFn,
 } from "@server/account/functions";
 import { logoutFn } from "@server/auth/functions";
-import { requestAccountEmailChangeFn } from "@server/auth/recoveryFunctions";
+import {
+	getEmailDeliveryAvailableFn,
+	requestAccountEmailChangeFn,
+} from "@server/auth/recoveryFunctions";
 import {
 	changePasswordFn,
 	updateAccountHandleFn,
+	updateAccountSettingsFn,
 } from "@server/users/functions";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ApiKey, Permissions } from "@virtool/contracts";
+import {
+	queryOptions,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
+import type {
+	Account,
+	AccountSettings,
+	ApiKey,
+	Permissions,
+} from "@virtool/contracts";
+
+const ACCOUNT_SETTINGS_MUTATION_KEY = ["account", "settings"];
+
+/** Query options for whether this instance can send email. */
+export function emailDeliveryQueryOptions() {
+	return queryOptions({
+		queryKey: accountQueryKeys.emailDelivery(),
+		queryFn: () => getEmailDeliveryAvailableFn(),
+	});
+}
 
 /**
  * Initializes a mutator for requesting verification of a new email address.
@@ -53,6 +77,71 @@ export function useUpdateHandle() {
 		mutationFn: ({ handle }) => updateAccountHandleFn({ data: { handle } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+		},
+	});
+}
+
+/**
+ * Initializes a mutator for changing the current account's settings.
+ *
+ * The cached account takes the change at once, so a control bound to a setting
+ * does not wait on the round trip. A failed change puts the old settings back.
+ *
+ * Changes run one at a time, so a quick second change cannot reach the server
+ * first and be overwritten by the one it replaced.
+ *
+ * @returns A mutator for changing the account settings
+ */
+export function useUpdateAccountSettings() {
+	const queryClient = useQueryClient();
+
+	return useMutation<
+		AccountSettings,
+		Error,
+		Partial<AccountSettings>,
+		{ previous: Account | undefined }
+	>({
+		mutationFn: (settings) => updateAccountSettingsFn({ data: settings }),
+		mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY,
+		scope: { id: "account-settings" },
+		onMutate: async (settings) => {
+			await queryClient.cancelQueries({
+				exact: true,
+				queryKey: accountQueryKeys.all(),
+			});
+
+			const previous = queryClient.getQueryData<Account>(
+				accountQueryKeys.all(),
+			);
+
+			if (previous) {
+				queryClient.setQueryData<Account>(accountQueryKeys.all(), {
+					...previous,
+					settings: { ...previous.settings, ...settings },
+				});
+			}
+
+			return { previous };
+		},
+		onError: (_error, _settings, context) => {
+			if (context?.previous) {
+				queryClient.setQueryData(accountQueryKeys.all(), context.previous);
+			}
+		},
+		onSettled: () => {
+			// A refetch while a queued change waits would show the settings from
+			// before that change.
+			if (
+				queryClient.isMutating({ mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY }) >
+				1
+			) {
+				return;
+			}
+
+			queryClient.invalidateQueries({
+				exact: true,
+				queryKey: accountQueryKeys.all(),
+			});
 		},
 	});
 }

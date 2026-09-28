@@ -67,7 +67,7 @@ const TIMING_DUMMY_HASH = Buffer.from(
 	"utf8",
 );
 
-function getDeliveryAvailable(
+function isEmailDeliveryAvailable(
 	settings: Awaited<ReturnType<typeof getEmailSettings>>,
 ): boolean {
 	return (
@@ -112,6 +112,13 @@ function rethrowVerificationError(error: unknown): never {
 	throw error;
 }
 
+/** Report whether this instance can send email, without saying why it cannot. */
+export const getEmailDeliveryAvailableFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async () => ({
+		available: isEmailDeliveryAvailable(await getEmailSettings(db)),
+	}));
+
 /** Start a pending account-email change without replacing the current address. */
 export const requestAccountEmailChangeFn = createServerFn({ method: "POST" })
 	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.accountEmailChange)])
@@ -122,7 +129,7 @@ export const requestAccountEmailChangeFn = createServerFn({ method: "POST" })
 			return await beginEmailVerification(db, {
 				userId: context.principal.userId,
 				email: data.email,
-				deliveryAvailable: getDeliveryAvailable(settings),
+				deliveryAvailable: isEmailDeliveryAvailable(settings),
 				getVerificationUrl: (token) => getPublicLink("/verify-email", token),
 			});
 		} catch (error) {
@@ -194,7 +201,7 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 			getEmailSettings(db),
 		]);
 		await verifyPassword(handle, TIMING_DUMMY_HASH);
-		if (allowed && getDeliveryAvailable(settings)) {
+		if (allowed && isEmailDeliveryAvailable(settings)) {
 			const userId = await getSelfServiceRecoveryTarget(db, handle);
 			if (userId !== null) {
 				try {
@@ -278,7 +285,7 @@ export const issueAdministratorRecoveryFn = createServerFn({ method: "POST" })
 				userId: data.userId,
 				purpose: "administrator_recovery",
 				issuerUserId: context.principal.userId,
-				deliveryAvailable: getDeliveryAvailable(settings),
+				deliveryAvailable: isEmailDeliveryAvailable(settings),
 				getRecoveryUrl: (token) =>
 					getPublicLink("/recover", token, "administrator_recovery"),
 			});

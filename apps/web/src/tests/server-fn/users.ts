@@ -16,6 +16,7 @@ export const userServerFnMocks = {
 	createUserFn: vi.fn(),
 	updateUserFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
+	updateAccountSettingsFn: vi.fn(),
 	changePasswordFn: vi.fn(),
 	setAdministratorRoleFn: vi.fn(),
 	listAdministratorRolesFn: vi.fn(),

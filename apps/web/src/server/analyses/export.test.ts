@@ -33,19 +33,22 @@ beforeEach(async () => {
 // The OTU is seeded at the version the analysis saw, so patching takes its
 // already-at-target fast path and no history is needed here. The history-aware
 // path is covered in `format.test.ts`.
-async function seedOtu(isolates: Record<string, unknown>[]): Promise<void> {
+async function seedOtu(
+	isolates: Record<string, unknown>[],
+	abbreviation = "GLRaV3",
+): Promise<void> {
 	await db.insert(legacyOtus).values({
 		id: "otu_one",
 		data: {
 			_id: "otu_one",
-			abbreviation: "GLRaV3",
+			abbreviation,
 			name: 'Grapevine "leafroll" virus',
 			reference: { id: referenceId },
 			version: 2,
 			isolates,
 		},
 		name: 'Grapevine "leafroll" virus',
-		abbreviation: "GLRaV3",
+		abbreviation,
 		reference_id: referenceId,
 		verified: true,
 		version: 2,
@@ -70,6 +73,9 @@ const NAMED_ISOLATE = [
 	{ id: "iso_a", source_type: "isolate", source_name: "A" },
 ];
 
+const BY_NAME = { preferAbbreviation: false };
+const BY_ABBREVIATION = { preferAbbreviation: true };
+
 // A depth profile of [0, 3] has a median of 1.5 — an even-length input whose
 // two middle values differ, so a rounded median would show as 2.
 function results(): JsonObject {
@@ -92,7 +98,7 @@ describe("formatAnalysisToCsv", () => {
 	it("writes the header and one row per hit sequence", async () => {
 		await seedOtu(NAMED_ISOLATE);
 
-		const csv = await formatAnalysisToCsv(db, "pathoscope", results());
+		const csv = await formatAnalysisToCsv(db, "pathoscope", results(), BY_NAME);
 
 		expect(csv).toBe(
 			'"OTU","Isolate","Sequence","Length","Weight","Median Depth","Coverage"\r\n' +
@@ -103,7 +109,7 @@ describe("formatAnalysisToCsv", () => {
 	it("takes the median depth from the raw alignment, unrounded", async () => {
 		await seedOtu(NAMED_ISOLATE);
 
-		const csv = await formatAnalysisToCsv(db, "pathoscope", results());
+		const csv = await formatAnalysisToCsv(db, "pathoscope", results(), BY_NAME);
 
 		// 1.5, not 2 and not 0: read from the raw `align` array before formatting
 		// replaces it with simplified coordinates.
@@ -113,7 +119,7 @@ describe("formatAnalysisToCsv", () => {
 	it("names an isolate missing either source field as unnamed", async () => {
 		await seedOtu([{ id: "iso_a", source_type: "isolate", source_name: "" }]);
 
-		const csv = await formatAnalysisToCsv(db, "pathoscope", results());
+		const csv = await formatAnalysisToCsv(db, "pathoscope", results(), BY_NAME);
 
 		expect(csv).toContain('"Unnamed Isolate"');
 	});
@@ -121,7 +127,7 @@ describe("formatAnalysisToCsv", () => {
 	it("lower-cases a source type past its first character", async () => {
 		await seedOtu([{ id: "iso_a", source_type: "ISOLATE", source_name: "A" }]);
 
-		const csv = await formatAnalysisToCsv(db, "pathoscope", results());
+		const csv = await formatAnalysisToCsv(db, "pathoscope", results(), BY_NAME);
 
 		// The name is composed capitalize-style — first character upper-cased, the
 		// rest lower-cased — so a shouted source type must not survive as written.
@@ -131,18 +137,23 @@ describe("formatAnalysisToCsv", () => {
 	it("reports zero depth for a hit with an empty alignment", async () => {
 		await seedOtu(NAMED_ISOLATE);
 
-		const csv = await formatAnalysisToCsv(db, "pathoscope", {
-			...results(),
-			hits: [
-				{
-					id: "seq_a0",
-					otu: { id: "otu_one", version: 2 },
-					align: [],
-					coverage: 0.25,
-					final: { best: 12, pi: 0.5, reads: 30 },
-				},
-			],
-		});
+		const csv = await formatAnalysisToCsv(
+			db,
+			"pathoscope",
+			{
+				...results(),
+				hits: [
+					{
+						id: "seq_a0",
+						otu: { id: "otu_one", version: 2 },
+						align: [],
+						coverage: 0.25,
+						final: { best: 12, pi: 0.5, reads: 30 },
+					},
+				],
+			},
+			BY_NAME,
+		);
 
 		// The median of nothing is not a number; a download must still carry a
 		// figure rather than the string `NaN`.
@@ -150,13 +161,41 @@ describe("formatAnalysisToCsv", () => {
 		expect(csv).not.toContain("NaN");
 	});
 
+	it("names an OTU by its abbreviation when one is preferred", async () => {
+		await seedOtu(NAMED_ISOLATE);
+
+		const csv = await formatAnalysisToCsv(
+			db,
+			"pathoscope",
+			results(),
+			BY_ABBREVIATION,
+		);
+
+		expect(csv).toContain('\r\n"GLRaV3","Isolate A",');
+	});
+
+	it("names an OTU without an abbreviation by its name when one is preferred", async () => {
+		await seedOtu(NAMED_ISOLATE, "");
+
+		const csv = await formatAnalysisToCsv(
+			db,
+			"pathoscope",
+			results(),
+			BY_ABBREVIATION,
+		);
+
+		expect(csv).toContain('\r\n"Grapevine ""leafroll"" virus","Isolate A",');
+	});
+
 	it("writes only the header when nothing was hit", async () => {
 		await seedOtu(NAMED_ISOLATE);
 
-		const csv = await formatAnalysisToCsv(db, "pathoscope", {
-			read_count: 0,
-			hits: [],
-		});
+		const csv = await formatAnalysisToCsv(
+			db,
+			"pathoscope",
+			{ read_count: 0, hits: [] },
+			BY_NAME,
+		);
 
 		expect(csv).toBe(
 			'"OTU","Isolate","Sequence","Length","Weight","Median Depth","Coverage"\r\n',
@@ -173,6 +212,7 @@ describe("formatAnalysisToExcel", () => {
 			"pathoscope",
 			results(),
 			1234,
+			BY_NAME,
 		);
 
 		// An XLSX file is a zip, which always starts with the local file header.

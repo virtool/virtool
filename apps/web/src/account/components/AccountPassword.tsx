@@ -59,8 +59,8 @@ export default function AccountPassword({
 
 	return (
 		<section>
-			<SectionHeader>
-				<h2>Password</h2>
+			<SectionHeader level={3}>
+				<h3>Password</h3>
 			</SectionHeader>
 			<BoxGroup>
 				<form onSubmit={handleSubmit(onSubmit)}>
