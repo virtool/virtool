@@ -74,7 +74,7 @@ export function useSortAndFilterPathoscopeHits(
 		search: { dir, find, minCoverage, showLowOtus, sort },
 	} = useAnalysisSearch();
 
-	const fuse = createFuse(hits, ["name", "abbreviation"]);
+	const fuse = createFuse(hits, ["name", "acronym"]);
 	const normalizedFind = normalizeSearchTerm(find);
 
 	if (normalizedFind) {

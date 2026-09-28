@@ -4,7 +4,7 @@ import { createFakePermissions } from "./permissions";
 import { createFakeUser } from "./user";
 
 const defaultSettings: AccountSettings = {
-	preferAbbreviation: false,
+	preferAcronym: false,
 	quickAnalyzeWorkflow: "pathoscope",
 	showIds: true,
 	showVersions: true,

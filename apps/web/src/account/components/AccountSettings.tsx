@@ -31,11 +31,11 @@ export default function AccountSettings() {
 				<BoxGroupSection>
 					<div className="flex items-center justify-between gap-5">
 						<div>
-							<p className="font-semibold" id="preferAbbreviation-label">
-								Prefer abbreviations in Pathoscope exports
+							<p className="font-semibold" id="preferAcronym-label">
+								Prefer acronyms in Pathoscope exports
 							</p>
 							<p className="text-gray-600 text-sm">
-								Name OTUs by their abbreviation when they have one.
+								Name OTUs by their acronym when they have one.
 							</p>
 							{mutation.isError ? (
 								<p className="text-red-600 text-sm" role="alert">
@@ -44,10 +44,10 @@ export default function AccountSettings() {
 							) : null}
 						</div>
 						<Switch
-							aria-labelledby="preferAbbreviation-label"
-							checked={data.settings.preferAbbreviation}
+							aria-labelledby="preferAcronym-label"
+							checked={data.settings.preferAcronym}
 							onCheckedChange={(checked) =>
-								mutation.mutate({ preferAbbreviation: checked })
+								mutation.mutate({ preferAcronym: checked })
 							}
 						/>
 					</div>

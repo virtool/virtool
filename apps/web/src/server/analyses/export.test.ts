@@ -35,20 +35,20 @@ beforeEach(async () => {
 // path is covered in `format.test.ts`.
 async function seedOtu(
 	isolates: Record<string, unknown>[],
-	abbreviation = "GLRaV3",
+	acronym = "GLRaV3",
 ): Promise<void> {
 	await db.insert(legacyOtus).values({
 		id: "otu_one",
 		data: {
 			_id: "otu_one",
-			abbreviation,
+			abbreviation: acronym,
 			name: 'Grapevine "leafroll" virus',
 			reference: { id: referenceId },
 			version: 2,
 			isolates,
 		},
 		name: 'Grapevine "leafroll" virus',
-		abbreviation,
+		abbreviation: acronym,
 		reference_id: referenceId,
 		verified: true,
 		version: 2,
@@ -73,8 +73,8 @@ const NAMED_ISOLATE = [
 	{ id: "iso_a", source_type: "isolate", source_name: "A" },
 ];
 
-const BY_NAME = { preferAbbreviation: false };
-const BY_ABBREVIATION = { preferAbbreviation: true };
+const BY_NAME = { preferAcronym: false };
+const BY_ACRONYM = { preferAcronym: true };
 
 // A depth profile of [0, 3] has a median of 1.5 — an even-length input whose
 // two middle values differ, so a rounded median would show as 2.
@@ -161,27 +161,27 @@ describe("formatAnalysisToCsv", () => {
 		expect(csv).not.toContain("NaN");
 	});
 
-	it("names an OTU by its abbreviation when one is preferred", async () => {
+	it("names an OTU by its acronym when one is preferred", async () => {
 		await seedOtu(NAMED_ISOLATE);
 
 		const csv = await formatAnalysisToCsv(
 			db,
 			"pathoscope",
 			results(),
-			BY_ABBREVIATION,
+			BY_ACRONYM,
 		);
 
 		expect(csv).toContain('\r\n"GLRaV3","Isolate A",');
 	});
 
-	it("names an OTU without an abbreviation by its name when one is preferred", async () => {
+	it("names an OTU without an acronym by its name when one is preferred", async () => {
 		await seedOtu(NAMED_ISOLATE, "");
 
 		const csv = await formatAnalysisToCsv(
 			db,
 			"pathoscope",
 			results(),
-			BY_ABBREVIATION,
+			BY_ACRONYM,
 		);
 
 		expect(csv).toContain('\r\n"Grapevine ""leafroll"" virus","Isolate A",');
