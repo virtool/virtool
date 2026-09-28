@@ -23,6 +23,8 @@ import type {
 	Permissions,
 } from "@virtool/contracts";
 
+const ACCOUNT_SETTINGS_MUTATION_KEY = ["account", "settings"];
+
 /**
  * Initializes a mutator for requesting verification of a new email address.
  *
@@ -69,6 +71,9 @@ export function useUpdateHandle() {
  * The cached account takes the change at once, so a control bound to a setting
  * does not wait on the round trip. A failed change puts the old settings back.
  *
+ * Changes run one at a time, so a quick second change cannot reach the server
+ * first and be overwritten by the one it replaced.
+ *
  * @returns A mutator for changing the account settings
  */
 export function useUpdateAccountSettings() {
@@ -81,6 +86,8 @@ export function useUpdateAccountSettings() {
 		{ previous: Account | undefined }
 	>({
 		mutationFn: (settings) => updateAccountSettingsFn({ data: settings }),
+		mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY,
+		scope: { id: "account-settings" },
 		onMutate: async (settings) => {
 			await queryClient.cancelQueries({
 				exact: true,
@@ -106,6 +113,15 @@ export function useUpdateAccountSettings() {
 			}
 		},
 		onSettled: () => {
+			// A refetch while a queued change waits would show the settings from
+			// before that change.
+			if (
+				queryClient.isMutating({ mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY }) >
+				1
+			) {
+				return;
+			}
+
 			queryClient.invalidateQueries({
 				exact: true,
 				queryKey: accountQueryKeys.all(),

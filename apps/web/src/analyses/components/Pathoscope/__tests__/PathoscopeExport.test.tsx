@@ -224,6 +224,43 @@ describe("<PathoscopeExport />", () => {
 		await waitFor(() => expect(toggle).toBeChecked());
 	});
 
+	it("should save a second toggle only after the first settles", async () => {
+		const account = createFakeAccount();
+		mockGetAccount(account);
+
+		let resolveFirst: (value: typeof account.settings) => void = () => {};
+		userServerFnMocks.updateAccountSettingsFn
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						resolveFirst = resolve;
+					}),
+			)
+			.mockResolvedValueOnce(account.settings);
+
+		renderExport();
+		await openMenu();
+
+		const toggle = await screen.findByRole("menuitemcheckbox", {
+			name: "Prefer abbreviation",
+		});
+
+		await userEvent.click(toggle);
+		await userEvent.click(toggle);
+
+		expect(toggle).not.toBeChecked();
+		expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledTimes(1);
+
+		resolveFirst({ ...account.settings, preferAbbreviation: true });
+
+		await waitFor(() =>
+			expect(
+				userServerFnMocks.updateAccountSettingsFn,
+			).toHaveBeenLastCalledWith({ data: { preferAbbreviation: false } }),
+		);
+		await waitFor(() => expect(toggle).not.toBeChecked());
+	});
+
 	// The menu closes on a copy, so the trigger is the only place left to say it
 	// happened.
 	it("should report a copy on the trigger", async () => {
