@@ -164,9 +164,13 @@ export async function createPendingInvitation(
 		});
 
 		await emit("users", result.userId, "create");
+		const [user, invitation] = await Promise.all([
+			getUser(db, result.userId),
+			getInvitation(db, result.userId),
+		]);
 		return {
-			user: await getUser(db, result.userId),
-			invitation: await getInvitation(db, result.userId),
+			user,
+			invitation,
 			setupToken:
 				result.issued.delivery === "copy_only" ? result.issued.token : null,
 		};
@@ -242,9 +246,13 @@ export async function regenerateInvitation(
 		);
 	});
 
+	const [user, invitation] = await Promise.all([
+		getUser(db, userId),
+		getInvitation(db, userId),
+	]);
 	return {
-		user: await getUser(db, userId),
-		invitation: await getInvitation(db, userId),
+		user,
+		invitation,
 		setupToken: issued.delivery === "copy_only" ? issued.token : null,
 	};
 }
