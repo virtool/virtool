@@ -49,6 +49,9 @@ export type User = UserNested & {
 
 	/** The group whose rights new resources of theirs inherit */
 	primaryGroup: GroupMinimal | null;
+
+	/** Whether they have confirmed a TOTP enrollment */
+	twoFactorEnabled: boolean;
 };
 
 /** The workflow the quick-analyze dialog runs by default. */

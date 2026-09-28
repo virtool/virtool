@@ -8,6 +8,7 @@ import {
 	type BrowserPrincipal,
 	FORBIDDEN_ERROR_NAME,
 	hasSufficientAdminRole,
+	isMfaEnrollmentPrincipal,
 	isPasswordResetPrincipal,
 	type PasswordResetPrincipal,
 	type SetupPrincipal,
@@ -17,6 +18,7 @@ import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
 import { db } from "../composition";
 import {
+	MfaEnrollmentRequiredError,
 	PasswordResetRequiredError,
 	resolveRestrictedSetup,
 	SetupRequiredError,
@@ -105,6 +107,10 @@ export const requireBrowserPrincipal = createServerOnlyFn(
 		if (isPasswordResetPrincipal(principal)) {
 			setResponseStatus(403);
 			throw new PasswordResetRequiredError();
+		}
+		if (isMfaEnrollmentPrincipal(principal)) {
+			setResponseStatus(403);
+			throw new MfaEnrollmentRequiredError();
 		}
 		return principal;
 	},
@@ -323,6 +329,12 @@ const resolvePrincipal = createServerOnlyFn(
 			) {
 				setResponseStatus(403);
 				throw new PasswordResetRequiredError();
+			}
+			// Enrollment runs through Better Auth's own endpoints, so no server
+			// function is reachable while it is outstanding.
+			if (isMfaEnrollmentPrincipal(browser)) {
+				setResponseStatus(403);
+				throw new MfaEnrollmentRequiredError();
 			}
 			return { principal: browser };
 		}

@@ -18,6 +18,7 @@ export const userServerFnMocks = {
 	createUserFn: vi.fn(),
 	regenerateInvitationFn: vi.fn(),
 	deletePendingUserFn: vi.fn(),
+	resetUserTotpFn: vi.fn(),
 	updateUserFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
 	updateAccountSettingsFn: vi.fn(),
@@ -160,6 +161,15 @@ export function mockRegenerateInvitation(user: User, email: string): Mock {
 export function mockDeletePendingUser(): Mock {
 	userServerFnMocks.deletePendingUserFn.mockResolvedValue(null);
 	return userServerFnMocks.deletePendingUserFn;
+}
+
+/** Sets up resetUserTotp to resolve with the user, their factor removed. */
+export function mockResetUserTotp(user: User): Mock {
+	userServerFnMocks.resetUserTotpFn.mockResolvedValue({
+		...user,
+		twoFactorEnabled: false,
+	});
+	return userServerFnMocks.resetUserTotpFn;
 }
 
 /** Sets up createUser to resolve with the given user (or reject on a 4xx code). */

@@ -10,6 +10,7 @@ import {
 	authVerifications,
 } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
+import { getSettings } from "@virtool/data/settings/data";
 import { type BetterAuthPlugin, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
@@ -380,7 +381,20 @@ const FORCED_RESET_ALLOWED_PATHS = new Set([
 	`${AUTH_BASE_PATH}/sign-out`,
 ]);
 
-/** Wrap Better Auth's raw handler with Virtool's forced-reset restriction. */
+// Enrollment is Better Auth's own `enable` then `verify-totp`. The first
+// successful verification sets `twoFactorEnabled`, which lifts the
+// restriction on the next request.
+const MFA_ENROLLMENT_ALLOWED_PATHS = new Set([
+	`${AUTH_BASE_PATH}/get-session`,
+	`${AUTH_BASE_PATH}/sign-out`,
+	`${AUTH_BASE_PATH}/two-factor/enable`,
+	`${AUTH_BASE_PATH}/two-factor/verify-totp`,
+]);
+
+/**
+ * Wrap Better Auth's raw handler with Virtool's forced-reset and required-MFA
+ * restrictions.
+ */
 export function createAuthRequestHandler(
 	db: Db,
 	auth: ReturnType<typeof createAuth>,
@@ -397,7 +411,10 @@ export function createAuthRequestHandler(
 				const userId = Number(session.user.id);
 				const [user] = Number.isSafeInteger(userId)
 					? await db
-							.select({ forceReset: users.forceReset })
+							.select({
+								forceReset: users.forceReset,
+								twoFactorEnabled: users.twoFactorEnabled,
+							})
 							.from(users)
 							.where(eq(users.id, userId))
 							.limit(1)
@@ -408,6 +425,20 @@ export function createAuthRequestHandler(
 						{
 							code: "PASSWORD_RESET_REQUIRED",
 							message: "Password reset required",
+						},
+						{ status: 403 },
+					);
+				}
+
+				if (
+					!user.twoFactorEnabled &&
+					!MFA_ENROLLMENT_ALLOWED_PATHS.has(pathname) &&
+					(await getSettings(db)).mfaPolicy === "required"
+				) {
+					return Response.json(
+						{
+							code: "MFA_ENROLLMENT_REQUIRED",
+							message: "TOTP enrollment required",
 						},
 						{ status: 403 },
 					);

@@ -3,8 +3,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
 import { authSessions } from "../db/schema/auth";
 import { sessions } from "../db/schema/sessions";
+import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedSettings } from "../settings/test/fixtures";
 import {
 	createAuthenticatedSession,
 	deleteActiveBrowserSession,
@@ -28,6 +30,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(settings);
 	await db.delete(authSessions);
 	await db.delete(users);
 });
@@ -60,6 +63,27 @@ describe("resolveBrowserSession", () => {
 		const live = await seedSession(db, userId);
 		await db.update(users).set({ active: false }).where(eq(users.id, userId));
 		expect(await resolveBrowserSession(db, live.sessionId, userId)).toBeNull();
+	});
+
+	it("restricts an unenrolled user only under the required MFA policy", async () => {
+		const userId = await seedUser(db);
+		const session = await seedSession(db, userId);
+
+		async function isRestricted() {
+			return (await resolveBrowserSession(db, session.sessionId, userId))
+				?.mfaEnrollmentRequired;
+		}
+
+		expect(await isRestricted()).toBe(false);
+
+		await seedSettings(db, { mfaPolicy: "required" });
+		expect(await isRestricted()).toBe(true);
+
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		expect(await isRestricted()).toBe(false);
 	});
 });
 

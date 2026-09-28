@@ -1,5 +1,9 @@
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import {
+	authAccounts,
+	authSessions,
+	authTwoFactors,
+} from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -214,5 +218,83 @@ describe("changePassword", () => {
 				(await readUser(userId))?.password as Buffer,
 			),
 		).toBe(true);
+	});
+});
+
+describe("resetUserTotpFn", () => {
+	async function signInAdministrator(role: "full" | "users" = "full") {
+		const { session, userId } = await signIn();
+		await db
+			.update(users)
+			.set({ administratorRole: role })
+			.where(eq(users.id, userId));
+		return { session, userId };
+	}
+
+	async function seedEnrolledUser() {
+		const userId = await seedUser(db, { handle: "bob" });
+		await db.insert(authTwoFactors).values({
+			backupCodes: "encrypted",
+			secret: "secret",
+			userId,
+		});
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		await seedSession(db, userId);
+		return userId;
+	}
+
+	it("removes the target's factor and sessions and keeps the caller's", async () => {
+		const { session } = await signInAdministrator();
+		const targetId = await seedEnrolledUser();
+
+		const user = await call("resetUserTotpFn", { userId: targetId });
+
+		expect(user).toMatchObject({ id: targetId, twoFactorEnabled: false });
+		expect(
+			await db
+				.select()
+				.from(authTwoFactors)
+				.where(eq(authTwoFactors.userId, targetId)),
+		).toHaveLength(0);
+		const remaining = await db.select().from(authSessions);
+		expect(remaining.map((row) => row.id)).toEqual([session.sessionId]);
+		expect(emit).toHaveBeenCalledWith("users", targetId, "update");
+	});
+
+	it("refuses the caller's own account", async () => {
+		const { userId } = await signInAdministrator();
+
+		await expect(call("resetUserTotpFn", { userId })).rejects.toThrow(
+			"Cannot reset own two-factor authentication",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(400);
+	});
+
+	it("refuses an administrator without the full role", async () => {
+		await signInAdministrator("users");
+		const targetId = await seedEnrolledUser();
+
+		await expect(call("resetUserTotpFn", { userId: targetId })).rejects.toThrow(
+			"Forbidden",
+		);
+		expect(
+			await db
+				.select()
+				.from(authTwoFactors)
+				.where(eq(authTwoFactors.userId, targetId)),
+		).toHaveLength(1);
+	});
+
+	it("responds with 409 for a user with no factor", async () => {
+		await signInAdministrator();
+		const targetId = await seedUser(db, { handle: "bob" });
+
+		await expect(call("resetUserTotpFn", { userId: targetId })).rejects.toThrow(
+			"User has no two-factor authentication.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
 	});
 });

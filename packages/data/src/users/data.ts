@@ -310,6 +310,7 @@ function buildUser(row: UserRow, memberships: GroupMembershipRow[]): User {
 		primaryGroup: primary
 			? { id: primary.id, legacyId: primary.legacyId, name: primary.name }
 			: null,
+		twoFactorEnabled: row.twoFactorEnabled ?? false,
 	};
 }
 

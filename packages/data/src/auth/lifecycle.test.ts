@@ -1,7 +1,7 @@
 import { eq, isNull } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
-import { authAccounts, authTwoFactors } from "../db/schema/auth";
+import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { settings } from "../db/schema/settings";
 import { setupSessions, setupTokens } from "../db/schema/setup";
@@ -14,13 +14,13 @@ import {
 	claimEmailRemediationPromotion,
 	completeAccountSetup,
 	completeEmailRemediation,
-	completeTotpEnrollment,
 	EmailInUseError,
 	EmailRemediationRateLimitedError,
 	getEmailRemediationState,
 	normalizeEmail,
 	prepareEmailRemediation,
 	resendEmailRemediation,
+	resetUserTotp,
 	SetupNotEligibleError,
 	startEmailRemediation,
 	TotpNotEnrolledError,
@@ -772,63 +772,59 @@ describe("email remediation journey", () => {
 	});
 });
 
-describe("completeTotpEnrollment", () => {
-	async function seedTwoFactor(userId: number, verified: boolean) {
+describe("resetUserTotp", () => {
+	async function seedTwoFactor(userId: number) {
 		await db.insert(authTwoFactors).values({
 			backupCodes: "encrypted",
 			secret: "secret",
 			userId,
-			verified,
+		});
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+	}
+
+	async function seedAuthSession(userId: number) {
+		const now = new Date();
+		await db.insert(authSessions).values({
+			createdAt: now,
+			expiresAt: new Date(now.getTime() + 60_000),
+			token: `token-${userId}-${now.getTime()}-${Math.random()}`,
+			updatedAt: now,
+			userId,
 		});
 	}
 
-	it("releases the restriction once a verified enrollment exists", async () => {
+	it("removes the factor and every session of the user", async () => {
 		const userId = await seedUser(db);
-		await seedTwoFactor(userId, true);
-		await seedSetupSession(db, userId, "totp_enrollment");
+		const otherId = await seedUser(db, { handle: "bob" });
+		await seedTwoFactor(userId);
+		await seedTwoFactor(otherId);
+		await Promise.all([
+			seedAuthSession(userId),
+			seedAuthSession(userId),
+			seedAuthSession(otherId),
+		]);
 
-		const user = await completeTotpEnrollment(db, { userId });
+		const user = await resetUserTotp(db, userId);
 
 		expect(user.id).toBe(userId);
-		expect((await readUser(userId)).twoFactorEnabled).toBe(true);
-		expect(await db.select().from(setupSessions)).toHaveLength(0);
+		expect((await readUser(userId)).twoFactorEnabled).toBe(false);
+		const factors = await db.select().from(authTwoFactors);
+		expect(factors.map((row) => row.userId)).toEqual([otherId]);
+		const remaining = await db.select().from(authSessions);
+		expect(remaining.map((row) => row.userId)).toEqual([otherId]);
 	});
 
-	it("refuses an unverified enrollment and keeps the restriction", async () => {
+	it("refuses a user with no factor and keeps their sessions", async () => {
 		const userId = await seedUser(db);
-		await seedTwoFactor(userId, false);
-		await seedSetupSession(db, userId, "totp_enrollment");
+		await seedAuthSession(userId);
 
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
+		await expect(resetUserTotp(db, userId)).rejects.toBeInstanceOf(
 			TotpNotEnrolledError,
 		);
 
-		expect(await db.select().from(setupSessions)).toHaveLength(1);
-	});
-
-	it("refuses when nothing was enrolled at all", async () => {
-		const userId = await seedUser(db);
-
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
-			TotpNotEnrolledError,
-		);
-	});
-
-	it("refuses a deactivated user", async () => {
-		const userId = await seedUser(db, { active: false });
-		await seedTwoFactor(userId, true);
-
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
-			TotpNotEnrolledError,
-		);
-	});
-
-	it("refuses a pending account", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		await seedTwoFactor(userId, true);
-
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
-			TotpNotEnrolledError,
-		);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
 	});
 });

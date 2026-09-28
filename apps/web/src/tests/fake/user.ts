@@ -41,6 +41,7 @@ export function createFakeUser(overrides?: Partial<User>): User {
 		permissions: createFakePermissions(permissions),
 		primaryGroup:
 			primaryGroup === undefined ? (groups[0] ?? null) : primaryGroup,
+		twoFactorEnabled: false,
 		...rest,
 	};
 }

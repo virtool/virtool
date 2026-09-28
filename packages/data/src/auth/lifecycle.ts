@@ -49,7 +49,7 @@ export { EmailInUseError } from "./email";
 /** Thrown when a remediation message is requested before the resend window. */
 export class EmailRemediationRateLimitedError extends AppError {}
 
-/** Thrown when TOTP enrollment has not actually happened. */
+/** Thrown when a user has no TOTP enrollment to act on. */
 export class TotpNotEnrolledError extends AppError {}
 
 export { normalizeEmail } from "./email";
@@ -915,56 +915,34 @@ export async function claimEmailRemediationPromotion(
 	});
 }
 
-/** What {@link completeTotpEnrollment} accepts. */
-export type CompleteTotpEnrollmentInput = {
-	/** The user the restricted session names. */
-	userId: number;
-};
-
 /**
- * Release a user from required-MFA restriction, once they have actually
- * enrolled.
+ * Remove a user's TOTP enrollment and recovery codes, and end their sessions.
  *
- * This confirms rather than performs: Better Auth's two-factor endpoints write
- * `auth_two_factors` and set `users.two_factor_enabled`, and only a *verified*
- * row counts — an enrollment that minted a secret but never had a code checked
- * against it is not enrollment.
+ * The administrator path for a user who has lost their authenticator and their
+ * recovery codes. The factor is deleted, never replaced, so no administrator
+ * ever holds it. Deleting every session means the user signs in again, and
+ * under the `required` MFA policy that sign-in is restricted to enrollment.
  *
- * The check and the revocation are one transaction, so a caller cannot lose
- * the restriction against an enrollment that then rolls back.
- *
- * There is no setup token. The holder of a required-MFA restriction got it by
- * authenticating, not by following a link, so there is nothing to spend.
+ * Throws {@link TotpNotEnrolledError} when the user has nothing to reset.
  */
-export async function completeTotpEnrollment(
-	db: Db,
-	{ userId }: CompleteTotpEnrollmentInput,
-): Promise<User> {
+export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 	await db.transaction(async (tx) => {
-		const [row] = await tx
-			.select({ id: authTwoFactors.id })
-			.from(authTwoFactors)
-			.innerJoin(users, eq(users.id, authTwoFactors.userId))
-			.where(
-				and(
-					eq(authTwoFactors.userId, userId),
-					eq(authTwoFactors.verified, true),
-					eq(users.active, true),
-					eq(users.lifecycleState, "normal"),
-				),
-			)
-			.limit(1);
+		const removed = await tx
+			.delete(authTwoFactors)
+			.where(eq(authTwoFactors.userId, userId))
+			.returning({ id: authTwoFactors.id });
 
-		if (!row) {
+		const [user] = await tx
+			.update(users)
+			.set({ twoFactorEnabled: false })
+			.where(eq(users.id, userId))
+			.returning({ id: users.id });
+
+		if (!user || removed.length === 0) {
 			throw new TotpNotEnrolledError();
 		}
 
-		await tx
-			.update(users)
-			.set({ twoFactorEnabled: true })
-			.where(eq(users.id, userId));
-
-		await invalidateUserSetupSessions(tx, userId);
+		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
 	});
 
 	await emit("users", userId, "update");

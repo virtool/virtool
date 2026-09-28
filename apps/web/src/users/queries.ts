@@ -9,6 +9,7 @@ import {
 	getUserFn,
 	listUsersFn,
 	regenerateInvitationFn,
+	resetUserTotpFn,
 	searchUsersFn,
 	setAdministratorRoleFn,
 	updateUserFn,
@@ -282,6 +283,20 @@ export function useSetAdministratorRole() {
 		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: userQueryKeys.all() });
+		},
+	});
+}
+
+/** Remove a user's TOTP enrollment and end their sessions. */
+export function useResetUserTotp() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation((userId: number) =>
+		resetUserTotpFn({ data: { userId } }),
+	);
+	return useMutation({
+		mutationFn,
+		onSuccess: (result) => {
+			queryClient.setQueryData(userQueryKeys.detail(result.id), result);
 		},
 	});
 }

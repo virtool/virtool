@@ -57,13 +57,19 @@ export async function verifyBrowserPrincipal(
 		return null;
 	}
 
-	return {
-		kind: row.forceReset ? "password_reset" : "browser",
+	const identity = {
 		userId,
 		sessionId,
 		createdAt: row.createdAt,
-		sessionStore: "better_auth",
+		sessionStore: "better_auth" as const,
 	};
+	if (row.forceReset) {
+		return { kind: "password_reset", ...identity };
+	}
+	if (row.mfaEnrollmentRequired) {
+		return { kind: "mfa_enrollment", ...identity };
+	}
+	return { kind: "browser", ...identity };
 }
 
 /** Resolve a retained legacy browser or forced-reset session. */

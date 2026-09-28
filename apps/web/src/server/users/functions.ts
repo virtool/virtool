@@ -14,6 +14,10 @@ import {
 	normalizeEmail,
 } from "@virtool/data/auth/email";
 import {
+	resetUserTotp,
+	TotpNotEnrolledError,
+} from "@virtool/data/auth/lifecycle";
+import {
 	getEmailSettings,
 	resolveEmailDelivery,
 } from "@virtool/data/email/settings";
@@ -176,6 +180,10 @@ function rethrowAsHttp(err: unknown): never {
 	if (err instanceof PendingAccountError) {
 		setResponseStatus(409);
 		throw new ClientError("User has not completed account setup.", 409);
+	}
+	if (err instanceof TotpNotEnrolledError) {
+		setResponseStatus(409);
+		throw new ClientError("User has no two-factor authentication.", 409);
 	}
 	if (
 		err instanceof InvitationNotEligibleError ||
@@ -490,6 +498,46 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 		try {
 			return await setAdministratorRole(db, data.userId, data.role);
 		} catch (err) {
+			throw rethrowAsHttp(err);
+		}
+	});
+
+/**
+ * Remove a user's TOTP enrollment and recovery codes, and end their sessions.
+ *
+ * For a user who has lost both their authenticator and their recovery codes.
+ * An administrator resets their own factor through the account settings
+ * instead, so this refuses the caller's own account.
+ */
+export const resetUserTotpFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.totpReset),
+	])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		if (context.principal.userId === data.userId) {
+			setResponseStatus(400);
+			throw new ClientError("Cannot reset own two-factor authentication", 400);
+		}
+
+		try {
+			const user = await resetUserTotp(db, data.userId);
+			recordAccountLifecycle({
+				operation: "totp_reset",
+				outcome: "success",
+				message: "user totp reset",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return user;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "totp_reset",
+				outcome: "failure",
+				message: "user totp reset failed",
+				userId: data.userId,
+			});
 			throw rethrowAsHttp(err);
 		}
 	});
