@@ -32,6 +32,7 @@ import {
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { db, keyring } from "../composition";
 import { config } from "../config";
 import { ClientError } from "../errors";
@@ -106,17 +107,6 @@ const emailRemediationSchema = z.object({
 const emailRemediationTokenSchema = z.object({
 	token: z.string().regex(/^[0-9a-f]{64}$/),
 });
-
-async function recordLifecycle(
-	input: Parameters<
-		typeof import("../accountLifecycleTelemetry").recordAccountLifecycle
-	>[0],
-): Promise<void> {
-	const { recordAccountLifecycle } = await import(
-		"../accountLifecycleTelemetry"
-	);
-	recordAccountLifecycle(input);
-}
 
 function rethrowAsHttp(err: unknown): never {
 	if (
@@ -253,7 +243,7 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 					`${config.publicOrigin}/verify-email#token=${token}`,
 			});
 			await signInUsername(data.handle, data.password);
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "bootstrap",
 				outcome: "success",
 				message: "first instance administrator created",
@@ -262,7 +252,7 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 			setResponseStatus(201);
 			return result;
 		} catch (err) {
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "bootstrap",
 				outcome: "failure",
 				message: "first instance administrator creation failed",
@@ -298,7 +288,7 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 					`${config.publicOrigin}/verify-email#token=${token}`,
 			});
 			await signInUsername(completed.user.handle, data.password);
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_accept",
 				outcome: "success",
 				message: "account invitation accepted",
@@ -311,7 +301,7 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 				nextRoute: "/" as const,
 			};
 		} catch (err) {
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_accept",
 				outcome: "failure",
 				message: "account invitation acceptance failed",

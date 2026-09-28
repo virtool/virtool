@@ -44,6 +44,7 @@ import {
 	regenerateInvitation,
 } from "@virtool/data/users/invitations";
 import { z } from "zod";
+import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { realCookies } from "../auth/cookies";
 import { establishLegacySession } from "../auth/core";
 import { PROTECTED_OPERATIONS } from "../auth/freshness";
@@ -194,17 +195,6 @@ async function getDeliveryAvailable(): Promise<boolean> {
 	);
 }
 
-async function recordLifecycle(
-	input: Parameters<
-		typeof import("../accountLifecycleTelemetry").recordAccountLifecycle
-	>[0],
-): Promise<void> {
-	const { recordAccountLifecycle } = await import(
-		"../accountLifecycleTelemetry"
-	);
-	recordAccountLifecycle(input);
-}
-
 function getSetupUrl(token: string): string {
 	return `${config.publicOrigin}/account-setup#token=${token}`;
 }
@@ -299,7 +289,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 				issuerUserId: context.principal.userId,
 				getSetupUrl,
 			});
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_create",
 				outcome: result.invitation.delivery,
 				message: "account invitation created",
@@ -310,7 +300,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 			setResponseStatus(201);
 			return result;
 		} catch (err) {
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_create",
 				outcome: "failure",
 				message: "account invitation creation failed",
@@ -349,7 +339,7 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 				deliveryAvailable: await getDeliveryAvailable(),
 				getSetupUrl,
 			});
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_regenerate",
 				outcome: result.invitation.delivery,
 				message: "account invitation regenerated",
@@ -359,7 +349,7 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 			});
 			return result;
 		} catch (err) {
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_regenerate",
 				outcome: "failure",
 				message: "account invitation regeneration failed",
@@ -377,7 +367,7 @@ export const deletePendingUserFn = createServerFn({ method: "POST" })
 			const role = await getAdministratorRole(db, data.userId);
 			await requireInvitationAuthority(context.principal, role);
 			await deletePendingUser(db, data.userId);
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_delete",
 				outcome: "success",
 				message: "pending user deleted",
@@ -386,7 +376,7 @@ export const deletePendingUserFn = createServerFn({ method: "POST" })
 			});
 			return null;
 		} catch (err) {
-			await recordLifecycle({
+			recordAccountLifecycle({
 				operation: "invitation_delete",
 				outcome: "failure",
 				message: "pending user deletion failed",
