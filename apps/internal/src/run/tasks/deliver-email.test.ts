@@ -678,6 +678,38 @@ describe("deliverEmailTask", () => {
 		});
 	});
 
+	it("records a provider rejection that lands after the run is aborted", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await queue({ idempotencyKey: "a" });
+		const controller = new AbortController();
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockImplementation(() => {
+				controller.abort();
+
+				return Promise.resolve(providerError(422, "validation_error"));
+			}),
+		);
+
+		const task = await claimTask(db, deliverEmailTask);
+
+		await runTask({
+			db,
+			def: deliverEmailTask,
+			task,
+			ctx,
+			logger,
+			signal: controller.signal,
+		});
+
+		expect(recorded.attempts).toEqual([["email_verification", "permanent"]]);
+		expect(await readOutboxRow(outboxId)).toMatchObject({
+			status: "failed",
+		});
+	});
+
 	it("fails queued rows with unsupported template versions", async () => {
 		await seedEmailSettings();
 

@@ -158,10 +158,9 @@ async function deliverOne(
 		return "stop";
 	}
 
-	// The provider client reports an aborted fetch as an ordinary retryable
-	// error. A shutdown is not a provider attempt, so the row goes back
-	// unchanged instead of spending an attempt, or its last one.
-	if (outcome.outcome !== "accepted" && signal.aborted) {
+	// A shutdown is not a provider attempt, so the row goes back unchanged
+	// instead of spending an attempt, or its last one.
+	if (outcome.outcome === "retryable" && outcome.aborted) {
 		await releaseEmailClaim(ctx.db, target);
 		logger.info({ ...base }, "email delivery aborted, claim released");
 
