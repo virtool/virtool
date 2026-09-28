@@ -158,6 +158,15 @@ async function deliverOne(
 		return "stop";
 	}
 
+	// A shutdown is not a provider attempt, so the row goes back unchanged
+	// instead of spending an attempt, or its last one.
+	if (outcome.outcome === "retryable" && outcome.aborted) {
+		await releaseEmailClaim(ctx.db, target);
+		logger.info({ ...base }, "email delivery aborted, claim released");
+
+		return "stop";
+	}
+
 	switch (outcome.outcome) {
 		case "accepted": {
 			const held = await markEmailAccepted(
