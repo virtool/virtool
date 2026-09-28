@@ -69,6 +69,8 @@ WorkingDirectory=${escapeUnitPath(options.primaryWorktree)}
 Environment=${quoteUnitValue(`PATH=${options.path}`)}
 ExecStart=${exec}
 Restart=on-failure
+RestartForceExitStatus=75
+SuccessExitStatus=75
 RestartSec=1s
 KillMode=control-group
 UMask=0077

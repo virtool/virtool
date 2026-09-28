@@ -60,6 +60,7 @@ function emptySnapshot(repositoryId: string, concurrency: number): Snapshot {
 			buildQueue: [],
 			capacity: concurrency,
 			concurrency,
+			errors: {},
 			lastError: null,
 			queues: {},
 		},
