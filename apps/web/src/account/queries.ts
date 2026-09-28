@@ -9,13 +9,21 @@ import {
 	updateApiKeyFn,
 } from "@server/account/functions";
 import { logoutFn } from "@server/auth/functions";
-import { requestAccountEmailChangeFn } from "@server/auth/recoveryFunctions";
+import {
+	getEmailDeliveryAvailableFn,
+	requestAccountEmailChangeFn,
+} from "@server/auth/recoveryFunctions";
 import {
 	changePasswordFn,
 	updateAccountHandleFn,
 	updateAccountSettingsFn,
 } from "@server/users/functions";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	queryOptions,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import type {
 	Account,
 	AccountSettings,
@@ -24,6 +32,14 @@ import type {
 } from "@virtool/contracts";
 
 const ACCOUNT_SETTINGS_MUTATION_KEY = ["account", "settings"];
+
+/** Query options for whether this instance can send email. */
+export function emailDeliveryQueryOptions() {
+	return queryOptions({
+		queryKey: accountQueryKeys.emailDelivery(),
+		queryFn: () => getEmailDeliveryAvailableFn(),
+	});
+}
 
 /**
  * Initializes a mutator for requesting verification of a new email address.

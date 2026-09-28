@@ -1,5 +1,5 @@
+import AccountSidebar from "@account/components/AccountSidebar";
 import { ContainerNarrow, ContainerWide } from "@base/Container";
-import { NavTab, NavTabs } from "@base/Nav";
 import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
@@ -13,15 +13,12 @@ function AccountLayout() {
 			<ViewHeader title="Account">
 				<ViewHeaderTitle>Account</ViewHeaderTitle>
 			</ViewHeader>
-
-			<NavTabs>
-				<NavTab to="/account/profile">Profile</NavTab>
-				<NavTab to="/account/api">API</NavTab>
-			</NavTabs>
-
-			<ContainerNarrow>
-				<Outlet />
-			</ContainerNarrow>
+			<div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-start lg:gap-10">
+				<AccountSidebar />
+				<ContainerNarrow>
+					<Outlet />
+				</ContainerNarrow>
+			</div>
 		</ContainerWide>
 	);
 }

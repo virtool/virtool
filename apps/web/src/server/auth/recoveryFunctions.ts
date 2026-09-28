@@ -112,6 +112,13 @@ function rethrowVerificationError(error: unknown): never {
 	throw error;
 }
 
+/** Report whether this instance can send email, without saying why it cannot. */
+export const getEmailDeliveryAvailableFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async () => ({
+		available: getDeliveryAvailable(await getEmailSettings(db)),
+	}));
+
 /** Start a pending account-email change without replacing the current address. */
 export const requestAccountEmailChangeFn = createServerFn({ method: "POST" })
 	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.accountEmailChange)])

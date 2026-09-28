@@ -1,5 +1,5 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import { InputError, InputGroup, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
@@ -34,14 +34,16 @@ export default function AccountHandle({ handle }: HandleProps) {
 
 	return (
 		<section>
-			<SectionHeader>
-				<h2>Handle</h2>
+			<SectionHeader level={3}>
+				<h3>
+					<label htmlFor="handle">Handle</label>
+				</h3>
+				<p>The name other users see on your work in Virtool.</p>
 			</SectionHeader>
 			<BoxGroup>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<BoxGroupSection>
 						<InputGroup>
-							<InputLabel htmlFor="handle">Username</InputLabel>
 							<InputSimple
 								id="handle"
 								autoComplete="off"
