@@ -47,15 +47,15 @@ function calculateMedianDepths(hits: unknown[]): Map<string, number> {
 
 /** How an exported spreadsheet names its OTUs. */
 type ExportOptions = {
-	/** Whether to name an OTU by its abbreviation, when it has one */
-	preferAbbreviation: boolean;
+	/** Whether to name an OTU by its acronym, when it has one */
+	preferAcronym: boolean;
 };
 
 async function composeRows(
 	db: DbOrTx,
 	workflow: string,
 	results: JsonObject,
-	{ preferAbbreviation }: ExportOptions,
+	{ preferAcronym }: ExportOptions,
 ): Promise<Row[]> {
 	const depths = calculateMedianDepths(asArray(results.hits));
 	const formatted = await formatAnalysis(db, workflow, results);
@@ -69,9 +69,8 @@ async function composeRows(
 			continue;
 		}
 
-		const abbreviation = asText(otu.abbreviation);
-		const otuName =
-			preferAbbreviation && abbreviation ? abbreviation : asText(otu.name);
+		const acronym = asText(otu.acronym);
+		const otuName = preferAcronym && acronym ? acronym : asText(otu.name);
 
 		for (const isolateEntry of asArray(otu.isolates)) {
 			const isolate = asRecord(isolateEntry);

@@ -90,7 +90,7 @@ describe("read budgets", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Budget", abbreviation: "", schema: [] },
+			{ name: "Budget", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -102,7 +102,7 @@ describe("read budgets", () => {
 		await createOtu(
 			db,
 			referenceId,
-			{ name: "Budget", abbreviation: "", schema: [] },
+			{ name: "Budget", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -119,7 +119,7 @@ describe("read budgets", () => {
 		await createOtu(
 			db,
 			referenceId,
-			{ name: "Budget", abbreviation: "", schema: [] },
+			{ name: "Budget", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -136,7 +136,7 @@ describe("write budgets", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Budget", abbreviation: "", schema: [] },
+			{ name: "Budget", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -154,7 +154,7 @@ describe("write budgets", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Budget", abbreviation: "", schema: [] },
+			{ name: "Budget", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -201,7 +201,7 @@ describe("write budgets", () => {
 			referenceId,
 			{
 				name: "Segmented",
-				abbreviation: "",
+				acronym: "",
 				schema: [{ molecule: null, name: "DNA A", required: true }],
 			},
 			userId,
@@ -249,7 +249,7 @@ describe("write budgets", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Budget", abbreviation: "", schema: [] },
+			{ name: "Budget", acronym: "", schema: [] },
 			userId,
 		);
 

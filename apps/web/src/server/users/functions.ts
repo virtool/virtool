@@ -102,7 +102,7 @@ const searchUsersSchema = z
 
 const accountSettingsSchema = z
 	.object({
-		preferAbbreviation: z.boolean(),
+		preferAcronym: z.boolean(),
 		quickAnalyzeWorkflow: z.enum(["nuvs", "pathoscope"]),
 		showIds: z.boolean(),
 		showVersions: z.boolean(),

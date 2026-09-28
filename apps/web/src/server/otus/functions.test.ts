@@ -137,7 +137,7 @@ describe("reference visibility", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Alpha", abbreviation: "", schema: [] },
+			{ name: "Alpha", acronym: "", schema: [] },
 			ownerId,
 		);
 
@@ -178,7 +178,7 @@ describe("reference visibility", () => {
 			call("createOtuFn", {
 				referenceId,
 				name: "Beta",
-				abbreviation: "",
+				acronym: "",
 				schema: [],
 			}),
 		).rejects.toThrow("Reference not found.");
@@ -229,7 +229,7 @@ describe("authorizeOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Alpha", abbreviation: "", schema: [] },
+			{ name: "Alpha", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -245,7 +245,7 @@ describe("authorizeOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Alpha", abbreviation: "", schema: [] },
+			{ name: "Alpha", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -261,7 +261,7 @@ describe("authorizeOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Alpha", abbreviation: "", schema: [] },
+			{ name: "Alpha", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -281,7 +281,7 @@ describe("authorizeOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Alpha", abbreviation: "", schema: [] },
+			{ name: "Alpha", acronym: "", schema: [] },
 			userId,
 		);
 
@@ -299,7 +299,7 @@ describe("authorizeOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Alpha", abbreviation: "", schema: [] },
+			{ name: "Alpha", acronym: "", schema: [] },
 			userId,
 		);
 		const isolate = await createIsolate(
@@ -332,7 +332,7 @@ describe("authorizeOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Alpha", abbreviation: "", schema: [] },
+			{ name: "Alpha", acronym: "", schema: [] },
 			userId,
 		);
 		const isolate = await createIsolate(

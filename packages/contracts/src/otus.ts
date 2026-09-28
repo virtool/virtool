@@ -236,8 +236,8 @@ export type OtuHistory = HistoryNested & {
 
 /** An OTU as it appears in a search-result list. */
 export type OtuMinimal = OtuNested & {
-	/** The OTU's abbreviation, or the empty string */
-	abbreviation: string;
+	/** The OTU's acronym, or the empty string */
+	acronym: string;
 
 	/** The reference the OTU belongs to */
 	reference: OtuReferenceNested;
@@ -299,7 +299,7 @@ const segmentSchema = z.object({
 /** Fields accepted when creating an OTU. */
 export const OtuCreateRequest = z.object({
 	name: z.string().trim().min(1),
-	abbreviation: z.string().trim().default(""),
+	acronym: z.string().trim().default(""),
 	schema: z.array(segmentSchema).default([]),
 });
 
@@ -308,7 +308,7 @@ export type OtuCreateRequest = z.infer<typeof OtuCreateRequest>;
 /** Fields accepted when updating an OTU. Only those present are changed. */
 export const OtuUpdateRequest = z.object({
 	name: z.string().trim().min(1).optional(),
-	abbreviation: z.string().trim().optional(),
+	acronym: z.string().trim().optional(),
 	schema: z.array(segmentSchema).optional(),
 });
 

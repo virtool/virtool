@@ -23,8 +23,8 @@ type PathoscopeListHeaderProps = {
 	/** The number of selected hits, which the actions apply to */
 	selectedCount: number;
 
-	/** Whether any hit on screen carries an abbreviation to label */
-	showAbbreviation: boolean;
+	/** Whether any hit on screen carries an acronym to label */
+	showAcronym: boolean;
 
 	/** The number of hits before the search and filters narrowed them */
 	total: number;
@@ -61,7 +61,7 @@ export default function PathoscopeListHeader({
 	onCopy,
 	onSelectAll,
 	selectedCount,
-	showAbbreviation,
+	showAcronym,
 	total,
 }: PathoscopeListHeaderProps) {
 	const { search } = useAnalysisSearch();
@@ -136,7 +136,7 @@ export default function PathoscopeListHeader({
 					{/* The columns of figures are labelled here instead of on every hit.
 					    They are the same fixed widths, in the same order, aligned against
 					    the same right edge, so each label lands over its column — a hit
-					    without an abbreviation leaves that one empty rather than shifting
+					    without an acronym leaves that one empty rather than shifting
 					    the rest, because the group is aligned from the right.
 
 					    Hidden from assistive technology: every figure still carries its
@@ -146,7 +146,7 @@ export default function PathoscopeListHeader({
 						aria-hidden
 						className="flex gap-4 shrink-0 font-medium text-gray-500"
 					>
-						{showAbbreviation && <span className="w-32">Abbreviation</span>}
+						{showAcronym && <span className="w-32">Acronym</span>}
 						<span className="w-22">{search.reads ? "Reads" : "Weight"}</span>
 						<span className="w-22">Depth</span>
 						<span className="w-22">Coverage</span>

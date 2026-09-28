@@ -75,7 +75,7 @@ export class IsolateNotFoundError extends AppError {}
 /** Thrown when no sequence holds the requested id. */
 export class SequenceNotFoundError extends AppError {}
 
-/** Thrown when an OTU's name or abbreviation is already used in its reference. */
+/** Thrown when an OTU's name or acronym is already used in its reference. */
 export class OtuNameConflictError extends AppError {}
 
 /** Thrown when a reference restricts source types and does not permit this one. */
@@ -748,7 +748,7 @@ function formatOtu(
 	const lastIndexedVersion = joined.last_indexed_version;
 
 	return {
-		abbreviation: String(joined.abbreviation ?? ""),
+		acronym: String(joined.abbreviation ?? ""),
 		id: String(joined._id),
 		isolates: isolatesOf(joined).map(formatIsolate),
 		issues: verify(joined),
@@ -825,7 +825,7 @@ export async function findOtus(
 		db
 			.select({
 				id: legacyOtus.id,
-				abbreviation: legacyOtus.abbreviation,
+				acronym: legacyOtus.abbreviation,
 				name: legacyOtus.name,
 				verified: legacyOtus.verified,
 				version: legacyOtus.version,
@@ -863,7 +863,7 @@ export async function findOtus(
 	const foundCount = Number(counts.found);
 
 	const items: OtuMinimal[] = rows.map((row) => ({
-		abbreviation: row.abbreviation,
+		acronym: row.acronym,
 		id: row.id,
 		name: row.name,
 		reference: { id: row.referenceId, name: row.referenceName },
@@ -976,17 +976,17 @@ async function getOtuInTransaction(tx: DbOrTx, otuId: string): Promise<Otu> {
 
 // The name is matched on `lower(name)` rather than the denormalised `lower_name`
 // field the Mongo query used; the `legacy_otus_name_lower` index makes that
-// expression a lookup rather than a scan. The abbreviation is matched exactly,
+// expression a lookup rather than a scan. The acronym is matched exactly,
 // case included. An empty value is never "in use".
-async function checkNameAndAbbreviation(
+async function checkNameAndAcronym(
 	tx: DbOrTx,
 	referenceId: number,
 	name: string | null,
-	abbreviation: string | null,
+	acronym: string | null,
 ): Promise<void> {
 	const scope = eq(legacyOtus.reference_id, referenceId);
 
-	const [nameRows, abbreviationRows] = await Promise.all([
+	const [nameRows, acronymRows] = await Promise.all([
 		name
 			? tx
 					.select({ id: legacyOtus.id })
@@ -996,28 +996,28 @@ async function checkNameAndAbbreviation(
 					)
 					.limit(1)
 			: Promise.resolve([]),
-		abbreviation
+		acronym
 			? tx
 					.select({ id: legacyOtus.id })
 					.from(legacyOtus)
-					.where(and(scope, eq(legacyOtus.abbreviation, abbreviation)))
+					.where(and(scope, eq(legacyOtus.abbreviation, acronym)))
 					.limit(1)
 			: Promise.resolve([]),
 	]);
 
 	const nameExists = nameRows.length > 0;
-	const abbreviationExists = abbreviationRows.length > 0;
+	const acronymExists = acronymRows.length > 0;
 
-	if (nameExists && abbreviationExists) {
-		throw new OtuNameConflictError("Name and abbreviation already exist");
+	if (nameExists && acronymExists) {
+		throw new OtuNameConflictError("Name and acronym already exist");
 	}
 
 	if (nameExists) {
 		throw new OtuNameConflictError("Name already exists");
 	}
 
-	if (abbreviationExists) {
-		throw new OtuNameConflictError("Abbreviation already exists");
+	if (acronymExists) {
+		throw new OtuNameConflictError("Acronym already exists");
 	}
 }
 
@@ -1080,17 +1080,12 @@ export async function createOtu(
 			throw new ReferenceArchivedError("Reference is archived");
 		}
 
-		await checkNameAndAbbreviation(
-			tx,
-			referenceId,
-			values.name,
-			values.abbreviation,
-		);
+		await checkNameAndAcronym(tx, referenceId, values.name, values.acronym);
 
 		const document: OtuDocument = {
 			_id: await generateId(tx, otuIdTaken),
 			name: values.name,
-			abbreviation: values.abbreviation,
+			abbreviation: values.acronym,
 			last_indexed_version: null,
 			verified: false,
 			lower_name: values.name.toLowerCase(),
@@ -1116,7 +1111,7 @@ export async function createOtu(
 }
 
 /**
- * Update an OTU's name, abbreviation, or schema.
+ * Update an OTU's name, acronym, or schema.
  *
  * An update that changes nothing writes nothing — no version bump, no history
  * row — and returns the OTU as it stands.
@@ -1135,7 +1130,7 @@ export async function updateOtu(
 		);
 
 		const oldDocument = splitOtu(old);
-		const oldAbbreviation = String(oldDocument.abbreviation ?? "");
+		const oldAcronym = String(oldDocument.abbreviation ?? "");
 		const oldSchema = Array.isArray(oldDocument.schema)
 			? (oldDocument.schema as OtuSegment[])
 			: null;
@@ -1147,21 +1142,16 @@ export async function updateOtu(
 				? values.name
 				: null;
 
-		const changedAbbreviation =
-			values.abbreviation !== undefined &&
-			values.abbreviation !== oldAbbreviation
-				? values.abbreviation
+		const changedAcronym =
+			values.acronym !== undefined && values.acronym !== oldAcronym
+				? values.acronym
 				: null;
 
 		const schemaChanged =
 			values.schema !== undefined &&
 			!isSameSchema(values.schema, oldSchema ?? []);
 
-		if (
-			changedName === null &&
-			changedAbbreviation === null &&
-			!schemaChanged
-		) {
+		if (changedName === null && changedAcronym === null && !schemaChanged) {
 			return getOtuInTransaction(tx, otuId);
 		}
 
@@ -1169,12 +1159,7 @@ export async function updateOtu(
 
 		// Only the changed values are checked, so an OTU keeping its own name never
 		// collides with itself.
-		await checkNameAndAbbreviation(
-			tx,
-			referenceId,
-			changedName,
-			changedAbbreviation,
-		);
+		await checkNameAndAcronym(tx, referenceId, changedName, changedAcronym);
 
 		const newDocument: OtuDocument = {
 			...oldDocument,
@@ -1182,8 +1167,8 @@ export async function updateOtu(
 				name: values.name,
 				lower_name: values.name.toLowerCase(),
 			}),
-			...(values.abbreviation !== undefined && {
-				abbreviation: values.abbreviation,
+			...(values.acronym !== undefined && {
+				abbreviation: values.acronym,
 			}),
 			...(values.schema !== undefined && { schema: values.schema }),
 			verified: false,
@@ -1210,8 +1195,8 @@ export async function updateOtu(
 		await addHistory(tx, {
 			description: composeEditDescription(
 				changedName,
-				changedAbbreviation,
-				oldAbbreviation,
+				changedAcronym,
+				oldAcronym,
 				schemaChanged,
 			),
 			methodName: "edit",
