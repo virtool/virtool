@@ -505,8 +505,6 @@ export async function findAdministeredUsers(
 		statuses.length ? or(...statuses.map(getStatusCondition)) : undefined,
 		roles.length ? getRoleCondition(roles) : undefined,
 	);
-	const skip = page > 1 ? (page - 1) * perPage : 0;
-
 	const [[totalRow], [foundRow], rows] = await Promise.all([
 		db.select({ value: count() }).from(usersTable),
 		db.select({ value: count() }).from(usersTable).where(filter),
@@ -520,7 +518,7 @@ export async function findAdministeredUsers(
 				asc(usersTable.id),
 			)
 			.limit(perPage)
-			.offset(skip),
+			.offset(getPageOffset(page, perPage)),
 	]);
 
 	const foundCount = foundRow?.value ?? 0;
@@ -534,7 +532,7 @@ export async function findAdministeredUsers(
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,
-		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 	};
 }
