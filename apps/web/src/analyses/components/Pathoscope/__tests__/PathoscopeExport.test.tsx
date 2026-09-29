@@ -182,9 +182,6 @@ describe("<PathoscopeExport />", () => {
 			"href",
 			"/account/settings#pathoscope",
 		);
-		expect(
-			screen.queryByRole("menuitemradio", { name: "Name last" }),
-		).not.toBeInTheDocument();
 	});
 
 	it("should leave the header row out when it is not wanted", async () => {

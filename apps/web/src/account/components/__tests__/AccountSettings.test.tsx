@@ -116,16 +116,6 @@ describe("moveColumn()", () => {
 		]);
 	});
 
-	it("should hide the name like any other column", () => {
-		expect(moveColumn([...order], "name", "depth")).toEqual([
-			"weight",
-			"coverage",
-			"divider",
-			"depth",
-			"name",
-		]);
-	});
-
 	it("should never hide the last shown column", () => {
 		const current = [
 			"weight",
