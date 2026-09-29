@@ -351,14 +351,14 @@ describe("createReferenceIndexStep", () => {
 });
 
 describe("createSubtractionIndexStep", () => {
-	it("downloads the genome and caches the index on a miss", async () => {
+	it("builds from the downloaded genome and caches the index on a miss", async () => {
 		const { builtFastas, fastaPath, paths, run, state } =
 			await setupSubtraction();
 
 		await run();
 
-		await expect(readFile(fastaPath, "utf8")).resolves.toBe(SUBTRACTION_GENOME);
 		expect(builtFastas).toEqual([SUBTRACTION_GENOME]);
+		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 
 		expect(state.cacheRegistrations.map(({ key }) => key)).toEqual([
 			deriveCacheKey(subtractionIndexCacheParams()),
@@ -393,5 +393,23 @@ describe("createSubtractionIndexStep", () => {
 				"utf8",
 			),
 		).resolves.toBe("cached shard");
+	});
+
+	it("removes the genome when the build fails", async () => {
+		const { builtFastas, fastaPath, run, runSubprocess, state } =
+			await setupSubtraction();
+
+		runSubprocess.register([BOWTIE2_BUILD, "--threads"], {
+			async effect({ command }) {
+				builtFastas.push(await readFile(command[3] ?? "", "utf8"));
+			},
+			exitCode: 1,
+		});
+
+		await expect(run()).rejects.toThrow();
+
+		expect(builtFastas).toEqual([SUBTRACTION_GENOME]);
+		expect(state.cacheRegistrations).toEqual([]);
+		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 	});
 });
