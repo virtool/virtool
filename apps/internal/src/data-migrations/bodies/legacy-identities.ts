@@ -24,6 +24,22 @@ function normalizeEmail(email: string): string {
 	return email.trim().toLowerCase();
 }
 
+function groupBy<K>(
+	accounts: Credential[],
+	key: (account: Credential) => K,
+): Map<K, Credential[]> {
+	const groups = new Map<K, Credential[]>();
+	for (const account of accounts) {
+		const group = groups.get(key(account));
+		if (group === undefined) {
+			groups.set(key(account), [account]);
+		} else {
+			group.push(account);
+		}
+	}
+	return groups;
+}
+
 async function migrate({ client, signal, report }: DataMigrationArgs) {
 	signal.throwIfAborted();
 	try {
@@ -40,6 +56,11 @@ async function migrate({ client, signal, report }: DataMigrationArgs) {
 				SELECT account_id, user_id, password FROM public.auth_accounts
 				WHERE provider_id = 'credential' ORDER BY user_id, id
 			`;
+			const accountsByUserId = groupBy(accounts, (account) => account.user_id);
+			const accountsByAccountId = groupBy(
+				accounts,
+				(account) => account.account_id,
+			);
 			const duplicateEmails = new Set<string>();
 			const seenEmails = new Set<string>();
 			for (const user of users) {
@@ -76,11 +97,12 @@ async function migrate({ client, signal, report }: DataMigrationArgs) {
 				const activity = user.active ? "active" : "deactivated";
 				const email = normalizeEmail(user.email);
 				const password = user.password?.toString("utf8");
-				const linked = accounts.filter(
-					(account) =>
-						account.user_id === user.id ||
-						account.account_id === String(user.id),
-				);
+				const linked = [
+					...(accountsByUserId.get(user.id) ?? []),
+					...(accountsByAccountId.get(String(user.id)) ?? []).filter(
+						(account) => account.user_id !== user.id,
+					),
+				];
 				const account = linked[0];
 				const conflict =
 					linked.length > 1 ||
