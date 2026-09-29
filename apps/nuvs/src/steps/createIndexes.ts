@@ -1,3 +1,4 @@
+import { rm } from "node:fs/promises";
 import {
 	cacheFor,
 	createMappingIndex,
@@ -57,6 +58,9 @@ export const createReferenceIndexStep: NuvsStep = {
  * the same subtraction reuses one cached index, so a hit is the common outcome,
  * and a host genome is gigabytes that would otherwise be pulled out of storage
  * and never opened.
+ *
+ * Nothing reads the genome once its index is built, so it is removed straight
+ * after, whether or not the build succeeded.
  */
 export const createSubtractionIndexesStep: NuvsStep = {
 	id: "create_subtraction_indexes",
@@ -70,31 +74,35 @@ export const createSubtractionIndexesStep: NuvsStep = {
 		// Sequentially, not concurrently: `bowtie2-build --threads {proc}` is
 		// already using every core, so overlapping two of them only contends.
 		for (const subtraction of data.subtractions) {
-			await createMappingIndex({
-				cache,
-				extraParams: SUBTRACTION_INDEX_EXTRA_PARAMS,
-				fastaPath: subtraction.path,
-				indexKind: SUBTRACTION_INDEX_KIND,
-				indexPrefix: paths.subtraction(subtraction.id).indexPrefix,
-				logger,
-				parentId: subtraction.id,
-				prepareFasta: async () => {
-					await downloadToPath(
-						storage,
-						subtraction.storageKey,
-						subtraction.path,
-					);
+			try {
+				await createMappingIndex({
+					cache,
+					extraParams: SUBTRACTION_INDEX_EXTRA_PARAMS,
+					fastaPath: subtraction.path,
+					indexKind: SUBTRACTION_INDEX_KIND,
+					indexPrefix: paths.subtraction(subtraction.id).indexPrefix,
+					logger,
+					parentId: subtraction.id,
+					prepareFasta: async () => {
+						await downloadToPath(
+							storage,
+							subtraction.storageKey,
+							subtraction.path,
+						);
 
-					logger.info(
-						{ fastaPath: subtraction.path, subtractionId: subtraction.id },
-						"downloaded subtraction genome",
-					);
-				},
-				proc,
-				runSubprocess,
-				workflow: WORKFLOW_NAME,
-				workflowVersion: APP_VERSION,
-			});
+						logger.info(
+							{ fastaPath: subtraction.path, subtractionId: subtraction.id },
+							"downloaded subtraction genome",
+						);
+					},
+					proc,
+					runSubprocess,
+					workflow: WORKFLOW_NAME,
+					workflowVersion: APP_VERSION,
+				});
+			} finally {
+				await rm(subtraction.path, { force: true });
+			}
 		}
 	},
 };
