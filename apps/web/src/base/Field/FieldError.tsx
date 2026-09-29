@@ -1,7 +1,7 @@
 import { cn } from "@app/cn";
 import { CircleAlert } from "lucide-react";
-import { type ReactNode, useLayoutEffect } from "react";
-import { useFieldContext } from "./FieldContext";
+import type { ReactNode } from "react";
+import { useFieldContext, useRegisterFieldPart } from "./FieldContext";
 
 /** Props for a `FieldError`. Pass either a message as children or react-hook-form errors. */
 export type FieldErrorProps = {
@@ -27,7 +27,6 @@ export default function FieldError({
 	errors,
 }: FieldErrorProps) {
 	const field = useFieldContext();
-	const setInvalid = field?.setInvalid;
 
 	const messages = [
 		...new Set(
@@ -51,15 +50,7 @@ export default function FieldError({
 
 	const hasContent = Boolean(content);
 
-	useLayoutEffect(() => {
-		if (!setInvalid) {
-			return;
-		}
-
-		setInvalid(hasContent);
-
-		return () => setInvalid(false);
-	}, [hasContent, setInvalid]);
+	useRegisterFieldPart(field?.setInvalid, hasContent);
 
 	return (
 		<div

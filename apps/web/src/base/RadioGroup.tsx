@@ -27,18 +27,10 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
 /**
  * A single radio option. Renders as a circular button with a filled dot when
  * selected; reachable by keyboard and exposes `role="radio"`. Inside a
- * `Field`, it takes its `id` and `aria-describedby` from the field.
+ * `Field`, it takes its `id` and ARIA connections from the field.
  */
-export function RadioGroupItem({
-	className,
-	id,
-	"aria-describedby": ariaDescribedBy,
-	...props
-}: RadioGroupItemProps) {
-	const { "aria-invalid": _, ...fieldProps } = useFieldControl({
-		id,
-		"aria-describedby": ariaDescribedBy,
-	});
+export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
+	const { "aria-invalid": _, ...fieldProps } = useFieldControl(props);
 
 	return (
 		<RadioGroupPrimitive.Item
@@ -64,8 +56,8 @@ export function RadioGroupItem({
 				className,
 			)}
 			data-slot="radio-group-item"
-			{...fieldProps}
 			{...props}
+			{...fieldProps}
 		>
 			<RadioGroupPrimitive.Indicator className="h-2 w-2 rounded-full bg-white" />
 		</RadioGroupPrimitive.Item>

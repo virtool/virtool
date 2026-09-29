@@ -1,17 +1,21 @@
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@tests/setup";
 import { ChevronDown } from "lucide-react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import Checkbox from "../Checkbox";
 import Field, {
+	FieldContent,
 	FieldDescription,
 	FieldError,
 	FieldLabel,
 	FieldLegend,
 	FieldSet,
+	FieldTitle,
 } from "../Field";
 import Input from "../Input";
 import Select, { SelectButton } from "../Select";
+import Switch from "../Switch";
 
 describe("<Field />", () => {
 	it("should connect the label to the control", () => {
@@ -116,6 +120,48 @@ describe("<Field />", () => {
 
 		expect(trigger).toHaveAttribute("aria-invalid", "true");
 		expect(trigger).toHaveAccessibleDescription("Library type is required");
+	});
+});
+
+describe('<FieldLabel variant="row" />', () => {
+	function renderRow(onCheckedChange = vi.fn(), ariaLabel?: string) {
+		renderWithProviders(
+			<FieldLabel variant="row">
+				<Field orientation="horizontal">
+					<FieldContent>
+						<FieldTitle>Prefer acronyms</FieldTitle>
+						<FieldDescription>Name OTUs by their acronym.</FieldDescription>
+					</FieldContent>
+					<Switch aria-label={ariaLabel} onCheckedChange={onCheckedChange} />
+				</Field>
+			</FieldLabel>,
+		);
+
+		return onCheckedChange;
+	}
+
+	it("should name the control with the title and describe it with the description", () => {
+		renderRow();
+
+		const control = screen.getByRole("switch", { name: "Prefer acronyms" });
+
+		expect(control).toHaveAccessibleDescription("Name OTUs by their acronym.");
+	});
+
+	it("should toggle the control when the description is clicked", async () => {
+		const onCheckedChange = renderRow();
+
+		await userEvent.click(screen.getByText("Name OTUs by their acronym."));
+
+		expect(onCheckedChange).toHaveBeenCalledWith(true);
+	});
+
+	it("should let an explicit aria-label name the control", () => {
+		renderRow(vi.fn(), "Use acronyms");
+
+		expect(
+			screen.getByRole("switch", { name: "Use acronyms" }),
+		).toBeInTheDocument();
 	});
 });
 

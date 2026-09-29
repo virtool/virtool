@@ -12,20 +12,10 @@ export type TextAreaProps = ComponentProps<"textarea">;
 
 /**
  * A multi-line text input that grows with its content. Inside a `Field`, it
- * takes its `id`, `aria-invalid`, and `aria-describedby` from the field.
+ * takes its `id` and ARIA connections from the field.
  */
-export default function TextArea({
-	className,
-	id,
-	"aria-describedby": ariaDescribedBy,
-	"aria-invalid": ariaInvalid,
-	...props
-}: TextAreaProps) {
-	const fieldProps = useFieldControl({
-		id,
-		"aria-describedby": ariaDescribedBy,
-		"aria-invalid": ariaInvalid,
-	});
+export default function TextArea({ className, ...props }: TextAreaProps) {
+	const fieldProps = useFieldControl(props);
 
 	return (
 		<textarea
@@ -38,8 +28,8 @@ export default function TextArea({
 				className,
 			)}
 			data-slot="textarea"
-			{...fieldProps}
 			{...props}
+			{...fieldProps}
 		/>
 	);
 }

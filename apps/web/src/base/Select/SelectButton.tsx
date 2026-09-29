@@ -35,6 +35,7 @@ export default function SelectButton({
 		id,
 		"aria-describedby": ariaDescribedby,
 		"aria-invalid": ariaInvalid,
+		"aria-label": ariaLabel,
 	});
 
 	return (

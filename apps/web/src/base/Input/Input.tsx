@@ -12,21 +12,11 @@ import type { ComponentProps } from "react";
 export type InputProps = ComponentProps<"input">;
 
 /**
- * A single-line text input. Inside a `Field`, it takes its `id`,
- * `aria-invalid`, and `aria-describedby` from the field.
+ * A single-line text input. Inside a `Field`, it takes its `id` and ARIA
+ * connections from the field.
  */
-export default function Input({
-	className,
-	id,
-	"aria-describedby": ariaDescribedBy,
-	"aria-invalid": ariaInvalid,
-	...props
-}: InputProps) {
-	const fieldProps = useFieldControl({
-		id,
-		"aria-describedby": ariaDescribedBy,
-		"aria-invalid": ariaInvalid,
-	});
+export default function Input({ className, ...props }: InputProps) {
+	const fieldProps = useFieldControl(props);
 
 	return (
 		<input
@@ -39,8 +29,8 @@ export default function Input({
 				className,
 			)}
 			data-slot="input"
-			{...fieldProps}
 			{...props}
+			{...fieldProps}
 		/>
 	);
 }

@@ -8,21 +8,10 @@ export type SwitchProps = ComponentProps<typeof SwitchPrimitive.Root>;
 
 /**
  * A toggle switch. Pass `checked` and `onCheckedChange` to control it. Inside a
- * `Field`, it takes its `id`, `aria-invalid`, and `aria-describedby` from the
- * field.
+ * `Field`, it takes its `id` and ARIA connections from the field.
  */
-export default function Switch({
-	className,
-	id,
-	"aria-describedby": ariaDescribedBy,
-	"aria-invalid": ariaInvalid,
-	...props
-}: SwitchProps) {
-	const fieldProps = useFieldControl({
-		id,
-		"aria-describedby": ariaDescribedBy,
-		"aria-invalid": ariaInvalid,
-	});
+export default function Switch({ className, ...props }: SwitchProps) {
+	const fieldProps = useFieldControl(props);
 
 	return (
 		<SwitchPrimitive.Root
@@ -48,8 +37,8 @@ export default function Switch({
 				className,
 			)}
 			data-slot="switch"
-			{...fieldProps}
 			{...props}
+			{...fieldProps}
 		>
 			<SwitchPrimitive.Thumb
 				className={cn(

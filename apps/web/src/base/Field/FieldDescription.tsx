@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
-import { type ComponentProps, useLayoutEffect } from "react";
-import { useFieldContext } from "./FieldContext";
+import type { ComponentProps } from "react";
+import { useFieldContext, useRegisterFieldPart } from "./FieldContext";
 
 /** Props for a `FieldDescription`. */
 export type FieldDescriptionProps = ComponentProps<"p">;
@@ -11,17 +11,8 @@ export default function FieldDescription({
 	...props
 }: FieldDescriptionProps) {
 	const field = useFieldContext();
-	const setHasDescription = field?.setHasDescription;
 
-	useLayoutEffect(() => {
-		if (!setHasDescription) {
-			return;
-		}
-
-		setHasDescription(true);
-
-		return () => setHasDescription(false);
-	}, [setHasDescription]);
+	useRegisterFieldPart(field?.setHasDescription);
 
 	return (
 		<p

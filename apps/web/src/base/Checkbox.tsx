@@ -25,7 +25,7 @@ function Checkbox({
 	onClick,
 }: CheckboxProps) {
 	const generatedId = useId();
-	const fieldProps = useFieldControl({ id });
+	const fieldProps = useFieldControl({ id, "aria-label": ariaLabel || label });
 	const controlId = fieldProps.id ?? generatedId;
 	const isIndeterminate = checked === "indeterminate";
 	const isEmpty = checked === false;

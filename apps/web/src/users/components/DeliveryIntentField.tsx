@@ -1,5 +1,12 @@
 import { cn } from "@app/cn";
-import Field, { FieldLabel, FieldLegend, FieldSet } from "@base/Field";
+import Field, {
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldTitle,
+} from "@base/Field";
 import Link from "@base/Link";
 import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
 
@@ -35,6 +42,7 @@ export function DeliveryIntentField({
 						className={cn(
 							!emailDeliveryAvailable && "cursor-not-allowed text-gray-500",
 						)}
+						variant="card"
 					>
 						<Field orientation="horizontal" className="items-start">
 							<RadioGroupItem
@@ -42,19 +50,16 @@ export function DeliveryIntentField({
 								value="email"
 								disabled={!emailDeliveryAvailable}
 							/>
-							<span>
-								<span className="block font-medium">Email invitation</span>
-								<span
-									className={cn(
-										"block text-sm font-normal",
-										emailDeliveryAvailable ? "text-gray-600" : "text-gray-500",
-									)}
+							<FieldContent>
+								<FieldTitle>Email invitation</FieldTitle>
+								<FieldDescription
+									className={cn(!emailDeliveryAvailable && "text-gray-500")}
 								>
 									{emailDeliveryAvailable
 										? "Send the setup link to this email address."
 										: "Email invitations aren’t configured."}
-								</span>
-							</span>
+								</FieldDescription>
+							</FieldContent>
 						</Field>
 					</FieldLabel>
 					{!emailDeliveryAvailable && canConfigureEmailDelivery && (
@@ -66,15 +71,15 @@ export function DeliveryIntentField({
 						</Link>
 					)}
 				</div>
-				<FieldLabel>
+				<FieldLabel variant="card">
 					<Field orientation="horizontal" className="items-start">
 						<RadioGroupItem className="mt-0.5" value="copy_only" />
-						<span>
-							<span className="block font-medium">Create shareable link</span>
-							<span className="block text-sm font-normal text-gray-600">
+						<FieldContent>
+							<FieldTitle>Create shareable link</FieldTitle>
+							<FieldDescription>
 								You’ll need to send the link yourself.
-							</span>
-						</span>
+							</FieldDescription>
+						</FieldContent>
 					</Field>
 				</FieldLabel>
 			</RadioGroup>

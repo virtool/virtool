@@ -11,9 +11,10 @@ export type FieldProps = ComponentProps<"div"> & {
 /**
  * A single form control with its label, description, and error.
  *
- * Child `FieldLabel`, `FieldDescription`, `FieldError`, and form controls read
- * the generated ids from context, so they connect without manual `id`,
- * `htmlFor`, `aria-invalid`, or `aria-describedby` props.
+ * Child `FieldLabel`, `FieldTitle`, `FieldDescription`, `FieldError`, and form
+ * controls read the generated ids from context, so they connect without manual
+ * `id`, `htmlFor`, `aria-invalid`, `aria-describedby`, or `aria-labelledby`
+ * props.
  */
 export default function Field({
 	className,
@@ -22,6 +23,7 @@ export default function Field({
 }: FieldProps) {
 	const id = useId();
 	const [hasDescription, setHasDescription] = useState(false);
+	const [hasTitle, setHasTitle] = useState(false);
 	const [invalid, setInvalid] = useState(false);
 
 	return (
@@ -31,9 +33,12 @@ export default function Field({
 				descriptionId: `${id}-description`,
 				errorId: `${id}-error`,
 				hasDescription,
+				hasTitle,
 				invalid,
 				setHasDescription,
+				setHasTitle,
 				setInvalid,
+				titleId: `${id}-title`,
 			}}
 		>
 			<div

@@ -127,7 +127,11 @@ optional `FieldDescription`, and a `FieldError`. The field connects them: don't
 set `id`, `htmlFor`, `aria-invalid`, or `aria-describedby` by hand. A control
 built on a new primitive gets these props from `useFieldControl`. Use
 `orientation="horizontal"` for a checkbox, switch, or radio row. Put a
-checkbox or radio before its label, and a switch after its label. Put two or
+checkbox or radio before its label, and a switch after its label. When a row
+has a description, wrap its `Field` in `FieldLabel variant="row"` (or `"card"`
+for a bordered choice) and name the control with a `FieldTitle`. A click
+anywhere in the row then toggles the control, and the description stays out
+of the control's name. Put two or
 more related controls in a `FieldSet` with a `FieldLegend`, but don't put a
 single `Field` in a `FieldSet`. To put icons, text, or buttons inside an input,
 use `InputGroup` from `@base/InputGroup`.
