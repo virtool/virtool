@@ -8,7 +8,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@base/Empty";
-import { InputError } from "@base/Input";
+import { FieldError, useFieldControl } from "@base/Field";
 import Link from "@base/Link";
 import useListboxNavigation from "@base/useListboxNavigation";
 import type { InfiniteData } from "@tanstack/react-query";
@@ -68,6 +68,8 @@ export function SubtractionFileSelector({
 }: SubtractionFileSelectorProps) {
 	useValidateFiles("subtraction", selected, onClick);
 
+	const fieldControl = useFieldControl({});
+
 	const items = files.pages.flatMap((page) => page.items);
 
 	const { listboxProps, activeOptionId, getOptionId } = useListboxNavigation(
@@ -113,6 +115,7 @@ export function SubtractionFileSelector({
 		<>
 			<CompactScrollList
 				{...listboxProps}
+				{...fieldControl}
 				aria-labelledby={ariaLabelledby}
 				className={cn(
 					"max-h-96",
@@ -127,7 +130,7 @@ export function SubtractionFileSelector({
 				items={items}
 				renderRow={renderRow}
 			/>
-			<InputError className="mb-1">{error}</InputError>
+			<FieldError className="mb-1">{error}</FieldError>
 		</>
 	);
 }

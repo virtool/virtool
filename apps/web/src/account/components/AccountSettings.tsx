@@ -1,4 +1,5 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
+import Field, { FieldDescription, FieldLabel } from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
@@ -29,28 +30,27 @@ export default function AccountSettings() {
 			</SectionHeader>
 			<BoxGroup>
 				<BoxGroupSection>
-					<div className="flex items-center justify-between gap-5">
+					<Field className="gap-5" orientation="horizontal">
+						<Switch
+							checked={data.settings.preferAcronym}
+							onCheckedChange={(checked) =>
+								mutation.mutate({ preferAcronym: checked })
+							}
+						/>
 						<div>
-							<p className="font-semibold" id="preferAcronym-label">
+							<FieldLabel className="font-semibold">
 								Prefer acronyms in Pathoscope exports
-							</p>
-							<p className="text-gray-600 text-sm">
+							</FieldLabel>
+							<FieldDescription>
 								Name OTUs by their acronym when they have one.
-							</p>
+							</FieldDescription>
 							{mutation.isError ? (
 								<p className="text-red-600 text-sm" role="alert">
 									Could not save the setting. Try again.
 								</p>
 							) : null}
 						</div>
-						<Switch
-							aria-labelledby="preferAcronym-label"
-							checked={data.settings.preferAcronym}
-							onCheckedChange={(checked) =>
-								mutation.mutate({ preferAcronym: checked })
-							}
-						/>
-					</div>
+					</Field>
 				</BoxGroupSection>
 			</BoxGroup>
 		</section>

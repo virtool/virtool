@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import { useFieldControl } from "@base/Field";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import type { ComponentProps } from "react";
 
@@ -25,9 +26,20 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
 
 /**
  * A single radio option. Renders as a circular button with a filled dot when
- * selected; reachable by keyboard and exposes `role="radio"`.
+ * selected; reachable by keyboard and exposes `role="radio"`. Inside a
+ * `Field`, it takes its `id` and `aria-describedby` from the field.
  */
-export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
+export function RadioGroupItem({
+	className,
+	id,
+	"aria-describedby": ariaDescribedBy,
+	...props
+}: RadioGroupItemProps) {
+	const { "aria-invalid": _, ...fieldProps } = useFieldControl({
+		id,
+		"aria-describedby": ariaDescribedBy,
+	});
+
 	return (
 		<RadioGroupPrimitive.Item
 			className={cn(
@@ -51,6 +63,8 @@ export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
 				"disabled:opacity-50",
 				className,
 			)}
+			data-slot="radio-group-item"
+			{...fieldProps}
 			{...props}
 		>
 			<RadioGroupPrimitive.Indicator className="h-2 w-2 rounded-full bg-white" />

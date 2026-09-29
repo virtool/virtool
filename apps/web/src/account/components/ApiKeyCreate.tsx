@@ -8,11 +8,17 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, {
+	FieldError,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+} from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import type { Permissions } from "@virtool/contracts";
 import { emptyPermissions } from "@virtool/contracts";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useCreateApiKey } from "../queries";
 import ApiKeyAdministratorInfo from "./ApiKeyAdministratorInfo";
@@ -31,7 +37,6 @@ export default function ApiKeyCreate() {
 	const [copied, setCopied] = useState(false);
 	const [newKey, setNewKey] = useState("");
 	const mutation = useCreateApiKey();
-	const permissionsLabelId = useId();
 
 	const {
 		formState: { errors },
@@ -101,32 +106,30 @@ export default function ApiKeyCreate() {
 				) : (
 					<form onSubmit={handleSubmit(onSubmit)}>
 						<ApiKeyAdministratorInfo />
-						<InputGroup>
-							<InputLabel htmlFor="name">Name</InputLabel>
-							<InputSimple
-								id="name"
+						<Field>
+							<FieldLabel>Name</FieldLabel>
+							<Input
 								aria-required
-								aria-invalid={Boolean(errors.name) || undefined}
-								aria-describedby={errors.name ? "name-error" : undefined}
 								{...register("name", {
 									required: "Provide a name for the key",
 								})}
 							/>
-							<InputError id="name-error">{errors.name?.message}</InputError>
-						</InputGroup>
+							<FieldError errors={[errors.name]} />
+						</Field>
 
-						<InputLabel id={permissionsLabelId}>Permissions</InputLabel>
-						<Controller
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<ApiKeyPermissions
-									aria-labelledby={permissionsLabelId}
-									keyPermissions={value}
-									onChange={onChange}
-								/>
-							)}
-							name="permissions"
-						/>
+						<FieldSet>
+							<FieldLegend variant="label">Permissions</FieldLegend>
+							<Controller
+								control={control}
+								render={({ field: { onChange, value } }) => (
+									<ApiKeyPermissions
+										keyPermissions={value}
+										onChange={onChange}
+									/>
+								)}
+								name="permissions"
+							/>
+						</FieldSet>
 
 						<DialogFooter>
 							<SaveButton />

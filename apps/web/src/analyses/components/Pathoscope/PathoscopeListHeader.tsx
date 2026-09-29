@@ -2,6 +2,7 @@ import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { useIsSecureContext } from "@app/hooks";
 import Button from "@base/Button";
 import Checkbox from "@base/Checkbox";
+import { FieldSet } from "@base/Field";
 import Icon from "@base/Icon";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { Check, ClipboardCopy } from "lucide-react";
@@ -107,14 +108,13 @@ export default function PathoscopeListHeader({
 			    announced as belonging together rather than as loose controls ahead
 			    of the list. `min-w-0` because a fieldset will not otherwise shrink
 			    below its content, which would push the bar wider than the hits. */}
-			<fieldset
+			<FieldSet
 				aria-label="Hit list"
-				className="min-w-0 flex items-center gap-4 border border-gray-300 rounded-sm bg-gray-50 px-4 h-14 text-sm font-medium text-gray-700"
+				className="mb-0 flex items-center gap-4 border border-gray-300 rounded-sm bg-gray-50 px-4 h-14 text-sm font-medium text-gray-700"
 			>
 				<Checkbox
 					ariaLabel="Select all hits"
 					checked={checked}
-					id="PathoscopeSelectAll"
 					onClick={onSelectAll}
 				/>
 				{/* The count stays put once hits are selected. It is the only statement
@@ -152,7 +152,7 @@ export default function PathoscopeListHeader({
 						<span className="w-22">Coverage</span>
 					</div>
 				</div>
-			</fieldset>
+			</FieldSet>
 		</div>
 	);
 }

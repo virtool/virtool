@@ -1,6 +1,6 @@
 import { useUpdateSettings } from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
 import SectionHeader from "@base/SectionHeader";
 import { SelectBox, SelectBoxItem } from "@base/Select";
 import type { Settings } from "@virtool/contracts";
@@ -65,10 +65,9 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 						</SelectBoxItem>
 					</SelectBox>
 
-					<InputGroup>
-						<InputLabel htmlFor="group">Group Rights</InputLabel>
+					<Field>
+						<FieldLabel>Group Rights</FieldLabel>
 						<RightsSelect
-							id="group"
 							value={group}
 							onChange={(value) =>
 								mutation.mutate({
@@ -77,12 +76,11 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 								})
 							}
 						/>
-					</InputGroup>
+					</Field>
 
-					<InputGroup>
-						<InputLabel htmlFor="all">All {"Users'"} Rights</InputLabel>
+					<Field>
+						<FieldLabel>All {"Users'"} Rights</FieldLabel>
 						<RightsSelect
-							id="all"
 							value={all}
 							onChange={(value) =>
 								mutation.mutate({
@@ -91,7 +89,7 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 								})
 							}
 						/>
-					</InputGroup>
+					</Field>
 				</BoxGroupSection>
 			</BoxGroup>
 		</section>

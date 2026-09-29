@@ -1,6 +1,7 @@
 import { accountQueryKeys } from "@account/keys";
 import Button from "@base/Button";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import { usePasswordRules } from "@forms/password";
 import {
 	acceptAccountSetupFn,
@@ -104,31 +105,27 @@ export default function AccountSetup() {
 				subtitle={`Choose a username and password for ${inspection.email}.`}
 			/>
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<InputGroup>
-					<InputLabel htmlFor="handle">Username</InputLabel>
-					<InputSimple
-						id="handle"
+				<Field>
+					<FieldLabel>Username</FieldLabel>
+					<Input
 						autoComplete="username"
-						aria-invalid={Boolean(errors.handle) || undefined}
 						{...register("handle", { required: "Please choose a username" })}
 					/>
-					<InputError>{errors.handle?.message}</InputError>
-				</InputGroup>
-				<InputGroup>
-					<InputLabel htmlFor="password">Password</InputLabel>
-					<InputSimple
-						id="password"
+					<FieldError errors={[errors.handle]} />
+				</Field>
+				<Field>
+					<FieldLabel>Password</FieldLabel>
+					<Input
 						type="password"
 						autoComplete="new-password"
-						aria-invalid={Boolean(errors.password) || undefined}
 						{...register("password", passwordRules)}
 					/>
-					<InputError>{errors.password?.message}</InputError>
-				</InputGroup>
+					<FieldError errors={[errors.password]} />
+				</Field>
 				<Button type="submit" color="blue" disabled={isSubmitting}>
 					Create account
 				</Button>
-				{submissionError && <InputError>{submissionError}</InputError>}
+				{submissionError && <FieldError>{submissionError}</FieldError>}
 			</form>
 		</WallContainer>
 	);

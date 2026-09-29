@@ -1,5 +1,4 @@
 import { cn } from "@app/cn";
-import { InputLabel } from "@base/Input";
 import { ToggleGroup } from "radix-ui";
 import { type ReactNode, useId } from "react";
 
@@ -22,7 +21,9 @@ export function SelectBox({
 
 	return (
 		<div>
-			<InputLabel id={labelId}>{label}</InputLabel>
+			<div className="font-medium mb-2" id={labelId}>
+				{label}
+			</div>
 			<ToggleGroup.Root
 				aria-labelledby={labelId}
 				className={cn("grid gap-4", className)}

@@ -1,5 +1,6 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import Link from "@base/Link";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
@@ -74,12 +75,9 @@ export default function AccountEmail({
 				<BoxGroup>
 					<form onSubmit={handleSubmit(onSubmit)}>
 						<BoxGroupSection>
-							<InputGroup>
-								<InputLabel htmlFor="email">Email Address</InputLabel>
-								<InputSimple
-									id="email"
-									aria-invalid={Boolean(errors.email) || undefined}
-									aria-describedby={errors.email ? "email-error" : undefined}
+							<Field>
+								<FieldLabel>Email Address</FieldLabel>
+								<Input
 									{...register("email", {
 										required: "Please provide an email address",
 										pattern: {
@@ -88,10 +86,8 @@ export default function AccountEmail({
 										},
 									})}
 								/>
-								<InputError id="email-error">
-									{errors.email?.message}
-								</InputError>
-							</InputGroup>
+								<FieldError errors={[errors.email]} />
+							</Field>
 							{mutation.isSuccess && (
 								<p role="status">
 									A verification link has been queued. Your current address

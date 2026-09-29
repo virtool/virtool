@@ -1,7 +1,8 @@
 import { writeToClipboard } from "@app/clipboard";
 import Button from "@base/Button";
-import { InputLabel, InputSimple } from "@base/Input";
-import { useId, useState } from "react";
+import Field, { FieldLabel } from "@base/Field";
+import Input from "@base/Input";
+import { useState } from "react";
 
 type CopyFieldProps = {
 	/** The visible label, which also names the read-only input. */
@@ -23,7 +24,6 @@ type CopyResult = { value: string; status: "copied" | "failed" };
  * the status line tells the user to copy the selected text by hand.
  */
 export default function CopyField({ label, onCopy, value }: CopyFieldProps) {
-	const id = useId();
 	const [result, setResult] = useState<CopyResult | null>(null);
 
 	// A result for an earlier value must not describe a replacement value.
@@ -40,11 +40,10 @@ export default function CopyField({ label, onCopy, value }: CopyFieldProps) {
 	}
 
 	return (
-		<div>
-			<InputLabel htmlFor={id}>{label}</InputLabel>
+		<Field className="mb-0 pb-0">
+			<FieldLabel>{label}</FieldLabel>
 			<div className="flex flex-col gap-2 sm:flex-row">
-				<InputSimple
-					id={id}
+				<Input
 					className="min-w-0 flex-1 font-mono text-sm"
 					readOnly
 					value={value}
@@ -59,6 +58,6 @@ export default function CopyField({ label, onCopy, value }: CopyFieldProps) {
 				{status === "failed" &&
 					"Could not copy. Select the text and copy it manually."}
 			</p>
-		</div>
+		</Field>
 	);
 }

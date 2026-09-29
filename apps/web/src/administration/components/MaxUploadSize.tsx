@@ -3,7 +3,8 @@ import {
 	useUpdateSettings,
 } from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { MAX_UPLOAD_SIZE } from "@virtool/contracts";
@@ -54,12 +55,9 @@ export default function MaxUploadSize() {
 				<BoxGroup>
 					<BoxGroupSection>
 						<form onSubmit={handleSubmit(save)}>
-							<InputGroup>
-								<InputLabel htmlFor="maxUploadSize">Maximum (GB)</InputLabel>
+							<Field>
+								<FieldLabel>Maximum (GB)</FieldLabel>
 								<Input
-									id="maxUploadSize"
-									aria-describedby="maxUploadSize-error"
-									aria-invalid={Boolean(errors.maximumGigabytes) || undefined}
 									min={1}
 									step={1}
 									type="number"
@@ -76,10 +74,8 @@ export default function MaxUploadSize() {
 										},
 									})}
 								/>
-								<InputError id="maxUploadSize-error">
-									{errors.maximumGigabytes?.message}
-								</InputError>
-							</InputGroup>
+								<FieldError errors={[errors.maximumGigabytes]} />
+							</Field>
 							<div className="flex justify-end">
 								<SaveButton />
 							</div>

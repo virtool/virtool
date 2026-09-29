@@ -1,8 +1,9 @@
 import { cn } from "@app/cn";
+import { useFieldControl } from "@base/Field";
 import Icon from "@base/Icon";
 import { Check, Minus } from "lucide-react";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
-import type { MouseEvent, ReactNode } from "react";
+import { type MouseEvent, type ReactNode, useId } from "react";
 
 type CheckboxProps = {
 	ariaLabel?: string;
@@ -10,7 +11,8 @@ type CheckboxProps = {
 	label?: string;
 	labelComponent?: ReactNode;
 	disabled?: boolean;
-	id: string;
+	/** Defaults to the control id of a surrounding `Field`, or a generated id. */
+	id?: string;
 	onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
 };
 
@@ -22,13 +24,18 @@ function Checkbox({
 	labelComponent,
 	onClick,
 }: CheckboxProps) {
+	const generatedId = useId();
+	const fieldProps = useFieldControl({ id });
+	const controlId = fieldProps.id ?? generatedId;
 	const isIndeterminate = checked === "indeterminate";
 	const isEmpty = checked === false;
 
 	return (
 		<div className="inline-flex items-center gap-3">
 			<CheckboxPrimitive.Root
-				aria-label={ariaLabel || label || "checkbox"}
+				{...fieldProps}
+				id={controlId}
+				aria-label={ariaLabel || label}
 				checked={checked}
 				className={cn(
 					{
@@ -47,7 +54,7 @@ function Checkbox({
 					"rounded",
 					"size-6",
 				)}
-				id={id}
+				data-slot="checkbox"
 				onClick={onClick}
 			>
 				<CheckboxPrimitive.Indicator forceMount>
@@ -60,7 +67,7 @@ function Checkbox({
 			{label && (
 				<label
 					className="flex gap-2 items-center select-none cursor-pointer"
-					htmlFor={id}
+					htmlFor={controlId}
 				>
 					{labelComponent || label}
 				</label>

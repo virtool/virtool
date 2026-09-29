@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import { InputError } from "@base/Input";
+import { FieldError } from "@base/Field";
 import {
 	useInvitationEmailAvailability,
 	useRegenerateInvitation,
@@ -98,9 +98,9 @@ export function ReissueInvitationDialog({
 							emailDeliveryAvailable={emailDeliveryAvailable}
 							canConfigureEmailDelivery={account?.administratorRole === "full"}
 						/>
-						<InputError>
+						<FieldError>
 							{mutation.isError ? mutation.error.message : ""}
-						</InputError>
+						</FieldError>
 						<DialogFooter className="gap-2">
 							<Button onClick={() => onOpenChange(false)}>Cancel</Button>
 							<Button

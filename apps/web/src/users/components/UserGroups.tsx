@@ -1,6 +1,7 @@
 import { useFuse } from "@app/fuse";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import ComboBox from "@base/ComboBox";
+import Field, { FieldLabel } from "@base/Field";
 import Icon from "@base/Icon";
 import Link from "@base/Link";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -139,16 +140,12 @@ export default function UserGroups({
 								key={group.id}
 								className="flex items-center gap-3"
 							>
-								<RadioGroupItem
-									id={`primary-${group.id}`}
-									value={String(group.id)}
-								/>
-								<label
-									htmlFor={`primary-${group.id}`}
-									className="grow capitalize cursor-pointer select-none"
-								>
-									{group.name}
-								</label>
+								<Field orientation="horizontal" className="grow">
+									<RadioGroupItem value={String(group.id)} />
+									<FieldLabel className="grow capitalize cursor-pointer select-none">
+										{group.name}
+									</FieldLabel>
+								</Field>
 								<button
 									type="button"
 									aria-label={`Remove ${group.name}`}
@@ -160,13 +157,12 @@ export default function UserGroups({
 							</BoxGroupSection>
 						))}
 						<BoxGroupSection className="flex items-center gap-3">
-							<RadioGroupItem id="primary-none" value="none" />
-							<label
-								htmlFor="primary-none"
-								className="grow cursor-pointer select-none"
-							>
-								No primary group
-							</label>
+							<Field orientation="horizontal" className="grow">
+								<RadioGroupItem value="none" />
+								<FieldLabel className="grow cursor-pointer select-none">
+									No primary group
+								</FieldLabel>
+							</Field>
 						</BoxGroupSection>
 					</BoxGroup>
 				</RadioGroup>

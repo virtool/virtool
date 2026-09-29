@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import { useFieldControl } from "@base/Field";
 import {
 	inputBaseClasses,
 	inputFocusClasses,
@@ -6,20 +7,29 @@ import {
 	inputInvalidClasses,
 } from "@base/styles";
 import type { ComponentProps } from "react";
-import { useIsInvalid } from "./InputContext";
 
 /** Props for the shared single-line text input. Accepts any native input attribute. */
-export type InputProps = ComponentProps<"input"> & {
-	/** Marks the input invalid, turning its border and focus ring red. Falls back to the error on a surrounding `InputGroup`. */
-	error?: string;
-};
+export type InputProps = ComponentProps<"input">;
 
-export default function Input({ className, error, ...props }: InputProps) {
-	const invalid = useIsInvalid(error);
+/**
+ * A single-line text input. Inside a `Field`, it takes its `id`,
+ * `aria-invalid`, and `aria-describedby` from the field.
+ */
+export default function Input({
+	className,
+	id,
+	"aria-describedby": ariaDescribedBy,
+	"aria-invalid": ariaInvalid,
+	...props
+}: InputProps) {
+	const fieldProps = useFieldControl({
+		id,
+		"aria-describedby": ariaDescribedBy,
+		"aria-invalid": ariaInvalid,
+	});
 
 	return (
 		<input
-			aria-invalid={invalid || undefined}
 			className={cn(
 				inputBaseClasses,
 				inputHeightClass,
@@ -28,6 +38,8 @@ export default function Input({ className, error, ...props }: InputProps) {
 				"read-only:bg-gray-100",
 				className,
 			)}
+			data-slot="input"
+			{...fieldProps}
 			{...props}
 		/>
 	);

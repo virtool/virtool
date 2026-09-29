@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import { useFieldControl } from "@base/Field";
 import { Switch as SwitchPrimitive } from "radix-ui";
 import type { ComponentProps } from "react";
 
@@ -6,9 +7,23 @@ import type { ComponentProps } from "react";
 export type SwitchProps = ComponentProps<typeof SwitchPrimitive.Root>;
 
 /**
- * A toggle switch. Pass `checked` and `onCheckedChange` to control it.
+ * A toggle switch. Pass `checked` and `onCheckedChange` to control it. Inside a
+ * `Field`, it takes its `id`, `aria-invalid`, and `aria-describedby` from the
+ * field.
  */
-export default function Switch({ className, ...props }: SwitchProps) {
+export default function Switch({
+	className,
+	id,
+	"aria-describedby": ariaDescribedBy,
+	"aria-invalid": ariaInvalid,
+	...props
+}: SwitchProps) {
+	const fieldProps = useFieldControl({
+		id,
+		"aria-describedby": ariaDescribedBy,
+		"aria-invalid": ariaInvalid,
+	});
+
 	return (
 		<SwitchPrimitive.Root
 			className={cn(
@@ -32,6 +47,8 @@ export default function Switch({ className, ...props }: SwitchProps) {
 				"disabled:opacity-50",
 				className,
 			)}
+			data-slot="switch"
+			{...fieldProps}
 			{...props}
 		>
 			<SwitchPrimitive.Thumb
