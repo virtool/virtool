@@ -30,18 +30,12 @@ export default function AccountSettings() {
 			</SectionHeader>
 			<BoxGroup>
 				<BoxGroupSection>
-					<Field className="gap-5" orientation="horizontal">
-						<Switch
-							checked={data.settings.preferAcronym}
-							onCheckedChange={(checked) =>
-								mutation.mutate({ preferAcronym: checked })
-							}
-						/>
+					<Field className="justify-between gap-5" orientation="horizontal">
 						<div>
-							<FieldLabel className="font-semibold">
+							<FieldLabel className="mb-0 block font-semibold">
 								Prefer acronyms in Pathoscope exports
 							</FieldLabel>
-							<FieldDescription>
+							<FieldDescription className="mt-0">
 								Name OTUs by their acronym when they have one.
 							</FieldDescription>
 							{mutation.isError ? (
@@ -50,6 +44,12 @@ export default function AccountSettings() {
 								</p>
 							) : null}
 						</div>
+						<Switch
+							checked={data.settings.preferAcronym}
+							onCheckedChange={(checked) =>
+								mutation.mutate({ preferAcronym: checked })
+							}
+						/>
 					</Field>
 				</BoxGroupSection>
 			</BoxGroup>

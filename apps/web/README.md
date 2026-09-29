@@ -126,7 +126,8 @@ Put each form control in a `Field` from `@base/Field`, with a `FieldLabel`, an
 optional `FieldDescription`, and a `FieldError`. The field connects them: don't
 set `id`, `htmlFor`, `aria-invalid`, or `aria-describedby` by hand. A control
 built on a new primitive gets these props from `useFieldControl`. Use
-`orientation="horizontal"` for a checkbox, switch, or radio row. Put two or
+`orientation="horizontal"` for a checkbox, switch, or radio row. Put a
+checkbox or radio before its label, and a switch after its label. Put two or
 more related controls in a `FieldSet` with a `FieldLegend`, but don't put a
 single `Field` in a `FieldSet`. To put icons, text, or buttons inside an input,
 use `InputGroup` from `@base/InputGroup`.
