@@ -34,7 +34,7 @@ describe("<SampleSettings />", () => {
 			screen.getByRole("radio", { name: /Force choice/ }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("radio", { name: /User's primary group/ }),
+			screen.getByRole("radio", { name: /User’s primary group/ }),
 		).toBeInTheDocument();
 		expect(screen.getByText("Group Rights")).toBeInTheDocument();
 		expect(screen.getByLabelText("Group Rights")).toBeInTheDocument();
@@ -51,13 +51,13 @@ describe("<SampleSettings />", () => {
 
 		expect(
 			screen.getByRole("radio", { name: /Force choice/ }),
-		).toHaveTextContent(
-			"Samples are assigned by the user in the creation form",
+		).toHaveAccessibleDescription(
+			"Samples are assigned by the user in the creation form.",
 		);
 		expect(
-			screen.getByRole("radio", { name: /User's primary group/ }),
-		).toHaveTextContent(
-			"Samples are automatically assigned the creating user's primary group",
+			screen.getByRole("radio", { name: /User’s primary group/ }),
+		).toHaveAccessibleDescription(
+			"Samples are automatically assigned the creating user’s primary group.",
 		);
 	});
 
@@ -87,7 +87,7 @@ describe("<SampleSettings />", () => {
 			expect(screen.getByText("Sample Settings")).toBeInTheDocument(),
 		);
 		await userEvent.click(
-			screen.getByRole("radio", { name: /User's primary group/ }),
+			screen.getByRole("radio", { name: /User’s primary group/ }),
 		);
 
 		expect(updateSettings).toHaveBeenCalledWith({
