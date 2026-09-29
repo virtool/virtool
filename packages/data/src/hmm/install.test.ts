@@ -33,6 +33,7 @@ import {
 	cleanHmmStatus,
 	installHmms,
 	isInstallInProgress,
+	recreateHmmAnnotations,
 	writeHmmAnnotations,
 } from "./data";
 
@@ -462,8 +463,8 @@ describe("installHmms", () => {
 		expect(await listKeys(storage)).toContain(HMM_ANNOTATIONS_KEY);
 	});
 
-	// Nothing else writes this key, so a swallowed failure would report a
-	// successful install and leave Nuvs with a blob nothing can recreate.
+	// A swallowed failure would report a successful install while Nuvs cannot
+	// run.
 	it("fails when the annotations blob cannot be written", async () => {
 		const storage = new MemoryStorage();
 		await seedPendingStatus();
@@ -583,5 +584,95 @@ describe("cleanHmmStatus", () => {
 
 		// The committed marker stays; only the failed pending one is dropped.
 		expect(status?.updates).toEqual([committed]);
+	});
+});
+
+describe("recreateHmmAnnotations", () => {
+	async function readRecords(storage: MemoryStorage) {
+		return JSON.parse(
+			gunzipSync(await readKey(storage, HMM_ANNOTATIONS_KEY)).toString(),
+		) as HmmAnnotationRecord[];
+	}
+
+	it("writes the blob from the installed rows when it is missing", async () => {
+		const storage = new MemoryStorage();
+
+		await db.insert(hmms).values(
+			[createAnnotation(7), createAnnotation(9)].map((a) => ({
+				...a,
+				hidden: false,
+			})),
+		);
+
+		expect(await recreateHmmAnnotations(db, storage)).toBe(true);
+
+		const records = await readRecords(storage);
+		expect(records.map((record) => record.cluster)).toEqual([7, 9]);
+	});
+
+	it("leaves a blob that exists alone", async () => {
+		const storage = new MemoryStorage();
+
+		await db.insert(hmms).values({ ...createAnnotation(7), hidden: false });
+		await storage.write(
+			HMM_ANNOTATIONS_KEY,
+			Readable.from([Buffer.from("existing")]),
+		);
+
+		expect(await recreateHmmAnnotations(db, storage)).toBe(false);
+		expect(await readKey(storage, HMM_ANNOTATIONS_KEY)).toEqual(
+			Buffer.from("existing"),
+		);
+	});
+
+	it("writes nothing when no HMMs are installed", async () => {
+		const storage = new MemoryStorage();
+
+		expect(await recreateHmmAnnotations(db, storage)).toBe(false);
+		expect(await listKeys(storage)).toEqual([]);
+	});
+
+	/*
+	 * Unlocked, the recreate would read the rows from before the install and
+	 * could replace the install's blob with a stale one.
+	 */
+	it("waits for an install that holds the status row", async () => {
+		const storage = new MemoryStorage();
+		await seedPendingStatus();
+
+		await db.insert(hmms).values({ ...createAnnotation(1), hidden: false });
+
+		const second = database.connect();
+		onTestFinished(() => second.close());
+
+		let recreate: Promise<boolean> | undefined;
+		let settled = false;
+		let settledDuringInstall: boolean | undefined;
+
+		await installHmms(
+			db,
+			storage,
+			testLogger,
+			{
+				annotations: [createAnnotation(2), createAnnotation(3)],
+				profiles: profilesOf("profiles"),
+				release: createRelease(),
+				userId: 1,
+			},
+			async () => {
+				recreate ??= recreateHmmAnnotations(second.db, storage).finally(() => {
+					settled = true;
+				});
+				await delay(250);
+				settledDuringInstall = settled;
+			},
+		);
+
+		expect(settledDuringInstall).toBe(false);
+
+		await recreate;
+
+		const records = await readRecords(storage);
+		expect(records.map((record) => record.cluster)).toEqual([1, 2, 3]);
 	});
 });
