@@ -6,6 +6,8 @@ import {
 	type AdministeredUserSearchResult,
 	type AdministratorRoleName,
 	emptyPermissions,
+	PATHOSCOPE_COLUMNS,
+	type PathoscopeColumn,
 	PERMISSION_NAMES,
 	type Permissions,
 	type SortDirection,
@@ -71,8 +73,17 @@ import { emit } from "../events/emit";
  * blind cast, so nothing but this mapper stands between a rename on this side
  * and every existing user's preferences silently reading `undefined`.
  */
+function isPathoscopeColumns(value: unknown): value is PathoscopeColumn[] {
+	return (
+		Array.isArray(value) &&
+		value.includes("name") &&
+		new Set(value).size === value.length &&
+		value.every((column) => PATHOSCOPE_COLUMNS.includes(column))
+	);
+}
+
 type StoredAccountSettings = {
-	pathoscope_column_order: "name-first" | "name-last";
+	pathoscope_columns: PathoscopeColumn[];
 	/** Stored under its older name; the model calls it `preferAcronym`. */
 	prefer_abbreviation: boolean;
 	quick_analyze_workflow: "nuvs" | "pathoscope";
@@ -92,9 +103,9 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 	const blob = (stored ?? {}) as Partial<StoredAccountSettings>;
 
 	return {
-		pathoscopeColumnOrder:
-			blob.pathoscope_column_order ??
-			DEFAULT_USER_SETTINGS.pathoscopeColumnOrder,
+		pathoscopeColumns: isPathoscopeColumns(blob.pathoscope_columns)
+			? blob.pathoscope_columns
+			: DEFAULT_USER_SETTINGS.pathoscopeColumns,
 		preferAcronym:
 			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAcronym,
 		quickAnalyzeWorkflow:
@@ -112,7 +123,7 @@ function toStoredAccountSettings(
 	settings: AccountSettings,
 ): StoredAccountSettings {
 	return {
-		pathoscope_column_order: settings.pathoscopeColumnOrder,
+		pathoscope_columns: settings.pathoscopeColumns,
 		prefer_abbreviation: settings.preferAcronym,
 		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
 		show_ids: settings.showIds,
@@ -221,7 +232,7 @@ export class FirstAdministratorExistsError extends AppError {}
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
 const DEFAULT_USER_SETTINGS: AccountSettings = {
-	pathoscopeColumnOrder: "name-first",
+	pathoscopeColumns: [...PATHOSCOPE_COLUMNS],
 	preferAcronym: false,
 	skipQuickAnalyzeDialog: true,
 	showIds: true,
@@ -595,7 +606,7 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 const STORED_ACCOUNT_SETTINGS_KEYS: {
 	[K in keyof AccountSettings]: keyof StoredAccountSettings;
 } = {
-	pathoscopeColumnOrder: "pathoscope_column_order",
+	pathoscopeColumns: "pathoscope_columns",
 	preferAcronym: "prefer_abbreviation",
 	quickAnalyzeWorkflow: "quick_analyze_workflow",
 	showIds: "show_ids",

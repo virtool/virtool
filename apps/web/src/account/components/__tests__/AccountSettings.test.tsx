@@ -1,10 +1,11 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { mockGetAccount, userServerFnMocks } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 import AccountSettings from "../AccountSettings";
+import { moveColumn } from "../PathoscopeColumns";
 
 describe("<AccountSettings />", () => {
 	it("should show the current acronym preference", async () => {
@@ -18,7 +19,7 @@ describe("<AccountSettings />", () => {
 
 		expect(
 			await screen.findByRole("switch", {
-				name: "Prefer acronyms in Pathoscope exports",
+				name: "Prefer acronyms",
 			}),
 		).toBeChecked();
 	});
@@ -33,7 +34,7 @@ describe("<AccountSettings />", () => {
 		renderWithProviders(<AccountSettings />);
 
 		const toggle = await screen.findByRole("switch", {
-			name: "Prefer acronyms in Pathoscope exports",
+			name: "Prefer acronyms",
 		});
 		expect(toggle).not.toBeChecked();
 
@@ -49,35 +50,76 @@ describe("<AccountSettings />", () => {
 		expect(toggle).toBeChecked();
 	});
 
-	it("should save the Pathoscope column order when one is chosen", async () => {
+	it("should list the copied columns in order and the hidden ones apart", async () => {
 		const account = createFakeAccount();
-		mockGetAccount(account);
-		const saved = {
-			...account.settings,
-			pathoscopeColumnOrder: "name-last" as const,
-		};
-		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(saved);
+		mockGetAccount({
+			...account,
+			settings: {
+				...account.settings,
+				pathoscopeColumns: ["weight", "name"],
+			},
+		});
 
 		renderWithProviders(<AccountSettings />);
 
+		const divider = await screen.findByRole("separator");
+		const buttons = screen.getAllByRole("button", { name: /^Move / });
+
+		expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
+			"Move Weight / Reads",
+			"Move Name",
+			"Move Depth",
+			"Move Coverage",
+		]);
 		expect(
-			await screen.findByRole("radio", {
-				name: "Name, Weight, Depth, Coverage",
-			}),
-		).toBeChecked();
+			buttons.map((button) =>
+				Boolean(
+					divider.compareDocumentPosition(button) &
+						Node.DOCUMENT_POSITION_FOLLOWING,
+				),
+			),
+		).toEqual([false, false, true, true]);
+		expect(within(divider).getByText("Hidden columns")).toBeInTheDocument();
+	});
+});
 
-		mockGetAccount({ ...account, settings: saved });
+describe("moveColumn()", () => {
+	const order = ["name", "weight", "coverage", "divider", "depth"] as const;
 
-		const nameLast = screen.getByRole("radio", {
-			name: "Weight, Depth, Coverage, Name",
-		});
-		await userEvent.click(nameLast);
+	it("should reorder within the copied columns", () => {
+		expect(moveColumn([...order], "coverage", "name")).toEqual([
+			"coverage",
+			"name",
+			"weight",
+			"divider",
+			"depth",
+		]);
+	});
 
-		await waitFor(() =>
-			expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
-				data: { pathoscopeColumnOrder: "name-last" },
-			}),
-		);
-		expect(nameLast).toBeChecked();
+	it("should hide a column moved below the divider", () => {
+		expect(moveColumn([...order], "weight", "depth")).toEqual([
+			"name",
+			"coverage",
+			"divider",
+			"depth",
+			"weight",
+		]);
+	});
+
+	it("should show a column moved above the divider", () => {
+		expect(moveColumn([...order], "depth", "weight")).toEqual([
+			"name",
+			"depth",
+			"weight",
+			"coverage",
+			"divider",
+		]);
+	});
+
+	it("should never hide the name", () => {
+		const current = [...order];
+
+		expect(moveColumn(current, "name", "divider")).toBe(current);
+		expect(moveColumn(current, "name", "depth")).toBe(current);
 	});
 });

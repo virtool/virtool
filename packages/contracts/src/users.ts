@@ -60,8 +60,16 @@ export type AdministeredUserDetail = User & {
 /** The workflow the quick-analyze dialog runs by default. */
 export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
 
-/** The placement of the naming columns in a copied Pathoscope table. */
-export type PathoscopeColumnOrder = "name-first" | "name-last";
+/** The columns a copied Pathoscope table can carry, in their default order. */
+export const PATHOSCOPE_COLUMNS = [
+	"name",
+	"weight",
+	"depth",
+	"coverage",
+] as const;
+
+/** A column of a copied Pathoscope table. */
+export type PathoscopeColumn = (typeof PATHOSCOPE_COLUMNS)[number];
 
 /**
  * A signed-in user's client-side preferences.
@@ -70,8 +78,8 @@ export type PathoscopeColumnOrder = "name-first" | "name-last";
  * between the two spellings.
  */
 export type AccountSettings = {
-	/** Whether Pathoscope copies put the naming columns before or after the metrics */
-	pathoscopeColumnOrder: PathoscopeColumnOrder;
+	/** The columns a Pathoscope copy carries, in order; always includes `name` */
+	pathoscopeColumns: PathoscopeColumn[];
 	/** Whether pathoscope exports name an OTU by its acronym, when it has one */
 	preferAcronym: boolean;
 	quickAnalyzeWorkflow: QuickAnalyzeWorkflow;

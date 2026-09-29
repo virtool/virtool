@@ -71,7 +71,7 @@ describe("getAccount", () => {
 
 		expect(account.email).toBe("alice@example.com");
 		expect(account.settings).toEqual({
-			pathoscopeColumnOrder: "name-first",
+			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: false,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
@@ -92,7 +92,7 @@ describe("getAccount", () => {
 		const account = await getAccount(db, userId);
 
 		expect(account.settings).toEqual({
-			pathoscopeColumnOrder: "name-first",
+			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: false,
 			quickAnalyzeWorkflow: "pathoscope",
 			showIds: false,
@@ -139,7 +139,7 @@ describe("updateAccountSettings", () => {
 		});
 
 		expect(settings).toEqual({
-			pathoscopeColumnOrder: "name-first",
+			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: true,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
@@ -154,17 +154,18 @@ describe("updateAccountSettings", () => {
 		});
 	});
 
-	it("reads back the Pathoscope column order it writes", async () => {
+	it("reads back the Pathoscope columns it writes", async () => {
 		const userId = await seedUser(db, { handle: "bob" });
 
 		const settings = await updateAccountSettings(db, userId, {
-			pathoscopeColumnOrder: "name-last",
+			pathoscopeColumns: ["weight", "name"],
 		});
 
-		expect(settings.pathoscopeColumnOrder).toBe("name-last");
-		expect((await getAccount(db, userId)).settings.pathoscopeColumnOrder).toBe(
-			"name-last",
-		);
+		expect(settings.pathoscopeColumns).toEqual(["weight", "name"]);
+		expect((await getAccount(db, userId)).settings.pathoscopeColumns).toEqual([
+			"weight",
+			"name",
+		]);
 	});
 
 	it("throws when the user does not exist", async () => {
@@ -820,7 +821,7 @@ describe("createUser", () => {
 		// stored blob already uses.
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.settings).toEqual({
-			pathoscope_column_order: "name-first",
+			pathoscope_columns: ["name", "weight", "depth", "coverage"],
 			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
 			show_ids: true,

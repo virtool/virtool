@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
+	PATHOSCOPE_COLUMNS,
 	PasswordTooShortError,
 	SORT_DIRECTIONS,
 	USER_ROLE_FILTERS,
@@ -103,7 +104,13 @@ const searchUsersSchema = z
 
 const accountSettingsSchema = z
 	.object({
-		pathoscopeColumnOrder: z.enum(["name-first", "name-last"]),
+		pathoscopeColumns: z
+			.array(z.enum(PATHOSCOPE_COLUMNS))
+			.refine(
+				(columns) =>
+					columns.includes("name") && new Set(columns).size === columns.length,
+				"Columns must be unique and include the name",
+			),
 		preferAcronym: z.boolean(),
 		quickAnalyzeWorkflow: z.enum(["nuvs", "pathoscope"]),
 		showIds: z.boolean(),

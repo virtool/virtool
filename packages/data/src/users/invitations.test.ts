@@ -104,7 +104,7 @@ describe("account invitations", () => {
 			.where(eq(users.id, created.user.id));
 		expect(row?.password).toBeNull();
 		expect(row?.settings).toEqual({
-			pathoscope_column_order: "name-first",
+			pathoscope_columns: ["name", "weight", "depth", "coverage"],
 			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
 			show_ids: true,

@@ -13,15 +13,24 @@ import Dropdown, {
 	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
+	DropdownMenuLink,
 	DropdownMenuSeparator,
 } from "@base/Dropdown";
 import Icon from "@base/Icon";
 import Tooltip from "@base/Tooltip";
 import * as Sentry from "@sentry/tanstackstart-react";
-import type { PathoscopeColumnOrder, PathoscopeHit } from "@virtool/contracts";
-import { Check, ClipboardCopy, Download, FileSpreadsheet } from "lucide-react";
+import {
+	PATHOSCOPE_COLUMNS,
+	type PathoscopeColumn,
+	type PathoscopeHit,
+} from "@virtool/contracts";
+import {
+	Check,
+	ClipboardCopy,
+	Download,
+	FileSpreadsheet,
+	Settings,
+} from "lucide-react";
 import { useState } from "react";
 import { collapsingLabel } from "./collapsingLabel";
 import {
@@ -33,7 +42,7 @@ type CopyItem = {
 	format: (
 		hits: PathoscopeHit[],
 		options: {
-			columnOrder: PathoscopeColumnOrder;
+			columns: PathoscopeColumn[];
 			headers: boolean;
 			mappedCount: number;
 			preferAcronym: boolean;
@@ -78,7 +87,9 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const { data: account } = useFetchAccount();
 	const { mutate: updateSettings } = useUpdateAccountSettings();
 
-	const columnOrder = account?.settings.pathoscopeColumnOrder ?? "name-first";
+	const columns = account?.settings.pathoscopeColumns ?? [
+		...PATHOSCOPE_COLUMNS,
+	];
 	const preferAcronym = account?.settings.preferAcronym ?? false;
 	const downloadQuery = preferAcronym ? "?preferAcronym=true" : "";
 
@@ -91,7 +102,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	function handleCopy({ format, headers }: CopyItem) {
 		writeToClipboard(
 			format(hits, {
-				columnOrder,
+				columns,
 				headers,
 				mappedCount: analysis.results.readCount,
 				preferAcronym,
@@ -136,34 +147,6 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 							))}
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
-						<DropdownMenuGroup aria-labelledby="PathoscopeExportColumnOrder">
-							<DropdownMenuLabel id="PathoscopeExportColumnOrder">
-								Copy column order
-							</DropdownMenuLabel>
-							<DropdownMenuRadioGroup
-								value={columnOrder}
-								onValueChange={(value) =>
-									updateSettings({
-										pathoscopeColumnOrder: value as PathoscopeColumnOrder,
-									})
-								}
-							>
-								{/* Stay open when chosen, as the abbreviation toggle does. */}
-								<DropdownMenuRadioItem
-									onSelect={(e) => e.preventDefault()}
-									value="name-first"
-								>
-									Name first
-								</DropdownMenuRadioItem>
-								<DropdownMenuRadioItem
-									onSelect={(e) => e.preventDefault()}
-									value="name-last"
-								>
-									Name last
-								</DropdownMenuRadioItem>
-							</DropdownMenuRadioGroup>
-						</DropdownMenuGroup>
-						<DropdownMenuSeparator />
 					</>
 				)}
 				<DropdownMenuGroup aria-labelledby="PathoscopeExportDownload">
@@ -193,6 +176,10 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 				>
 					Prefer acronym
 				</DropdownMenuCheckboxItem>
+				<DropdownMenuSeparator />
+				<DropdownMenuLink hash="pathoscope" to="/account/settings">
+					<Icon icon={Settings} /> Settings
+				</DropdownMenuLink>
 			</DropdownMenuContent>
 		</Dropdown>
 	);
