@@ -1,7 +1,6 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
 import {
 	getDataMigration,
-	listDataMigrationFindings,
 	listDataMigrations,
 } from "@virtool/data/data-migrations/data";
 import { createDb, type Db } from "@virtool/data/db/pg";
@@ -12,6 +11,7 @@ import { runCommand } from "../command";
 
 import type { DataMigrationRegistry } from "./define";
 import { DATA_MIGRATIONS } from "./registry";
+import { getDataMigrationReport } from "./report";
 
 const SERVICE = "data-migrations";
 
@@ -102,30 +102,9 @@ async function exportDataMigration(deps: Deps, key: string): Promise<boolean> {
 		return false;
 	}
 
-	const findings = await listDataMigrationFindings(deps.db, row.id);
+	const report = await getDataMigrationReport(deps.db, row);
 
-	process.stdout.write(
-		`${JSON.stringify(
-			{
-				key: row.key,
-				version: row.version,
-				kind: row.kind,
-				status: row.status,
-				attempts: row.attempts,
-				startedAt: row.startedAt,
-				finishedAt: row.finishedAt,
-				error: row.error,
-				summary: row.summary,
-				findings: findings.map((finding) => ({
-					code: finding.code,
-					subject: finding.subject,
-					detail: finding.detail,
-				})),
-			},
-			null,
-			2,
-		)}\n`,
-	);
+	process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 
 	return row.status === "passed";
 }

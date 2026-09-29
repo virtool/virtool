@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { resolveFileBacked } from "@virtool/contracts/env";
 import {
 	acquireDataMigrationsLock,
+	getDataMigration,
 	releaseDataMigrationsLock,
 } from "@virtool/data/data-migrations/data";
 import type { Logger } from "@virtool/logger";
@@ -10,6 +11,10 @@ import { z } from "zod";
 import { runCommand } from "../command";
 
 import { DATA_MIGRATIONS } from "../data-migrations/registry";
+import {
+	captureDataMigrationFindings,
+	getDataMigrationReport,
+} from "../data-migrations/report";
 import { applyGatedMigrations } from "./apply";
 import { createMigrationDb } from "./connection";
 
@@ -118,6 +123,19 @@ async function doMigrate(env: MigrateEnvValues, logger: Logger): Promise<void> {
 				},
 				"data migration did not pass; inspect its findings, remediate, and rerun migrate",
 			);
+
+			// An errored attempt was already captured as an exception.
+			if (result.outcome?.status === "failed") {
+				const row = await getDataMigration(
+					db,
+					result.outcome.key,
+					result.outcome.version,
+				);
+
+				if (row) {
+					captureDataMigrationFindings(await getDataMigrationReport(db, row));
+				}
+			}
 
 			process.exitCode = 1;
 		} finally {

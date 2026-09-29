@@ -31,6 +31,12 @@ tagged `service: jobs-api`, `service: tasks`, `service: migrate`, and
 that stops them and flush Sentry before they exit. `auth-remediation` logs
 failures and exits non-zero without sending them to Sentry.
 
+When `migrate` runs a data migration, an attempt that errors is reported as an
+exception. An attempt that fails with findings is reported as one issue per key
+and version, with finding counts by code and the `export` document attached as
+`<key>-v<version>.json`. Both are tagged `data_migration` and
+`data_migration_version`.
+
 ## `auth-remediation`: cutover report
 
 Run `node dist/index.mjs auth-remediation report` against the production
@@ -264,7 +270,8 @@ in `data_migration_findings`.
 | `data-migrations export <key>` | Write the current version's outcome and findings as JSON. |
 | `migrate` | Apply pending SQL and execute or retry its paired bodies. |
 
-Inspection reads only `VT_POSTGRES_URL` (or its `_FILE` variant). Before
+Inspection reads only `VT_POSTGRES_URL` and `VT_SENTRY_DSN` (or their `_FILE`
+variants). Before
 bootstrap exists, it reports that `migrate` must initialize the database and
 exits non-zero. Export also exits non-zero for an unrun or non-passing attempt.
 Bodies cannot be run individually against an arbitrary schema.
@@ -320,12 +327,14 @@ Every batch must tolerate replay: a crash after writes commit but before the
 checkpoint persists repeats those writes. A stored cursor that no longer parses
 restarts from `initialCursor`. Progress is isolated by version and cleared on
 success. Long bodies must observe their abort signal. Finding details are stored
-verbatim and must contain no credentials; persisted errors are redacted. At most
+verbatim and sent to Sentry, so they must contain no credentials; persisted
+errors are redacted. At most
 5,000 finding details are retained per attempt, while all findings are counted.
 
 ### Remediation
 
-1. Inspect `data-migrations list` and export the failing key's findings.
+1. Read the failing key's findings from the Sentry issue's attachment, or run
+   `data-migrations export <key>`.
 2. Remediate the data, or correct the body and bump its version and SQL assertion.
 3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
