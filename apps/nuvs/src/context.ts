@@ -35,15 +35,16 @@ import { workPaths } from "./paths";
  * The HMM annotations blob is not in the bucket.
  *
  * Its own class because the likely cause is neither a misconfigured bucket nor a
- * broken row, and a bare `StorageKeyNotFoundError` reads like both. The blob is
- * written by the HMM install task, so a deployment that has never installed
- * HMMs has no key to read. No jobs API route writes it, so a run cannot warm it
- * and must say why rather than fail at `vfam` forty minutes in.
+ * broken row, and a bare `StorageKeyNotFoundError` reads like both. The HMM
+ * install task writes the blob, and a periodic task writes it again within a
+ * minute when it is missing, so a deployment that has never installed HMMs is
+ * the only one that stays without it. No jobs API route writes it, so a run
+ * cannot warm it and must say why rather than fail at `vfam` forty minutes in.
  */
 export class HmmAnnotationsUnavailableError extends WorkflowError {
 	constructor(options?: ErrorOptions) {
 		super(
-			`No HMM annotations at ${HMM_ANNOTATIONS_KEY}. Virtool writes this blob lazily, on the first request for it, and clears it whenever an HMM install commits; request it once from the web API to warm it.`,
+			`No HMM annotations at ${HMM_ANNOTATIONS_KEY}. Virtool writes this blob when HMMs are installed and writes it again within a minute when it is missing. Make sure HMMs are installed, then run the analysis again.`,
 			options,
 		);
 	}
