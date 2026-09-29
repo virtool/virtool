@@ -18,7 +18,7 @@ import { nowUtc } from "../db/time";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-import { getUser } from "../users/data";
+import { getUser, UserNotFoundError } from "../users/data";
 import {
 	claimEmail,
 	EmailInUseError,
@@ -919,8 +919,10 @@ export async function claimEmailRemediationPromotion(
  * ever holds it. Deleting every session means the user signs in again, and
  * under the `required` MFA policy that sign-in is restricted to enrollment.
  *
- * Throws {@link TotpNotEnrolledError} when the user has neither a factor nor
- * the enabled flag.
+ * Throws {@link UserNotFoundError} for an unknown user and
+ * {@link TotpNotEnrolledError} for a user who has not confirmed an enrollment.
+ * An abandoned enrollment does not lock a user out, because their next
+ * enrollment replaces its unverified factor, so it is left alone.
  */
 export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 	await db.transaction(async (tx) => {
@@ -930,18 +932,15 @@ export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 			.where(eq(users.id, userId))
 			.for("update");
 
-		const removed = await tx
-			.delete(authTwoFactors)
-			.where(eq(authTwoFactors.userId, userId))
-			.returning({ id: authTwoFactors.id });
-
-		// Either half is enough to reset, so an account left with the flag but
-		// no factor, or the reverse, can still be repaired.
-		if (!user || (removed.length === 0 && !user.twoFactorEnabled)) {
+		if (!user) {
+			throw new UserNotFoundError();
+		}
+		if (!user.twoFactorEnabled) {
 			throw new TotpNotEnrolledError();
 		}
 
 		await Promise.all([
+			tx.delete(authTwoFactors).where(eq(authTwoFactors.userId, userId)),
 			tx
 				.update(users)
 				.set({ twoFactorEnabled: false })

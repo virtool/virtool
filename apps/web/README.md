@@ -267,10 +267,13 @@ Better Auth session is fresh for 15 minutes from its immutable `created_at`;
 the inclusive boundary is stale (`now - created_at >= 15 minutes`). Rolling
 expiry updates `updated_at` and `expires_at` but never renews freshness. The
 central inventory in `@server/auth/freshness` covers current-account password
-and email changes; TOTP enrollment, disablement, reset, and recovery-code
-regeneration; passkey registration, removal, and security changes; API-key
-creation, permission changes, deletion, and rotation; revocation of another or
-all other browser sessions; and administrator-issued setup or recovery links.
+and email changes; administrator TOTP reset; passkey registration, removal, and
+security changes; API-key creation, permission changes, deletion, and rotation;
+revocation of another or all other browser sessions; administrator changes to
+users, administrator roles, and the MFA policy; and administrator-issued setup
+or recovery links. TOTP enrollment, disablement, and recovery-code regeneration
+use Better Auth's password check instead. See
+[Two-factor authentication](#two-factor-authentication).
 Logout and revocation of the current session remain available without recent
 authentication. Reads require it only when they reveal a one-time secret.
 
@@ -441,15 +444,18 @@ After a correct password, an enrolled user gets Better Auth's login challenge
 instead of a session. The challenge allows five attempts, and ten failures lock
 the factor for 15 minutes.
 
-The instance MFA policy is `settings.mfa_policy`, `optional` or `required`,
-and only a full administrator can set it through `setMfaPolicyFn`. It refuses
-`required` until the caller has enrolled, so the policy can't lock out the
-administrator who sets it. Under
-`required`, a Better Auth or retained legacy session whose user has no
-confirmed TOTP resolves to an `mfa_enrollment` principal. The restriction is read from the policy and
-`users.two_factor_enabled` on every request, so it applies to live sessions as
-soon as the policy changes or a user disables TOTP. It ends when the first
-`verify-totp` succeeds.
+The instance MFA policy is `settings.mfa_policy`, `optional` or `required`.
+Only a full administrator with a recently authenticated session can set it,
+through `setMfaPolicyFn`. It refuses `required` until the caller has enrolled,
+so the policy can't lock out the administrator who sets it.
+
+Under `required`, a Better Auth session whose user has no confirmed TOTP
+resolves to an `mfa_enrollment` principal. A retained legacy session for such a
+user resolves to no principal and answers 401, because enrollment runs only
+through Better Auth. The user signs in again to get a Better Auth session. The
+restriction is read from the policy and `users.two_factor_enabled` on every
+request, so it applies to live sessions as soon as the policy changes or a user
+disables TOTP. It ends when the first `verify-totp` succeeds.
 
 An `mfa_enrollment` principal reaches no server function or raw route. Server
 functions answer 403 `MfaEnrollmentRequiredError`. In `/api/auth/*`, it can
@@ -462,8 +468,9 @@ authenticator and their recovery codes. It requires the full administrator role
 and recent authentication, and it refuses the caller's own account. It deletes
 the factor, clears `users.two_factor_enabled`, and deletes every session of the
 target in one transaction, so under `required` the target's next sign-in is
-restricted to enrollment. The factor row or the flag alone is sufficient, so
-the reset also repairs an account where the two do not agree.
+restricted to enrollment. The reset requires `users.two_factor_enabled`. A
+factor row without the flag is an abandoned enrollment, which does not lock the
+user out: their next `two-factor/enable` replaces it.
 
 ### Server push
 

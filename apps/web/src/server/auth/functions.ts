@@ -30,8 +30,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { db } from "../composition";
-import { config } from "../config";
 import {
+	getPublicLink,
 	getVerificationUrl,
 	isEmailDeliveryAvailable,
 } from "../email/delivery";
@@ -508,11 +508,7 @@ export const completeEmailRemediationFn = createServerFn({ method: "POST" })
 	});
 
 function getRemediationVerificationUrl(token: string, redirect?: string) {
-	const fragment = new URLSearchParams({ token });
-	if (redirect) {
-		fragment.set("redirect", redirect);
-	}
-	return `${config.publicOrigin}/email-remediation-verify#${fragment}`;
+	return getPublicLink("/email-remediation-verify", { token, redirect });
 }
 
 /** Send a replacement mailbox challenge for the staged address. */

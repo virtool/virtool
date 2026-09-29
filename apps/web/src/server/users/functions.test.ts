@@ -288,6 +288,15 @@ describe("resetUserTotpFn", () => {
 		).toHaveLength(1);
 	});
 
+	it("responds with 404 for an unknown user", async () => {
+		await signInAdministrator();
+
+		await expect(call("resetUserTotpFn", { userId: 999_999 })).rejects.toThrow(
+			"User not found.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
 	it("responds with 409 for a user with no factor", async () => {
 		await signInAdministrator();
 		const targetId = await seedUser(db, { handle: "bob" });

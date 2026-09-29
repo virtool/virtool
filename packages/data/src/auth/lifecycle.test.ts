@@ -9,6 +9,7 @@ import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { seedSettings } from "../settings/test/fixtures";
+import { UserNotFoundError } from "../users/data";
 import {
 	cancelEmailRemediation,
 	changeEmailRemediation,
@@ -841,6 +842,29 @@ describe("resetUserTotp", () => {
 
 		expect((await readUser(userId)).twoFactorEnabled).toBe(false);
 		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("leaves an abandoned enrollment and its user's sessions alone", async () => {
+		const userId = await seedUser(db);
+		await db.insert(authTwoFactors).values({
+			backupCodes: "encrypted",
+			secret: "secret",
+			userId,
+		});
+		await seedAuthSession(userId);
+
+		await expect(resetUserTotp(db, userId)).rejects.toBeInstanceOf(
+			TotpNotEnrolledError,
+		);
+
+		expect(await db.select().from(authTwoFactors)).toHaveLength(1);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
+	});
+
+	it("refuses an unknown user", async () => {
+		await expect(resetUserTotp(db, 999_999)).rejects.toBeInstanceOf(
+			UserNotFoundError,
+		);
 	});
 
 	it("refuses a user with no factor and keeps their sessions", async () => {

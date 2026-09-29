@@ -1,5 +1,11 @@
 import type { AdministratorRole } from "@administration/types";
-import type { Account, Invitation, User, UserNested } from "@virtool/contracts";
+import type {
+	Account,
+	AdministeredUserDetail,
+	Invitation,
+	User,
+	UserNested,
+} from "@virtool/contracts";
 import { expect, type Mock, vi } from "vitest";
 
 /**
@@ -90,11 +96,19 @@ export function mockGetAccountUnauthorized(): Mock {
 }
 
 /** Sets up getUser to resolve with the given user when matched by id. */
-export function mockGetUser(userId: number, user: User): Mock {
+export function mockGetUser(
+	userId: number,
+	user: User,
+	twoFactorEnabled = false,
+): Mock {
 	userServerFnMocks.getUserFn.mockImplementation(
-		async ({ data }: { data: { userId: number } }) => {
+		async ({
+			data,
+		}: {
+			data: { userId: number };
+		}): Promise<AdministeredUserDetail> => {
 			if (data.userId === userId) {
-				return user;
+				return { ...user, twoFactorEnabled };
 			}
 			throw new Error(`unexpected userId in mockGetUser: ${data.userId}`);
 		},

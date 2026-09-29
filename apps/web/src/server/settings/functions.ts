@@ -9,7 +9,6 @@ import {
 	sampleGroups,
 } from "@virtool/contracts";
 import { listCacheUsage } from "@virtool/data/caches/usage";
-import { users } from "@virtool/data/db/schema/users";
 import {
 	getSettings,
 	type Settings as StoredSettings,
@@ -21,9 +20,10 @@ import {
 	resolveNcbiApiKey,
 	setNcbiApiKey,
 } from "@virtool/data/settings/ncbi";
-import { eq } from "drizzle-orm";
+import { getUser } from "@virtool/data/users/data";
 import { z } from "zod";
-import { adminRole, open } from "../auth/policy";
+import { PROTECTED_OPERATIONS } from "../auth/freshness";
+import { adminRole, open, recentlyAuthenticated } from "../auth/policy";
 import { db, keyring } from "../composition";
 import { ClientError } from "../errors";
 
@@ -177,17 +177,16 @@ export const clearNcbiApiKeyFn = createServerFn({ method: "POST" })
  * @public
  */
 export const setMfaPolicyFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("full")])
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.mfaPolicySet),
+	])
 	.validator(z.object({ mfaPolicy: z.enum(mfaPolicies) }))
 	.handler(async ({ context, data }): Promise<Settings> => {
 		if (data.mfaPolicy === "required") {
-			const [caller] = await db
-				.select({ twoFactorEnabled: users.twoFactorEnabled })
-				.from(users)
-				.where(eq(users.id, context.principal.userId))
-				.limit(1);
+			const caller = await getUser(db, context.principal.userId);
 
-			if (!caller?.twoFactorEnabled) {
+			if (!caller.twoFactorEnabled) {
 				setResponseStatus(409);
 				throw new ClientError(
 					"Set up two-factor authentication before requiring it.",

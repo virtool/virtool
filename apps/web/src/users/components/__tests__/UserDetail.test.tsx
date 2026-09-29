@@ -157,8 +157,8 @@ describe("<UserDetail />", () => {
 	describe("<ResetUserTotp />", () => {
 		it("lets a full administrator reset an enrolled user", async () => {
 			mockListGroups(groups);
-			const enrolled = createFakeUser({ twoFactorEnabled: true });
-			mockGetUser(enrolled.id, enrolled);
+			const enrolled = createFakeUser();
+			mockGetUser(enrolled.id, enrolled, true);
 			const resetUserTotp = mockResetUserTotp(enrolled);
 
 			renderWithProviders(<UserDetail userId={enrolled.id} />);
@@ -192,8 +192,8 @@ describe("<UserDetail />", () => {
 		it("is hidden for an administrator without the full role", async () => {
 			mockGetAccount(createFakeAccount({ administratorRole: "users" }));
 			mockListGroups(groups);
-			const enrolled = createFakeUser({ twoFactorEnabled: true });
-			mockGetUser(enrolled.id, enrolled);
+			const enrolled = createFakeUser();
+			mockGetUser(enrolled.id, enrolled, true);
 
 			renderWithProviders(<UserDetail userId={enrolled.id} />);
 
@@ -209,11 +209,8 @@ describe("<UserDetail />", () => {
 			const account = createFakeAccount({ administratorRole: "full" });
 			mockGetAccount(account);
 			mockListGroups(groups);
-			const self = createFakeUser({
-				id: account.id,
-				twoFactorEnabled: true,
-			});
-			mockGetUser(self.id, self);
+			const self = createFakeUser({ id: account.id });
+			mockGetUser(self.id, self, true);
 
 			renderWithProviders(<UserDetail userId={self.id} />);
 

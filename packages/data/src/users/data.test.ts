@@ -540,6 +540,17 @@ describe("findUsers", () => {
 		).toEqual(["bob"]);
 	});
 
+	// Any signed-in user may search, so the results must not show who has no
+	// second factor.
+	it("leaves out two-factor state", async () => {
+		await seedUser(db, { handle: "alice" });
+
+		const [user] = (await findUsers(db, {})).items;
+
+		expect(user).toBeDefined();
+		expect(user).not.toHaveProperty("twoFactorEnabled");
+	});
+
 	it("filters by handle substring", async () => {
 		await seedUser(db, { handle: "alice" });
 		await seedUser(db, { handle: "malice" });
@@ -736,6 +747,18 @@ describe("getUser", () => {
 		});
 		expect(user.groups.map((group) => group.name)).toEqual(["refs", "samples"]);
 		expect(user.primaryGroup).toMatchObject({ id: samples, name: "samples" });
+	});
+
+	it("reports whether the user has confirmed a TOTP enrollment", async () => {
+		const userId = await seedUser(db, { handle: "alice" });
+		expect((await getUser(db, userId)).twoFactorEnabled).toBe(false);
+
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+
+		expect((await getUser(db, userId)).twoFactorEnabled).toBe(true);
 	});
 
 	it("throws when the user does not exist", async () => {

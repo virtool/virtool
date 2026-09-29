@@ -49,7 +49,10 @@ export type User = UserNested & {
 
 	/** The group whose rights new resources of theirs inherit */
 	primaryGroup: GroupMinimal | null;
+};
 
+/** A user as the administrator detail view reads them. */
+export type AdministeredUserDetail = User & {
 	/** Whether they have confirmed a TOTP enrollment */
 	twoFactorEnabled: boolean;
 };

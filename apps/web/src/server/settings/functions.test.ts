@@ -74,6 +74,8 @@ const handlers = (await import(
 const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
+const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
+const { SessionNotFreshError } = await import("../auth/policy");
 const { signIn } = await import("../auth/test/fixtures");
 const { seedSettings } = await import("@virtool/data/settings/test/fixtures");
 
@@ -452,6 +454,30 @@ describe("setMfaPolicy", () => {
 		await expect(
 			call("setMfaPolicyFn", { mfaPolicy: "required" }),
 		).resolves.toMatchObject({ mfaPolicy: "required" });
+		await expect(call("getSettingsFn")).resolves.toMatchObject({
+			mfaPolicy: "required",
+		});
+	});
+
+	it("requires a fresh session", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
+		await db
+			.update(authSessions)
+			.set({
+				createdAt: new Date(
+					Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1),
+				),
+			})
+			.where(eq(authSessions.userId, userId));
+		await seedSettings(db, { mfaPolicy: "required" });
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "optional" }),
+		).rejects.toBeInstanceOf(SessionNotFreshError);
 		await expect(call("getSettingsFn")).resolves.toMatchObject({
 			mfaPolicy: "required",
 		});

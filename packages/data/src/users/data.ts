@@ -2,6 +2,7 @@ import {
 	type Account,
 	type AccountLifecycleState,
 	type AccountSettings,
+	type AdministeredUserDetail,
 	type AdministeredUserSearchResult,
 	type AdministratorRoleName,
 	emptyPermissions,
@@ -310,7 +311,6 @@ function buildUser(row: UserRow, memberships: GroupMembershipRow[]): User {
 		primaryGroup: primary
 			? { id: primary.id, legacyId: primary.legacyId, name: primary.name }
 			: null,
-		twoFactorEnabled: row.twoFactorEnabled ?? false,
 	};
 }
 
@@ -538,7 +538,11 @@ export async function findAdministeredUsers(
 	};
 }
 
-export async function getUser(db: Db, userId: number): Promise<User> {
+/** Read a user for the administrator detail view, with their TOTP state. */
+export async function getUser(
+	db: Db,
+	userId: number,
+): Promise<AdministeredUserDetail> {
 	const [row] = await db
 		.select()
 		.from(usersTable)
@@ -549,7 +553,9 @@ export async function getUser(db: Db, userId: number): Promise<User> {
 		throw new UserNotFoundError();
 	}
 
-	return takeFirstOrThrow(await assembleUsers(db, [row]));
+	const user = takeFirstOrThrow(await assembleUsers(db, [row]));
+
+	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
 }
 
 /** Read the signed-in user's own account, including their email and settings. */

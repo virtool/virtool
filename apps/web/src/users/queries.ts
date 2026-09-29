@@ -305,8 +305,12 @@ export function useResetUserTotp() {
 	);
 	return useMutation({
 		mutationFn,
-		onSuccess: (result) => {
-			queryClient.setQueryData(userQueryKeys.detail(result.id), result);
+		onSuccess: (_data, userId) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "update",
+				id: userId,
+			});
 		},
 	});
 }

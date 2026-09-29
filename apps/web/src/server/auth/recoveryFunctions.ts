@@ -31,6 +31,7 @@ import { z } from "zod";
 import { db } from "../composition";
 import { config } from "../config";
 import {
+	getPublicLink,
 	getVerificationUrl,
 	isEmailDeliveryAvailable,
 } from "../email/delivery";
@@ -69,16 +70,6 @@ const TIMING_DUMMY_HASH = Buffer.from(
 
 function digestRecoveryBudget(value: string): string {
 	return createHmac("sha256", config.authSecret).update(value).digest("hex");
-}
-
-function getPublicLink(path: string, token: string, purpose?: string): string {
-	const url = new URL(path, config.publicOrigin);
-	const fragment = new URLSearchParams({ token });
-	if (purpose) {
-		fragment.set("purpose", purpose);
-	}
-	url.hash = fragment.toString();
-	return url.toString();
 }
 
 function rethrowVerificationError(error: unknown): never {
@@ -200,7 +191,10 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 						purpose: "password_recovery",
 						deliveryAvailable: true,
 						getRecoveryUrl: (token) =>
-							getPublicLink("/recover", token, "password_recovery"),
+							getPublicLink("/recover", {
+								token,
+								purpose: "password_recovery",
+							}),
 					});
 				} catch (error) {
 					if (
@@ -277,10 +271,16 @@ export const issueAdministratorRecoveryFn = createServerFn({ method: "POST" })
 				issuerUserId: context.principal.userId,
 				deliveryAvailable,
 				getRecoveryUrl: (token) =>
-					getPublicLink("/recover", token, "administrator_recovery"),
+					getPublicLink("/recover", {
+						token,
+						purpose: "administrator_recovery",
+					}),
 			});
 			return {
-				url: getPublicLink("/recover", issued.token, "administrator_recovery"),
+				url: getPublicLink("/recover", {
+					token: issued.token,
+					purpose: "administrator_recovery",
+				}),
 				expiresAt: issued.expiresAt,
 				delivery: issued.delivery,
 			};
