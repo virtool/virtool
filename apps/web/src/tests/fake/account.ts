@@ -1,9 +1,15 @@
 import { faker } from "@faker-js/faker";
-import type { Account, AccountSettings, ApiKey } from "@virtool/contracts";
+import {
+	type Account,
+	type AccountSettings,
+	type ApiKey,
+	PATHOSCOPE_COLUMNS,
+} from "@virtool/contracts";
 import { createFakePermissions } from "./permissions";
 import { createFakeUser } from "./user";
 
 const defaultSettings: AccountSettings = {
+	pathoscopeColumns: [...PATHOSCOPE_COLUMNS],
 	preferAcronym: false,
 	quickAnalyzeWorkflow: "pathoscope",
 	showIds: true,

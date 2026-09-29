@@ -13,13 +13,24 @@ import Dropdown, {
 	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
+	DropdownMenuLink,
 	DropdownMenuSeparator,
 } from "@base/Dropdown";
 import Icon from "@base/Icon";
 import Tooltip from "@base/Tooltip";
 import * as Sentry from "@sentry/tanstackstart-react";
-import type { PathoscopeHit } from "@virtool/contracts";
-import { Check, ClipboardCopy, Download, FileSpreadsheet } from "lucide-react";
+import {
+	PATHOSCOPE_COLUMNS,
+	type PathoscopeColumn,
+	type PathoscopeHit,
+} from "@virtool/contracts";
+import {
+	Check,
+	ClipboardCopy,
+	Download,
+	FileSpreadsheet,
+	Settings,
+} from "lucide-react";
 import { useState } from "react";
 import { collapsingLabel } from "./collapsingLabel";
 import {
@@ -31,6 +42,7 @@ type CopyItem = {
 	format: (
 		hits: PathoscopeHit[],
 		options: {
+			columns: PathoscopeColumn[];
 			headers: boolean;
 			mappedCount: number;
 			preferAcronym: boolean;
@@ -64,8 +76,9 @@ type PathoscopeExportProps = {
  * The export menu.
  *
  * A copy takes what the search and filters left on screen; a download is the
- * entire analysis, sequence by sequence, as the server renders it. Both name
- * OTUs by acronym when the account prefers it and the OTU has one.
+ * entire analysis, sequence by sequence, as the server renders it. Both carry
+ * the account's columns in its order, and name OTUs by acronym when the
+ * account prefers it and the OTU has one.
  */
 export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const hits = useSortAndFilterPathoscopeHits(analysis);
@@ -75,8 +88,12 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const { data: account } = useFetchAccount();
 	const { mutate: updateSettings } = useUpdateAccountSettings();
 
+	const columns = account?.settings.pathoscopeColumns ?? [
+		...PATHOSCOPE_COLUMNS,
+	];
 	const preferAcronym = account?.settings.preferAcronym ?? false;
-	const downloadQuery = preferAcronym ? "?preferAcronym=true" : "";
+	// Column names are fixed identifiers, so the list needs no encoding.
+	const downloadQuery = `?columns=${columns.join(",")}${preferAcronym ? "&preferAcronym=true" : ""}`;
 
 	const [copied, setCopied] = useState(false);
 
@@ -87,6 +104,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	function handleCopy({ format, headers }: CopyItem) {
 		writeToClipboard(
 			format(hits, {
+				columns,
 				headers,
 				mappedCount: analysis.results.readCount,
 				preferAcronym,
@@ -160,6 +178,10 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 				>
 					Prefer acronym
 				</DropdownMenuCheckboxItem>
+				<DropdownMenuSeparator />
+				<DropdownMenuLink hash="pathoscope" to="/account/settings">
+					<Icon icon={Settings} /> Settings
+				</DropdownMenuLink>
 			</DropdownMenuContent>
 		</Dropdown>
 	);
