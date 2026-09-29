@@ -33,12 +33,14 @@ type ApiBehaviour = {
 	 */
 	pingRefusal?: string;
 	finishStatus?: number;
+	finishMessage?: string;
 };
 
 function createHandler({
 	claimStatus = 200,
 	pingRefusal,
 	finishStatus = 200,
+	finishMessage = "no",
 }: ApiBehaviour): TestServerHandler {
 	return (request, response) => {
 		if (request.path === "/jobs/claim") {
@@ -100,7 +102,7 @@ function createHandler({
 		}
 
 		if (request.path.endsWith("/finish") && finishStatus !== 200) {
-			respondJson(response, finishStatus, { message: "no" });
+			respondJson(response, finishStatus, { message: finishMessage });
 			return;
 		}
 
@@ -254,6 +256,35 @@ describe("a finish the jobs API rejects", () => {
 		expect(reported).toEqual([
 			{
 				err: expect.any(Error),
+				tags: { workflow: "create_subtraction", jobId: String(JOB_ID) },
+			},
+		]);
+	});
+
+	it("reports nothing when the job was cancelled before the finish", async () => {
+		server = await startTestServer(
+			createHandler({ finishStatus: 401, finishMessage: "Job is cancelled." }),
+		);
+
+		const { code, reported } = await run(createWorkflow([step("prepare")]));
+
+		expect(code).toBe(EXIT_OK);
+		expect(reported).toEqual([]);
+	});
+
+	it("reports a refused key that names no terminal state", async () => {
+		server = await startTestServer(
+			createHandler({
+				finishStatus: 401,
+				finishMessage: "Invalid credentials",
+			}),
+		);
+
+		const { reported } = await run(createWorkflow([step("prepare")]));
+
+		expect(reported).toEqual([
+			{
+				err: expect.objectContaining({ message: "Invalid credentials" }),
 				tags: { workflow: "create_subtraction", jobId: String(JOB_ID) },
 			},
 		]);

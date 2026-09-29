@@ -16,8 +16,9 @@ and test harness shared by Virtool workflow executors.
 - With `VT_SENTRY_DSN` set, the runtime sends a Sentry exception for each
   failed claim, preparation, step, and finish call. It tags each exception
   with `workflow` and, after the claim, `jobId`. The default logger also
-  forwards `info`-and-above records to Sentry logs. Cancellation and
-  termination send no exception.
+  forwards `info`-and-above records to Sentry logs. Cancellation,
+  termination, and a jobs API refusal that names a terminal job state send no
+  exception.
 - Cancellation is cooperative. The runtime abandons the active step when its
   signal aborts and safely observes any later rejection.
 

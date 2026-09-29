@@ -157,6 +157,34 @@ export const JobPing = z.object({
 
 export type JobPing = z.infer<typeof JobPing>;
 
+/**
+ * The states a job never leaves, and the `401` message a runner holding a key
+ * for one is told.
+ *
+ * The message is the whole of the cancellation channel, so the jobs API sends
+ * these exact strings and the runtime matches on them to tell a job that ended
+ * from a credential that is broken.
+ */
+const JOB_TERMINAL_REFUSALS: Record<string, string> = {
+	cancelled: "Job is cancelled.",
+	failed: "Job has failed.",
+	succeeded: "Job has succeeded.",
+};
+
+const JOB_TERMINAL_REFUSAL_MESSAGES = new Set(
+	Object.values(JOB_TERMINAL_REFUSALS),
+);
+
+/** Get what a runner is told for a job in `state`, or `null` if it is not terminal. */
+export function getJobTerminalRefusal(state: string): string | null {
+	return JOB_TERMINAL_REFUSALS[state] ?? null;
+}
+
+/** Whether `message` is one the jobs API sends to refuse a terminal job's key. */
+export function isJobTerminalRefusal(message: string): boolean {
+	return JOB_TERMINAL_REFUSAL_MESSAGES.has(message);
+}
+
 const fileName = z.string().min(1);
 
 // The complete object-storage key the workflow wrote to, minted with

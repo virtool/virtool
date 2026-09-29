@@ -1,10 +1,12 @@
 import { hostname } from "node:os";
 import * as Sentry from "@sentry/node";
+import { isJobTerminalRefusal } from "@virtool/contracts";
 import { createLogger, type Logger } from "@virtool/logger";
 import { getCommonOptions } from "@virtool/sentry";
 import { createSentryLogStream } from "@virtool/sentry/log";
 import { createStorageBackend } from "@virtool/storage";
 import { createJobsApiClient } from "./client/client";
+import { UnauthorizedError } from "./client/errors";
 import type { WorkflowRunConfig } from "./config";
 import { createWorkflowContext } from "./context";
 import { claimJob } from "./lifecycle/claim";
@@ -162,6 +164,13 @@ export async function runWorkflowApp<TData, TState>({
 	// Logged errors reach Sentry only as log records, which raise no issue and
 	// trigger no alert, so every failure is also captured as an exception.
 	const reportError: ReportError = (err, jobId) => {
+		// A job can end while the ping loop is not watching, such as between the
+		// last step and the finish call. Any request can then be refused with a
+		// terminal state, and that is a cancellation, not a failure.
+		if (err instanceof UnauthorizedError && isJobTerminalRefusal(err.message)) {
+			return;
+		}
+
 		const tags: Record<string, string> = { workflow: config.workflow };
 
 		if (jobId !== undefined) {
