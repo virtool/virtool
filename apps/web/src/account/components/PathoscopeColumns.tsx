@@ -80,7 +80,7 @@ function ColumnRow({ column, hidden }: ColumnRowProps) {
 	return (
 		<BoxGroupSection
 			className={cn(
-				"flex h-12 items-center gap-3",
+				"flex h-12 items-center gap-3 pl-3.5",
 				hidden && "text-gray-400",
 				isDragging && "opacity-40",
 			)}
@@ -214,7 +214,7 @@ export default function PathoscopeColumns({
 					<BoxGroup className="mb-0 shadow-lg">
 						<BoxGroupSection
 							className={cn(
-								"flex h-12 cursor-grabbing items-center gap-3 bg-white",
+								"flex h-12 cursor-grabbing items-center gap-3 bg-white pl-3.5",
 								order.indexOf(active) > dividerIndex && "text-gray-400",
 							)}
 						>
