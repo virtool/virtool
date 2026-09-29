@@ -26,7 +26,8 @@ type SummaryRow = Pick<
 	"id" | "name" | "createdAt" | "deviceType" | "backedUp"
 >;
 
-function toPasskeySummary(row: SummaryRow): PasskeySummary {
+/** Map a stored passkey to the summary its owner sees. */
+export function toPasskeySummary(row: SummaryRow): PasskeySummary {
 	return {
 		managementId: row.id,
 		name: row.name || DEFAULT_PASSKEY_NAME,

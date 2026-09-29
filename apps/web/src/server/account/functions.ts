@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
-	DEFAULT_PASSKEY_NAME,
 	type PasskeySummary,
 	passkeyNameSchema,
 	permissionsSchema,
@@ -16,6 +15,7 @@ import {
 import {
 	findPasskeys,
 	PasskeyFallbackMissingError,
+	toPasskeySummary,
 } from "@virtool/data/auth/passkeys";
 import { users } from "@virtool/data/db/schema/users";
 import { APIError } from "better-auth/api";
@@ -304,13 +304,11 @@ export const registerPasskeyFn = createServerFn({ method: "POST" })
 		try {
 			const passkey = await verifyPasskeyRegistration(data.response);
 			setResponseStatus(201);
-			return {
-				managementId: Number(passkey.id),
-				name: passkey.name || DEFAULT_PASSKEY_NAME,
-				createdAt: passkey.createdAt ?? null,
-				multiDevice: passkey.deviceType === "multiDevice",
-				backedUp: passkey.backedUp,
-			};
+			return toPasskeySummary({
+				...passkey,
+				id: Number(passkey.id),
+				name: passkey.name ?? null,
+			});
 		} catch (err) {
 			return rethrowPasskeyError(err, PROTECTED_OPERATIONS.passkeyRegister);
 		}

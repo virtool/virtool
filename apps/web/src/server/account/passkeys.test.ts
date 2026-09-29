@@ -217,6 +217,15 @@ describe("registration", () => {
 		});
 	});
 
+	it("returns the summary that the passkey list shows", async () => {
+		const userId = await seedAccount();
+		await signInAs(userId);
+
+		const summary = await registerPasskey();
+
+		expect(await account("findPasskeysFn")).toEqual([summary]);
+	});
+
 	it("stores transports it does not know and drops ones it cannot store", async () => {
 		const userId = await seedAccount();
 		await signInAs(userId);
