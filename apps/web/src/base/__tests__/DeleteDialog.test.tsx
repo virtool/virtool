@@ -109,6 +109,28 @@ describe("<DeleteDialog />", () => {
 		);
 	});
 
+	it("stays open without an error when recent authentication is cancelled", async () => {
+		const cancelled = new Error("Recent authentication was cancelled.");
+		cancelled.name = "RecentAuthenticationCancelled";
+		const onConfirm = vi.fn().mockRejectedValue(cancelled);
+		const onOpenChange = vi.fn();
+		renderWithProviders(
+			<DeleteDialog
+				name="Foo"
+				noun="Sample"
+				onConfirm={onConfirm}
+				onOpenChange={onOpenChange}
+				open
+			/>,
+		);
+
+		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+		await waitFor(() => expect(onConfirm).toHaveBeenCalledOnce());
+		expect(screen.queryByRole("alert")).toBeNull();
+		expect(onOpenChange).not.toHaveBeenCalled();
+	});
+
 	it("closes without confirming when cancelled", async () => {
 		const onConfirm = vi.fn();
 		const onOpenChange = vi.fn();

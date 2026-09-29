@@ -43,10 +43,17 @@ const RecentAuthenticationContext = createContext<(() => Promise<void>) | null>(
 	null,
 );
 
+const CANCELLED_ERROR_NAME = "RecentAuthenticationCancelled";
+
 function cancellationError(): Error {
 	const error = new Error("Recent authentication was cancelled.");
-	error.name = "RecentAuthenticationCancelled";
+	error.name = CANCELLED_ERROR_NAME;
 	return error;
+}
+
+/** Whether an error is the user's cancel of a recent-authentication challenge. */
+export function isRecentAuthenticationCancelled(error: unknown): boolean {
+	return error instanceof Error && error.name === CANCELLED_ERROR_NAME;
 }
 
 /** Coordinate one shared recent-authentication challenge for the application. */

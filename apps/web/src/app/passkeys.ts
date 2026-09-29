@@ -1,3 +1,4 @@
+import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type {
 	AuthenticationResponseJSON,
@@ -198,7 +199,7 @@ export function getPasskeyErrorMessage(error: unknown): string | null {
 	if (error instanceof PasskeyCeremonyError) {
 		return error.kind === "cancelled" ? null : error.message;
 	}
-	if (error.name === "RecentAuthenticationCancelled") {
+	if (isRecentAuthenticationCancelled(error)) {
 		return null;
 	}
 	if (error.name === CLIENT_ERROR_NAME && error.message) {

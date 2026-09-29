@@ -4,8 +4,12 @@ import {
 	accountServerFnMocks,
 	mockFindPasskeys,
 } from "@tests/server-fn/account";
+import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthentication";
 import { renderWithProviders } from "@tests/setup";
-import type { PasskeySummary } from "@virtool/contracts";
+import {
+	type PasskeySummary,
+	SESSION_NOT_FRESH_ERROR_NAME,
+} from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const browser = vi.hoisted(() => ({ startRegistration: vi.fn() }));
@@ -186,5 +190,42 @@ describe("<AccountPasskeys />", () => {
 			"Set a password",
 		);
 		expect(accountServerFnMocks.findPasskeysFn).toHaveBeenCalledTimes(1);
+	});
+
+	it("keeps the dialog open without an error when the identity check is cancelled", async () => {
+		const user = userEvent.setup();
+		mockFindPasskeys([passkey()]);
+		accountServerFnMocks.removePasskeyFn.mockRejectedValue(
+			Object.assign(new Error("Recent authentication required"), {
+				name: SESSION_NOT_FRESH_ERROR_NAME,
+			}),
+		);
+		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
+			{ password: true, totp: false },
+		);
+
+		renderWithProviders(<AccountPasskeys />);
+		await user.click(
+			await screen.findByRole("button", { name: "Remove Work laptop" }),
+		);
+		await user.click(
+			within(screen.getByRole("alertdialog")).getByRole("button", {
+				name: "Confirm",
+			}),
+		);
+		const challenge = await screen.findByRole("dialog", {
+			name: "Confirm your identity",
+		});
+		await within(challenge).findByLabelText("Password");
+		await user.click(within(challenge).getByRole("button", { name: "Cancel" }));
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole("dialog", { name: "Confirm your identity" }),
+			).toBeNull(),
+		);
+		const dialog = screen.getByRole("alertdialog");
+		expect(within(dialog).queryByRole("alert")).toBeNull();
+		expect(accountServerFnMocks.removePasskeyFn).toHaveBeenCalledTimes(1);
 	});
 });

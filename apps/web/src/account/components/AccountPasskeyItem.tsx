@@ -143,19 +143,9 @@ export default function AccountPasskeyItem({
 							your device or password manager.
 						</>
 					}
-					onConfirm={async () => {
-						try {
-							await removeMutation.mutateAsync({
-								managementId: passkey.managementId,
-							});
-						} catch (error) {
-							// A cancelled recent-authentication challenge leaves the passkey
-							// in place and is not an error to show.
-							if (getPasskeyErrorMessage(error) !== null) {
-								throw error;
-							}
-						}
-					}}
+					onConfirm={() =>
+						removeMutation.mutateAsync({ managementId: passkey.managementId })
+					}
 					trigger={
 						<IconButton
 							color="red"
