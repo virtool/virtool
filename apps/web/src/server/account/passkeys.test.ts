@@ -84,7 +84,9 @@ vi.mock("../auth/instance", () => ({
 const { createAuth } = await import("../auth/betterAuth");
 const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
 const { SessionNotFreshError } = await import("../auth/policy");
-const { sessionCookie } = await import("../auth/test/fixtures");
+const { interceptPasskeyInsert, sessionCookie } = await import(
+	"../auth/test/fixtures"
+);
 const { createSoftwareAuthenticator } = await import("../auth/test/webauthn");
 const { ClientError } = await import("../errors");
 const { BrowserSessionEndedError, removeAccountPasskey } = await import(
@@ -254,6 +256,43 @@ describe("registration", () => {
 		await expect(registerPasskey(key)).rejects.toMatchObject({
 			status: 409,
 		});
+	});
+
+	it("surfaces a failure to store a verified passkey as a server error", async () => {
+		const userId = await seedAccount();
+		await signInAs(userId);
+		const spy = interceptPasskeyInsert(db, () =>
+			Promise.reject(new Error("connection lost")),
+		);
+
+		try {
+			const error = await registerPasskey().catch((err: unknown) => err);
+
+			expect(error).toBeInstanceOf(Error);
+			expect(error).not.toBeInstanceOf(ClientError);
+		} finally {
+			spy.mockRestore();
+		}
+		expect(await db.select().from(authPasskeys)).toEqual([]);
+	});
+
+	it("reports a response that fails verification as a client error", async () => {
+		const userId = await seedAccount();
+		await signInAs(userId);
+		const options = (await account("getPasskeyRegistrationOptionsFn")) as {
+			challenge: string;
+		};
+		const key = createSoftwareAuthenticator({
+			origin: "https://evil.test",
+			rpId: "localhost",
+		});
+
+		const error = await account("registerPasskeyFn", {
+			response: key.register(options),
+		}).catch((err: unknown) => err);
+
+		expect(error).toBeInstanceOf(ClientError);
+		expect(error).toMatchObject({ status: 400 });
 	});
 });
 

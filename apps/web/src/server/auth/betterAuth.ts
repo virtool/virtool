@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { getAuthenticatorName, passkey } from "@better-auth/passkey";
 import { DEFAULT_PASSKEY_NAME } from "@virtool/contracts";
 import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
@@ -276,6 +277,52 @@ function rejectUnverifiedUser(): never {
 	});
 }
 
+function rejectRegisteredPasskey(): never {
+	throw new APIError("BAD_REQUEST", {
+		code: "PASSKEY_ALREADY_REGISTERED",
+		message: "Passkey already registered",
+	});
+}
+
+/** The credential a registration verified, once its signature checks out. */
+type PasskeyRegistrationCeremony = { credentialId?: string };
+
+const passkeyRegistrations =
+	new AsyncLocalStorage<PasskeyRegistrationCeremony>();
+
+/**
+ * Run a passkey registration so a failure to store the verified credential is
+ * not taken for a response that failed verification.
+ *
+ * The plugin answers any error that is not an `APIError` with a 500
+ * `FAILED_TO_VERIFY_REGISTRATION`, whether the WebAuthn library rejected the
+ * response or the database refused the insert. Only a response that passed
+ * verification reaches `afterVerification`, which records its credential. A
+ * 500 after that is a concurrent registration of the same credential, which
+ * is refused as already registered, or a server fault.
+ */
+export async function runPasskeyRegistration<T>(
+	db: Db,
+	register: () => Promise<T>,
+): Promise<T> {
+	const ceremony: PasskeyRegistrationCeremony = {};
+	try {
+		return await passkeyRegistrations.run(ceremony, register);
+	} catch (err) {
+		if (
+			ceremony.credentialId === undefined ||
+			!(err instanceof APIError) ||
+			err.statusCode < 500
+		) {
+			throw err;
+		}
+		if (await isPasskeyCredentialRegistered(db, ceremony.credentialId)) {
+			rejectRegisteredPasskey();
+		}
+		throw new Error("Failed to store a verified passkey", { cause: err });
+	}
+}
+
 /**
  * Build the Better Auth instance.
  *
@@ -489,11 +536,12 @@ export function createAuth({
 						if (!info?.userVerified) {
 							rejectUnverifiedUser();
 						}
+						const ceremony = passkeyRegistrations.getStore();
+						if (ceremony) {
+							ceremony.credentialId = info.credential.id;
+						}
 						if (await isPasskeyCredentialRegistered(db, info.credential.id)) {
-							throw new APIError("BAD_REQUEST", {
-								code: "PASSKEY_ALREADY_REGISTERED",
-								message: "Passkey already registered",
-							});
+							rejectRegisteredPasskey();
 						}
 						return {
 							name: getAuthenticatorName(info.aaguid) ?? DEFAULT_PASSKEY_NAME,

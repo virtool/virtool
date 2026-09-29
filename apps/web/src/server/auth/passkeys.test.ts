@@ -13,6 +13,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
+import { APIError } from "better-auth/api";
 import { twoFactor } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -21,10 +22,11 @@ import {
 	createAuth,
 	createAuthRequestHandler,
 	PASSKEY_SIGN_IN_PATH,
+	runPasskeyRegistration,
 	withPasskeyTwoFactor,
 } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
-import { sessionCookie } from "./test/fixtures";
+import { interceptPasskeyInsert, sessionCookie } from "./test/fixtures";
 import { createSoftwareAuthenticator } from "./test/webauthn";
 
 const ORIGIN = "https://virtool.test";
@@ -123,10 +125,12 @@ async function register(
 ) {
 	const jar = await signedInJar(userId);
 	const options = await registrationOptions(jar);
-	return auth.api.verifyPasskeyRegistration({
-		headers: jar.headers(),
-		body: { response: key.register(options, ceremony) },
-	});
+	return runPasskeyRegistration(db, () =>
+		auth.api.verifyPasskeyRegistration({
+			headers: jar.headers(),
+			body: { response: key.register(options, ceremony) },
+		}),
+	);
 }
 
 async function signIn(
@@ -269,6 +273,51 @@ describe("registration", () => {
 				}),
 			),
 		).rejects.toMatchObject({ body: { code: "PASSKEY_ALREADY_REGISTERED" } });
+		expect(await passkeyRows()).toMatchObject([{ userId: alice }]);
+	});
+
+	it("reports a verified credential the database fails to store as a server fault", async () => {
+		const userId = await seedUser(db);
+		const spy = interceptPasskeyInsert(db, () =>
+			Promise.reject(new Error("connection lost")),
+		);
+
+		try {
+			const error = await register(userId).catch((err: unknown) => err);
+
+			expect(error).not.toBeInstanceOf(APIError);
+			expect(error).toMatchObject({
+				message: "Failed to store a verified passkey",
+				cause: { body: { code: "FAILED_TO_VERIFY_REGISTRATION" } },
+			});
+		} finally {
+			spy.mockRestore();
+		}
+		expect(await passkeyRows()).toEqual([]);
+	});
+
+	it("refuses a credential a concurrent registration stored first", async () => {
+		const alice = await seedUser(db, { handle: "alice" });
+		const bob = await seedUser(db, { handle: "bob" });
+		const key = authenticator();
+		const spy = interceptPasskeyInsert(db, (insert) =>
+			insert(authPasskeys).values({
+				userId: alice,
+				credentialID: key.credentialId,
+				publicKey: "public-key",
+				counter: 0,
+				deviceType: "singleDevice",
+				backedUp: false,
+			}),
+		);
+
+		try {
+			await expect(register(bob, key)).rejects.toMatchObject({
+				body: { code: "PASSKEY_ALREADY_REGISTERED" },
+			});
+		} finally {
+			spy.mockRestore();
+		}
 		expect(await passkeyRows()).toMatchObject([{ userId: alice }]);
 	});
 

@@ -243,7 +243,8 @@ function rethrowPasskeyError(
 			throw new ClientError("This passkey is already registered.", 409);
 		}
 		// The plugin reports a response that fails verification, including one
-		// signed for another origin, as a server error.
+		// signed for another origin, as a server error. `runPasskeyRegistration`
+		// has already turned a failure after verification into a plain error.
 		if (
 			err.statusCode < 500 ||
 			err.body?.code === "FAILED_TO_VERIFY_REGISTRATION"

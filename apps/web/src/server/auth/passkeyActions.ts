@@ -78,11 +78,18 @@ export const generatePasskeyRegistrationOptions = createServerOnlyFn(
 /** Verify a registration response and store the new passkey. */
 export const verifyPasskeyRegistration = createServerOnlyFn(
 	async (response: z.infer<typeof registrationResponseSchema>) => {
-		const { auth, headers } = await loadAuth();
-		return auth.api.verifyPasskeyRegistration({
-			headers,
-			body: { response },
-		});
+		const [{ auth, headers }, { runPasskeyRegistration }, { db }] =
+			await Promise.all([
+				loadAuth(),
+				import("./betterAuth"),
+				import("../composition"),
+			]);
+		return runPasskeyRegistration(db, () =>
+			auth.api.verifyPasskeyRegistration({
+				headers,
+				body: { response },
+			}),
+		);
 	},
 );
 

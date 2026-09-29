@@ -7,7 +7,8 @@ import {
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
-import type { Mock } from "vitest";
+import { authPasskeys } from "@virtool/data/db/schema/auth";
+import { type Mock, vi } from "vitest";
 import {
 	SETUP_SESSION_ID_COOKIE,
 	SETUP_SESSION_TOKEN_COOKIE,
@@ -86,4 +87,34 @@ export function setupSessionCookie({
 	token,
 }: Pick<SeededSetupSession, "sessionId" | "token">): string {
 	return `${SETUP_SESSION_ID_COOKIE}=${sessionId}; ${SETUP_SESSION_TOKEN_COOKIE}=${token}`;
+}
+
+/**
+ * Run `before` between the passkey plugin's verification of a registration and
+ * its insert of the new credential.
+ *
+ * That gap is where a database fault or a concurrent registration of the same
+ * credential lands. `before` receives the unintercepted `insert`. Restore the
+ * returned spy when done.
+ */
+export function interceptPasskeyInsert(
+	db: Db,
+	before: (insert: Db["insert"]) => Promise<unknown>,
+) {
+	const insert: Db["insert"] = db.insert.bind(db);
+	return vi.spyOn(db, "insert").mockImplementation(((
+		table: Parameters<Db["insert"]>[0],
+	) => {
+		if (table !== authPasskeys) {
+			return insert(table);
+		}
+		return {
+			values: (values: typeof authPasskeys.$inferInsert) => ({
+				async returning() {
+					await before(insert);
+					return insert(authPasskeys).values(values).returning();
+				},
+			}),
+		};
+	}) as unknown as Db["insert"]);
 }
