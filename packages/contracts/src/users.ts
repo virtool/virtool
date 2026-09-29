@@ -60,6 +60,17 @@ export type AdministeredUserDetail = User & {
 /** The workflow the quick-analyze dialog runs by default. */
 export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
 
+/** The columns a Pathoscope export can carry, in their default order. */
+export const PATHOSCOPE_COLUMNS = [
+	"name",
+	"weight",
+	"depth",
+	"coverage",
+] as const;
+
+/** A column of a Pathoscope export. */
+export type PathoscopeColumn = (typeof PATHOSCOPE_COLUMNS)[number];
+
 /**
  * A signed-in user's client-side preferences.
  *
@@ -67,6 +78,8 @@ export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
  * between the two spellings.
  */
 export type AccountSettings = {
+	/** The columns a Pathoscope export carries, in order; never empty */
+	pathoscopeColumns: PathoscopeColumn[];
 	/** Whether pathoscope exports name an OTU by its acronym, when it has one */
 	preferAcronym: boolean;
 	quickAnalyzeWorkflow: QuickAnalyzeWorkflow;

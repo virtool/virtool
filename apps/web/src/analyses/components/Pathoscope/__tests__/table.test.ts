@@ -20,6 +20,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				}),
 			],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: true,
 				mappedCount: 1000,
 				preferAcronym: false,
@@ -29,9 +30,9 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 
 		expect(table).toBe(
 			[
-				"Name\tWeight\tDepth\tCoverage",
-				"Alpha virus\t0.250\t12\t0.500",
-				"Beta virus\t1.23E-4\t7\t0.123",
+				"Weight\tDepth\tCoverage\tName",
+				"0.250\t12\t0.500\tAlpha virus",
+				"1.23E-4\t7\t0.123\tBeta virus",
 			].join("\n"),
 		);
 	});
@@ -40,6 +41,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha virus", pi: 0.25 })],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: true,
 				mappedCount: 1000,
 				preferAcronym: false,
@@ -48,7 +50,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		);
 
 		expect(table).toBe(
-			["Name\tReads\tDepth\tCoverage", "Alpha virus\t250\t12\t0.500"].join(
+			["Reads\tDepth\tCoverage\tName", "250\t12\t0.500\tAlpha virus"].join(
 				"\n",
 			),
 		);
@@ -59,6 +61,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha virus" })],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: false,
 				mappedCount: 1000,
 				preferAcronym: false,
@@ -66,7 +69,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 			},
 		);
 
-		expect(table).toBe("Alpha virus\t0.250\t12\t0.500");
+		expect(table).toBe("0.250\t12\t0.500\tAlpha virus");
 	});
 
 	it("should name an OTU by its acronym when one is preferred", () => {
@@ -84,6 +87,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				}),
 			],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: false,
 				mappedCount: 1000,
 				preferAcronym: true,
@@ -92,19 +96,20 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		);
 
 		expect(table).toBe(
-			["AV\t0.250\t12\t0.500", "Beta virus\t0.250\t12\t0.500"].join("\n"),
+			["0.250\t12\t0.500\tAV", "0.250\t12\t0.500\tBeta virus"].join("\n"),
 		);
 	});
 
 	it("should render only the header row when nothing is selected", () => {
 		expect(
 			formatPathoscopeHitsAsTsv([], {
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: true,
 				mappedCount: 1000,
 				preferAcronym: false,
 				showReads: false,
 			}),
-		).toBe("Name\tWeight\tDepth\tCoverage");
+		).toBe("Weight\tDepth\tCoverage\tName");
 	});
 
 	// A name carrying a tab or a newline would otherwise open a column or a row
@@ -113,6 +118,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[createFakePathoscopeHit({ name: "Alpha\tvirus\nstrain" })],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: false,
 				mappedCount: 1000,
 				preferAcronym: false,
@@ -120,7 +126,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 			},
 		);
 
-		expect(table).toBe("Alpha virus strain\t0.250\t12\t0.500");
+		expect(table).toBe("0.250\t12\t0.500\tAlpha virus strain");
 	});
 });
 
@@ -165,6 +171,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				}),
 			],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: true,
 				mappedCount: 1000,
 				preferAcronym: false,
@@ -174,10 +181,10 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 
 		expect(table).toBe(
 			[
-				"Name\tIsolate\tWeight\tDepth\tCoverage",
-				"Alpha virus\tIsolate A\t0.250\t12\t0.500",
-				"Alpha virus\tIsolate B\t0.100\t4\t0.250",
-				"Beta virus\tIsolate C\t0.250\t12\t0.500",
+				"Weight\tDepth\tCoverage\tName\tIsolate",
+				"0.250\t12\t0.500\tAlpha virus\tIsolate A",
+				"0.100\t4\t0.250\tAlpha virus\tIsolate B",
+				"0.250\t12\t0.500\tBeta virus\tIsolate C",
 			].join("\n"),
 		);
 	});
@@ -191,6 +198,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				}),
 			],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: false,
 				mappedCount: 1000,
 				preferAcronym: false,
@@ -198,7 +206,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 			},
 		);
 
-		expect(table).toBe("Alpha virus\tIsolate A\t250\t12\t0.500");
+		expect(table).toBe("250\t12\t0.500\tAlpha virus\tIsolate A");
 	});
 
 	// A hit whose isolates were all filtered out contributes nothing rather than
@@ -213,6 +221,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				}),
 			],
 			{
+				columns: ["weight", "depth", "coverage", "name"],
 				headers: false,
 				mappedCount: 1000,
 				preferAcronym: true,
@@ -220,7 +229,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 			},
 		);
 
-		expect(table).toBe("AV\tIsolate A\t0.250\t12\t0.500");
+		expect(table).toBe("0.250\t12\t0.500\tAV\tIsolate A");
 	});
 
 	it("should render nothing for a hit with no isolates", () => {
@@ -228,6 +237,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 			formatPathoscopeIsolatesAsTsv(
 				[createFakePathoscopeHit({ isolates: [] })],
 				{
+					columns: ["weight", "depth", "coverage", "name"],
 					headers: false,
 					mappedCount: 1000,
 					preferAcronym: false,
@@ -235,5 +245,40 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				},
 			),
 		).toBe("");
+	});
+});
+
+describe("column selection", () => {
+	const options = {
+		headers: true,
+		mappedCount: 1000,
+		preferAcronym: false,
+		showReads: false,
+	};
+
+	it("should leave out columns that are not chosen", () => {
+		const table = formatPathoscopeHitsAsTsv(
+			[createFakePathoscopeHit({ id: "a", name: "Alpha virus" })],
+			{ ...options, columns: ["coverage", "name"] },
+		);
+
+		expect(table).toBe(["Coverage\tName", "0.500\tAlpha virus"].join("\n"));
+	});
+
+	it("should keep the isolate beside the name in any position", () => {
+		const table = formatPathoscopeIsolatesAsTsv(
+			[
+				createFakePathoscopeHit({
+					id: "a",
+					isolates: [createIsolate({ id: "a1", name: "Isolate A" })],
+					name: "Alpha virus",
+				}),
+			],
+			{ ...options, columns: ["depth", "name"] },
+		);
+
+		expect(table).toBe(
+			["Depth\tName\tIsolate", "12\tAlpha virus\tIsolate A"].join("\n"),
+		);
 	});
 });

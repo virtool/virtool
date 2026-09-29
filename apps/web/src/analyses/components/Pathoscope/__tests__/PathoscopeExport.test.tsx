@@ -9,7 +9,7 @@ import {
 	createFakePathoscopeHit,
 } from "@tests/fake/analyses";
 import { mockGetAccount, userServerFnMocks } from "@tests/server-fn/users";
-import { renderWithProviders } from "@tests/setup";
+import { renderWithRouter } from "@tests/setup";
 import type { PathoscopeIsolate } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PathoscopeExport from "../PathoscopeExport";
@@ -68,8 +68,8 @@ const analysis: FormattedPathoscopeAnalysis = {
 
 const writeText = vi.fn().mockResolvedValue(undefined);
 
-function renderExport(search: Partial<AnalysisSearch> = {}) {
-	renderWithProviders(
+async function renderExport(search: Partial<AnalysisSearch> = {}) {
+	await renderWithRouter(
 		<AnalysisSearchProvider
 			search={{
 				...DEFAULT_ANALYSIS_SEARCH,
@@ -97,7 +97,7 @@ beforeEach(() => {
 
 describe("<PathoscopeExport />", () => {
 	it("should offer a copy and a download section", async () => {
-		renderExport();
+		await renderExport();
 		await openMenu();
 
 		expect(screen.getByRole("group", { name: "Copy" })).toBeInTheDocument();
@@ -105,16 +105,16 @@ describe("<PathoscopeExport />", () => {
 
 		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.xlsx",
+			"/analyses/documents/5.xlsx?columns=name,weight,depth,coverage",
 		);
 		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.csv",
+			"/analyses/documents/5.csv?columns=name,weight,depth,coverage",
 		);
 	});
 
 	it("should copy the shown viruses as a tab-separated table", async () => {
-		renderExport({ sort: "coverage" });
+		await renderExport({ sort: "coverage" });
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
@@ -128,7 +128,7 @@ describe("<PathoscopeExport />", () => {
 	});
 
 	it("should copy the isolates of every shown virus", async () => {
-		renderExport({ sort: "coverage" });
+		await renderExport({ sort: "coverage" });
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "Isolates" }));
 
@@ -142,8 +142,50 @@ describe("<PathoscopeExport />", () => {
 		);
 	});
 
+	it("should carry the columns the account chose, in its order", async () => {
+		mockGetAccount(
+			createFakeAccount({
+				settings: {
+					...createFakeAccount().settings,
+					pathoscopeColumns: ["weight", "depth", "coverage", "name"],
+				},
+			}),
+		);
+
+		await renderExport({ sort: "coverage" });
+		await openMenu();
+
+		await screen.findByRole("menuitemcheckbox", { name: "Prefer acronym" });
+
+		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
+			"href",
+			"/analyses/documents/5.csv?columns=weight,depth,coverage,name",
+		);
+
+		await userEvent.click(screen.getByRole("menuitem", { name: "Isolates" }));
+
+		expect(writeText).toHaveBeenCalledWith(
+			[
+				"Weight\tDepth\tCoverage\tName\tIsolate",
+				"0.250\t12\t0.500\tBeta virus\tIsolate C",
+				"0.250\t12\t0.500\tAlpha virus\tIsolate A",
+				"0.100\t4\t0.250\tAlpha virus\tIsolate B",
+			].join("\n"),
+		);
+	});
+
+	it("should link to the Pathoscope account settings", async () => {
+		await renderExport();
+		await openMenu();
+
+		expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+			"href",
+			"/account/settings#pathoscope",
+		);
+	});
+
 	it("should leave the header row out when it is not wanted", async () => {
-		renderExport({ find: "Beta" });
+		await renderExport({ find: "Beta" });
 		await openMenu();
 		await userEvent.click(
 			screen.getByRole("menuitem", { name: "OTUs without headers" }),
@@ -153,7 +195,7 @@ describe("<PathoscopeExport />", () => {
 	});
 
 	it("should copy read pseudo-counts when reads are shown", async () => {
-		renderExport({ find: "Alpha", reads: true });
+		await renderExport({ find: "Alpha", reads: true });
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
@@ -171,7 +213,7 @@ describe("<PathoscopeExport />", () => {
 			}),
 		);
 
-		renderExport({ sort: "coverage" });
+		await renderExport({ sort: "coverage" });
 		await openMenu();
 
 		expect(
@@ -181,11 +223,11 @@ describe("<PathoscopeExport />", () => {
 		).toBeChecked();
 		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.xlsx?preferAcronym=true",
+			"/analyses/documents/5.xlsx?columns=name,weight,depth,coverage&preferAcronym=true",
 		);
 		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.csv?preferAcronym=true",
+			"/analyses/documents/5.csv?columns=name,weight,depth,coverage&preferAcronym=true",
 		);
 
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
@@ -206,7 +248,7 @@ describe("<PathoscopeExport />", () => {
 		mockGetAccount(account);
 		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(settings);
 
-		renderExport();
+		await renderExport();
 		await openMenu();
 
 		const toggle = await screen.findByRole("menuitemcheckbox", {
@@ -238,7 +280,7 @@ describe("<PathoscopeExport />", () => {
 			)
 			.mockResolvedValueOnce(account.settings);
 
-		renderExport();
+		await renderExport();
 		await openMenu();
 
 		const toggle = await screen.findByRole("menuitemcheckbox", {
@@ -264,7 +306,7 @@ describe("<PathoscopeExport />", () => {
 	// The menu closes on a copy, so the trigger is the only place left to say it
 	// happened.
 	it("should report a copy on the trigger", async () => {
-		renderExport();
+		await renderExport();
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
@@ -276,7 +318,7 @@ describe("<PathoscopeExport />", () => {
 	it("should offer downloads alone outside a secure context", async () => {
 		vi.stubGlobal("isSecureContext", false);
 
-		renderExport();
+		await renderExport();
 		await openMenu();
 
 		expect(
