@@ -32,11 +32,13 @@ type ApiBehaviour = {
 	 * state. This is the whole of the cancellation channel.
 	 */
 	pingRefusal?: string;
+	finishStatus?: number;
 };
 
 function createHandler({
 	claimStatus = 200,
 	pingRefusal,
+	finishStatus = 200,
 }: ApiBehaviour): TestServerHandler {
 	return (request, response) => {
 		if (request.path === "/jobs/claim") {
@@ -94,6 +96,11 @@ function createHandler({
 				workflow: "create_subtraction",
 			});
 
+			return;
+		}
+
+		if (request.path.endsWith("/finish") && finishStatus !== 200) {
+			respondJson(response, finishStatus, { message: "no" });
 			return;
 		}
 
@@ -164,6 +171,7 @@ async function run(
 ) {
 	const codes: number[] = [];
 	const recording = options.logger ?? createRecordingLogger();
+	const reported: Array<{ err: unknown; tags: Record<string, string> }> = [];
 
 	await runWorkflowApp({
 		workflow,
@@ -172,9 +180,10 @@ async function run(
 		workflowVersion: "4.5.6",
 		exit: (code) => codes.push(code),
 		logger: recording.logger,
+		captureException: (err, { tags }) => reported.push({ err, tags }),
 	});
 
-	return { code: codes.at(-1), codes, records: recording.records };
+	return { code: codes.at(-1), codes, records: recording.records, reported };
 }
 
 describe("a successful run", () => {
@@ -196,6 +205,14 @@ describe("a successful run", () => {
 			`POST /jobs/${JOB_ID}/steps/map_default_isolates/start`,
 		);
 		expect(paths).toContain(`POST /jobs/${JOB_ID}/finish`);
+	});
+
+	it("reports nothing to sentry", async () => {
+		server = await startTestServer(createHandler({}));
+
+		const { reported } = await run(createWorkflow([step("prepare")]));
+
+		expect(reported).toEqual([]);
 	});
 
 	it("reports the step's id rather than its display name", async () => {
@@ -227,6 +244,22 @@ describe("a successful run", () => {
 	});
 });
 
+describe("a finish the jobs API rejects", () => {
+	it("exits 0 and reports the error to sentry", async () => {
+		server = await startTestServer(createHandler({ finishStatus: 500 }));
+
+		const { code, reported } = await run(createWorkflow([step("prepare")]));
+
+		expect(code).toBe(EXIT_OK);
+		expect(reported).toEqual([
+			{
+				err: expect.any(Error),
+				tags: { workflow: "create_subtraction", jobId: String(JOB_ID) },
+			},
+		]);
+	});
+});
+
 describe("a failed run", () => {
 	it("exits 0, logs the error, and never reports a finish", async () => {
 		server = await startTestServer(createHandler({}));
@@ -248,6 +281,23 @@ describe("a failed run", () => {
 				(record) => record.level === 50 && record.msg === "workflow failed",
 			),
 		).toBe(true);
+	});
+
+	it("reports the step's error to sentry with the workflow and job", async () => {
+		server = await startTestServer(createHandler({}));
+
+		const error = new Error("step blew up");
+
+		const { reported } = await run(
+			createWorkflow([step("prepare", () => Promise.reject(error))]),
+		);
+
+		expect(reported).toEqual([
+			{
+				err: error,
+				tags: { workflow: "create_subtraction", jobId: String(JOB_ID) },
+			},
+		]);
 	});
 });
 
@@ -276,6 +326,28 @@ describe("cancellation", () => {
 		expect(
 			server.requests.some((request) => request.path.endsWith("/finish")),
 		).toBe(false);
+	});
+
+	it("reports nothing to sentry", async () => {
+		server = await startTestServer(
+			createHandler({ pingRefusal: "Job is cancelled." }),
+		);
+
+		const { reported } = await run(
+			createWorkflow([
+				step(
+					"wait",
+					(context) =>
+						new Promise<void>((resolve) => {
+							context.signal.addEventListener("abort", () => resolve(), {
+								once: true,
+							});
+						}),
+				),
+			]),
+		);
+
+		expect(reported).toEqual([]);
 	});
 });
 
@@ -308,7 +380,7 @@ describe("termination", () => {
 	it("exits 124 when sigterm arrives mid-run", async () => {
 		server = await startTestServer(createHandler({}));
 
-		const { code } = await run(
+		const { code, reported } = await run(
 			createWorkflow([
 				step("wait", (context) => {
 					process.emit("SIGTERM", "SIGTERM");
@@ -323,6 +395,7 @@ describe("termination", () => {
 		);
 
 		expect(code).toBe(EXIT_TERMINATED);
+		expect(reported).toEqual([]);
 	});
 
 	it("exits 124 when sigterm arrives while preparing the run", async () => {
@@ -342,9 +415,10 @@ describe("termination", () => {
 			steps: [step("prepare")],
 		});
 
-		const { code } = await run(workflow);
+		const { code, reported } = await run(workflow);
 
 		expect(code).toBe(EXIT_TERMINATED);
+		expect(reported).toEqual([]);
 	});
 
 	it("removes its sigterm handler when the run is over", async () => {
@@ -380,9 +454,12 @@ describe("infrastructure failures", () => {
 	it("exits 1 when the claim call fails outright", async () => {
 		server = await startTestServer(createHandler({ claimStatus: 500 }));
 
-		const { code } = await run(createWorkflow([step("prepare")]));
+		const { code, reported } = await run(createWorkflow([step("prepare")]));
 
 		expect(code).toBe(EXIT_INFRASTRUCTURE_FAILURE);
+		expect(reported).toEqual([
+			{ err: expect.any(Error), tags: { workflow: "create_subtraction" } },
+		]);
 	});
 
 	it("exits 1 when the work path cannot be prepared", async () => {
@@ -402,15 +479,23 @@ describe("infrastructure failures", () => {
 	it("exits 1 when buildContext throws", async () => {
 		server = await startTestServer(createHandler({}));
 
+		const error = new Error("no reference");
+
 		const workflow = defineWorkflow<Data, State>({
 			name: "create_subtraction",
-			buildContext: () => Promise.reject(new Error("no reference")),
+			buildContext: () => Promise.reject(error),
 			createState: () => ({ visited: [] }),
 			steps: [step("prepare")],
 		});
 
-		const { code } = await run(workflow);
+		const { code, reported } = await run(workflow);
 
 		expect(code).toBe(EXIT_INFRASTRUCTURE_FAILURE);
+		expect(reported).toEqual([
+			{
+				err: error,
+				tags: { workflow: "create_subtraction", jobId: String(JOB_ID) },
+			},
+		]);
 	});
 });

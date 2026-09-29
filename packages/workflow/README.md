@@ -12,7 +12,12 @@ and test harness shared by Virtool workflow executors.
 - `runWorkflow()` returns an outcome. It doesn't use the network, install
   signal handlers, exit the process, run teardown, or provide lifecycle hooks.
 - `runWorkflowApp()` owns configuration, job claiming, pings, cancellation,
-  reporting, Sentry flushing, and process exit.
+  reporting, Sentry reporting, and process exit.
+- With `VT_SENTRY_DSN` set, the runtime sends a Sentry exception for each
+  failed claim, preparation, step, and finish call. It tags each exception
+  with `workflow` and, after the claim, `jobId`. The default logger also
+  forwards `info`-and-above records to Sentry logs. Cancellation and
+  termination send no exception.
 - Cancellation is cooperative. The runtime abandons the active step when its
   signal aborts and safely observes any later rejection.
 
