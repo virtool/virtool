@@ -17,7 +17,12 @@ import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 export type PasskeySupport = "pending" | "unavailable" | "available";
 
 /** Why a passkey ceremony ended without a credential. */
-type PasskeyErrorKind = "cancelled" | "duplicate" | "unsupported" | "failed";
+type PasskeyErrorKind =
+	| "cancelled"
+	| "incomplete"
+	| "duplicate"
+	| "unsupported"
+	| "failed";
 
 const PASSKEY_CEREMONY_ERROR_NAME = "PasskeyCeremonyError";
 
@@ -71,20 +76,25 @@ export function usePasskeySupport(): PasskeySupport {
 
 // Messages are fixed strings, never the browser's own, which can name the
 // origin, the RP ID or the authenticator.
-function toCeremonyError(error: unknown): PasskeyCeremonyError {
+function toCeremonyError(
+	error: unknown,
+	incompleteMessage: string,
+): PasskeyCeremonyError {
 	const name = error instanceof Error ? error.name : "";
 	const code =
 		error instanceof Error && "code" in error ? String(error.code) : "";
 
-	if (
-		name === "NotAllowedError" ||
-		name === "AbortError" ||
-		code === "ERROR_CEREMONY_ABORTED"
-	) {
+	if (name === "AbortError" || code === "ERROR_CEREMONY_ABORTED") {
 		return new PasskeyCeremonyError(
 			"cancelled",
-			"The passkey request was cancelled or timed out.",
+			"The passkey request was cancelled.",
 		);
+	}
+	// Browsers use NotAllowedError for a user cancel, a timeout, and a request
+	// that the browser refused. They do not tell these apart, so the user gets
+	// a neutral message and not silence.
+	if (name === "NotAllowedError") {
+		return new PasskeyCeremonyError("incomplete", incompleteMessage);
 	}
 	if (code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED") {
 		return new PasskeyCeremonyError(
@@ -124,7 +134,7 @@ export async function createPasskey(
 		});
 		return response;
 	} catch (error) {
-		throw toCeremonyError(error);
+		throw toCeremonyError(error, "The passkey was not added. Try again.");
 	}
 }
 
@@ -138,7 +148,10 @@ export async function getPasskeyAssertion(
 			await startAuthentication({ optionsJSON });
 		return response;
 	} catch (error) {
-		throw toCeremonyError(error);
+		throw toCeremonyError(
+			error,
+			"Passkey sign-in did not finish. Try again, or sign in with your password.",
+		);
 	}
 }
 
@@ -172,8 +185,8 @@ export function useSingleCeremony<T>(
 }
 
 /**
- * The message to show for a failed passkey action, or `null` when the user
- * cancelled it and there is nothing to report.
+ * The message to show for a failed passkey action, or `null` when it was
+ * stopped on purpose and there is nothing to report.
  *
  * Only messages written for the user are shown: a ceremony error from this
  * module or a deliberate server refusal.

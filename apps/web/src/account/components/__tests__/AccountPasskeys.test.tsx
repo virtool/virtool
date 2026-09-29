@@ -100,12 +100,12 @@ describe("<AccountPasskeys />", () => {
 		});
 	});
 
-	it("says nothing when the user cancels the browser dialog", async () => {
+	it("says the passkey was not added when the browser does not allow it", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([]);
 		accountServerFnMocks.getPasskeyRegistrationOptionsFn.mockResolvedValue({});
 		browser.startRegistration.mockRejectedValue(
-			Object.assign(new Error("cancelled"), { name: "NotAllowedError" }),
+			Object.assign(new Error("not allowed"), { name: "NotAllowedError" }),
 		);
 
 		renderWithProviders(<AccountPasskeys />);
@@ -113,10 +113,10 @@ describe("<AccountPasskeys />", () => {
 			await screen.findByRole("button", { name: "Add passkey" }),
 		);
 
-		await waitFor(() =>
-			expect(screen.getByRole("button", { name: "Add passkey" })).toBeEnabled(),
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"The passkey was not added. Try again.",
 		);
-		expect(screen.queryByRole("alert")).toBeNull();
+		expect(screen.getByRole("button", { name: "Add passkey" })).toBeEnabled();
 		expect(accountServerFnMocks.registerPasskeyFn).not.toHaveBeenCalled();
 	});
 

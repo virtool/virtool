@@ -89,8 +89,9 @@ describe("ceremonies", () => {
 	});
 
 	it.each([
-		["NotAllowedError", undefined, "cancelled"],
+		["NotAllowedError", undefined, "incomplete"],
 		["AbortError", undefined, "cancelled"],
+		["AbortError", "ERROR_CEREMONY_ABORTED", "cancelled"],
 		[
 			"InvalidStateError",
 			"ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
@@ -111,6 +112,26 @@ describe("ceremonies", () => {
 		expect(caught.kind).toBe(kind);
 		expect(caught.message).not.toContain("virtool.test");
 		expect(Sentry.captureException).not.toHaveBeenCalled();
+	});
+
+	it("gives each ceremony its own message for a NotAllowedError", async () => {
+		const notAllowed = Object.assign(new Error("https://virtool.test"), {
+			name: "NotAllowedError",
+		});
+		browser.startRegistration.mockRejectedValue(notAllowed);
+		browser.startAuthentication.mockRejectedValue(notAllowed);
+
+		const [registration, assertion] = await Promise.all([
+			createPasskey({} as never).catch((err) => err),
+			getPasskeyAssertion({} as never).catch((err) => err),
+		]);
+
+		expect(getPasskeyErrorMessage(registration)).toBe(
+			"The passkey was not added. Try again.",
+		);
+		expect(getPasskeyErrorMessage(assertion)).toBe(
+			"Passkey sign-in did not finish. Try again, or sign in with your password.",
+		);
 	});
 
 	it("reports an unexpected failure without the browser's payload", async () => {
@@ -182,7 +203,7 @@ describe("useSingleCeremony", () => {
 });
 
 describe("getPasskeyErrorMessage", () => {
-	it("stays silent for a cancelled ceremony or step-up challenge", () => {
+	it("stays silent for an aborted ceremony or cancelled step-up challenge", () => {
 		const cancelled = new Error("cancelled");
 		cancelled.name = "RecentAuthenticationCancelled";
 
