@@ -3,6 +3,7 @@ import {
 	CreateJobClaimRequest,
 	fromStoredJobClaim,
 	fromStoredJobStep,
+	getJobTerminalRefusal,
 	Job,
 	type JobClaimed,
 	type JobPing,
@@ -28,7 +29,7 @@ import {
 } from "@virtool/data/jobs/data";
 import type { Logger } from "@virtool/logger";
 import { requireJobRequest } from "../auth/guard";
-import { getTerminalRefusal, type JobPrincipal } from "../auth/verify";
+import type { JobPrincipal } from "../auth/verify";
 import { jsonError, parseJsonBody, requireRowId } from "../http";
 
 /** What the job lifecycle handlers need to serve a request. */
@@ -270,7 +271,7 @@ export async function handlePingJob(
 		}
 
 		if (err instanceof JobTerminalStateError) {
-			const message = getTerminalRefusal(err.state);
+			const message = getJobTerminalRefusal(err.state);
 
 			if (message) {
 				return jsonError(401, message);
