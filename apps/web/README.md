@@ -539,9 +539,9 @@ gone succeeds. Another user's passkey is treated as missing and is not changed.
 In the browser, `@app/passkeys` imports `@simplewebauthn/browser` only when a
 ceremony starts. `usePasskeySupport` reads WebAuthn support after hydration and
 reports `pending` during server rendering. `useSingleCeremony` lets a component
-run only one ceremony at a time, and cancels it on unmount. Cancellation,
+run only one ceremony at a time, and cancels it when the component is removed. Cancellation,
 timeout, and an unsupported browser leave password sign-in available. The login
-form does not start conditional (autofill) passkey requests.
+form does not start conditional passkey requests.
 
 ### Server push
 
