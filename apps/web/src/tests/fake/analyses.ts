@@ -81,7 +81,7 @@ export function createFakePathoscopeHit(
 	overrides?: Partial<PathoscopeHit>,
 ): PathoscopeHit {
 	return {
-		abbreviation: "TMV",
+		acronym: "TMV",
 		coverage: 0.5,
 		depth: 12,
 		id: "hit",

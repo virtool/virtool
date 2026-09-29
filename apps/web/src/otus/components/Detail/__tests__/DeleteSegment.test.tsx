@@ -18,7 +18,7 @@ describe("<DeleteSegment />", () => {
 	it("should render when [open=true]", () => {
 		renderWithProviders(
 			<DeleteSegment
-				abbreviation={otu.abbreviation}
+				acronym={otu.acronym}
 				name={otu.name}
 				open
 				otuId={otu.id}
@@ -39,7 +39,7 @@ describe("<DeleteSegment />", () => {
 	it("should not render when [open=false]", () => {
 		renderWithProviders(
 			<DeleteSegment
-				abbreviation={otu.abbreviation}
+				acronym={otu.acronym}
 				name={otu.name}
 				otuId={otu.id}
 				schema={otu.schema}
@@ -60,7 +60,7 @@ describe("<DeleteSegment />", () => {
 
 		renderWithProviders(
 			<DeleteSegment
-				abbreviation={otu.abbreviation}
+				acronym={otu.acronym}
 				name={otu.name}
 				open
 				otuId={otu.id}
@@ -77,7 +77,7 @@ describe("<DeleteSegment />", () => {
 			data: {
 				otuId: otu.id,
 				name: otu.name,
-				abbreviation: otu.abbreviation,
+				acronym: otu.acronym,
 				schema,
 			},
 		});
@@ -88,7 +88,7 @@ describe("<DeleteSegment />", () => {
 
 		renderWithProviders(
 			<DeleteSegment
-				abbreviation={otu.abbreviation}
+				acronym={otu.acronym}
 				name={otu.name}
 				open
 				otuId={otu.id}

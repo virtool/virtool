@@ -64,8 +64,8 @@ export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
  * between the two spellings.
  */
 export type AccountSettings = {
-	/** Whether pathoscope exports name an OTU by its abbreviation, when it has one */
-	preferAbbreviation: boolean;
+	/** Whether pathoscope exports name an OTU by its acronym, when it has one */
+	preferAcronym: boolean;
 	quickAnalyzeWorkflow: QuickAnalyzeWorkflow;
 	showIds: boolean;
 	showVersions: boolean;

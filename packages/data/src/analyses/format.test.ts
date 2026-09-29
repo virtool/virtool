@@ -317,15 +317,15 @@ describe("formatAnalysis for nuvs", () => {
 // analysis recorded version 2; the live OTU is at version 3.
 const CURRENT_NAME = "Cucumber mosaic virus";
 const ANALYSED_NAME = "Cucumber mosaic tobamovirus";
-const CURRENT_ABBREVIATION = "CMV";
-const ANALYSED_ABBREVIATION = "CuMV";
+const CURRENT_ACRONYM = "CMV";
+const ANALYSED_ACRONYM = "CuMV";
 
 async function seedDetectedOtu(): Promise<void> {
 	await db.insert(legacyOtus).values({
 		id: "otu_one",
 		data: {
 			_id: "otu_one",
-			abbreviation: CURRENT_ABBREVIATION,
+			abbreviation: CURRENT_ACRONYM,
 			name: CURRENT_NAME,
 			reference: { id: referenceId },
 			version: 3,
@@ -335,7 +335,7 @@ async function seedDetectedOtu(): Promise<void> {
 			],
 		},
 		name: CURRENT_NAME,
-		abbreviation: CURRENT_ABBREVIATION,
+		abbreviation: CURRENT_ACRONYM,
 		reference_id: referenceId,
 		verified: true,
 		version: 3,
@@ -409,7 +409,7 @@ async function seedDetectedOtu(): Promise<void> {
 		history_id: change.id,
 		diff: [
 			["change", "name", [ANALYSED_NAME, CURRENT_NAME]],
-			["change", "abbreviation", [ANALYSED_ABBREVIATION, CURRENT_ABBREVIATION]],
+			["change", "abbreviation", [ANALYSED_ACRONYM, CURRENT_ACRONYM]],
 			["change", "version", [2, 3]],
 		],
 	});
@@ -457,12 +457,12 @@ describe("formatAnalysis for pathoscope", () => {
 
 		expect(otu.id).toBe("otu_one");
 		expect(otu.name).toBe(ANALYSED_NAME);
-		expect(otu.abbreviation).toBe(ANALYSED_ABBREVIATION);
+		expect(otu.acronym).toBe(ANALYSED_ACRONYM);
 		expect(otu.version).toBe(2);
 
 		// The live OTU says otherwise, which is the whole point of the patching.
 		expect(otu.name).not.toBe(CURRENT_NAME);
-		expect(otu.abbreviation).not.toBe(CURRENT_ABBREVIATION);
+		expect(otu.acronym).not.toBe(CURRENT_ACRONYM);
 	});
 
 	it("emits the workflow's totals in the casing the rest of the API uses", async () => {

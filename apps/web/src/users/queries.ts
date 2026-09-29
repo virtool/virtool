@@ -1,4 +1,4 @@
-import { analysesQueryKeys } from "@analyses/keys";
+import { invalidateChange } from "@app/invalidate";
 import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import {
 	createUserFn,
@@ -144,8 +144,12 @@ export function useCreateUser() {
 		}
 	>({
 		mutationFn,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
+		onSuccess: (result) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "insert",
+				id: result.user.id,
+			});
 		},
 	});
 }
@@ -189,8 +193,12 @@ export function useDeletePendingUser() {
 	);
 	return useMutation({
 		mutationFn,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
+		onSuccess: (_data, userId) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "delete",
+				id: userId,
+			});
 		},
 	});
 }
@@ -247,13 +255,11 @@ export function useUpdateUser() {
 		{ userId: number; update: UserUpdate }
 	>({
 		mutationFn,
-		onSuccess: (result) => {
-			if (result) {
-				queryClient.setQueryData(userQueryKeys.detail(result.id), result);
-			}
-			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
-			queryClient.invalidateQueries({
-				queryKey: analysesQueryKeys.users(),
+		onSuccess: (_data, { userId }) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "update",
+				id: userId,
 			});
 		},
 	});
@@ -281,8 +287,12 @@ export function useSetAdministratorRole() {
 		{ role: AdministratorRoleName | null; user_id: number }
 	>({
 		mutationFn,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: userQueryKeys.all() });
+		onSuccess: (_data, { user_id }) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "update",
+				id: user_id,
+			});
 		},
 	});
 }

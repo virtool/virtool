@@ -1,17 +1,7 @@
-import { accountQueryKeys } from "@account/keys";
-import { roleQueryKeys } from "@administration/keys";
-import { analysesQueryKeys } from "@analyses/keys";
-import { bannerQueryKeys } from "@banner/keys";
-import { groupQueryKeys } from "@groups/keys";
-import { indexQueryKeys } from "@indexes/keys";
-import { jobQueryKeys } from "@jobs/keys";
 import { labelQueryKeys } from "@labels/keys";
-import { referenceQueryKeys } from "@references/keys";
 import { samplesQueryKeys } from "@samples/keys";
 import { QueryClient } from "@tanstack/react-query";
 import { taskQueryKeys } from "@tasks/keys";
-import { fileQueryKeys } from "@uploads/keys";
-import { userQueryKeys } from "@users/keys";
 import type { SseMessage } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reactQueryHandler } from "../reactQueryHandler";
@@ -44,264 +34,22 @@ describe("reactQueryHandler", () => {
 		queueTaskRefresh.mockClear();
 	});
 
-	describe("selects the narrowest key the domain actually caches under", () => {
-		const cases: Array<{
-			message: SseMessage;
-			queryKey: readonly unknown[];
-		}> = [
-			// Domains caching both details and lists narrow to one or the other.
-			{
-				message: { domain: "groups", operation: "update", id: 3 },
-				queryKey: groupQueryKeys.detail(3),
-			},
-			{
-				message: { domain: "groups", operation: "insert", id: 3 },
-				queryKey: groupQueryKeys.lists(),
-			},
-			{
-				message: { domain: "indexes", operation: "update", id: 8 },
-				queryKey: indexQueryKeys.detail(8),
-			},
-			{
-				message: { domain: "indexes", operation: "delete", id: 8 },
-				queryKey: indexQueryKeys.lists(),
-			},
-			{
-				message: { domain: "jobs", operation: "insert", id: 42 },
-				queryKey: jobQueryKeys.lists(),
-			},
-			{
-				message: { domain: "references", operation: "update", id: 9 },
-				queryKey: referenceQueryKeys.detail(9),
-			},
-			{
-				message: { domain: "references", operation: "delete", id: 9 },
-				queryKey: referenceQueryKeys.lists(),
-			},
-			{
-				message: { domain: "samples", operation: "update", id: 4184 },
-				queryKey: samplesQueryKeys.detail(4184),
-			},
-			{
-				message: { domain: "samples", operation: "insert", id: 4184 },
-				queryKey: samplesQueryKeys.lists(),
-			},
-			{
-				message: { domain: "users", operation: "delete", id: 7 },
-				queryKey: userQueryKeys.lists(),
-			},
-
-			// Labels and uploads cache lists but no details, so an update narrows
-			// to the whole list rather than the whole domain.
-			{
-				message: { domain: "labels", operation: "update", id: 7 },
-				queryKey: labelQueryKeys.lists(),
-			},
-			{
-				message: { domain: "labels", operation: "insert", id: 7 },
-				queryKey: labelQueryKeys.lists(),
-			},
-			{
-				message: { domain: "uploads", operation: "update", id: 5 },
-				queryKey: fileQueryKeys.lists(),
-			},
-			{
-				message: { domain: "uploads", operation: "insert", id: 5 },
-				queryKey: fileQueryKeys.lists(),
-			},
-			// Analyses cache a detail and a per-sample list, and an update changes
-			// the list row (ready), but the frame has no sampleId to target the
-			// list — so an update refreshes the whole domain.
-			{
-				message: { domain: "analyses", operation: "update", id: 5 },
-				queryKey: analysesQueryKeys.all(),
-			},
-			{
-				message: { domain: "analyses", operation: "insert", id: 5 },
-				queryKey: analysesQueryKeys.lists(),
-			},
-			// Banners cache the active banner at active(), outside lists(), so an
-			// update still has to fall back to the whole domain to reach it.
-			{
-				message: { domain: "banners", operation: "update", id: 1 },
-				queryKey: bannerQueryKeys.all(),
-			},
-			{
-				message: { domain: "banners", operation: "delete", id: 1 },
-				queryKey: bannerQueryKeys.lists(),
-			},
-
-			// Tasks cache details but no list, so an insert falls back. Their
-			// updates skip this mapping entirely — see the batching test below.
-			{
-				message: { domain: "tasks", operation: "insert", id: 9 },
-				queryKey: taskQueryKeys.all(),
-			},
-
-			// The account and the role list are cached at all() itself, so every
-			// operation falls back to it.
-			{
-				message: { domain: "account", operation: "update", id: 1 },
-				queryKey: accountQueryKeys.all(),
-			},
-			{
-				message: { domain: "account", operation: "insert", id: 1 },
-				queryKey: accountQueryKeys.all(),
-			},
-			{
-				message: { domain: "roles", operation: "update", id: "full" },
-				queryKey: roleQueryKeys.all(),
-			},
-			{
-				message: { domain: "roles", operation: "insert", id: "full" },
-				queryKey: roleQueryKeys.all(),
-			},
-		];
-
-		for (const { message, queryKey } of cases) {
-			it(`${message.domain} on ${message.operation}`, () => {
-				reactQueryHandler(queryClient)(message);
-				expect(invalidate).toHaveBeenNthCalledWith(1, { queryKey });
-			});
-		}
-	});
-
-	describe("marks cached data in other domains that the change alters", () => {
-		const cases: Array<{
-			message: SseMessage;
-			queryKeys: (readonly unknown[])[];
-		}> = [
-			{
-				message: { domain: "samples", operation: "insert", id: 4 },
-				queryKeys: [samplesQueryKeys.lists(), labelQueryKeys.lists()],
-			},
-			{
-				message: { domain: "samples", operation: "update", id: 4 },
-				queryKeys: [samplesQueryKeys.detail(4), labelQueryKeys.lists()],
-			},
-			{
-				message: { domain: "labels", operation: "delete", id: 7 },
-				queryKeys: [labelQueryKeys.lists(), samplesQueryKeys.all()],
-			},
-			{
-				message: { domain: "labels", operation: "update", id: 7 },
-				queryKeys: [labelQueryKeys.lists()],
-			},
-			{
-				message: { domain: "groups", operation: "delete", id: 3 },
-				queryKeys: [
-					groupQueryKeys.lists(),
-					samplesQueryKeys.all(),
-					referenceQueryKeys.all(),
-				],
-			},
-			{
-				message: { domain: "groups", operation: "update", id: 3 },
-				queryKeys: [groupQueryKeys.detail(3)],
-			},
-		];
-
-		for (const { message, queryKeys } of cases) {
-			it(`${message.domain} on ${message.operation}`, () => {
-				reactQueryHandler(queryClient)(message);
-				expect(invalidate.mock.calls).toEqual(
-					queryKeys.map((queryKey) => [{ queryKey }]),
-				);
-			});
-		}
-	});
-
-	describe("marks what each domain actually caches stale", () => {
-		// A key nothing is cached under invalidates nothing, so asserting on the
-		// key alone would not catch a domain narrowing to a key it never uses.
-		const cases: Array<{ message: SseMessage; queryKey: readonly unknown[] }> =
-			[
-				{
-					message: { domain: "account", operation: "update", id: 1 },
-					queryKey: accountQueryKeys.all(),
-				},
-				{
-					message: { domain: "account", operation: "update", id: 1 },
-					queryKey: accountQueryKeys.apiKeys(),
-				},
-				{
-					message: { domain: "roles", operation: "update", id: "full" },
-					queryKey: roleQueryKeys.all(),
-				},
-				{
-					message: { domain: "labels", operation: "update", id: 7 },
-					queryKey: labelQueryKeys.lists(),
-				},
-				// An analysis flipping to ready must refresh the sample's analyses
-				// list row, which renders `ready`, not just the analysis detail.
-				{
-					message: { domain: "analyses", operation: "update", id: 5 },
-					queryKey: analysesQueryKeys.list(["smp1", 1, 25]),
-				},
-				{
-					message: { domain: "banners", operation: "update", id: 1 },
-					queryKey: bannerQueryKeys.active(),
-				},
-				{
-					message: { domain: "uploads", operation: "update", id: 5 },
-					queryKey: fileQueryKeys.list(["reads", 1, 25]),
-				},
-				{
-					message: { domain: "tasks", operation: "insert", id: 9 },
-					queryKey: taskQueryKeys.detail(9),
-				},
-			];
-
-		for (const { message, queryKey } of cases) {
-			it(`${message.domain} on ${message.operation} refreshes ${JSON.stringify(queryKey)}`, () => {
-				queryClient.setQueryData(queryKey, {});
-
-				reactQueryHandler(queryClient)(message);
-
-				expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
-			});
-		}
-	});
-
-	it("marks every user list variant stale on insert", () => {
-		const paginated = userQueryKeys.list([1, 25, ""]);
-		const infinite = userQueryKeys.infiniteList([25, ""]);
-		const nested = userQueryKeys.nested();
-
-		queryClient.setQueryData(paginated, { documents: [] });
-		queryClient.setQueryData(infinite, { pages: [] });
-		queryClient.setQueryData(nested, []);
+	it("refreshes what the change reaches under the shared rule", async () => {
+		queryClient.setQueryData(labelQueryKeys.lists(), []);
+		queryClient.setQueryData(samplesQueryKeys.detail(4), {});
 
 		reactQueryHandler(queryClient)({
-			domain: "users",
-			operation: "insert",
-			id: 7,
-		});
-
-		for (const queryKey of [paginated, infinite, nested]) {
-			expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
-		}
-	});
-
-	it("marks the matching user detail and analysis user options stale on update", () => {
-		queryClient.setQueryData(userQueryKeys.detail(7), { id: 7 });
-		queryClient.setQueryData(userQueryKeys.detail(8), { id: 8 });
-		const analysisUsers = analysesQueryKeys.users([1, ["pathoscope"]]);
-		queryClient.setQueryData(analysisUsers, []);
-
-		reactQueryHandler(queryClient)({
-			domain: "users",
+			domain: "labels",
 			operation: "update",
 			id: 7,
 		});
 
 		expect(
-			queryClient.getQueryState(userQueryKeys.detail(7))?.isInvalidated,
+			queryClient.getQueryState(labelQueryKeys.lists())?.isInvalidated,
 		).toBe(true);
 		expect(
-			queryClient.getQueryState(userQueryKeys.detail(8))?.isInvalidated,
-		).toBe(false);
-		expect(queryClient.getQueryState(analysisUsers)?.isInvalidated).toBe(true);
+			queryClient.getQueryState(samplesQueryKeys.detail(4))?.isInvalidated,
+		).toBe(true);
 	});
 
 	// Every on-screen job holds its own detail query, so invalidating the frame's
@@ -343,7 +91,7 @@ describe("reactQueryHandler", () => {
 		});
 
 		expect(queueTaskRefresh).not.toHaveBeenCalled();
-		expect(invalidate).toHaveBeenCalledExactlyOnceWith({
+		expect(invalidate).toHaveBeenCalledWith({
 			queryKey: taskQueryKeys.all(),
 		});
 	});

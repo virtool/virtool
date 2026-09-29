@@ -533,6 +533,8 @@ export async function updateSubtraction(
 					eq(subtractions.deleted, false),
 				),
 			);
+
+		await emit("subtractions", subtractionId, "update");
 	}
 
 	return getSubtraction(db, subtractionId);
@@ -573,6 +575,8 @@ export async function deleteSubtraction(
 	if (storageKeys === null) {
 		throw new SubtractionNotFoundError();
 	}
+
+	await emit("subtractions", subtractionId, "delete");
 
 	// The database write has committed, so a storage failure only orphans bytes
 	// rather than failing the delete. Log the orphans so they stay observable.

@@ -1,5 +1,5 @@
 import { analysesQueryKeys } from "@analyses/keys";
-import { samplesQueryKeys } from "@samples/keys";
+import { invalidateChange } from "@app/invalidate";
 import {
 	blastNuvsFn,
 	createAnalysisFn,
@@ -173,9 +173,11 @@ export function useDeleteAnalysis(analysisId: number) {
 	const mutation = useMutation<null, Error, { analysisId: number }>({
 		mutationFn: ({ analysisId }) => deleteAnalysisFn({ data: { analysisId } }),
 
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: analysesQueryKeys.lists(),
+		onSuccess: (_data, { analysisId }) => {
+			invalidateChange(queryClient, {
+				domain: "analyses",
+				operation: "delete",
+				id: analysisId,
 			});
 		},
 	});
@@ -239,19 +241,11 @@ export function useCreateAnalysis() {
 				},
 			}) as Promise<Analysis>,
 
-		onSuccess: (_data, { sampleId }) => {
-			// Only this sample's analyses list gained a row, so leave every other
-			// sample's analyses alone.
-			queryClient.invalidateQueries({
-				queryKey: [...analysesQueryKeys.lists(), sampleId],
-			});
-			// The sample's workflow state changed, and the samples-list row renders
-			// `sample.workflows` from its own list entry — so a Quick Analyze
-			// started from that list would otherwise keep showing stale workflow
-			// tags until a remount. The sample's detail cache is refreshed by the
-			// SSE `samples/update` frame, not here.
-			queryClient.invalidateQueries({
-				queryKey: samplesQueryKeys.lists(),
+		onSuccess: (analysis) => {
+			invalidateChange(queryClient, {
+				domain: "analyses",
+				operation: "insert",
+				id: analysis.id,
 			});
 		},
 	});
@@ -271,8 +265,10 @@ export function useBlastNuvs(analysisId: number) {
 			blastNuvsFn({ data: { analysisId, sequenceIndex } }),
 
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: analysesQueryKeys.detail(analysisId),
+			invalidateChange(queryClient, {
+				domain: "analyses",
+				operation: "update",
+				id: analysisId,
 			});
 		},
 	});

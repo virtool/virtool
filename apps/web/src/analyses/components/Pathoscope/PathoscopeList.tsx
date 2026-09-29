@@ -25,7 +25,7 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 	const showTable = search.table;
 
 	const { data: account } = useFetchAccount();
-	const preferAbbreviation = account?.settings.preferAbbreviation ?? false;
+	const preferAcronym = account?.settings.preferAcronym ?? false;
 
 	// Every hit is on screen at once, so a selection that outlived a filter would
 	// be copied without ever being visible. The key is built from the hit ids
@@ -53,7 +53,7 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 			formatPathoscopeHitsAsTsv(hits.filter(selection.isSelected), {
 				headers: true,
 				mappedCount: analysis.results.readCount,
-				preferAbbreviation,
+				preferAcronym,
 				showReads,
 			}),
 		);
@@ -71,7 +71,7 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 				onCopy={copySelected}
 				onSelectAll={() => selection.toggleVisible(hits)}
 				selectedCount={selection.selected.length}
-				showAbbreviation={hits.some((hit) => Boolean(hit.abbreviation))}
+				showAcronym={hits.some((hit) => Boolean(hit.acronym))}
 				total={analysis.results.hits.length}
 			/>
 			{showTable ? (

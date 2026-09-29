@@ -71,7 +71,7 @@ describe("getAccount", () => {
 
 		expect(account.email).toBe("alice@example.com");
 		expect(account.settings).toEqual({
-			preferAbbreviation: false,
+			preferAcronym: false,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
 			showVersions: true,
@@ -91,7 +91,7 @@ describe("getAccount", () => {
 		const account = await getAccount(db, userId);
 
 		expect(account.settings).toEqual({
-			preferAbbreviation: false,
+			preferAcronym: false,
 			quickAnalyzeWorkflow: "pathoscope",
 			showIds: false,
 			showVersions: true,
@@ -133,11 +133,11 @@ describe("updateAccountSettings", () => {
 		});
 
 		const settings = await updateAccountSettings(db, userId, {
-			preferAbbreviation: true,
+			preferAcronym: true,
 		});
 
 		expect(settings).toEqual({
-			preferAbbreviation: true,
+			preferAcronym: true,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
 			showVersions: true,
@@ -153,7 +153,7 @@ describe("updateAccountSettings", () => {
 
 	it("throws when the user does not exist", async () => {
 		await expect(
-			updateAccountSettings(db, 404, { preferAbbreviation: true }),
+			updateAccountSettings(db, 404, { preferAcronym: true }),
 		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
 });

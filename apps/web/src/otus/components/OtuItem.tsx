@@ -2,7 +2,7 @@ import { BoxGroupSection } from "@base/Box";
 import Link from "@base/Link";
 
 type OtuItemProps = {
-	abbreviation: string;
+	acronym: string;
 	id: string;
 	name: string;
 	refId: string;
@@ -13,7 +13,7 @@ type OtuItemProps = {
  * A condensed OTU item for use in a list of OTUs
  */
 export default function OtuItem({
-	abbreviation,
+	acronym,
 	id,
 	name,
 	refId,
@@ -32,7 +32,7 @@ export default function OtuItem({
 			>
 				{name}
 			</Link>
-			<span className="flex justify-start">{abbreviation}</span>
+			<span className="flex justify-start">{acronym}</span>
 			{verified || <span className="flex justify-end">Unverified</span>}
 		</BoxGroupSection>
 	);
