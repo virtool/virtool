@@ -37,6 +37,7 @@ export default function LoginForm({
 	const passkeySupport = usePasskeySupport();
 	const [twoFactor, setTwoFactor] = useState(false);
 	const navigate = useNavigate();
+	const isSigningIn = loginMutation.isPending || passkeyMutation.isPending;
 
 	function onSignedIn(data: LoginResult) {
 		if ("twoFactorRedirect" in data) {
@@ -58,11 +59,17 @@ export default function LoginForm({
 	}
 
 	function onSubmit({ handle, password }: FormValues) {
+		if (isSigningIn) {
+			return;
+		}
 		passkeyMutation.reset();
 		loginMutation.mutate({ handle, password }, { onSuccess: onSignedIn });
 	}
 
 	function onPasskeySignIn() {
+		if (isSigningIn) {
+			return;
+		}
 		loginMutation.reset();
 		passkeyMutation.mutate(undefined, { onSuccess: onSignedIn });
 	}
@@ -131,7 +138,7 @@ export default function LoginForm({
 				</div>
 				<div className="flex items-center justify-between">
 					<Link to="/recover">Forgot your password?</Link>
-					<Button type="submit" color="blue">
+					<Button type="submit" color="blue" disabled={isSigningIn}>
 						Login
 					</Button>
 				</div>
@@ -145,9 +152,7 @@ export default function LoginForm({
 				) : (
 					<Button
 						className="w-full"
-						disabled={
-							passkeySupport !== "available" || passkeyMutation.isPending
-						}
+						disabled={passkeySupport !== "available" || isSigningIn}
 						onClick={onPasskeySignIn}
 					>
 						<KeyRound aria-hidden size={16} />

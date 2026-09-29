@@ -180,6 +180,51 @@ describe("<LoginForm />", () => {
 			);
 		});
 
+		it("blocks password sign-in while a passkey request is pending", async () => {
+			stubPasskeySupport(true);
+			passkeyMock.mockReturnValue(new Promise(() => {}));
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Sign in with a passkey" }),
+			);
+			await userEvent.type(screen.getByLabelText("Username"), "Alice");
+			await userEvent.type(
+				screen.getByLabelText("Password"),
+				"password{enter}",
+			);
+
+			expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+			expect(loginMock).not.toHaveBeenCalled();
+		});
+
+		it("blocks passkey sign-in while a password request is pending", async () => {
+			stubPasskeySupport(true);
+			loginMock.mockReturnValue(new Promise(() => {}));
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+			await userEvent.type(screen.getByLabelText("Password"), "password");
+			await userEvent.click(screen.getByRole("button", { name: "Login" }));
+
+			await waitFor(() =>
+				expect(
+					screen.getByRole("button", { name: "Sign in with a passkey" }),
+				).toBeDisabled(),
+			);
+			expect(passkeyMock).not.toHaveBeenCalled();
+		});
+
 		it("sends a TOTP-enrolled user to the second-factor step", async () => {
 			stubPasskeySupport(true);
 			passkeyMock.mockResolvedValue({ twoFactorRedirect: true });
