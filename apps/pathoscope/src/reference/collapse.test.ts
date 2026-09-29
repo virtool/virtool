@@ -260,24 +260,32 @@ describe("collapseOtu", () => {
 		]);
 	});
 
-	it("runs one cd-hit-est per segment, named after the OTU and segment", async () => {
-		const collapseSegment = vi.fn(collapseToSelf);
+	it("runs one cd-hit-est per segment, named after the OTU and segment position", async () => {
+		const collapseSegment = vi.fn<CollapseSegment>(
+			async (input, output, sequences) => {
+				await writeSegmentFasta(input, sequences);
+
+				return collapseToSelf(input, output, sequences);
+			},
+		);
 
 		const otu = createOtu(
 			[
 				createIsolate(
 					"iso_1",
 					[
-						createSequence("seq_1", { segment: "RNA B" }),
-						createSequence("seq_2", { segment: "RNA A" }),
+						createSequence("seq_1", { segment: "DNA-B" }),
+						createSequence("seq_2", { segment: "DNA-A/B" }),
 					],
 					true,
 				),
-				createIsolate("iso_2", [createSequence("seq_3", { segment: "RNA A" })]),
+				createIsolate("iso_2", [
+					createSequence("seq_3", { segment: "DNA-A/B" }),
+				]),
 			],
 			[
-				{ molecule: null, name: "RNA A", required: true },
-				{ molecule: null, name: "RNA B", required: false },
+				{ molecule: null, name: "DNA-A/B", required: true },
+				{ molecule: null, name: "DNA-B", required: false },
 			],
 		);
 
@@ -290,8 +298,8 @@ describe("collapseOtu", () => {
 				basename(output),
 			]),
 		).toEqual([
-			["otu-otu_1-segment-RNA A.fa", "otu-otu_1-segment-RNA A.cdhit"],
-			["otu-otu_1-segment-RNA B.fa", "otu-otu_1-segment-RNA B.cdhit"],
+			["otu-otu_1-segment-0.fa", "otu-otu_1-segment-0.cdhit"],
+			["otu-otu_1-segment-1.fa", "otu-otu_1-segment-1.cdhit"],
 		]);
 	});
 
