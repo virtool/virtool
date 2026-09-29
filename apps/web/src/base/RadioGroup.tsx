@@ -25,9 +25,10 @@ export function RadioGroup({ className, ...props }: RadioGroupProps) {
 }
 
 /**
- * A single radio option. Renders as a circular button with a filled dot when
- * selected; reachable by keyboard and exposes `role="radio"`. Inside a
- * `Field`, it takes its `id` and ARIA connections from the field.
+ * A single radio option. Renders as a grey ring that fills with a thick blue
+ * ring around a white dot when selected; reachable by keyboard and exposes
+ * `role="radio"`. Inside a `Field`, it takes its `id` and ARIA connections
+ * from the field.
  */
 export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
 	const { "aria-invalid": _, ...fieldProps } = useFieldControl(props);
@@ -35,19 +36,11 @@ export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
 	return (
 		<RadioGroupPrimitive.Item
 			className={cn(
-				"h-5",
-				"w-5",
+				"group",
+				"size-5",
 				"shrink-0",
 				"rounded-full",
-				"border-2",
-				"border-gray-300",
-				"bg-white",
 				"cursor-pointer",
-				"flex",
-				"items-center",
-				"justify-center",
-				"data-[state=checked]:border-gray-900",
-				"data-[state=checked]:bg-gray-900",
 				"focus-visible:ring-2",
 				"focus-visible:ring-blue-500",
 				"focus-visible:outline-none",
@@ -59,7 +52,25 @@ export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
 			{...props}
 			{...fieldProps}
 		>
-			<RadioGroupPrimitive.Indicator className="h-2 w-2 rounded-full bg-white" />
+			{/* An SVG stays circular when fractional zoom rounds the box to unequal sides. */}
+			<svg
+				aria-hidden="true"
+				className="block size-full overflow-visible"
+				viewBox="0 0 20 20"
+			>
+				<circle
+					className="fill-white stroke-gray-300 stroke-2"
+					cx="10"
+					cy="10"
+					r="9"
+				/>
+				<circle
+					className="hidden fill-white stroke-blue-600 stroke-6 group-data-[state=checked]:inline"
+					cx="10"
+					cy="10"
+					r="7"
+				/>
+			</svg>
 		</RadioGroupPrimitive.Item>
 	);
 }
