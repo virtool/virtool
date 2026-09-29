@@ -16,14 +16,14 @@ import {
 import { DEFAULT_SETTINGS } from "@virtool/data/settings/data";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { seedJob } from "../auth/test/fixtures";
+import { jobAuthorization, seedJob } from "../auth/test/fixtures";
 import type { ReadHandlerDeps } from "../http";
 import { handleGetSettings } from "./handlers";
 
 let database: TestDatabase;
 let db: Db;
 let deps: ReadHandlerDeps;
-let credential: string;
+let authorization: string;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
@@ -41,7 +41,7 @@ beforeEach(async () => {
 
 	const job = await seedJob(db, await seedUser(db), { workflow: "pathoscope" });
 
-	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
+	authorization = jobAuthorization(job);
 	deps = { db };
 });
 
@@ -70,7 +70,7 @@ function encryptedNcbiApiKey(plaintext: string): EncryptedValue {
 
 function get(authenticated = true): Request {
 	return new Request("https://jobs.virtool.test/settings", {
-		headers: authenticated ? { authorization: `Basic ${credential}` } : {},
+		headers: authenticated ? { authorization } : {},
 	});
 }
 

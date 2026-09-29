@@ -24,7 +24,11 @@ import {
 } from "vitest";
 
 import { createApp } from "../app";
-import { type SeededJob, seedJob } from "../auth/test/fixtures";
+import {
+	jobAuthorization,
+	type SeededJob,
+	seedJob,
+} from "../auth/test/fixtures";
 import { createMetrics } from "../metrics/registry";
 import {
 	handleClaimJob,
@@ -119,7 +123,7 @@ function authorized(job: SeededJob, path: string, method = "GET"): Request {
 	return new Request(`https://jobs.virtool.test${path}`, {
 		method,
 		headers: {
-			authorization: `Basic ${Buffer.from(`job-${job.id}:${job.key}`).toString("base64")}`,
+			authorization: jobAuthorization(job),
 		},
 	});
 }

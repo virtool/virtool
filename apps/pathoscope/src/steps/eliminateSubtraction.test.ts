@@ -1,12 +1,9 @@
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type {
-	AnalysisSubtraction,
-	RunSubprocess,
-	RunSubprocessOptions,
-} from "@virtool/workflow";
+import type { AnalysisSubtraction } from "@virtool/workflow";
 import {
 	createFakeContext,
+	createFakeSubprocessRunner,
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
@@ -94,13 +91,14 @@ function createFakeTools(eliminationsPerPass: readonly (readonly string[])[]) {
 		);
 	}
 
-	const runSubprocess: RunSubprocess = async (
-		options: RunSubprocessOptions,
-	) => {
-		const { command } = options;
-		const script = command[2] ?? "";
+	const runSubprocess = createFakeSubprocessRunner({
+		effect: ({ command }) => runCore(command),
+	});
 
-		if (command[0] === "bash") {
+	runSubprocess.register("bash", {
+		async effect({ command }) {
+			const script = command[2] ?? "";
+
 			scripts.push(script);
 
 			bowtie2Inputs.push(
@@ -108,19 +106,8 @@ function createFakeTools(eliminationsPerPass: readonly (readonly string[])[]) {
 			);
 
 			await writeFile(shellFlagValue(script, "-o"), "");
-		} else {
-			await runCore(command);
-		}
-
-		return {
-			command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
-	};
+		},
+	});
 
 	return { bowtie2Inputs, runSubprocess, scripts };
 }
