@@ -16,7 +16,7 @@ export default function FieldDescription({
 
 	return (
 		<p
-			className={cn("text-gray-600 text-sm mt-1", className)}
+			className={cn("text-gray-600 text-sm mt-1 mb-0", className)}
 			data-slot="field-description"
 			id={field?.descriptionId}
 			{...props}
