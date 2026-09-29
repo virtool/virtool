@@ -217,6 +217,44 @@ it.each(["missing", "unmarked", "foreign", "null"])(
 	},
 );
 
+it("blocks a user linked to separate credentials by owner and account id", async () => {
+	const id = await seedUser(db, { handle: "owner", password });
+	const other = await seedUser(db, { handle: "other", password });
+	await db
+		.update(users)
+		.set({ authMigratedAt: new Date() })
+		.where(eq(users.id, id));
+	for (const [accountId, userId] of [
+		[String(id), other],
+		["extra", id],
+	] as const) {
+		await db.insert(authAccounts).values({
+			accountId,
+			providerId: "credential",
+			userId,
+			password: password.toString("utf8"),
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		});
+	}
+	const accounts = await db.select().from(authAccounts);
+	const finished = await runLegacyIdentities();
+	expect(finished.status).toBe("failed");
+	expect(await listDataMigrationFindings(db, finished.id)).toEqual(
+		expect.arrayContaining([
+			expect.objectContaining({
+				code: "credential_conflict",
+				subject: `user:${id}`,
+			}),
+			expect.objectContaining({
+				code: "credential_conflict",
+				subject: `user:${other}`,
+			}),
+		]),
+	);
+	expect(await db.select().from(authAccounts)).toEqual(accounts);
+});
+
 it("repairs stale credentials and rejects invalid legacy passwords on migrated users", async () => {
 	const id = await seedUser(db, { email: "valid@example.com", password });
 	await runLegacyIdentities();
