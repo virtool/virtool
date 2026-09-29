@@ -44,10 +44,16 @@ let browserModule: Promise<BrowserModule> | null = null;
 let loadedModule: BrowserModule | null = null;
 
 function loadBrowserModule(): Promise<BrowserModule> {
-	browserModule ??= import("@simplewebauthn/browser").then((module) => {
-		loadedModule = module;
-		return module;
-	});
+	browserModule ??= import("@simplewebauthn/browser").then(
+		(module) => {
+			loadedModule = module;
+			return module;
+		},
+		(error: unknown) => {
+			browserModule = null;
+			throw error;
+		},
+	);
 	return browserModule;
 }
 
