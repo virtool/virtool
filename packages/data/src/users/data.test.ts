@@ -284,6 +284,22 @@ describe("updateUser", () => {
 		expect((await readUser(userId))?.active).toBe(true);
 	});
 
+	it("rejects an unknown group and keeps the existing membership", async () => {
+		const userId = await seedUser(db);
+		const groupId = await seedGroup(db);
+		await updateUser(db, userId, { groups: [groupId] });
+
+		await expect(
+			updateUser(db, userId, { groups: [groupId, 999] }),
+		).rejects.toBeInstanceOf(GroupMembershipError);
+
+		const memberships = await db
+			.select({ groupId: userGroups.groupId })
+			.from(userGroups)
+			.where(eq(userGroups.userId, userId));
+		expect(memberships).toEqual([{ groupId }]);
+	});
+
 	it("replaces group membership, keeping the primary flag on a group that stays", async () => {
 		const userId = await seedUser(db);
 		const keep = await seedGroup(db, { name: "keep" });
