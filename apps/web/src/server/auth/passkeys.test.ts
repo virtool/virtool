@@ -13,12 +13,15 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
+import { twoFactor } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
 	AUTH_BASE_PATH,
 	createAuth,
 	createAuthRequestHandler,
+	PASSKEY_SIGN_IN_PATH,
+	withPasskeyTwoFactor,
 } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { sessionCookie } from "./test/fixtures";
@@ -445,5 +448,48 @@ describe("the mounted handler", () => {
 		);
 
 		expect(response.status).toBe(404);
+	});
+});
+
+describe("withPasskeyTwoFactor", () => {
+	function decoys() {
+		return twoFactor().hooks.after.map((hook) => ({
+			...hook,
+			matcher: () => false,
+		}));
+	}
+
+	function passkeyHook(plugin: ReturnType<typeof twoFactor>) {
+		return plugin.hooks.after.find((hook) =>
+			hook.matcher({ path: PASSKEY_SIGN_IN_PATH } as never),
+		);
+	}
+
+	it("reuses the sign-in hook wherever the plugin lists it", () => {
+		const plugin = twoFactor();
+		const [signIn] = plugin.hooks.after;
+		plugin.hooks.after.unshift(...decoys());
+
+		expect(passkeyHook(withPasskeyTwoFactor(plugin))?.handler).toBe(
+			signIn?.handler,
+		);
+	});
+
+	it("fails at startup when no hook matches sign-in", () => {
+		const plugin = twoFactor();
+		plugin.hooks.after.splice(0, plugin.hooks.after.length, ...decoys());
+
+		expect(() => withPasskeyTwoFactor(plugin)).toThrow(
+			"Expected one Better Auth two-factor sign-in hook, found 0",
+		);
+	});
+
+	it("fails at startup when more than one hook matches sign-in", () => {
+		const plugin = twoFactor();
+		plugin.hooks.after.push(...twoFactor().hooks.after);
+
+		expect(() => withPasskeyTwoFactor(plugin)).toThrow(
+			"Expected one Better Auth two-factor sign-in hook, found 2",
+		);
 	});
 });

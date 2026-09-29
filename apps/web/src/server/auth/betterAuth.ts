@@ -233,13 +233,24 @@ function virtoolSessionPlugin(db: Db) {
  * otherwise issue a full session to a user enrolled in TOTP. Reusing its own
  * handler means both paths set the same pending challenge cookie and answer
  * with the same `twoFactorRedirect`.
+ *
+ * The handler is found by what its matcher accepts, not by its position, and
+ * anything other than exactly one match stops startup: reusing the wrong hook
+ * would let a passkey skip the second factor.
  */
-function withPasskeyTwoFactor<T extends ReturnType<typeof twoFactor>>(
+export function withPasskeyTwoFactor<T extends ReturnType<typeof twoFactor>>(
 	plugin: T,
 ): T {
-	const [signIn] = plugin.hooks.after;
-	if (!signIn) {
-		throw new Error("Better Auth two-factor plugin has no sign-in hook");
+	type HookContext = Parameters<T["hooks"]["after"][number]["matcher"]>[0];
+	const signInContext = { path: "/sign-in/username" } as HookContext;
+	const signInHooks = plugin.hooks.after.filter((hook) =>
+		hook.matcher(signInContext),
+	);
+	const [signIn] = signInHooks;
+	if (!signIn || signInHooks.length !== 1) {
+		throw new Error(
+			`Expected one Better Auth two-factor sign-in hook, found ${signInHooks.length}`,
+		);
 	}
 
 	return {
