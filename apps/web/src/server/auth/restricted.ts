@@ -1,5 +1,6 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import {
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	type RestrictedSetup,
 	SETUP_REQUIRED_ERROR_NAME,
@@ -38,6 +39,17 @@ export class PasswordResetRequiredError extends Error {
 	constructor() {
 		super("Password reset required");
 		this.name = PASSWORD_RESET_REQUIRED_ERROR_NAME;
+	}
+}
+
+/**
+ * Thrown while the `required` MFA policy restricts a signed-in user to TOTP
+ * enrollment.
+ */
+export class MfaEnrollmentRequiredError extends Error {
+	constructor() {
+		super("TOTP enrollment required");
+		this.name = MFA_ENROLLMENT_REQUIRED_ERROR_NAME;
 	}
 }
 

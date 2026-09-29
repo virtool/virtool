@@ -1,5 +1,6 @@
 import {
 	emptyPermissions,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -13,12 +14,14 @@ import {
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
 import { authSessions } from "@virtool/data/db/schema/auth";
+import { settings } from "@virtool/data/db/schema/settings";
 import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -112,6 +115,7 @@ beforeEach(async () => {
 	await db.delete(apiKeys);
 	await db.delete(authSessions);
 	await db.delete(setupSessions);
+	await db.delete(settings);
 	await db.delete(users);
 });
 
@@ -346,6 +350,41 @@ describe("browser boundary", () => {
 				}),
 			},
 		});
+	});
+});
+
+describe("required MFA boundary", () => {
+	async function seedUnenrolledSession() {
+		await seedSettings(db, { mfaPolicy: "required" });
+		const userId = await seedUser(db);
+		return seedSession(db, userId);
+	}
+
+	it("refuses every server function to an unenrolled session", async () => {
+		const session = await seedUnenrolledSession();
+		getRequest.mockReturnValue(requestFor(sessionCookie(session)));
+
+		const next = vi.fn();
+		const error = await serverHandler()({
+			next,
+			serverFnMeta: metaFor(resetPasswordFn),
+		}).catch((value) => value);
+
+		expect(error).toBeInstanceOf(Error);
+		expect((error as Error).name).toBe(MFA_ENROLLMENT_REQUIRED_ERROR_NAME);
+		expect(setResponseStatus).toHaveBeenLastCalledWith(403);
+		expect(next).not.toHaveBeenCalled();
+	});
+
+	it("refuses raw routes to an unenrolled session", async () => {
+		const session = await seedUnenrolledSession();
+
+		const result = await requireAuthenticatedRequest(
+			requestFor(sessionCookie(session)),
+		);
+
+		expect(result).toBeInstanceOf(Response);
+		expect((result as Response).status).toBe(401);
 	});
 });
 

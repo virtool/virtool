@@ -56,7 +56,7 @@ const postgresConnections = new Gauge({
 
 const accountLifecycleOperations = new Counter({
 	name: "virtool_account_lifecycle_operations_total",
-	help: "Invitation and bootstrap operations, by bounded operation and outcome.",
+	help: "Invitation, bootstrap, and TOTP reset operations, by bounded operation and outcome.",
 	labelNames: ["operation", "outcome"],
 	registers: [registry],
 });
@@ -115,7 +115,8 @@ export function recordAccountLifecycleOperation(
 		| "invitation_regenerate"
 		| "invitation_delete"
 		| "invitation_accept"
-		| "bootstrap",
+		| "bootstrap"
+		| "totp_reset",
 	outcome: "success" | "failure" | "copy_only" | "queued",
 ): void {
 	accountLifecycleOperations.inc({ operation, outcome });
