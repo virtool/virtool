@@ -217,6 +217,51 @@ describe("registration", () => {
 		});
 	});
 
+	it("stores transports it does not know and drops ones it cannot store", async () => {
+		const userId = await seedAccount();
+		await signInAs(userId);
+		const options = (await account("getPasskeyRegistrationOptionsFn")) as {
+			challenge: string;
+		};
+		const response = authenticator().register(options);
+
+		await account("registerPasskeyFn", {
+			response: {
+				...response,
+				response: {
+					...response.response,
+					transports: ["hybrid", "internal", "future-transport", "a,b", ""],
+				},
+			},
+		});
+
+		expect(await db.select().from(authPasskeys)).toMatchObject([
+			{ transports: "hybrid,internal,future-transport" },
+		]);
+	});
+
+	it("refuses an unbounded list of transports", async () => {
+		const userId = await seedAccount();
+		await signInAs(userId);
+		const options = (await account("getPasskeyRegistrationOptionsFn")) as {
+			challenge: string;
+		};
+		const response = authenticator().register(options);
+
+		await expect(
+			account("registerPasskeyFn", {
+				response: {
+					...response,
+					response: {
+						...response.response,
+						transports: Array.from({ length: 17 }, (_, i) => `t${i}`),
+					},
+				},
+			}),
+		).rejects.toThrow("expected array to have <=16 items");
+		expect(await db.select().from(authPasskeys)).toEqual([]);
+	});
+
 	it("asks for a recent authentication before generating options", async () => {
 		const userId = await seedAccount();
 		await signInAs(

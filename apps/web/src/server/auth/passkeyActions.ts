@@ -6,11 +6,15 @@ const base64Url = z.string().regex(/^[A-Za-z0-9_-]*$/);
 
 const credentialId = base64Url.min(1).max(1366);
 
+// WebAuthn asks relying parties to store transport values they do not know, and
+// browsers ignore them when they come back. The plugin stores the list joined by
+// commas, so only plain tokens are kept.
 const transportsSchema = z
-	.array(
-		z.enum(["ble", "cable", "hybrid", "internal", "nfc", "smart-card", "usb"]),
-	)
-	.max(7);
+	.array(z.string().max(64))
+	.max(16)
+	.transform((transports) =>
+		transports.filter((transport) => /^[A-Za-z0-9_-]+$/.test(transport)),
+	);
 
 const authenticatorAttachment = z.enum(["platform", "cross-platform"]);
 
