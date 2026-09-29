@@ -1,6 +1,5 @@
 import { cn } from "@app/cn";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import Label from "@base/Label";
 import {
 	closestCenter,
 	DndContext,
@@ -44,22 +43,17 @@ const restrictToVerticalAxis: Modifier = ({ transform }) => ({
 
 /**
  * Move an item onto the position of another. Columns above the divider are
- * copied and columns below it are hidden. The name column never goes below
- * the divider, because every row needs it.
+ * exported and columns below it are hidden. At least one column stays above
+ * the divider, because an export without columns is empty.
  */
 export function moveColumn(order: Item[], active: Item, over: Item): Item[] {
 	const next = arrayMove(order, order.indexOf(active), order.indexOf(over));
 
-	return next.indexOf("name") > next.indexOf(DIVIDER) ? order : next;
+	return next.indexOf(DIVIDER) === 0 ? order : next;
 }
 
 function ColumnLabel({ column }: { column: PathoscopeColumn }) {
-	return (
-		<>
-			<span className="flex-1 font-medium">{columnLabels[column]}</span>
-			{column === "name" && <Label color="purple">Required</Label>}
-		</>
-	);
+	return <span className="flex-1 font-medium">{columnLabels[column]}</span>;
 }
 
 type ColumnRowProps = {
@@ -135,7 +129,7 @@ type PathoscopeColumnsProps = {
 };
 
 /**
- * A list for choosing which Pathoscope copy columns to carry and in what
+ * A list for choosing which Pathoscope export columns to carry and in what
  * order. Columns drag to reorder, and below a divider to leave them out.
  */
 export default function PathoscopeColumns({

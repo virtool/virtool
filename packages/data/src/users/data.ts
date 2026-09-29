@@ -76,7 +76,7 @@ import { emit } from "../events/emit";
 function isPathoscopeColumns(value: unknown): value is PathoscopeColumn[] {
 	return (
 		Array.isArray(value) &&
-		value.includes("name") &&
+		value.length > 0 &&
 		new Set(value).size === value.length &&
 		value.every((column) => PATHOSCOPE_COLUMNS.includes(column))
 	);

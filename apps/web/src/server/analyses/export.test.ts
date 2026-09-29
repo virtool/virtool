@@ -1,4 +1,4 @@
-import type { JsonObject } from "@virtool/contracts";
+import { type JsonObject, PATHOSCOPE_COLUMNS } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
@@ -73,8 +73,10 @@ const NAMED_ISOLATE = [
 	{ id: "iso_a", source_type: "isolate", source_name: "A" },
 ];
 
-const BY_NAME = { preferAcronym: false };
-const BY_ACRONYM = { preferAcronym: true };
+const ALL_COLUMNS = [...PATHOSCOPE_COLUMNS];
+
+const BY_NAME = { columns: ALL_COLUMNS, preferAcronym: false };
+const BY_ACRONYM = { columns: ALL_COLUMNS, preferAcronym: true };
 
 // A depth profile of [0, 3] has a median of 1.5 — an even-length input whose
 // two middle values differ, so a rounded median would show as 2.
@@ -185,6 +187,21 @@ describe("formatAnalysisToCsv", () => {
 		);
 
 		expect(csv).toContain('\r\n"Grapevine ""leafroll"" virus","Isolate A",');
+	});
+
+	it("carries only the chosen columns, in their order", async () => {
+		await seedOtu(NAMED_ISOLATE);
+
+		const csv = await formatAnalysisToCsv(db, "pathoscope", results(), {
+			columns: ["coverage", "name", "weight"],
+			preferAcronym: false,
+		});
+
+		// The identifying fields travel with the name column as one block.
+		expect(csv).toBe(
+			'"Coverage","OTU","Isolate","Sequence","Length","Weight"\r\n' +
+				'0.25,"Grapevine ""leafroll"" virus","Isolate A","NC_000001",10,0.5\r\n',
+		);
 	});
 
 	it("writes only the header when nothing was hit", async () => {

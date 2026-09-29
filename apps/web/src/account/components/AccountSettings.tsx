@@ -30,15 +30,15 @@ export default function AccountSettings() {
 			</SectionHeader>
 			<section aria-labelledby="pathoscope-heading" id="pathoscope">
 				<SectionHeader level={3}>
-					<h3 id="pathoscope-heading">Pathoscope</h3>
-					<p>Change how Pathoscope results are named and exported.</p>
+					<h3 id="pathoscope-heading">Pathoscope export</h3>
+					<p>Change how Pathoscope results are copied and downloaded.</p>
 				</SectionHeader>
 				<BoxGroup>
 					<BoxGroupSection>
 						<div className="flex items-center justify-between gap-5">
 							<div>
 								<p className="font-semibold" id="preferAcronym-label">
-									Prefer acronyms
+									Prefer acronym
 								</p>
 								<p className="text-gray-600 text-sm">
 									Name OTUs by their acronym when they have one.
@@ -61,10 +61,7 @@ export default function AccountSettings() {
 				</BoxGroup>
 				<div className="mt-5 mb-3">
 					<p className="font-semibold" id="pathoscopeColumns-label">
-						Copy columns
-					</p>
-					<p className="text-gray-600 text-sm">
-						Drag columns into order. Hidden columns are left out of copies.
+						Column order
 					</p>
 				</div>
 				<PathoscopeColumns

@@ -19,7 +19,7 @@ describe("<AccountSettings />", () => {
 
 		expect(
 			await screen.findByRole("switch", {
-				name: "Prefer acronyms",
+				name: "Prefer acronym",
 			}),
 		).toBeChecked();
 	});
@@ -34,7 +34,7 @@ describe("<AccountSettings />", () => {
 		renderWithProviders(<AccountSettings />);
 
 		const toggle = await screen.findByRole("switch", {
-			name: "Prefer acronyms",
+			name: "Prefer acronym",
 		});
 		expect(toggle).not.toBeChecked();
 
@@ -116,10 +116,25 @@ describe("moveColumn()", () => {
 		]);
 	});
 
-	it("should never hide the name", () => {
-		const current = [...order];
+	it("should hide the name like any other column", () => {
+		expect(moveColumn([...order], "name", "depth")).toEqual([
+			"weight",
+			"coverage",
+			"divider",
+			"depth",
+			"name",
+		]);
+	});
 
-		expect(moveColumn(current, "name", "divider")).toBe(current);
-		expect(moveColumn(current, "name", "depth")).toBe(current);
+	it("should never hide the last shown column", () => {
+		const current = [
+			"weight",
+			"divider",
+			"name",
+			"coverage",
+			"depth",
+		] as Parameters<typeof moveColumn>[0];
+
+		expect(moveColumn(current, "weight", "name")).toBe(current);
 	});
 });

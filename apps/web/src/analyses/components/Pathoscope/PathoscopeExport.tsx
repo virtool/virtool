@@ -76,8 +76,9 @@ type PathoscopeExportProps = {
  * The export menu.
  *
  * A copy takes what the search and filters left on screen; a download is the
- * entire analysis, sequence by sequence, as the server renders it. Both name
- * OTUs by acronym when the account prefers it and the OTU has one.
+ * entire analysis, sequence by sequence, as the server renders it. Both carry
+ * the account's columns in its order, and name OTUs by acronym when the
+ * account prefers it and the OTU has one.
  */
 export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const hits = useSortAndFilterPathoscopeHits(analysis);
@@ -91,7 +92,8 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 		...PATHOSCOPE_COLUMNS,
 	];
 	const preferAcronym = account?.settings.preferAcronym ?? false;
-	const downloadQuery = preferAcronym ? "?preferAcronym=true" : "";
+	// Column names are fixed identifiers, so the list needs no encoding.
+	const downloadQuery = `?columns=${columns.join(",")}${preferAcronym ? "&preferAcronym=true" : ""}`;
 
 	const [copied, setCopied] = useState(false);
 

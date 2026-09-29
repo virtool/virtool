@@ -108,8 +108,8 @@ const accountSettingsSchema = z
 			.array(z.enum(PATHOSCOPE_COLUMNS))
 			.refine(
 				(columns) =>
-					columns.includes("name") && new Set(columns).size === columns.length,
-				"Columns must be unique and include the name",
+					columns.length > 0 && new Set(columns).size === columns.length,
+				"Columns must be unique and include at least one",
 			),
 		preferAcronym: z.boolean(),
 		quickAnalyzeWorkflow: z.enum(["nuvs", "pathoscope"]),

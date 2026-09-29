@@ -122,6 +122,16 @@ describe("getAccount", () => {
 
 	// The route guards on /login and /_authenticated read a rejection as "nobody
 	// is signed in", so this must throw rather than resolve undefined.
+	it("reads back Pathoscope columns without the name", async () => {
+		const userId = await seedUser(db, { handle: "carol" });
+
+		await updateAccountSettings(db, userId, { pathoscopeColumns: ["weight"] });
+
+		expect((await getAccount(db, userId)).settings.pathoscopeColumns).toEqual([
+			"weight",
+		]);
+	});
+
 	it("throws when the user does not exist", async () => {
 		await expect(getAccount(db, 404)).rejects.toBeInstanceOf(UserNotFoundError);
 	});

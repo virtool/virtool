@@ -105,11 +105,11 @@ describe("<PathoscopeExport />", () => {
 
 		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.xlsx",
+			"/analyses/documents/5.xlsx?columns=name,weight,depth,coverage",
 		);
 		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.csv",
+			"/analyses/documents/5.csv?columns=name,weight,depth,coverage",
 		);
 	});
 
@@ -156,6 +156,11 @@ describe("<PathoscopeExport />", () => {
 		await openMenu();
 
 		await screen.findByRole("menuitemcheckbox", { name: "Prefer acronym" });
+
+		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
+			"href",
+			"/analyses/documents/5.csv?columns=weight,depth,coverage,name",
+		);
 
 		await userEvent.click(screen.getByRole("menuitem", { name: "Isolates" }));
 
@@ -221,11 +226,11 @@ describe("<PathoscopeExport />", () => {
 		).toBeChecked();
 		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.xlsx?preferAcronym=true",
+			"/analyses/documents/5.xlsx?columns=name,weight,depth,coverage&preferAcronym=true",
 		);
 		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.csv?preferAcronym=true",
+			"/analyses/documents/5.csv?columns=name,weight,depth,coverage&preferAcronym=true",
 		);
 
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
