@@ -18,10 +18,11 @@ import {
 	mintStorageKey,
 	type StorageBackend,
 } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { seedJob } from "../auth/test/fixtures";
+import { jobAuthorization, seedJob } from "../auth/test/fixtures";
 import {
 	handleFinalizeSubtraction,
 	handleGetSubtraction,
@@ -32,7 +33,7 @@ let database: TestDatabase;
 let db: Db;
 let storage: MemoryStorage;
 let deps: SubtractionHandlerDeps;
-let credential: string;
+let authorization: string;
 let jobId: number;
 let userId: number;
 
@@ -72,7 +73,7 @@ beforeEach(async () => {
 	});
 
 	jobId = job.id;
-	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
+	authorization = jobAuthorization(job);
 	storage = new MemoryStorage();
 	deps = { db, storage: recording(storage), logger };
 	timeline.length = 0;
@@ -90,10 +91,6 @@ function recording(backend: MemoryStorage): StorageBackend {
 			return backend.size(key);
 		},
 	};
-}
-
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
 }
 
 async function seedSubtraction(
@@ -141,7 +138,7 @@ function patch(
 			method: "PATCH",
 			headers: {
 				"content-type": "application/json",
-				...(authenticated ? { authorization: `Basic ${credential}` } : {}),
+				...(authenticated ? { authorization } : {}),
 			},
 			body: JSON.stringify(payload),
 		},
@@ -156,7 +153,7 @@ async function written(
 ): Promise<SubtractionFileManifest> {
 	const storageKey = mintStorageKey("subtractions", subtractionId);
 
-	await storage.write(storageKey, body(contents));
+	await storage.write(storageKey, streamOf(contents));
 
 	return { kind: "subtractionFile", name, storageKey };
 }
@@ -442,7 +439,7 @@ describe("handleFinalizeSubtraction", () => {
 			{
 				method: "PATCH",
 				headers: {
-					authorization: `Basic ${credential}`,
+					authorization,
 					"content-type": "application/json",
 				},
 				body: "{",
@@ -503,7 +500,7 @@ describe("handleFinalizeSubtraction", () => {
 function get(subtractionId: number | string, authenticated = true): Request {
 	return new Request(
 		`https://jobs.virtool.test/subtractions/${subtractionId}`,
-		{ headers: authenticated ? { authorization: `Basic ${credential}` } : {} },
+		{ headers: authenticated ? { authorization } : {} },
 	);
 }
 

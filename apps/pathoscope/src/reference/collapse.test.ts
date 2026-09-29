@@ -1,12 +1,14 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type {
 	IndexOtu,
 	IndexOtuIsolate,
 	IndexOtuSequence,
 } from "@virtool/sqlite";
-import type { RunSubprocess } from "@virtool/workflow";
+import {
+	createFakeSubprocessRunner,
+	createTestWorkPath,
+} from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import {
 	type CollapseSegment,
@@ -72,11 +74,11 @@ const collapseToSelf: CollapseSegment = async (_input, _output, sequences) =>
 	new Map(sequences.map((sequence) => [sequence.id, sequence.id]));
 
 async function tempDir(): Promise<string> {
-	const directory = await mkdtemp(join(tmpdir(), "pathoscope-collapse-"));
+	const { path, cleanup } = await createTestWorkPath();
 
-	onTestFinished(() => rm(directory, { force: true, recursive: true }));
+	onTestFinished(cleanup);
 
-	return directory;
+	return path;
 }
 
 describe("prepareOtuCollapse", () => {
@@ -328,24 +330,17 @@ describe("createSegmentCollapser", () => {
 		const directory = await tempDir();
 		const outputPath = join(directory, "otu-otu_1-segment-.cdhit");
 
-		const runSubprocess = vi.fn<RunSubprocess>(async ({ command }) => {
-			await writeSegmentFasta(`${outputPath}.clstr`, []);
-
-			return {
-				command,
-				exitCode: 0,
-				signal: null,
-				cancelled: false,
-				stderrTail: [],
-				durationMs: 1,
-			};
+		const runSubprocess = createFakeSubprocessRunner({
+			async effect() {
+				await writeSegmentFasta(`${outputPath}.clstr`, []);
+			},
 		});
 
 		const collapse = createSegmentCollapser(runSubprocess);
 
 		await collapse(join(directory, "otu-otu_1-segment-.fa"), outputPath, []);
 
-		expect(runSubprocess.mock.calls[0]?.[0].command).toEqual([
+		expect(runSubprocess.commands()[0]).toEqual([
 			"cd-hit-est",
 			"-i",
 			join(directory, "otu-otu_1-segment-.fa"),

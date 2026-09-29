@@ -19,10 +19,11 @@ import {
 	mintRootStorageKey,
 	mintStorageKey,
 } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { seedJob } from "../auth/test/fixtures";
+import { jobAuthorization, seedJob } from "../auth/test/fixtures";
 import {
 	handleFinalizeSample,
 	handleGetSample,
@@ -33,7 +34,7 @@ let database: TestDatabase;
 let db: Db;
 let storage: MemoryStorage;
 let deps: SampleHandlerDeps;
-let credential: string;
+let authorization: string;
 let jobId: number;
 let userId: number;
 
@@ -71,14 +72,10 @@ beforeEach(async () => {
 	const job = await seedJob(db, userId, { workflow: "create_sample" });
 
 	jobId = job.id;
-	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
+	authorization = jobAuthorization(job);
 	storage = new MemoryStorage();
 	deps = { db, storage, logger };
 });
-
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
-}
 
 async function seedSample(
 	overrides: Partial<typeof legacySamples.$inferInsert> = {},
@@ -106,7 +103,7 @@ async function seedSample(
 async function seedInput(sampleId: number, index: number): Promise<number> {
 	const storageKey = mintRootStorageKey("uploads");
 
-	await storage.write(storageKey, body(`input ${index}`));
+	await storage.write(storageKey, streamOf(`input ${index}`));
 
 	const [row] = await db
 		.insert(uploads)
@@ -146,7 +143,7 @@ function patch(
 		method: "PATCH",
 		headers: {
 			"content-type": "application/json",
-			...(authenticated ? { authorization: `Basic ${credential}` } : {}),
+			...(authenticated ? { authorization } : {}),
 		},
 		body: JSON.stringify(payload),
 	});
@@ -160,7 +157,7 @@ async function written(
 ): Promise<SampleReadManifest> {
 	const storageKey = mintStorageKey("samples", sampleId);
 
-	await storage.write(storageKey, body(contents));
+	await storage.write(storageKey, streamOf(contents));
 
 	return { kind: "sampleRead", name, storageKey };
 }
@@ -488,7 +485,7 @@ describe("handleFinalizeSample", () => {
 			{
 				method: "PATCH",
 				headers: {
-					authorization: `Basic ${credential}`,
+					authorization,
 					"content-type": "application/json",
 				},
 				body: "{",
@@ -510,7 +507,7 @@ describe("handleFinalizeSample", () => {
 		const sampleId = await seedSample({ legacy_id: "abc123" });
 
 		const storageKey = mintRootStorageKey("uploads");
-		await storage.write(storageKey, body("input"));
+		await storage.write(storageKey, streamOf("input"));
 
 		const [upload] = await db
 			.insert(uploads)
@@ -546,7 +543,7 @@ describe("handleFinalizeSample", () => {
 
 function get(sampleId: number | string, authenticated = true): Request {
 	return new Request(`https://jobs.virtool.test/samples/${sampleId}`, {
-		headers: authenticated ? { authorization: `Basic ${credential}` } : {},
+		headers: authenticated ? { authorization } : {},
 	});
 }
 
@@ -675,7 +672,7 @@ describe("handleGetSample", () => {
 
 		const storageKey = mintRootStorageKey("uploads");
 
-		await storage.write(storageKey, body("input"));
+		await storage.write(storageKey, streamOf("input"));
 
 		const [upload] = await db
 			.insert(uploads)

@@ -10,7 +10,7 @@ import {
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { requireJobRequest } from "./guard";
-import { seedJob } from "./test/fixtures";
+import { basicAuthorization, seedJob } from "./test/fixtures";
 
 let database: TestDatabase;
 let db: Db;
@@ -35,7 +35,7 @@ beforeEach(async () => {
 function request(login: string, key: string): Request {
 	return new Request("https://jobs.virtool.test/jobs/1/ping", {
 		headers: {
-			authorization: `Basic ${Buffer.from(`${login}:${key}`).toString("base64")}`,
+			authorization: basicAuthorization(login, key),
 		},
 	});
 }
