@@ -258,11 +258,12 @@ administrator's switch and stays authoritative. A deactivated account is
 unusable whatever its lifecycle state, and completing setup never activates
 anyone.
 
-A pending account keeps its handle, administrator role and group memberships,
-so an administrator states who a person is and what they may do at the moment
-of invitation. What it doesn't have is a credential: `users.password` is null,
-which the `pending_has_no_password` constraint holds, and `createPendingUser`
-is the only thing that writes the state.
+A pending account keeps its email, administrator role and group memberships.
+Its handle is empty until the invitee accepts and chooses one; the partial
+handle uniqueness index permits multiple pending invitations. It has no credential: `users.password` is null,
+which the `pending_has_no_password` constraint holds. Its Better Auth credential
+identity already exists with a null password so invitation acceptance only has
+to fill the credential, never create a second identity.
 
 Every reader that assumes an account is usable checks the state, not just
 `active`: `listUsers`, `findUsers` (which defaults to `normal` and takes
@@ -303,6 +304,24 @@ password-change transactions; Better Auth verifies the latter.
 Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
 Nothing waits on it. Both readers refuse an expired row on sight, so there
 are no request-path scans.
+
+Account-completion tokens are invitation generations. Each records its issuer,
+copy-only or queued delivery, and distinct consumed and superseded timestamps. `src/users/invitations.ts` creates
+the pending user, identity, role/groups, token, and optional outbox message in
+one transaction. Regeneration serializes on the user's setup advisory lock and
+invalidates older generations. Deleting a pending user takes the same lock and
+cascades to its tokens. A plaintext token is returned only for a
+copy-only creation or regeneration; emailed generations expose only metadata so
+acceptance proves control of the bound mailbox.
+
+Copied invitations leave the assigned normalized email unverified. A queued
+invitation proves control of that exact address when accepted. Acceptance uses
+the token-bound address, invalidates every prior session and setup credential,
+and cannot race regeneration or deletion. The 72-hour lifetime is shared in
+`@virtool/contracts`. `cleanup_setup_state` removes other expired setup state.
+It keeps the expired live invitation of a pending user, so the administration
+view can offer a reissue. A reissue supersedes it, and the next sweep removes
+it. Deleting the user also deletes it.
 
 ## Outbound requests
 
@@ -361,6 +380,10 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.
+- Pass `setupTokenId` when the message carries a setup link. Deleting the
+  token deletes the message, and `claimDueEmails` deletes a queued message
+  whose token was consumed, superseded, or expired, so a dead link is never
+  sent.
 - Keep provider errors, retries, and the Resend SDK behind the email package.
 - Handle `{ status: "discarded" }`. It's an ordinary outcome, not an error:
   a flow that depends on the email must offer the user another route rather

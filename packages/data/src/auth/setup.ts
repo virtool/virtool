@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 
 import type { RestrictedSetup, SetupPurpose } from "@virtool/contracts";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, type SQL, sql } from "drizzle-orm";
 
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -38,6 +38,12 @@ export class SetupCredentialError extends AppError {}
 export type IssueSetupTokenInput = {
 	userId: number;
 	purpose: SetupPurpose;
+	/** Administrator issuing an account-completion invitation. */
+	issuerUserId?: number;
+	/** Monotonic generation for an account-completion invitation. */
+	generation?: number;
+	/** How an account-completion invitation is delivered. */
+	delivery?: "copy_only" | "queued";
 	/** Purpose-bound address carried by an email-remediation token. */
 	candidateEmail?: string;
 	/** Address that must still be current when verifying an email change. */
@@ -89,6 +95,9 @@ export async function issueSetupTokenInTransaction(
 		purpose,
 		candidateEmail,
 		sourceEmail,
+		issuerUserId,
+		generation = 1,
+		delivery,
 		lifetimeMs = SETUP_TOKEN_LIFETIME_MS,
 	}: IssueSetupTokenInput,
 ): Promise<IssuedSetupToken> {
@@ -104,6 +113,9 @@ export async function issueSetupTokenInTransaction(
 			.values({
 				userId,
 				purpose,
+				issuerUserId,
+				generation,
+				delivery,
 				candidateEmail,
 				sourceEmail,
 				tokenHash: hashToken(token),
@@ -150,6 +162,7 @@ export async function invalidateUserSetupTokens(
 /** The user a consumed setup token names. */
 export type ConsumedSetupToken = {
 	candidateEmail: string | null;
+	delivery: "copy_only" | "queued" | null;
 	userId: number;
 	purpose: SetupPurpose;
 };
@@ -195,6 +208,7 @@ export async function consumeSetupToken(
 		)
 		.returning({
 			candidateEmail: setupTokens.candidateEmail,
+			delivery: setupTokens.delivery,
 			userId: setupTokens.userId,
 			purpose: setupTokens.purpose,
 		});
@@ -393,7 +407,10 @@ export type DeleteExpiredSetupResult = {
  *
  * An expired *consumed* token goes too. Its only remaining job was to make a
  * replayed link fail the same way an unknown one does, and past its expiry the
- * expiry check does that on its own.
+ * expiry check does that on its own. *
+ * A pending user's live invitation stays after it expires. It is the only
+ * record of that invitation, and the administration view needs it to offer a
+ * reissue. Reissuing supersedes it, and deleting the user deletes it.
  */
 export async function deleteExpiredSetupState(
 	db: DbOrTx,
@@ -409,8 +426,16 @@ export async function deleteExpiredSetupState(
 	}
 
 	return {
-		tokens: await sweep(db, setupTokens, batchSize, signal),
-		sessions: await sweep(db, setupSessions, batchSize, signal),
+		tokens: await sweep(
+			db,
+			setupTokens,
+			batchSize,
+			signal,
+			sql`not (${setupTokens.purpose} = 'account_completion'
+				and ${setupTokens.consumedAt} is null
+				and ${setupTokens.supersededAt} is null)`,
+		),
+		sessions: await sweep(db, setupSessions, batchSize, signal, sql`true`),
 	};
 }
 
@@ -426,6 +451,7 @@ async function sweep(
 	table: typeof setupTokens | typeof setupSessions,
 	batchSize: number,
 	signal: AbortSignal | undefined,
+	sweepable: SQL,
 ): Promise<number> {
 	let total = 0;
 
@@ -435,9 +461,9 @@ async function sweep(
 		const deleted = await db
 			.delete(table)
 			.where(
-				sql`${table.expiresAt} < ${nowUtc()} and ${table.id} in (
+				sql`${table.expiresAt} < ${nowUtc()} and ${sweepable} and ${table.id} in (
 					select id from ${table}
-					where expires_at < ${nowUtc()}
+					where expires_at < ${nowUtc()} and ${sweepable}
 					limit ${batchSize}
 				)`,
 			)

@@ -2,26 +2,36 @@ import {
 	type Account,
 	type AccountLifecycleState,
 	type AccountSettings,
+	type AdministeredUserDetail,
+	type AdministeredUserSearchResult,
 	type AdministratorRoleName,
 	emptyPermissions,
 	PERMISSION_NAMES,
 	type Permissions,
+	type SortDirection,
 	type User,
 	type UserNested,
+	type UserRoleFilter,
 	type UserSearchResult,
+	type UserSortField,
+	type UserStatus,
 } from "@virtool/contracts";
 import {
 	and,
 	asc,
 	count,
+	desc,
 	eq,
 	ilike,
 	inArray,
 	isNotNull,
 	isNull,
+	or,
+	type SQL,
 	sql,
 } from "drizzle-orm";
-import type { PostgresError } from "postgres";
+import { claimEmail, normalizeEmail } from "../auth/email";
+import { queueEmailVerificationInTransaction } from "../auth/emailVerification";
 import {
 	CREDENTIAL_PROVIDER_ID,
 	updateAuthPassword,
@@ -35,8 +45,9 @@ import {
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
+import { isForeignKeyViolation, isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
-import type { Db } from "../db/pg";
+import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { authAccounts, authSessions } from "../db/schema/auth";
 import {
@@ -62,6 +73,7 @@ import { emit } from "../events/emit";
  */
 type StoredAccountSettings = {
 	pathoscope_column_order: "name-first" | "name-last";
+	/** Stored under its older name; the model calls it `preferAcronym`. */
 	prefer_abbreviation: boolean;
 	quick_analyze_workflow: "nuvs" | "pathoscope";
 	show_ids: boolean;
@@ -83,8 +95,8 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 		pathoscopeColumnOrder:
 			blob.pathoscope_column_order ??
 			DEFAULT_USER_SETTINGS.pathoscopeColumnOrder,
-		preferAbbreviation:
-			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAbbreviation,
+		preferAcronym:
+			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAcronym,
 		quickAnalyzeWorkflow:
 			blob.quick_analyze_workflow ?? DEFAULT_USER_SETTINGS.quickAnalyzeWorkflow,
 		showIds: blob.show_ids ?? DEFAULT_USER_SETTINGS.showIds,
@@ -101,7 +113,7 @@ function toStoredAccountSettings(
 ): StoredAccountSettings {
 	return {
 		pathoscope_column_order: settings.pathoscopeColumnOrder,
-		prefer_abbreviation: settings.preferAbbreviation,
+		prefer_abbreviation: settings.preferAcronym,
 		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
@@ -120,9 +132,8 @@ export type FindUsersFilters = {
 	 * Which lifecycle states to return. Defaults to `"normal"`, so a caller
 	 * that has not thought about pending accounts does not publish them.
 	 *
-	 * `"any"` is for the user administration views, which are the one place a
-	 * pending account has to be visible — an administrator needs to see the
-	 * invitation they issued and to be able to re-issue it.
+	 * The user administration list reads pending accounts through
+	 * {@link findAdministeredUsers} instead.
 	 */
 	lifecycleState?: AccountLifecycleState | "any";
 };
@@ -132,14 +143,17 @@ export type CreateUserValues = {
 	handle: string;
 	password: string;
 	forceReset: boolean;
+	email?: string;
+	emailVerified?: boolean;
 	administratorRole?: AdministratorRoleName | null;
 };
 
 /** Values accepted when creating a pending user. */
 export type CreatePendingUserValues = {
-	handle: string;
+	email: string;
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
+	primaryGroup?: number | null;
 };
 
 /** Partial values accepted when updating a user. */
@@ -185,8 +199,15 @@ export class InvalidPasswordError extends AppError {}
 /** Thrown when a user handle conflicts with an existing user. */
 export class UserConflictError extends AppError {}
 
-/** Thrown when a primary group is set to a group the user does not belong to. */
+/** Thrown when a user's group assignment names an invalid group. */
 export class GroupMembershipError extends AppError {}
+
+function mapUnknownGroup(error: unknown): never {
+	if (isForeignKeyViolation(error, ["user_groups_group_id_fkey"])) {
+		throw new GroupMembershipError();
+	}
+	throw error;
+}
 
 /**
  * Thrown when an operation that assumes a usable account is aimed at one that
@@ -194,11 +215,14 @@ export class GroupMembershipError extends AppError {}
  */
 export class PendingAccountError extends AppError {}
 
+/** Thrown when first-instance creation runs after any user already exists. */
+export class FirstAdministratorExistsError extends AppError {}
+
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
 const DEFAULT_USER_SETTINGS: AccountSettings = {
 	pathoscopeColumnOrder: "name-first",
-	preferAbbreviation: false,
+	preferAcronym: false,
 	skipQuickAnalyzeDialog: true,
 	showIds: true,
 	showVersions: true,
@@ -243,19 +267,6 @@ function mergePermissions(memberships: Permissions[]): Permissions {
 		}
 	}
 	return merged;
-}
-
-function isUniqueViolation(error: unknown): boolean {
-	if (error === null || typeof error !== "object") {
-		return false;
-	}
-	const cause = (error as { cause?: unknown }).cause;
-	return (
-		(error as Partial<PostgresError>).code === "23505" ||
-		(cause !== null &&
-			typeof cause === "object" &&
-			(cause as Partial<PostgresError>).code === "23505")
-	);
 }
 
 type GroupMembershipRow = {
@@ -411,7 +422,140 @@ export async function findUsers(
 	};
 }
 
-export async function getUser(db: Db, userId: number): Promise<User> {
+/** Filters and ordering accepted by the user administration list. */
+export type FindAdministeredUsersOptions = {
+	term?: string;
+	page?: number;
+	perPage?: number;
+	/** The account states to return. Empty returns every state. */
+	statuses?: UserStatus[];
+	/** The roles to return, where `"none"` means no administrator role. Empty returns every role. */
+	roles?: UserRoleFilter[];
+	sort?: UserSortField;
+	direction?: SortDirection;
+};
+
+function getStatusCondition(status: UserStatus): SQL | undefined {
+	if (status === "deactivated") {
+		return eq(usersTable.active, false);
+	}
+
+	return and(
+		eq(usersTable.active, true),
+		eq(usersTable.lifecycleState, status === "invited" ? "pending" : "normal"),
+	);
+}
+
+function getRoleCondition(roles: UserRoleFilter[]): SQL | undefined {
+	const named = roles.filter((role) => role !== "none");
+
+	return or(
+		named.length ? inArray(usersTable.administratorRole, named) : undefined,
+		roles.includes("none") ? isNull(usersTable.administratorRole) : undefined,
+	);
+}
+
+function getSortExpressions(sort: UserSortField, direction: SortDirection) {
+	const order = direction === "ascending" ? asc : desc;
+	const handle = sql`lower(${usersTable.handle})`;
+
+	switch (sort) {
+		case "email":
+			// Accounts without an address go last in either direction.
+			return [
+				asc(sql`${usersTable.email} = ''`),
+				order(sql`lower(${usersTable.email})`),
+			];
+		case "role":
+			return [
+				order(sql`case ${usersTable.administratorRole}
+					when 'full' then 0
+					when 'settings' then 1
+					when 'users' then 2
+					when 'base' then 3
+					else 4 end`),
+			];
+		case "status":
+			return [
+				order(sql`case
+					when not ${usersTable.active} then 2
+					when ${usersTable.lifecycleState} = 'pending' then 1
+					else 0 end`),
+			];
+		default:
+			// Pending accounts have no handle yet, so they go last in either
+			// direction.
+			return [asc(sql`${usersTable.handle} = ''`), order(handle)];
+	}
+}
+
+/**
+ * Find users for the user administration list, with their email addresses.
+ *
+ * Unlike {@link findUsers}, this returns pending and deactivated accounts, so
+ * only administrators may call it.
+ */
+export async function findAdministeredUsers(
+	db: Db,
+	options: FindAdministeredUsersOptions,
+): Promise<AdministeredUserSearchResult> {
+	const {
+		term = "",
+		page = 1,
+		perPage = 25,
+		statuses = [],
+		roles = [],
+		sort = "handle",
+		direction = "ascending",
+	} = options;
+
+	const filter = and(
+		term
+			? or(
+					ilike(usersTable.handle, toSearchPattern(term)),
+					ilike(usersTable.email, toSearchPattern(term)),
+				)
+			: undefined,
+		statuses.length ? or(...statuses.map(getStatusCondition)) : undefined,
+		roles.length ? getRoleCondition(roles) : undefined,
+	);
+	const [[totalRow], [foundRow], rows] = await Promise.all([
+		db.select({ value: count() }).from(usersTable),
+		db.select({ value: count() }).from(usersTable).where(filter),
+		db
+			.select()
+			.from(usersTable)
+			.where(filter)
+			.orderBy(
+				...getSortExpressions(sort, direction),
+				...getSortExpressions("handle", "ascending"),
+				asc(usersTable.id),
+			)
+			.limit(perPage)
+			.offset(getPageOffset(page, perPage)),
+	]);
+
+	const foundCount = foundRow?.value ?? 0;
+	const users = await assembleUsers(db, rows);
+
+	return {
+		items: users.map((user, index) => ({
+			...user,
+			email: rows[index]?.email ?? "",
+		})),
+		foundCount,
+		totalCount: totalRow?.value ?? 0,
+		page,
+		pageCount: getPageCount(foundCount, perPage),
+		perPage,
+	};
+}
+
+/** Read a user for the administrator detail view, with their TOTP state. */
+export async function getUser(
+	db: Db,
+	userId: number,
+): Promise<AdministeredUserDetail> {
 	const [row] = await db
 		.select()
 		.from(usersTable)
@@ -422,7 +566,9 @@ export async function getUser(db: Db, userId: number): Promise<User> {
 		throw new UserNotFoundError();
 	}
 
-	return takeFirstOrThrow(await assembleUsers(db, [row]));
+	const user = takeFirstOrThrow(await assembleUsers(db, [row]));
+
+	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
 }
 
 /** Read the signed-in user's own account, including their email and settings. */
@@ -450,7 +596,7 @@ const STORED_ACCOUNT_SETTINGS_KEYS: {
 	[K in keyof AccountSettings]: keyof StoredAccountSettings;
 } = {
 	pathoscopeColumnOrder: "pathoscope_column_order",
-	preferAbbreviation: "prefer_abbreviation",
+	preferAcronym: "prefer_abbreviation",
 	quickAnalyzeWorkflow: "quick_analyze_workflow",
 	showIds: "show_ids",
 	showVersions: "show_versions",
@@ -610,10 +756,9 @@ export async function getAdministratorRole(
 /**
  * Create an account that exists but cannot yet be signed in as.
  *
- * The handle, the administrator role and the group memberships are all set
- * here, so an administrator states who the person is and what they may do at
- * the moment of invitation rather than after they accept. What is missing is
- * the credential: `password` stays null and `lifecycle_state` is `pending`,
+ * The administrator role and group memberships are set here. The handle stays
+ * empty so the invitee can choose it during acceptance.
+ * The credential is also missing: `password` stays null and `lifecycle_state` is `pending`,
  * which the `pending_has_no_password` constraint holds together.
  *
  * No password is generated and none is transmitted. Completing the account is
@@ -624,40 +769,83 @@ export async function getAdministratorRole(
  * two would make deactivating an invited user indistinguishable from never
  * having invited them.
  */
-export async function createPendingUser(
-	db: Db,
+export async function createPendingUserInTransaction(
+	tx: DbOrTx,
 	values: CreatePendingUserValues,
-): Promise<User> {
+): Promise<number> {
 	const groupIds = Array.from(new Set(values.groups ?? []));
+	if (
+		values.primaryGroup !== undefined &&
+		values.primaryGroup !== null &&
+		!groupIds.includes(values.primaryGroup)
+	) {
+		throw new GroupMembershipError();
+	}
+
+	if (groupIds.length > 0) {
+		const existing = await tx
+			.select({ id: groupsTable.id })
+			.from(groupsTable)
+			.where(inArray(groupsTable.id, groupIds));
+		if (existing.length !== groupIds.length) {
+			throw new GroupMembershipError();
+		}
+	}
+
+	const email = normalizeEmail(values.email);
+	const now = new Date();
+	await claimEmail(tx, 0, email);
+	const row = takeFirstOrThrow(
+		await tx
+			.insert(usersTable)
+			.values({
+				authMigratedAt: now,
+				email,
+				handle: "",
+				lifecycleState: "pending",
+				administratorRole: values.administratorRole ?? null,
+				lastPasswordChange: now,
+				legacyId: null,
+				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+			})
+			.returning({ id: usersTable.id }),
+	);
+
+	await tx.insert(authAccounts).values({
+		accountId: String(row.id),
+		providerId: CREDENTIAL_PROVIDER_ID,
+		userId: row.id,
+		password: null,
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	if (groupIds.length > 0) {
+		await tx
+			.insert(userGroupsTable)
+			.values(
+				groupIds.map((groupId) => ({
+					userId: row.id,
+					groupId,
+					primary: groupId === values.primaryGroup,
+				})),
+			)
+			.catch(mapUnknownGroup);
+	}
+
+	return row.id;
+}
+
+export async function createUser(
+	db: Db,
+	values: CreateUserValues,
+): Promise<User> {
+	const password = await hashPassword(values.password);
 
 	try {
-		const userId = await db.transaction(async (tx) => {
-			const row = takeFirstOrThrow(
-				await tx
-					.insert(usersTable)
-					.values({
-						handle: values.handle,
-						lifecycleState: "pending",
-						administratorRole: values.administratorRole ?? null,
-						lastPasswordChange: new Date(),
-						legacyId: null,
-						settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-					})
-					.returning({ id: usersTable.id }),
-			);
-
-			if (groupIds.length > 0) {
-				await tx.insert(userGroupsTable).values(
-					groupIds.map((groupId) => ({
-						userId: row.id,
-						groupId,
-						primary: false,
-					})),
-				);
-			}
-
-			return row.id;
-		});
+		const userId = await db.transaction((tx) =>
+			createUserInTransaction(tx, values, password),
+		);
 
 		await emit("users", userId, "create");
 
@@ -670,54 +858,115 @@ export async function createPendingUser(
 	}
 }
 
-export async function createUser(
-	db: Db,
+/** Insert a normal user and Better Auth credential in the caller's transaction. */
+export async function createUserInTransaction(
+	tx: DbOrTx,
 	values: CreateUserValues,
-): Promise<User> {
-	const password = await hashPassword(values.password);
-
-	try {
-		const userId = await db.transaction(async (tx) => {
-			const row = takeFirstOrThrow(
-				await tx
-					.insert(usersTable)
-					.values({
-						authMigratedAt: new Date(),
-						handle: values.handle,
-						username: values.handle.toLowerCase(),
-						displayUsername: values.handle,
-						password,
-						forceReset: values.forceReset,
-						administratorRole: values.administratorRole ?? null,
-						lastPasswordChange: new Date(),
-						legacyId: null,
-						settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-					})
-					.returning({ id: usersTable.id }),
-			);
-
-			const now = new Date();
-			await tx.insert(authAccounts).values({
-				accountId: String(row.id),
-				providerId: CREDENTIAL_PROVIDER_ID,
-				userId: row.id,
-				password: password.toString("utf8"),
-				createdAt: now,
-				updatedAt: now,
-			});
-
-			return row.id;
-		});
-
-		await emit("users", userId, "create");
-
-		return getUser(db, userId);
-	} catch (error) {
-		if (isUniqueViolation(error)) {
-			throw new UserConflictError();
-		}
-		throw error;
+	password: Buffer,
+): Promise<number> {
+	const now = new Date();
+	const email = values.email ? normalizeEmail(values.email) : "";
+	if (email) {
+		await claimEmail(tx, 0, email);
 	}
+	const row = takeFirstOrThrow(
+		await tx
+			.insert(usersTable)
+			.values({
+				authMigratedAt: now,
+				handle: values.handle,
+				username: values.handle.toLowerCase(),
+				displayUsername: values.handle,
+				email,
+				emailVerified: values.emailVerified ?? false,
+				password,
+				forceReset: values.forceReset,
+				administratorRole: values.administratorRole ?? null,
+				lastPasswordChange: now,
+				legacyId: null,
+				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+			})
+			.returning({ id: usersTable.id }),
+	);
+
+	await tx.insert(authAccounts).values({
+		accountId: String(row.id),
+		providerId: CREDENTIAL_PROVIDER_ID,
+		userId: row.id,
+		password: password.toString("utf8"),
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	return row.id;
+}
+
+/** Inputs for transactionally creating the first instance administrator. */
+export type CreateFirstAdministratorInput = {
+	handle: string;
+	email: string;
+	password: string;
+	deliveryAvailable: boolean;
+	getVerificationUrl: (token: string) => string;
+};
+
+/** Create exactly one first administrator and optional verification message. */
+export async function createFirstAdministrator(
+	db: Db,
+	input: CreateFirstAdministratorInput,
+): Promise<{ user: User; emailVerificationRequired: boolean }> {
+	// The endpoint is unauthenticated, so refuse before the costly hash. The
+	// locked count below still decides concurrent attempts.
+	const [anyUser] = await db
+		.select({ id: usersTable.id })
+		.from(usersTable)
+		.limit(1);
+	if (anyUser) {
+		throw new FirstAdministratorExistsError();
+	}
+
+	const password = await hashPassword(input.password);
+	const result = await db.transaction(async (tx) => {
+		await tx.execute(
+			sql`select pg_advisory_xact_lock(hashtext('first_instance_bootstrap'))`,
+		);
+		const [existing] = await tx.select({ value: count() }).from(usersTable);
+		if ((existing?.value ?? 0) > 0) {
+			throw new FirstAdministratorExistsError();
+		}
+
+		const userId = await createUserInTransaction(
+			tx,
+			{
+				handle: input.handle,
+				email: input.email,
+				password: input.password,
+				forceReset: false,
+				administratorRole: "full",
+				emailVerified: false,
+			},
+			password,
+		);
+
+		let emailVerificationRequired = false;
+		if (input.deliveryAvailable) {
+			const verification = await queueEmailVerificationInTransaction(tx, {
+				userId,
+				candidateEmail: normalizeEmail(input.email),
+				sourceEmail: normalizeEmail(input.email),
+				handle: input.handle,
+				getVerificationUrl: input.getVerificationUrl,
+			});
+			emailVerificationRequired = verification.queued;
+		}
+		return { userId, emailVerificationRequired };
+	});
+
+	await emit("users", result.userId, "create");
+	return {
+		user: await getUser(db, result.userId),
+		emailVerificationRequired: result.emailVerificationRequired,
+	};
 }
 
 export async function updateUser(
@@ -743,7 +992,10 @@ export async function updateUser(
 	// carrying a credential the `pending_has_no_password` constraint forbids.
 	// Refused here so the caller gets a stated reason rather than a check
 	// violation.
-	if (values.password !== undefined && existing.lifecycleState === "pending") {
+	if (
+		(values.password !== undefined || values.handle !== undefined) &&
+		existing.lifecycleState === "pending"
+	) {
 		throw new PendingAccountError();
 	}
 
@@ -847,13 +1099,16 @@ export async function updateUser(
 
 			const uniqueGroupIds = Array.from(new Set(values.groups));
 			if (uniqueGroupIds.length > 0) {
-				await tx.insert(userGroupsTable).values(
-					uniqueGroupIds.map((groupId) => ({
-						userId,
-						groupId,
-						primary: groupId === currentPrimary,
-					})),
-				);
+				await tx
+					.insert(userGroupsTable)
+					.values(
+						uniqueGroupIds.map((groupId) => ({
+							userId,
+							groupId,
+							primary: groupId === currentPrimary,
+						})),
+					)
+					.catch(mapUnknownGroup);
 			}
 		}
 

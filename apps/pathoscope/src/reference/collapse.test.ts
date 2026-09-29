@@ -1,12 +1,14 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type {
 	IndexOtu,
 	IndexOtuIsolate,
 	IndexOtuSequence,
 } from "@virtool/sqlite";
-import type { RunSubprocess } from "@virtool/workflow";
+import {
+	createFakeSubprocessRunner,
+	createTestWorkPath,
+} from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import {
 	type CollapseSegment,
@@ -72,11 +74,11 @@ const collapseToSelf: CollapseSegment = async (_input, _output, sequences) =>
 	new Map(sequences.map((sequence) => [sequence.id, sequence.id]));
 
 async function tempDir(): Promise<string> {
-	const directory = await mkdtemp(join(tmpdir(), "pathoscope-collapse-"));
+	const { path, cleanup } = await createTestWorkPath();
 
-	onTestFinished(() => rm(directory, { force: true, recursive: true }));
+	onTestFinished(cleanup);
 
-	return directory;
+	return path;
 }
 
 describe("prepareOtuCollapse", () => {
@@ -258,24 +260,32 @@ describe("collapseOtu", () => {
 		]);
 	});
 
-	it("runs one cd-hit-est per segment, named after the OTU and segment", async () => {
-		const collapseSegment = vi.fn(collapseToSelf);
+	it("runs one cd-hit-est per segment, named after the OTU and segment position", async () => {
+		const collapseSegment = vi.fn<CollapseSegment>(
+			async (input, output, sequences) => {
+				await writeSegmentFasta(input, sequences);
+
+				return collapseToSelf(input, output, sequences);
+			},
+		);
 
 		const otu = createOtu(
 			[
 				createIsolate(
 					"iso_1",
 					[
-						createSequence("seq_1", { segment: "RNA B" }),
-						createSequence("seq_2", { segment: "RNA A" }),
+						createSequence("seq_1", { segment: "DNA-B" }),
+						createSequence("seq_2", { segment: "DNA-A/B" }),
 					],
 					true,
 				),
-				createIsolate("iso_2", [createSequence("seq_3", { segment: "RNA A" })]),
+				createIsolate("iso_2", [
+					createSequence("seq_3", { segment: "DNA-A/B" }),
+				]),
 			],
 			[
-				{ molecule: null, name: "RNA A", required: true },
-				{ molecule: null, name: "RNA B", required: false },
+				{ molecule: null, name: "DNA-A/B", required: true },
+				{ molecule: null, name: "DNA-B", required: false },
 			],
 		);
 
@@ -288,8 +298,8 @@ describe("collapseOtu", () => {
 				basename(output),
 			]),
 		).toEqual([
-			["otu-otu_1-segment-RNA A.fa", "otu-otu_1-segment-RNA A.cdhit"],
-			["otu-otu_1-segment-RNA B.fa", "otu-otu_1-segment-RNA B.cdhit"],
+			["otu-otu_1-segment-0.fa", "otu-otu_1-segment-0.cdhit"],
+			["otu-otu_1-segment-1.fa", "otu-otu_1-segment-1.cdhit"],
 		]);
 	});
 
@@ -328,24 +338,17 @@ describe("createSegmentCollapser", () => {
 		const directory = await tempDir();
 		const outputPath = join(directory, "otu-otu_1-segment-.cdhit");
 
-		const runSubprocess = vi.fn<RunSubprocess>(async ({ command }) => {
-			await writeSegmentFasta(`${outputPath}.clstr`, []);
-
-			return {
-				command,
-				exitCode: 0,
-				signal: null,
-				cancelled: false,
-				stderrTail: [],
-				durationMs: 1,
-			};
+		const runSubprocess = createFakeSubprocessRunner({
+			async effect() {
+				await writeSegmentFasta(`${outputPath}.clstr`, []);
+			},
 		});
 
 		const collapse = createSegmentCollapser(runSubprocess);
 
 		await collapse(join(directory, "otu-otu_1-segment-.fa"), outputPath, []);
 
-		expect(runSubprocess.mock.calls[0]?.[0].command).toEqual([
+		expect(runSubprocess.commands()[0]).toEqual([
 			"cd-hit-est",
 			"-i",
 			join(directory, "otu-otu_1-segment-.fa"),

@@ -1,5 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { createIndexArtifact, type IndexOtu } from "@virtool/sqlite";
 import {
@@ -7,8 +6,6 @@ import {
 	type CacheParams,
 	createWorkflowCache,
 	deriveCacheKey,
-	type RunSubprocess,
-	type RunSubprocessOptions,
 } from "@virtool/workflow";
 import {
 	createFakeContext,
@@ -118,29 +115,25 @@ async function createHarness() {
 	const testStorage = createTestStorage();
 	const { storage } = testStorage;
 
-	const runner = createFakeSubprocessRunner();
-
-	runner.register([BOWTIE2_BUILD, "--version"], {
-		stdout: [`${BOWTIE2_BUILD} version ${BOWTIE2_BUILD_VERSION}`],
-	});
-
 	const builtFastas: string[] = [];
 
-	const runSubprocess: RunSubprocess = async (
-		options: RunSubprocessOptions,
-	) => {
-		const [tool, flag, , fastaPath, indexPrefix] = options.command;
+	const runSubprocess = createFakeSubprocessRunner();
 
-		if (tool === BOWTIE2_BUILD && flag !== "--version") {
+	runSubprocess.register(BOWTIE2_BUILD, {
+		async effect({ command }) {
+			const [, , , fastaPath, indexPrefix] = command;
+
 			builtFastas.push(await readFile(fastaPath ?? "", "utf8"));
 
 			// The shards the real tool writes, which the cache then archives.
 			await mkdir(dirname(indexPrefix ?? ""), { recursive: true });
 			await writeFile(`${indexPrefix}.1.bt2`, "built shard");
-		}
+		},
+	});
 
-		return runner(options);
-	};
+	runSubprocess.register([BOWTIE2_BUILD, "--version"], {
+		stdout: [`${BOWTIE2_BUILD} version ${BOWTIE2_BUILD_VERSION}`],
+	});
 
 	const pathoscopeState: PathoscopeState = {
 		candidateSequenceIds: [],
@@ -169,8 +162,9 @@ async function createHarness() {
 			directoryName: string,
 			shardName: string,
 		) {
-			const source = await mkdtemp(join(tmpdir(), "pathoscope-cache-"));
-			onTestFinished(() => rm(source, { force: true, recursive: true }));
+			const { path: source, cleanup: cleanupSource } =
+				await createTestWorkPath();
+			onTestFinished(cleanupSource);
 
 			const directory = join(source, directoryName);
 
@@ -357,14 +351,14 @@ describe("createReferenceIndexStep", () => {
 });
 
 describe("createSubtractionIndexStep", () => {
-	it("downloads the genome and caches the index on a miss", async () => {
+	it("builds from the downloaded genome and caches the index on a miss", async () => {
 		const { builtFastas, fastaPath, paths, run, state } =
 			await setupSubtraction();
 
 		await run();
 
-		await expect(readFile(fastaPath, "utf8")).resolves.toBe(SUBTRACTION_GENOME);
 		expect(builtFastas).toEqual([SUBTRACTION_GENOME]);
+		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 
 		expect(state.cacheRegistrations.map(({ key }) => key)).toEqual([
 			deriveCacheKey(subtractionIndexCacheParams()),
@@ -399,5 +393,23 @@ describe("createSubtractionIndexStep", () => {
 				"utf8",
 			),
 		).resolves.toBe("cached shard");
+	});
+
+	it("removes the genome when the build fails", async () => {
+		const { builtFastas, fastaPath, run, runSubprocess, state } =
+			await setupSubtraction();
+
+		runSubprocess.register([BOWTIE2_BUILD, "--threads"], {
+			async effect({ command }) {
+				builtFastas.push(await readFile(command[3] ?? "", "utf8"));
+			},
+			exitCode: 1,
+		});
+
+		await expect(run()).rejects.toThrow();
+
+		expect(builtFastas).toEqual([SUBTRACTION_GENOME]);
+		expect(state.cacheRegistrations).toEqual([]);
+		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 	});
 });

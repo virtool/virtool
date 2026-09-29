@@ -9,6 +9,7 @@ export * from "./errors";
 export * from "./groups";
 export * from "./hmms";
 export * from "./indexes";
+export * from "./invitations";
 export * from "./jobs";
 export * from "./jobsApi";
 export * from "./json";

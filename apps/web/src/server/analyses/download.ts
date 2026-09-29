@@ -28,8 +28,8 @@ function isExtension(value: string): value is Extension {
  * it with a plain `<a href>` — the browser has to see a real response with a
  * `Content-Disposition`, which an RPC call cannot produce.
  *
- * A `preferAbbreviation=true` query parameter names each OTU by its
- * abbreviation, where it has one.
+ * A `preferAcronym=true` query parameter names each OTU by its
+ * acronym, where it has one.
  *
  * Being a route means no policy middleware runs, so the authorization floor is
  * enforced here: a valid session, then the read right on the analysis's parent
@@ -90,8 +90,8 @@ export async function handleAnalysisDocument(
 	}
 
 	const options = {
-		preferAbbreviation:
-			new URL(request.url).searchParams.get("preferAbbreviation") === "true",
+		preferAcronym:
+			new URL(request.url).searchParams.get("preferAcronym") === "true",
 	};
 
 	const headers = {

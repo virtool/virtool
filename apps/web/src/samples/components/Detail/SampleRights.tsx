@@ -9,9 +9,7 @@ import SectionHeader from "@base/SectionHeader";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { useListGroups } from "@groups/queries";
 import RightsSelect from "@samples/components/RightsSelect";
-import { samplesQueryKeys } from "@samples/keys";
 import { useFetchSample, useUpdateSampleRights } from "@samples/queries";
-import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 
 /**
@@ -45,7 +43,6 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 		isError: isErrorGroups,
 	} = useListGroups();
 
-	const queryClient = useQueryClient();
 	const mutation = useUpdateSampleRights(sampleId);
 
 	if (
@@ -73,34 +70,16 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 
 	function handleChangeGroup(value: string) {
 		const group = value === "" ? null : parseInt(value, 10);
-		mutation.mutate(
-			{ update: { group } },
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({
-						queryKey: samplesQueryKeys.detail(sampleId),
-					});
-				},
-			},
-		);
+		mutation.mutate({ update: { group } });
 	}
 
 	function handleChangeRights(value: string, scope: "all" | "group") {
-		mutation.mutate(
-			{
-				update: {
-					[`${scope}Read`]: value.includes("r"),
-					[`${scope}Write`]: value.includes("w"),
-				},
+		mutation.mutate({
+			update: {
+				[`${scope}Read`]: value.includes("r"),
+				[`${scope}Write`]: value.includes("w"),
 			},
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({
-						queryKey: samplesQueryKeys.detail(sampleId),
-					});
-				},
-			},
-		);
+		});
 	}
 
 	if (!canModifyRights) {

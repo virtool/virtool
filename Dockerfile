@@ -240,10 +240,9 @@ ENV VT_TASKS_PROBE_PORT="9900"
 
 # Installs Sentry's module hooks before the dispatcher imports the selected
 # command's graph, so the SDK can inject its diagnostics channels into postgres
-# as it loads. The subcommand — serve, run or migrate — is the argument each
-# workload's manifest supplies; the default is the HTTP server. `migrate` runs
-# under the same hook, which is a no-op there: with no DSN configured the SDK
-# never initialises.
+# as it loads. The subcommand is the argument each workload's manifest
+# supplies; the default is the HTTP server. Every subcommand runs under the same
+# hook. With no DSN configured the SDK never initialises.
 ENTRYPOINT ["node", "--import", "@sentry/node/import", "dist/index.mjs"]
 CMD ["serve"]
 

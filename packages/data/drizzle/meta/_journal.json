@@ -288,6 +288,20 @@
       "when": 1790370910079,
       "tag": "0040_cascade_label_and_group_deletes",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790379049176,
+      "tag": "0041_add_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790630394967,
+      "tag": "0042_add_mfa_policy",
+      "breakpoints": true
     }
   ]
 }

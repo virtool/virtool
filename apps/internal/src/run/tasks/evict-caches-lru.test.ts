@@ -11,6 +11,7 @@ import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { createLogger, type Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { cacheKey, MemoryStorage } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { asc } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
@@ -52,10 +53,6 @@ beforeEach(async () => {
 	ctx = createTaskTestContext({ db, storage });
 });
 
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
-}
-
 /**
  * Seed `count` cache entries of `size` declared bytes each, oldest first.
  *
@@ -70,7 +67,7 @@ async function seedEntries(count: number, size: number): Promise<string[]> {
 		const storageKey = cacheKey(index.toString(16).padStart(32, "0"));
 		const key = `cache-${index}`;
 
-		await storage.write(storageKey, body(key));
+		await storage.write(storageKey, streamOf(key));
 
 		// Descending age, so index 0 is the least recently used and eviction order
 		// is the seeding order.

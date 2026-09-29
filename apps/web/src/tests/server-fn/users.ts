@@ -1,5 +1,11 @@
 import type { AdministratorRole } from "@administration/types";
-import type { Account, User, UserNested } from "@virtool/contracts";
+import type {
+	Account,
+	AdministeredUserDetail,
+	Invitation,
+	User,
+	UserNested,
+} from "@virtool/contracts";
 import { expect, type Mock, vi } from "vitest";
 
 /**
@@ -13,7 +19,12 @@ export const userServerFnMocks = {
 	listUsersFn: vi.fn(),
 	getAccountFn: vi.fn(),
 	getUserFn: vi.fn(),
+	getInvitationFn: vi.fn(),
+	getInvitationEmailAvailabilityFn: vi.fn(),
 	createUserFn: vi.fn(),
+	regenerateInvitationFn: vi.fn(),
+	deletePendingUserFn: vi.fn(),
+	resetUserTotpFn: vi.fn(),
 	updateUserFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
 	updateAccountSettingsFn: vi.fn(),
@@ -22,10 +33,16 @@ export const userServerFnMocks = {
 	listAdministratorRolesFn: vi.fn(),
 };
 
-/** Sets up findUsers to resolve with a single page containing the given users. */
-export function mockFindUsers(users: User[]): Mock {
+/**
+ * Sets up findUsers to resolve with a single page containing the given users.
+ * A user without an email gets one derived from their handle.
+ */
+export function mockFindUsers(users: (User & { email?: string })[]): Mock {
 	userServerFnMocks.findUsersFn.mockResolvedValue({
-		items: users,
+		items: users.map((user) => ({
+			...user,
+			email: user.email ?? `${user.handle}@example.com`,
+		})),
 		foundCount: users.length,
 		page: 1,
 		pageCount: 1,
@@ -79,16 +96,94 @@ export function mockGetAccountUnauthorized(): Mock {
 }
 
 /** Sets up getUser to resolve with the given user when matched by id. */
-export function mockGetUser(userId: number, user: User): Mock {
+export function mockGetUser(
+	userId: number,
+	user: User,
+	twoFactorEnabled = false,
+): Mock {
 	userServerFnMocks.getUserFn.mockImplementation(
-		async ({ data }: { data: { userId: number } }) => {
+		async ({
+			data,
+		}: {
+			data: { userId: number };
+		}): Promise<AdministeredUserDetail> => {
 			if (data.userId === userId) {
-				return user;
+				return { ...user, twoFactorEnabled };
 			}
 			throw new Error(`unexpected userId in mockGetUser: ${data.userId}`);
 		},
 	);
 	return userServerFnMocks.getUserFn;
+}
+
+/** Build an invitation that is pending and shared as a link. */
+export function createFakeInvitation(
+	overrides: Partial<Invitation> = {},
+): Invitation {
+	return {
+		id: 1,
+		userId: 1,
+		email: "user@example.com",
+		issuerUserId: 2,
+		generation: 1,
+		createdAt: new Date(),
+		expiresAt: new Date(Date.now() + 60_000),
+		consumedAt: null,
+		supersededAt: null,
+		delivery: "copy_only",
+		outboxStatus: null,
+		...overrides,
+	};
+}
+
+/** Sets up getInvitation to resolve with the given invitation. */
+export function mockGetInvitation(invitation: Invitation): Mock {
+	userServerFnMocks.getInvitationFn.mockResolvedValue(invitation);
+	return userServerFnMocks.getInvitationFn;
+}
+
+/** Sets up whether invitation emails can be sent. */
+export function mockInvitationEmailAvailability(available: boolean): Mock {
+	userServerFnMocks.getInvitationEmailAvailabilityFn.mockResolvedValue(
+		available,
+	);
+	return userServerFnMocks.getInvitationEmailAvailabilityFn;
+}
+
+/** Sets up regenerateInvitation to return a new generation for the user. */
+export function mockRegenerateInvitation(user: User, email: string): Mock {
+	userServerFnMocks.regenerateInvitationFn.mockImplementation(
+		async ({ data }: { data: { deliveryIntent: "copy_only" | "email" } }) => {
+			const emailed = data.deliveryIntent === "email";
+			return {
+				user,
+				setupToken: emailed ? null : "b".repeat(64),
+				invitation: createFakeInvitation({
+					userId: user.id,
+					email,
+					generation: 2,
+					delivery: emailed ? "queued" : "copy_only",
+					outboxStatus: emailed ? "queued" : null,
+				}),
+			};
+		},
+	);
+	return userServerFnMocks.regenerateInvitationFn;
+}
+
+/** Sets up deletePendingUser to resolve. */
+export function mockDeletePendingUser(): Mock {
+	userServerFnMocks.deletePendingUserFn.mockResolvedValue(null);
+	return userServerFnMocks.deletePendingUserFn;
+}
+
+/** Sets up resetUserTotp to resolve with the user, their factor removed. */
+export function mockResetUserTotp(user: User): Mock {
+	userServerFnMocks.resetUserTotpFn.mockResolvedValue({
+		...user,
+		twoFactorEnabled: false,
+	});
+	return userServerFnMocks.resetUserTotpFn;
 }
 
 /** Sets up createUser to resolve with the given user (or reject on a 4xx code). */
@@ -100,7 +195,15 @@ export function mockCreateUser(
 	if (statusCode >= 400) {
 		userServerFnMocks.createUserFn.mockRejectedValue(new Error(message));
 	} else {
-		userServerFnMocks.createUserFn.mockResolvedValue(user ?? {});
+		userServerFnMocks.createUserFn.mockResolvedValue(
+			user
+				? {
+						user,
+						setupToken: "a".repeat(64),
+						invitation: createFakeInvitation({ userId: user.id }),
+					}
+				: {},
+		);
 	}
 	return userServerFnMocks.createUserFn;
 }

@@ -28,3 +28,9 @@ export const SETUP_REQUIRED_ERROR_NAME = "SetupRequiredError";
 
 /** Error name returned when a signed-in user must replace their password. */
 export const PASSWORD_RESET_REQUIRED_ERROR_NAME = "PasswordResetRequiredError";
+
+/**
+ * Error name returned when instance policy requires TOTP and the signed-in
+ * user has not enrolled.
+ */
+export const MFA_ENROLLMENT_REQUIRED_ERROR_NAME = "MfaEnrollmentRequiredError";

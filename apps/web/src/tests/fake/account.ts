@@ -5,7 +5,7 @@ import { createFakeUser } from "./user";
 
 const defaultSettings: AccountSettings = {
 	pathoscopeColumnOrder: "name-first",
-	preferAbbreviation: false,
+	preferAcronym: false,
 	quickAnalyzeWorkflow: "pathoscope",
 	showIds: true,
 	showVersions: true,

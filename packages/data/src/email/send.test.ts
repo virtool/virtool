@@ -279,8 +279,38 @@ describe("sendEmailViaResend", () => {
 
 		const outcome = await pending;
 
-		expect(outcome.outcome).toBe("retryable");
+		expect(outcome).toMatchObject({ outcome: "retryable", aborted: true });
 		expect(outcome).not.toMatchObject({ timedOut: true });
+	});
+
+	it("keeps the provider's answer when it lands after the caller aborts", async () => {
+		const controller = new AbortController();
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockImplementation(() => {
+				controller.abort();
+
+				return Promise.resolve(
+					jsonResponse(422, {
+						name: "validation_error",
+						message: "invalid recipient",
+						statusCode: 422,
+					}),
+				);
+			}),
+		);
+
+		const outcome = await sendEmailViaResend({
+			...request,
+			signal: controller.signal,
+		});
+
+		expect(outcome).toEqual({
+			outcome: "permanent",
+			code: "validation_error",
+			error: "validation_error: invalid recipient",
+		});
 	});
 
 	it("marks the internal deadline as a timeout", async () => {

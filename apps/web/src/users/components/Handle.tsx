@@ -1,10 +1,5 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputSimple,
-} from "@base/Input";
+import { InputError, InputGroup, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useUpdateUser } from "@users/queries";
@@ -34,8 +29,8 @@ export default function Handle({ id, handle }: HandleProps) {
 
 	return (
 		<section>
-			<SectionHeader>
-				<h2>Change Handle</h2>
+			<SectionHeader level={3}>
+				<h3>Change Handle</h3>
 				<p>The username this person signs in with.</p>
 			</SectionHeader>
 			<BoxGroup>
@@ -49,29 +44,25 @@ export default function Handle({ id, handle }: HandleProps) {
 						)}
 					>
 						<InputGroup>
-							<InputContainer>
-								<InputSimple
-									aria-label="handle"
-									id="handle"
-									autoComplete="off"
-									aria-required
-									aria-invalid={
-										Boolean(errors.handle) || mutation.isError || undefined
-									}
-									aria-describedby={
-										errors.handle || mutation.isError
-											? "handle-error"
-											: undefined
-									}
-									{...register("handle", {
-										required: "Please specify a username",
-									})}
-								/>
-								<InputError id="handle-error">
-									{errors.handle?.message ||
-										(mutation.isError ? mutation.error.message : "")}
-								</InputError>
-							</InputContainer>
+							<InputSimple
+								aria-label="handle"
+								id="handle"
+								autoComplete="off"
+								aria-required
+								aria-invalid={
+									Boolean(errors.handle) || mutation.isError || undefined
+								}
+								aria-describedby={
+									errors.handle || mutation.isError ? "handle-error" : undefined
+								}
+								{...register("handle", {
+									required: "Please specify a username",
+								})}
+							/>
+							<InputError id="handle-error">
+								{errors.handle?.message ||
+									(mutation.isError ? mutation.error.message : "")}
+							</InputError>
 						</InputGroup>
 
 						<div className="flex items-center justify-end">

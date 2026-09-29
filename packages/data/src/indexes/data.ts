@@ -666,6 +666,8 @@ export async function createIndex(
 		return index.id;
 	});
 
+	await emit("indexes", indexId, "create");
+
 	return getIndex(db, indexId);
 }
 

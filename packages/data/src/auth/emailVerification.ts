@@ -1,14 +1,13 @@
 import { EMAIL_REMEDIATION_RESEND_DELAY_SECONDS } from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 
-import type { Db } from "../db/pg";
+import type { Db, DbOrTx } from "../db/pg";
 import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-import { isValidEmail, normalizeEmail } from "./email";
-import { claimEmail } from "./lifecycle";
+import { claimEmail, isValidEmail, normalizeEmail } from "./email";
 import {
 	consumeSetupToken,
 	issueSetupTokenInTransaction,
@@ -28,6 +27,41 @@ export class EmailVerificationRateLimitedError extends AppError {}
 
 /** The mail service could not accept the verification challenge. */
 export class EmailVerificationUnavailableError extends AppError {}
+
+/** Inputs for issuing and mailing a verification challenge in a transaction. */
+export type QueueEmailVerificationInput = {
+	userId: number;
+	candidateEmail: string;
+	sourceEmail: string;
+	handle: string;
+	getVerificationUrl: (token: string) => string;
+};
+
+/** Issue a verification token and queue its message in the caller's transaction. */
+export async function queueEmailVerificationInTransaction(
+	tx: DbOrTx,
+	input: QueueEmailVerificationInput,
+): Promise<{ expiresAt: Date; queued: boolean }> {
+	const issued = await issueSetupTokenInTransaction(tx, {
+		userId: input.userId,
+		purpose: "email_verification",
+		candidateEmail: input.candidateEmail,
+		sourceEmail: input.sourceEmail,
+		lifetimeMs: EMAIL_VERIFICATION_LIFETIME_MS,
+	});
+	const queued = await enqueueEmail(tx, {
+		idempotencyKey: `email_verification/${input.userId}/${issued.tokenId}`,
+		recipient: input.candidateEmail,
+		setupTokenId: issued.tokenId,
+		template: {
+			type: "email_verification",
+			username: input.handle,
+			verifyUrl: input.getVerificationUrl(issued.token),
+			expiresInHours: EMAIL_VERIFICATION_LIFETIME_MS / (60 * 60 * 1000),
+		},
+	});
+	return { expiresAt: issued.expiresAt, queued: queued.status === "queued" };
+}
 
 /** Inputs for issuing a challenge for the current or a proposed address. */
 export type BeginEmailVerificationInput = {
@@ -103,24 +137,14 @@ export async function beginEmailVerification(
 			throw new EmailVerificationRateLimitedError();
 		}
 
-		const issued = await issueSetupTokenInTransaction(tx, {
+		const issued = await queueEmailVerificationInTransaction(tx, {
 			userId: input.userId,
-			purpose: "email_verification",
 			candidateEmail,
 			sourceEmail: user.email,
-			lifetimeMs: EMAIL_VERIFICATION_LIFETIME_MS,
+			handle: user.handle,
+			getVerificationUrl: input.getVerificationUrl,
 		});
-		const queued = await enqueueEmail(tx, {
-			idempotencyKey: `email_verification/${input.userId}/${issued.tokenId}`,
-			recipient: candidateEmail,
-			template: {
-				type: "email_verification",
-				username: user.handle,
-				verifyUrl: input.getVerificationUrl(issued.token),
-				expiresInHours: EMAIL_VERIFICATION_LIFETIME_MS / (60 * 60 * 1000),
-			},
-		});
-		if (queued.status !== "queued") {
+		if (!issued.queued) {
 			throw new EmailVerificationUnavailableError();
 		}
 		return {

@@ -36,7 +36,7 @@ type CopyItem = {
 			columnOrder: PathoscopeColumnOrder;
 			headers: boolean;
 			mappedCount: number;
-			preferAbbreviation: boolean;
+			preferAcronym: boolean;
 			showReads: boolean;
 		},
 	) => string;
@@ -68,7 +68,7 @@ type PathoscopeExportProps = {
  *
  * A copy takes what the search and filters left on screen; a download is the
  * entire analysis, sequence by sequence, as the server renders it. Both name
- * OTUs by abbreviation when the account prefers it and the OTU has one.
+ * OTUs by acronym when the account prefers it and the OTU has one.
  */
 export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const hits = useSortAndFilterPathoscopeHits(analysis);
@@ -79,8 +79,8 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const { mutate: updateSettings } = useUpdateAccountSettings();
 
 	const columnOrder = account?.settings.pathoscopeColumnOrder ?? "name-first";
-	const preferAbbreviation = account?.settings.preferAbbreviation ?? false;
-	const downloadQuery = preferAbbreviation ? "?preferAbbreviation=true" : "";
+	const preferAcronym = account?.settings.preferAcronym ?? false;
+	const downloadQuery = preferAcronym ? "?preferAcronym=true" : "";
 
 	const [copied, setCopied] = useState(false);
 
@@ -94,7 +94,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 				columnOrder,
 				headers,
 				mappedCount: analysis.results.readCount,
-				preferAbbreviation,
+				preferAcronym,
 				showReads,
 			}),
 		).then(
@@ -185,13 +185,13 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 				{/* Stays open when toggled, so the choice can be seen to take before an
 				    export is picked. */}
 				<DropdownMenuCheckboxItem
-					checked={preferAbbreviation}
+					checked={preferAcronym}
 					onCheckedChange={(checked) =>
-						updateSettings({ preferAbbreviation: checked === true })
+						updateSettings({ preferAcronym: checked === true })
 					}
 					onSelect={(e) => e.preventDefault()}
 				>
-					Prefer abbreviation
+					Prefer acronym
 				</DropdownMenuCheckboxItem>
 			</DropdownMenuContent>
 		</Dropdown>

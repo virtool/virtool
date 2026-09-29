@@ -38,6 +38,8 @@ export type EmailSendOutcome =
 			error: string;
 			retryAfterSeconds?: number;
 			timedOut?: boolean;
+			/** The caller's signal cut the request off before the provider answered. */
+			aborted?: boolean;
 	  }
 	| {
 			outcome: "rate_limited";
@@ -187,6 +189,13 @@ export async function sendEmailViaResend(
 
 	const code = error.name;
 	const message = `${code}: ${error.message}`.slice(0, 500);
+
+	// A null status is a request that never got a response. Only then can the
+	// caller's abort be the cause; a response that lands after the abort is
+	// still the provider's answer.
+	if (error.statusCode === null && request.signal?.aborted) {
+		return { outcome: "retryable", code, error: message, aborted: true };
+	}
 
 	if (CONFIGURATION_ERRORS.has(code)) {
 		return { outcome: "configuration", code, error: message };

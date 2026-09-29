@@ -292,6 +292,14 @@ export function createNcbiClient(options: NcbiClientOptions): NcbiClient {
 					return response;
 				}
 
+				// An unread body holds its pooled connection open until it's
+				// collected, so a burst of refusals would exhaust the pool.
+				await response.body?.cancel().catch(() => undefined);
+
+				// An abort that lands during the cancel would otherwise be
+				// reported as NCBI being unreachable after the last attempt.
+				signal?.throwIfAborted();
+
 				lastError = new NcbiUnreachableError(
 					`NCBI returned ${response.status} trying to ${description}`,
 				);

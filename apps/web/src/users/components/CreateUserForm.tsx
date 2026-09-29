@@ -1,88 +1,190 @@
 import Checkbox from "@base/Checkbox";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
-import { usePasswordRules } from "@forms/password";
+import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
 import { Controller, useForm } from "react-hook-form";
+import {
+	type DeliveryIntent,
+	DeliveryIntentField,
+} from "./DeliveryIntentField";
 
-type CreateUserFormProps = {
-	/** The user's handle or username */
-	handle?: string;
-	/** The user's password */
-	password?: string;
-	/** Error message to be displayed */
-	error: string;
-	/** A callback function to be called when the form is submitted */
-	onSubmit: (data: {
-		handle: string;
-		password: string;
-		forceReset: boolean;
-	}) => void;
+/** Values collected when an administrator invites a user. */
+export type CreateUserFormValues = {
+	email: string;
+	deliveryIntent: DeliveryIntent;
+	administratorRole: AdministratorRoleName | null;
+	groups: number[];
+	primaryGroup: number | null;
 };
 
-/**
- * A form component for creating a new user
- */
+/** Form state, where a null delivery intent means none was chosen yet. */
+type CreateUserFormState = Omit<CreateUserFormValues, "deliveryIntent"> & {
+	deliveryIntent: DeliveryIntent | null;
+};
+
+type CreateUserFormProps = {
+	error: string;
+	onSubmit: (data: CreateUserFormValues) => void;
+	groups: GroupMinimal[];
+	roles: Array<{ id: AdministratorRoleName; name: string }>;
+	canAssignAdministratorRole: boolean;
+	canConfigureEmailDelivery: boolean;
+	emailDeliveryAvailable: boolean;
+};
+
+/** Form for creating a pending user and issuing an invitation. */
 export function CreateUserForm({
-	handle = "",
-	password = "",
 	error,
 	onSubmit,
+	groups,
+	roles,
+	canAssignAdministratorRole,
+	canConfigureEmailDelivery,
+	emailDeliveryAvailable,
 }: CreateUserFormProps) {
-	const passwordRules = usePasswordRules();
 	const {
 		formState: { errors },
 		register,
 		handleSubmit,
 		control,
-	} = useForm({ defaultValues: { handle, password, forceReset: false } });
+		getValues,
+		setValue,
+		watch,
+	} = useForm<CreateUserFormState>({
+		defaultValues: {
+			email: "",
+			deliveryIntent: null,
+			administratorRole: null,
+			groups: [],
+			primaryGroup: null,
+		},
+	});
+	const selectedGroups = watch("groups");
+	const defaultDeliveryIntent: DeliveryIntent = emailDeliveryAvailable
+		? "email"
+		: "copy_only";
+
+	function submit(values: CreateUserFormState) {
+		onSubmit({
+			...values,
+			deliveryIntent: values.deliveryIntent ?? defaultDeliveryIntent,
+		});
+	}
 
 	return (
-		<form onSubmit={handleSubmit((values) => onSubmit({ ...values }))}>
+		<form onSubmit={handleSubmit(submit)}>
+			{groups.length > 0 && (
+				<InputGroup>
+					<InputLabel>Groups</InputLabel>
+					<Controller
+						name="groups"
+						control={control}
+						render={({ field }) => (
+							<div className="grid gap-2">
+								{groups.map((group) => (
+									<Checkbox
+										key={group.id}
+										id={`invite-group-${group.id}`}
+										label={group.name}
+										checked={field.value.includes(group.id)}
+										onClick={() => {
+											const removing = field.value.includes(group.id);
+											field.onChange(
+												removing
+													? field.value.filter((id) => id !== group.id)
+													: [...field.value, group.id],
+											);
+											if (removing && getValues("primaryGroup") === group.id) {
+												setValue("primaryGroup", null);
+											}
+										}}
+									/>
+								))}
+							</div>
+						)}
+					/>
+					<InputLabel htmlFor="primary-group">Primary group</InputLabel>
+					<Controller
+						name="primaryGroup"
+						control={control}
+						render={({ field }) => (
+							<select
+								id="primary-group"
+								value={field.value ?? ""}
+								onChange={(event) =>
+									field.onChange(
+										event.target.value ? Number(event.target.value) : null,
+									)
+								}
+							>
+								<option value="">None</option>
+								{groups
+									.filter((group) => selectedGroups.includes(group.id))
+									.map((group) => (
+										<option key={group.id} value={group.id}>
+											{group.name}
+										</option>
+									))}
+							</select>
+						)}
+					/>
+				</InputGroup>
+			)}
 			<InputGroup>
-				<InputLabel htmlFor="handle">Username</InputLabel>
+				<InputLabel htmlFor="email">Email</InputLabel>
 				<InputSimple
-					id="handle"
+					id="email"
+					type="email"
 					autoComplete="off"
-					aria-required
-					aria-invalid={Boolean(errors.handle) || undefined}
-					aria-describedby={errors.handle ? "handle-error" : undefined}
-					{...register("handle", {
-						required: "Please specify a username",
+					aria-invalid={Boolean(errors.email) || undefined}
+					{...register("email", {
+						required: "Please specify an email address",
 					})}
 				/>
-				<InputError id="handle-error">{errors.handle?.message}</InputError>
+				<InputError>{errors.email?.message || error}</InputError>
 			</InputGroup>
+			{canAssignAdministratorRole && (
+				<InputGroup>
+					<InputLabel htmlFor="administrator-role">
+						Administrator role
+					</InputLabel>
+					<Controller
+						name="administratorRole"
+						control={control}
+						render={({ field }) => (
+							<select
+								className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900"
+								id="administrator-role"
+								value={field.value ?? ""}
+								onChange={(event) => field.onChange(event.target.value || null)}
+							>
+								<option value="">None</option>
+								{roles.map((role) => (
+									<option key={role.id} value={role.id}>
+										{role.name}
+									</option>
+								))}
+							</select>
+						)}
+					/>
+				</InputGroup>
+			)}
 			<InputGroup>
-				<InputLabel htmlFor="password">Password</InputLabel>
-				<InputSimple
-					id="password"
-					type="password"
-					autoComplete="off"
-					aria-required
-					aria-invalid={Boolean(errors.password) || Boolean(error) || undefined}
-					aria-describedby={
-						errors.password || error ? "password-error" : undefined
-					}
-					{...register("password", passwordRules)}
-				/>
-				<InputError id="password-error">
-					{errors.password?.message || error}
-				</InputError>
-			</InputGroup>
-
-			<div className="flex justify-between items-center mb-2.5">
 				<Controller
-					name="forceReset"
+					name="deliveryIntent"
 					control={control}
-					render={({ field: { onChange, value } }) => (
-						<Checkbox
-							checked={value}
-							id="ForceReset"
-							label="Force user to reset password on login"
-							onClick={() => onChange(!value)}
+					render={({ field }) => (
+						<DeliveryIntentField
+							name={field.name}
+							value={field.value ?? defaultDeliveryIntent}
+							onChange={field.onChange}
+							emailDeliveryAvailable={emailDeliveryAvailable}
+							canConfigureEmailDelivery={canConfigureEmailDelivery}
 						/>
 					)}
 				/>
+			</InputGroup>
+			<div className="flex justify-end items-center mb-2.5">
 				<SaveButton />
 			</div>
 		</form>

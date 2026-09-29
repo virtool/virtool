@@ -6,6 +6,7 @@ import Link from "@base/Link";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
+import SectionHeader from "@base/SectionHeader";
 import { useListGroups } from "@groups/queries";
 import { useUpdateUser } from "@users/queries";
 import type { GroupMinimal } from "@virtool/contracts";
@@ -186,7 +187,9 @@ export default function UserGroups({
 
 	return (
 		<div className="mb-4">
-			<span className="font-medium mb-2 inline-block">Groups</span>
+			<SectionHeader level={3}>
+				<h3>Groups</h3>
+			</SectionHeader>
 			{renderAdd()}
 			{renderMembership()}
 		</div>

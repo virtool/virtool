@@ -1,9 +1,15 @@
-import { analysesQueryKeys } from "@analyses/keys";
+import { invalidateChange } from "@app/invalidate";
+import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import {
 	createUserFn,
+	deletePendingUserFn,
 	findUsersFn,
+	getInvitationEmailAvailabilityFn,
+	getInvitationFn,
 	getUserFn,
 	listUsersFn,
+	regenerateInvitationFn,
+	resetUserTotpFn,
 	searchUsersFn,
 	setAdministratorRoleFn,
 	updateUserFn,
@@ -18,7 +24,22 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { userQueryKeys } from "@users/keys";
-import type { AdministratorRoleName, UserNested } from "@virtool/contracts";
+import type {
+	AdministratorRoleName,
+	SortDirection,
+	UserNested,
+	UserRoleFilter,
+	UserSortField,
+	UserStatus,
+} from "@virtool/contracts";
+
+/** Query whether invitation emails can currently be sent. */
+export function useInvitationEmailAvailability() {
+	return useQuery({
+		queryKey: [...userQueryKeys.all(), "invitation-email-availability"],
+		queryFn: () => getInvitationEmailAvailabilityFn(),
+	});
+}
 
 /**
  * Fetch every active user, for populating selectors and filters
@@ -55,33 +76,35 @@ export function useInfiniteFindUsers(perPage: number, term: string) {
 	});
 }
 
-/**
- * Query options for a page of user search results.
- *
- * @param page - The page to fetch
- * @param perPage - The number of users to fetch per page
- * @param term - The search term to filter users by
- * @param administrator - Filter the users by administrator status
- * @param active - Filter the users by whether they are active
- */
-export function usersQueryOptions(
-	page: number,
-	perPage: number,
-	term: string,
-	administrator?: boolean,
-	active?: boolean,
-) {
+/** The filters, ordering, and page of the user administration list. */
+export type AdministeredUsersQuery = {
+	direction: SortDirection;
+	page: number;
+	perPage: number;
+	roles: UserRoleFilter[];
+	sort: UserSortField;
+	statuses: UserStatus[];
+	term: string;
+};
+
+/** Query options for a page of the user administration list. */
+export function usersQueryOptions(query: AdministeredUsersQuery) {
 	return queryOptions({
-		queryKey: userQueryKeys.list([page, perPage, term, administrator, active]),
-		queryFn: () =>
-			findUsersFn({
-				data: { page, perPage, term, administrator, active },
-			}),
+		queryKey: userQueryKeys.list([
+			query.page,
+			query.perPage,
+			query.term,
+			query.statuses,
+			query.roles,
+			query.sort,
+			query.direction,
+		]),
+		queryFn: () => findUsersFn({ data: query }),
 	});
 }
 
 /**
- * Fetch a page of user search results, suspending until it resolves.
+ * Fetch a page of the user administration list, suspending until it resolves.
  *
  * `data` is always defined, and a failed request throws to the nearest route
  * error boundary instead of resolving to `undefined`. Use this from components
@@ -89,16 +112,8 @@ export function usersQueryOptions(
  * page — loading and errors are handled by the route's Suspense and
  * `errorComponent` rather than inline.
  */
-export function useSuspenseUsers(
-	page: number,
-	perPage: number,
-	term: string,
-	administrator?: boolean,
-	active?: boolean,
-) {
-	return useSuspenseQuery(
-		usersQueryOptions(page, perPage, term, administrator, active),
-	);
+export function useSuspenseUsers(query: AdministeredUsersQuery) {
+	return useSuspenseQuery(usersQueryOptions(query));
 }
 
 /**
@@ -108,19 +123,82 @@ export function useSuspenseUsers(
  */
 export function useCreateUser() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		(data: {
+			email: string;
+			deliveryIntent: "copy_only" | "email";
+			administratorRole: AdministratorRoleName | null;
+			groups: number[];
+			primaryGroup?: number | null;
+		}) => createUserFn({ data }),
+	);
 	return useMutation<
 		Awaited<ReturnType<typeof createUserFn>>,
 		Error,
 		{
-			handle: string;
-			password: string;
-			forceReset: boolean;
+			email: string;
+			deliveryIntent: "copy_only" | "email";
+			administratorRole: AdministratorRoleName | null;
+			groups: number[];
+			primaryGroup?: number | null;
 		}
 	>({
-		mutationFn: ({ handle, password, forceReset }) =>
-			createUserFn({ data: { handle, password, forceReset } }),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
+		mutationFn,
+		onSuccess: (result) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "insert",
+				id: result.user.id,
+			});
+		},
+	});
+}
+
+/** Query options for the safe invitation metadata attached to a pending user. */
+export function invitationQueryOptions(userId: number) {
+	return queryOptions({
+		queryKey: [...userQueryKeys.detail(userId), "invitation"],
+		queryFn: () => getInvitationFn({ data: { userId } }),
+	});
+}
+
+/** Issue a fresh invitation generation and expose its token only to the caller. */
+export function useRegenerateInvitation() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({
+			userId,
+			deliveryIntent,
+		}: {
+			userId: number;
+			deliveryIntent: "copy_only" | "email";
+		}) => regenerateInvitationFn({ data: { userId, deliveryIntent } }),
+	);
+	return useMutation({
+		mutationFn,
+		onSuccess: (result) => {
+			queryClient.setQueryData(
+				[...userQueryKeys.detail(result.user.id), "invitation"],
+				result.invitation,
+			);
+		},
+	});
+}
+
+/** Delete a user whose invitation is still pending. */
+export function useDeletePendingUser() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation((userId: number) =>
+		deletePendingUserFn({ data: { userId } }),
+	);
+	return useMutation({
+		mutationFn,
+		onSuccess: (_data, userId) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "delete",
+				id: userId,
+			});
 		},
 	});
 }
@@ -167,20 +245,21 @@ export type UserUpdate = {
  */
 export function useUpdateUser() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ userId, update }: { userId: number; update: UserUpdate }) =>
+			updateUserFn({ data: { userId, ...update } }),
+	);
 	return useMutation<
 		Awaited<ReturnType<typeof updateUserFn>>,
 		Error,
 		{ userId: number; update: UserUpdate }
 	>({
-		mutationFn: ({ userId, update }) =>
-			updateUserFn({ data: { userId, ...update } }),
-		onSuccess: (result) => {
-			if (result) {
-				queryClient.setQueryData(userQueryKeys.detail(result.id), result);
-			}
-			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
-			queryClient.invalidateQueries({
-				queryKey: analysesQueryKeys.users(),
+		mutationFn,
+		onSuccess: (_data, { userId }) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "update",
+				id: userId,
 			});
 		},
 	});
@@ -193,15 +272,45 @@ export function useUpdateUser() {
  */
 export function useSetAdministratorRole() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({
+			role,
+			user_id,
+		}: {
+			role: AdministratorRoleName | null;
+			user_id: number;
+		}) => setAdministratorRoleFn({ data: { userId: user_id, role } }),
+	);
 	return useMutation<
 		Awaited<ReturnType<typeof setAdministratorRoleFn>>,
 		Error,
 		{ role: AdministratorRoleName | null; user_id: number }
 	>({
-		mutationFn: ({ role, user_id }) =>
-			setAdministratorRoleFn({ data: { userId: user_id, role } }),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: userQueryKeys.all() });
+		mutationFn,
+		onSuccess: (_data, { user_id }) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "update",
+				id: user_id,
+			});
+		},
+	});
+}
+
+/** Remove a user's TOTP enrollment and end their sessions. */
+export function useResetUserTotp() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation((userId: number) =>
+		resetUserTotpFn({ data: { userId } }),
+	);
+	return useMutation({
+		mutationFn,
+		onSuccess: (_data, userId) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "update",
+				id: userId,
+			});
 		},
 	});
 }

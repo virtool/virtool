@@ -36,7 +36,7 @@ const analysis: FormattedPathoscopeAnalysis = {
 	results: {
 		hits: [
 			createFakePathoscopeHit({
-				abbreviation: "AV",
+				acronym: "AV",
 				id: "a",
 				isolates: [
 					createIsolate({ id: "a1", name: "Isolate A" }),
@@ -51,7 +51,7 @@ const analysis: FormattedPathoscopeAnalysis = {
 				name: "Alpha virus",
 			}),
 			createFakePathoscopeHit({
-				abbreviation: "",
+				acronym: "",
 				coverage: 0.25,
 				depth: 7,
 				id: "b",
@@ -222,10 +222,10 @@ describe("<PathoscopeExport />", () => {
 		);
 	});
 
-	it("should name OTUs by abbreviation when the account prefers it", async () => {
+	it("should name OTUs by acronym when the account prefers it", async () => {
 		mockGetAccount(
 			createFakeAccount({
-				settings: { ...createFakeAccount().settings, preferAbbreviation: true },
+				settings: { ...createFakeAccount().settings, preferAcronym: true },
 			}),
 		);
 
@@ -234,16 +234,16 @@ describe("<PathoscopeExport />", () => {
 
 		expect(
 			await screen.findByRole("menuitemcheckbox", {
-				name: "Prefer abbreviation",
+				name: "Prefer acronym",
 			}),
 		).toBeChecked();
 		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.xlsx?preferAbbreviation=true",
+			"/analyses/documents/5.xlsx?preferAcronym=true",
 		);
 		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.csv?preferAbbreviation=true",
+			"/analyses/documents/5.csv?preferAcronym=true",
 		);
 
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
@@ -257,9 +257,9 @@ describe("<PathoscopeExport />", () => {
 		);
 	});
 
-	it("should save the abbreviation preference to the account", async () => {
+	it("should save the acronym preference to the account", async () => {
 		const account = createFakeAccount();
-		const settings = { ...account.settings, preferAbbreviation: true };
+		const settings = { ...account.settings, preferAcronym: true };
 
 		mockGetAccount(account);
 		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(settings);
@@ -268,7 +268,7 @@ describe("<PathoscopeExport />", () => {
 		await openMenu();
 
 		const toggle = await screen.findByRole("menuitemcheckbox", {
-			name: "Prefer abbreviation",
+			name: "Prefer acronym",
 		});
 		expect(toggle).not.toBeChecked();
 
@@ -277,7 +277,7 @@ describe("<PathoscopeExport />", () => {
 		await userEvent.click(toggle);
 
 		expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
-			data: { preferAbbreviation: true },
+			data: { preferAcronym: true },
 		});
 		await waitFor(() => expect(toggle).toBeChecked());
 	});
@@ -300,7 +300,7 @@ describe("<PathoscopeExport />", () => {
 		await openMenu();
 
 		const toggle = await screen.findByRole("menuitemcheckbox", {
-			name: "Prefer abbreviation",
+			name: "Prefer acronym",
 		});
 
 		await userEvent.click(toggle);
@@ -309,12 +309,12 @@ describe("<PathoscopeExport />", () => {
 		expect(toggle).not.toBeChecked();
 		expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledTimes(1);
 
-		resolveFirst({ ...account.settings, preferAbbreviation: true });
+		resolveFirst({ ...account.settings, preferAcronym: true });
 
 		await waitFor(() =>
 			expect(
 				userServerFnMocks.updateAccountSettingsFn,
-			).toHaveBeenLastCalledWith({ data: { preferAbbreviation: false } }),
+			).toHaveBeenLastCalledWith({ data: { preferAcronym: false } }),
 		);
 		await waitFor(() => expect(toggle).not.toBeChecked());
 	});

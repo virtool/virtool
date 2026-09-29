@@ -9,16 +9,10 @@ import pkg from "../package.json" with { type: "json" };
  * say so. A JSON import is a real module value the bundler inlines and `vitest`
  * resolves.
  *
- * **In a built image today this is `0.0.0`, and that is a live constraint on the
- * cache.** CI's `publish-ghcr` job runs `pnpm -C <workspace> version` before the
- * Docker build, and this app has no publish entry on purpose —
- * `virtool/workflow-pathoscope` still releases the pathoscope image and a second
- * pipeline shipping one would leave two candidates for what the cluster runs.
- * `workflow_version` is part of every cache key, so until this app is published
- * with a real version its `reference_mapping_index` and
- * `subtraction_mapping_index` keys cannot coincide with the key a blob already
- * in the bucket was archived under, and nothing is restored. The derivation is
- * still exact — that is what the tests pin — but reuse only starts once a real
- * version ships.
+ * CI's `release-ghcr` job sets it from the release tag with
+ * `pnpm -C apps/pathoscope version` before the Docker build. `workflow_version`
+ * is part of every cache key, so a cached `reference_mapping_index` or
+ * `subtraction_mapping_index` blob is reused only by a runner of the same
+ * release. Unreleased builds carry `0.0.0`.
  */
 export const APP_VERSION: string = pkg.version;

@@ -23,7 +23,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: false,
 			},
 		);
@@ -44,7 +44,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				columnOrder: "name-first",
 				headers: true,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: false,
 			},
 		);
@@ -63,7 +63,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: true,
 			},
 		);
@@ -83,7 +83,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: false,
 			},
 		);
@@ -91,16 +91,16 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		expect(table).toBe("0.250\t12\t0.500\tAlpha virus");
 	});
 
-	it("should name an OTU by its abbreviation when one is preferred", () => {
+	it("should name an OTU by its acronym when one is preferred", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[
 				createFakePathoscopeHit({
-					abbreviation: "AV",
+					acronym: "AV",
 					id: "a",
 					name: "Alpha virus",
 				}),
 				createFakePathoscopeHit({
-					abbreviation: "",
+					acronym: "",
 					id: "b",
 					name: "Beta virus",
 				}),
@@ -109,7 +109,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
-				preferAbbreviation: true,
+				preferAcronym: true,
 				showReads: false,
 			},
 		);
@@ -125,7 +125,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: false,
 			}),
 		).toBe("Weight\tDepth\tCoverage\tName");
@@ -140,7 +140,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: false,
 			},
 		);
@@ -193,7 +193,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: true,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: false,
 			},
 		);
@@ -220,7 +220,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				columnOrder: "name-first",
 				headers: true,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: false,
 			},
 		);
@@ -245,7 +245,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
-				preferAbbreviation: false,
+				preferAcronym: false,
 				showReads: true,
 			},
 		);
@@ -255,11 +255,11 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 
 	// A hit whose isolates were all filtered out contributes nothing rather than
 	// an empty row.
-	it("should name each isolate's OTU by its abbreviation when one is preferred", () => {
+	it("should name each isolate's OTU by its acronym when one is preferred", () => {
 		const table = formatPathoscopeIsolatesAsTsv(
 			[
 				createFakePathoscopeHit({
-					abbreviation: "AV",
+					acronym: "AV",
 					isolates: [createIsolate({ id: "a1", name: "Isolate A" })],
 					name: "Alpha virus",
 				}),
@@ -268,7 +268,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 				columnOrder: "name-last",
 				headers: false,
 				mappedCount: 1000,
-				preferAbbreviation: true,
+				preferAcronym: true,
 				showReads: false,
 			},
 		);
@@ -284,7 +284,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 					columnOrder: "name-last",
 					headers: false,
 					mappedCount: 1000,
-					preferAbbreviation: false,
+					preferAcronym: false,
 					showReads: false,
 				},
 			),

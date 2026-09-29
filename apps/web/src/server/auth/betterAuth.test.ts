@@ -5,11 +5,13 @@ import {
 	authRateLimits,
 	authSessions,
 } from "@virtool/data/db/schema/auth";
+import { settings } from "@virtool/data/db/schema/settings";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -63,7 +65,11 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await Promise.all([db.delete(users), db.delete(authRateLimits)]);
+	await Promise.all([
+		db.delete(users),
+		db.delete(authRateLimits),
+		db.delete(settings),
+	]);
 });
 
 function post(path: string, body: unknown, origin = ORIGIN): Request {
@@ -286,6 +292,85 @@ describe("the mounted handler", () => {
 		expect(await response.json()).toEqual({
 			code: "PASSWORD_RESET_REQUIRED",
 			message: "Password reset required",
+		});
+	});
+
+	describe("under the required MFA policy", () => {
+		async function signInUnenrolled(): Promise<string> {
+			await seedSettings(db, { mfaPolicy: "required" });
+			await seedMigratedUser();
+			const response = await auth.handler(
+				post("/sign-in/username", {
+					username: "alice",
+					password: LEGACY_PASSWORD,
+				}),
+			);
+			const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+			if (!cookie) {
+				throw new Error("sign-in set no cookie");
+			}
+			return cookie;
+		}
+
+		function authRequest(path: string, cookie: string, body: unknown) {
+			return new Request(`${ORIGIN}${AUTH_BASE_PATH}${path}`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
+				body: JSON.stringify(body),
+			});
+		}
+
+		it("blocks account operations for an unenrolled session", async () => {
+			const cookie = await signInUnenrolled();
+			const handler = createAuthRequestHandler(db, auth);
+
+			const response = await handler(
+				authRequest("/change-password", cookie, {
+					currentPassword: LEGACY_PASSWORD,
+					newPassword: "new-password-123",
+				}),
+			);
+
+			expect(response.status).toBe(403);
+			expect(await response.json()).toEqual({
+				code: "MFA_ENROLLMENT_REQUIRED",
+				message: "TOTP enrollment required",
+			});
+		});
+
+		it("lets an unenrolled session start TOTP enrollment", async () => {
+			const cookie = await signInUnenrolled();
+			const handler = createAuthRequestHandler(db, auth);
+
+			const response = await handler(
+				authRequest("/two-factor/enable", cookie, {
+					password: LEGACY_PASSWORD,
+				}),
+			);
+
+			expect(response.status).toBe(200);
+			expect(await response.json()).toMatchObject({
+				totpURI: expect.stringMatching(/^otpauth:\/\/totp\//),
+			});
+		});
+
+		it("lifts the restriction once the user is enrolled", async () => {
+			const cookie = await signInUnenrolled();
+			await db.update(users).set({ twoFactorEnabled: true });
+			const handler = createAuthRequestHandler(db, auth);
+
+			const response = await handler(
+				authRequest("/change-password", cookie, {
+					currentPassword: "wrong-password",
+					newPassword: "new-password-123",
+				}),
+			);
+
+			expect(response.status).not.toBe(403);
 		});
 	});
 

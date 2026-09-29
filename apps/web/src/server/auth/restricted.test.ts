@@ -159,7 +159,7 @@ describe("setupOnly", () => {
 		getRequest.mockReturnValue(requestWith(setupSessionCookie(session)));
 
 		await expect(
-			handlerFor("totp_enrollment")({ context: {}, next }),
+			handlerFor("password_recovery")({ context: {}, next }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(next).not.toHaveBeenCalled();
@@ -193,11 +193,11 @@ describe("setupOnly", () => {
 			kind: "setup" as const,
 			userId: 7,
 			sessionId: "setup_upstream",
-			purpose: "totp_enrollment" as const,
+			purpose: "password_recovery" as const,
 			expiresAt: new Date(Date.now() + 60_000),
 		};
 
-		await handlerFor("totp_enrollment")({ context: { principal }, next });
+		await handlerFor("password_recovery")({ context: { principal }, next });
 
 		expect(next).toHaveBeenCalledWith({ context: { principal } });
 		expect(getRequest).not.toHaveBeenCalled();

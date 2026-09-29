@@ -19,6 +19,7 @@ import {
 	addReferenceUser,
 	checkReferenceVisibility,
 	createReference,
+	ReferenceMemberConflictError,
 	removeReferenceGroup,
 	removeReferenceUser,
 	setReferenceArchived,
@@ -188,6 +189,62 @@ describe("membership", () => {
 			{ domain: "references", resource_id: referenceId, operation: "update" },
 			{ domain: "references", resource_id: referenceId, operation: "update" },
 		]);
+	});
+
+	it("rejects a user who is already a member", async () => {
+		const referenceId = await seedReference();
+		const memberId = await seedUser(db, { handle: "bob" });
+		await addReferenceUser(db, referenceId, memberId, {});
+
+		await expect(
+			addReferenceUser(db, referenceId, memberId, {}),
+		).rejects.toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("rejects a group that is already a member", async () => {
+		const referenceId = await seedReference();
+		const groupId = await seedGroup();
+		await addReferenceGroup(db, referenceId, groupId, {});
+
+		await expect(
+			addReferenceGroup(db, referenceId, groupId, {}),
+		).rejects.toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("adds a user once when two requests race", async () => {
+		const referenceId = await seedReference();
+		const memberId = await seedUser(db, { handle: "bob" });
+
+		const results = await Promise.allSettled([
+			addReferenceUser(db, referenceId, memberId, {}),
+			addReferenceUser(db, referenceId, memberId, {}),
+		]);
+
+		expect(results.map((result) => result.status).sort()).toEqual([
+			"fulfilled",
+			"rejected",
+		]);
+		expect(
+			results.find((result) => result.status === "rejected")?.reason,
+		).toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("adds a group once when two requests race", async () => {
+		const referenceId = await seedReference();
+		const groupId = await seedGroup();
+
+		const results = await Promise.allSettled([
+			addReferenceGroup(db, referenceId, groupId, {}),
+			addReferenceGroup(db, referenceId, groupId, {}),
+		]);
+
+		expect(results.map((result) => result.status).sort()).toEqual([
+			"fulfilled",
+			"rejected",
+		]);
+		expect(
+			results.find((result) => result.status === "rejected")?.reason,
+		).toBeInstanceOf(ReferenceMemberConflictError);
 	});
 
 	it("publishes nothing when the member does not exist", async () => {

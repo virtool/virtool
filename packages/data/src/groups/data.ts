@@ -7,7 +7,7 @@ import {
 	type UserNested,
 } from "@virtool/contracts";
 import { asc, count, eq, ilike, sql } from "drizzle-orm";
-import type { PostgresError } from "postgres";
+import { isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -32,19 +32,6 @@ export class GroupNotFoundError extends AppError {}
 
 /** Thrown when a group name conflicts with an existing group. */
 export class GroupConflictError extends AppError {}
-
-function isUniqueViolation(error: unknown): boolean {
-	if (error === null || typeof error !== "object") {
-		return false;
-	}
-	const cause = (error as { cause?: unknown }).cause;
-	return (
-		(error as Partial<PostgresError>).code === "23505" ||
-		(cause !== null &&
-			typeof cause === "object" &&
-			(cause as Partial<PostgresError>).code === "23505")
-	);
-}
 
 function toGroupMinimal(row: GroupRow): GroupMinimal {
 	return {

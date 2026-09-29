@@ -4,11 +4,11 @@ import OtuForm from "./OtuForm";
 
 type FormValues = {
 	name: string;
-	abbreviation: string;
+	acronym: string;
 };
 
 type OtuEditProps = {
-	abbreviation: string;
+	acronym: string;
 	name: string;
 	open?: boolean;
 	otuId: string;
@@ -19,7 +19,7 @@ type OtuEditProps = {
  * Displays a dialog for editing an OTU
  */
 export default function OtuEdit({
-	abbreviation,
+	acronym,
 	name,
 	open = false,
 	otuId,
@@ -27,9 +27,9 @@ export default function OtuEdit({
 }: OtuEditProps) {
 	const mutation = useUpdateOtu(otuId);
 
-	function handleSubmit({ name, abbreviation }: FormValues) {
+	function handleSubmit({ name, acronym }: FormValues) {
 		mutation.mutate(
-			{ otuId, name, abbreviation },
+			{ otuId, name, acronym },
 			{
 				onSuccess: () => {
 					setOpen(false);
@@ -49,7 +49,7 @@ export default function OtuEdit({
 				<DialogTitle>Edit OTU</DialogTitle>
 				<OtuForm
 					name={name}
-					abbreviation={abbreviation}
+					acronym={acronym}
 					error={mutation.error?.message}
 					onSubmit={handleSubmit}
 				/>

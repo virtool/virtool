@@ -14,6 +14,7 @@ const indexKeys = createQueryKeys("indexes");
  */
 export const indexQueryKeys = {
 	...indexKeys,
+	allUnbuilt: () => [...indexKeys.all(), "unbuilt"] as const,
 	unbuilt: (referenceId: number) =>
 		[...indexKeys.all(), "unbuilt", referenceId] as const,
 };

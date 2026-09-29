@@ -3,10 +3,23 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
 	PasswordTooShortError,
+	SORT_DIRECTIONS,
+	USER_ROLE_FILTERS,
+	USER_SORT_FIELDS,
+	USER_STATUSES,
 } from "@virtool/contracts";
 import {
+	EmailInUseError,
+	isValidEmail,
+	normalizeEmail,
+} from "@virtool/data/auth/email";
+import {
+	resetUserTotp,
+	TotpNotEnrolledError,
+} from "@virtool/data/auth/lifecycle";
+import {
 	changePassword,
-	createUser,
+	findAdministeredUsers,
 	findUsers,
 	GroupMembershipError,
 	getAccount,
@@ -22,7 +35,16 @@ import {
 	updateAccountSettings,
 	updateUser,
 } from "@virtool/data/users/data";
+import {
+	createPendingInvitation,
+	deletePendingUser,
+	getInvitation,
+	InvitationNotEligibleError,
+	InvitationNotFoundError,
+	regenerateInvitation,
+} from "@virtool/data/users/invitations";
 import { z } from "zod";
+import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { realCookies } from "../auth/cookies";
 import { establishLegacySession } from "../auth/core";
 import { PROTECTED_OPERATIONS } from "../auth/freshness";
@@ -37,6 +59,8 @@ import {
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { signInUsername } from "../auth/sessionActions";
 import { db } from "../composition";
+import { config } from "../config";
+import { isEmailDeliveryAvailable } from "../email/delivery";
 import { ClientError } from "../errors";
 import {
 	pageSchema,
@@ -56,8 +80,16 @@ const findUsersSchema = z
 		term: searchTermSchema,
 		page: pageSchema,
 		perPage: perPageSchema,
-		administrator: z.boolean().optional(),
-		active: z.boolean().default(true),
+		statuses: z
+			.array(z.enum(USER_STATUSES))
+			.max(USER_STATUSES.length)
+			.default([]),
+		roles: z
+			.array(z.enum(USER_ROLE_FILTERS))
+			.max(USER_ROLE_FILTERS.length)
+			.default([]),
+		sort: z.enum(USER_SORT_FIELDS).default("handle"),
+		direction: z.enum(SORT_DIRECTIONS).default("ascending"),
 	})
 	.optional();
 
@@ -72,7 +104,7 @@ const searchUsersSchema = z
 const accountSettingsSchema = z
 	.object({
 		pathoscopeColumnOrder: z.enum(["name-first", "name-last"]),
-		preferAbbreviation: z.boolean(),
+		preferAcronym: z.boolean(),
 		quickAnalyzeWorkflow: z.enum(["nuvs", "pathoscope"]),
 		showIds: z.boolean(),
 		showVersions: z.boolean(),
@@ -84,9 +116,11 @@ const accountSettingsSchema = z
 // below, not here — see that function for why the validator is the wrong place
 // for it.
 const createUserSchema = z.object({
-	handle: z.string().trim().min(1),
-	password: z.string(),
-	forceReset: z.boolean().default(false),
+	email: z.string().trim().min(1).max(254),
+	administratorRole: administratorRoleSchema.nullable().optional(),
+	groups: z.array(rowIdSchema).default([]),
+	primaryGroup: rowIdSchema.nullable().optional(),
+	deliveryIntent: z.enum(["copy_only", "email"]),
 });
 
 const updateUserSchema = userIdSchema.extend({
@@ -133,6 +167,10 @@ function rethrowAsHttp(err: unknown): never {
 		setResponseStatus(409);
 		throw new ClientError("User already exists.", 409);
 	}
+	if (err instanceof EmailInUseError) {
+		setResponseStatus(409);
+		throw new ClientError("Email address is already in use.", 409);
+	}
 	if (err instanceof GroupMembershipError) {
 		setResponseStatus(400);
 		throw new ClientError("User is not a member of group.", 400);
@@ -141,12 +179,44 @@ function rethrowAsHttp(err: unknown): never {
 		setResponseStatus(409);
 		throw new ClientError("User has not completed account setup.", 409);
 	}
+	if (err instanceof TotpNotEnrolledError) {
+		setResponseStatus(409);
+		throw new ClientError("User has no two-factor authentication.", 409);
+	}
+	if (
+		err instanceof InvitationNotEligibleError ||
+		err instanceof InvitationNotFoundError
+	) {
+		setResponseStatus(409);
+		throw new ClientError("Invitation is not available.", 409);
+	}
 	throw err;
+}
+
+function getSetupUrl(token: string): string {
+	return `${config.publicOrigin}/account-setup#token=${token}`;
+}
+
+async function requireInvitationAuthority(
+	principal: Parameters<typeof requireAdminRole>[0],
+	administratorRole:
+		| (typeof ADMINISTRATOR_ROLE_NAMES)[number]
+		| null
+		| undefined,
+): Promise<void> {
+	await requireAdminRole(principal, administratorRole ? "full" : "users");
 }
 
 export const listAdministratorRolesFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("base")])
 	.handler(async () => listAdministratorRoles());
+
+/** Whether invitation email can currently be delivered. */
+export const getInvitationEmailAvailabilityFn = createServerFn({
+	method: "GET",
+})
+	.middleware([adminRole("users")])
+	.handler(isEmailDeliveryAvailable);
 
 // Any authenticated user can see who else exists — the handles are already
 // visible on samples, jobs, and analyses they can read.
@@ -157,20 +227,7 @@ export const listUsersFn = createServerFn({ method: "GET" })
 export const findUsersFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("users")])
 	.validator(findUsersSchema)
-	.handler(async ({ data }) => {
-		return findUsers(db, {
-			term: data?.term ?? "",
-			page: data?.page ?? 1,
-			perPage: data?.perPage ?? 25,
-			administrator: data?.administrator,
-			active: data?.active ?? true,
-			// The one caller that asks for pending accounts. An administrator has
-			// to see the invitation they issued in order to re-issue or revoke it,
-			// and `findUsers` defaults to hiding them so nothing else has to
-			// remember to.
-			lifecycleState: "any",
-		});
-	});
+	.handler(async ({ data }) => findAdministeredUsers(db, data ?? {}));
 
 // A paginated user search any signed-in user may run: authenticated, with no
 // administrator filter. Backs the reference member picker, where a non-admin
@@ -209,29 +266,138 @@ export const getUserFn = createServerFn({ method: "GET" })
 	});
 
 export const createUserFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("users")])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
 	.validator(createUserSchema)
-	.handler(async ({ data }) => {
-		checkHandle(data.handle);
-		checkReservedHandle(data.handle);
+	.handler(async ({ context, data }) => {
+		await requireInvitationAuthority(context.principal, data.administratorRole);
+		const email = normalizeEmail(data.email);
+		if (!isValidEmail(email)) {
+			setResponseStatus(400);
+			throw new ClientError("Enter a valid email address.", 400);
+		}
 
 		try {
-			await checkConfiguredPasswordLength(db, data.password);
-
-			const user = await createUser(db, {
-				handle: data.handle,
-				password: data.password,
-				forceReset: data.forceReset,
+			const result = await createPendingInvitation(db, {
+				email,
+				administratorRole: data.administratorRole,
+				groups: data.groups,
+				primaryGroup: data.primaryGroup,
+				deliveryIntent: data.deliveryIntent,
+				deliveryAvailable: await isEmailDeliveryAvailable(),
+				issuerUserId: context.principal.userId,
+				getSetupUrl,
+			});
+			recordAccountLifecycle({
+				operation: "invitation_create",
+				outcome: result.invitation.delivery,
+				message: "account invitation created",
+				invitationId: result.invitation.id,
+				userId: result.user.id,
+				issuerUserId: context.principal.userId,
 			});
 			setResponseStatus(201);
-			return user;
+			return result;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "invitation_create",
+				outcome: "failure",
+				message: "account invitation creation failed",
+			});
+			throw rethrowAsHttp(err);
+		}
+	});
+
+export const getInvitationFn = createServerFn({ method: "GET" })
+	.middleware([adminRole("users")])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const role = await getAdministratorRole(db, data.userId);
+			await requireInvitationAuthority(context.principal, role);
+			return await getInvitation(db, data.userId);
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}
 	});
 
+const invitationMutationSchema = userIdSchema.extend({
+	deliveryIntent: z.enum(["copy_only", "email"]).optional(),
+});
+
+export const regenerateInvitationFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
+	.validator(invitationMutationSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const role = await getAdministratorRole(db, data.userId);
+			await requireInvitationAuthority(context.principal, role);
+			const result = await regenerateInvitation(db, data.userId, {
+				issuerUserId: context.principal.userId,
+				deliveryIntent: data.deliveryIntent ?? "copy_only",
+				deliveryAvailable: await isEmailDeliveryAvailable(),
+				getSetupUrl,
+			});
+			recordAccountLifecycle({
+				operation: "invitation_regenerate",
+				outcome: result.invitation.delivery,
+				message: "account invitation regenerated",
+				invitationId: result.invitation.id,
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return result;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "invitation_regenerate",
+				outcome: "failure",
+				message: "account invitation regeneration failed",
+				userId: data.userId,
+			});
+			throw rethrowAsHttp(err);
+		}
+	});
+
+export const deletePendingUserFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const role = await getAdministratorRole(db, data.userId);
+			await requireInvitationAuthority(context.principal, role);
+			await deletePendingUser(db, data.userId);
+			recordAccountLifecycle({
+				operation: "invitation_delete",
+				outcome: "success",
+				message: "pending user deleted",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return null;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "invitation_delete",
+				outcome: "failure",
+				message: "pending user deletion failed",
+				userId: data.userId,
+			});
+			throw rethrowAsHttp(err);
+		}
+	});
+
 export const updateUserFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("users")])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.userUpdate),
+	])
 	.validator(updateUserSchema)
 	.handler(async ({ context, data }) => {
 		// A policy states the floor. This one depends on the target row, so it can
@@ -317,7 +483,10 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 	});
 
 export const setAdministratorRoleFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("full")])
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.administratorRoleSet),
+	])
 	.validator(setAdministratorRoleSchema)
 	.handler(async ({ context, data }) => {
 		if (context.principal.userId === data.userId) {
@@ -328,6 +497,46 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 		try {
 			return await setAdministratorRole(db, data.userId, data.role);
 		} catch (err) {
+			throw rethrowAsHttp(err);
+		}
+	});
+
+/**
+ * Remove a user's TOTP enrollment and recovery codes, and end their sessions.
+ *
+ * For a user who has lost both their authenticator and their recovery codes.
+ * An administrator resets their own factor through the account settings
+ * instead, so this refuses the caller's own account.
+ */
+export const resetUserTotpFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.totpReset),
+	])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		if (context.principal.userId === data.userId) {
+			setResponseStatus(400);
+			throw new ClientError("Cannot reset own two-factor authentication", 400);
+		}
+
+		try {
+			const user = await resetUserTotp(db, data.userId);
+			recordAccountLifecycle({
+				operation: "totp_reset",
+				outcome: "success",
+				message: "user totp reset",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return user;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "totp_reset",
+				outcome: "failure",
+				message: "user totp reset failed",
+				userId: data.userId,
+			});
 			throw rethrowAsHttp(err);
 		}
 	});

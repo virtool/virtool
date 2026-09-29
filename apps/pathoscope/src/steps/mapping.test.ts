@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import type { RunSubprocess, RunSubprocessOptions } from "@virtool/workflow";
 import {
 	createFakeContext,
+	createFakeSubprocessRunner,
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
@@ -22,22 +22,7 @@ async function runStep(readNames: readonly string[]) {
 	const { path: workPath, cleanup } = await createTestWorkPath();
 	onTestFinished(cleanup);
 
-	const scripts: string[] = [];
-
-	const runSubprocess: RunSubprocess = async (
-		options: RunSubprocessOptions,
-	) => {
-		scripts.push(options.command[2] ?? "");
-
-		return {
-			command: options.command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
-	};
+	const runSubprocess = createFakeSubprocessRunner();
 
 	const paths = workPaths(workPath);
 
@@ -64,6 +49,8 @@ async function runStep(readNames: readonly string[]) {
 	await mapIsolatesStep.run(
 		createFakeContext(data, state, { workPath, runSubprocess }),
 	);
+
+	const scripts = runSubprocess.commands().map((command) => command[2] ?? "");
 
 	return { paths, script: scripts[0] ?? "", scripts };
 }
@@ -123,14 +110,14 @@ describe("mapIsolatesStep", () => {
 			subtractedCount: 0,
 		};
 
-		const runSubprocess: RunSubprocess = () => {
-			throw new Error("ran a subprocess with no candidate otus");
-		};
+		const runSubprocess = createFakeSubprocessRunner();
 
 		await expect(
 			mapIsolatesStep.run(
 				createFakeContext(data, state, { workPath, runSubprocess }),
 			),
 		).resolves.toBeUndefined();
+
+		expect(runSubprocess.calls()).toEqual([]);
 	});
 });
