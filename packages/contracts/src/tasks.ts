@@ -14,6 +14,7 @@ export const PeriodicTaskName = z.enum([
 	"deliver_email",
 	"evict_caches_lru",
 	"reap_orphaned_uploads",
+	"recreate_hmm_annotations",
 	"refresh_hmms",
 	"sweep_blast",
 	"timeout_jobs",

@@ -22,9 +22,20 @@ each passes.
 `src/index.ts` is the dispatcher: it reads `argv[2]` and dynamically imports the
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
-directory: `src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/`, and
-owns its own config, Sentry service name (`jobs-api`, `tasks`, `migrate`,
-`data-migrations`, `auth-remediation`) and fatal logging.
+directory (`src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/`,
+`src/auth-remediation/`) and owns its own config and fatal logging.
+
+`serve`, `run`, `migrate`, and `data-migrations` report errors to Sentry,
+tagged `service: jobs-api`, `service: tasks`, `service: migrate`, and
+`service: data-migrations`. `migrate` and `data-migrations` report the error
+that stops them and flush Sentry before they exit. `auth-remediation` logs
+failures and exits non-zero without sending them to Sentry.
+
+When `migrate` runs a data migration, an attempt that errors is reported as an
+exception. An attempt that fails with findings is reported as one issue per key
+and version, with finding counts by code and the `export` document attached as
+`<key>-v<version>.json`. Both are tagged `data_migration` and
+`data_migration_version`.
 
 ## `auth-remediation`: cutover report
 
@@ -259,7 +270,8 @@ in `data_migration_findings`.
 | `data-migrations export <key>` | Write the current version's outcome and findings as JSON. |
 | `migrate` | Apply pending SQL and execute or retry its paired bodies. |
 
-Inspection reads only `VT_POSTGRES_URL` (or its `_FILE` variant). Before
+Inspection reads only `VT_POSTGRES_URL` and `VT_SENTRY_DSN` (or their `_FILE`
+variants). Before
 bootstrap exists, it reports that `migrate` must initialize the database and
 exits non-zero. Export also exits non-zero for an unrun or non-passing attempt.
 Bodies cannot be run individually against an arbitrary schema.
@@ -315,12 +327,14 @@ Every batch must tolerate replay: a crash after writes commit but before the
 checkpoint persists repeats those writes. A stored cursor that no longer parses
 restarts from `initialCursor`. Progress is isolated by version and cleared on
 success. Long bodies must observe their abort signal. Finding details are stored
-verbatim and must contain no credentials; persisted errors are redacted. At most
+verbatim and sent to Sentry, so they must contain no credentials; persisted
+errors are redacted. At most
 5,000 finding details are retained per attempt, while all findings are counted.
 
 ### Remediation
 
-1. Inspect `data-migrations list` and export the failing key's findings.
+1. Read the failing key's findings from the Sentry issue's attachment, or run
+   `data-migrations export <key>`.
 2. Remediate the data, or correct the body and bump its version and SQL assertion.
 3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
@@ -335,7 +349,10 @@ Both long-lived subcommands own a private Prometheus registry and a token-gated
 `GET /metrics`: `serve` on 9950 and `run` on 9900. Each requires the configured
 bearer token; when `VT_METRICS_TOKEN` is unset the route returns 404. Both
 registries carry the default Node metrics, `virtool_app_info`, and Postgres pool
-occupancy.
+occupancy. Both routes use the shared scrape handler in `src/metrics/handler.ts`.
+It refreshes the database-backed gauges independently on each scrape. When a
+refresh fails, the handler drops that source's series instead of serving stale
+values, and the scrape still succeeds.
 
 `serve` additionally exports HTTP request series and the job-queue depth series
 the KEDA `ScaledJob` scales on. `run` additionally exports the task series:
@@ -355,8 +372,7 @@ the KEDA `ScaledJob` scales on. `run` additionally exports the task series:
 
 Task names outside `TaskName` fold into the bounded `other` label. Queue reads
 use the active predicate `complete = false AND error IS NULL`, are bounded by a
-two-second deadline, and are cached for ten seconds. A failed read omits the
-queue series rather than reporting a false zero or repeating stale values.
+two-second deadline, and are cached for ten seconds.
 
 The email series carry bounded labels only. `template` is the template type,
 `outcome` is one of `accepted`, `retryable`, `rate_limited`, `permanent`,
@@ -396,7 +412,7 @@ unset.
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, errors aren't sent to Sentry. |
+| `VT_SENTRY_DSN` | URL string | Unset | `serve`, `run`, `migrate`, and `data-migrations`: send errors to Sentry. When unset, errors aren't sent to Sentry. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
 | `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept encrypted values written under the prior key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
@@ -410,9 +426,9 @@ unset.
 | `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
 | `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
 
-`migrate` reads only `VT_POSTGRES_URL` and `VT_MIGRATIONS_PATH`, and
-`data-migrations` reads only `VT_POSTGRES_URL`. Neither reads the storage or metrics
-keys.
+`migrate` reads only `VT_POSTGRES_URL`, `VT_MIGRATIONS_PATH`, and
+`VT_SENTRY_DSN`, and `data-migrations` reads only `VT_POSTGRES_URL` and
+`VT_SENTRY_DSN`. Neither reads the storage or metrics keys.
 
 ## Commands
 

@@ -37,7 +37,7 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
-import type { PostgresError } from "postgres";
+import { isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -160,24 +160,8 @@ export class SampleNotOwnedError extends AppError {}
 /** Thrown when a sample name is already taken. */
 export class SampleNameConflictError extends AppError {}
 
-function isSampleNameUniqueViolation(error: unknown): boolean {
-	if (error === null || typeof error !== "object") {
-		return false;
-	}
-
-	const cause = (error as { cause?: unknown }).cause;
-	const postgresError =
-		cause !== null && typeof cause === "object" ? cause : error;
-
-	return (
-		(postgresError as Partial<PostgresError>).code === "23505" &&
-		(postgresError as Partial<PostgresError>).constraint_name ===
-			"legacy_samples_name_key"
-	);
-}
-
 function mapSampleNameConflict(error: unknown): never {
-	if (isSampleNameUniqueViolation(error)) {
+	if (isUniqueViolation(error, ["legacy_samples_name_key"])) {
 		throw new SampleNameConflictError("Sample name is already in use");
 	}
 	throw error;

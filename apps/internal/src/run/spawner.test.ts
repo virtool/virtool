@@ -123,6 +123,7 @@ describe("PERIODIC_TASKS", () => {
 			cleanup_sessions: 3600,
 			sweep_blast: 30,
 			deliver_email: 30,
+			recreate_hmm_annotations: 60,
 			refresh_hmms: 600,
 			timeout_jobs: 600,
 			evict_caches_lru: 3600,

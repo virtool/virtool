@@ -58,6 +58,12 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	 * noticed, and auth emails are exactly the mail people wait on.
 	 */
 	{ type: "deliver_email", intervalSeconds: 30 },
+	/*
+	 * Each minute, because Nuvs analyses fail while the annotations blob is
+	 * missing. A run that finds the blob does one row lock and one storage
+	 * lookup.
+	 */
+	{ type: "recreate_hmm_annotations", intervalSeconds: 60 },
 	{ type: "refresh_hmms", intervalSeconds: 600 },
 	{ type: "timeout_jobs", intervalSeconds: 600 },
 	{ type: "evict_caches_lru", intervalSeconds: 3600 },
