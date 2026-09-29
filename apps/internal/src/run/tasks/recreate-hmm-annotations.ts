@@ -24,9 +24,9 @@ export const recreateHmmAnnotationsTask = defineTask<
 	// The name is written to the row's `step` column, which is what the UI shows
 	// and what rows already written carry, so it is fixed.
 	steps: ["recreate"],
-	async run({ ctx, helpers, logger }) {
+	async run({ ctx, helpers, logger, signal }) {
 		await helpers.runStep("recreate", async () => {
-			if (await recreateHmmAnnotations(ctx.db, ctx.storage)) {
+			if (await recreateHmmAnnotations(ctx.db, ctx.storage, signal)) {
 				logger.info("recreated the missing hmm annotations blob");
 			}
 		});

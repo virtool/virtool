@@ -625,6 +625,59 @@ describe("recreateHmmAnnotations", () => {
 		);
 	});
 
+	it("creates the status singleton so there is a row to lock", async () => {
+		const storage = new MemoryStorage();
+
+		await db.insert(hmms).values({ ...createAnnotation(7), hidden: false });
+
+		expect(await recreateHmmAnnotations(db, storage)).toBe(true);
+		expect(await readStatus()).toMatchObject({ installed: null, updates: [] });
+	});
+
+	it("deletes a partial blob when the write fails", async () => {
+		const storage = new MemoryStorage();
+
+		await db.insert(hmms).values({ ...createAnnotation(7), hidden: false });
+
+		const write = vi.spyOn(storage, "write").mockImplementation(async function (
+			this: MemoryStorage,
+			key,
+			data,
+		) {
+			await MemoryStorage.prototype.write.call(
+				storage,
+				key,
+				Readable.from([Buffer.from("[")]),
+			);
+			for await (const _ of data) {
+			}
+			throw new Error("bucket exploded");
+		});
+
+		await expect(recreateHmmAnnotations(db, storage)).rejects.toThrow(
+			"bucket exploded",
+		);
+
+		write.mockRestore();
+
+		expect(await listKeys(storage)).toEqual([]);
+	});
+
+	it("stops and writes no blob when aborted", async () => {
+		const storage = new MemoryStorage();
+
+		await db.insert(hmms).values({ ...createAnnotation(7), hidden: false });
+
+		const controller = new AbortController();
+		controller.abort();
+
+		await expect(
+			recreateHmmAnnotations(db, storage, controller.signal),
+		).rejects.toThrow();
+
+		expect(await listKeys(storage)).toEqual([]);
+	});
+
 	it("writes nothing when no HMMs are installed", async () => {
 		const storage = new MemoryStorage();
 

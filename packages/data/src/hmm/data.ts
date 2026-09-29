@@ -652,6 +652,7 @@ export async function installHmms(
 export async function writeHmmAnnotations(
 	db: DbOrTx,
 	storage: StorageBackend,
+	signal?: AbortSignal,
 ): Promise<void> {
 	async function* iterJson(): AsyncGenerator<string> {
 		yield "[";
@@ -660,6 +661,8 @@ export async function writeHmmAnnotations(
 		let first = true;
 
 		for (;;) {
+			signal?.throwIfAborted();
+
 			const rows = await db
 				.select()
 				.from(hmms)
@@ -737,15 +740,32 @@ async function hasHmmAnnotations(storage: StorageBackend): Promise<boolean> {
  * then replaces the new blob with a stale one. Nuvs does not see a stale blob
  * as an error.
  *
+ * The singleton is inserted first when it is absent, because `FOR UPDATE`
+ * locks nothing when there is no row.
+ *
  * No `hmms` rows means that nothing is installed. An empty blob gives Nuvs no
  * clusters, so nothing is written and Nuvs continues to report the missing
  * blob.
+ *
+ * `signal` stops the write between pages. The partial blob is then deleted.
  */
 export async function recreateHmmAnnotations(
 	db: Db,
 	storage: StorageBackend,
+	signal?: AbortSignal,
 ): Promise<boolean> {
 	return db.transaction(async (tx) => {
+		await tx
+			.insert(legacyHmmStatus)
+			.values({
+				id: HMM_STATUS_ID,
+				errors: [],
+				installed: null,
+				release: null,
+				updates: [],
+			})
+			.onConflictDoNothing({ target: legacyHmmStatus.id });
+
 		await tx
 			.select({ id: legacyHmmStatus.id })
 			.from(legacyHmmStatus)
@@ -762,7 +782,14 @@ export async function recreateHmmAnnotations(
 			return false;
 		}
 
-		await writeHmmAnnotations(tx, storage);
+		try {
+			await writeHmmAnnotations(tx, storage, signal);
+		} catch (err) {
+			// A short array reads as a dataset missing annotations, and later runs
+			// would find the key and leave it.
+			await storage.delete(HMM_ANNOTATIONS_KEY);
+			throw err;
+		}
 
 		return true;
 	});
