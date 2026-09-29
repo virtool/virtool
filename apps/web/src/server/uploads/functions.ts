@@ -1,29 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
-	MAX_UPLOAD_SIZE,
 	SORT_DIRECTIONS,
 	UPLOAD_SORT_FIELDS,
 	UPLOAD_TYPES,
 	type UploadPolicy,
-	UploadTooLargeError,
 } from "@virtool/contracts";
 import { getSettings } from "@virtool/data/settings/data";
-import {
-	deleteUpload,
-	findUploads,
-	UploadIncompleteError,
-	UploadNotFoundError,
-	UploadReservedError,
-	UploadSizeMismatchError,
-} from "@virtool/data/uploads/data";
+import { deleteUpload, findUploads } from "@virtool/data/uploads/data";
 import { z } from "zod";
 import { authenticated, permission } from "../auth/policy";
 import { db, storage } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
-import { cancelUpload, finalizeUpload, initializeUpload } from "./service";
+import { getUploadErrorResponse } from "./errors";
+import {
+	cancelUpload,
+	finalizeUpload,
+	initializeUpload,
+	uploadInitSchema,
+} from "./service";
 
 const findUploadsSchema = z
 	.object({
@@ -43,25 +40,10 @@ const uploadIdSchema = z.object({
 });
 
 function rethrowAsHttp(err: unknown): never {
-	if (err instanceof UploadNotFoundError) {
-		setResponseStatus(404);
-		throw new ClientError("Upload not found.", 404);
-	}
-	if (err instanceof UploadReservedError) {
-		setResponseStatus(409);
-		throw new ClientError("Upload is reserved and in use.", 409);
-	}
-	if (err instanceof UploadIncompleteError) {
-		setResponseStatus(409);
-		throw new ClientError("Upload is not complete.", 409);
-	}
-	if (err instanceof UploadSizeMismatchError) {
-		setResponseStatus(409);
-		throw new ClientError("Upload size does not match the declared size.", 409);
-	}
-	if (err instanceof UploadTooLargeError) {
-		setResponseStatus(413);
-		throw new ClientError(err.message);
+	const response = getUploadErrorResponse(err);
+	if (response) {
+		setResponseStatus(response.status);
+		throw new ClientError(response.message, response.status);
 	}
 	throw err;
 }
@@ -92,18 +74,10 @@ export const deleteUploadFn = createServerFn({ method: "POST" })
 		}
 	});
 
-const initUploadSchema = z.object({
-	name: z.string().min(1),
-	type: z.enum(UPLOAD_TYPES),
-	// The file's byte length, locked here so finalize can reject a commit that
-	// does not land exactly this many bytes.
-	size: z.number().int().nonnegative().max(MAX_UPLOAD_SIZE),
-});
-
 /** Begin a direct upload for the browser client. */
 export const initUploadFn = createServerFn({ method: "POST" })
 	.middleware([permission("upload_file")])
-	.validator(initUploadSchema)
+	.validator(uploadInitSchema)
 	.handler(async ({ data, context }) => {
 		try {
 			return await initializeUpload(data, context.principal.userId);

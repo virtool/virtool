@@ -1,24 +1,12 @@
-import { UPLOAD_TYPES, UploadTooLargeError } from "@virtool/contracts";
-import {
-	UploadIncompleteError,
-	UploadNotFoundError,
-	UploadSizeMismatchError,
-} from "@virtool/data/uploads/data";
-import { z } from "zod";
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { hasPermission } from "../auth/policy";
+import { getUploadErrorResponse } from "./errors";
 import {
 	cancelUpload,
-	DirectUploadUnavailableError,
 	finalizeUpload,
 	initializeUpload,
+	uploadInitSchema,
 } from "./service";
-
-const initUploadSchema = z.object({
-	name: z.string().min(1),
-	type: z.enum(UPLOAD_TYPES),
-	size: z.number().int().nonnegative(),
-});
 
 function jsonResponse(body: unknown, status: number): Response {
 	return Response.json(body, { status });
@@ -36,23 +24,9 @@ async function authorize(request: Request) {
 }
 
 function uploadErrorResponse(err: unknown): Response | null {
-	if (err instanceof UploadNotFoundError) {
-		return jsonResponse({ message: "Upload not found." }, 404);
-	}
-	if (err instanceof UploadIncompleteError) {
-		return jsonResponse({ message: "Upload is not complete." }, 409);
-	}
-	if (err instanceof UploadSizeMismatchError) {
-		return jsonResponse(
-			{ message: "Upload size does not match the declared size." },
-			409,
-		);
-	}
-	if (err instanceof UploadTooLargeError) {
-		return jsonResponse({ message: err.message }, 413);
-	}
-	if (err instanceof DirectUploadUnavailableError) {
-		return jsonResponse({ message: err.message }, 503);
+	const response = getUploadErrorResponse(err);
+	if (response) {
+		return jsonResponse({ message: response.message }, response.status);
 	}
 	return null;
 }
@@ -73,7 +47,7 @@ export async function handleUploadInitialize(
 		return jsonResponse({ message: "A JSON body is required." }, 400);
 	}
 
-	const parsed = initUploadSchema.safeParse(input);
+	const parsed = uploadInitSchema.safeParse(input);
 	if (!parsed.success) {
 		return jsonResponse({ message: "Invalid upload initialization." }, 422);
 	}

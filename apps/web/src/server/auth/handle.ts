@@ -21,6 +21,7 @@ export function checkHandle(handle: string): void {
 		setResponseStatus(400);
 		throw new ClientError(
 			`User name must have ${HANDLE_MIN_LENGTH} to ${HANDLE_MAX_LENGTH} characters, and use only letters, numbers, and _ .`,
+			400,
 		);
 	}
 }
@@ -35,6 +36,6 @@ export function checkHandle(handle: string): void {
 export function checkReservedHandle(handle: string): void {
 	if (isReservedHandle(handle.trim())) {
 		setResponseStatus(400);
-		throw new ClientError("Reserved user name: virtool");
+		throw new ClientError("Reserved user name: virtool", 400);
 	}
 }
