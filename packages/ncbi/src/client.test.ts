@@ -542,6 +542,49 @@ describe("failure handling", () => {
 		expect(calls).toHaveLength(3);
 	});
 
+	it("releases the body of every refusal it retries", async () => {
+		const cancel = vi.fn();
+
+		const { fetchMock } = createFetch(
+			() => new Response(new ReadableStream({ cancel }), { status: 503 }),
+		);
+
+		await expect(
+			createNcbiClient({ logger, fetch: fetchMock }).fetchGenbankRecords([
+				"AB000048.1",
+			]),
+		).rejects.toThrow(NcbiUnreachableError);
+
+		expect(cancel).toHaveBeenCalledTimes(3);
+	});
+
+	it("lets an abort during the last refusal's release escape untranslated", async () => {
+		const controller = new AbortController();
+
+		const { calls, fetchMock } = createFetch(
+			() =>
+				new Response(
+					new ReadableStream({
+						cancel() {
+							if (calls.length === 3) {
+								controller.abort();
+							}
+						},
+					}),
+					{ status: 503 },
+				),
+		);
+
+		await expect(
+			createNcbiClient({ logger, fetch: fetchMock }).fetchGenbankRecords(
+				["AB000048.1"],
+				controller.signal,
+			),
+		).rejects.not.toThrow(NcbiUnreachableError);
+
+		expect(calls).toHaveLength(3);
+	});
+
 	it("does not retry a 400, which no later attempt settles", async () => {
 		const { calls, fetchMock } = createFetch(
 			() => new Response("bad accession", { status: 400 }),
