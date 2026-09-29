@@ -436,10 +436,10 @@ authority rather than one per kind.
 
 TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
 `Virtool`, six-digit codes, a 30-second period, and ten encrypted recovery
-codes minted with every enrollment. The browser calls the plugin's endpoints
-through `better-auth/client` for enrollment, recovery-code regeneration, and
-disable. Each of these requires the current password; they don't use the
-recent-authentication policy. Trusted devices are not enabled.
+codes minted with every enrollment. The plugin's enrollment, recovery-code
+regeneration, and disable endpoints are reachable over HTTP. Each of these
+requires the current password; they don't use the recent-authentication
+policy. Trusted devices are not enabled.
 
 After a correct password, an enrolled user gets Better Auth's login challenge
 instead of a session. The challenge allows five attempts, and ten failures lock
