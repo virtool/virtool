@@ -25,9 +25,11 @@ server never loads the task registry. Each command lives under its own
 directory (`src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/`,
 `src/auth-remediation/`) and owns its own config and fatal logging.
 
-Only `serve` and `run` report errors to Sentry, tagged `service: jobs-api` and
-`service: tasks`. `migrate`, `data-migrations`, and `auth-remediation` log
-failures and exit non-zero without sending them to Sentry.
+`serve`, `run`, `migrate`, and `data-migrations` report errors to Sentry,
+tagged `service: jobs-api`, `service: tasks`, `service: migrate`, and
+`service: data-migrations`. `migrate` and `data-migrations` report the error
+that stops them and flush Sentry before they exit. `auth-remediation` logs
+failures and exits non-zero without sending them to Sentry.
 
 ## `auth-remediation`: cutover report
 
@@ -399,7 +401,7 @@ unset.
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, errors aren't sent to Sentry. |
+| `VT_SENTRY_DSN` | URL string | Unset | `serve`, `run`, `migrate`, and `data-migrations`: send errors to Sentry. When unset, errors aren't sent to Sentry. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
 | `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept encrypted values written under the prior key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
@@ -413,9 +415,9 @@ unset.
 | `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
 | `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
 
-`migrate` reads only `VT_POSTGRES_URL` and `VT_MIGRATIONS_PATH`, and
-`data-migrations` reads only `VT_POSTGRES_URL`. Neither reads the storage or metrics
-keys.
+`migrate` reads only `VT_POSTGRES_URL`, `VT_MIGRATIONS_PATH`, and
+`VT_SENTRY_DSN`, and `data-migrations` reads only `VT_POSTGRES_URL` and
+`VT_SENTRY_DSN`. Neither reads the storage or metrics keys.
 
 ## Commands
 
