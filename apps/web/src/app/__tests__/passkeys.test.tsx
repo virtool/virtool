@@ -23,7 +23,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	createPasskey,
 	getPasskeyAssertion,
-	getPasskeyErrorMessage,
+	getPasskeyNotice,
 	PasskeyCeremonyError,
 	usePasskeySupport,
 	useSingleCeremony,
@@ -114,7 +114,7 @@ describe("ceremonies", () => {
 		expect(Sentry.captureException).not.toHaveBeenCalled();
 	});
 
-	it("gives each ceremony its own message for a NotAllowedError", async () => {
+	it("gives each ceremony its own neutral notice for a NotAllowedError", async () => {
 		const notAllowed = Object.assign(new Error("https://virtool.test"), {
 			name: "NotAllowedError",
 		});
@@ -126,12 +126,15 @@ describe("ceremonies", () => {
 			getPasskeyAssertion({} as never).catch((err) => err),
 		]);
 
-		expect(getPasskeyErrorMessage(registration)).toBe(
-			"The passkey was not added. Try again.",
-		);
-		expect(getPasskeyErrorMessage(assertion)).toBe(
-			"Passkey sign-in did not finish. Try again, or sign in with your password.",
-		);
+		expect(getPasskeyNotice(registration)).toEqual({
+			message: "The passkey was not added. Try again.",
+			tone: "neutral",
+		});
+		expect(getPasskeyNotice(assertion)).toEqual({
+			message:
+				"Passkey sign-in did not finish. Try again, or sign in with your password.",
+			tone: "neutral",
+		});
 	});
 
 	it("reports an unexpected failure without the browser's payload", async () => {
@@ -202,26 +205,43 @@ describe("useSingleCeremony", () => {
 	});
 });
 
-describe("getPasskeyErrorMessage", () => {
+describe("getPasskeyNotice", () => {
 	it("stays silent for an aborted ceremony or cancelled step-up challenge", () => {
 		const cancelled = new Error("cancelled");
 		cancelled.name = "RecentAuthenticationCancelled";
 
 		expect(
-			getPasskeyErrorMessage(new PasskeyCeremonyError("cancelled", "x")),
+			getPasskeyNotice(new PasskeyCeremonyError("cancelled", "x")),
 		).toBeNull();
-		expect(getPasskeyErrorMessage(cancelled)).toBeNull();
+		expect(getPasskeyNotice(cancelled)).toBeNull();
 	});
+
+	it("shows an incomplete ceremony as neutral", () => {
+		expect(
+			getPasskeyNotice(new PasskeyCeremonyError("incomplete", "Try again.")),
+		).toEqual({ message: "Try again.", tone: "neutral" });
+	});
+
+	it.each(["duplicate", "unsupported", "failed"] as const)(
+		"shows a %s ceremony as an error",
+		(kind) => {
+			expect(
+				getPasskeyNotice(new PasskeyCeremonyError(kind, "Message.")),
+			).toEqual({ message: "Message.", tone: "error" });
+		},
+	);
 
 	it("shows a server refusal but not an unexpected error's message", () => {
 		const refusal = new Error("This passkey is already registered.");
 		refusal.name = "ClientError";
 
-		expect(getPasskeyErrorMessage(refusal)).toBe(
-			"This passkey is already registered.",
-		);
-		expect(getPasskeyErrorMessage(new Error("relation does not exist"))).toBe(
-			"Something went wrong. Try again.",
-		);
+		expect(getPasskeyNotice(refusal)).toEqual({
+			message: "This passkey is already registered.",
+			tone: "error",
+		});
+		expect(getPasskeyNotice(new Error("relation does not exist"))).toEqual({
+			message: "Something went wrong. Try again.",
+			tone: "error",
+		});
 	});
 });

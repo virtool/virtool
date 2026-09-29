@@ -104,7 +104,7 @@ describe("<AccountPasskeys />", () => {
 		});
 	});
 
-	it("says the passkey was not added when the browser does not allow it", async () => {
+	it("says the passkey was not added in a neutral notice when the browser does not allow it", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([]);
 		accountServerFnMocks.getPasskeyRegistrationOptionsFn.mockResolvedValue({});
@@ -113,15 +113,36 @@ describe("<AccountPasskeys />", () => {
 		);
 
 		renderWithProviders(<AccountPasskeys />);
-		await user.click(
-			await screen.findByRole("button", { name: "Add passkey" }),
-		);
+		await screen.findByText("You have not added any passkeys.");
+		await user.click(screen.getByRole("button", { name: "Add passkey" }));
 
-		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"The passkey was not added. Try again.",
-		);
+		const notice = await screen.findByRole("status");
+		expect(notice).toHaveTextContent("The passkey was not added. Try again.");
+		expect(notice.firstElementChild).toHaveClass("bg-gray-100");
+		expect(screen.queryByRole("alert")).toBeNull();
 		expect(screen.getByRole("button", { name: "Add passkey" })).toBeEnabled();
 		expect(accountServerFnMocks.registerPasskeyFn).not.toHaveBeenCalled();
+	});
+
+	it("shows a red alert when the passkey is already registered", async () => {
+		const user = userEvent.setup();
+		mockFindPasskeys([]);
+		accountServerFnMocks.getPasskeyRegistrationOptionsFn.mockResolvedValue({});
+		browser.startRegistration.mockRejectedValue(
+			Object.assign(new Error("already registered"), {
+				name: "InvalidStateError",
+				code: "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
+			}),
+		);
+
+		renderWithProviders(<AccountPasskeys />);
+		await screen.findByText("You have not added any passkeys.");
+		await user.click(screen.getByRole("button", { name: "Add passkey" }));
+
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent("This passkey is already registered.");
+		expect(alert.firstElementChild).toHaveClass("bg-red-100");
+		expect(screen.queryByRole("status")).toBeNull();
 	});
 
 	it("explains why a browser cannot add passkeys", async () => {

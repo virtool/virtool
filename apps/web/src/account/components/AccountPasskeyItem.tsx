@@ -1,4 +1,4 @@
-import { getPasskeyErrorMessage } from "@app/passkeys";
+import { getPasskeyNotice } from "@app/passkeys";
 import { BoxGroupSection } from "@base/Box";
 import DeleteDialog from "@base/DeleteDialog";
 import {
@@ -65,7 +65,7 @@ function PasskeyRename({ passkey }: AccountPasskeyItemProps) {
 
 	const error =
 		errors.name?.message ||
-		(mutation.isError ? getPasskeyErrorMessage(mutation.error) : null);
+		(mutation.isError ? getPasskeyNotice(mutation.error)?.message : null);
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>

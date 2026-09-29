@@ -99,7 +99,7 @@ function toCeremonyError(
 	}
 	// Browsers use NotAllowedError for a user cancel, a timeout, and a request
 	// that the browser refused. They do not tell these apart, so the user gets
-	// a neutral message and not silence.
+	// a neutral notice and not silence.
 	if (name === "NotAllowedError") {
 		return new PasskeyCeremonyError("incomplete", incompleteMessage);
 	}
@@ -191,25 +191,38 @@ export function useSingleCeremony<T>(
 	}, [ceremony]);
 }
 
+/** A message about a failed passkey action and how strongly to show it. */
+type PasskeyNotice = {
+	message: string;
+	tone: "error" | "neutral";
+};
+
 /**
- * The message to show for a failed passkey action, or `null` when it was
+ * The notice to show for a failed passkey action, or `null` when it was
  * stopped on purpose and there is nothing to report.
  *
  * Only messages written for the user are shown: a ceremony error from this
- * module or a deliberate server refusal.
+ * module or a deliberate server refusal. An incomplete ceremony is neutral
+ * because it is usually a deliberate cancel.
  */
-export function getPasskeyErrorMessage(error: unknown): string | null {
+export function getPasskeyNotice(error: unknown): PasskeyNotice | null {
 	if (!(error instanceof Error)) {
 		return null;
 	}
 	if (error instanceof PasskeyCeremonyError) {
-		return error.kind === "cancelled" ? null : error.message;
+		if (error.kind === "cancelled") {
+			return null;
+		}
+		return {
+			message: error.message,
+			tone: error.kind === "incomplete" ? "neutral" : "error",
+		};
 	}
 	if (isRecentAuthenticationCancelled(error)) {
 		return null;
 	}
 	if (error.name === CLIENT_ERROR_NAME && error.message) {
-		return error.message;
+		return { message: error.message, tone: "error" };
 	}
-	return "Something went wrong. Try again.";
+	return { message: "Something went wrong. Try again.", tone: "error" };
 }

@@ -1,4 +1,4 @@
-import { getPasskeyErrorMessage, usePasskeySupport } from "@app/passkeys";
+import { getPasskeyNotice, usePasskeySupport } from "@app/passkeys";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
@@ -6,7 +6,7 @@ import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import { useQuery } from "@tanstack/react-query";
-import { TriangleAlert } from "lucide-react";
+import { Info, TriangleAlert } from "lucide-react";
 import { passkeysQueryOptions, useRegisterPasskey } from "../queries";
 import AccountPasskeyItem from "./AccountPasskeyItem";
 
@@ -44,9 +44,10 @@ export default function AccountPasskeys() {
 	const support = usePasskeySupport();
 	const registerMutation = useRegisterPasskey();
 
-	const registerError = registerMutation.isError
-		? getPasskeyErrorMessage(registerMutation.error)
+	const registerNotice = registerMutation.isError
+		? getPasskeyNotice(registerMutation.error)
 		: null;
+	const isRegisterError = registerNotice?.tone === "error";
 
 	return (
 		<section aria-labelledby="account-passkeys">
@@ -74,10 +75,13 @@ export default function AccountPasskeys() {
 					browser and a secure (HTTPS) connection.
 				</Alert>
 			)}
-			{registerError && (
-				<div role="alert">
-					<Alert color="red" icon={TriangleAlert}>
-						{registerError}
+			{registerNotice && (
+				<div role={isRegisterError ? "alert" : "status"}>
+					<Alert
+						color={isRegisterError ? "red" : "gray"}
+						icon={isRegisterError ? TriangleAlert : Info}
+					>
+						{registerNotice.message}
 					</Alert>
 				</div>
 			)}

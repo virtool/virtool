@@ -1,8 +1,9 @@
-import { getPasskeyErrorMessage, usePasskeySupport } from "@app/passkeys";
+import { cn } from "@app/cn";
+import { getPasskeyNotice, usePasskeySupport } from "@app/passkeys";
 import Button from "@base/Button";
 import { InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CircleAlert, KeyRound } from "lucide-react";
+import { CircleAlert, Info, KeyRound } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -67,9 +68,11 @@ export default function LoginForm({
 	}
 
 	const { error, isError } = loginMutation;
-	const passkeyError = passkeyMutation.isError
-		? getPasskeyErrorMessage(passkeyMutation.error)
+	const passkeyNotice = passkeyMutation.isError
+		? getPasskeyNotice(passkeyMutation.error)
 		: null;
+	const isPasskeyError = passkeyNotice?.tone === "error";
+	const PasskeyNoticeIcon = isPasskeyError ? CircleAlert : Info;
 
 	if (twoFactor) {
 		return (
@@ -153,13 +156,16 @@ export default function LoginForm({
 							: "Sign in with a passkey"}
 					</Button>
 				)}
-				{passkeyError && (
+				{passkeyNotice && (
 					<p
-						role="alert"
-						className="flex items-center gap-1 text-red-600 font-medium"
+						role={isPasskeyError ? "alert" : "status"}
+						className={cn(
+							"flex items-center gap-1 font-medium",
+							isPasskeyError ? "text-red-600" : "text-gray-600",
+						)}
 					>
-						<CircleAlert aria-hidden className="shrink-0" size={14} />
-						{passkeyError}
+						<PasskeyNoticeIcon aria-hidden className="shrink-0" size={14} />
+						{passkeyNotice.message}
 					</p>
 				)}
 			</div>

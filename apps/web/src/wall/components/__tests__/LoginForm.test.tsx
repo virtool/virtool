@@ -229,6 +229,32 @@ describe("<LoginForm />", () => {
 			);
 		});
 
+		it("shows an incomplete ceremony as a neutral notice", async () => {
+			const { PasskeyCeremonyError } = await import("@app/passkeys");
+			stubPasskeySupport(true);
+			passkeyMock.mockRejectedValue(
+				new PasskeyCeremonyError(
+					"incomplete",
+					"Passkey sign-in did not finish. Try again, or sign in with your password.",
+				),
+			);
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Sign in with a passkey" }),
+			);
+
+			const notice = await screen.findByRole("status");
+			expect(notice).toHaveTextContent("Passkey sign-in did not finish");
+			expect(notice).toHaveClass("text-gray-600");
+			expect(screen.queryByRole("alert")).toBeNull();
+		});
+
 		it("shows the server's generic failure", async () => {
 			stubPasskeySupport(true);
 			const error = new Error(
@@ -247,9 +273,9 @@ describe("<LoginForm />", () => {
 				await screen.findByRole("button", { name: "Sign in with a passkey" }),
 			);
 
-			expect(await screen.findByRole("alert")).toHaveTextContent(
-				"Passkey sign-in failed",
-			);
+			const alert = await screen.findByRole("alert");
+			expect(alert).toHaveTextContent("Passkey sign-in failed");
+			expect(alert).toHaveClass("text-red-600");
 		});
 
 		it("explains when the browser cannot use passkeys", async () => {
