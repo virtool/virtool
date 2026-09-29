@@ -7,6 +7,7 @@ import type { Snapshot } from "../shared/types.ts";
 import App from "./App.tsx";
 
 const snapshot: Snapshot = {
+	defaultAdministrator: null,
 	environments: [
 		{
 			age: 1,
@@ -513,4 +514,45 @@ it("lists uncreated worktrees in their own section", async () => {
 			}),
 		}),
 	);
+});
+
+it("saves the default administrator without showing the saved password", async () => {
+	snapshot.defaultAdministrator = {
+		email: "admin@example.com",
+		handle: "admin",
+	};
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+
+	expect(screen.getByLabelText("Handle")).toHaveValue("admin");
+	expect(screen.getByLabelText("Password")).toHaveValue("");
+	await user.clear(screen.getByLabelText("Handle"));
+	await user.type(screen.getByLabelText("Handle"), "boss");
+	await user.click(screen.getByRole("button", { name: "Save" }));
+
+	expect(fetch).toHaveBeenCalledWith(
+		"/api/default-administrator",
+		expect.objectContaining({
+			body: JSON.stringify({
+				email: "admin@example.com",
+				handle: "boss",
+				password: "",
+			}),
+		}),
+	);
+	expect(await screen.findByText("Default administrator saved.")).toBeVisible();
+});
+
+it("requires a password before the first default administrator save", async () => {
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+	await user.type(screen.getByLabelText("Handle"), "admin");
+	await user.type(screen.getByLabelText("Email"), "admin@example.com");
+
+	expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+	expect(
+		screen.queryByRole("button", { name: "Clear" }),
+	).not.toBeInTheDocument();
 });

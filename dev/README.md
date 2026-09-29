@@ -45,6 +45,21 @@ If shared storage disappears after initialization, the daemon shows an error
 instead of recreating it. Use the shared reset control in the UI only when you
 intend to destroy all local development state.
 
+## Default administrator
+
+Set a default handle, email, and password on the **Shared** page of the UI.
+After migrations, each environment that starts creates a full administrator
+with these values if its database has no users. The daemon never changes
+existing users.
+
+The daemon keeps the values in its state. The UI and `vtd list` never show the
+password. When you save the setting without a password, the daemon keeps the
+saved password.
+
+The daemon runs `create administrator` from
+[`@virtool/dev-tools`](../apps/dev-tools/README.md). Worktrees on branches that
+do not have the `dev-tools` Compose service skip this step.
+
 ## Workflows
 
 Workflow images build on demand. The daemon runs queued workflow jobs from all

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type {
+	DefaultAdministrator,
 	Environment,
 	Mutation,
 	Operation,
@@ -45,6 +46,7 @@ const STARTUP_STAGES = [
 	["initializing database and storage", "Initialize database and storage"],
 	["building core image", "Build core image"],
 	["running migrations", "Run migrations"],
+	["creating default administrator", "Create default administrator"],
 	["starting services", "Start services"],
 	["checking HTTPS readiness", "Check HTTPS readiness"],
 ] as const;
@@ -1148,6 +1150,115 @@ function Logs({ environments }: { environments: Environment[] }) {
 	);
 }
 
+function DefaultAdministratorSettings({
+	connected,
+	value,
+}: {
+	connected: boolean;
+	value: DefaultAdministrator | null;
+}) {
+	const [draft, setDraft] = useState<{
+		email: string;
+		handle: string;
+		password: string;
+	} | null>(null);
+	const form = draft ?? {
+		email: value?.email ?? "",
+		handle: value?.handle ?? "",
+		password: "",
+	};
+	const action = useAction();
+	const inputClassName = "rounded-lg border border-slate-200 px-3 py-1.5";
+	return (
+		<section
+			aria-labelledby="default-administrator-heading"
+			className={`${PANEL} p-4`}
+		>
+			<h2 className="text-sm font-semibold" id="default-administrator-heading">
+				Default administrator
+			</h2>
+			<p className="mt-1 text-xs text-slate-500">
+				Created after migrations in each environment that has no users. Existing
+				users are never changed.
+			</p>
+			<form
+				className="mt-3 flex flex-wrap items-end gap-3 text-sm"
+				onSubmit={(event) => {
+					event.preventDefault();
+					void action.run(async () => {
+						await post("/api/default-administrator", form);
+						setDraft(null);
+					}, "Default administrator saved.");
+				}}
+			>
+				<label className="grid gap-1 font-medium">
+					Handle
+					<input
+						autoComplete="off"
+						className={inputClassName}
+						value={form.handle}
+						onChange={(event) =>
+							setDraft({ ...form, handle: event.target.value })
+						}
+					/>
+				</label>
+				<label className="grid gap-1 font-medium">
+					Email
+					<input
+						autoComplete="off"
+						className={inputClassName}
+						type="email"
+						value={form.email}
+						onChange={(event) =>
+							setDraft({ ...form, email: event.target.value })
+						}
+					/>
+				</label>
+				<label className="grid gap-1 font-medium">
+					Password
+					<input
+						autoComplete="new-password"
+						className={inputClassName}
+						placeholder={value ? "Unchanged" : undefined}
+						type="password"
+						value={form.password}
+						onChange={(event) =>
+							setDraft({ ...form, password: event.target.value })
+						}
+					/>
+				</label>
+				<Button
+					disabled={
+						!connected ||
+						action.pending ||
+						!form.handle.trim() ||
+						!form.email.trim() ||
+						(!value && !form.password)
+					}
+					type="submit"
+					variant="primary"
+				>
+					Save
+				</Button>
+				{value && (
+					<Button
+						disabled={!connected || action.pending}
+						onClick={() =>
+							void action.run(async () => {
+								await post("/api/default-administrator/clear", {});
+								setDraft(null);
+							}, "Default administrator cleared.")
+						}
+					>
+						Clear
+					</Button>
+				)}
+			</form>
+			<Feedback error={action.error} message={action.message} />
+		</section>
+	);
+}
+
 function AppContent() {
 	const { snapshot, connection } = useSnapshot();
 	const connected = connection === "live";
@@ -1405,6 +1516,10 @@ function AppContent() {
 							</Button>
 						</details>
 					</section>
+					<DefaultAdministratorSettings
+						connected={connected}
+						value={snapshot.defaultAdministrator}
+					/>
 				</section>
 			)}
 			{pathname === "/workflows" && (

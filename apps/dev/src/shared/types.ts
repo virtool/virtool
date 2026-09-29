@@ -76,8 +76,15 @@ export type SchedulerState = {
 	queues: Record<string, Partial<Record<Workflow, number>>>;
 };
 
+/** The administrator the daemon creates in environments that have no users. */
+export type DefaultAdministrator = {
+	email: string;
+	handle: string;
+};
+
 /** A complete management UI state snapshot. */
 export type Snapshot = {
+	defaultAdministrator: DefaultAdministrator | null;
 	environments: Environment[];
 	repositoryId: string;
 	scheduler: SchedulerState;

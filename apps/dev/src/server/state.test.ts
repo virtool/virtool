@@ -97,3 +97,53 @@ describe("StateStore", () => {
 it("creates safe readable slugs", () => {
 	expect(slugify("refs/heads/Feature/My change!")).toBe("feature-my-change");
 });
+
+describe("default administrator", () => {
+	it("keeps the saved password when a new one is empty", () => {
+		const store = createStore();
+		store.setDefaultAdministrator({
+			email: "admin@example.com",
+			handle: "admin",
+			password: "hello world",
+		});
+		store.setDefaultAdministrator({
+			email: " new@example.com ",
+			handle: "boss",
+			password: "",
+		});
+
+		expect(store.getDefaultAdministrator()).toEqual({
+			email: "new@example.com",
+			handle: "boss",
+		});
+		expect(store.getDefaultAdministratorCredentials()?.password).toBe(
+			"hello world",
+		);
+	});
+
+	it("requires a password when none is saved", () => {
+		const store = createStore();
+
+		expect(() =>
+			store.setDefaultAdministrator({
+				email: "admin@example.com",
+				handle: "admin",
+				password: "",
+			}),
+		).toThrow("Handle, email, and password are required");
+		expect(store.getDefaultAdministrator()).toBeNull();
+	});
+
+	it("clears every saved value", () => {
+		const store = createStore();
+		store.setDefaultAdministrator({
+			email: "admin@example.com",
+			handle: "admin",
+			password: "hello world",
+		});
+
+		store.clearDefaultAdministrator();
+
+		expect(store.getDefaultAdministratorCredentials()).toBeNull();
+	});
+});

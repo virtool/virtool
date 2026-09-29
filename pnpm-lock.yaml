@@ -220,6 +220,37 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.4.1)(@vitest/browser-playwright@5.0.1)(@vitest/ui@5.0.1)(jsdom@30.1.1(@noble/hashes@2.4.0))(vite@8.3.0(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.1))
 
+  apps/dev-tools:
+    dependencies:
+      '@virtool/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@virtool/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@virtool/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      bcrypt:
+        specifier: ^6.0.0
+        version: 6.0.0
+      pino:
+        specifier: ^10.1.0
+        version: 10.3.1
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
+    devDependencies:
+      tsdown:
+        specifier: ^0.23.0
+        version: 0.23.0(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.4.1)(@vitest/browser-playwright@5.0.1)(@vitest/ui@5.0.1)(jsdom@30.1.1(@noble/hashes@2.4.0))(vite@8.3.0(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.1))
+
   apps/internal:
     dependencies:
       '@hono/node-server':

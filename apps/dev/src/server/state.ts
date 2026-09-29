@@ -3,12 +3,18 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type {
+	DefaultAdministrator,
 	DesiredState,
 	Environment,
 	OpenPullRequest,
 	Operation,
 } from "../shared/types.ts";
 import { CONFIG_VERSION } from "./constants.ts";
+
+/** Default administrator credentials, which the UI never receives. */
+export type DefaultAdministratorCredentials = DefaultAdministrator & {
+	password: string;
+};
 
 type WorktreeInput = {
 	branch: string;
@@ -445,6 +451,55 @@ export class StateStore {
 				WHERE status IN ('pending', 'running')
 			`)
 			.run(Date.now());
+	}
+
+	getDefaultAdministrator(): DefaultAdministrator | null {
+		const credentials = this.getDefaultAdministratorCredentials();
+		return credentials
+			? { email: credentials.email, handle: credentials.handle }
+			: null;
+	}
+
+	getDefaultAdministratorCredentials(): DefaultAdministratorCredentials | null {
+		const handle = this.getMeta("default_administrator_handle");
+		const email = this.getMeta("default_administrator_email");
+		const password = this.getMeta("default_administrator_password");
+		return handle && email && password ? { email, handle, password } : null;
+	}
+
+	/** Save the default administrator, keeping the saved password when `password` is empty. */
+	setDefaultAdministrator(input: {
+		email: string;
+		handle: string;
+		password: string;
+	}): void {
+		const handle = input.handle.trim();
+		const email = input.email.trim();
+		const password =
+			input.password || this.getMeta("default_administrator_password");
+		if (!handle || !email || !password) {
+			throw new Error("Handle, email, and password are required");
+		}
+		this.database.exec("BEGIN IMMEDIATE");
+		try {
+			this.setMeta("default_administrator_handle", handle);
+			this.setMeta("default_administrator_email", email);
+			this.setMeta("default_administrator_password", password);
+			this.database.exec("COMMIT");
+		} catch (error) {
+			this.database.exec("ROLLBACK");
+			throw error;
+		}
+	}
+
+	clearDefaultAdministrator(): void {
+		this.database
+			.prepare("DELETE FROM meta WHERE key IN (?, ?, ?)")
+			.run(
+				"default_administrator_email",
+				"default_administrator_handle",
+				"default_administrator_password",
+			);
 	}
 
 	setWorkflowConcurrency(value: number): void {

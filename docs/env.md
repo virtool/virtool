@@ -75,6 +75,7 @@ Current integrations are:
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`
+- `apps/dev-tools/src/administrator.ts`
 - `packages/workflow/src/config.ts`
 
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`

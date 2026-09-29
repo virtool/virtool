@@ -4,6 +4,7 @@ import type { Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
 
 const snapshot: Snapshot = {
+	defaultAdministrator: null,
 	environments: [],
 	repositoryId: "repo",
 	scheduler: {
@@ -193,5 +194,47 @@ describe("management API", () => {
 		expect(response.status).toBe(200);
 		expect(await response.text()).toBe("daemon ready\n");
 		expect(readDaemonLogs).toHaveBeenCalledOnce();
+	});
+
+	it("saves the default administrator and reports invalid input as text", async () => {
+		const set = vi.fn((input: { password: string }) => {
+			if (!input.password) {
+				throw new Error("Handle, email, and password are required");
+			}
+		});
+		const app = createApi(
+			new SnapshotFeed(snapshot),
+			vi.fn(),
+			vi.fn(),
+			"/missing",
+			undefined,
+			undefined,
+			undefined,
+			{ clear: vi.fn(), set },
+		);
+		function save(password: string) {
+			return app.request("http://127.0.0.1/api/default-administrator", {
+				body: JSON.stringify({
+					email: "admin@example.com",
+					handle: "admin",
+					password,
+				}),
+				headers: { origin: "https://dev.localhost:9443" },
+				method: "POST",
+			});
+		}
+
+		expect((await save("hello world")).status).toBe(202);
+		expect(set).toHaveBeenCalledWith({
+			email: "admin@example.com",
+			handle: "admin",
+			password: "hello world",
+		});
+
+		const invalid = await save("");
+		expect(invalid.status).toBe(422);
+		expect(await invalid.text()).toBe(
+			"Handle, email, and password are required",
+		);
 	});
 });

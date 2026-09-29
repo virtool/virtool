@@ -13,6 +13,11 @@ type EnvironmentLogReader = (
 
 type DaemonLogReader = () => Promise<string>;
 
+type DefaultAdministratorSettings = {
+	clear: () => void;
+	set: (input: { email: string; handle: string; password: string }) => void;
+};
+
 export class SnapshotFeed {
 	private listeners = new Set<(snapshot: Snapshot) => void>();
 
@@ -53,6 +58,7 @@ export function createApi(
 	resetShared: () => Promise<void> = async () => undefined,
 	readDaemonLogs?: DaemonLogReader,
 	readEnvironmentLogs?: EnvironmentLogReader,
+	defaultAdministrator?: DefaultAdministratorSettings,
 ) {
 	const app = new Hono();
 	app.use("/api/*", async (context, next) => {
@@ -159,6 +165,37 @@ export function createApi(
 			return context.json({ error: "confirmation required" }, 422);
 		}
 		await resetShared();
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/default-administrator", async (context) => {
+		const body = (await context.req.json()) as {
+			email?: unknown;
+			handle?: unknown;
+			password?: unknown;
+		};
+		if (
+			typeof body.handle !== "string" ||
+			typeof body.email !== "string" ||
+			typeof body.password !== "string"
+		) {
+			return context.text("Handle, email, and password must be strings", 422);
+		}
+		try {
+			defaultAdministrator?.set({
+				email: body.email,
+				handle: body.handle,
+				password: body.password,
+			});
+		} catch (error) {
+			return context.text(
+				error instanceof Error ? error.message : String(error),
+				422,
+			);
+		}
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/default-administrator/clear", (context) => {
+		defaultAdministrator?.clear();
 		return context.json({ accepted: true }, 202);
 	});
 	if (existsSync(clientDirectory)) {
