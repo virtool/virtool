@@ -1,3 +1,4 @@
+import { useFetchAccount } from "@account/account";
 import { useCheckAdminRole } from "@administration/hooks";
 import Alert from "@base/Alert";
 import { InitialIcon } from "@base/Icon";
@@ -9,11 +10,13 @@ import {
 	useSuspenseUser,
 	useUpdateUser,
 } from "@users/queries";
+import { hasSufficientAdminRole } from "@virtool/contracts";
 import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
 import { DeletePendingUser } from "./DeletePendingUser";
 import Handle from "./Handle";
 import { InvitationControls } from "./InvitationControls";
 import Password from "./Password";
+import { ResetUserTotp } from "./ResetUserTotp";
 import { UserActivationBanner } from "./UserActivationBanner";
 import UserAdministratorRole from "./UserAdministratorRole";
 import UserGroups from "./UserGroups";
@@ -29,6 +32,7 @@ type UserDetailProps = {
  */
 export default function UserDetail({ userId }: UserDetailProps) {
 	const { data } = useSuspenseUser(userId);
+	const { data: account } = useFetchAccount();
 	const { hasPermission: canEdit } = useCheckAdminRole(
 		data.administratorRole === null ? "users" : "full",
 	);
@@ -40,6 +44,12 @@ export default function UserDetail({ userId }: UserDetailProps) {
 	});
 
 	const mutation = useUpdateUser();
+
+	const canResetTotp =
+		data.twoFactorEnabled &&
+		account !== undefined &&
+		account.id !== userId &&
+		hasSufficientAdminRole("full", account.administratorRole);
 
 	if (!canEdit) {
 		return (
@@ -128,15 +138,18 @@ export default function UserDetail({ userId }: UserDetailProps) {
 				{isInvited ? (
 					<DeletePendingUser userId={id} email={invitation?.email} />
 				) : (
-					<UserActivationBanner
-						onClick={() =>
-							mutation.mutate({
-								userId: id,
-								update: { active: !data.active },
-							})
-						}
-						verb={data.active ? "deactivate" : "activate"}
-					/>
+					<>
+						{canResetTotp && <ResetUserTotp userId={id} handle={handle} />}
+						<UserActivationBanner
+							onClick={() =>
+								mutation.mutate({
+									userId: id,
+									update: { active: !data.active },
+								})
+							}
+							verb={data.active ? "deactivate" : "activate"}
+						/>
+					</>
 				)}
 			</section>
 		</div>

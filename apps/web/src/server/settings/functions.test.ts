@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { MFA_ENROLLMENT_REQUIRED_ERROR_NAME } from "@virtool/contracts";
 import {
 	createKeyring,
 	type EncryptedValue,
@@ -13,6 +14,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { eq } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -72,6 +74,8 @@ const handlers = (await import(
 const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
+const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
+const { SessionNotFreshError } = await import("../auth/policy");
 const { signIn } = await import("../auth/test/fixtures");
 const { seedSettings } = await import("@virtool/data/settings/test/fixtures");
 
@@ -428,5 +432,90 @@ describe("clearNcbiApiKey", () => {
 		await expect(call("clearNcbiApiKeyFn")).resolves.toMatchObject({
 			hasNcbiApiKey: false,
 		});
+	});
+});
+
+describe("setMfaPolicy", () => {
+	it("refuses a settings administrator without the full role", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "required" }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+	});
+
+	it("sets the policy for a full administrator", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		await seedSettings(db);
+
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "required" }),
+		).resolves.toMatchObject({ mfaPolicy: "required" });
+		await expect(call("getSettingsFn")).resolves.toMatchObject({
+			mfaPolicy: "required",
+		});
+	});
+
+	it("requires a fresh session", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
+		await db
+			.update(authSessions)
+			.set({
+				createdAt: new Date(
+					Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1),
+				),
+			})
+			.where(eq(authSessions.userId, userId));
+		await seedSettings(db, { mfaPolicy: "required" });
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "optional" }),
+		).rejects.toBeInstanceOf(SessionNotFreshError);
+		await expect(call("getSettingsFn")).resolves.toMatchObject({
+			mfaPolicy: "required",
+		});
+	});
+
+	it("refuses to require MFA before the caller has enrolled", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await seedSettings(db);
+
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "required" }),
+		).rejects.toThrow("Set up two-factor authentication before requiring it.");
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		await expect(call("getSettingsFn")).resolves.toMatchObject({
+			mfaPolicy: "optional",
+		});
+	});
+
+	it("restricts an unenrolled administrator while MFA is required", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await seedSettings(db, { mfaPolicy: "required" });
+
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "optional" }),
+		).rejects.toMatchObject({ name: MFA_ENROLLMENT_REQUIRED_ERROR_NAME });
+	});
+
+	it("rejects an unknown policy", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "sometimes" }),
+		).rejects.toThrow();
+	});
+
+	it("is not settable through the settings patch", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await expect(
+			call("updateSettingsFn", { mfaPolicy: "required" }),
+		).rejects.toThrow();
 	});
 });

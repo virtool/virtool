@@ -83,7 +83,7 @@ describe("issueSetupToken", () => {
 			purpose: "email_remediation",
 		});
 
-		await issueSetupToken(db, { userId, purpose: "totp_enrollment" });
+		await issueSetupToken(db, { userId, purpose: "password_recovery" });
 
 		await expect(
 			consumeSetupToken(db, remediation.token, "email_remediation"),
@@ -147,7 +147,7 @@ describe("consumeSetupToken", () => {
 		const { token } = await seedSetupToken(db, userId, "email_remediation");
 
 		await expect(
-			consumeSetupToken(db, token, "totp_enrollment"),
+			consumeSetupToken(db, token, "password_recovery"),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 
 		const [row] = await db.select().from(setupTokens);
@@ -205,7 +205,7 @@ describe("supersedeSetupTokens", () => {
 		await seedSetupToken(db, userId, "email_remediation", {
 			consumedAt: new Date(),
 		});
-		await seedSetupToken(db, userId, "totp_enrollment");
+		await seedSetupToken(db, userId, "password_recovery");
 
 		expect(await supersedeSetupTokens(db, userId, "email_remediation")).toBe(1);
 		const rows = await db.select().from(setupTokens);
@@ -235,7 +235,7 @@ describe("createSetupSession", () => {
 
 		await createSetupSession(db, {
 			userId,
-			purpose: "totp_enrollment",
+			purpose: "password_recovery",
 			ip: "127.0.0.1",
 		});
 
@@ -282,7 +282,7 @@ describe("verifySetupSession", () => {
 
 	it("returns null when the secret does not match", async () => {
 		const userId = await seedUser(db);
-		const seeded = await seedSetupSession(db, userId, "totp_enrollment");
+		const seeded = await seedSetupSession(db, userId, "password_recovery");
 
 		expect(
 			await verifySetupSession(db, seeded.sessionId, "0".repeat(64)),
@@ -291,7 +291,7 @@ describe("verifySetupSession", () => {
 
 	it("returns null once expired", async () => {
 		const userId = await seedUser(db);
-		const seeded = await seedSetupSession(db, userId, "totp_enrollment", {
+		const seeded = await seedSetupSession(db, userId, "password_recovery", {
 			expiresAt: new Date(Date.now() - 1_000),
 		});
 
@@ -302,7 +302,7 @@ describe("verifySetupSession", () => {
 
 	it("returns null once the user is deactivated", async () => {
 		const userId = await seedUser(db);
-		const seeded = await seedSetupSession(db, userId, "totp_enrollment");
+		const seeded = await seedSetupSession(db, userId, "password_recovery");
 
 		await db.update(users).set({ active: false });
 
@@ -316,8 +316,8 @@ describe("invalidateSetupSession", () => {
 	it("deletes the named session and leaves the rest", async () => {
 		const first = await seedUser(db, { handle: "alice" });
 		const second = await seedUser(db, { handle: "bob" });
-		const seeded = await seedSetupSession(db, first, "totp_enrollment");
-		await seedSetupSession(db, second, "totp_enrollment");
+		const seeded = await seedSetupSession(db, first, "password_recovery");
+		await seedSetupSession(db, second, "password_recovery");
 
 		await invalidateSetupSession(db, seeded.sessionId);
 
@@ -329,8 +329,8 @@ describe("invalidateUserSetupSessions", () => {
 	it("deletes every session the user holds", async () => {
 		const first = await seedUser(db, { handle: "alice" });
 		const second = await seedUser(db, { handle: "bob" });
-		await seedSetupSession(db, first, "totp_enrollment");
-		await seedSetupSession(db, second, "totp_enrollment");
+		await seedSetupSession(db, first, "password_recovery");
+		await seedSetupSession(db, second, "password_recovery");
 
 		await invalidateUserSetupSessions(db, first);
 
@@ -345,12 +345,14 @@ describe("deleteExpiredSetupState", () => {
 		const past = new Date(Date.now() - 60_000);
 
 		await seedSetupToken(db, userId, "email_remediation", { expiresAt: past });
-		await seedSetupToken(db, userId, "totp_enrollment", {
+		await seedSetupToken(db, userId, "password_recovery", {
 			expiresAt: past,
 			consumedAt: new Date(),
 		});
 		await seedSetupToken(db, userId, "account_completion");
-		await seedSetupSession(db, userId, "totp_enrollment", { expiresAt: past });
+		await seedSetupSession(db, userId, "password_recovery", {
+			expiresAt: past,
+		});
 
 		expect(await deleteExpiredSetupState(db)).toEqual({
 			tokens: 2,
@@ -385,7 +387,7 @@ describe("deleteExpiredSetupState", () => {
 		const userId = await seedUser(db);
 		const past = new Date(Date.now() - 60_000);
 
-		for (const purpose of ["email_remediation", "totp_enrollment"] as const) {
+		for (const purpose of ["email_remediation", "password_recovery"] as const) {
 			await seedSetupToken(db, userId, purpose, { expiresAt: past });
 		}
 

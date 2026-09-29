@@ -23,6 +23,20 @@ export type PasswordResetPrincipal = {
 	sessionStore: "better_auth" | "legacy";
 };
 
+/**
+ * A signed-in human restricted to TOTP enrollment by the `required` MFA
+ * policy.
+ */
+export type MfaEnrollmentPrincipal = {
+	kind: "mfa_enrollment";
+	userId: number;
+	/** Stable session-row identifier; never the bearer token. */
+	sessionId: number;
+	/** Immutable time at which this browser session was created. */
+	createdAt: Date;
+	sessionStore: "better_auth";
+};
+
 /** A machine caller authenticated by a Virtool API key. */
 export type ApiKeyPrincipal = {
 	kind: "api_key";
@@ -41,12 +55,16 @@ export type SetupPrincipal = RestrictedSetup & {
 export type AuthenticatedPrincipal = BrowserPrincipal | ApiKeyPrincipal;
 
 /** A principal backed by a Better Auth or retained legacy browser session. */
-export type BrowserSessionPrincipal = BrowserPrincipal | PasswordResetPrincipal;
+export type BrowserSessionPrincipal =
+	| BrowserPrincipal
+	| PasswordResetPrincipal
+	| MfaEnrollmentPrincipal;
 
 /** Any credential resolved by the web authentication boundary. */
 export type AuthenticationPrincipal =
 	| AuthenticatedPrincipal
 	| PasswordResetPrincipal
+	| MfaEnrollmentPrincipal
 	| SetupPrincipal;
 
 /** Whether a principal has ordinary browser-session authority. */
@@ -68,6 +86,13 @@ export function isPasswordResetPrincipal(
 	principal: AuthenticationPrincipal,
 ): principal is PasswordResetPrincipal {
 	return principal.kind === "password_reset";
+}
+
+/** Whether a principal must enroll in TOTP before ordinary access. */
+export function isMfaEnrollmentPrincipal(
+	principal: AuthenticationPrincipal,
+): principal is MfaEnrollmentPrincipal {
+	return principal.kind === "mfa_enrollment";
 }
 
 /** Whether a principal is restricted to one setup purpose. */
