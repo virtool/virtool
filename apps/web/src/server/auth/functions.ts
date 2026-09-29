@@ -50,12 +50,6 @@ import {
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
 import { UnauthorizedError } from "./middleware";
-import {
-	authenticationResponseSchema,
-	generatePasskeyAuthenticationOptions,
-	PasskeySignInRefusedError,
-	verifyPasskeyAuthentication,
-} from "./passkeyActions";
 import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
 import { resolveRestrictedSetup } from "./restricted";
 import { checkConfiguredPasswordLength } from "./service";
@@ -214,69 +208,6 @@ export const verifyTwoFactorFn = createServerFn({ method: "POST" })
 				);
 			}
 			throw err;
-		}
-	});
-
-function rethrowPasskeySignInError(err: unknown): never {
-	if (err instanceof PasskeySignInRefusedError && err.status === 429) {
-		setResponseStatus(429);
-		throw new ClientError(
-			"Too many sign-in attempts. Wait and try again.",
-			429,
-		);
-	}
-	if (
-		err instanceof PasskeySignInRefusedError ||
-		(err instanceof APIError && err.statusCode < 500)
-	) {
-		setResponseStatus(400);
-		throw new ClientError(
-			"Passkey sign-in failed. Try again or sign in with your password.",
-			400,
-		);
-	}
-	throw err;
-}
-
-/**
- * Start a passkey sign-in. Unauthenticated by necessity, like `loginFn`.
- *
- * The challenge is bound to a short-lived signed cookie, so only the browser
- * that asked for these options can complete them.
- */
-export const getPasskeySignInOptionsFn = createServerFn({ method: "POST" })
-	.middleware([open()])
-	.handler(async () => {
-		try {
-			return await generatePasskeyAuthenticationOptions();
-		} catch (err) {
-			rethrowPasskeySignInError(err);
-		}
-	});
-
-/**
- * Complete a passkey sign-in.
- *
- * Every refusal gets the same answer: an unknown credential, a bad signature,
- * an expired or replayed challenge, a missing user verification, and a
- * deactivated or incomplete account are not distinguishable to the caller.
- * A user enrolled in TOTP is sent to the same second-factor step as a password
- * sign-in.
- */
-export const signInWithPasskeyFn = createServerFn({ method: "POST" })
-	.middleware([open()])
-	.validator(z.object({ response: authenticationResponseSchema }))
-	.handler(async ({ data }) => {
-		try {
-			const result = await verifyPasskeyAuthentication(data.response);
-
-			if ("twoFactorRedirect" in result) {
-				return { twoFactorRedirect: true as const };
-			}
-
-			return await completeLogin(Number(result.user.id));
-		} catch (err) {
-			rethrowPasskeySignInError(err);
 		}
 	});
 

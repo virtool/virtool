@@ -71,7 +71,9 @@ export default function LoginForm({
 			return;
 		}
 		loginMutation.reset();
-		passkeyMutation.mutate(undefined, { onSuccess: onSignedIn });
+		passkeyMutation.mutate(undefined, {
+			onSuccess: () => navigate({ to: redirect ?? "/" }),
+		});
 	}
 
 	const { error, isError } = loginMutation;

@@ -1,12 +1,11 @@
 import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
 import * as Sentry from "@sentry/tanstackstart-react";
-import type {
-	AuthenticationResponseJSON,
-	PublicKeyCredentialCreationOptionsJSON,
-	PublicKeyCredentialRequestOptionsJSON,
-	RegistrationResponseJSON,
-} from "@simplewebauthn/browser";
-import { CLIENT_ERROR_NAME } from "@virtool/contracts";
+import { PROTECTED_OPERATIONS } from "@server/auth/freshness";
+import {
+	CLIENT_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	UNAUTHORIZED_ERROR_NAME,
+} from "@virtool/contracts";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 /**
@@ -27,7 +26,7 @@ type PasskeyErrorKind =
 
 const PASSKEY_CEREMONY_ERROR_NAME = "PasskeyCeremonyError";
 
-/** A passkey ceremony that the browser or authenticator ended. */
+/** A passkey ceremony that the browser, authenticator, or server ended. */
 export class PasskeyCeremonyError extends Error {
 	readonly kind: PasskeyErrorKind;
 
@@ -38,23 +37,37 @@ export class PasskeyCeremonyError extends Error {
 	}
 }
 
-type BrowserModule = typeof import("@simplewebauthn/browser");
+/** The error part of a Better Auth client result. */
+type AuthClientError = {
+	code?: string;
+	status: number;
+};
 
-let browserModule: Promise<BrowserModule> | null = null;
-let loadedModule: BrowserModule | null = null;
+type AuthClient = typeof import("./authClient")["authClient"];
 
-function loadBrowserModule(): Promise<BrowserModule> {
-	browserModule ??= import("@simplewebauthn/browser").then(
-		(module) => {
-			loadedModule = module;
-			return module;
+type AbortService =
+	typeof import("@simplewebauthn/browser")["WebAuthnAbortService"];
+
+let authClientModule: Promise<AuthClient> | null = null;
+let loadedAbortService: AbortService | null = null;
+
+// The client plugin starts each ceremony through this same abort service, so
+// it can cancel the ceremony that is running.
+function loadAuthClient(): Promise<AuthClient> {
+	authClientModule ??= Promise.all([
+		import("@app/authClient"),
+		import("@simplewebauthn/browser"),
+	]).then(
+		([{ authClient }, { WebAuthnAbortService }]) => {
+			loadedAbortService = WebAuthnAbortService;
+			return authClient;
 		},
 		(error: unknown) => {
-			browserModule = null;
+			authClientModule = null;
 			throw error;
 		},
 	);
-	return browserModule;
+	return authClientModule;
 }
 
 function subscribe() {
@@ -81,84 +94,127 @@ export function usePasskeySupport(): PasskeySupport {
 	return useSyncExternalStore(subscribe, getSupport, getServerSupport);
 }
 
-// Messages are fixed strings, never the browser's own, which can name the
-// origin, the RP ID or the authenticator.
-function toCeremonyError(
-	error: unknown,
-	incompleteMessage: string,
-): PasskeyCeremonyError {
-	const name = error instanceof Error ? error.name : "";
-	const code =
-		error instanceof Error && "code" in error ? String(error.code) : "";
+// Browsers use NotAllowedError for a user cancel, a timeout, and a request that
+// the browser refused. The WebAuthn library passes it through with this code.
+const INCOMPLETE_CODE = "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY";
 
-	if (name === "AbortError" || code === "ERROR_CEREMONY_ABORTED") {
+const UNSUPPORTED_CODES = new Set([
+	"ERROR_INVALID_DOMAIN",
+	"ERROR_INVALID_RP_ID",
+	"ERROR_AUTHENTICATOR_MISSING_USER_VERIFICATION_SUPPORT",
+	"ERROR_AUTHENTICATOR_MISSING_DISCOVERABLE_CREDENTIAL_SUPPORT",
+	"ERROR_AUTHENTICATOR_NO_SUPPORTED_PUBKEYCREDPARAMS_ALG",
+]);
+
+// The client plugin uses these codes for any failure it does not recognize.
+const UNEXPECTED_CODES = new Set([
+	"AUTH_CANCELLED",
+	"UNKNOWN_ERROR",
+	"ERROR_AUTHENTICATOR_GENERAL_ERROR",
+]);
+
+// Messages are fixed strings. The browser's and the server's own messages can
+// name the origin, the RP ID, or the authenticator.
+function toBrowserError(
+	{ code }: AuthClientError,
+	incompleteMessage: string,
+): PasskeyCeremonyError | null {
+	if (code === "ERROR_CEREMONY_ABORTED") {
 		return new PasskeyCeremonyError(
 			"cancelled",
 			"The passkey request was cancelled.",
 		);
 	}
-	// Browsers use NotAllowedError for a user cancel, a timeout, and a request
-	// that the browser refused. They do not tell these apart, so the user gets
-	// a neutral notice and not silence.
-	if (name === "NotAllowedError") {
+	// The user gets a neutral notice and not silence, because the browser does
+	// not say which of the three it was.
+	if (code === INCOMPLETE_CODE) {
 		return new PasskeyCeremonyError("incomplete", incompleteMessage);
 	}
-	if (code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED") {
-		return new PasskeyCeremonyError(
-			"duplicate",
-			"This passkey is already registered.",
-		);
-	}
-	if (
-		name === "NotSupportedError" ||
-		name === "SecurityError" ||
-		code === "ERROR_AUTHENTICATOR_MISSING_USER_VERIFICATION_SUPPORT" ||
-		code === "ERROR_AUTHENTICATOR_MISSING_DISCOVERABLE_CREDENTIAL_SUPPORT"
-	) {
+	if (code && UNSUPPORTED_CODES.has(code)) {
 		return new PasskeyCeremonyError(
 			"unsupported",
 			"This browser or authenticator cannot use a passkey here.",
 		);
 	}
+	return null;
+}
 
-	Sentry.captureException(new Error("Passkey ceremony failed"), {
-		extra: { name, code },
-	});
-	return new PasskeyCeremonyError(
-		"failed",
-		"The passkey request failed. Try again.",
+function toFailure(error: AuthClientError, message: string): Error {
+	if (error.status >= 500 || (error.code && UNEXPECTED_CODES.has(error.code))) {
+		Sentry.captureException(new Error("Passkey ceremony failed"), {
+			extra: { code: error.code, status: error.status },
+		});
+	}
+	return new PasskeyCeremonyError("failed", message);
+}
+
+function toSignInError(error: AuthClientError): Error {
+	const browserError = toBrowserError(
+		error,
+		"Passkey sign-in did not finish. Try again, or sign in with your password.",
+	);
+	if (browserError) {
+		return browserError;
+	}
+	if (error.status === 429) {
+		return new PasskeyCeremonyError(
+			"failed",
+			"Too many sign-in attempts. Wait and try again.",
+		);
+	}
+	return toFailure(
+		error,
+		"Passkey sign-in failed. Try again or sign in with your password.",
 	);
 }
 
-/** Ask the browser to create a passkey from server-generated options. */
-export async function createPasskey(
-	optionsJSON: PublicKeyCredentialCreationOptionsJSON,
-): Promise<Omit<RegistrationResponseJSON, "clientExtensionResults">> {
-	const { startRegistration } = await loadBrowserModule();
-	try {
-		const { clientExtensionResults: _, ...response } = await startRegistration({
-			optionsJSON,
+function toRegistrationError(error: AuthClientError): Error {
+	if (error.code === SESSION_NOT_FRESH_ERROR_NAME) {
+		return Object.assign(new Error("Recent authentication required"), {
+			name: SESSION_NOT_FRESH_ERROR_NAME,
+			operation: PROTECTED_OPERATIONS.passkeyRegister,
 		});
-		return response;
-	} catch (error) {
-		throw toCeremonyError(error, "The passkey was not added. Try again.");
+	}
+	if (error.status === 401 && error.code === "UNAUTHORIZED") {
+		return Object.assign(new Error("Unauthorized"), {
+			name: UNAUTHORIZED_ERROR_NAME,
+		});
+	}
+	if (
+		error.code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED" ||
+		error.code === "PASSKEY_ALREADY_REGISTERED"
+	) {
+		return new PasskeyCeremonyError(
+			"duplicate",
+			"This passkey is already registered.",
+		);
+	}
+	return (
+		toBrowserError(error, "The passkey was not added. Try again.") ??
+		toFailure(error, "The passkey could not be registered. Try again.")
+	);
+}
+
+/** Sign in with a discoverable passkey through Better Auth. */
+export async function signInWithPasskey(): Promise<void> {
+	const authClient = await loadAuthClient();
+	const { error } = await authClient.signIn.passkey();
+	if (error) {
+		throw toSignInError(error);
 	}
 }
 
-/** Ask the browser to sign a server-generated challenge with a passkey. */
-export async function getPasskeyAssertion(
-	optionsJSON: PublicKeyCredentialRequestOptionsJSON,
-): Promise<Omit<AuthenticationResponseJSON, "clientExtensionResults">> {
-	const { startAuthentication } = await loadBrowserModule();
-	try {
-		const { clientExtensionResults: _, ...response } =
-			await startAuthentication({ optionsJSON });
-		return response;
-	} catch (error) {
-		throw toCeremonyError(
-			error,
-			"Passkey sign-in did not finish. Try again, or sign in with your password.",
-		);
+/**
+ * Register a passkey for the signed-in user through Better Auth.
+ *
+ * `name` is the account label that the authenticator shows in its picker, and
+ * the stored name of the new passkey.
+ */
+export async function addPasskey(name: string): Promise<void> {
+	const authClient = await loadAuthClient();
+	const { error } = await authClient.passkey.addPasskey({ name });
+	if (error) {
+		throw toRegistrationError(error);
 	}
 }
 
@@ -169,26 +225,29 @@ export async function getPasskeyAssertion(
  * which would make the browser abort the first. Unmounting cancels a running
  * ceremony so the browser dialog does not outlive the component.
  */
-export function useSingleCeremony<T>(
-	ceremony: () => Promise<T>,
-): () => Promise<T> {
+export function useSingleCeremony<TVariables, T>(
+	ceremony: (variables: TVariables) => Promise<T>,
+): (variables: TVariables) => Promise<T> {
 	const running = useRef<Promise<T> | null>(null);
 
 	useEffect(
 		() => () => {
 			if (running.current) {
-				loadedModule?.WebAuthnAbortService.cancelCeremony();
+				loadedAbortService?.cancelCeremony();
 			}
 		},
 		[],
 	);
 
-	return useCallback(() => {
-		running.current ??= ceremony().finally(() => {
-			running.current = null;
-		});
-		return running.current;
-	}, [ceremony]);
+	return useCallback(
+		(variables: TVariables) => {
+			running.current ??= ceremony(variables).finally(() => {
+				running.current = null;
+			});
+			return running.current;
+		},
+		[ceremony],
+	);
 }
 
 /** A message about a failed passkey action and how strongly to show it. */

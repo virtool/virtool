@@ -1,6 +1,5 @@
-import { AsyncLocalStorage } from "node:async_hooks";
-import { getAuthenticatorName, passkey } from "@better-auth/passkey";
-import { DEFAULT_PASSKEY_NAME } from "@virtool/contracts";
+import { passkey } from "@better-auth/passkey";
+import { AUTH_BASE_PATH } from "@virtool/contracts";
 import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import { mfaEnrollmentRequired } from "@virtool/data/auth/session";
@@ -36,9 +35,6 @@ import {
 	normalizeBrowserSessionMetadata,
 } from "./sessionMetadata";
 
-/** Where the Better Auth handler is mounted. */
-export const AUTH_BASE_PATH = "/api/auth";
-
 /**
  * The endpoints this instance refuses.
  *
@@ -57,10 +53,6 @@ export const AUTH_BASE_PATH = "/api/auth";
  * signs in with away from `users.handle` and around the case-insensitive
  * uniqueness that `users_handle_lower_unique` holds. Virtool owns account
  * updates through its own server functions.
- *
- * The passkey list, rename and delete endpoints: the list returns public keys
- * and counters, and neither mutation checks recent authentication or the
- * password fallback. Virtool's account server functions serve all three.
  */
 const REFUSED_PATHS = new Set([
 	"/sign-in/email",
@@ -70,31 +62,21 @@ const REFUSED_PATHS = new Set([
 	"/revoke-session",
 	"/revoke-sessions",
 	"/revoke-other-sessions",
-	"/passkey/list-user-passkeys",
-	"/passkey/update-passkey",
-	"/passkey/delete-passkey",
 ]);
 
-/** The passkey endpoint that starts a sign-in. */
-export const PASSKEY_SIGN_IN_OPTIONS_PATH =
-	"/passkey/generate-authenticate-options";
-
-/** The passkey endpoint that signs a user in. */
-export const PASSKEY_SIGN_IN_PATH = "/passkey/verify-authentication";
-
 /**
- * Better Auth endpoints reachable only through server functions.
+ * The passkey management endpoints, refused over HTTP only.
  *
- * `./passkeyActions` calls the passkey ceremonies from server functions so it
- * can apply Virtool's recent-authentication policy, override the options the
- * plugin sends, and shape the result. Over HTTP they would skip all three.
+ * The list returns public keys and counters, and neither mutation checks
+ * recent authentication. Virtool's account server functions call all three
+ * through `auth.api` and apply its own policy. The `before` hook also runs for
+ * `auth.api` calls, so the refusal is in {@link createAuthRequestHandler}.
  */
-const SERVER_FUNCTION_PATHS = new Set(
+const HTTP_REFUSED_PATHS = new Set(
 	[
-		"/passkey/generate-register-options",
-		"/passkey/verify-registration",
-		PASSKEY_SIGN_IN_OPTIONS_PATH,
-		PASSKEY_SIGN_IN_PATH,
+		"/passkey/list-user-passkeys",
+		"/passkey/update-passkey",
+		"/passkey/delete-passkey",
 	].map((path) => `${AUTH_BASE_PATH}${path}`),
 );
 
@@ -105,23 +87,7 @@ const SERVER_FUNCTION_PATHS = new Set(
  * An options request writes a challenge row, so the limit also stops a caller
  * who fills the verification table.
  */
-function passkeySignInRateLimitPlugin() {
-	return {
-		id: "virtool-passkey-sign-in-rate-limit",
-		rateLimit: [
-			{
-				pathMatcher(path) {
-					return (
-						path === PASSKEY_SIGN_IN_OPTIONS_PATH ||
-						path === PASSKEY_SIGN_IN_PATH
-					);
-				},
-				window: 10,
-				max: 3,
-			},
-		],
-	} satisfies BetterAuthPlugin;
-}
+const PASSKEY_SIGN_IN_RATE_LIMIT = { window: 10, max: 3 };
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -227,49 +193,6 @@ function virtoolSessionPlugin(db: Db) {
 	} satisfies BetterAuthPlugin;
 }
 
-/**
- * Apply the two-factor plugin's sign-in gate to passkey sign-in too.
- *
- * The plugin matches only its password sign-in paths, so a passkey would
- * otherwise issue a full session to a user enrolled in TOTP. Reusing its own
- * handler means both paths set the same pending challenge cookie and answer
- * with the same `twoFactorRedirect`.
- *
- * The handler is found by what its matcher accepts, not by its position, and
- * anything other than exactly one match stops startup: reusing the wrong hook
- * would let a passkey skip the second factor.
- */
-export function withPasskeyTwoFactor<T extends ReturnType<typeof twoFactor>>(
-	plugin: T,
-): T {
-	type HookContext = Parameters<T["hooks"]["after"][number]["matcher"]>[0];
-	const signInContext = { path: "/sign-in/username" } as HookContext;
-	const signInHooks = plugin.hooks.after.filter((hook) =>
-		hook.matcher(signInContext),
-	);
-	const [signIn] = signInHooks;
-	if (!signIn || signInHooks.length !== 1) {
-		throw new Error(
-			`Expected one Better Auth two-factor sign-in hook, found ${signInHooks.length}`,
-		);
-	}
-
-	return {
-		...plugin,
-		hooks: {
-			...plugin.hooks,
-			after: [
-				...plugin.hooks.after,
-				{
-					matcher: (context: { path?: string }) =>
-						context.path === PASSKEY_SIGN_IN_PATH,
-					handler: signIn.handler,
-				},
-			],
-		},
-	};
-}
-
 function rejectUnverifiedUser(): never {
 	throw new APIError("BAD_REQUEST", {
 		code: "USER_VERIFICATION_REQUIRED",
@@ -282,45 +205,6 @@ function rejectRegisteredPasskey(): never {
 		code: "PASSKEY_ALREADY_REGISTERED",
 		message: "Passkey already registered",
 	});
-}
-
-/** The credential a registration verified, once its signature checks out. */
-type PasskeyRegistrationCeremony = { credentialId?: string };
-
-const passkeyRegistrations =
-	new AsyncLocalStorage<PasskeyRegistrationCeremony>();
-
-/**
- * Run a passkey registration so a failure to store the verified credential is
- * not taken for a response that failed verification.
- *
- * The plugin answers any error that is not an `APIError` with a 500
- * `FAILED_TO_VERIFY_REGISTRATION`, whether the WebAuthn library rejected the
- * response or the database refused the insert. Only a response that passed
- * verification reaches `afterVerification`, which records its credential. A
- * 500 after that is a concurrent registration of the same credential, which
- * is refused as already registered, or a server fault.
- */
-export async function runPasskeyRegistration<T>(
-	db: Db,
-	register: () => Promise<T>,
-): Promise<T> {
-	const ceremony: PasskeyRegistrationCeremony = {};
-	try {
-		return await passkeyRegistrations.run(ceremony, register);
-	} catch (err) {
-		if (
-			ceremony.credentialId === undefined ||
-			!(err instanceof APIError) ||
-			err.statusCode < 500
-		) {
-			throw err;
-		}
-		if (await isPasskeyCredentialRegistered(db, ceremony.credentialId)) {
-			rejectRegisteredPasskey();
-		}
-		throw new Error("Failed to store a verified passkey", { cause: err });
-	}
 }
 
 /**
@@ -352,6 +236,11 @@ export function createAuth({
 		rateLimit: {
 			enabled: true,
 			customStorage: createRateLimitStorage(db),
+			// Keys are paths without the base path.
+			customRules: {
+				"/passkey/generate-authenticate-options": PASSKEY_SIGN_IN_RATE_LIMIT,
+				"/passkey/verify-authentication": PASSKEY_SIGN_IN_RATE_LIMIT,
+			},
 		},
 		// The one origin this instance answers on. Better Auth otherwise trusts
 		// whatever `Host` says, and every callback and WebAuthn ceremony would
@@ -476,7 +365,6 @@ export function createAuth({
 		},
 		plugins: [
 			virtoolSessionPlugin(db),
-			passkeySignInRateLimitPlugin(),
 			recentAuthenticationPlugin(
 				async function verify(headers, challenge): Promise<void> {
 					if (challenge.method === "password") {
@@ -505,16 +393,14 @@ export function createAuth({
 				minUsernameLength: HANDLE_MIN_LENGTH,
 				maxUsernameLength: HANDLE_MAX_LENGTH,
 			}),
-			withPasskeyTwoFactor(
-				twoFactor({
-					issuer: "Virtool",
-					// Recovery codes are not optional in this plugin — enrolling in TOTP
-					// always mints a set — so the only choice here is how they are held.
-					// Encrypted, because a code is a second factor in plaintext and the
-					// row sits beside the TOTP secret it would otherwise stand in for.
-					backupCodeOptions: { storeBackupCodes: "encrypted" },
-				}),
-			),
+			twoFactor({
+				issuer: "Virtool",
+				// Recovery codes are not optional in this plugin — enrolling in TOTP
+				// always mints a set — so the only choice here is how they are held.
+				// Encrypted, because a code is a second factor in plaintext and the
+				// row sits beside the TOTP secret it would otherwise stand in for.
+				backupCodeOptions: { storeBackupCodes: "encrypted" },
+			}),
 			passkey({
 				rpID: webauthnRpId,
 				rpName: "Virtool",
@@ -536,16 +422,9 @@ export function createAuth({
 						if (!info?.userVerified) {
 							rejectUnverifiedUser();
 						}
-						const ceremony = passkeyRegistrations.getStore();
-						if (ceremony) {
-							ceremony.credentialId = info.credential.id;
-						}
 						if (await isPasskeyCredentialRegistered(db, info.credential.id)) {
 							rejectRegisteredPasskey();
 						}
-						return {
-							name: getAuthenticatorName(info.aaguid) ?? DEFAULT_PASSKEY_NAME,
-						};
 					},
 				},
 				authentication: {
@@ -590,7 +469,7 @@ export function createAuthRequestHandler(
 ): (request: Request) => Promise<Response> {
 	return async function handleAuthRequest(request: Request): Promise<Response> {
 		const pathname = new URL(request.url).pathname;
-		if (SERVER_FUNCTION_PATHS.has(pathname)) {
+		if (HTTP_REFUSED_PATHS.has(pathname)) {
 			return new Response(null, { status: 404 });
 		}
 		if (!FORCED_RESET_ALLOWED_PATHS.has(pathname)) {

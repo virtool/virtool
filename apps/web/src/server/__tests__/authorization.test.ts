@@ -309,7 +309,6 @@ describe("the open endpoints are reachable without a session", () => {
 			"completeEmailRemediationFn",
 			"completePasswordRecoveryFn",
 			"createFirstUserFn",
-			"getPasskeySignInOptionsFn",
 			"getPasswordPolicyFn",
 			"getRootFn",
 			"inspectAccountSetupFn",
@@ -318,7 +317,6 @@ describe("the open endpoints are reachable without a session", () => {
 			"loginFn",
 			"logoutFn",
 			"requestPasswordRecoveryFn",
-			"signInWithPasskeyFn",
 			"verifyCurrentEmailFn",
 			"verifyTwoFactorFn",
 		]);

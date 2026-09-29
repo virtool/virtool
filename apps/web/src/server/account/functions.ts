@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import {
+	DEFAULT_PASSKEY_NAME,
 	type PasskeySummary,
 	passkeyNameSchema,
 	permissionsSchema,
@@ -12,12 +13,6 @@ import {
 	findApiKeys,
 	updateApiKey,
 } from "@virtool/data/account/data";
-import {
-	findPasskeys,
-	PasskeyFallbackMissingError,
-	toPasskeySummary,
-} from "@virtool/data/auth/passkeys";
-import { getHandle } from "@virtool/data/users/data";
 import { APIError } from "better-auth/api";
 import { z } from "zod";
 import {
@@ -25,11 +20,6 @@ import {
 	type ProtectedOperation,
 } from "../auth/freshness";
 import { UnauthorizedError } from "../auth/middleware";
-import {
-	generatePasskeyRegistrationOptions,
-	registrationResponseSchema,
-	verifyPasskeyRegistration,
-} from "../auth/passkeyActions";
 import {
 	authenticated,
 	recentlyAuthenticated,
@@ -43,9 +33,6 @@ import {
 	BrowserSessionNotFreshError,
 	CurrentBrowserSessionError,
 	getActiveBrowserSessions,
-	PasskeyNotFoundError,
-	removeAccountPasskey,
-	renameAccountPasskey,
 	revokeActiveBrowserSession,
 	revokeOtherActiveBrowserSessions,
 } from "./service";
@@ -213,49 +200,60 @@ export const deleteApiKeyFn = createServerFn({ method: "POST" })
 		}
 	});
 
-function rethrowPasskeyError(
-	err: unknown,
-	operation: ProtectedOperation,
-): never {
-	if (err instanceof PasskeyNotFoundError) {
-		setResponseStatus(404);
-		throw new ClientError("Passkey not found.", 404);
-	}
-	if (err instanceof PasskeyFallbackMissingError) {
-		setResponseStatus(409);
-		throw new ClientError(
-			"Set a password for your account before removing a passkey.",
-			409,
-		);
-	}
+/** The fields of a Better Auth passkey row that its owner may see. */
+type PasskeyRow = {
+	id: string | number;
+	name?: string | null;
+	createdAt?: Date | null;
+	deviceType: string;
+	backedUp: boolean;
+};
+
+function toPasskeySummary(row: PasskeyRow): PasskeySummary {
+	return {
+		managementId: Number(row.id),
+		name: row.name || DEFAULT_PASSKEY_NAME,
+		createdAt: row.createdAt ?? null,
+		multiDevice: row.deviceType === "multiDevice",
+		backedUp: row.backedUp,
+	};
+}
+
+function compareCreatedAt(a: PasskeySummary, b: PasskeySummary): number {
+	return (
+		(a.createdAt?.getTime() ?? Number.NEGATIVE_INFINITY) -
+			(b.createdAt?.getTime() ?? Number.NEGATIVE_INFINITY) ||
+		a.managementId - b.managementId
+	);
+}
+
+/**
+ * Map a Better Auth refusal from a passkey management call.
+ *
+ * The plugin answers another user's passkey with a 401 that has no
+ * `UNAUTHORIZED` code, and a missing passkey with a 404. Both mean "not yours"
+ * to the caller. An ended session has the `UNAUTHORIZED` code.
+ */
+function rethrowPasskeyError(err: unknown): never {
 	if (err instanceof APIError) {
-		if (err.body?.code === "SESSION_NOT_FRESH") {
-			setResponseStatus(403);
-			throw new SessionNotFreshError(operation);
-		}
-		if (err.statusCode === 401) {
+		if (err.body?.code === "UNAUTHORIZED") {
 			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
-		if (err.body?.code === "PASSKEY_ALREADY_REGISTERED") {
-			setResponseStatus(409);
-			throw new ClientError("This passkey is already registered.", 409);
-		}
-		// The plugin reports a response that fails verification, including one
-		// signed for another origin, as a server error. `runPasskeyRegistration`
-		// has already turned a failure after verification into a plain error.
-		if (
-			err.statusCode < 500 ||
-			err.body?.code === "FAILED_TO_VERIFY_REGISTRATION"
-		) {
-			setResponseStatus(400);
-			throw new ClientError(
-				"The passkey could not be registered. Try again.",
-				400,
-			);
+		if (err.statusCode === 401 || err.statusCode === 404) {
+			setResponseStatus(404);
+			throw new ClientError("Passkey not found.", 404);
 		}
 	}
-	return rethrowSessionManagementError(err, operation);
+	throw err;
+}
+
+// Read the session without rolling its expiry, as every server function does.
+const READ_ONLY_SESSION = { disableRefresh: true } as const;
+
+async function loadAuth() {
+	const { auth } = await import("../auth/instance");
+	return { auth, headers: getRequest().headers };
 }
 
 /** List the signed-in user's passkeys without any credential material. */
@@ -269,43 +267,16 @@ export const findPasskeysFn = createServerFn({ method: "GET" })
 				403,
 			);
 		}
-		return findPasskeys(db, context.principal.userId);
-	});
 
-/** Start registering a passkey for the signed-in user. */
-export const getPasskeyRegistrationOptionsFn = createServerFn({
-	method: "POST",
-})
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.passkeyRegister)])
-	.handler(async ({ context }) => {
-		const handle = await getHandle(db, context.principal.userId);
-		if (handle === null) {
-			setResponseStatus(401);
-			throw new UnauthorizedError();
-		}
-
+		const { auth, headers } = await loadAuth();
 		try {
-			return await generatePasskeyRegistrationOptions(handle);
-		} catch (err) {
-			return rethrowPasskeyError(err, PROTECTED_OPERATIONS.passkeyRegister);
-		}
-	});
-
-/** Verify the browser's registration response and store the passkey. */
-export const registerPasskeyFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.passkeyRegister)])
-	.validator(z.object({ response: registrationResponseSchema }))
-	.handler(async ({ data }): Promise<PasskeySummary> => {
-		try {
-			const passkey = await verifyPasskeyRegistration(data.response);
-			setResponseStatus(201);
-			return toPasskeySummary({
-				...passkey,
-				id: Number(passkey.id),
-				name: passkey.name ?? null,
+			const rows = await auth.api.listPasskeys({
+				headers,
+				query: READ_ONLY_SESSION,
 			});
+			return rows.map(toPasskeySummary).sort(compareCreatedAt);
 		} catch (err) {
-			return rethrowPasskeyError(err, PROTECTED_OPERATIONS.passkeyRegister);
+			return rethrowPasskeyError(err);
 		}
 	});
 
@@ -315,20 +286,17 @@ export const renamePasskeyFn = createServerFn({ method: "POST" })
 		recentlyAuthenticated(PROTECTED_OPERATIONS.passkeySecurityUpdate),
 	])
 	.validator(renamePasskeySchema)
-	.handler(async ({ context, data }) => {
+	.handler(async ({ data }): Promise<PasskeySummary> => {
+		const { auth, headers } = await loadAuth();
 		try {
-			return await renameAccountPasskey(
-				db,
-				context.principal.userId,
-				context.principal.sessionId,
-				data.managementId,
-				data.name,
-			);
+			const { passkey } = await auth.api.updatePasskey({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { id: String(data.managementId), name: data.name },
+			});
+			return toPasskeySummary(passkey);
 		} catch (err) {
-			return rethrowPasskeyError(
-				err,
-				PROTECTED_OPERATIONS.passkeySecurityUpdate,
-			);
+			return rethrowPasskeyError(err);
 		}
 	});
 
@@ -341,16 +309,16 @@ export const renamePasskeyFn = createServerFn({ method: "POST" })
 export const removePasskeyFn = createServerFn({ method: "POST" })
 	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.passkeyRemove)])
 	.validator(managementIdSchema)
-	.handler(async ({ context, data }) => {
+	.handler(async ({ data }) => {
+		const { auth, headers } = await loadAuth();
 		try {
-			await removeAccountPasskey(
-				db,
-				context.principal.userId,
-				context.principal.sessionId,
-				data.managementId,
-			);
+			await auth.api.deletePasskey({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { id: String(data.managementId) },
+			});
 			return null;
 		} catch (err) {
-			return rethrowPasskeyError(err, PROTECTED_OPERATIONS.passkeyRemove);
+			return rethrowPasskeyError(err);
 		}
 	});

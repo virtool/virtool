@@ -51,7 +51,7 @@ export default function AccountProfile() {
 			</div>
 			<AccountHandle handle={handle} />
 			<AccountPassword lastPasswordChange={lastPasswordChange} />
-			<AccountPasskeys />
+			<AccountPasskeys handle={handle} />
 			<AccountEmail
 				canManageEmail={hasSufficientAdminRole("full", administratorRole)}
 				deliveryAvailable={emailDelivery.data?.available ?? true}

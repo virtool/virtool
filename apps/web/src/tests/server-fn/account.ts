@@ -14,8 +14,6 @@ export const accountServerFnMocks = {
 	updateApiKeyFn: vi.fn(),
 	deleteApiKeyFn: vi.fn(),
 	findPasskeysFn: vi.fn(),
-	getPasskeyRegistrationOptionsFn: vi.fn(),
-	registerPasskeyFn: vi.fn(),
 	renamePasskeyFn: vi.fn(),
 	removePasskeyFn: vi.fn(),
 	revokeBrowserSessionFn: vi.fn(),

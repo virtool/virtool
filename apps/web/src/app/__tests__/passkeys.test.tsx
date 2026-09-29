@@ -3,16 +3,21 @@ import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const browser = vi.hoisted(() => ({
+const client = vi.hoisted(() => ({
+	addPasskey: vi.fn(),
 	cancelCeremony: vi.fn(),
-	startAuthentication: vi.fn(),
-	startRegistration: vi.fn(),
+	signInPasskey: vi.fn(),
+}));
+
+vi.mock("@app/authClient", () => ({
+	authClient: {
+		passkey: { addPasskey: client.addPasskey },
+		signIn: { passkey: client.signInPasskey },
+	},
 }));
 
 vi.mock("@simplewebauthn/browser", () => ({
-	startAuthentication: browser.startAuthentication,
-	startRegistration: browser.startRegistration,
-	WebAuthnAbortService: { cancelCeremony: browser.cancelCeremony },
+	WebAuthnAbortService: { cancelCeremony: client.cancelCeremony },
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -21,13 +26,25 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
-	createPasskey,
-	getPasskeyAssertion,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	UNAUTHORIZED_ERROR_NAME,
+} from "@virtool/contracts";
+import {
+	addPasskey,
 	getPasskeyNotice,
 	PasskeyCeremonyError,
+	signInWithPasskey,
 	usePasskeySupport,
 	useSingleCeremony,
 } from "../passkeys";
+
+function failure(
+	status: number,
+	code?: string,
+	message = "https://virtool.test",
+) {
+	return { data: null, error: { code, message, status, statusText: "" } };
+}
 
 function stubPasskeySupport(secure: boolean, credential: boolean) {
 	vi.stubGlobal("isSecureContext", secure);
@@ -78,35 +95,24 @@ describe("usePasskeySupport", () => {
 	});
 });
 
-describe("ceremonies", () => {
-	it("sends the browser response without client extension results", async () => {
-		browser.startRegistration.mockResolvedValue({
-			id: "id",
-			clientExtensionResults: { credProps: { rk: true } },
-		});
+describe("signInWithPasskey", () => {
+	it("resolves when Better Auth signs the user in", async () => {
+		client.signInPasskey.mockResolvedValue({ data: {}, error: null });
 
-		await expect(createPasskey({} as never)).resolves.toEqual({ id: "id" });
+		await expect(signInWithPasskey()).resolves.toBeUndefined();
 	});
 
 	it.each([
-		["NotAllowedError", undefined, "incomplete"],
-		["AbortError", undefined, "cancelled"],
-		["AbortError", "ERROR_CEREMONY_ABORTED", "cancelled"],
-		[
-			"InvalidStateError",
-			"ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
-			"duplicate",
-		],
-		["SecurityError", "ERROR_INVALID_DOMAIN", "unsupported"],
-		["NotSupportedError", undefined, "unsupported"],
-	])("maps a %s to %s", async (name, code, kind) => {
-		const error = Object.assign(new Error("https://virtool.test detail"), {
-			name,
-			code,
-		});
-		browser.startAuthentication.mockRejectedValue(error);
+		[400, "ERROR_CEREMONY_ABORTED", "cancelled"],
+		[400, "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY", "incomplete"],
+		[400, "ERROR_INVALID_DOMAIN", "unsupported"],
+		[400, "USER_VERIFICATION_REQUIRED", "failed"],
+		[401, "PASSKEY_NOT_FOUND", "failed"],
+		[429, undefined, "failed"],
+	])("maps a %i %s to %s", async (status, code, kind) => {
+		client.signInPasskey.mockResolvedValue(failure(status, code));
 
-		const caught = await getPasskeyAssertion({} as never).catch((err) => err);
+		const caught = await signInWithPasskey().catch((err) => err);
 
 		expect(caught).toBeInstanceOf(PasskeyCeremonyError);
 		expect(caught.kind).toBe(kind);
@@ -114,16 +120,98 @@ describe("ceremonies", () => {
 		expect(Sentry.captureException).not.toHaveBeenCalled();
 	});
 
-	it("gives each ceremony its own neutral notice for a NotAllowedError", async () => {
-		const notAllowed = Object.assign(new Error("https://virtool.test"), {
-			name: "NotAllowedError",
+	it.each([
+		[400, "USER_VERIFICATION_REQUIRED"],
+		[401, "INVALID_CREDENTIALS"],
+		[400, "CHALLENGE_NOT_FOUND"],
+	])("gives a %i %s the generic sign-in failure", async (status, code) => {
+		client.signInPasskey.mockResolvedValue(failure(status, code));
+
+		expect(
+			getPasskeyNotice(await signInWithPasskey().catch((err) => err)),
+		).toEqual({
+			message:
+				"Passkey sign-in failed. Try again or sign in with your password.",
+			tone: "error",
 		});
-		browser.startRegistration.mockRejectedValue(notAllowed);
-		browser.startAuthentication.mockRejectedValue(notAllowed);
+	});
+
+	it("asks the user to wait after too many attempts", async () => {
+		client.signInPasskey.mockResolvedValue(failure(429));
+
+		expect(
+			getPasskeyNotice(await signInWithPasskey().catch((err) => err)),
+		).toEqual({
+			message: "Too many sign-in attempts. Wait and try again.",
+			tone: "error",
+		});
+	});
+
+	it("reports an unexpected failure without the raw message", async () => {
+		client.signInPasskey.mockResolvedValue(
+			failure(400, "AUTH_CANCELLED", "clientDataJSON=secret"),
+		);
+
+		const caught = await signInWithPasskey().catch((err) => err);
+
+		expect(caught.kind).toBe("failed");
+		expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+		expect(
+			JSON.stringify(vi.mocked(Sentry.captureException).mock.calls),
+		).not.toContain("secret");
+	});
+});
+
+describe("addPasskey", () => {
+	it("names the new passkey", async () => {
+		client.addPasskey.mockResolvedValue({ data: {}, error: null });
+
+		await addPasskey("Alice");
+
+		expect(client.addPasskey).toHaveBeenCalledWith({ name: "Alice" });
+	});
+
+	it("asks for recent authentication when the session is stale", async () => {
+		client.addPasskey.mockResolvedValue(failure(403, "SESSION_NOT_FRESH"));
+
+		const caught = await addPasskey("Alice").catch((err) => err);
+
+		expect(caught).toMatchObject({
+			name: SESSION_NOT_FRESH_ERROR_NAME,
+			operation: "passkey.register",
+		});
+	});
+
+	it("ends the session when Better Auth no longer knows it", async () => {
+		client.addPasskey.mockResolvedValue(failure(401, "UNAUTHORIZED"));
+
+		const caught = await addPasskey("Alice").catch((err) => err);
+
+		expect(caught.name).toBe(UNAUTHORIZED_ERROR_NAME);
+	});
+
+	it.each([
+		[400, "PASSKEY_ALREADY_REGISTERED"],
+		[400, "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"],
+	])("says a %i %s is already registered", async (status, code) => {
+		client.addPasskey.mockResolvedValue(failure(status, code));
+
+		expect(
+			getPasskeyNotice(await addPasskey("Alice").catch((err) => err)),
+		).toEqual({
+			message: "This passkey is already registered.",
+			tone: "error",
+		});
+	});
+
+	it("gives each ceremony its own neutral notice for a NotAllowedError", async () => {
+		const notAllowed = failure(400, "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY");
+		client.addPasskey.mockResolvedValue(notAllowed);
+		client.signInPasskey.mockResolvedValue(notAllowed);
 
 		const [registration, assertion] = await Promise.all([
-			createPasskey({} as never).catch((err) => err),
-			getPasskeyAssertion({} as never).catch((err) => err),
+			addPasskey("Alice").catch((err) => err),
+			signInWithPasskey().catch((err) => err),
 		]);
 
 		expect(getPasskeyNotice(registration)).toEqual({
@@ -137,16 +225,17 @@ describe("ceremonies", () => {
 		});
 	});
 
-	it("reports an unexpected failure without the browser's payload", async () => {
-		browser.startRegistration.mockRejectedValue(
-			Object.assign(new Error("clientDataJSON=secret"), {
-				name: "UnknownError",
-			}),
+	it("reports an unexpected failure without the raw message", async () => {
+		client.addPasskey.mockResolvedValue(
+			failure(500, "UNKNOWN_ERROR", "clientDataJSON=secret"),
 		);
 
-		const caught = await createPasskey({} as never).catch((err) => err);
+		const caught = await addPasskey("Alice").catch((err) => err);
 
-		expect(caught.kind).toBe("failed");
+		expect(getPasskeyNotice(caught)).toEqual({
+			message: "The passkey could not be registered. Try again.",
+			tone: "error",
+		});
 		expect(Sentry.captureException).toHaveBeenCalledTimes(1);
 		expect(
 			JSON.stringify(vi.mocked(Sentry.captureException).mock.calls),
@@ -160,8 +249,8 @@ describe("useSingleCeremony", () => {
 		const ceremony = vi.fn(() => deferred.promise);
 		const { result } = renderHook(() => useSingleCeremony(ceremony));
 
-		const first = result.current();
-		const second = result.current();
+		const first = result.current(undefined);
+		const second = result.current(undefined);
 		deferred.resolve("done");
 
 		await expect(first).resolves.toBe("done");
@@ -173,25 +262,21 @@ describe("useSingleCeremony", () => {
 		const ceremony = vi.fn(() => Promise.resolve("done"));
 		const { result } = renderHook(() => useSingleCeremony(ceremony));
 
-		await result.current();
-		await result.current();
+		await result.current(undefined);
+		await result.current(undefined);
 
 		expect(ceremony).toHaveBeenCalledTimes(2);
 	});
 
 	it("cancels a running ceremony on unmount", async () => {
-		browser.startRegistration.mockReturnValue(new Promise(() => {}));
-		const { result, unmount } = renderHook(() =>
-			useSingleCeremony(() => createPasskey({} as never)),
-		);
+		client.addPasskey.mockReturnValue(new Promise(() => {}));
+		const { result, unmount } = renderHook(() => useSingleCeremony(addPasskey));
 
-		result.current();
-		await vi.waitFor(() =>
-			expect(browser.startRegistration).toHaveBeenCalled(),
-		);
+		result.current("Alice");
+		await vi.waitFor(() => expect(client.addPasskey).toHaveBeenCalled());
 		unmount();
 
-		expect(browser.cancelCeremony).toHaveBeenCalledTimes(1);
+		expect(client.cancelCeremony).toHaveBeenCalledTimes(1);
 	});
 
 	it("does not cancel anything on unmount when idle", () => {
@@ -201,7 +286,7 @@ describe("useSingleCeremony", () => {
 
 		unmount();
 
-		expect(browser.cancelCeremony).not.toHaveBeenCalled();
+		expect(client.cancelCeremony).not.toHaveBeenCalled();
 	});
 });
 

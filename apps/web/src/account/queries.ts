@@ -1,5 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
-import { createPasskey, useSingleCeremony } from "@app/passkeys";
+import { addPasskey, useSingleCeremony } from "@app/passkeys";
 import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import { resetClient } from "@app/utils";
 import * as Sentry from "@sentry/tanstackstart-react";
@@ -8,8 +8,6 @@ import {
 	deleteApiKeyFn,
 	findApiKeysFn,
 	findPasskeysFn,
-	getPasskeyRegistrationOptionsFn,
-	registerPasskeyFn,
 	removePasskeyFn,
 	renamePasskeyFn,
 	updateApiKeyFn,
@@ -267,24 +265,16 @@ export function passkeysQueryOptions() {
 /**
  * Initializes a mutator that registers a passkey for the current user.
  *
- * Both server calls take part in the recent-authentication challenge on their
- * own, so a session that goes stale while the browser dialog is open is
- * challenged once and the registration completes without a second ceremony.
+ * The variable is the name for the new passkey. A stale session gets the
+ * recent-authentication challenge, and then the whole ceremony runs again.
  */
 export function useRegisterPasskey() {
 	const queryClient = useQueryClient();
-	const getOptions = useRecentlyAuthenticatedMutation(() =>
-		getPasskeyRegistrationOptionsFn(),
-	);
-	const register = useRecentlyAuthenticatedMutation(
-		(response: Awaited<ReturnType<typeof createPasskey>>) =>
-			registerPasskeyFn({ data: { response } }),
-	);
-	const ceremony = useSingleCeremony(async () =>
-		register(await createPasskey(await getOptions(undefined))),
+	const ceremony = useSingleCeremony(
+		useRecentlyAuthenticatedMutation(addPasskey),
 	);
 
-	return useMutation<PasskeySummary, Error, void>({
+	return useMutation<void, Error, string>({
 		mutationFn: ceremony,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });

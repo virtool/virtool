@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { AUTH_BASE_PATH } from "@virtool/contracts";
 import { resolveBrowserSession } from "@virtool/data/auth/session";
 import { authAccounts, authTwoFactors } from "@virtool/data/db/schema/auth";
 import { APIError } from "better-auth/api";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { AUTH_BASE_PATH } from "./betterAuth";
 import { getSessionFreshRemainingMs } from "./freshness";
 import {
 	attributePrincipal,

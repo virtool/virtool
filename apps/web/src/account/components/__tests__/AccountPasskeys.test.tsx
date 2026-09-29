@@ -12,12 +12,22 @@ import {
 } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const browser = vi.hoisted(() => ({ startRegistration: vi.fn() }));
+const { addPasskey } = vi.hoisted(() => ({ addPasskey: vi.fn() }));
+
+vi.mock("@app/authClient", () => ({
+	authClient: { passkey: { addPasskey } },
+}));
 
 vi.mock("@simplewebauthn/browser", () => ({
-	startRegistration: browser.startRegistration,
 	WebAuthnAbortService: { cancelCeremony: vi.fn() },
 }));
+
+function failure(status: number, code?: string) {
+	return {
+		data: null,
+		error: { code, message: "https://virtool.test", status, statusText: "" },
+	};
+}
 
 import AccountPasskeys from "../AccountPasskeys";
 
@@ -52,7 +62,7 @@ describe("<AccountPasskeys />", () => {
 	it("shows an empty state", async () => {
 		mockFindPasskeys([]);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 
 		expect(
 			await screen.findByText("You have not added any passkeys."),
@@ -70,49 +80,36 @@ describe("<AccountPasskeys />", () => {
 			}),
 		]);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 
 		expect(await screen.findByText("Work laptop")).toBeInTheDocument();
 		expect(screen.getAllByText("Synced")).toHaveLength(1);
 		expect(screen.getByText("Date added unknown")).toBeInTheDocument();
 	});
 
-	it("adds a passkey and refreshes the list", async () => {
+	it("adds a passkey named after the handle and refreshes the list", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([]);
-		accountServerFnMocks.getPasskeyRegistrationOptionsFn.mockResolvedValue({
-			challenge: "challenge",
-		});
-		browser.startRegistration.mockResolvedValue({
-			id: "credential",
-			clientExtensionResults: {},
-		});
-		accountServerFnMocks.registerPasskeyFn.mockResolvedValue(passkey());
+		addPasskey.mockResolvedValue({ data: {}, error: null });
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await screen.findByText("You have not added any passkeys.");
-		mockFindPasskeys([passkey()]);
+		mockFindPasskeys([passkey({ name: "Alice" })]);
 
 		await user.click(screen.getByRole("button", { name: "Add passkey" }));
 
-		expect(await screen.findByText("Work laptop")).toBeInTheDocument();
-		expect(browser.startRegistration).toHaveBeenCalledWith({
-			optionsJSON: { challenge: "challenge" },
-		});
-		expect(accountServerFnMocks.registerPasskeyFn).toHaveBeenCalledWith({
-			data: { response: { id: "credential" } },
-		});
+		expect(await screen.findByText("Alice")).toBeInTheDocument();
+		expect(addPasskey).toHaveBeenCalledWith({ name: "Alice" });
 	});
 
 	it("says the passkey was not added in a neutral notice when the browser does not allow it", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([]);
-		accountServerFnMocks.getPasskeyRegistrationOptionsFn.mockResolvedValue({});
-		browser.startRegistration.mockRejectedValue(
-			Object.assign(new Error("not allowed"), { name: "NotAllowedError" }),
+		addPasskey.mockResolvedValue(
+			failure(400, "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY"),
 		);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await screen.findByText("You have not added any passkeys.");
 		await user.click(screen.getByRole("button", { name: "Add passkey" }));
 
@@ -121,35 +118,64 @@ describe("<AccountPasskeys />", () => {
 		expect(notice.firstElementChild).toHaveClass("bg-gray-100");
 		expect(screen.queryByRole("alert")).toBeNull();
 		expect(screen.getByRole("button", { name: "Add passkey" })).toBeEnabled();
-		expect(accountServerFnMocks.registerPasskeyFn).not.toHaveBeenCalled();
 	});
 
-	it("shows a red alert when the passkey is already registered", async () => {
+	it.each([
+		["the browser", "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"],
+		["the server", "PASSKEY_ALREADY_REGISTERED"],
+	])(
+		"shows a red alert when %s says the passkey is already registered",
+		async (_, code) => {
+			const user = userEvent.setup();
+			mockFindPasskeys([]);
+			addPasskey.mockResolvedValue(failure(400, code));
+
+			renderWithProviders(<AccountPasskeys handle="Alice" />);
+			await screen.findByText("You have not added any passkeys.");
+			await user.click(screen.getByRole("button", { name: "Add passkey" }));
+
+			const alert = await screen.findByRole("alert");
+			expect(alert).toHaveTextContent("This passkey is already registered.");
+			expect(alert).not.toHaveTextContent("virtool.test");
+			expect(alert.firstElementChild).toHaveClass("bg-red-100");
+			expect(screen.queryByRole("status")).toBeNull();
+		},
+	);
+
+	it("confirms the user's identity and registers again when the session is stale", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([]);
-		accountServerFnMocks.getPasskeyRegistrationOptionsFn.mockResolvedValue({});
-		browser.startRegistration.mockRejectedValue(
-			Object.assign(new Error("already registered"), {
-				name: "InvalidStateError",
-				code: "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
-			}),
+		addPasskey
+			.mockResolvedValueOnce(failure(403, "SESSION_NOT_FRESH"))
+			.mockResolvedValueOnce({ data: {}, error: null });
+		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
+			{ password: true, totp: false },
+		);
+		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockResolvedValue(
+			null,
 		);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await screen.findByText("You have not added any passkeys.");
 		await user.click(screen.getByRole("button", { name: "Add passkey" }));
 
-		const alert = await screen.findByRole("alert");
-		expect(alert).toHaveTextContent("This passkey is already registered.");
-		expect(alert.firstElementChild).toHaveClass("bg-red-100");
-		expect(screen.queryByRole("status")).toBeNull();
+		const challenge = await screen.findByRole("dialog", {
+			name: "Confirm your identity",
+		});
+		await user.type(within(challenge).getByLabelText("Password"), "password");
+		await user.click(
+			within(challenge).getByRole("button", { name: "Continue" }),
+		);
+
+		await waitFor(() => expect(addPasskey).toHaveBeenCalledTimes(2));
+		expect(screen.queryByRole("alert")).toBeNull();
 	});
 
 	it("explains why a browser cannot add passkeys", async () => {
 		stubPasskeySupport(false);
 		mockFindPasskeys([passkey()]);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 
 		expect(
 			await screen.findByText(/This browser cannot use passkeys here/),
@@ -165,7 +191,7 @@ describe("<AccountPasskeys />", () => {
 			passkey({ name: "Phone" }),
 		);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await user.click(
 			await screen.findByRole("button", { name: "Rename Work laptop" }),
 		);
@@ -193,13 +219,11 @@ describe("<AccountPasskeys />", () => {
 	it("keeps the dialog open with the server's refusal to remove a passkey", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([passkey()]);
-		const refusal = new Error(
-			"Set a password for your account before removing a passkey.",
-		);
+		const refusal = new Error("Passkey not found.");
 		refusal.name = "ClientError";
 		accountServerFnMocks.removePasskeyFn.mockRejectedValue(refusal);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await user.click(
 			await screen.findByRole("button", { name: "Remove Work laptop" }),
 		);
@@ -208,7 +232,7 @@ describe("<AccountPasskeys />", () => {
 		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
 		expect(await within(dialog).findByRole("alert")).toHaveTextContent(
-			"Set a password",
+			"Passkey not found.",
 		);
 		expect(accountServerFnMocks.findPasskeysFn).toHaveBeenCalledTimes(1);
 	});
@@ -225,7 +249,7 @@ describe("<AccountPasskeys />", () => {
 			{ password: true, totp: false },
 		);
 
-		renderWithProviders(<AccountPasskeys />);
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await user.click(
 			await screen.findByRole("button", { name: "Remove Work laptop" }),
 		);

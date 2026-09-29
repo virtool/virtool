@@ -10,22 +10,39 @@ const { loginMock, navigateMock, passkeyMock, verifyMock } = vi.hoisted(() => ({
 	verifyMock: vi.fn(),
 }));
 
+vi.mock("@app/authClient", () => ({
+	authClient: { signIn: { passkey: passkeyMock } },
+}));
+
+vi.mock("@simplewebauthn/browser", () => ({
+	WebAuthnAbortService: { cancelCeremony: vi.fn() },
+}));
+
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@tanstack/react-router")>()),
 	useNavigate: () => navigateMock,
 }));
 
-vi.mock("../../queries", async () => {
+vi.mock("../../queries", async (importOriginal) => {
 	const { useMutation } = await import("@tanstack/react-query");
+	const { usePasskeySignInMutation } =
+		await importOriginal<typeof import("../../queries")>();
 	return {
 		useVerifyTwoFactorMutation: () => useMutation({ mutationFn: verifyMock }),
 		useLoginMutation: () =>
 			useMutation({
 				mutationFn: loginMock,
 			}),
-		usePasskeySignInMutation: () => useMutation({ mutationFn: passkeyMock }),
+		usePasskeySignInMutation,
 	};
 });
+
+function passkeyFailure(status: number, code?: string) {
+	return {
+		data: null,
+		error: { code, message: "https://virtool.test", status, statusText: "" },
+	};
+}
 
 function stubPasskeySupport(available: boolean) {
 	vi.stubGlobal("isSecureContext", available);
@@ -163,7 +180,7 @@ describe("<LoginForm />", () => {
 	describe("passkey sign-in", () => {
 		it("signs in and follows the redirect", async () => {
 			stubPasskeySupport(true);
-			passkeyMock.mockResolvedValue({ reset: false });
+			passkeyMock.mockResolvedValue({ data: {}, error: null });
 
 			renderWithProviders(
 				<MemoryRouter>
@@ -225,31 +242,10 @@ describe("<LoginForm />", () => {
 			expect(passkeyMock).not.toHaveBeenCalled();
 		});
 
-		it("sends a TOTP-enrolled user to the second-factor step", async () => {
-			stubPasskeySupport(true);
-			passkeyMock.mockResolvedValue({ twoFactorRedirect: true });
-
-			renderWithProviders(
-				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
-				</MemoryRouter>,
-			);
-
-			await userEvent.click(
-				await screen.findByRole("button", { name: "Sign in with a passkey" }),
-			);
-
-			expect(
-				await screen.findByLabelText("Authentication code"),
-			).toBeInTheDocument();
-			expect(navigateMock).not.toHaveBeenCalled();
-		});
-
 		it("says nothing when the user cancels and keeps the password form usable", async () => {
-			const { PasskeyCeremonyError } = await import("@app/passkeys");
 			stubPasskeySupport(true);
-			passkeyMock.mockRejectedValue(
-				new PasskeyCeremonyError("cancelled", "cancelled"),
+			passkeyMock.mockResolvedValue(
+				passkeyFailure(400, "ERROR_CEREMONY_ABORTED"),
 			);
 			loginMock.mockResolvedValue({ reset: false });
 
@@ -275,13 +271,9 @@ describe("<LoginForm />", () => {
 		});
 
 		it("shows an incomplete ceremony as a neutral notice", async () => {
-			const { PasskeyCeremonyError } = await import("@app/passkeys");
 			stubPasskeySupport(true);
-			passkeyMock.mockRejectedValue(
-				new PasskeyCeremonyError(
-					"incomplete",
-					"Passkey sign-in did not finish. Try again, or sign in with your password.",
-				),
+			passkeyMock.mockResolvedValue(
+				passkeyFailure(400, "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY"),
 			);
 
 			renderWithProviders(
@@ -300,13 +292,9 @@ describe("<LoginForm />", () => {
 			expect(screen.queryByRole("alert")).toBeNull();
 		});
 
-		it("shows the server's generic failure", async () => {
+		it("shows the generic failure for a server refusal", async () => {
 			stubPasskeySupport(true);
-			const error = new Error(
-				"Passkey sign-in failed. Try again or sign in with your password.",
-			);
-			error.name = "ClientError";
-			passkeyMock.mockRejectedValue(error);
+			passkeyMock.mockResolvedValue(passkeyFailure(401, "INVALID_CREDENTIALS"));
 
 			renderWithProviders(
 				<MemoryRouter>
@@ -319,8 +307,30 @@ describe("<LoginForm />", () => {
 			);
 
 			const alert = await screen.findByRole("alert");
-			expect(alert).toHaveTextContent("Passkey sign-in failed");
+			expect(alert).toHaveTextContent(
+				"Passkey sign-in failed. Try again or sign in with your password.",
+			);
+			expect(alert).not.toHaveTextContent("virtool.test");
 			expect(alert).toHaveClass("text-red-600");
+		});
+
+		it("asks the user to wait after too many attempts", async () => {
+			stubPasskeySupport(true);
+			passkeyMock.mockResolvedValue(passkeyFailure(429));
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Sign in with a passkey" }),
+			);
+
+			expect(await screen.findByRole("alert")).toHaveTextContent(
+				"Too many sign-in attempts. Wait and try again.",
+			);
 		});
 
 		it("explains when the browser cannot use passkeys", async () => {

@@ -2,26 +2,27 @@ import { expect, it, vi } from "vitest";
 
 const browser = vi.hoisted(() => ({
 	isUnavailable: true,
-	startRegistration: vi.fn(),
+	signInPasskey: vi.fn(),
 }));
 
 vi.mock("@simplewebauthn/browser", () => {
 	if (browser.isUnavailable) {
 		throw new Error("Failed to fetch dynamically imported module");
 	}
-	return { startRegistration: browser.startRegistration };
+	return { WebAuthnAbortService: { cancelCeremony: vi.fn() } };
 });
 
-import { createPasskey } from "../passkeys";
+vi.mock("@app/authClient", () => ({
+	authClient: { signIn: { passkey: browser.signInPasskey } },
+}));
 
-it("loads the browser module again after a failed import", async () => {
-	await expect(createPasskey({} as never)).rejects.toThrow();
+import { signInWithPasskey } from "../passkeys";
+
+it("loads the ceremony modules again after a failed import", async () => {
+	await expect(signInWithPasskey()).rejects.toThrow();
 
 	browser.isUnavailable = false;
-	browser.startRegistration.mockResolvedValue({
-		id: "id",
-		clientExtensionResults: {},
-	});
+	browser.signInPasskey.mockResolvedValue({ data: {}, error: null });
 
-	await expect(createPasskey({} as never)).resolves.toEqual({ id: "id" });
+	await expect(signInWithPasskey()).resolves.toBeUndefined();
 });

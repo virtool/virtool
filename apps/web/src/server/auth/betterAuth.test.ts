@@ -1,4 +1,4 @@
-import type { AccountLifecycleState } from "@virtool/contracts";
+import { type AccountLifecycleState, AUTH_BASE_PATH } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -26,11 +26,7 @@ import {
 	BrowserSessionEndedError,
 	revokeOtherActiveBrowserSessions,
 } from "../account/service";
-import {
-	AUTH_BASE_PATH,
-	createAuth,
-	createAuthRequestHandler,
-} from "./betterAuth";
+import { createAuth, createAuthRequestHandler } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
 const ORIGIN = "https://virtool.test";

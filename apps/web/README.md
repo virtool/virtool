@@ -16,8 +16,8 @@ Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
 - **Lucide React** for icons
 - **d3** for imperative SVG charts
 - **exceljs** for server-side analysis XLSX exports
-- **Better Auth** with its passkey plugin for human authentication, and
-  **SimpleWebAuthn** for browser passkey ceremonies
+- **Better Auth** with its passkey plugin for human authentication, including
+  the browser passkey ceremonies
 
 ## Client development
 
@@ -477,30 +477,29 @@ user out: their next `two-factor/enable` replaces it.
 
 A passkey is an optional primary credential. It does not replace the password,
 which stays available for sign-in and recovery. A passkey sign-in goes through
-the same gates as a password sign-in: `users.active` and the `normal` lifecycle
-state, forced reset, TOTP, and the `required` MFA policy. A user enrolled in
-TOTP gets the same second-factor challenge after a passkey as after a password.
-A passkey is not a trusted device.
+the same account gates as a password sign-in: `users.active` and the `normal`
+lifecycle state, forced reset, and the `required` MFA policy. A passkey
+verifies the user, so a user enrolled in TOTP does not get a second-factor
+challenge after a passkey. A passkey is not a trusted device.
 
-The browser does not call the plugin's endpoints. Server functions call them in
-`@server/auth/passkeyActions`, and the mounted handler answers 404 for every
-`/api/auth/passkey/*` path. The plugin's list, rename, and delete endpoints are
-refused for all callers, because they return public keys and counters and skip
-recent authentication and the password check.
+The browser runs both ceremonies through the plugin's client in
+[`@app/authClient`](src/app/authClient.ts). The requests go to the mounted
+handler, so its forced-reset and MFA-enrollment restrictions apply to them.
+Better Auth checks recent authentication for registration with the same
+15-minute freshness window. The plugin's list, rename, and delete endpoints
+answer 404 over HTTP, because the list returns public keys and counters and the
+mutations skip recent authentication. Server functions call these three through
+`auth.api` and apply Virtool's policies.
 
-Registration calls go through `auth.api`. Sign-in calls send a request built
-from the incoming request to `auth.handler`, because Better Auth applies its
-rate limiter only in its HTTP router. The options and verify paths each allow
-3 requests per client IP in 10 seconds, the same as Better Auth's default rule
-for `/sign-in/*`. A refused call gets a 429. The router does not let
-`tanstackStartCookies` copy cookies, so `passkeyActions` copies the challenge,
-session, and two-factor cookies onto the server function response.
+The sign-in options and verify paths each allow 3 requests per client IP in 10
+seconds, the same as Better Auth's default rule for `/sign-in/*`. The limit is
+a `rateLimit.customRules` entry. A refused request gets a 429.
 
-| Operation | Server function | Policy |
+| Operation | Entry point | Policy |
 | --- | --- | --- |
-| Start or finish sign-in | `getPasskeySignInOptionsFn`, `signInWithPasskeyFn` | `open()` |
+| Sign in | `authClient.signIn.passkey()` | Open, rate limited |
+| Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
 | List | `findPasskeysFn` | `authenticated()`, Better Auth session only |
-| Register | `getPasskeyRegistrationOptionsFn`, `registerPasskeyFn` | `passkey.register` |
 | Rename | `renamePasskeyFn` | `passkey.security.update` |
 | Remove | `removePasskeyFn` | `passkey.remove` |
 
@@ -511,37 +510,43 @@ WebAuthn rules:
   another origin or RP ID is refused.
 - Both ceremonies require user verification (a PIN or biometric). The pinned
   plugin verifies with `requireUserVerification: false`, so `afterVerification`
-  hooks in `createAuth` check the flag again. The sign-in options sent to the
-  browser are also raised from `preferred` to `required`.
+  hooks in `createAuth` check the flag again. The plugin asks the browser for
+  `preferred` user verification at sign-in, so the browser can offer an
+  authenticator that the server then refuses.
 - Registration asks for a discoverable credential, so a user can sign in without
   typing a handle.
 - Challenges are server-generated, bound to a signed cookie, valid for five
   minutes, and deleted when they are used.
-- `auth_passkeys.credential_id` is unique across all users. A credential that
-  is already registered is refused with 409.
+- `auth_passkeys.credential_id` is unique across all users. Registration refuses
+  a credential that is already registered with `PASSKEY_ALREADY_REGISTERED`. A
+  concurrent registration of the same credential can fail with a server error.
 
-Registration names the credential after the user's handle, not their email. A
-new passkey gets the provider name for its AAGUID, when the plugin knows it, or
-`Passkey`. The user can rename it. Names are whitespace-normalized, 1 to 64
-characters, and contain no control characters.
+Registration sends the user's handle as the passkey name. The authenticator
+shows it as the account label, and it is the stored name. The user can rename
+the passkey. Names are whitespace-normalized, 1 to 64 characters, and contain
+no control characters.
 
-`findPasskeysFn` returns `PasskeySummary` values: a management id, the name,
-the creation time, and whether the credential is synced and backed up. It never
-returns the credential id, public key, counter, or AAGUID. These flags describe
-the credential, not a device. A synced passkey can be on many devices.
+`findPasskeysFn` returns `PasskeySummary` values, oldest first: a management
+id, the name, the creation time, and whether the credential is synced and
+backed up. It never returns the credential id, public key, counter, or AAGUID.
+These flags describe the credential, not a device. A synced passkey can be on
+many devices.
 
-Removal locks the user row and requires a password credential in the same
-transaction. It can remove the final passkey, because the password remains. It
-does not change the password, TOTP, recovery codes, API keys, or sessions,
-including a session that the passkey started. Removing a passkey that is already
-gone succeeds. Another user's passkey is treated as missing and is not changed.
+Removal can remove the final passkey, because the password remains. It does
+not change the password, TOTP, recovery codes, API keys, or sessions, including
+a session that the passkey started. A passkey that is gone, or that belongs to
+another user, is not found (404) and is not changed.
 
-In the browser, `@app/passkeys` imports `@simplewebauthn/browser` only when a
-ceremony starts. `usePasskeySupport` reads WebAuthn support after hydration and
-reports `pending` during server rendering. `useSingleCeremony` lets a component
-run only one ceremony at a time, and cancels it when the component is removed. Cancellation,
+In the browser, `@app/passkeys` loads the auth client only when a ceremony
+starts. It maps the client's errors to fixed messages and never shows a browser
+or server message. A stale session on registration opens the
+recent-authentication challenge, and then the ceremony runs again.
+`usePasskeySupport` reads WebAuthn support after hydration and reports `pending`
+during server rendering. `useSingleCeremony` lets a component run only one
+ceremony at a time, and cancels it when the component is removed. Cancellation,
 timeout, and an unsupported browser leave password sign-in available. The login
-form does not start conditional passkey requests.
+form does not start conditional passkey requests. After a passkey sign-in, the
+route guards send a user who must reset their password to the reset form.
 
 ### Server push
 

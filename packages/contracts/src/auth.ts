@@ -1,3 +1,6 @@
+/** The path where the Better Auth handler is mounted. */
+export const AUTH_BASE_PATH = "/api/auth";
+
 /**
  * Name of the error the server auth middleware throws when a request has no
  * valid session. Shared so the server that throws it, the client serialization

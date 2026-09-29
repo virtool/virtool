@@ -13,8 +13,6 @@ export const authServerFnMocks = {
 	refreshBrowserSessionFn: vi.fn(),
 	completeEmailRemediationFn: vi.fn(),
 	loginFn: vi.fn(),
-	getPasskeySignInOptionsFn: vi.fn(),
-	signInWithPasskeyFn: vi.fn(),
 	getEmailRemediationFn: vi.fn(),
 	inspectAccountSetupFn: vi.fn(),
 	promoteEmailRemediationFn: vi.fn(),

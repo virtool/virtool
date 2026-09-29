@@ -19,7 +19,6 @@ import {
 	GroupMembershipError,
 	getAccount,
 	getAdministratorRole,
-	getHandle,
 	getUser,
 	getUserCount,
 	InvalidPasswordError,
@@ -862,15 +861,6 @@ describe("getAdministratorRole", () => {
 
 		expect(await getAdministratorRole(db, admin)).toBe("settings");
 		expect(await getAdministratorRole(db, regular)).toBeNull();
-	});
-});
-
-describe("getHandle", () => {
-	it("returns the handle, or null when the user does not exist", async () => {
-		const userId = await seedUser(db, { handle: "alice" });
-
-		expect(await getHandle(db, userId)).toBe("alice");
-		expect(await getHandle(db, userId + 1)).toBeNull();
 	});
 });
 
