@@ -1,4 +1,5 @@
-import type { ActiveBrowserSession } from "@virtool/contracts";
+import type { ActiveBrowserSession, PasskeySummary } from "@virtool/contracts";
+import { deletePasskey, renamePasskey } from "@virtool/data/auth/passkeys";
 import {
 	deleteActiveBrowserSession,
 	deleteOtherBrowserSessions,
@@ -90,5 +91,45 @@ export async function revokeOtherActiveBrowserSessions(
 	return db.transaction(async (tx) => {
 		await checkCurrentSession(tx, userId, currentSessionId);
 		return deleteOtherBrowserSessions(tx, userId, currentSessionId);
+	});
+}
+
+/** No passkey with the management id belongs to the current user. */
+export class PasskeyNotFoundError extends Error {}
+
+/** Rename one of the user's passkeys while the current session is still fresh. */
+export async function renameAccountPasskey(
+	db: Db,
+	userId: number,
+	currentSessionId: number,
+	managementId: number,
+	name: string,
+): Promise<PasskeySummary> {
+	return db.transaction(async (tx) => {
+		await checkCurrentSession(tx, userId, currentSessionId);
+		const passkey = await renamePasskey(tx, userId, managementId, name);
+		if (!passkey) {
+			throw new PasskeyNotFoundError();
+		}
+		return passkey;
+	});
+}
+
+/**
+ * Remove one of the user's passkeys while the current session is still fresh.
+ *
+ * Removing a passkey that is already gone succeeds, so a retried request does
+ * not report an error for work that was done. Another user's passkey is
+ * indistinguishable from a missing one and is never touched.
+ */
+export async function removeAccountPasskey(
+	db: Db,
+	userId: number,
+	currentSessionId: number,
+	managementId: number,
+): Promise<void> {
+	await db.transaction(async (tx) => {
+		await checkCurrentSession(tx, userId, currentSessionId);
+		await deletePasskey(tx, userId, managementId);
 	});
 }

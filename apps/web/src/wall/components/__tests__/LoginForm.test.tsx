@@ -3,9 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { loginMock, navigateMock, verifyMock } = vi.hoisted(() => ({
+const { loginMock, navigateMock, passkeyMock, verifyMock } = vi.hoisted(() => ({
 	loginMock: vi.fn(),
 	navigateMock: vi.fn(),
+	passkeyMock: vi.fn(),
 	verifyMock: vi.fn(),
 }));
 
@@ -22,8 +23,17 @@ vi.mock("../../queries", async () => {
 			useMutation({
 				mutationFn: loginMock,
 			}),
+		usePasskeySignInMutation: () => useMutation({ mutationFn: passkeyMock }),
 	};
 });
+
+function stubPasskeySupport(available: boolean) {
+	vi.stubGlobal("isSecureContext", available);
+	vi.stubGlobal(
+		"PublicKeyCredential",
+		available ? function PublicKeyCredential() {} : undefined,
+	);
+}
 
 import LoginForm from "../LoginForm";
 
@@ -31,7 +41,9 @@ describe("<LoginForm />", () => {
 	afterEach(() => {
 		loginMock.mockReset();
 		navigateMock.mockReset();
+		passkeyMock.mockReset();
 		verifyMock.mockReset();
+		vi.unstubAllGlobals();
 	});
 
 	it("carries the redirect into email remediation", async () => {
@@ -146,5 +158,118 @@ describe("<LoginForm />", () => {
 			{ code: "backup-code", recovery: true },
 			expect.anything(),
 		);
+	});
+
+	describe("passkey sign-in", () => {
+		it("signs in and follows the redirect", async () => {
+			stubPasskeySupport(true);
+			passkeyMock.mockResolvedValue({ reset: false });
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm redirect="/samples" setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Sign in with a passkey" }),
+			);
+
+			await waitFor(() =>
+				expect(navigateMock).toHaveBeenCalledWith({ to: "/samples" }),
+			);
+		});
+
+		it("sends a TOTP-enrolled user to the second-factor step", async () => {
+			stubPasskeySupport(true);
+			passkeyMock.mockResolvedValue({ twoFactorRedirect: true });
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Sign in with a passkey" }),
+			);
+
+			expect(
+				await screen.findByLabelText("Authentication code"),
+			).toBeInTheDocument();
+			expect(navigateMock).not.toHaveBeenCalled();
+		});
+
+		it("says nothing when the user cancels and keeps the password form usable", async () => {
+			const { PasskeyCeremonyError } = await import("@app/passkeys");
+			stubPasskeySupport(true);
+			passkeyMock.mockRejectedValue(
+				new PasskeyCeremonyError("cancelled", "cancelled"),
+			);
+			loginMock.mockResolvedValue({ reset: false });
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Sign in with a passkey" }),
+			);
+			await waitFor(() => expect(passkeyMock).toHaveBeenCalled());
+			expect(screen.queryByRole("alert")).toBeNull();
+
+			await userEvent.type(screen.getByLabelText("Username"), "Alice");
+			await userEvent.type(screen.getByLabelText("Password"), "password");
+			await userEvent.click(screen.getByRole("button", { name: "Login" }));
+
+			await waitFor(() =>
+				expect(navigateMock).toHaveBeenCalledWith({ to: "/" }),
+			);
+		});
+
+		it("shows the server's generic failure", async () => {
+			stubPasskeySupport(true);
+			const error = new Error(
+				"Passkey sign-in failed. Try again or sign in with your password.",
+			);
+			error.name = "ClientError";
+			passkeyMock.mockRejectedValue(error);
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Sign in with a passkey" }),
+			);
+
+			expect(await screen.findByRole("alert")).toHaveTextContent(
+				"Passkey sign-in failed",
+			);
+		});
+
+		it("explains when the browser cannot use passkeys", async () => {
+			stubPasskeySupport(false);
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			expect(
+				await screen.findByText(
+					"Passkey sign-in is not available in this browser.",
+				),
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: "Sign in with a passkey" }),
+			).toBeNull();
+			expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+		});
 	});
 });

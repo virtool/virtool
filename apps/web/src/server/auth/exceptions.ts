@@ -4,10 +4,12 @@ import {
 	acceptAccountSetupFn,
 	completeEmailRemediationFn,
 	createFirstUserFn,
+	getPasskeySignInOptionsFn,
 	inspectAccountSetupFn,
 	loginFn,
 	logoutFn,
 	resetPasswordFn,
+	signInWithPasskeyFn,
 	verifyTwoFactorFn,
 } from "./functions";
 import {
@@ -24,6 +26,9 @@ import {
  * logoutFn must be exempt so stale or missing cookies can still be cleared.
  *
  * createFirstUserFn runs before any user or session exists.
+ *
+ * getPasskeySignInOptionsFn and signInWithPasskeyFn create a session, as
+ * loginFn does.
  *
  * getPasswordPolicyFn serves the first-user form before a session exists and
  * the forced-reset form while ordinary application access is restricted.
@@ -45,6 +50,8 @@ export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
 	getRootFn,
 	loginFn,
 	logoutFn,
+	getPasskeySignInOptionsFn,
+	signInWithPasskeyFn,
 	verifyTwoFactorFn,
 	requestPasswordRecoveryFn,
 	completePasswordRecoveryFn,

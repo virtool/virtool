@@ -1,4 +1,6 @@
-import { passkey } from "@better-auth/passkey";
+import { getAuthenticatorName, passkey } from "@better-auth/passkey";
+import { DEFAULT_PASSKEY_NAME } from "@virtool/contracts";
+import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import { mfaEnrollmentRequired } from "@virtool/data/auth/session";
 import type { Db } from "@virtool/data/db/pg";
@@ -54,6 +56,10 @@ export const AUTH_BASE_PATH = "/api/auth";
  * signs in with away from `users.handle` and around the case-insensitive
  * uniqueness that `users_handle_lower_unique` holds. Virtool owns account
  * updates through its own server functions.
+ *
+ * The passkey list, rename and delete endpoints: the list returns public keys
+ * and counters, and neither mutation checks recent authentication or the
+ * password fallback. Virtool's account server functions serve all three.
  */
 const REFUSED_PATHS = new Set([
 	"/sign-in/email",
@@ -63,7 +69,58 @@ const REFUSED_PATHS = new Set([
 	"/revoke-session",
 	"/revoke-sessions",
 	"/revoke-other-sessions",
+	"/passkey/list-user-passkeys",
+	"/passkey/update-passkey",
+	"/passkey/delete-passkey",
 ]);
+
+/** The passkey endpoint that starts a sign-in. */
+export const PASSKEY_SIGN_IN_OPTIONS_PATH =
+	"/passkey/generate-authenticate-options";
+
+/** The passkey endpoint that signs a user in. */
+export const PASSKEY_SIGN_IN_PATH = "/passkey/verify-authentication";
+
+/**
+ * Better Auth endpoints reachable only through server functions.
+ *
+ * `./passkeyActions` calls the passkey ceremonies from server functions so it
+ * can apply Virtool's recent-authentication policy, override the options the
+ * plugin sends, and shape the result. Over HTTP they would skip all three.
+ */
+const SERVER_FUNCTION_PATHS = new Set(
+	[
+		"/passkey/generate-register-options",
+		"/passkey/verify-registration",
+		PASSKEY_SIGN_IN_OPTIONS_PATH,
+		PASSKEY_SIGN_IN_PATH,
+	].map((path) => `${AUTH_BASE_PATH}${path}`),
+);
+
+/**
+ * Limit passkey sign-in as Better Auth limits its own sign-in paths.
+ *
+ * Better Auth's default rule matches only paths that start with `/sign-in`.
+ * An options request writes a challenge row, so the limit also stops a caller
+ * who fills the verification table.
+ */
+function passkeySignInRateLimitPlugin() {
+	return {
+		id: "virtool-passkey-sign-in-rate-limit",
+		rateLimit: [
+			{
+				pathMatcher(path) {
+					return (
+						path === PASSKEY_SIGN_IN_OPTIONS_PATH ||
+						path === PASSKEY_SIGN_IN_PATH
+					);
+				},
+				window: 10,
+				max: 3,
+			},
+		],
+	} satisfies BetterAuthPlugin;
+}
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -167,6 +224,45 @@ function virtoolSessionPlugin(db: Db) {
 			),
 		},
 	} satisfies BetterAuthPlugin;
+}
+
+/**
+ * Apply the two-factor plugin's sign-in gate to passkey sign-in too.
+ *
+ * The plugin matches only its password sign-in paths, so a passkey would
+ * otherwise issue a full session to a user enrolled in TOTP. Reusing its own
+ * handler means both paths set the same pending challenge cookie and answer
+ * with the same `twoFactorRedirect`.
+ */
+function withPasskeyTwoFactor<T extends ReturnType<typeof twoFactor>>(
+	plugin: T,
+): T {
+	const [signIn] = plugin.hooks.after;
+	if (!signIn) {
+		throw new Error("Better Auth two-factor plugin has no sign-in hook");
+	}
+
+	return {
+		...plugin,
+		hooks: {
+			...plugin.hooks,
+			after: [
+				...plugin.hooks.after,
+				{
+					matcher: (context: { path?: string }) =>
+						context.path === PASSKEY_SIGN_IN_PATH,
+					handler: signIn.handler,
+				},
+			],
+		},
+	};
+}
+
+function rejectUnverifiedUser(): never {
+	throw new APIError("BAD_REQUEST", {
+		code: "USER_VERIFICATION_REQUIRED",
+		message: "The authenticator did not verify the user",
+	});
 }
 
 /**
@@ -322,6 +418,7 @@ export function createAuth({
 		},
 		plugins: [
 			virtoolSessionPlugin(db),
+			passkeySignInRateLimitPlugin(),
 			recentAuthenticationPlugin(
 				async function verify(headers, challenge): Promise<void> {
 					if (challenge.method === "password") {
@@ -350,22 +447,55 @@ export function createAuth({
 				minUsernameLength: HANDLE_MIN_LENGTH,
 				maxUsernameLength: HANDLE_MAX_LENGTH,
 			}),
-			twoFactor({
-				issuer: "Virtool",
-				// Recovery codes are not optional in this plugin — enrolling in TOTP
-				// always mints a set — so the only choice here is how they are held.
-				// Encrypted, because a code is a second factor in plaintext and the
-				// row sits beside the TOTP secret it would otherwise stand in for.
-				backupCodeOptions: { storeBackupCodes: "encrypted" },
-			}),
+			withPasskeyTwoFactor(
+				twoFactor({
+					issuer: "Virtool",
+					// Recovery codes are not optional in this plugin — enrolling in TOTP
+					// always mints a set — so the only choice here is how they are held.
+					// Encrypted, because a code is a second factor in plaintext and the
+					// row sits beside the TOTP secret it would otherwise stand in for.
+					backupCodeOptions: { storeBackupCodes: "encrypted" },
+				}),
+			),
 			passkey({
 				rpID: webauthnRpId,
 				rpName: "Virtool",
 				origin: publicOrigin,
-				// The authenticator must prove a person was present *and* verified —
-				// a PIN, a fingerprint, a face. Without it a passkey degrades to
-				// possession of an unlocked device.
-				authenticatorSelection: { userVerification: "required" },
+				authenticatorSelection: {
+					// Discoverable, so a user can sign in without typing a handle first.
+					residentKey: "required",
+					// The authenticator must prove a person was present *and* verified —
+					// a PIN, a fingerprint, a face. Without it a passkey degrades to
+					// possession of an unlocked device.
+					userVerification: "required",
+				},
+				// The plugin verifies both ceremonies with `requireUserVerification:
+				// false` whatever the options above ask the browser for, so the flag
+				// is checked again here, after the signature has been verified.
+				registration: {
+					async afterVerification({ verification }) {
+						const info = verification.registrationInfo;
+						if (!info?.userVerified) {
+							rejectUnverifiedUser();
+						}
+						if (await isPasskeyCredentialRegistered(db, info.credential.id)) {
+							throw new APIError("BAD_REQUEST", {
+								code: "PASSKEY_ALREADY_REGISTERED",
+								message: "Passkey already registered",
+							});
+						}
+						return {
+							name: getAuthenticatorName(info.aaguid) ?? DEFAULT_PASSKEY_NAME,
+						};
+					},
+				},
+				authentication: {
+					afterVerification({ verification }) {
+						if (!verification.authenticationInfo.userVerified) {
+							rejectUnverifiedUser();
+						}
+					},
+				},
 			}),
 			// Must stay last: it copies whatever `set-cookie` the endpoints above
 			// produced onto the TanStack Start response, so a plugin registered
@@ -401,6 +531,9 @@ export function createAuthRequestHandler(
 ): (request: Request) => Promise<Response> {
 	return async function handleAuthRequest(request: Request): Promise<Response> {
 		const pathname = new URL(request.url).pathname;
+		if (SERVER_FUNCTION_PATHS.has(pathname)) {
+			return new Response(null, { status: 404 });
+		}
 		if (!FORCED_RESET_ALLOWED_PATHS.has(pathname)) {
 			const session = await auth.api.getSession({
 				headers: request.headers,

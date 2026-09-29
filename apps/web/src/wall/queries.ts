@@ -1,14 +1,17 @@
 import { accountQueryKeys } from "@account/keys";
+import { getPasskeyAssertion, useSingleCeremony } from "@app/passkeys";
 import {
 	cancelEmailRemediationFn,
 	changeEmailRemediationFn,
 	completeEmailRemediationFn,
 	createFirstUserFn,
 	getEmailRemediationFn,
+	getPasskeySignInOptionsFn,
 	loginFn,
 	promoteEmailRemediationFn,
 	resendEmailRemediationFn,
 	resetPasswordFn,
+	signInWithPasskeyFn,
 	submitEmailRemediationFn,
 	verifyTwoFactorFn,
 } from "@server/auth/functions";
@@ -77,6 +80,30 @@ export function useLoginMutation() {
 	return useMutation<LoginResult, Error, { handle: string; password: string }>({
 		mutationFn: ({ handle, password }) =>
 			loginFn({ data: { handle, password } }),
+		onSuccess: (data) => {
+			if (!("twoFactorRedirect" in data) && !data.reset) {
+				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+			}
+		},
+	});
+}
+
+/**
+ * Initializes a mutator that signs in with a passkey.
+ *
+ * A passkey is a primary credential, so the result is shaped like a password
+ * login's: a TOTP-enrolled user is sent to the second-factor step.
+ */
+export function usePasskeySignInMutation() {
+	const queryClient = useQueryClient();
+	const ceremony = useSingleCeremony(async () => {
+		const options = await getPasskeySignInOptionsFn();
+		const response = await getPasskeyAssertion(options);
+		return signInWithPasskeyFn({ data: { response } });
+	});
+
+	return useMutation<Awaited<ReturnType<typeof signInWithPasskeyFn>>, Error>({
+		mutationFn: ceremony,
 		onSuccess: (data) => {
 			if (!("twoFactorRedirect" in data) && !data.reset) {
 				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });

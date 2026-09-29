@@ -481,6 +481,9 @@ importers:
       '@sentry/tanstackstart-react':
         specifier: ^11.0.0
         version: 11.0.0(react@19.3.0)
+      '@simplewebauthn/browser':
+        specifier: 13.3.0
+        version: 13.3.0
       '@simplewebauthn/server':
         specifier: 13.3.3
         version: 13.3.3
