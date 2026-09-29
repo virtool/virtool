@@ -52,16 +52,11 @@ export function LocalSourceTypes() {
 				<p>Configure a list of allowable source types.</p>
 			</SectionHeader>
 			<SettingsCheckbox
+				description="Only allow users to select from allowed source types for isolates. If disabled, users will be able to enter any string as a source type."
 				enabled={restrictSourceTypes}
-				id="RestrictSourceTypes"
 				onToggle={handleToggle}
-			>
-				<h2>Restrict Source Types</h2>
-				<small>
-					Only allow users to to select from allowed source types for isolates.
-					If disabled, users will be able to enter any string as a source type.
-				</small>
-			</SettingsCheckbox>
+				title="Restrict Source Types"
+			/>
 			<BoxGroup>
 				<BoxGroupDisabled disabled={!restrictSourceTypes}>
 					<SourceTypeList sourceTypes={sourceTypes} onRemove={handleRemove} />
