@@ -739,6 +739,20 @@ export async function getAdministratorRole(
 	return row?.administratorRole ?? null;
 }
 
+/** Read a user's handle, or `null` when the user does not exist. */
+export async function getHandle(
+	db: Db,
+	userId: number,
+): Promise<string | null> {
+	const [row] = await db
+		.select({ handle: usersTable.handle })
+		.from(usersTable)
+		.where(eq(usersTable.id, userId))
+		.limit(1);
+
+	return row?.handle ?? null;
+}
+
 /**
  * Create an account that exists but cannot yet be signed in as.
  *

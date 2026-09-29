@@ -17,9 +17,8 @@ import {
 	PasskeyFallbackMissingError,
 	toPasskeySummary,
 } from "@virtool/data/auth/passkeys";
-import { users } from "@virtool/data/db/schema/users";
+import { getHandle } from "@virtool/data/users/data";
 import { APIError } from "better-auth/api";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
 import {
 	PROTECTED_OPERATIONS,
@@ -279,18 +278,14 @@ export const getPasskeyRegistrationOptionsFn = createServerFn({
 })
 	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.passkeyRegister)])
 	.handler(async ({ context }) => {
-		const [user] = await db
-			.select({ handle: users.handle })
-			.from(users)
-			.where(eq(users.id, context.principal.userId))
-			.limit(1);
-		if (!user) {
+		const handle = await getHandle(db, context.principal.userId);
+		if (handle === null) {
 			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 
 		try {
-			return await generatePasskeyRegistrationOptions(user.handle);
+			return await generatePasskeyRegistrationOptions(handle);
 		} catch (err) {
 			return rethrowPasskeyError(err, PROTECTED_OPERATIONS.passkeyRegister);
 		}
