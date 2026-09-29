@@ -143,8 +143,14 @@ export async function verifyLegacyBrowserPrincipal(
 			: null;
 	}
 
+	// Enrollment runs only through Better Auth, which cannot read a legacy
+	// session, so the user must sign in again to get one that can enroll.
+	if (row.mfaEnrollmentRequired) {
+		return null;
+	}
+
 	return {
-		kind: row.mfaEnrollmentRequired ? "mfa_enrollment" : "browser",
+		kind: "browser",
 		sessionId: row.id,
 		createdAt: row.createdAt,
 		sessionStore: "legacy",

@@ -148,7 +148,7 @@ describe("verifyLegacyBrowserPrincipal", () => {
 		});
 	});
 
-	it("restricts an unenrolled user under the required MFA policy", async () => {
+	it("rejects an unenrolled user under the required MFA policy", async () => {
 		await seedSettings(db, { mfaPolicy: "required" });
 		const userId = await seedUser(db);
 		const session = await createAuthenticatedSession(db, {
@@ -161,13 +161,7 @@ describe("verifyLegacyBrowserPrincipal", () => {
 			},
 		});
 
-		await expect(
-			verifyLegacyBrowserPrincipal(db, request),
-		).resolves.toMatchObject({
-			kind: "mfa_enrollment",
-			sessionStore: "legacy",
-			userId,
-		});
+		await expect(verifyLegacyBrowserPrincipal(db, request)).resolves.toBeNull();
 	});
 
 	it("rejects a wrong retained legacy token", async () => {
