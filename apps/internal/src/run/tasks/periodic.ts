@@ -44,7 +44,7 @@ export const SPAWN_TICK_INTERVAL_MS = 30_000;
  * type rather than a backlog, which is what makes the mistake survivable rather
  * than invisible.
  *
- * A test pins this list to exactly these nine, so a tenth is a deliberate
+ * A test pins this list to exactly these ten, so an eleventh is a deliberate
  * act.
  *
  * The order is the order each tick walks.
