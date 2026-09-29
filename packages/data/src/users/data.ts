@@ -45,7 +45,7 @@ import {
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
-import { isUniqueViolation } from "../db/errors";
+import { isForeignKeyViolation, isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -194,8 +194,15 @@ export class InvalidPasswordError extends AppError {}
 /** Thrown when a user handle conflicts with an existing user. */
 export class UserConflictError extends AppError {}
 
-/** Thrown when a primary group is set to a group the user does not belong to. */
+/** Thrown when a user's group assignment names an invalid group. */
 export class GroupMembershipError extends AppError {}
+
+function mapUnknownGroup(error: unknown): never {
+	if (isForeignKeyViolation(error, ["user_groups_group_id_fkey"])) {
+		throw new GroupMembershipError();
+	}
+	throw error;
+}
 
 /**
  * Thrown when an operation that assumes a usable account is aimed at one that
@@ -807,13 +814,16 @@ export async function createPendingUserInTransaction(
 	});
 
 	if (groupIds.length > 0) {
-		await tx.insert(userGroupsTable).values(
-			groupIds.map((groupId) => ({
-				userId: row.id,
-				groupId,
-				primary: groupId === values.primaryGroup,
-			})),
-		);
+		await tx
+			.insert(userGroupsTable)
+			.values(
+				groupIds.map((groupId) => ({
+					userId: row.id,
+					groupId,
+					primary: groupId === values.primaryGroup,
+				})),
+			)
+			.catch(mapUnknownGroup);
 	}
 
 	return row.id;
@@ -1082,13 +1092,16 @@ export async function updateUser(
 
 			const uniqueGroupIds = Array.from(new Set(values.groups));
 			if (uniqueGroupIds.length > 0) {
-				await tx.insert(userGroupsTable).values(
-					uniqueGroupIds.map((groupId) => ({
-						userId,
-						groupId,
-						primary: groupId === currentPrimary,
-					})),
-				);
+				await tx
+					.insert(userGroupsTable)
+					.values(
+						uniqueGroupIds.map((groupId) => ({
+							userId,
+							groupId,
+							primary: groupId === currentPrimary,
+						})),
+					)
+					.catch(mapUnknownGroup);
 			}
 		}
 
