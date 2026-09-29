@@ -1,5 +1,9 @@
 import type { ActiveBrowserSession, PasskeySummary } from "@virtool/contracts";
-import { deletePasskey, renamePasskey } from "@virtool/data/auth/passkeys";
+import {
+	deletePasskey,
+	lockPasskeyOwner,
+	renamePasskey,
+} from "@virtool/data/auth/passkeys";
 import {
 	deleteActiveBrowserSession,
 	deleteOtherBrowserSessions,
@@ -129,6 +133,7 @@ export async function removeAccountPasskey(
 	managementId: number,
 ): Promise<void> {
 	await db.transaction(async (tx) => {
+		await lockPasskeyOwner(tx, userId);
 		await checkCurrentSession(tx, userId, currentSessionId);
 		await deletePasskey(tx, userId, managementId);
 	});

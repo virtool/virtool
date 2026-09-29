@@ -87,6 +87,9 @@ const { SessionNotFreshError } = await import("../auth/policy");
 const { sessionCookie } = await import("../auth/test/fixtures");
 const { createSoftwareAuthenticator } = await import("../auth/test/webauthn");
 const { ClientError } = await import("../errors");
+const { BrowserSessionEndedError, removeAccountPasskey } = await import(
+	"./service"
+);
 const accountHandlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
@@ -424,6 +427,58 @@ describe("removal", () => {
 			account("removePasskeyFn", { managementId }),
 		).rejects.toBeInstanceOf(SessionNotFreshError);
 		expect(await db.select().from(authPasskeys)).toHaveLength(1);
+	});
+
+	it("locks the user before the session, as a credential reset does", async () => {
+		const userId = await seedAccount();
+		const managementId = await seedPasskey(userId, "credential");
+		const session = await seedSession(db, userId, {
+			expiresAt: new Date(Date.now() + 60 * 60_000),
+		});
+		const holder = database.connect();
+		const observer = database.connect();
+		const release = Promise.withResolvers<void>();
+		const locked = Promise.withResolvers<void>();
+
+		try {
+			const reset = holder.client.begin(async (tx) => {
+				await tx`select id from users where id = ${userId} for update`;
+				locked.resolve();
+				await release.promise;
+				await tx`delete from auth_sessions where user_id = ${userId}`;
+			});
+			await locked.promise;
+
+			const removal = removeAccountPasskey(
+				db,
+				userId,
+				session.sessionId,
+				managementId,
+			);
+			let isWaiting = false;
+			for (let attempt = 0; attempt < 100; attempt += 1) {
+				const rows = await observer.client<{ pid: number }[]>`
+					select pid
+					from pg_stat_activity
+					where datname = current_database()
+						and wait_event_type = 'Lock'
+				`;
+				if (rows.length > 0) {
+					isWaiting = true;
+					break;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+			expect(isWaiting).toBe(true);
+
+			release.resolve();
+			await reset;
+			await expect(removal).rejects.toBeInstanceOf(BrowserSessionEndedError);
+			expect(await db.select().from(authPasskeys)).toHaveLength(1);
+		} finally {
+			release.resolve();
+			await Promise.all([holder.close(), observer.close()]);
+		}
 	});
 });
 

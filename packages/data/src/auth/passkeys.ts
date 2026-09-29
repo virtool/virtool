@@ -90,6 +90,29 @@ export async function renamePasskey(
 }
 
 /**
+ * Lock a user's row before a change to their passkeys.
+ *
+ * Take this lock before a lock on any of the user's sessions. Credential
+ * resets lock the user and then delete the sessions, so the opposite order can
+ * deadlock.
+ *
+ * Returns whether the user exists.
+ */
+export async function lockPasskeyOwner(
+	tx: DbOrTx,
+	userId: number,
+): Promise<boolean> {
+	const [owner] = await tx
+		.select({ id: users.id })
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1)
+		.for("update");
+
+	return owner !== undefined;
+}
+
+/**
  * Delete one of a user's passkeys, leaving every other credential in place.
  *
  * Locks the user row first, so a concurrent password change or account
@@ -105,14 +128,7 @@ export async function deletePasskey(
 	userId: number,
 	managementId: number,
 ): Promise<boolean> {
-	const [owner] = await tx
-		.select({ id: users.id })
-		.from(users)
-		.where(eq(users.id, userId))
-		.limit(1)
-		.for("update");
-
-	if (!owner) {
+	if (!(await lockPasskeyOwner(tx, userId))) {
 		return false;
 	}
 
