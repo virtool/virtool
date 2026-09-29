@@ -11,7 +11,6 @@ import {
 import { sortBy } from "es-toolkit";
 
 type ApiPermissionsProps = {
-	"aria-labelledby"?: string;
 	className?: string;
 	keyPermissions: Permissions;
 	/** Callback function to handle permission selection */
@@ -22,7 +21,6 @@ type ApiPermissionsProps = {
  * Manages permissions for creating/updating an API
  */
 export default function ApiKeyPermissions({
-	"aria-labelledby": ariaLabelledby,
 	className,
 	keyPermissions,
 	onChange,
@@ -70,13 +68,5 @@ export default function ApiKeyPermissions({
 		},
 	);
 
-	return (
-		<BoxGroup
-			className={className}
-			role="group"
-			aria-labelledby={ariaLabelledby}
-		>
-			{rowComponents}
-		</BoxGroup>
-	);
+	return <BoxGroup className={className}>{rowComponents}</BoxGroup>;
 }

@@ -1,7 +1,8 @@
 import { useSendTestEmail } from "@administration/queries";
 import { BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
-import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import type { EmailSettings, EmailTestFailureCode } from "@virtool/contracts";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -67,14 +68,11 @@ export default function EmailTest({
 				Send a test email to verify the delivery configuration.
 			</p>
 			<form onSubmit={handleSubmit(send)}>
-				<InputGroup>
-					<InputLabel htmlFor="testRecipient">Email Address</InputLabel>
+				<Field>
+					<FieldLabel>Email Address</FieldLabel>
 					<div className="flex items-start gap-3">
 						<Input
 							className="min-w-0 flex-1"
-							id="testRecipient"
-							aria-describedby="testRecipient-error"
-							aria-invalid={Boolean(errors.recipient) || undefined}
 							disabled={!isUsable}
 							{...register("recipient", {
 								required: "A recipient is required.",
@@ -93,10 +91,8 @@ export default function EmailTest({
 							{mutation.isPending ? "Sending" : "Send"}
 						</Button>
 					</div>
-					<InputError id="testRecipient-error">
-						{errors.recipient?.message}
-					</InputError>
-				</InputGroup>
+					<FieldError errors={[errors.recipient]} />
+				</Field>
 				<div aria-live="polite" role="status">
 					{mutation.isSuccess ? (
 						<p className="mb-2 text-sm">

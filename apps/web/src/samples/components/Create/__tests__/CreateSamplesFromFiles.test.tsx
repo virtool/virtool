@@ -551,7 +551,7 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(
 			screen.queryByText("Enter a valid regular expression."),
 		).not.toBeInTheDocument();
-		expect(match).toHaveAttribute("aria-invalid", "false");
+		expect(match).not.toHaveAttribute("aria-invalid", "true");
 		await userEvent.click(toggle);
 		await userEvent.clear(match);
 		await userEvent.type(match, "^sample_");

@@ -2,13 +2,8 @@ import { useTimedReset } from "@app/hooks";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import FadeOut from "@base/FadeOut";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputLabel,
-	InputPassword,
-} from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import { InputPassword } from "@base/Input";
 import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
@@ -65,53 +60,37 @@ export default function AccountPassword({
 			<BoxGroup>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<BoxGroupSection>
-						<InputGroup>
-							<InputLabel htmlFor="oldPassword">Old Password</InputLabel>
-							<InputContainer align="right">
-								<InputPassword
-									id="oldPassword"
-									autoComplete="current-password"
-									aria-required
-									aria-invalid={
-										Boolean(errors.oldPassword) || mutation.isError || undefined
-									}
-									aria-describedby={
-										errors.oldPassword || mutation.isError
-											? "oldPassword-error"
-											: undefined
-									}
-									{...register("oldPassword", {
-										// No length rule. This authenticates the password the user
-										// already has, and if the minimum were raised, checking it
-										// here would lock a user with a shorter existing password out
-										// of the very form that would replace it.
-										required: "Please provide your old password",
-									})}
-								/>
-								<InputError id="oldPassword-error">
-									{errors.oldPassword?.message ||
-										(mutation.isError && mutation.error.message)}
-								</InputError>
-							</InputContainer>
-						</InputGroup>
-						<InputGroup>
-							<InputLabel htmlFor="newPassword">New Password</InputLabel>
-							<InputContainer>
-								<InputPassword
-									id="newPassword"
-									autoComplete="new-password"
-									aria-required
-									aria-invalid={Boolean(errors.newPassword) || undefined}
-									aria-describedby={
-										errors.newPassword ? "newPassword-error" : undefined
-									}
-									{...register("newPassword", passwordRules)}
-								/>
-								<InputError id="newPassword-error">
-									{errors.newPassword?.message}
-								</InputError>
-							</InputContainer>
-						</InputGroup>
+						<Field>
+							<FieldLabel>Old Password</FieldLabel>
+							<InputPassword
+								autoComplete="current-password"
+								aria-required
+								{...register("oldPassword", {
+									// No length rule. This authenticates the password the user
+									// already has, and if the minimum were raised, checking it
+									// here would lock a user with a shorter existing password out
+									// of the very form that would replace it.
+									required: "Please provide your old password",
+								})}
+							/>
+							<FieldError
+								errors={[
+									errors.oldPassword,
+									mutation.isError
+										? { message: mutation.error.message }
+										: undefined,
+								]}
+							/>
+						</Field>
+						<Field>
+							<FieldLabel>New Password</FieldLabel>
+							<InputPassword
+								autoComplete="new-password"
+								aria-required
+								{...register("newPassword", passwordRules)}
+							/>
+							<FieldError errors={[errors.newPassword]} />
+						</Field>
 						<FadeOut role="status">
 							{mutation.isSuccess ? (
 								<Alert color="green" icon={Check}>

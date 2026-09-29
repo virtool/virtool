@@ -1,5 +1,5 @@
 import Badge from "@base/Badge";
-import { InputError, InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
 import TextArea from "@base/TextArea";
 import { normalizeSequence, SEQUENCE_PATTERN } from "@virtool/contracts";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -16,16 +16,13 @@ export default function SequenceField() {
 	const sequence = useWatch({ control, name: "sequence" });
 
 	return (
-		<InputGroup className="flex flex-col">
-			<InputLabel htmlFor="sequence">
+		<Field className="flex flex-col">
+			<FieldLabel>
 				Sequence <Badge>{sequence?.length}</Badge>
-			</InputLabel>
+			</FieldLabel>
 			<TextArea
 				className="font-mono uppercase"
-				id="sequence"
 				aria-required
-				aria-invalid={Boolean(errors.sequence) || undefined}
-				aria-describedby={errors.sequence ? "sequence-error" : undefined}
 				{...register("sequence", {
 					required: "Required Field",
 					setValueAs: normalizeSequence,
@@ -35,7 +32,7 @@ export default function SequenceField() {
 					},
 				})}
 			/>
-			<InputError id="sequence-error">{errors.sequence?.message}</InputError>
-		</InputGroup>
+			<FieldError errors={[errors.sequence]} />
+		</Field>
 	);
 }

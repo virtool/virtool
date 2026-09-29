@@ -7,7 +7,13 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, {
+	FieldError,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+} from "@base/Field";
+import Input from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
@@ -83,44 +89,47 @@ export default function SubtractionCreate() {
 					<LoadingPlaceholder className="mt-9" />
 				) : (
 					<form onSubmit={handleSubmit(onSubmit)}>
-						<InputGroup>
-							<InputLabel htmlFor="name">Name</InputLabel>
-							<InputSimple
-								id="name"
+						<Field>
+							<FieldLabel>Name</FieldLabel>
+							<Input
 								aria-required
-								aria-invalid={Boolean(errors.name) || undefined}
-								aria-describedby={errors.name ? "name-error" : undefined}
 								{...register("name", {
 									required: "A name is required",
 								})}
 							/>
-							<InputError id="name-error">{errors.name?.message}</InputError>
-						</InputGroup>
+							<FieldError errors={[errors.name]} />
+						</Field>
 
-						<InputGroup>
-							<InputLabel htmlFor="nickname">Nickname</InputLabel>
-							<InputSimple id="nickname" {...register("nickname")} />
-						</InputGroup>
+						<Field>
+							<FieldLabel>Nickname</FieldLabel>
+							<Input {...register("nickname")} />
+						</Field>
 
-						<InputLabel id={filesLabelId}>Files</InputLabel>
-						<Controller
-							name="uploadId"
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<SubtractionFileSelector
-									aria-labelledby={filesLabelId}
-									onClick={onChange}
-									error={errors.uploadId?.message ?? ""}
-									files={files}
-									isFetchingNextPage={isFetchingNextPage}
-									fetchNextPage={fetchNextPage}
-									isPending={isPending}
-									foundCount={files.pages[0]?.foundCount ?? 0}
-									selected={value}
+						<FieldSet>
+							<FieldLegend id={filesLabelId} variant="label">
+								Files
+							</FieldLegend>
+							<Field className="mb-0 pb-0">
+								<Controller
+									name="uploadId"
+									control={control}
+									render={({ field: { onChange, value } }) => (
+										<SubtractionFileSelector
+											aria-labelledby={filesLabelId}
+											onClick={onChange}
+											error={errors.uploadId?.message ?? ""}
+											files={files}
+											isFetchingNextPage={isFetchingNextPage}
+											fetchNextPage={fetchNextPage}
+											isPending={isPending}
+											foundCount={files.pages[0]?.foundCount ?? 0}
+											selected={value}
+										/>
+									)}
+									rules={{ required: "Please select a file" }}
 								/>
-							)}
-							rules={{ required: "Please select a file" }}
-						/>
+							</Field>
+						</FieldSet>
 						<DialogFooter>
 							<SaveButton />
 						</DialogFooter>

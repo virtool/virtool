@@ -11,13 +11,13 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
+import Field, { FieldError } from "@base/Field";
 import { IconButton } from "@base/Icon";
-import {
-	InputContainer,
-	InputError,
-	InputIconButton,
-	InputSimple,
-} from "@base/Input";
+import InputGroup, {
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from "@base/InputGroup";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
@@ -32,7 +32,7 @@ import {
 } from "@uploads/pairing";
 import type { Label, Upload } from "@virtool/contracts";
 import { AlertCircle, PencilOff, X } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import BulkRename from "./BulkRename";
 import ReadPairBadge from "./ReadPairBadge";
@@ -139,7 +139,6 @@ export default function CreateSamplesFromFiles({
 		name: "samples",
 	});
 
-	const nameErrorPrefix = useId();
 	const samples = useWatch({ control, name: "samples" });
 	const nameCounts = new Map<string, number>();
 	for (const sample of samples) {
@@ -333,9 +332,9 @@ export default function CreateSamplesFromFiles({
 							</Alert>
 						)}
 
-						<InputError className="text-left">
+						<FieldError className="text-left">
 							{mutation.isError && mutation.error.message}
-						</InputError>
+						</FieldError>
 
 						<div className="flex flex-col gap-6 lg:flex-row">
 							<div className="min-w-0 flex-1">
@@ -375,48 +374,44 @@ export default function CreateSamplesFromFiles({
 													const initialName = getSampleNameFromReads(
 														field.reads,
 													);
-													const errorId = `${nameErrorPrefix}-${index}`;
 
 													return (
 														<tr key={field.id}>
 															<td>
-																<InputContainer
-																	align="right"
-																	className="items-center"
-																>
-																	<InputSimple
-																		aria-describedby={
-																			error ? errorId : undefined
-																		}
-																		aria-invalid={Boolean(error) || undefined}
-																		aria-label={`Name for ${field.reads[0]?.name}`}
-																		{...register(`samples.${index}.name`, {
-																			onChange: () => setUndoNames(null),
-																			validate: (name) =>
-																				Boolean(name.trim()) ||
-																				"Required Field",
-																		})}
-																	/>
-																	{samples[index]?.name !== initialName && (
-																		<InputIconButton
-																			IconComponent={PencilOff}
-																			ariaLabel={`Reset name for ${field.reads[0]?.name}`}
-																			tip="Reset name"
-																			onClick={() => {
-																				setValue(
-																					`samples.${index}.name`,
-																					initialName,
-																					{
-																						shouldDirty: true,
-																						shouldValidate: true,
-																					},
-																				);
-																				setUndoNames(null);
-																			}}
+																<Field className="mb-0 pb-0">
+																	<InputGroup>
+																		<InputGroupInput
+																			aria-label={`Name for ${field.reads[0]?.name}`}
+																			{...register(`samples.${index}.name`, {
+																				onChange: () => setUndoNames(null),
+																				validate: (name) =>
+																					Boolean(name.trim()) ||
+																					"Required Field",
+																			})}
 																		/>
-																	)}
-																</InputContainer>
-																<InputError id={errorId}>{error}</InputError>
+																		{samples[index]?.name !== initialName && (
+																			<InputGroupAddon align="inline-end">
+																				<InputGroupButton
+																					IconComponent={PencilOff}
+																					ariaLabel={`Reset name for ${field.reads[0]?.name}`}
+																					tip="Reset name"
+																					onClick={() => {
+																						setValue(
+																							`samples.${index}.name`,
+																							initialName,
+																							{
+																								shouldDirty: true,
+																								shouldValidate: true,
+																							},
+																						);
+																						setUndoNames(null);
+																					}}
+																				/>
+																			</InputGroupAddon>
+																		)}
+																	</InputGroup>
+																	<FieldError>{error}</FieldError>
+																</Field>
 															</td>
 															<td>
 																<div className="flex flex-col gap-1">

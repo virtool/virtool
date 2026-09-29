@@ -16,8 +16,9 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@base/Empty";
+import Field, { FieldError, FieldLegend, FieldSet } from "@base/Field";
 import Icon from "@base/Icon";
-import { InputError, InputGroup, InputLabel, InputSearch } from "@base/Input";
+import { InputSearch } from "@base/Input";
 import Link from "@base/Link";
 import Toolbar from "@base/Toolbar";
 import type {
@@ -220,11 +221,14 @@ export default function ReadSelector({
 		);
 
 	return (
-		<InputGroup>
-			<div className="flex items-center justify-between">
-				<InputLabel htmlFor="read-files-search">Read files</InputLabel>
+		<FieldSet className="pb-2">
+			<FieldLegend
+				className="flex w-full items-center justify-between"
+				variant="label"
+			>
+				Read files
 				<ReadPairBadge count={selected.length} />
-			</div>
+			</FieldLegend>
 
 			{wasCleared && (
 				<Alert color="orange" icon={TriangleAlert} level>
@@ -251,59 +255,58 @@ export default function ReadSelector({
 				showSwap={mode === "manual"}
 			/>
 
-			<Box className={cn(error && "border-red-600")}>
-				<Toolbar>
-					<div className="flex-grow">
-						<InputSearch
-							id="read-files-search"
-							aria-label="Search read files"
-							aria-describedby={error ? "read-files-error" : undefined}
-							placeholder="Filename"
-							value={term}
-							onChange={(e) => setTerm(e.target.value)}
-						/>
-					</div>
-					<Button className="inline-flex gap-2" type="button" onClick={reset}>
-						<Icon icon={Undo} /> Reset
-					</Button>
-					<Dropdown>
-						<DropdownButton className="flex items-center gap-1.5">
-							{selectorModes.find((m) => m.value === mode)?.label}
-							<ChevronDown size={16} />
-						</DropdownButton>
-						<DropdownMenuContent className="max-w-72">
-							{selectorModes.map((selectorMode) => (
-								<DropdownMenuItem
-									key={selectorMode.value}
-									onSelect={() => setMode(selectorMode.value)}
-									className="flex flex-col items-start"
-								>
-									<span className="font-medium">{selectorMode.label}</span>
-									<span className="text-xs text-gray-500">
-										{selectorMode.description}
-									</span>
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuContent>
-					</Dropdown>
-				</Toolbar>
-				{noneFound || (
-					<>
-						<CompactScrollList
-							className="border border-gray-300 rounded h-54"
-							fetchNextPage={fetchNextPage}
-							isFetchingNextPage={isFetchingNextPage}
-							isPending={isPending}
-							items={rows}
-							renderRow={renderRow}
-						/>
+			<Field className="mb-0 pb-0">
+				<Box className={cn(error && "border-red-600")}>
+					<Toolbar>
+						<div className="flex-grow">
+							<InputSearch
+								aria-invalid={false}
+								aria-label="Search read files"
+								placeholder="Filename"
+								value={term}
+								onChange={(e) => setTerm(e.target.value)}
+							/>
+						</div>
+						<Button className="inline-flex gap-2" type="button" onClick={reset}>
+							<Icon icon={Undo} /> Reset
+						</Button>
+						<Dropdown>
+							<DropdownButton className="flex items-center gap-1.5">
+								{selectorModes.find((m) => m.value === mode)?.label}
+								<ChevronDown size={16} />
+							</DropdownButton>
+							<DropdownMenuContent className="max-w-72">
+								{selectorModes.map((selectorMode) => (
+									<DropdownMenuItem
+										key={selectorMode.value}
+										onSelect={() => setMode(selectorMode.value)}
+										className="flex flex-col items-start"
+									>
+										<span className="font-medium">{selectorMode.label}</span>
+										<span className="text-xs text-gray-500">
+											{selectorMode.description}
+										</span>
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</Dropdown>
+					</Toolbar>
+					{noneFound || (
+						<>
+							<CompactScrollList
+								className="border border-gray-300 rounded h-54"
+								fetchNextPage={fetchNextPage}
+								isFetchingNextPage={isFetchingNextPage}
+								isPending={isPending}
+								items={rows}
+								renderRow={renderRow}
+							/>
 
-						<InputError id="read-files-error" className="mb-2.5">
-							{error}
-						</InputError>
-					</>
-				)}
-			</Box>
-		</InputGroup>
+							<FieldError className="mb-2.5">{error}</FieldError>
+						</>
+					)}
+				</Box>
+			</Field>
+		</FieldSet>
 	);
 }

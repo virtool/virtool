@@ -1,5 +1,6 @@
 import Button from "@base/Button";
-import { InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
 import { useState } from "react";
@@ -76,10 +77,9 @@ export default function LoginForm({
 			<WallTitle title="Login" subtitle="Login with your Virtool account." />
 
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<InputGroup>
-					<InputLabel htmlFor="handle">Username</InputLabel>
-					<InputSimple
-						id="handle"
+				<Field>
+					<FieldLabel>Username</FieldLabel>
+					<Input
 						autoComplete="username"
 						aria-required
 						aria-invalid={isError || undefined}
@@ -87,11 +87,10 @@ export default function LoginForm({
 						{...register("handle", { required: true })}
 						autoFocus
 					/>
-				</InputGroup>
-				<InputGroup>
-					<InputLabel htmlFor="password">Password</InputLabel>
-					<InputSimple
-						id="password"
+				</Field>
+				<Field>
+					<FieldLabel>Password</FieldLabel>
+					<Input
 						type="password"
 						autoComplete="current-password"
 						aria-required
@@ -99,7 +98,7 @@ export default function LoginForm({
 						aria-describedby={isError ? "login-error" : undefined}
 						{...register("password", { required: true })}
 					/>
-				</InputGroup>
+				</Field>
 				<div className="flex justify-end my-4">
 					{isError && (
 						<div

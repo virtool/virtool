@@ -1,8 +1,15 @@
 import { useUpdateSettings } from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InputGroup, InputLabel } from "@base/Input";
+import Field, {
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldTitle,
+} from "@base/Field";
+import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
 import SectionHeader from "@base/SectionHeader";
-import { SelectBox, SelectBoxItem } from "@base/Select";
 import type { Settings } from "@virtool/contracts";
 import RightsSelect from "./RightsSelect";
 
@@ -39,36 +46,57 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 			</SectionHeader>
 			<BoxGroup>
 				<BoxGroupSection>
-					<SelectBox
-						className="grid-cols-3"
-						label="Sample Group"
-						onValueChange={(value) => mutation.mutate({ sampleGroup: value })}
-						value={sampleGroup}
-					>
-						<SelectBoxItem value="none">
-							<strong>None</strong>
-							<p>
-								Samples are assigned no group and only
-								<em> all {"users'"}</em> rights apply
-							</p>
-						</SelectBoxItem>
-						<SelectBoxItem value="force_choice">
-							<strong>Force choice</strong>
-							<p>Samples are assigned by the user in the creation form</p>
-						</SelectBoxItem>
-						<SelectBoxItem value="users_primary_group">
-							<strong>{"User's"} primary group</strong>
-							<p>
-								Samples are automatically assigned the creating {"user's"}{" "}
-								primary group
-							</p>
-						</SelectBoxItem>
-					</SelectBox>
+					<FieldSet>
+						<FieldLegend variant="label">Sample Group</FieldLegend>
+						<RadioGroup
+							className="grid-cols-3"
+							onValueChange={(value) => mutation.mutate({ sampleGroup: value })}
+							value={sampleGroup}
+						>
+							<FieldLabel variant="card">
+								<Field orientation="horizontal" className="items-start">
+									<RadioGroupItem className="mt-0.5" value="none" />
+									<FieldContent>
+										<FieldTitle>None</FieldTitle>
+										<FieldDescription>
+											Samples are assigned no group and only <em>all users’</em>{" "}
+											rights apply.
+										</FieldDescription>
+									</FieldContent>
+								</Field>
+							</FieldLabel>
+							<FieldLabel variant="card">
+								<Field orientation="horizontal" className="items-start">
+									<RadioGroupItem className="mt-0.5" value="force_choice" />
+									<FieldContent>
+										<FieldTitle>Force choice</FieldTitle>
+										<FieldDescription>
+											Samples are assigned by the user in the creation form.
+										</FieldDescription>
+									</FieldContent>
+								</Field>
+							</FieldLabel>
+							<FieldLabel variant="card">
+								<Field orientation="horizontal" className="items-start">
+									<RadioGroupItem
+										className="mt-0.5"
+										value="users_primary_group"
+									/>
+									<FieldContent>
+										<FieldTitle>User’s primary group</FieldTitle>
+										<FieldDescription>
+											Samples are automatically assigned the creating user’s
+											primary group.
+										</FieldDescription>
+									</FieldContent>
+								</Field>
+							</FieldLabel>
+						</RadioGroup>
+					</FieldSet>
 
-					<InputGroup>
-						<InputLabel htmlFor="group">Group Rights</InputLabel>
+					<Field>
+						<FieldLabel>Group Rights</FieldLabel>
 						<RightsSelect
-							id="group"
 							value={group}
 							onChange={(value) =>
 								mutation.mutate({
@@ -77,12 +105,11 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 								})
 							}
 						/>
-					</InputGroup>
+					</Field>
 
-					<InputGroup>
-						<InputLabel htmlFor="all">All {"Users'"} Rights</InputLabel>
+					<Field>
+						<FieldLabel>All {"Users'"} Rights</FieldLabel>
 						<RightsSelect
-							id="all"
 							value={all}
 							onChange={(value) =>
 								mutation.mutate({
@@ -91,7 +118,7 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 								})
 							}
 						/>
-					</InputGroup>
+					</Field>
 				</BoxGroupSection>
 			</BoxGroup>
 		</section>

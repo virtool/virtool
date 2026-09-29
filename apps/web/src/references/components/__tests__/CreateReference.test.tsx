@@ -19,10 +19,7 @@ describe("<CreateReference />", () => {
 		);
 
 		expect(screen.getByText("Create Reference")).toBeInTheDocument();
-		expect(screen.getByRole("radio", { name: /Empty/i })).toHaveAttribute(
-			"data-state",
-			"on",
-		);
+		expect(screen.getByRole("radio", { name: /Empty/i })).toBeChecked();
 		expect(
 			screen.getByRole("textbox", { name: "Organism" }),
 		).toBeInTheDocument();

@@ -1,6 +1,7 @@
 import { accountQueryKeys } from "@account/keys";
 import Button from "@base/Button";
-import { InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import {
 	completePasswordRecoveryFn,
 	inspectPasswordRecoveryFn,
@@ -124,16 +125,15 @@ export default function RecoveryWall() {
 						subtitle="Request a password reset link."
 					/>
 					<form onSubmit={requestRecovery}>
-						<InputGroup>
-							<InputLabel htmlFor="recovery-handle">Username</InputLabel>
-							<InputSimple
-								id="recovery-handle"
+						<Field>
+							<FieldLabel>Username</FieldLabel>
+							<Input
 								autoComplete="username"
 								required
 								value={handle}
 								onChange={(event) => setHandle(event.target.value)}
 							/>
-						</InputGroup>
+						</Field>
 						{error && <p role="alert">{error}</p>}
 						<Button color="blue" type="submit" disabled={pending}>
 							Send recovery link
@@ -157,17 +157,16 @@ export default function RecoveryWall() {
 						subtitle="This recovery link can be used once."
 					/>
 					<form onSubmit={completeRecovery}>
-						<InputGroup>
-							<InputLabel htmlFor="new-password">New password</InputLabel>
-							<InputSimple
-								id="new-password"
+						<Field>
+							<FieldLabel>New password</FieldLabel>
+							<Input
 								type="password"
 								autoComplete="new-password"
 								required
 								value={password}
 								onChange={(event) => setPassword(event.target.value)}
 							/>
-						</InputGroup>
+						</Field>
 						{error && <p role="alert">{error}</p>}
 						<Button color="blue" type="submit" disabled={pending}>
 							Change password

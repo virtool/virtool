@@ -1,4 +1,10 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
+import Field, {
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldTitle,
+} from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
@@ -35,28 +41,29 @@ export default function AccountSettings() {
 				</SectionHeader>
 				<BoxGroup>
 					<BoxGroupSection>
-						<div className="flex items-center justify-between gap-5">
-							<div>
-								<p className="font-semibold" id="preferAcronym-label">
-									Prefer acronym
-								</p>
-								<p className="text-gray-600 text-sm">
-									Name OTUs by their acronym when they have one.
-								</p>
-								{mutation.isError ? (
-									<p className="text-red-600 text-sm" role="alert">
-										Could not save the setting. Try again.
-									</p>
-								) : null}
-							</div>
-							<Switch
-								aria-labelledby="preferAcronym-label"
-								checked={data.settings.preferAcronym}
-								onCheckedChange={(checked) =>
-									mutation.mutate({ preferAcronym: checked })
-								}
-							/>
-						</div>
+						<FieldLabel variant="row">
+							<Field className="flex-1 gap-5" orientation="horizontal">
+								<FieldContent>
+									<FieldTitle className="font-semibold">
+										Prefer acronym
+									</FieldTitle>
+									<FieldDescription>
+										Name OTUs by their acronym when they have one.
+									</FieldDescription>
+								</FieldContent>
+								<Switch
+									checked={data.settings.preferAcronym}
+									onCheckedChange={(checked) =>
+										mutation.mutate({ preferAcronym: checked })
+									}
+								/>
+							</Field>
+						</FieldLabel>
+						{mutation.isError ? (
+							<p className="text-red-600 text-sm" role="alert">
+								Could not save the setting. Try again.
+							</p>
+						) : null}
 					</BoxGroupSection>
 				</BoxGroup>
 				<div className="mt-5 mb-3">

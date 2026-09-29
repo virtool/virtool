@@ -1,5 +1,6 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InputError, InputGroup, InputSimple } from "@base/Input";
+import Field, { FieldError } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
@@ -35,34 +36,30 @@ export default function AccountHandle({ handle }: HandleProps) {
 	return (
 		<section>
 			<SectionHeader level={3}>
-				<h3>
-					<label htmlFor="handle">Handle</label>
-				</h3>
+				<h3>Handle</h3>
 				<p>The name other users see on your work in Virtool.</p>
 			</SectionHeader>
 			<BoxGroup>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<BoxGroupSection>
-						<InputGroup>
-							<InputSimple
-								id="handle"
+						<Field>
+							<Input
+								aria-label="Handle"
 								autoComplete="off"
 								aria-required
-								aria-invalid={
-									Boolean(errors.handle) || mutation.isError || undefined
-								}
-								aria-describedby={
-									errors.handle || mutation.isError ? "handle-error" : undefined
-								}
 								{...register("handle", {
 									required: "Please specify a username",
 								})}
 							/>
-							<InputError id="handle-error">
-								{errors.handle?.message ||
-									(mutation.isError ? mutation.error.message : "")}
-							</InputError>
-						</InputGroup>
+							<FieldError
+								errors={[
+									errors.handle,
+									mutation.isError
+										? { message: mutation.error.message }
+										: undefined,
+								]}
+							/>
+						</Field>
 						<footer className="flex items-center justify-end mb-4">
 							<SaveButton altText="Change" />
 						</footer>
