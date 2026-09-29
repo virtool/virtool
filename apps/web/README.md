@@ -426,8 +426,8 @@ The instance MFA policy is `settings.mfa_policy`, `optional` or `required`,
 and only a full administrator can set it through `setMfaPolicyFn`. It refuses
 `required` until the caller has enrolled, so the policy can't lock out the
 administrator who sets it. Under
-`required`, a Better Auth session whose user has no confirmed TOTP resolves to
-an `mfa_enrollment` principal. The restriction is read from the policy and
+`required`, a Better Auth or retained legacy session whose user has no
+confirmed TOTP resolves to an `mfa_enrollment` principal. The restriction is read from the policy and
 `users.two_factor_enabled` on every request, so it applies to live sessions as
 soon as the policy changes or a user disables TOTP. It ends when the first
 `verify-totp` succeeds.
@@ -441,8 +441,10 @@ reach only `get-session`, `sign-out`, `two-factor/enable`, and
 `resetUserTotpFn` is the recovery path for a user who has lost both their
 authenticator and their recovery codes. It requires the full administrator role
 and recent authentication, and it refuses the caller's own account. It deletes
-the factor and every session of the target in one transaction, so under
-`required` the target's next sign-in is restricted to enrollment.
+the factor, clears `users.two_factor_enabled`, and deletes every session of the
+target in one transaction, so under `required` the target's next sign-in is
+restricted to enrollment. The factor row or the flag alone is sufficient, so
+the reset also repairs an account where the two do not agree.
 
 ### Server push
 

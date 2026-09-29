@@ -7,6 +7,7 @@ import {
 } from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 
+import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
@@ -328,16 +329,11 @@ export async function completeAccountSetup(
 			return { userId: consumed.userId, emailVerificationRequired };
 		})
 		.catch((error: unknown) => {
-			const cause =
-				error && typeof error === "object" && "cause" in error
-					? error.cause
-					: error;
 			if (
-				cause &&
-				typeof cause === "object" &&
-				"constraint_name" in cause &&
-				(cause.constraint_name === "users_handle_lower_unique" ||
-					cause.constraint_name === "users_username_key")
+				isUniqueViolation(error, [
+					"users_handle_lower_unique",
+					"users_username_key",
+				])
 			) {
 				throw new AccountSetupHandleInUseError();
 			}
@@ -923,26 +919,36 @@ export async function claimEmailRemediationPromotion(
  * ever holds it. Deleting every session means the user signs in again, and
  * under the `required` MFA policy that sign-in is restricted to enrollment.
  *
- * Throws {@link TotpNotEnrolledError} when the user has nothing to reset.
+ * Throws {@link TotpNotEnrolledError} when the user has neither a factor nor
+ * the enabled flag.
  */
 export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 	await db.transaction(async (tx) => {
+		const [user] = await tx
+			.select({ twoFactorEnabled: users.twoFactorEnabled })
+			.from(users)
+			.where(eq(users.id, userId))
+			.for("update");
+
 		const removed = await tx
 			.delete(authTwoFactors)
 			.where(eq(authTwoFactors.userId, userId))
 			.returning({ id: authTwoFactors.id });
 
-		const [user] = await tx
-			.update(users)
-			.set({ twoFactorEnabled: false })
-			.where(eq(users.id, userId))
-			.returning({ id: users.id });
-
-		if (!user || removed.length === 0) {
+		// Either half is enough to reset, so an account left with the flag but
+		// no factor, or the reverse, can still be repaired.
+		if (!user || (removed.length === 0 && !user.twoFactorEnabled)) {
 			throw new TotpNotEnrolledError();
 		}
 
-		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
+		await Promise.all([
+			tx
+				.update(users)
+				.set({ twoFactorEnabled: false })
+				.where(eq(users.id, userId)),
+			tx.delete(authSessions).where(eq(authSessions.userId, userId)),
+			tx.delete(sessions).where(eq(sessions.userId, userId)),
+		]);
 	});
 
 	await emit("users", userId, "update");

@@ -13,7 +13,6 @@ import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import {
 	changePassword,
-	createPendingUser,
 	createUser,
 	findAdministeredUsers,
 	findUsers,
@@ -744,45 +743,6 @@ describe("getUser", () => {
 	});
 });
 
-describe("createPendingUser", () => {
-	it("creates an account with no credential and pending lifecycle", async () => {
-		const group = await seedGroup(db, { name: "researchers" });
-
-		const user = await createPendingUser(db, {
-			handle: "alice",
-			administratorRole: "users",
-			groups: [group],
-		});
-
-		expect(user).toMatchObject({
-			handle: "alice",
-			administratorRole: "users",
-			active: true,
-			forceReset: false,
-			lifecycleState: "pending",
-		});
-		expect(user.groups.map((entry) => entry.name)).toEqual(["researchers"]);
-
-		const [row] = await db.select().from(users).where(eq(users.id, user.id));
-		expect(row?.password).toBeNull();
-		expect(row?.settings).toEqual({
-			prefer_abbreviation: false,
-			skip_quick_analyze_dialog: true,
-			show_ids: true,
-			show_versions: true,
-			quick_analyze_workflow: "pathoscope",
-		});
-	});
-
-	it("rejects a duplicate handle", async () => {
-		await seedUser(db, { handle: "alice" });
-
-		await expect(
-			createPendingUser(db, { handle: "Alice" }),
-		).rejects.toBeInstanceOf(UserConflictError);
-	});
-});
-
 describe("createUser", () => {
 	it("creates a user with the default settings and no administrator role", async () => {
 		const user = await createUser(db, {
@@ -882,25 +842,31 @@ describe("updateUser on a pending account", () => {
 	// Setting a password here would complete the setup without the token that
 	// authorizes the transition.
 	it("refuses to set a password", async () => {
-		const user = await createPendingUser(db, { handle: "alice" });
+		const userId = await seedUser(db, {
+			handle: "",
+			lifecycleState: "pending",
+		});
 
 		await expect(
-			updateUser(db, user.id, { password: "a-real-password" }),
+			updateUser(db, userId, { password: "a-real-password" }),
 		).rejects.toBeInstanceOf(PendingAccountError);
 
-		const [row] = await db.select().from(users).where(eq(users.id, user.id));
+		const [row] = await db.select().from(users).where(eq(users.id, userId));
 		expect(row?.password).toBeNull();
 		expect(row?.lifecycleState).toBe("pending");
 	});
 
 	it("reserves the handle for the invitee while allowing group changes", async () => {
-		const user = await createPendingUser(db, {});
+		const userId = await seedUser(db, {
+			handle: "",
+			lifecycleState: "pending",
+		});
 		const group = await seedGroup(db, { name: "researchers" });
 
 		await expect(
-			updateUser(db, user.id, { handle: "ada" }),
+			updateUser(db, userId, { handle: "ada" }),
 		).rejects.toBeInstanceOf(PendingAccountError);
-		const updated = await updateUser(db, user.id, { groups: [group] });
+		const updated = await updateUser(db, userId, { groups: [group] });
 
 		expect(updated.handle).toBe("");
 		expect(updated.groups.map((entry) => entry.name)).toEqual(["researchers"]);
@@ -910,11 +876,14 @@ describe("updateUser on a pending account", () => {
 
 describe("changePassword on a pending account", () => {
 	it("reports a bad credential rather than a lifecycle state", async () => {
-		const user = await createPendingUser(db, { handle: "alice" });
+		const userId = await seedUser(db, {
+			handle: "",
+			lifecycleState: "pending",
+		});
 
 		await expect(
 			changePassword(db, {
-				userId: user.id,
+				userId,
 				oldPassword: "anything",
 				password: "a-real-password",
 			}),

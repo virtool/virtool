@@ -1,5 +1,6 @@
 import { passkey } from "@better-auth/passkey";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
+import { mfaEnrollmentRequired } from "@virtool/data/auth/session";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -10,7 +11,6 @@ import {
 	authVerifications,
 } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
-import { getSettings } from "@virtool/data/settings/data";
 import { type BetterAuthPlugin, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
@@ -413,7 +413,7 @@ export function createAuthRequestHandler(
 					? await db
 							.select({
 								forceReset: users.forceReset,
-								twoFactorEnabled: users.twoFactorEnabled,
+								mfaEnrollmentRequired,
 							})
 							.from(users)
 							.where(eq(users.id, userId))
@@ -431,9 +431,8 @@ export function createAuthRequestHandler(
 				}
 
 				if (
-					!user.twoFactorEnabled &&
-					!MFA_ENROLLMENT_ALLOWED_PATHS.has(pathname) &&
-					(await getSettings(db)).mfaPolicy === "required"
+					user.mfaEnrollmentRequired &&
+					!MFA_ENROLLMENT_ALLOWED_PATHS.has(pathname)
 				) {
 					return Response.json(
 						{

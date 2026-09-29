@@ -34,7 +34,7 @@ export type MfaEnrollmentPrincipal = {
 	sessionId: number;
 	/** Immutable time at which this browser session was created. */
 	createdAt: Date;
-	sessionStore: "better_auth";
+	sessionStore: "better_auth" | "legacy";
 };
 
 /** A machine caller authenticated by a Virtool API key. */

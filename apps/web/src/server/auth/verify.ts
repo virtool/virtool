@@ -5,7 +5,10 @@ import {
 	type BrowserSessionPrincipal,
 	emptyPermissions,
 } from "@virtool/contracts";
-import { resolveBrowserSession } from "@virtool/data/auth/session";
+import {
+	mfaEnrollmentRequired,
+	resolveBrowserSession,
+} from "@virtool/data/auth/session";
 import { hashToken } from "@virtool/data/auth/tokens";
 
 import type { Db } from "@virtool/data/db/pg";
@@ -94,6 +97,7 @@ export async function verifyLegacyBrowserPrincipal(
 			active: users.active,
 			lifecycleState: users.lifecycleState,
 			forceReset: users.forceReset,
+			mfaEnrollmentRequired,
 		})
 		.from(sessions)
 		.innerJoin(users, eq(users.id, sessions.userId))
@@ -140,7 +144,7 @@ export async function verifyLegacyBrowserPrincipal(
 	}
 
 	return {
-		kind: "browser",
+		kind: row.mfaEnrollmentRequired ? "mfa_enrollment" : "browser",
 		sessionId: row.id,
 		createdAt: row.createdAt,
 		sessionStore: "legacy",

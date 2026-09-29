@@ -1,6 +1,6 @@
 import { accountQueryKeys } from "@account/keys";
 import { getRecentAuthenticationRemainingFn } from "@server/auth/recentAuthentication";
-import type { QueryClient } from "@tanstack/react-query";
+import { isServer, type QueryClient } from "@tanstack/react-query";
 
 /** A session's freshness deadline, in epoch milliseconds on the local clock. */
 type RecentAuthentication = {
@@ -20,10 +20,17 @@ function isFresh({ freshUntil }: RecentAuthentication): boolean {
  * sign-in or challenge replaces it, so a cached deadline that has not passed
  * is trusted without a request. One that has passed is refetched, because a
  * challenge passed in another tab may have replaced the session since.
+ *
+ * A server render answers without caching: a deadline measured on the server's
+ * clock would be dehydrated and then compared against the browser's.
  */
 export async function resolveRecentAuthenticationFresh(
 	queryClient: QueryClient,
 ): Promise<boolean> {
+	if (isServer) {
+		return (await getRecentAuthenticationRemainingFn()) > 0;
+	}
+
 	const queryKey = accountQueryKeys.recentAuthentication();
 	const cached = queryClient.getQueryData<RecentAuthentication>(queryKey);
 

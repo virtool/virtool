@@ -18,10 +18,6 @@ import {
 	TotpNotEnrolledError,
 } from "@virtool/data/auth/lifecycle";
 import {
-	getEmailSettings,
-	resolveEmailDelivery,
-} from "@virtool/data/email/settings";
-import {
 	changePassword,
 	findAdministeredUsers,
 	findUsers,
@@ -62,8 +58,9 @@ import {
 } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { signInUsername } from "../auth/sessionActions";
-import { db, keyring } from "../composition";
+import { db } from "../composition";
 import { config } from "../config";
+import { isEmailDeliveryAvailable } from "../email/delivery";
 import { ClientError } from "../errors";
 import {
 	pageSchema,
@@ -195,14 +192,6 @@ function rethrowAsHttp(err: unknown): never {
 	throw err;
 }
 
-async function getDeliveryAvailable(): Promise<boolean> {
-	const settings = await getEmailSettings(db);
-	return (
-		settings.enabled &&
-		resolveEmailDelivery(settings, keyring).availability === "ready"
-	);
-}
-
 function getSetupUrl(token: string): string {
 	return `${config.publicOrigin}/account-setup#token=${token}`;
 }
@@ -226,7 +215,7 @@ export const getInvitationEmailAvailabilityFn = createServerFn({
 	method: "GET",
 })
 	.middleware([adminRole("users")])
-	.handler(getDeliveryAvailable);
+	.handler(isEmailDeliveryAvailable);
 
 // Any authenticated user can see who else exists — the handles are already
 // visible on samples, jobs, and analyses they can read.
@@ -276,7 +265,10 @@ export const getUserFn = createServerFn({ method: "GET" })
 	});
 
 export const createUserFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
 	.validator(createUserSchema)
 	.handler(async ({ context, data }) => {
 		await requireInvitationAuthority(context.principal, data.administratorRole);
@@ -293,7 +285,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 				groups: data.groups,
 				primaryGroup: data.primaryGroup,
 				deliveryIntent: data.deliveryIntent,
-				deliveryAvailable: await getDeliveryAvailable(),
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				issuerUserId: context.principal.userId,
 				getSetupUrl,
 			});
@@ -335,7 +327,10 @@ const invitationMutationSchema = userIdSchema.extend({
 });
 
 export const regenerateInvitationFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
 	.validator(invitationMutationSchema)
 	.handler(async ({ context, data }) => {
 		try {
@@ -344,7 +339,7 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 			const result = await regenerateInvitation(db, data.userId, {
 				issuerUserId: context.principal.userId,
 				deliveryIntent: data.deliveryIntent ?? "copy_only",
-				deliveryAvailable: await getDeliveryAvailable(),
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				getSetupUrl,
 			});
 			recordAccountLifecycle({
@@ -368,7 +363,10 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 	});
 
 export const deletePendingUserFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
 	.validator(userIdSchema)
 	.handler(async ({ context, data }) => {
 		try {

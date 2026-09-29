@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
+import { sessions } from "../db/schema/sessions";
 import { settings } from "../db/schema/settings";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
@@ -27,6 +28,7 @@ import {
 	verifyEmailRemediationToken,
 } from "./lifecycle";
 import { hashPassword, verifyPassword } from "./password";
+import { createAuthenticatedSession } from "./session";
 import { SetupCredentialError } from "./setup";
 import { seedSetupSession, seedSetupToken, seedUser } from "./test/fixtures";
 
@@ -815,6 +817,30 @@ describe("resetUserTotp", () => {
 		expect(factors.map((row) => row.userId)).toEqual([otherId]);
 		const remaining = await db.select().from(authSessions);
 		expect(remaining.map((row) => row.userId)).toEqual([otherId]);
+	});
+
+	it("ends the user's legacy sessions", async () => {
+		const userId = await seedUser(db);
+		await seedTwoFactor(userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
+
+		await resetUserTotp(db, userId);
+
+		expect(await db.select().from(sessions)).toHaveLength(0);
+	});
+
+	it("resets a user whose flag is set without a factor", async () => {
+		const userId = await seedUser(db);
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		await seedAuthSession(userId);
+
+		await resetUserTotp(db, userId);
+
+		expect((await readUser(userId)).twoFactorEnabled).toBe(false);
+		expect(await db.select().from(authSessions)).toHaveLength(0);
 	});
 
 	it("refuses a user with no factor and keeps their sessions", async () => {

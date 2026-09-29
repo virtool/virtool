@@ -22,10 +22,13 @@ export type ResolvedBrowserSession = {
 	mfaEnrollmentRequired: boolean;
 };
 
-// Read with the session rather than from a cached policy, so a policy change
-// or a TOTP disable restricts every live session on its next request. A
-// missing settings row means the `optional` default.
-const mfaEnrollmentRequired = sql<boolean>`(
+/**
+ * Whether the live MFA policy restricts the joined `users` row to TOTP
+ * enrollment. Read with the session rather than from a cached policy, so a
+ * policy change or a TOTP disable restricts every live session on its next
+ * request. A missing settings row means the `optional` default.
+ */
+export const mfaEnrollmentRequired = sql<boolean>`(
 	coalesce((select ${settings.mfaPolicy} from ${settings} where ${settings.id} = 1), 'optional') = 'required'
 	and not coalesce(${users.twoFactorEnabled}, false)
 )`;

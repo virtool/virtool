@@ -7,11 +7,13 @@ import {
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { settings } from "@virtool/data/db/schema/settings";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -45,6 +47,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(apiKeys);
 	await db.delete(users);
+	await db.delete(settings);
 });
 
 describe("verifyBrowserPrincipal", () => {
@@ -140,6 +143,28 @@ describe("verifyLegacyBrowserPrincipal", () => {
 		).resolves.toMatchObject({
 			kind: "browser",
 			sessionId: session.row.id,
+			sessionStore: "legacy",
+			userId,
+		});
+	});
+
+	it("restricts an unenrolled user under the required MFA policy", async () => {
+		await seedSettings(db, { mfaPolicy: "required" });
+		const userId = await seedUser(db);
+		const session = await createAuthenticatedSession(db, {
+			userId,
+			ip: "127.0.0.1",
+		});
+		const request = new Request("https://virtool.test/", {
+			headers: {
+				cookie: `${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`,
+			},
+		});
+
+		await expect(
+			verifyLegacyBrowserPrincipal(db, request),
+		).resolves.toMatchObject({
+			kind: "mfa_enrollment",
 			sessionStore: "legacy",
 			userId,
 		});

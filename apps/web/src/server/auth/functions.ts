@@ -25,16 +25,16 @@ import {
 } from "@virtool/data/auth/lifecycle";
 import { SetupCredentialError } from "@virtool/data/auth/setup";
 import { users } from "@virtool/data/db/schema/users";
-import {
-	getEmailSettings,
-	resolveEmailDelivery,
-} from "@virtool/data/email/settings";
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
-import { db, keyring } from "../composition";
+import { db } from "../composition";
 import { config } from "../config";
+import {
+	getVerificationUrl,
+	isEmailDeliveryAvailable,
+} from "../email/delivery";
 import { ClientError } from "../errors";
 import { realCookies } from "./cookies";
 import {
@@ -227,20 +227,15 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 			setResponseStatus(400);
 			throw new ClientError("Enter a valid email address.", 400);
 		}
+		await checkConfiguredPasswordLength(db, data.password).catch(rethrowAsHttp);
 
 		try {
-			await checkConfiguredPasswordLength(db, data.password);
-			const settings = await getEmailSettings(db);
-			const delivery = resolveEmailDelivery(settings, keyring);
-
 			const result = await createFirstUser(db, {
 				handle: data.handle,
 				email,
 				password: data.password,
-				deliveryAvailable:
-					settings.enabled && delivery.availability === "ready",
-				getVerificationUrl: (token) =>
-					`${config.publicOrigin}/verify-email#token=${token}`,
+				deliveryAvailable: await isEmailDeliveryAvailable(),
+				getVerificationUrl,
 			});
 			await signInUsername(data.handle, data.password);
 			recordAccountLifecycle({
@@ -272,20 +267,17 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 	.middleware([open()])
 	.validator(accountSetupSchema)
 	.handler(async ({ data }) => {
+		checkHandle(data.handle);
+		checkReservedHandle(data.handle);
+		await checkConfiguredPasswordLength(db, data.password).catch(rethrowAsHttp);
+
 		try {
-			checkHandle(data.handle);
-			checkReservedHandle(data.handle);
-			await checkConfiguredPasswordLength(db, data.password);
-			const settings = await getEmailSettings(db);
-			const delivery = resolveEmailDelivery(settings, keyring);
 			const completed = await completeAccountSetup(db, {
 				token: data.token,
 				handle: data.handle,
 				password: data.password,
-				deliveryAvailable:
-					settings.enabled && delivery.availability === "ready",
-				getVerificationUrl: (token) =>
-					`${config.publicOrigin}/verify-email#token=${token}`,
+				deliveryAvailable: await isEmailDeliveryAvailable(),
+				getVerificationUrl,
 			});
 			await signInUsername(completed.user.handle, data.password);
 			recordAccountLifecycle({
@@ -439,11 +431,8 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 	.validator(emailRemediationSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const settings = await getEmailSettings(db);
-			const delivery = resolveEmailDelivery(settings, keyring);
 			const result = await startEmailRemediation(db, {
-				deliveryAvailable:
-					settings.enabled && delivery.availability === "ready",
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				email: data.email,
 				getVerificationUrl: (token) =>
 					getRemediationVerificationUrl(token, data.redirect),
@@ -532,11 +521,8 @@ export const resendEmailRemediationFn = createServerFn({ method: "POST" })
 	.validator(z.object({ redirect: z.string().max(2048).optional() }))
 	.handler(async ({ context, data }) => {
 		try {
-			const settings = await getEmailSettings(db);
-			const delivery = resolveEmailDelivery(settings, keyring);
 			const result = await resendEmailRemediation(db, {
-				deliveryAvailable:
-					settings.enabled && delivery.availability === "ready",
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				getVerificationUrl: (token) =>
 					getRemediationVerificationUrl(token, data.redirect),
 				setupSessionId: context.principal.sessionId,
