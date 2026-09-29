@@ -16,6 +16,7 @@ import {
 	HMM_ANNOTATIONS_KEY,
 	HMM_PROFILES_KEY,
 	type StorageBackend,
+	StorageKeyNotFoundError,
 } from "@virtool/storage";
 import { and, asc, count, eq, gt, sql } from "drizzle-orm";
 import { getPageCount, getPageOffset } from "../db/pagination";
@@ -627,8 +628,8 @@ export async function installHmms(
 		await storage.delete(HMM_ANNOTATIONS_KEY);
 
 		// Fails the install even though the rows and profiles are committed.
-		// Nothing else writes this key, so swallowing it would report success and
-		// leave Nuvs failing on a blob nothing can recreate.
+		// Swallowing it would report success while Nuvs cannot run until
+		// `recreateHmmAnnotations` next writes the blob.
 		throw err;
 	}
 
@@ -638,18 +639,20 @@ export async function installHmms(
 /**
  * Rebuild `hmm/annotations.json.gz` from the installed rows.
  *
- * Nuvs reads this blob straight from storage and there is no route to warm it,
- * so an install is its only writer.
+ * Nuvs reads this blob straight from storage and there is no route to warm it.
+ * An install writes it, and {@link recreateHmmAnnotations} writes it again when
+ * it is missing.
  *
- * Called **after** the commit. Any earlier reads the rows the install replaced,
+ * An install calls this **after** the commit. Any earlier reads the rows the install replaced,
  * and a write inside the `wroteProfiles` window could delete the profiles of an
  * install that already committed.
  *
  * Rows are paged into a `createGzip()` stream rather than held in memory.
  */
 export async function writeHmmAnnotations(
-	db: Db,
+	db: DbOrTx,
 	storage: StorageBackend,
+	signal?: AbortSignal,
 ): Promise<void> {
 	async function* iterJson(): AsyncGenerator<string> {
 		yield "[";
@@ -658,6 +661,8 @@ export async function writeHmmAnnotations(
 		let first = true;
 
 		for (;;) {
+			signal?.throwIfAborted();
+
 			const rows = await db
 				.select()
 				.from(hmms)
@@ -709,6 +714,85 @@ export async function writeHmmAnnotations(
 	source.pipe(gzip);
 
 	await storage.write(HMM_ANNOTATIONS_KEY, gzip);
+}
+
+async function hasHmmAnnotations(storage: StorageBackend): Promise<boolean> {
+	try {
+		await storage.size(HMM_ANNOTATIONS_KEY);
+		return true;
+	} catch (err) {
+		if (err instanceof StorageKeyNotFoundError) {
+			return false;
+		}
+
+		throw err;
+	}
+}
+
+/**
+ * Write the annotations blob again when it is missing and HMMs are installed.
+ *
+ * Returns `true` when it wrote the blob.
+ *
+ * **It holds the status row lock that {@link installHmms} takes while it reads
+ * the rows and writes the blob.** Without the lock, an install can commit new
+ * rows and write its blob while this call reads the old rows, and this call
+ * then replaces the new blob with a stale one. Nuvs does not see a stale blob
+ * as an error.
+ *
+ * The singleton is inserted first when it is absent, because `FOR UPDATE`
+ * locks nothing when there is no row.
+ *
+ * No `hmms` rows means that nothing is installed. An empty blob gives Nuvs no
+ * clusters, so nothing is written and Nuvs continues to report the missing
+ * blob.
+ *
+ * `signal` stops the write between pages. The partial blob is then deleted.
+ */
+export async function recreateHmmAnnotations(
+	db: Db,
+	storage: StorageBackend,
+	signal?: AbortSignal,
+): Promise<boolean> {
+	return db.transaction(async (tx) => {
+		await tx
+			.insert(legacyHmmStatus)
+			.values({
+				id: HMM_STATUS_ID,
+				errors: [],
+				installed: null,
+				release: null,
+				updates: [],
+			})
+			.onConflictDoNothing({ target: legacyHmmStatus.id });
+
+		await tx
+			.select({ id: legacyHmmStatus.id })
+			.from(legacyHmmStatus)
+			.where(eq(legacyHmmStatus.id, HMM_STATUS_ID))
+			.for("update");
+
+		if (await hasHmmAnnotations(storage)) {
+			return false;
+		}
+
+		const [row] = await tx.select({ id: hmms.id }).from(hmms).limit(1);
+
+		if (!row) {
+			return false;
+		}
+
+		try {
+			await writeHmmAnnotations(tx, storage, signal);
+		} catch (err) {
+			// A short array reads as a dataset missing annotations, and later runs
+			// would find the key and leave it.
+			await storage.delete(HMM_ANNOTATIONS_KEY);
+			throw err;
+		}
+
+		return true;
+	});
 }
 
 /**
