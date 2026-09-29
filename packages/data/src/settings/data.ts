@@ -1,6 +1,7 @@
 import {
 	DEFAULT_MAX_UPLOAD_SIZE,
 	DEFAULT_MINIMUM_PASSWORD_LENGTH,
+	type MfaPolicy,
 	type SampleGroup,
 } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
@@ -40,6 +41,7 @@ export type Settings = {
 	/** The maximum accepted upload size, in bytes. */
 	maxUploadSize: number;
 	minimumPasswordLength: number;
+	mfaPolicy: MfaPolicy;
 	/**
 	 * The stored NCBI API key's encrypted envelope, or `null` when none is
 	 * configured.
@@ -73,6 +75,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	enableSentry: true,
 	maxUploadSize: DEFAULT_MAX_UPLOAD_SIZE,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
+	mfaPolicy: "optional",
 	ncbiApiKey: null,
 	sampleAllRead: true,
 	sampleAllWrite: false,
@@ -93,6 +96,7 @@ function toSettings(row: SettingsRow): Settings {
 		enableSentry: row.enableSentry,
 		maxUploadSize: row.maxUploadSize,
 		minimumPasswordLength: row.minimumPasswordLength,
+		mfaPolicy: row.mfaPolicy,
 		ncbiApiKey: row.ncbiApiKey,
 		sampleAllRead: row.sampleAllRead,
 		sampleAllWrite: row.sampleAllWrite,

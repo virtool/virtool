@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import {
 	getDataMigration,
 	listDataMigrationFindings,
@@ -11,11 +12,21 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { createLogger, type Logger } from "@virtool/logger";
 import { eq, isNull } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import { z } from "zod";
 
 import { defineAudit, defineBackfill } from "./define";
 import { executeDataMigration } from "./run";
+
+vi.mock("@sentry/node", () => ({ captureException: vi.fn() }));
 
 let database: TestDatabase;
 let db: Db;
@@ -34,6 +45,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(dataMigrations);
 	await db.delete(tasks);
+	vi.clearAllMocks();
 });
 
 /** Run `definition` with a signal that is never aborted. */
@@ -94,6 +106,7 @@ describe("audits", () => {
 			{ code: "orphan", subject: "user:1" },
 			{ code: "orphan", subject: "user:2" },
 		]);
+		expect(Sentry.captureException).not.toHaveBeenCalled();
 	});
 
 	it("error with a redacted message, keeping what it found first", async () => {
@@ -121,6 +134,9 @@ describe("audits", () => {
 		});
 
 		expect(await listDataMigrationFindings(db, finished.id)).toHaveLength(1);
+		expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
+			tags: { data_migration: "broken", data_migration_version: 1 },
+		});
 	});
 
 	it("count a retry and clear the previous attempt's findings", async () => {

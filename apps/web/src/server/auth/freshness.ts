@@ -5,10 +5,7 @@ export const SESSION_FRESH_AGE_SECONDS = 15 * 60;
 export const PROTECTED_OPERATIONS = {
 	accountPasswordChange: "account.password.change",
 	accountEmailChange: "account.email.change",
-	totpEnroll: "totp.enroll",
-	totpDisable: "totp.disable",
 	totpReset: "totp.reset",
-	totpRecoveryCodesRegenerate: "totp.recovery_codes.regenerate",
 	passkeyRegister: "passkey.register",
 	passkeyRemove: "passkey.remove",
 	passkeySecurityUpdate: "passkey.security.update",
@@ -23,6 +20,7 @@ export const PROTECTED_OPERATIONS = {
 	recoveryLinkIssue: "recovery_link.issue",
 	userUpdate: "user.update",
 	administratorRoleSet: "administrator_role.set",
+	mfaPolicySet: "mfa_policy.set",
 } as const;
 
 /** A mutation covered by the recent-authentication policy. */

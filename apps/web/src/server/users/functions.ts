@@ -14,9 +14,9 @@ import {
 	normalizeEmail,
 } from "@virtool/data/auth/email";
 import {
-	getEmailSettings,
-	resolveEmailDelivery,
-} from "@virtool/data/email/settings";
+	resetUserTotp,
+	TotpNotEnrolledError,
+} from "@virtool/data/auth/lifecycle";
 import {
 	changePassword,
 	findAdministeredUsers,
@@ -58,8 +58,9 @@ import {
 } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { signInUsername } from "../auth/sessionActions";
-import { db, keyring } from "../composition";
+import { db } from "../composition";
 import { config } from "../config";
+import { isEmailDeliveryAvailable } from "../email/delivery";
 import { ClientError } from "../errors";
 import {
 	pageSchema,
@@ -177,6 +178,10 @@ function rethrowAsHttp(err: unknown): never {
 		setResponseStatus(409);
 		throw new ClientError("User has not completed account setup.", 409);
 	}
+	if (err instanceof TotpNotEnrolledError) {
+		setResponseStatus(409);
+		throw new ClientError("User has no two-factor authentication.", 409);
+	}
 	if (
 		err instanceof InvitationNotEligibleError ||
 		err instanceof InvitationNotFoundError
@@ -185,14 +190,6 @@ function rethrowAsHttp(err: unknown): never {
 		throw new ClientError("Invitation is not available.", 409);
 	}
 	throw err;
-}
-
-async function getDeliveryAvailable(): Promise<boolean> {
-	const settings = await getEmailSettings(db);
-	return (
-		settings.enabled &&
-		resolveEmailDelivery(settings, keyring).availability === "ready"
-	);
 }
 
 function getSetupUrl(token: string): string {
@@ -218,7 +215,7 @@ export const getInvitationEmailAvailabilityFn = createServerFn({
 	method: "GET",
 })
 	.middleware([adminRole("users")])
-	.handler(getDeliveryAvailable);
+	.handler(isEmailDeliveryAvailable);
 
 // Any authenticated user can see who else exists — the handles are already
 // visible on samples, jobs, and analyses they can read.
@@ -268,7 +265,10 @@ export const getUserFn = createServerFn({ method: "GET" })
 	});
 
 export const createUserFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
 	.validator(createUserSchema)
 	.handler(async ({ context, data }) => {
 		await requireInvitationAuthority(context.principal, data.administratorRole);
@@ -285,7 +285,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 				groups: data.groups,
 				primaryGroup: data.primaryGroup,
 				deliveryIntent: data.deliveryIntent,
-				deliveryAvailable: await getDeliveryAvailable(),
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				issuerUserId: context.principal.userId,
 				getSetupUrl,
 			});
@@ -327,7 +327,10 @@ const invitationMutationSchema = userIdSchema.extend({
 });
 
 export const regenerateInvitationFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
 	.validator(invitationMutationSchema)
 	.handler(async ({ context, data }) => {
 		try {
@@ -336,7 +339,7 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 			const result = await regenerateInvitation(db, data.userId, {
 				issuerUserId: context.principal.userId,
 				deliveryIntent: data.deliveryIntent ?? "copy_only",
-				deliveryAvailable: await getDeliveryAvailable(),
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				getSetupUrl,
 			});
 			recordAccountLifecycle({
@@ -360,7 +363,10 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 	});
 
 export const deletePendingUserFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue),
+	])
 	.validator(userIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
@@ -490,6 +496,46 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 		try {
 			return await setAdministratorRole(db, data.userId, data.role);
 		} catch (err) {
+			throw rethrowAsHttp(err);
+		}
+	});
+
+/**
+ * Remove a user's TOTP enrollment and recovery codes, and end their sessions.
+ *
+ * For a user who has lost both their authenticator and their recovery codes.
+ * An administrator resets their own factor through the account settings
+ * instead, so this refuses the caller's own account.
+ */
+export const resetUserTotpFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.totpReset),
+	])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		if (context.principal.userId === data.userId) {
+			setResponseStatus(400);
+			throw new ClientError("Cannot reset own two-factor authentication", 400);
+		}
+
+		try {
+			const user = await resetUserTotp(db, data.userId);
+			recordAccountLifecycle({
+				operation: "totp_reset",
+				outcome: "success",
+				message: "user totp reset",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return user;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "totp_reset",
+				outcome: "failure",
+				message: "user totp reset failed",
+				userId: data.userId,
+			});
 			throw rethrowAsHttp(err);
 		}
 	});

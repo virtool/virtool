@@ -198,6 +198,7 @@ describe("DEFAULT_SETTINGS", () => {
 			enableSentry: true,
 			maxUploadSize: 5_000_000_000,
 			minimumPasswordLength: 8,
+			mfaPolicy: "optional",
 			ncbiApiKey: null,
 			sampleAllRead: true,
 			sampleAllWrite: false,

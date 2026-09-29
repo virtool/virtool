@@ -75,7 +75,7 @@ describe("cleanupSetupStateTask", () => {
 		await seedSetupToken(db, userId, "account_completion", {
 			expiresAt: minutesFromNow(30),
 		});
-		await seedSetupSession(db, userId, "totp_enrollment", {
+		await seedSetupSession(db, userId, "password_recovery", {
 			expiresAt: minutesFromNow(-1),
 		});
 

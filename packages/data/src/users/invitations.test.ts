@@ -14,6 +14,7 @@ import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { claimDueEmails } from "../email/outbox";
+import { seedGroup } from "../groups/test/fixtures";
 import { seedSettings } from "../settings/test/fixtures";
 import { GroupMembershipError, UserNotFoundError } from "./data";
 import {
@@ -71,6 +72,43 @@ describe("account invitations", () => {
 		expect(await inspectAccountSetup(db, created.setupToken)).toMatchObject({
 			status: "valid",
 			email: "ada@example.com",
+		});
+	});
+
+	it("sets the role, groups, and default settings of the pending user", async () => {
+		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const group = await seedGroup(db, { name: "researchers" });
+
+		const created = await createPendingInvitation(db, {
+			email: "ada@example.com",
+			administratorRole: "users",
+			groups: [group],
+			issuerUserId,
+			deliveryIntent: "copy_only",
+			deliveryAvailable: false,
+			getSetupUrl: (token) =>
+				`https://virtool.test/account-setup#token=${token}`,
+		});
+
+		expect(created.user).toMatchObject({
+			administratorRole: "users",
+			active: true,
+			forceReset: false,
+		});
+		expect(created.user.groups.map((entry) => entry.name)).toEqual([
+			"researchers",
+		]);
+		const [row] = await db
+			.select()
+			.from(users)
+			.where(eq(users.id, created.user.id));
+		expect(row?.password).toBeNull();
+		expect(row?.settings).toEqual({
+			prefer_abbreviation: false,
+			skip_quick_analyze_dialog: true,
+			show_ids: true,
+			show_versions: true,
+			quick_analyze_workflow: "pathoscope",
 		});
 	});
 

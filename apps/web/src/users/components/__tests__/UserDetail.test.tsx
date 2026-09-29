@@ -9,6 +9,7 @@ import {
 	mockGetAccount,
 	mockGetUser,
 	mockListAdministratorRoles,
+	mockResetUserTotp,
 	mockSetAdministratorRole,
 	mockUpdateUser,
 } from "@tests/server-fn/users";
@@ -150,6 +151,75 @@ describe("<UserDetail />", () => {
 			);
 
 			expect(updateUser).toHaveBeenCalled();
+		});
+	});
+
+	describe("<ResetUserTotp />", () => {
+		it("lets a full administrator reset an enrolled user", async () => {
+			mockListGroups(groups);
+			const enrolled = createFakeUser();
+			mockGetUser(enrolled.id, enrolled, true);
+			const resetUserTotp = mockResetUserTotp(enrolled);
+
+			renderWithProviders(<UserDetail userId={enrolled.id} />);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Reset" }),
+			);
+			await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+			await waitFor(() =>
+				expect(resetUserTotp).toHaveBeenCalledWith({
+					data: { userId: enrolled.id },
+				}),
+			);
+		});
+
+		it("is hidden for a user without two-factor authentication", async () => {
+			mockListGroups(groups);
+			mockGetUser(user.id, user);
+
+			renderWithProviders(<UserDetail userId={user.id} />);
+
+			expect(
+				await screen.findByRole("button", { name: "Deactivate" }),
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: "Reset" }),
+			).not.toBeInTheDocument();
+		});
+
+		it("is hidden for an administrator without the full role", async () => {
+			mockGetAccount(createFakeAccount({ administratorRole: "users" }));
+			mockListGroups(groups);
+			const enrolled = createFakeUser();
+			mockGetUser(enrolled.id, enrolled, true);
+
+			renderWithProviders(<UserDetail userId={enrolled.id} />);
+
+			expect(
+				await screen.findByRole("button", { name: "Deactivate" }),
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: "Reset" }),
+			).not.toBeInTheDocument();
+		});
+
+		it("is hidden on the administrator's own account", async () => {
+			const account = createFakeAccount({ administratorRole: "full" });
+			mockGetAccount(account);
+			mockListGroups(groups);
+			const self = createFakeUser({ id: account.id });
+			mockGetUser(self.id, self, true);
+
+			renderWithProviders(<UserDetail userId={self.id} />);
+
+			expect(
+				await screen.findByRole("button", { name: "Deactivate" }),
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: "Reset" }),
+			).not.toBeInTheDocument();
 		});
 	});
 

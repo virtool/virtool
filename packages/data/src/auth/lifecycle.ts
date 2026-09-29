@@ -7,6 +7,7 @@ import {
 } from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 
+import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
@@ -17,7 +18,7 @@ import { nowUtc } from "../db/time";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-import { getUser } from "../users/data";
+import { getUser, UserNotFoundError } from "../users/data";
 import {
 	claimEmail,
 	EmailInUseError,
@@ -49,7 +50,7 @@ export { EmailInUseError } from "./email";
 /** Thrown when a remediation message is requested before the resend window. */
 export class EmailRemediationRateLimitedError extends AppError {}
 
-/** Thrown when TOTP enrollment has not actually happened. */
+/** Thrown when a user has no TOTP enrollment to act on. */
 export class TotpNotEnrolledError extends AppError {}
 
 export { normalizeEmail } from "./email";
@@ -328,16 +329,11 @@ export async function completeAccountSetup(
 			return { userId: consumed.userId, emailVerificationRequired };
 		})
 		.catch((error: unknown) => {
-			const cause =
-				error && typeof error === "object" && "cause" in error
-					? error.cause
-					: error;
 			if (
-				cause &&
-				typeof cause === "object" &&
-				"constraint_name" in cause &&
-				(cause.constraint_name === "users_handle_lower_unique" ||
-					cause.constraint_name === "users_username_key")
+				isUniqueViolation(error, [
+					"users_handle_lower_unique",
+					"users_username_key",
+				])
 			) {
 				throw new AccountSetupHandleInUseError();
 			}
@@ -915,56 +911,43 @@ export async function claimEmailRemediationPromotion(
 	});
 }
 
-/** What {@link completeTotpEnrollment} accepts. */
-export type CompleteTotpEnrollmentInput = {
-	/** The user the restricted session names. */
-	userId: number;
-};
-
 /**
- * Release a user from required-MFA restriction, once they have actually
- * enrolled.
+ * Remove a user's TOTP enrollment and recovery codes, and end their sessions.
  *
- * This confirms rather than performs: Better Auth's two-factor endpoints write
- * `auth_two_factors` and set `users.two_factor_enabled`, and only a *verified*
- * row counts — an enrollment that minted a secret but never had a code checked
- * against it is not enrollment.
+ * The administrator path for a user who has lost their authenticator and their
+ * recovery codes. The factor is deleted, never replaced, so no administrator
+ * ever holds it. Deleting every session means the user signs in again, and
+ * under the `required` MFA policy that sign-in is restricted to enrollment.
  *
- * The check and the revocation are one transaction, so a caller cannot lose
- * the restriction against an enrollment that then rolls back.
- *
- * There is no setup token. The holder of a required-MFA restriction got it by
- * authenticating, not by following a link, so there is nothing to spend.
+ * Throws {@link UserNotFoundError} for an unknown user and
+ * {@link TotpNotEnrolledError} for a user who has not confirmed an enrollment.
+ * An abandoned enrollment does not lock a user out, because their next
+ * enrollment replaces its unverified factor, so it is left alone.
  */
-export async function completeTotpEnrollment(
-	db: Db,
-	{ userId }: CompleteTotpEnrollmentInput,
-): Promise<User> {
+export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 	await db.transaction(async (tx) => {
-		const [row] = await tx
-			.select({ id: authTwoFactors.id })
-			.from(authTwoFactors)
-			.innerJoin(users, eq(users.id, authTwoFactors.userId))
-			.where(
-				and(
-					eq(authTwoFactors.userId, userId),
-					eq(authTwoFactors.verified, true),
-					eq(users.active, true),
-					eq(users.lifecycleState, "normal"),
-				),
-			)
-			.limit(1);
+		const [user] = await tx
+			.select({ twoFactorEnabled: users.twoFactorEnabled })
+			.from(users)
+			.where(eq(users.id, userId))
+			.for("update");
 
-		if (!row) {
+		if (!user) {
+			throw new UserNotFoundError();
+		}
+		if (!user.twoFactorEnabled) {
 			throw new TotpNotEnrolledError();
 		}
 
-		await tx
-			.update(users)
-			.set({ twoFactorEnabled: true })
-			.where(eq(users.id, userId));
-
-		await invalidateUserSetupSessions(tx, userId);
+		await Promise.all([
+			tx.delete(authTwoFactors).where(eq(authTwoFactors.userId, userId)),
+			tx
+				.update(users)
+				.set({ twoFactorEnabled: false })
+				.where(eq(users.id, userId)),
+			tx.delete(authSessions).where(eq(authSessions.userId, userId)),
+			tx.delete(sessions).where(eq(sessions.userId, userId)),
+		]);
 	});
 
 	await emit("users", userId, "update");

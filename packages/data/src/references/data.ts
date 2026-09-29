@@ -27,6 +27,7 @@ import {
 	type SQL,
 } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { isForeignKeyViolation, isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -807,34 +808,29 @@ export async function addReferenceUser(
 		throw new ReferenceMemberConflictError("User does not exist.");
 	}
 
-	const [existing] = await db
-		.select({ userId: legacyReferenceUsers.user_id })
-		.from(legacyReferenceUsers)
-		.where(
-			and(
-				eq(legacyReferenceUsers.reference_id, referenceId),
-				eq(legacyReferenceUsers.user_id, userId),
-			),
-		)
-		.limit(1);
-
-	if (existing) {
-		throw new ReferenceMemberConflictError("User is already a member.");
-	}
-
 	const resolved: ReferenceRights = {
 		build: rights.build ?? false,
 		modify: rights.modify ?? false,
 		modifyOtu: rights.modifyOtu ?? false,
 	};
 
-	await db.insert(legacyReferenceUsers).values({
-		reference_id: referenceId,
-		user_id: userId,
-		build: resolved.build,
-		modify: resolved.modify,
-		modify_otu: resolved.modifyOtu,
-	});
+	try {
+		await db.insert(legacyReferenceUsers).values({
+			reference_id: referenceId,
+			user_id: userId,
+			build: resolved.build,
+			modify: resolved.modify,
+			modify_otu: resolved.modifyOtu,
+		});
+	} catch (error) {
+		if (isUniqueViolation(error, ["legacy_reference_users_pkey"])) {
+			throw new ReferenceMemberConflictError("User is already a member.");
+		}
+		if (isForeignKeyViolation(error, ["legacy_reference_users_user_id_fkey"])) {
+			throw new ReferenceMemberConflictError("User does not exist.");
+		}
+		throw error;
+	}
 
 	await emit("references", referenceId, "update");
 
@@ -864,34 +860,31 @@ export async function addReferenceGroup(
 		throw new ReferenceMemberConflictError("Group does not exist.");
 	}
 
-	const [existing] = await db
-		.select({ groupId: legacyReferenceGroups.group_id })
-		.from(legacyReferenceGroups)
-		.where(
-			and(
-				eq(legacyReferenceGroups.reference_id, referenceId),
-				eq(legacyReferenceGroups.group_id, groupId),
-			),
-		)
-		.limit(1);
-
-	if (existing) {
-		throw new ReferenceMemberConflictError("Group is already a member.");
-	}
-
 	const resolved: ReferenceRights = {
 		build: rights.build ?? false,
 		modify: rights.modify ?? false,
 		modifyOtu: rights.modifyOtu ?? false,
 	};
 
-	await db.insert(legacyReferenceGroups).values({
-		reference_id: referenceId,
-		group_id: groupId,
-		build: resolved.build,
-		modify: resolved.modify,
-		modify_otu: resolved.modifyOtu,
-	});
+	try {
+		await db.insert(legacyReferenceGroups).values({
+			reference_id: referenceId,
+			group_id: groupId,
+			build: resolved.build,
+			modify: resolved.modify,
+			modify_otu: resolved.modifyOtu,
+		});
+	} catch (error) {
+		if (isUniqueViolation(error, ["legacy_reference_groups_pkey"])) {
+			throw new ReferenceMemberConflictError("Group is already a member.");
+		}
+		if (
+			isForeignKeyViolation(error, ["legacy_reference_groups_group_id_fkey"])
+		) {
+			throw new ReferenceMemberConflictError("Group does not exist.");
+		}
+		throw error;
+	}
 
 	await emit("references", referenceId, "update");
 

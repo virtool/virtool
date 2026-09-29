@@ -26,14 +26,15 @@ import {
 import { checkRecoveryRequestBudget } from "@virtool/data/auth/recoveryRateLimit";
 import { SetupCredentialError } from "@virtool/data/auth/setup";
 import { users } from "@virtool/data/db/schema/users";
-import {
-	getEmailSettings,
-	resolveEmailDelivery,
-} from "@virtool/data/email/settings";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, keyring } from "../composition";
+import { db } from "../composition";
 import { config } from "../config";
+import {
+	getPublicLink,
+	getVerificationUrl,
+	isEmailDeliveryAvailable,
+} from "../email/delivery";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
 import { PROTECTED_OPERATIONS } from "./freshness";
@@ -67,27 +68,8 @@ const TIMING_DUMMY_HASH = Buffer.from(
 	"utf8",
 );
 
-function isEmailDeliveryAvailable(
-	settings: Awaited<ReturnType<typeof getEmailSettings>>,
-): boolean {
-	return (
-		settings.enabled &&
-		resolveEmailDelivery(settings, keyring).availability === "ready"
-	);
-}
-
 function digestRecoveryBudget(value: string): string {
 	return createHmac("sha256", config.authSecret).update(value).digest("hex");
-}
-
-function getPublicLink(path: string, token: string, purpose?: string): string {
-	const url = new URL(path, config.publicOrigin);
-	const fragment = new URLSearchParams({ token });
-	if (purpose) {
-		fragment.set("purpose", purpose);
-	}
-	url.hash = fragment.toString();
-	return url.toString();
 }
 
 function rethrowVerificationError(error: unknown): never {
@@ -116,7 +98,7 @@ function rethrowVerificationError(error: unknown): never {
 export const getEmailDeliveryAvailableFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => ({
-		available: isEmailDeliveryAvailable(await getEmailSettings(db)),
+		available: await isEmailDeliveryAvailable(),
 	}));
 
 /** Start a pending account-email change without replacing the current address. */
@@ -125,12 +107,11 @@ export const requestAccountEmailChangeFn = createServerFn({ method: "POST" })
 	.validator(emailChallengeSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const settings = await getEmailSettings(db);
 			return await beginEmailVerification(db, {
 				userId: context.principal.userId,
 				email: data.email,
-				deliveryAvailable: isEmailDeliveryAvailable(settings),
-				getVerificationUrl: (token) => getPublicLink("/verify-email", token),
+				deliveryAvailable: await isEmailDeliveryAvailable(),
+				getVerificationUrl,
 			});
 		} catch (error) {
 			rethrowVerificationError(error);
@@ -196,12 +177,12 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 		const handle = data.handle.trim().toLowerCase();
 		const requesterDigest = digestRecoveryBudget(`requester:${getClientIp()}`);
 		const targetDigest = digestRecoveryBudget(`target:${handle}`);
-		const [allowed, settings] = await Promise.all([
+		const [allowed, deliveryAvailable] = await Promise.all([
 			checkRecoveryRequestBudget(db, requesterDigest, targetDigest),
-			getEmailSettings(db),
+			isEmailDeliveryAvailable(),
 		]);
 		await verifyPassword(handle, TIMING_DUMMY_HASH);
-		if (allowed && isEmailDeliveryAvailable(settings)) {
+		if (allowed && deliveryAvailable) {
 			const userId = await getSelfServiceRecoveryTarget(db, handle);
 			if (userId !== null) {
 				try {
@@ -210,7 +191,10 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 						purpose: "password_recovery",
 						deliveryAvailable: true,
 						getRecoveryUrl: (token) =>
-							getPublicLink("/recover", token, "password_recovery"),
+							getPublicLink("/recover", {
+								token,
+								purpose: "password_recovery",
+							}),
 					});
 				} catch (error) {
 					if (
@@ -279,18 +263,24 @@ export const issueAdministratorRecoveryFn = createServerFn({ method: "POST" })
 		if (target?.administratorRole) {
 			await requireAdminRole(context.principal, "full");
 		}
-		const settings = await getEmailSettings(db);
+		const deliveryAvailable = await isEmailDeliveryAvailable();
 		try {
 			const issued = await issueRecoveryLink(db, {
 				userId: data.userId,
 				purpose: "administrator_recovery",
 				issuerUserId: context.principal.userId,
-				deliveryAvailable: isEmailDeliveryAvailable(settings),
+				deliveryAvailable,
 				getRecoveryUrl: (token) =>
-					getPublicLink("/recover", token, "administrator_recovery"),
+					getPublicLink("/recover", {
+						token,
+						purpose: "administrator_recovery",
+					}),
 			});
 			return {
-				url: getPublicLink("/recover", issued.token, "administrator_recovery"),
+				url: getPublicLink("/recover", {
+					token: issued.token,
+					purpose: "administrator_recovery",
+				}),
 				expiresAt: issued.expiresAt,
 				delivery: issued.delivery,
 			};

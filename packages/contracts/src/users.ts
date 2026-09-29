@@ -51,6 +51,12 @@ export type User = UserNested & {
 	primaryGroup: GroupMinimal | null;
 };
 
+/** A user as the administrator detail view reads them. */
+export type AdministeredUserDetail = User & {
+	/** Whether they have confirmed a TOTP enrollment */
+	twoFactorEnabled: boolean;
+};
+
 /** The workflow the quick-analyze dialog runs by default. */
 export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
 

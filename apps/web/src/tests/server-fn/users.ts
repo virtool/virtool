@@ -1,5 +1,11 @@
 import type { AdministratorRole } from "@administration/types";
-import type { Account, Invitation, User, UserNested } from "@virtool/contracts";
+import type {
+	Account,
+	AdministeredUserDetail,
+	Invitation,
+	User,
+	UserNested,
+} from "@virtool/contracts";
 import { expect, type Mock, vi } from "vitest";
 
 /**
@@ -18,6 +24,7 @@ export const userServerFnMocks = {
 	createUserFn: vi.fn(),
 	regenerateInvitationFn: vi.fn(),
 	deletePendingUserFn: vi.fn(),
+	resetUserTotpFn: vi.fn(),
 	updateUserFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
 	updateAccountSettingsFn: vi.fn(),
@@ -89,11 +96,19 @@ export function mockGetAccountUnauthorized(): Mock {
 }
 
 /** Sets up getUser to resolve with the given user when matched by id. */
-export function mockGetUser(userId: number, user: User): Mock {
+export function mockGetUser(
+	userId: number,
+	user: User,
+	twoFactorEnabled = false,
+): Mock {
 	userServerFnMocks.getUserFn.mockImplementation(
-		async ({ data }: { data: { userId: number } }) => {
+		async ({
+			data,
+		}: {
+			data: { userId: number };
+		}): Promise<AdministeredUserDetail> => {
 			if (data.userId === userId) {
-				return user;
+				return { ...user, twoFactorEnabled };
 			}
 			throw new Error(`unexpected userId in mockGetUser: ${data.userId}`);
 		},
@@ -160,6 +175,15 @@ export function mockRegenerateInvitation(user: User, email: string): Mock {
 export function mockDeletePendingUser(): Mock {
 	userServerFnMocks.deletePendingUserFn.mockResolvedValue(null);
 	return userServerFnMocks.deletePendingUserFn;
+}
+
+/** Sets up resetUserTotp to resolve with the user, their factor removed. */
+export function mockResetUserTotp(user: User): Mock {
+	userServerFnMocks.resetUserTotpFn.mockResolvedValue({
+		...user,
+		twoFactorEnabled: false,
+	});
+	return userServerFnMocks.resetUserTotpFn;
 }
 
 /** Sets up createUser to resolve with the given user (or reject on a 4xx code). */

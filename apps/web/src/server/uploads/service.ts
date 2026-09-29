@@ -70,7 +70,12 @@ export async function initializeUpload(
 		});
 	} catch (err) {
 		await cancelPendingUpload(db, storage, logger, upload.id, userId).catch(
-			() => {},
+			(cancelErr) => {
+				logger.error(
+					{ err: cancelErr, uploadId: upload.id },
+					"failed to cancel upload after presign failure; row left for the stale sweep",
+				);
+			},
 		);
 		throw err;
 	}

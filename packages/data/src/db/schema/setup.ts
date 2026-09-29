@@ -35,7 +35,7 @@ import { users } from "./users";
  */
 function purposeCheck(): SQL {
 	return sql.raw(
-		"purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')",
+		"purpose in ('account_completion', 'email_remediation', 'email_verification', 'password_recovery', 'administrator_recovery')",
 	);
 }
 

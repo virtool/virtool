@@ -8,7 +8,11 @@ import type {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
-import { mintRootStorageKey, StorageKeyNotFoundError } from "@virtool/storage";
+import {
+	deleteKeys,
+	mintRootStorageKey,
+	StorageKeyNotFoundError,
+} from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, lt, notExists } from "drizzle-orm";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
@@ -390,8 +394,9 @@ export async function finalizePendingUpload(
  *
  * Only the owner's own unfinished reservation is cancellable; anything else —
  * another user's row, a finalized upload, an already-removed one — reads as
- * {@link UploadNotFoundError}. The row is soft-deleted and its object dropped.
- * No frame is emitted, since an unfinished upload was never in any list.
+ * {@link UploadNotFoundError}. The row is soft-deleted and its object dropped;
+ * the soft delete is committed first, so a failed object delete is logged
+ * rather than thrown. No frame is emitted, since an unfinished upload was never in any list.
  */
 export async function cancelPendingUpload(
 	db: DbOrTx,
@@ -427,7 +432,12 @@ export async function cancelPendingUpload(
 	}
 
 	if (cancelled.storageKey) {
-		await storage.delete(cancelled.storageKey);
+		for (const failure of await deleteKeys(storage, [cancelled.storageKey])) {
+			logger.error(
+				{ uploadId, key: failure.key, err: failure.error },
+				"cancelled upload cleanup failed; file orphaned",
+			);
+		}
 	} else {
 		logger.warn({ uploadId }, "cancelled upload has no storage_key to delete");
 	}
@@ -582,11 +592,17 @@ export async function deleteUpload(
 		.set({ removed: true, removedAt: new Date() })
 		.where(eq(uploadsTable.id, uploadId));
 
-	// `storage_key` is nullable at the database level. A row that lacks one names
-	// no object can be located — it predates keys being recorded — so leave its
+	// Committed, so a storage failure only orphans bytes. `storage_key` is
+	// nullable at the database level. A row that lacks one names no object can
+	// be located — it predates keys being recorded — so leave its
 	// bytes to the orphan sweep rather than guessing at a key.
 	if (row.storageKey) {
-		await storage.delete(row.storageKey);
+		for (const failure of await deleteKeys(storage, [row.storageKey])) {
+			logger.error(
+				{ uploadId, key: failure.key, err: failure.error },
+				"removed upload cleanup failed; file orphaned",
+			);
+		}
 	} else {
 		logger.warn({ uploadId }, "removed upload has no storage_key to delete");
 	}

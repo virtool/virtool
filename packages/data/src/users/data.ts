@@ -2,6 +2,7 @@ import {
 	type Account,
 	type AccountLifecycleState,
 	type AccountSettings,
+	type AdministeredUserDetail,
 	type AdministeredUserSearchResult,
 	type AdministratorRoleName,
 	emptyPermissions,
@@ -44,7 +45,7 @@ import {
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
-import { isUniqueViolation } from "../db/errors";
+import { isForeignKeyViolation, isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -144,8 +145,7 @@ export type CreateUserValues = {
 
 /** Values accepted when creating a pending user. */
 export type CreatePendingUserValues = {
-	handle?: string;
-	email?: string;
+	email: string;
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
 	primaryGroup?: number | null;
@@ -194,8 +194,15 @@ export class InvalidPasswordError extends AppError {}
 /** Thrown when a user handle conflicts with an existing user. */
 export class UserConflictError extends AppError {}
 
-/** Thrown when a primary group is set to a group the user does not belong to. */
+/** Thrown when a user's group assignment names an invalid group. */
 export class GroupMembershipError extends AppError {}
+
+function mapUnknownGroup(error: unknown): never {
+	if (isForeignKeyViolation(error, ["user_groups_group_id_fkey"])) {
+		throw new GroupMembershipError();
+	}
+	throw error;
+}
 
 /**
  * Thrown when an operation that assumes a usable account is aimed at one that
@@ -538,7 +545,11 @@ export async function findAdministeredUsers(
 	};
 }
 
-export async function getUser(db: Db, userId: number): Promise<User> {
+/** Read a user for the administrator detail view, with their TOTP state. */
+export async function getUser(
+	db: Db,
+	userId: number,
+): Promise<AdministeredUserDetail> {
 	const [row] = await db
 		.select()
 		.from(usersTable)
@@ -549,7 +560,9 @@ export async function getUser(db: Db, userId: number): Promise<User> {
 		throw new UserNotFoundError();
 	}
 
-	return takeFirstOrThrow(await assembleUsers(db, [row]));
+	const user = takeFirstOrThrow(await assembleUsers(db, [row]));
+
+	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
 }
 
 /** Read the signed-in user's own account, including their email and settings. */
@@ -736,8 +749,8 @@ export async function getAdministratorRole(
 /**
  * Create an account that exists but cannot yet be signed in as.
  *
- * The administrator role and group memberships are set here. Invitations
- * leave the handle empty so the holder can choose it during acceptance.
+ * The administrator role and group memberships are set here. The handle stays
+ * empty so the invitee can choose it during acceptance.
  * The credential is also missing: `password` stays null and `lifecycle_state` is `pending`,
  * which the `pending_has_no_password` constraint holds together.
  *
@@ -749,27 +762,6 @@ export async function getAdministratorRole(
  * two would make deactivating an invited user indistinguishable from never
  * having invited them.
  */
-export async function createPendingUser(
-	db: Db,
-	values: CreatePendingUserValues,
-): Promise<User> {
-	try {
-		const userId = await db.transaction((tx) =>
-			createPendingUserInTransaction(tx, values),
-		);
-
-		await emit("users", userId, "create");
-
-		return getUser(db, userId);
-	} catch (error) {
-		if (isUniqueViolation(error)) {
-			throw new UserConflictError();
-		}
-		throw error;
-	}
-}
-
-/** Create a pending Virtool user and passwordless Better Auth identity. */
 export async function createPendingUserInTransaction(
 	tx: DbOrTx,
 	values: CreatePendingUserValues,
@@ -793,25 +785,21 @@ export async function createPendingUserInTransaction(
 		}
 	}
 
-	const email = values.email ? normalizeEmail(values.email) : "";
+	const email = normalizeEmail(values.email);
 	const now = new Date();
-	if (email) {
-		await claimEmail(tx, 0, email);
-	}
+	await claimEmail(tx, 0, email);
 	const row = takeFirstOrThrow(
 		await tx
 			.insert(usersTable)
 			.values({
 				authMigratedAt: now,
-				displayUsername: values.handle || null,
 				email,
-				handle: values.handle ?? "",
+				handle: "",
 				lifecycleState: "pending",
 				administratorRole: values.administratorRole ?? null,
 				lastPasswordChange: now,
 				legacyId: null,
 				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-				username: values.handle?.toLowerCase() || null,
 			})
 			.returning({ id: usersTable.id }),
 	);
@@ -826,13 +814,16 @@ export async function createPendingUserInTransaction(
 	});
 
 	if (groupIds.length > 0) {
-		await tx.insert(userGroupsTable).values(
-			groupIds.map((groupId) => ({
-				userId: row.id,
-				groupId,
-				primary: groupId === values.primaryGroup,
-			})),
-		);
+		await tx
+			.insert(userGroupsTable)
+			.values(
+				groupIds.map((groupId) => ({
+					userId: row.id,
+					groupId,
+					primary: groupId === values.primaryGroup,
+				})),
+			)
+			.catch(mapUnknownGroup);
 	}
 
 	return row.id;
@@ -1101,13 +1092,16 @@ export async function updateUser(
 
 			const uniqueGroupIds = Array.from(new Set(values.groups));
 			if (uniqueGroupIds.length > 0) {
-				await tx.insert(userGroupsTable).values(
-					uniqueGroupIds.map((groupId) => ({
-						userId,
-						groupId,
-						primary: groupId === currentPrimary,
-					})),
-				);
+				await tx
+					.insert(userGroupsTable)
+					.values(
+						uniqueGroupIds.map((groupId) => ({
+							userId,
+							groupId,
+							primary: groupId === currentPrimary,
+						})),
+					)
+					.catch(mapUnknownGroup);
 			}
 		}
 

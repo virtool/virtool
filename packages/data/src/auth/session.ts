@@ -4,6 +4,7 @@ import type { DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { authSessions } from "../db/schema/auth";
 import { type SessionRow, sessions } from "../db/schema/sessions";
+import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { nowUtc } from "../db/time";
 import { hashToken, newSessionId, newSessionToken } from "./tokens";
@@ -17,7 +18,20 @@ export type ResolvedBrowserSession = {
 	userId: number;
 	createdAt: Date;
 	forceReset: boolean;
+	/** Whether the live MFA policy restricts this session to TOTP enrollment. */
+	mfaEnrollmentRequired: boolean;
 };
+
+/**
+ * Whether the live MFA policy restricts the joined `users` row to TOTP
+ * enrollment. Read with the session rather than from a cached policy, so a
+ * policy change or a TOTP disable restricts every live session on its next
+ * request. A missing settings row means the `optional` default.
+ */
+export const mfaEnrollmentRequired = sql<boolean>`(
+	coalesce((select ${settings.mfaPolicy} from ${settings} where ${settings.id} = 1), 'optional') = 'required'
+	and not coalesce(${users.twoFactorEnabled}, false)
+)`;
 
 /** A live Better Auth session row safe for account-session display shaping. */
 export type ActiveBrowserSessionRow = {
@@ -112,6 +126,7 @@ export async function resolveBrowserSessionForUpdate(
 			userId: authSessions.userId,
 			createdAt: authSessions.createdAt,
 			forceReset: users.forceReset,
+			mfaEnrollmentRequired,
 		})
 		.from(authSessions)
 		.innerJoin(users, eq(users.id, authSessions.userId))
@@ -142,6 +157,7 @@ export async function resolveBrowserSession(
 			userId: authSessions.userId,
 			createdAt: authSessions.createdAt,
 			forceReset: users.forceReset,
+			mfaEnrollmentRequired,
 		})
 		.from(authSessions)
 		.innerJoin(users, eq(users.id, authSessions.userId))
