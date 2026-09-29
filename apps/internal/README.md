@@ -335,7 +335,10 @@ Both long-lived subcommands own a private Prometheus registry and a token-gated
 `GET /metrics`: `serve` on 9950 and `run` on 9900. Each requires the configured
 bearer token; when `VT_METRICS_TOKEN` is unset the route returns 404. Both
 registries carry the default Node metrics, `virtool_app_info`, and Postgres pool
-occupancy.
+occupancy. Both routes use the shared scrape handler in `src/metrics/handler.ts`.
+It refreshes the database-backed gauges independently on each scrape. When a
+refresh fails, the handler drops that source's series instead of serving stale
+values, and the scrape still succeeds.
 
 `serve` additionally exports HTTP request series and the job-queue depth series
 the KEDA `ScaledJob` scales on. `run` additionally exports the task series:
@@ -355,8 +358,7 @@ the KEDA `ScaledJob` scales on. `run` additionally exports the task series:
 
 Task names outside `TaskName` fold into the bounded `other` label. Queue reads
 use the active predicate `complete = false AND error IS NULL`, are bounded by a
-two-second deadline, and are cached for ten seconds. A failed read omits the
-queue series rather than reporting a false zero or repeating stale values.
+two-second deadline, and are cached for ten seconds.
 
 The email series carry bounded labels only. `template` is the template type,
 `outcome` is one of `accepted`, `retryable`, `rate_limited`, `permanent`,
