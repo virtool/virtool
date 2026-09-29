@@ -1,3 +1,4 @@
+import { invalidateChange, invalidateChanges } from "@app/invalidate";
 import { samplesQueryKeys } from "@samples/keys";
 import {
 	createSampleFn,
@@ -18,7 +19,6 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import { fileQueryKeys } from "@uploads/keys";
 import type {
 	GroupMinimal,
 	LabelNested,
@@ -266,11 +266,12 @@ export function useCreateSample() {
 					group,
 				},
 			}) as Promise<Sample>,
-		onSuccess: () => {
-			// The created sample reserves its read files, so the server stops
-			// returning them. `lists()` is a prefix of `infiniteLists()`, so this
-			// refreshes both the paginated file manager and the reads selector.
-			queryClient.invalidateQueries({ queryKey: fileQueryKeys.lists() });
+		onSuccess: (sample) => {
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "insert",
+				id: sample.id,
+			});
 		},
 	});
 }
@@ -333,11 +334,15 @@ export function useCreateSamples() {
 
 			return { created, failed };
 		},
-		// Settled, not success: a partial failure still reserved the read files of
-		// the samples that were created, so the lists have to be refreshed either
-		// way.
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: fileQueryKeys.lists() });
+		onSuccess: ({ created }) => {
+			invalidateChanges(
+				queryClient,
+				created.map((sample) => ({
+					domain: "samples",
+					operation: "insert",
+					id: sample.id,
+				})),
+			);
 		},
 	});
 }
@@ -356,8 +361,10 @@ export function useUpdateSample(sampleId: number) {
 				data: { sampleId, ...update },
 			}) as Promise<Sample>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: samplesQueryKeys.detail(sampleId),
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "update",
+				id: sampleId,
 			});
 		},
 	});
@@ -369,9 +376,18 @@ export function useUpdateSample(sampleId: number) {
  * @returns A mutator for deleting a sample
  */
 export function useDeleteSample() {
+	const queryClient = useQueryClient();
+
 	return useMutation<null, Error, { sampleId: number }>({
 		mutationFn: ({ sampleId }) =>
 			deleteSampleFn({ data: { sampleId } }) as Promise<null>,
+		onSuccess: (_data, { sampleId }) => {
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "delete",
+				id: sampleId,
+			});
+		},
 	});
 }
 
@@ -381,11 +397,20 @@ export function useDeleteSample() {
  * @returns A mutator for updating a samples rights
  */
 export function useUpdateSampleRights(sampleId: number) {
+	const queryClient = useQueryClient();
+
 	return useMutation<Sample, Error, { update: SampleRightsUpdate }>({
 		mutationFn: ({ update }) =>
 			updateSampleRightsFn({
 				data: { sampleId, ...update },
 			}) as Promise<Sample>,
+		onSuccess: () => {
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "update",
+				id: sampleId,
+			});
+		},
 	});
 }
 
@@ -393,8 +418,9 @@ export function useUpdateSampleRights(sampleId: number) {
  * Initialize a mutator that adds or removes a label across the selected samples
  *
  * The label is removed when every selected sample already carries it, and added
- * otherwise. The samples are patched concurrently and the list is invalidated
- * once, after they all settle. The mutation resolves with the updated samples.
+ * otherwise. The samples are patched concurrently and their shared queries are
+ * invalidated once, after they all settle. The mutation resolves with the
+ * updated samples.
  *
  * @param selectedLabels - The labels carried by the selected samples
  * @param selectedSamples - The selected samples
@@ -426,10 +452,15 @@ export function useUpdateLabel(
 				}),
 			);
 		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: samplesQueryKeys.lists(),
-			});
+		onSuccess: (samples) => {
+			invalidateChanges(
+				queryClient,
+				samples.map((sample) => ({
+					domain: "samples",
+					operation: "update",
+					id: sample.id,
+				})),
+			);
 		},
 	});
 }

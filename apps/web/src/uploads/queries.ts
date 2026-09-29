@@ -1,3 +1,4 @@
+import { invalidateChange, invalidateChanges } from "@app/invalidate";
 import {
 	deleteUploadFn,
 	findUploadsFn,
@@ -67,8 +68,17 @@ export function useInfiniteFindFiles(type: UploadType, perPage: number) {
  * @returns A mutator for deleting a file
  */
 export function useDeleteFile() {
+	const queryClient = useQueryClient();
+
 	return useMutation<null, unknown, { id: number }>({
 		mutationFn: ({ id }) => deleteUploadFn({ data: { id } }),
+		onSuccess: (_data, { id }) => {
+			invalidateChange(queryClient, {
+				domain: "uploads",
+				operation: "delete",
+				id: id,
+			});
+		},
 	});
 }
 
@@ -97,8 +107,11 @@ export function useDeleteFiles() {
 		},
 		// Settled, not success: a partial failure still removed some of the files,
 		// so the list has to be refreshed either way.
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: fileQueryKeys.lists() });
+		onSettled: (_data, _error, { ids }) => {
+			invalidateChanges(
+				queryClient,
+				ids.map((id) => ({ domain: "uploads", operation: "delete", id })),
+			);
 		},
 	});
 }

@@ -1,3 +1,4 @@
+import { invalidateChange } from "@app/invalidate";
 import {
 	createSubtractionFn,
 	deleteSubtractionFn,
@@ -37,9 +38,11 @@ export function useCreateSubtraction() {
 			createSubtractionFn({
 				data: { name, nickname, uploadId },
 			}),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: subtractionQueryKeys.lists(),
+		onSuccess: (subtraction) => {
+			invalidateChange(queryClient, {
+				domain: "subtractions",
+				operation: "insert",
+				id: subtraction.id,
 			});
 		},
 	});
@@ -113,8 +116,10 @@ export function useUpdateSubtraction(subtractionId: number) {
 				data: { subtractionId, name, nickname },
 			}),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: subtractionQueryKeys.detail(subtractionId),
+			invalidateChange(queryClient, {
+				domain: "subtractions",
+				operation: "update",
+				id: subtractionId,
 			});
 		},
 	});
@@ -126,11 +131,20 @@ export function useUpdateSubtraction(subtractionId: number) {
  * @returns A mutator for deleting a subtraction
  */
 export function useDeleteSubtraction() {
+	const queryClient = useQueryClient();
+
 	return useMutation<null, Error, { subtractionId: number }>({
 		mutationFn: ({ subtractionId }) =>
 			deleteSubtractionFn({
 				data: { subtractionId },
 			}) as Promise<null>,
+		onSuccess: (_data, { subtractionId }) => {
+			invalidateChange(queryClient, {
+				domain: "subtractions",
+				operation: "delete",
+				id: subtractionId,
+			});
+		},
 	});
 }
 
