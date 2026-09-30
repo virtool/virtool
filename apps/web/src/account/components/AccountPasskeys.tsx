@@ -1,0 +1,98 @@
+import { getPasskeyNotice, usePasskeySupport } from "@app/passkeys";
+import Alert from "@base/Alert";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
+import Button from "@base/Button";
+import LoadingPlaceholder from "@base/LoadingPlaceholder";
+import QueryError from "@base/QueryError";
+import SectionHeader from "@base/SectionHeader";
+import { useQuery } from "@tanstack/react-query";
+import { Info, TriangleAlert } from "lucide-react";
+import { passkeysQueryOptions, useRegisterPasskey } from "../queries";
+import AccountPasskeyItem from "./AccountPasskeyItem";
+
+function PasskeyList() {
+	const { data, isPending, isError } = useQuery(passkeysQueryOptions());
+
+	if (isError && !data) {
+		return <QueryError noun="your passkeys" />;
+	}
+
+	if (isPending) {
+		return <LoadingPlaceholder />;
+	}
+
+	if (data.length === 0) {
+		return (
+			<BoxGroupSection className="text-gray-600">
+				You have not added any passkeys.
+			</BoxGroupSection>
+		);
+	}
+
+	return data.map((passkey) => (
+		<AccountPasskeyItem key={passkey.managementId} passkey={passkey} />
+	));
+}
+
+type AccountPasskeysProps = {
+	/** The handle that names new passkeys in the authenticator. */
+	handle: string;
+};
+
+/**
+ * Lists the account's passkeys and adds new ones.
+ *
+ * A passkey is an optional way to sign in beside the password, never a
+ * replacement for it.
+ */
+export default function AccountPasskeys({ handle }: AccountPasskeysProps) {
+	const support = usePasskeySupport();
+	const registerMutation = useRegisterPasskey();
+
+	const registerNotice = registerMutation.isError
+		? getPasskeyNotice(registerMutation.error)
+		: null;
+	const isRegisterError = registerNotice?.tone === "error";
+
+	return (
+		<section aria-labelledby="account-passkeys">
+			<SectionHeader level={3}>
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h3 id="account-passkeys">Passkeys</h3>
+						<p>
+							Sign in with your fingerprint, face, or device PIN. You can always
+							sign in with your password too.
+						</p>
+					</div>
+					<Button
+						color="blue"
+						disabled={support !== "available" || registerMutation.isPending}
+						onClick={() => registerMutation.mutate(handle)}
+					>
+						{registerMutation.isPending ? "Adding passkey…" : "Add passkey"}
+					</Button>
+				</div>
+			</SectionHeader>
+			{support === "unavailable" && (
+				<Alert color="orange" icon={TriangleAlert}>
+					This browser cannot use passkeys here. Passkeys need a supported
+					browser and a secure (HTTPS) connection.
+				</Alert>
+			)}
+			{registerNotice && (
+				<div role={isRegisterError ? "alert" : "status"}>
+					<Alert
+						color={isRegisterError ? "red" : "gray"}
+						icon={isRegisterError ? TriangleAlert : Info}
+					>
+						{registerNotice.message}
+					</Alert>
+				</div>
+			)}
+			<BoxGroup>
+				<PasskeyList />
+			</BoxGroup>
+		</section>
+	);
+}

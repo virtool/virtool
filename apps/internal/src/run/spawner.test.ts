@@ -84,10 +84,10 @@ function build(
 
 describe("PERIODIC_TASKS", () => {
 	/**
-	 * Pinning the list means adding a tenth type breaks a test, and so stays a
+	 * Pinning the list means adding an eleventh type breaks a test, and so stays a
 	 * deliberate act rather than a line someone appends.
 	 */
-	it("registers exactly the nine periodic names", () => {
+	it("registers exactly the ten periodic names", () => {
 		expect(PERIODIC_TASKS.map(({ type }) => type).toSorted()).toEqual(
 			[...PeriodicTaskName.options].toSorted(),
 		);
@@ -128,6 +128,7 @@ describe("PERIODIC_TASKS", () => {
 			timeout_jobs: 600,
 			evict_caches_lru: 3600,
 			cleanup_setup_state: 3600,
+			cleanup_auth_verifications: 3600,
 			reap_orphaned_uploads: 86400,
 		});
 	});

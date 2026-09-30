@@ -1,4 +1,4 @@
-import type { ApiKey, Permissions } from "@virtool/contracts";
+import type { ApiKey, PasskeySummary, Permissions } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 import { createFakeApiKey } from "../fake/account";
 
@@ -13,9 +13,18 @@ export const accountServerFnMocks = {
 	createApiKeyFn: vi.fn(),
 	updateApiKeyFn: vi.fn(),
 	deleteApiKeyFn: vi.fn(),
+	findPasskeysFn: vi.fn(),
+	renamePasskeyFn: vi.fn(),
+	removePasskeyFn: vi.fn(),
 	revokeBrowserSessionFn: vi.fn(),
 	revokeOtherBrowserSessionsFn: vi.fn(),
 };
+
+/** Sets up findPasskeys to resolve with the given passkeys. */
+export function mockFindPasskeys(passkeys: PasskeySummary[]): Mock {
+	accountServerFnMocks.findPasskeysFn.mockResolvedValue(passkeys);
+	return accountServerFnMocks.findPasskeysFn;
+}
 
 /** Sets up findApiKeys to resolve with the given API keys. */
 export function mockFindApiKeys(apiKeys: ApiKey[]): Mock {

@@ -10,6 +10,7 @@ import { useFetchAccount } from "../account";
 import { emailDeliveryQueryOptions } from "../queries";
 import AccountEmail from "./AccountEmail";
 import AccountHandle from "./AccountHandle";
+import AccountPasskeys from "./AccountPasskeys";
 import AccountPassword from "./AccountPassword";
 
 /**
@@ -34,7 +35,7 @@ export default function AccountProfile() {
 		<section className="flex flex-col gap-4">
 			<SectionHeader className="mb-0">
 				<h2>Profile</h2>
-				<p>Change your handle, password, and email address.</p>
+				<p>Change your handle, password, passkeys, and email address.</p>
 			</SectionHeader>
 			<div className="flex items-center justify-between">
 				<div className="flex font-medium items-center gap-4 text-2xl">
@@ -50,6 +51,7 @@ export default function AccountProfile() {
 			</div>
 			<AccountHandle handle={handle} />
 			<AccountPassword lastPasswordChange={lastPasswordChange} />
+			<AccountPasskeys handle={handle} />
 			<AccountEmail
 				canManageEmail={hasSufficientAdminRole("full", administratorRole)}
 				deliveryAvailable={emailDelivery.data?.available ?? true}

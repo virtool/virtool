@@ -10,9 +10,9 @@ const loginRouteApi = getRouteApi("/login");
 
 export default function LoginWall() {
 	const { passwordResetRequired } = loginRouteApi.useRouteContext();
-	const [isResetRequired, setIsResetRequired] = useState(
-		passwordResetRequired ?? false,
-	);
+	// The route context changes without a remount when a route guard sends a
+	// signed-in user who must reset their password back to this route.
+	const [isResetRequired, setIsResetRequired] = useState(false);
 	const { reason, redirect } = loginRouteApi.useSearch();
 
 	return (
@@ -27,7 +27,7 @@ export default function LoginWall() {
 					Your session ended. Please log in again.
 				</Alert>
 			)}
-			{isResetRequired ? (
+			{passwordResetRequired || isResetRequired ? (
 				<ResetForm redirect={redirect} />
 			) : (
 				<LoginForm redirect={redirect} setResetRequired={setIsResetRequired} />

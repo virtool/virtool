@@ -243,6 +243,9 @@ beforeEach(() => {
 		15 * 60 * 1000,
 	);
 
+	// The profile view lists passkeys, so any test rendering it needs a list.
+	accountServerFnMocks.findPasskeysFn.mockResolvedValue([]);
+
 	// Every upload begins by asking the server which transport to take. Default
 	// to the proxied path so a test that just exercises uploading does not have
 	// to stub it; tests for the chunked path override this.

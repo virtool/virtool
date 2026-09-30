@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { addPasskey, useSingleCeremony } from "@app/passkeys";
 import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import { resetClient } from "@app/utils";
 import * as Sentry from "@sentry/tanstackstart-react";
@@ -6,6 +7,9 @@ import {
 	createApiKeyFn,
 	deleteApiKeyFn,
 	findApiKeysFn,
+	findPasskeysFn,
+	removePasskeyFn,
+	renamePasskeyFn,
 	updateApiKeyFn,
 } from "@server/account/functions";
 import { logoutFn } from "@server/auth/functions";
@@ -28,6 +32,7 @@ import type {
 	Account,
 	AccountSettings,
 	ApiKey,
+	PasskeySummary,
 	Permissions,
 } from "@virtool/contracts";
 
@@ -245,6 +250,70 @@ export function useDeleteApiKey() {
 		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
+		},
+	});
+}
+
+/** Query options for the current user's passkeys. */
+export function passkeysQueryOptions() {
+	return queryOptions({
+		queryKey: accountQueryKeys.passkeys(),
+		queryFn: () => findPasskeysFn(),
+	});
+}
+
+/**
+ * Initializes a mutator that registers a passkey for the current user.
+ *
+ * The variable is the name for the new passkey. A stale session gets the
+ * recent-authentication challenge, and then the whole ceremony runs again.
+ */
+export function useRegisterPasskey() {
+	const queryClient = useQueryClient();
+	const ceremony = useSingleCeremony(
+		useRecentlyAuthenticatedMutation(addPasskey),
+	);
+
+	return useMutation<void, Error, string>({
+		mutationFn: ceremony,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
+		},
+	});
+}
+
+/** Initializes a mutator that renames one of the current user's passkeys. */
+export function useRenamePasskey() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ managementId, name }: { managementId: number; name: string }) =>
+			renamePasskeyFn({ data: { managementId, name } }),
+	);
+
+	return useMutation<
+		PasskeySummary,
+		Error,
+		{ managementId: number; name: string }
+	>({
+		mutationFn,
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
+		},
+	});
+}
+
+/** Initializes a mutator that removes one of the current user's passkeys. */
+export function useRemovePasskey() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ managementId }: { managementId: number }) =>
+			removePasskeyFn({ data: { managementId } }),
+	);
+
+	return useMutation<null, Error, { managementId: number }>({
+		mutationFn,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
 		},
 	});
 }
