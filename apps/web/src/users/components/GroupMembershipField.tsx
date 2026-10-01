@@ -7,6 +7,9 @@ import type { GroupMinimal } from "@virtool/contracts";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 
+/** A fixed locale keeps the server-rendered order identical in the browser. */
+const collator = new Intl.Collator("en");
+
 type GroupMembershipFieldProps = {
 	/** Every group that exists */
 	groups: GroupMinimal[];
@@ -52,7 +55,7 @@ export default function GroupMembershipField({
 	const memberIds = new Set(memberGroups.map((group) => group.id));
 	const availableGroups = results.filter((group) => !memberIds.has(group.id));
 	const sortedMembers = memberGroups.toSorted((a, b) =>
-		a.name.localeCompare(b.name),
+		collator.compare(a.name, b.name),
 	);
 
 	function renderAdd() {
@@ -80,9 +83,6 @@ export default function GroupMembershipField({
 				onTermChange={setTerm}
 				itemToKey={(group) => String(group.id)}
 				itemToString={(group) => group.name}
-				renderOption={(group) => (
-					<span className="capitalize">{group.name}</span>
-				)}
 				placeholder="Add group"
 			/>
 		);
@@ -101,7 +101,7 @@ export default function GroupMembershipField({
 			<BoxGroup className="mt-4 mb-0 max-h-64 overflow-y-auto">
 				{sortedMembers.map((group) => (
 					<BoxGroupSection key={group.id} className="flex items-center gap-3">
-						<span className="grow capitalize">{group.name}</span>
+						<span className="grow">{group.name}</span>
 						<ButtonToggle
 							aria-label={`Primary group: ${group.name}`}
 							className="min-h-8 bg-transparent px-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800"
