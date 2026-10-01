@@ -197,9 +197,9 @@ Restricted setup credentials may complete only their named transition. Each
 [setupExceptions.ts](src/server/auth/setupExceptions.ts).
 
 Raw routes handle transports RPC can't provide, such as uploads, streaming
-downloads, SSE, probes, metrics, and `/api/auth/*`. They enforce their own
-authorization. `requireAuthenticatedRequest` accepts sessions and API keys;
-server functions are session-only. Better Auth owns sign-in, while Virtool owns
+downloads, avatar images, SSE, probes, metrics, and `/api/auth/*`. They
+enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
+and API keys; server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
 Better Auth is mounted at `/api/auth/$` and composed in

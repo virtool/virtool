@@ -8,7 +8,7 @@ import { ShieldUser } from "lucide-react";
 import { useFetchAccount } from "../account";
 import AccountHandle from "./AccountHandle";
 
-/** Displays the account's identity with an option to change the handle. */
+/** Displays the account's identity with options to change the handle and avatar. */
 export default function AccountProfile() {
 	const { data, isPending, isError } = useFetchAccount();
 
@@ -20,16 +20,16 @@ export default function AccountProfile() {
 		return <LoadingPlaceholder />;
 	}
 
-	const { administratorRole, groups, handle } = data;
+	const { administratorRole, groups, handle, settings } = data;
 	const role = ADMINISTRATOR_ROLES.find(({ id }) => id === administratorRole);
 
 	return (
 		<section className="flex flex-col gap-4">
 			<SectionHeader className="mb-0">
 				<h2>Profile</h2>
-				<p>Your handle, administrator role, and groups.</p>
+				<p>Your handle, avatar, administrator role, and groups.</p>
 			</SectionHeader>
-			<AccountHandle handle={handle} />
+			<AccountHandle avatarSource={settings.avatarSource} handle={handle} />
 			<section>
 				<SectionHeader level={3}>
 					<h3>Administrator role</h3>

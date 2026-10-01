@@ -10,6 +10,7 @@ import { createFakePermissions } from "./permissions";
 import { createFakeUser } from "./user";
 
 const defaultSettings: AccountSettings = {
+	avatarSource: "initials",
 	pathoscopeColumns: [...PATHOSCOPE_COLUMNS],
 	preferAcronym: false,
 	quickAnalyzeWorkflow: "pathoscope",

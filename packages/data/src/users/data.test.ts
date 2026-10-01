@@ -23,6 +23,7 @@ import {
 	getAccount,
 	getAccountSecurity,
 	getAdministratorRole,
+	getGravatarEmail,
 	getUser,
 	getUserCount,
 	InvalidPasswordError,
@@ -160,6 +161,7 @@ describe("getAccount", () => {
 
 		expect(account.email).toBe("alice@example.com");
 		expect(account.settings).toEqual({
+			avatarSource: "initials",
 			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: false,
 			quickAnalyzeWorkflow: "nuvs",
@@ -181,6 +183,7 @@ describe("getAccount", () => {
 		const account = await getAccount(db, userId);
 
 		expect(account.settings).toEqual({
+			avatarSource: "initials",
 			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: false,
 			quickAnalyzeWorkflow: "pathoscope",
@@ -216,6 +219,41 @@ describe("getAccount", () => {
 	});
 });
 
+describe("getGravatarEmail", () => {
+	async function seedGravatarUser({
+		active = true,
+		avatarSource = "gravatar",
+		email = " Alice@Example.com ",
+	} = {}) {
+		await seedUser(db, {
+			active,
+			email,
+			handle: "Alice",
+			settings: { avatar_source: avatarSource },
+		});
+	}
+
+	it("returns the normalized email when the user chose Gravatar", async () => {
+		await seedGravatarUser();
+
+		expect(await getGravatarEmail(db, "alice")).toBe("alice@example.com");
+	});
+
+	it.each([
+		["the user did not choose Gravatar", { avatarSource: "initials" }],
+		["the email is empty", { email: "" }],
+		["the user is deactivated", { active: false }],
+	])("returns null when %s", async (_, options) => {
+		await seedGravatarUser(options);
+
+		expect(await getGravatarEmail(db, "alice")).toBeNull();
+	});
+
+	it("returns null when no user has the handle", async () => {
+		expect(await getGravatarEmail(db, "nobody")).toBeNull();
+	});
+});
+
 describe("updateAccountSettings", () => {
 	it("writes the changed key in its stored spelling and keeps the others", async () => {
 		const userId = await seedUser(db, {
@@ -228,6 +266,7 @@ describe("updateAccountSettings", () => {
 		});
 
 		expect(settings).toEqual({
+			avatarSource: "initials",
 			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: true,
 			quickAnalyzeWorkflow: "nuvs",
@@ -909,6 +948,7 @@ describe("createUser", () => {
 		// stored blob already uses.
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.settings).toEqual({
+			avatar_source: "initials",
 			pathoscope_columns: ["name", "weight", "depth", "coverage"],
 			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,

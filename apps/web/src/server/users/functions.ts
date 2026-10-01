@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
+	AVATAR_SOURCES,
 	PATHOSCOPE_COLUMNS,
 	PasswordTooShortError,
 	SORT_DIRECTIONS,
@@ -116,6 +117,7 @@ const accountSettingsSchema = z
 		showIds: z.boolean(),
 		showVersions: z.boolean(),
 		skipQuickAnalyzeDialog: z.boolean(),
+		avatarSource: z.enum(AVATAR_SOURCES),
 	})
 	.partial();
 

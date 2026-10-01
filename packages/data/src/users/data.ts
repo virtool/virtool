@@ -8,6 +8,8 @@ import {
 	type AdministeredUserSearchResult,
 	type AdministratorRole,
 	type AdministratorRoleName,
+	AVATAR_SOURCES,
+	type AvatarSource,
 	emptyPermissions,
 	PATHOSCOPE_COLUMNS,
 	type PathoscopeColumn,
@@ -95,6 +97,7 @@ type StoredAccountSettings = {
 	show_ids: boolean;
 	show_versions: boolean;
 	skip_quick_analyze_dialog: boolean;
+	avatar_source: AvatarSource;
 };
 
 /**
@@ -120,6 +123,9 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 		skipQuickAnalyzeDialog:
 			blob.skip_quick_analyze_dialog ??
 			DEFAULT_USER_SETTINGS.skipQuickAnalyzeDialog,
+		avatarSource: AVATAR_SOURCES.includes(blob.avatar_source as AvatarSource)
+			? (blob.avatar_source as AvatarSource)
+			: DEFAULT_USER_SETTINGS.avatarSource,
 	};
 }
 
@@ -134,6 +140,7 @@ function toStoredAccountSettings(
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
 		skip_quick_analyze_dialog: settings.skipQuickAnalyzeDialog,
+		avatar_source: settings.avatarSource,
 	};
 }
 
@@ -232,6 +239,7 @@ const DEFAULT_USER_SETTINGS: AccountSettings = {
 	showIds: true,
 	showVersions: true,
 	quickAnalyzeWorkflow: "pathoscope",
+	avatarSource: "initials",
 };
 
 // Every member of the administrator-role enum, with its capitalized name and
@@ -552,6 +560,41 @@ export async function getUser(
 	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
 }
 
+/**
+ * Get the email whose Gravatar represents the user with `handle`, or `null`
+ * when the user has none to show.
+ *
+ * Only an active user who chose Gravatar has one.
+ */
+export async function getGravatarEmail(
+	db: Db,
+	handle: string,
+): Promise<string | null> {
+	const [row] = await db
+		.select({
+			active: usersTable.active,
+			email: usersTable.email,
+			settings: usersTable.settings,
+		})
+		.from(usersTable)
+		.where(
+			and(
+				sql`lower(${usersTable.handle}) = lower(${handle})`,
+				sql`${usersTable.handle} <> ''`,
+			),
+		)
+		.limit(1);
+
+	if (
+		!row?.active ||
+		fromStoredAccountSettings(row.settings).avatarSource !== "gravatar"
+	) {
+		return null;
+	}
+
+	return normalizeEmail(row.email) || null;
+}
+
 /** Read the signed-in user's own account, including their email and settings. */
 export async function getAccount(db: Db, userId: number): Promise<Account> {
 	const [row] = await db
@@ -641,6 +684,7 @@ const STORED_ACCOUNT_SETTINGS_KEYS: {
 	showIds: "show_ids",
 	showVersions: "show_versions",
 	skipQuickAnalyzeDialog: "skip_quick_analyze_dialog",
+	avatarSource: "avatar_source",
 };
 
 /**

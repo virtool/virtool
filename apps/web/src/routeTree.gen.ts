@@ -29,6 +29,7 @@ import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/j
 import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
 import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
 import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
+import { Route as AvatarsHandleRouteImport } from './routes/avatars.$handle'
 import { Route as HealthLiveRouteImport } from './routes/health/live'
 import { Route as HealthReadyRouteImport } from './routes/health/ready'
 import { Route as UploadsUploadIdRouteImport } from './routes/uploads_.$uploadId'
@@ -198,6 +199,11 @@ const AuthenticatedSubtractionsRoute =
     path: '/subtractions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AvatarsHandleRoute = AvatarsHandleRouteImport.update({
+  id: '/avatars/$handle',
+  path: '/avatars/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthLiveRoute = HealthLiveRouteImport.update({
   id: '/health/live',
   path: '/health/live',
@@ -608,6 +614,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
@@ -688,6 +695,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
@@ -773,6 +781,7 @@ export interface FileRoutesById {
   '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/_authenticated/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads_/$uploadId': typeof UploadsUploadIdRoute
@@ -864,6 +873,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/samples'
     | '/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
@@ -944,6 +954,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/verify-email'
     | '/home'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
@@ -1028,6 +1039,7 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs'
     | '/_authenticated/samples'
     | '/_authenticated/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads_/$uploadId'
@@ -1110,6 +1122,7 @@ export interface RootRouteChildren {
   RecoverRoute: typeof RecoverRoute
   SetupRoute: typeof SetupRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  AvatarsHandleRoute: typeof AvatarsHandleRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
@@ -1266,6 +1279,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/subtractions'
       preLoaderRoute: typeof AuthenticatedSubtractionsRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/avatars/$handle': {
+      id: '/avatars/$handle'
+      path: '/avatars/$handle'
+      fullPath: '/avatars/$handle'
+      preLoaderRoute: typeof AvatarsHandleRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/health/live': {
       id: '/health/live'
@@ -2058,6 +2078,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecoverRoute: RecoverRoute,
   SetupRoute: SetupRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  AvatarsHandleRoute: AvatarsHandleRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
   UploadsUploadIdRoute: UploadsUploadIdRoute,

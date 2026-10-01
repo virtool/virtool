@@ -56,7 +56,7 @@ describe("<AccountProfile />", () => {
 		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle");
+		await screen.findByText("Handle and avatar");
 		expect(screen.getByLabelText("Handle")).toHaveValue("current_handle");
 	});
 
@@ -72,7 +72,7 @@ describe("<AccountProfile />", () => {
 		);
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle");
+		await screen.findByText("Handle and avatar");
 		const input = screen.getByLabelText("Handle");
 		const form = input.closest("form") as HTMLElement;
 
@@ -90,7 +90,7 @@ describe("<AccountProfile />", () => {
 		mockUpdateAccountHandle(undefined, 409, "User already exists.");
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle");
+		await screen.findByText("Handle and avatar");
 		const input = screen.getByLabelText("Handle");
 		const form = input.closest("form") as HTMLElement;
 
@@ -110,7 +110,7 @@ describe("<AccountProfile />", () => {
 		mockUpdateAccountHandle(undefined, 400, "Reserved user name: virtool");
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle");
+		await screen.findByText("Handle and avatar");
 		const input = screen.getByLabelText("Handle");
 		const form = input.closest("form") as HTMLElement;
 
@@ -132,7 +132,7 @@ describe("<AccountProfile />", () => {
 		mockUpdateAccountHandle({ ...account });
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle");
+		await screen.findByText("Handle and avatar");
 		const input = screen.getByLabelText("Handle");
 		const form = input.closest("form") as HTMLElement;
 
@@ -143,5 +143,28 @@ describe("<AccountProfile />", () => {
 			await screen.findByText("Please specify a username"),
 		).toBeInTheDocument();
 		expect(userServerFnMocks.updateAccountHandleFn).not.toHaveBeenCalled();
+	});
+
+	it("should save the Gravatar choice when toggled", async () => {
+		const account = createFakeAccount();
+		const saved = { ...account.settings, avatarSource: "gravatar" as const };
+		mockGetAccount(account);
+		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(saved);
+
+		renderWithProviders(<AccountProfile />);
+
+		const toggle = await screen.findByRole("switch", { name: "Use Gravatar" });
+		expect(toggle).not.toBeChecked();
+
+		mockGetAccount({ ...account, settings: saved });
+
+		await userEvent.click(toggle);
+
+		await waitFor(() =>
+			expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
+				data: { avatarSource: "gravatar" },
+			}),
+		);
+		expect(toggle).toBeChecked();
 	});
 });
