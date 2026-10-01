@@ -1,5 +1,4 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
@@ -30,10 +29,6 @@ export default function AccountProfile() {
 				<h2>Profile</h2>
 				<p>Your handle, administrator role, and groups.</p>
 			</SectionHeader>
-			<div className="flex font-medium items-center gap-4 text-2xl">
-				<InitialIcon handle={handle} size="xxl" />
-				<span>{handle}</span>
-			</div>
 			<AccountHandle handle={handle} />
 			<section>
 				<SectionHeader level={3}>

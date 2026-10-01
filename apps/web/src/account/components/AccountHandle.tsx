@@ -1,5 +1,6 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Field, { FieldError } from "@base/Field";
+import { InitialIcon } from "@base/Icon";
 import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
@@ -41,26 +42,33 @@ export default function AccountHandle({ handle }: HandleProps) {
 			</SectionHeader>
 			<BoxGroup>
 				<form onSubmit={handleSubmit(onSubmit)}>
-					<BoxGroupSection className="flex items-start gap-3">
-						<Field className="mb-0 flex-1 pb-0">
-							<Input
-								aria-label="Handle"
-								autoComplete="off"
-								aria-required
-								{...register("handle", {
-									required: "Please specify a username",
-								})}
-							/>
-							<FieldError
-								errors={[
-									errors.handle,
-									mutation.isError
-										? { message: mutation.error.message }
-										: undefined,
-								]}
-							/>
-						</Field>
-						<SaveButton altText="Change" />
+					<BoxGroupSection className="flex items-start justify-between gap-3">
+						<div className="flex h-9 items-center gap-2 font-medium">
+							<InitialIcon handle={handle} size="lg" />
+							<span>{handle}</span>
+						</div>
+						<div className="flex w-full max-w-sm items-start gap-3">
+							<Field className="mb-0 flex-1 pb-0">
+								<Input
+									aria-label="Handle"
+									autoComplete="off"
+									aria-required
+									{...register("handle", {
+										required: "Please specify a username",
+									})}
+								/>
+								<FieldError
+									className="empty:my-0 empty:min-h-0"
+									errors={[
+										errors.handle,
+										mutation.isError
+											? { message: mutation.error.message }
+											: undefined,
+									]}
+								/>
+							</Field>
+							<SaveButton altText="Change" />
+						</div>
 					</BoxGroupSection>
 				</form>
 			</BoxGroup>
