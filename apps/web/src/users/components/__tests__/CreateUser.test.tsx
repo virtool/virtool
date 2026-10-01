@@ -1,5 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeGroup } from "@tests/fake/groups";
 import { createFakeUser } from "@tests/fake/user";
 import {
 	mockCreateUser,
@@ -130,5 +131,171 @@ describe("<CreateUser />", () => {
 		expect(
 			screen.getByText("Please specify an email address"),
 		).toBeInTheDocument();
+	});
+
+	it("places the email field before the groups", async () => {
+		await renderWithRouter(
+			<CreateUserForm
+				onSubmit={() => {}}
+				error=""
+				groups={[createFakeGroup({ id: 1, name: "foo" })]}
+				roles={[]}
+				canAssignAdministratorRole={false}
+				canConfigureEmailDelivery={false}
+				emailDeliveryAvailable={false}
+			/>,
+		);
+
+		const email = screen.getByLabelText("Email");
+		const addGroup = screen.getByRole("combobox", { name: "Add group" });
+
+		expect(
+			email.compareDocumentPosition(addGroup) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+	});
+
+	it("submits the added groups and primary group", async () => {
+		const onSubmit = vi.fn();
+		await renderWithRouter(
+			<CreateUserForm
+				onSubmit={onSubmit}
+				error=""
+				groups={[
+					createFakeGroup({ id: 1, name: "foo" }),
+					createFakeGroup({ id: 2, name: "bar" }),
+					createFakeGroup({ id: 3, name: "baz" }),
+				]}
+				roles={[]}
+				canAssignAdministratorRole={false}
+				canConfigureEmailDelivery={false}
+				emailDeliveryAvailable={false}
+			/>,
+		);
+
+		expect(
+			screen.getByText("This user is not a member of any groups."),
+		).toBeInTheDocument();
+
+		const combobox = screen.getByRole("combobox", { name: "Add group" });
+		await userEvent.type(combobox, "baz");
+		await userEvent.click(await screen.findByRole("option", { name: "baz" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: "Toggle Add group menu" }),
+		);
+		await userEvent.click(await screen.findByRole("option", { name: "foo" }));
+
+		const primary = screen.getByRole("button", { name: "Primary group: foo" });
+		await userEvent.click(primary);
+		expect(primary).toHaveAttribute("aria-pressed", "true");
+
+		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+		expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
+			groups: [3, 1],
+			primaryGroup: 1,
+		});
+	});
+
+	it("does not submit when Enter is pressed in the group search", async () => {
+		await renderWithRouter(
+			<CreateUserForm
+				onSubmit={() => {}}
+				error=""
+				groups={[createFakeGroup({ id: 1, name: "foo" })]}
+				roles={[]}
+				canAssignAdministratorRole={false}
+				canConfigureEmailDelivery={false}
+				emailDeliveryAvailable={false}
+			/>,
+		);
+
+		const combobox = screen.getByRole("combobox", { name: "Add group" });
+		const submitListener = vi.fn((event: Event) => event.preventDefault());
+		combobox.closest("form")?.addEventListener("submit", submitListener);
+
+		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
+		combobox.focus();
+		await userEvent.keyboard("{Enter}");
+
+		expect(submitListener).not.toHaveBeenCalled();
+	});
+
+	it("clears the primary group when it is removed", async () => {
+		const onSubmit = vi.fn();
+		await renderWithRouter(
+			<CreateUserForm
+				onSubmit={onSubmit}
+				error=""
+				groups={[
+					createFakeGroup({ id: 1, name: "foo" }),
+					createFakeGroup({ id: 2, name: "bar" }),
+				]}
+				roles={[]}
+				canAssignAdministratorRole={false}
+				canConfigureEmailDelivery={false}
+				emailDeliveryAvailable={false}
+			/>,
+		);
+
+		const toggle = screen.getByRole("button", {
+			name: "Toggle Add group menu",
+		});
+		await userEvent.click(toggle);
+		await userEvent.click(await screen.findByRole("option", { name: "foo" }));
+		await userEvent.click(toggle);
+		await userEvent.click(await screen.findByRole("option", { name: "bar" }));
+
+		expect(
+			screen.getByText("This user is a member of every group."),
+		).toBeInTheDocument();
+
+		await userEvent.click(
+			screen.getByRole("button", { name: "Primary group: foo" }),
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Remove foo" }));
+
+		expect(
+			screen.getByRole("button", { name: "Primary group: bar" }),
+		).toHaveAttribute("aria-pressed", "false");
+
+		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+		expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
+			groups: [2],
+			primaryGroup: null,
+		});
+	});
+
+	it("submits the chosen administrator role", async () => {
+		const onSubmit = vi.fn();
+		await renderWithRouter(
+			<CreateUserForm
+				onSubmit={onSubmit}
+				error=""
+				groups={[]}
+				roles={[{ id: "users", name: "Users" }]}
+				canAssignAdministratorRole
+				canConfigureEmailDelivery
+				emailDeliveryAvailable={false}
+			/>,
+		);
+
+		await userEvent.click(
+			screen.getByRole("combobox", { name: "Administrator role" }),
+		);
+		await userEvent.click(await screen.findByRole("option", { name: "Users" }));
+
+		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+		expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
+			administratorRole: "users",
+		});
 	});
 });
