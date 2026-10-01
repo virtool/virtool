@@ -100,6 +100,20 @@ export type Account = User & {
 	settings: AccountSettings;
 };
 
+/** The signed-in user's email verification, TOTP, and recovery-code state. */
+export type AccountSecurity = {
+	/** Whether the current address is verified */
+	emailVerified: boolean;
+	/** Whether the instance requires every user to use TOTP */
+	mfaRequired: boolean;
+	/** An address waiting for verification; the current address stays active */
+	pendingEmail: string | null;
+	/** Unused recovery codes, or `null` without TOTP */
+	recoveryCodesRemaining: number | null;
+	/** Whether the user has confirmed a TOTP enrollment */
+	twoFactorEnabled: boolean;
+};
+
 /** A page of users. */
 export type UserSearchResult = SearchResult & {
 	items: User[];

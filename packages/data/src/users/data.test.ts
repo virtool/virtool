@@ -3,14 +3,17 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { hashPassword, verifyPassword } from "../auth/password";
 import { createAuthenticatedSession } from "../auth/session";
+import { issueSetupTokenInTransaction } from "../auth/setup";
 import { seedSession, seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { authSessions } from "../db/schema/auth";
 import { groups, userGroups } from "../db/schema/groups";
 import { sessions } from "../db/schema/sessions";
+import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
+import { seedSettings } from "../settings/test/fixtures";
 import {
 	changePassword,
 	createUser,
@@ -18,6 +21,7 @@ import {
 	findUsers,
 	GroupMembershipError,
 	getAccount,
+	getAccountSecurity,
 	getAdministratorRole,
 	getUser,
 	getUserCount,
@@ -58,6 +62,91 @@ const storedSettings = {
 	show_versions: true,
 	skip_quick_analyze_dialog: false,
 };
+
+describe("getAccountSecurity", () => {
+	beforeEach(async () => {
+		await db.delete(settings);
+	});
+
+	async function issueVerification(
+		userId: number,
+		candidateEmail: string,
+		lifetimeMs?: number,
+	) {
+		await db.transaction((tx) =>
+			issueSetupTokenInTransaction(tx, {
+				userId,
+				purpose: "email_verification",
+				candidateEmail,
+				sourceEmail: "alice@example.com",
+				lifetimeMs,
+			}),
+		);
+	}
+
+	it("reports an account with no pending change and no TOTP", async () => {
+		await seedSettings(db, { mfaPolicy: "optional" });
+		const userId = await seedUser(db, { email: "alice@example.com" });
+		await db
+			.update(users)
+			.set({ emailVerified: true })
+			.where(eq(users.id, userId));
+
+		expect(await getAccountSecurity(db, userId)).toEqual({
+			emailVerified: true,
+			mfaRequired: false,
+			pendingEmail: null,
+			twoFactorEnabled: false,
+		});
+	});
+
+	it("reports the address waiting for verification", async () => {
+		const userId = await seedUser(db, { email: "alice@example.com" });
+		await issueVerification(userId, "new@example.com");
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			pendingEmail: "new@example.com",
+		});
+	});
+
+	it("does not report a verification of the current address as pending", async () => {
+		const userId = await seedUser(db, { email: "Alice@Example.com" });
+		await issueVerification(userId, "alice@example.com");
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			pendingEmail: null,
+		});
+	});
+
+	it("does not report an expired verification as pending", async () => {
+		const userId = await seedUser(db, { email: "alice@example.com" });
+		await issueVerification(userId, "new@example.com", -1000);
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			pendingEmail: null,
+		});
+	});
+
+	it("reports TOTP and the required policy", async () => {
+		await seedSettings(db, { mfaPolicy: "required" });
+		const userId = await seedUser(db);
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			mfaRequired: true,
+			twoFactorEnabled: true,
+		});
+	});
+
+	it("throws for an unknown user", async () => {
+		await expect(getAccountSecurity(db, 999_999)).rejects.toThrow(
+			UserNotFoundError,
+		);
+	});
+});
 
 describe("getAccount", () => {
 	it("returns the email and settings that only the account holder may read", async () => {
@@ -438,7 +527,7 @@ describe("changePassword", () => {
 		await seedSession(db, userId);
 		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
-		const { handle } = await changePassword(db, {
+		await changePassword(db, {
 			userId,
 			oldPassword: "old_password_123",
 			password: "new_password_123",
@@ -453,7 +542,6 @@ describe("changePassword", () => {
 		expect(
 			await db.select().from(sessions).where(eq(sessions.userId, userId)),
 		).toHaveLength(0);
-		expect(handle).toBe("alice");
 	});
 
 	it("rejects a wrong old password and leaves everything alone", async () => {

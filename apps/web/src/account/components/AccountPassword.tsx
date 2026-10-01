@@ -94,7 +94,7 @@ export default function AccountPassword({
 						<FadeOut role="status">
 							{mutation.isSuccess ? (
 								<Alert color="green" icon={Check}>
-									Password changed successfully
+									Password changed. Other browsers were signed out.
 								</Alert>
 							) : null}
 						</FadeOut>

@@ -65,18 +65,22 @@ const REFUSED_PATHS = new Set([
 ]);
 
 /**
- * The passkey management endpoints, refused over HTTP only.
+ * Endpoints refused over HTTP only.
  *
- * The list returns public keys and counters, and neither mutation checks
- * recent authentication. Virtool's account server functions call all three
- * through `auth.api` and apply its own policy. The `before` hook also runs for
- * `auth.api` calls, so the refusal is in {@link createAuthRequestHandler}.
+ * The passkey list returns public keys and counters, and neither passkey
+ * mutation checks recent authentication. Virtool's account server functions
+ * call all three through `auth.api` and apply its own policy. The `before` hook
+ * also runs for `auth.api` calls, so the refusal is in
+ * {@link createAuthRequestHandler}.
  */
 const HTTP_REFUSED_PATHS = new Set(
 	[
 		"/passkey/list-user-passkeys",
 		"/passkey/update-passkey",
 		"/passkey/delete-passkey",
+		// Returns the TOTP secret again for only the password. Enrollment reads
+		// it once, from `enable`.
+		"/two-factor/get-totp-uri",
 	].map((path) => `${AUTH_BASE_PATH}${path}`),
 );
 

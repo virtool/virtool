@@ -87,3 +87,26 @@ export function setupSessionCookie({
 }: Pick<SeededSetupSession, "sessionId" | "token">): string {
 	return `${SETUP_SESSION_ID_COOKIE}=${sessionId}; ${SETUP_SESSION_TOKEN_COOKIE}=${token}`;
 }
+
+/** Compute the current TOTP code for an `otpauth://` URI. */
+export function totp(uri: string) {
+	const secret = new URL(uri).searchParams.get("secret") ?? "";
+	const bits = [...secret.toUpperCase()]
+		.map((char) =>
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+				.indexOf(char)
+				.toString(2)
+				.padStart(5, "0"),
+		)
+		.join("");
+	const key = Buffer.from(
+		(bits.match(/.{8}/g) ?? []).map((byte) => Number.parseInt(byte, 2)),
+	);
+	const counter = Buffer.alloc(8);
+	counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000)));
+	const digest = createHmac("sha1", key).update(counter).digest();
+	const offset = (digest[digest.length - 1] ?? 0) & 15;
+	return String(
+		(digest.readUInt32BE(offset) & 0x7fffffff) % 1_000_000,
+	).padStart(6, "0");
+}

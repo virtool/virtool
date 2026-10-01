@@ -1,6 +1,7 @@
 import {
 	type Account,
 	type AccountLifecycleState,
+	type AccountSecurity,
 	type AccountSettings,
 	type AdministeredUserDetail,
 	type AdministeredUserSearchResult,
@@ -56,6 +57,8 @@ import {
 	groups as groupsTable,
 	userGroups as userGroupsTable,
 } from "../db/schema/groups";
+import { settings as settingsTable } from "../db/schema/settings";
+import { setupTokens } from "../db/schema/setup";
 import { type UserRow, users as usersTable } from "../db/schema/users";
 import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
@@ -184,13 +187,9 @@ export type ChangePasswordValues = {
 	password: string;
 };
 
-/**
- * A completed password change, with the session credentials that replace the
- * ones the change revoked.
- */
+/** A completed password change. */
 export type ChangePasswordResult = {
 	account: Account;
-	handle: string;
 	migrated: boolean;
 };
 
@@ -603,6 +602,65 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 	};
 }
 
+/**
+ * Read the signed-in user's email verification and TOTP state.
+ *
+ * The recovery-code count is not here. Better Auth holds the codes encrypted,
+ * so the caller counts them through Better Auth.
+ */
+export async function getAccountSecurity(
+	db: Db,
+	userId: number,
+): Promise<Omit<AccountSecurity, "recoveryCodesRemaining">> {
+	const [[row], [pending], [policy]] = await Promise.all([
+		db
+			.select({
+				email: usersTable.email,
+				emailVerified: usersTable.emailVerified,
+				twoFactorEnabled: usersTable.twoFactorEnabled,
+			})
+			.from(usersTable)
+			.where(eq(usersTable.id, userId))
+			.limit(1),
+		db
+			.select({ candidateEmail: setupTokens.candidateEmail })
+			.from(setupTokens)
+			.where(
+				and(
+					eq(setupTokens.userId, userId),
+					eq(setupTokens.purpose, "email_verification"),
+					isNull(setupTokens.consumedAt),
+					isNull(setupTokens.supersededAt),
+					sql`${setupTokens.expiresAt} > timezone('utc', clock_timestamp())`,
+				),
+			)
+			.limit(1),
+		db
+			.select({ mfaPolicy: settingsTable.mfaPolicy })
+			.from(settingsTable)
+			.where(eq(settingsTable.id, 1))
+			.limit(1),
+	]);
+
+	if (!row) {
+		throw new UserNotFoundError();
+	}
+
+	// A token for the current address verifies it and changes nothing.
+	const candidateEmail = pending?.candidateEmail ?? null;
+	const pendingEmail =
+		candidateEmail && candidateEmail !== normalizeEmail(row.email)
+			? candidateEmail
+			: null;
+
+	return {
+		emailVerified: row.emailVerified,
+		mfaRequired: policy?.mfaPolicy === "required",
+		pendingEmail,
+		twoFactorEnabled: row.twoFactorEnabled ?? false,
+	};
+}
+
 const STORED_ACCOUNT_SETTINGS_KEYS: {
 	[K in keyof AccountSettings]: keyof StoredAccountSettings;
 } = {
@@ -665,7 +723,6 @@ export async function changePassword(
 	const [existing] = await db
 		.select({
 			authMigratedAt: usersTable.authMigratedAt,
-			handle: usersTable.handle,
 			password: usersTable.password,
 		})
 		.from(usersTable)
@@ -745,7 +802,6 @@ export async function changePassword(
 
 	return {
 		account: await getAccount(db, userId),
-		handle: existing.handle,
 		migrated: existing.authMigratedAt !== null,
 	};
 }

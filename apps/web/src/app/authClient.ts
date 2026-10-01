@@ -1,6 +1,7 @@
 import { passkeyClient } from "@better-auth/passkey/client";
 import { AUTH_BASE_PATH } from "@virtool/contracts";
 import { createAuthClient } from "better-auth/client";
+import { twoFactorClient } from "better-auth/client/plugins";
 
 /**
  * The browser client for the Better Auth handler at `/api/auth`.
@@ -10,5 +11,5 @@ import { createAuthClient } from "better-auth/client";
  */
 export const authClient = createAuthClient({
 	basePath: AUTH_BASE_PATH,
-	plugins: [passkeyClient()],
+	plugins: [passkeyClient(), twoFactorClient()],
 });

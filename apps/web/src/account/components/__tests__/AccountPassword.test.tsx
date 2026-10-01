@@ -67,7 +67,7 @@ describe("<AccountPassword />", () => {
 
 		await waitFor(() => {
 			expect(
-				screen.getByText("Password changed successfully"),
+				screen.getByText("Password changed. Other browsers were signed out."),
 			).toBeInTheDocument();
 		});
 
