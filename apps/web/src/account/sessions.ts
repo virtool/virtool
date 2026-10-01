@@ -21,11 +21,7 @@ export function activeBrowserSessionsQueryOptions() {
 	});
 }
 
-/**
- * Fetch the signed-in user's live browser sessions.
- *
- * @public
- */
+/** Fetch the signed-in user's live browser sessions. */
 export function useFetchActiveBrowserSessions() {
 	return useQuery(activeBrowserSessionsQueryOptions());
 }

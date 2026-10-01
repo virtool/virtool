@@ -2,27 +2,25 @@ import AccountProfile from "@account/components/AccountProfile";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
-import { mockGetEmailDeliveryAvailable } from "@tests/server-fn/recovery";
 import {
 	mockGetAccount,
 	mockUpdateAccountHandle,
 	userServerFnMocks,
 } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("<AccountProfile />", () => {
-	beforeEach(() => {
-		mockGetEmailDeliveryAvailable(true);
-	});
+	it("should leave the sign-in controls to the security page", async () => {
+		const account = createFakeAccount();
 
-	it("should hide the email form when delivery is not set up", async () => {
-		mockGetEmailDeliveryAvailable(false);
-		mockGetAccount(createFakeAccount({ administratorRole: null }));
+		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
 
-		expect(await screen.findByText(/Ask an administrator/)).toBeInTheDocument();
-		expect(screen.queryByLabelText("Email Address")).not.toBeInTheDocument();
+		expect(await screen.findByText(account.handle)).toBeInTheDocument();
+		expect(screen.queryByText("Email")).not.toBeInTheDocument();
+		expect(screen.queryByText("Password")).not.toBeInTheDocument();
+		expect(screen.queryByText("Passkeys")).not.toBeInTheDocument();
 	});
 
 	it("should render when administrator", async () => {
@@ -34,7 +32,10 @@ describe("<AccountProfile />", () => {
 		renderWithProviders(<AccountProfile />);
 
 		expect(await screen.findByText(account.handle)).toBeInTheDocument();
-		expect(screen.getByText("full Administrator")).toBeInTheDocument();
+		expect(screen.getByText("Full Administrator")).toBeInTheDocument();
+		expect(
+			screen.getByText("Manage who is an administrator and what they can do."),
+		).toBeInTheDocument();
 	});
 
 	it("should render when not administrator", async () => {
@@ -44,6 +45,9 @@ describe("<AccountProfile />", () => {
 		renderWithProviders(<AccountProfile />);
 
 		expect(await screen.findByText(account.handle)).toBeInTheDocument();
+		expect(
+			screen.getByText("You are not an administrator."),
+		).toBeInTheDocument();
 	});
 
 	it("should render with the current handle", async () => {

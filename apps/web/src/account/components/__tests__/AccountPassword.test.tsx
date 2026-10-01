@@ -6,6 +6,11 @@ import { mockChangePassword } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
+async function openDialog() {
+	await userEvent.click(await screen.findByRole("button", { name: "Change" }));
+	return screen.findByRole("dialog");
+}
+
 describe("<AccountPassword />", () => {
 	it("should handle password changes", async () => {
 		const account = createFakeAccount({
@@ -15,26 +20,26 @@ describe("<AccountPassword />", () => {
 			<AccountPassword lastPasswordChange={account.lastPasswordChange} />,
 		);
 
-		expect(await screen.findByText("Password")).toBeInTheDocument();
+		expect(await screen.findByText(/Last changed/)).toBeInTheDocument();
 
-		const oldPasswordInput = screen.getByLabelText("Old Password");
-		const newPasswordInput = screen.getByLabelText("New Password");
-		const form = oldPasswordInput.closest("form") as HTMLElement;
-		const button = within(form).getByRole("button", { name: "Change" });
+		const dialog = await openDialog();
+		const oldPasswordInput = within(dialog).getByLabelText("Current password");
+		const newPasswordInput = within(dialog).getByLabelText("New password");
+		const button = within(dialog).getByRole("button", { name: "Change" });
 
-		// Try without providing old password.
+		// Try without providing the current password.
 		await userEvent.type(newPasswordInput, "long_enough_password");
 		await userEvent.click(button);
 
 		expect(
-			screen.getByText("Please provide your old password"),
+			screen.getByText("Please provide your current password"),
 		).toBeInTheDocument();
 
 		await userEvent.clear(newPasswordInput);
 		await userEvent.type(oldPasswordInput, "expected_password");
 		await userEvent.type(newPasswordInput, "short");
 
-		expect(screen.getByLabelText("New Password")).toHaveValue("short");
+		expect(screen.getByLabelText("New password")).toHaveValue("short");
 
 		await userEvent.click(button);
 
@@ -43,7 +48,7 @@ describe("<AccountPassword />", () => {
 		).toBeInTheDocument();
 	});
 
-	it("should show success message after password change", async () => {
+	it("closes the dialog and confirms the change", async () => {
 		const account = createFakeAccount({
 			administratorRole: "full",
 		});
@@ -54,16 +59,19 @@ describe("<AccountPassword />", () => {
 			<AccountPassword lastPasswordChange={account.lastPasswordChange} />,
 		);
 
-		await screen.findByText("Password");
+		const dialog = await openDialog();
 
-		const oldPasswordInput = screen.getByLabelText("Old Password");
-		const newPasswordInput = screen.getByLabelText("New Password");
-		const form = oldPasswordInput.closest("form") as HTMLElement;
-		const button = within(form).getByRole("button", { name: "Change" });
-
-		await userEvent.type(oldPasswordInput, "old_password_123");
-		await userEvent.type(newPasswordInput, "new_password_123");
-		await userEvent.click(button);
+		await userEvent.type(
+			within(dialog).getByLabelText("Current password"),
+			"old_password_123",
+		);
+		await userEvent.type(
+			within(dialog).getByLabelText("New password"),
+			"new_password_123",
+		);
+		await userEvent.click(
+			within(dialog).getByRole("button", { name: "Change" }),
+		);
 
 		await waitFor(() => {
 			expect(
@@ -74,11 +82,14 @@ describe("<AccountPassword />", () => {
 		expect(changePassword).toHaveBeenCalledWith({
 			data: { oldPassword: "old_password_123", password: "new_password_123" },
 		});
-		expect(oldPasswordInput).toHaveValue("");
-		expect(newPasswordInput).toHaveValue("");
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+		const reopened = await openDialog();
+		expect(within(reopened).getByLabelText("Current password")).toHaveValue("");
+		expect(within(reopened).getByLabelText("New password")).toHaveValue("");
 	});
 
-	it("shows the server's message when the old password is wrong", async () => {
+	it("shows the server's message when the current password is wrong", async () => {
 		const account = createFakeAccount({ administratorRole: "full" });
 
 		mockChangePassword(undefined, 400);
@@ -87,20 +98,23 @@ describe("<AccountPassword />", () => {
 			<AccountPassword lastPasswordChange={account.lastPasswordChange} />,
 		);
 
-		await screen.findByText("Password");
+		const dialog = await openDialog();
 
-		const oldPasswordInput = screen.getByLabelText("Old Password");
-		const form = oldPasswordInput.closest("form") as HTMLElement;
-
-		await userEvent.type(oldPasswordInput, "wrong_password_123");
 		await userEvent.type(
-			screen.getByLabelText("New Password"),
+			within(dialog).getByLabelText("Current password"),
+			"wrong_password_123",
+		);
+		await userEvent.type(
+			within(dialog).getByLabelText("New password"),
 			"new_password_123",
 		);
-		await userEvent.click(within(form).getByRole("button", { name: "Change" }));
-
-		await waitFor(() =>
-			expect(screen.getByText("Invalid credentials")).toBeInTheDocument(),
+		await userEvent.click(
+			within(dialog).getByRole("button", { name: "Change" }),
 		);
+
+		expect(
+			await within(dialog).findByText("Invalid credentials"),
+		).toBeInTheDocument();
+		expect(screen.getByRole("dialog")).toBeInTheDocument();
 	});
 });

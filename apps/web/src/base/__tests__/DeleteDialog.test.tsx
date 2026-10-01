@@ -25,6 +25,26 @@ describe("<DeleteDialog />", () => {
 		expect(screen.getByText("Foo")).toBeInTheDocument();
 	});
 
+	it("takes a custom title and confirm label", () => {
+		renderWithProviders(
+			<DeleteDialog
+				confirmLabel="Sign out"
+				name="Firefox"
+				noun="session"
+				onConfirm={vi.fn()}
+				open
+				title="Sign out session"
+			/>,
+		);
+
+		expect(screen.getByText("Sign out session")).toBeInTheDocument();
+		expect(screen.queryByText("Delete session")).toBeNull();
+		expect(
+			screen.getByRole("button", { name: "Sign out" }),
+		).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
+	});
+
 	it("opens from its trigger", async () => {
 		renderWithProviders(
 			<DeleteDialog

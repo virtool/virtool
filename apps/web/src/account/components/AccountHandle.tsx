@@ -41,8 +41,8 @@ export default function AccountHandle({ handle }: HandleProps) {
 			</SectionHeader>
 			<BoxGroup>
 				<form onSubmit={handleSubmit(onSubmit)}>
-					<BoxGroupSection>
-						<Field>
+					<BoxGroupSection className="flex items-start gap-3">
+						<Field className="mb-0 flex-1 pb-0">
 							<Input
 								aria-label="Handle"
 								autoComplete="off"
@@ -60,9 +60,7 @@ export default function AccountHandle({ handle }: HandleProps) {
 								]}
 							/>
 						</Field>
-						<footer className="flex items-center justify-end mb-4">
-							<SaveButton altText="Change" />
-						</footer>
+						<SaveButton altText="Change" />
 					</BoxGroupSection>
 				</form>
 			</BoxGroup>

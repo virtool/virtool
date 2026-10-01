@@ -1,62 +1,82 @@
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
-import { useQuery } from "@tanstack/react-query";
-import { hasSufficientAdminRole } from "@virtool/contracts";
+import { ADMINISTRATOR_ROLES } from "@virtool/contracts";
 import { ShieldUser } from "lucide-react";
 import { useFetchAccount } from "../account";
-import { emailDeliveryQueryOptions } from "../queries";
-import AccountEmail from "./AccountEmail";
 import AccountHandle from "./AccountHandle";
-import AccountPasskeys from "./AccountPasskeys";
-import AccountPassword from "./AccountPassword";
 
-/**
- * Displays the account's identity with options to change the handle, password,
- * and email
- */
+/** Displays the account's identity with an option to change the handle. */
 export default function AccountProfile() {
 	const { data, isPending, isError } = useFetchAccount();
-	const emailDelivery = useQuery(emailDeliveryQueryOptions());
 
 	if (isError && !data) {
 		return <QueryError noun="your account" />;
 	}
 
-	if (isPending || emailDelivery.isPending) {
+	if (isPending) {
 		return <LoadingPlaceholder />;
 	}
 
-	const { administratorRole, email, handle, lastPasswordChange } = data;
+	const { administratorRole, groups, handle } = data;
+	const role = ADMINISTRATOR_ROLES.find(({ id }) => id === administratorRole);
 
 	return (
 		<section className="flex flex-col gap-4">
 			<SectionHeader className="mb-0">
 				<h2>Profile</h2>
-				<p>Change your handle, password, passkeys, and email address.</p>
+				<p>Your handle, administrator role, and groups.</p>
 			</SectionHeader>
-			<div className="flex items-center justify-between">
-				<div className="flex font-medium items-center gap-4 text-2xl">
-					<InitialIcon handle={handle} size="xxl" />
-					<span>{handle}</span>
-				</div>
-				{administratorRole && (
-					<Label className="capitalize text-base" color="purple">
-						<ShieldUser />
-						{administratorRole} Administrator
-					</Label>
-				)}
+			<div className="flex font-medium items-center gap-4 text-2xl">
+				<InitialIcon handle={handle} size="xxl" />
+				<span>{handle}</span>
 			</div>
 			<AccountHandle handle={handle} />
-			<AccountPassword lastPasswordChange={lastPasswordChange} />
-			<AccountPasskeys handle={handle} />
-			<AccountEmail
-				canManageEmail={hasSufficientAdminRole("full", administratorRole)}
-				deliveryAvailable={emailDelivery.data?.available ?? true}
-				email={email}
-			/>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Administrator role</h3>
+					<p>The parts of Virtool you can administer.</p>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						{role ? (
+							<div className="flex items-center gap-3">
+								<Label color="purple">
+									<ShieldUser size={16} />
+									{role.name} Administrator
+								</Label>
+								<span className="text-gray-600">{role.description}</span>
+							</div>
+						) : (
+							<span className="text-gray-600">
+								You are not an administrator.
+							</span>
+						)}
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Groups</h3>
+					<p>The groups you belong to.</p>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection className="flex flex-wrap gap-2">
+						{groups.length ? (
+							groups
+								.toSorted((a, b) => a.name.localeCompare(b.name))
+								.map(({ id, name }) => <Label key={id}>{name}</Label>)
+						) : (
+							<span className="text-gray-600">
+								You do not belong to any groups.
+							</span>
+						)}
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
 		</section>
 	);
 }

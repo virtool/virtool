@@ -18,12 +18,14 @@ describe("<AccountEmail />", () => {
 				canManageEmail={false}
 				deliveryAvailable
 				email={account.email}
+				emailVerified
+				pendingEmail={null}
 			/>,
 		);
 
-		expect(await screen.findByText("Email Address")).toBeInTheDocument();
+		expect(await screen.findByText("New Email Address")).toBeInTheDocument();
 
-		expect(screen.getByLabelText("Email Address")).toHaveValue(
+		expect(screen.getByLabelText("New Email Address")).toHaveValue(
 			"virtool.devs@gmail.com",
 		);
 	});
@@ -40,11 +42,13 @@ describe("<AccountEmail />", () => {
 				canManageEmail={false}
 				deliveryAvailable
 				email={account.email}
+				emailVerified
+				pendingEmail={null}
 			/>,
 		);
 
-		await screen.findByText("Email Address");
-		const input = screen.getByLabelText("Email Address");
+		await screen.findByText("New Email Address");
+		const input = screen.getByLabelText("New Email Address");
 		expect(input).toHaveValue("");
 
 		const form = input.closest("form") as HTMLElement;
@@ -77,13 +81,17 @@ describe("<AccountEmail />", () => {
 				canManageEmail={false}
 				deliveryAvailable={false}
 				email="virtool.devs@gmail.com"
+				emailVerified
+				pendingEmail={null}
 			/>,
 		);
 
 		expect(
 			await screen.findByText("virtool.devs@gmail.com"),
 		).toBeInTheDocument();
-		expect(screen.queryByLabelText("Email Address")).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("New Email Address"),
+		).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole("button", { name: "Send verification" }),
 		).not.toBeInTheDocument();
@@ -92,7 +100,13 @@ describe("<AccountEmail />", () => {
 
 	it("should link administrators to email delivery when it is not set up", async () => {
 		await renderWithRouter(
-			<AccountEmail canManageEmail deliveryAvailable={false} email="" />,
+			<AccountEmail
+				canManageEmail
+				deliveryAvailable={false}
+				email=""
+				emailVerified={false}
+				pendingEmail={null}
+			/>,
 		);
 
 		expect(
@@ -101,5 +115,40 @@ describe("<AccountEmail />", () => {
 		expect(
 			screen.getByRole("link", { name: "Set up email delivery" }),
 		).toHaveAttribute("href", "/administration/email");
+	});
+
+	it("should say whether the current address is verified", async () => {
+		renderWithProviders(
+			<AccountEmail
+				canManageEmail={false}
+				deliveryAvailable
+				email="virtool.devs@gmail.com"
+				emailVerified={false}
+				pendingEmail={null}
+			/>,
+		);
+
+		expect(await screen.findByText("Not verified")).toBeInTheDocument();
+		expect(screen.queryByText(/We sent a verification link/)).toBeNull();
+	});
+
+	it("should show the address that waits for verification", async () => {
+		renderWithProviders(
+			<AccountEmail
+				canManageEmail={false}
+				deliveryAvailable
+				email="virtool.devs@gmail.com"
+				emailVerified
+				pendingEmail="new@example.com"
+			/>,
+		);
+
+		expect(await screen.findByText("Verified")).toBeInTheDocument();
+		expect(screen.getByText("new@example.com")).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/Your current address stays active until you open the link/,
+			),
+		).toBeInTheDocument();
 	});
 });

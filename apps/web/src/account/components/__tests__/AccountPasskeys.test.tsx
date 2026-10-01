@@ -96,7 +96,7 @@ describe("<AccountPasskeys />", () => {
 		await screen.findByText("You have not added any passkeys.");
 		mockFindPasskeys([passkey({ name: "Alice" })]);
 
-		await user.click(screen.getByRole("button", { name: "Add passkey" }));
+		await user.click(screen.getByRole("button", { name: "Add" }));
 
 		expect(await screen.findByText("Alice")).toBeInTheDocument();
 		expect(addPasskey).toHaveBeenCalledWith({ name: "Alice" });
@@ -111,13 +111,13 @@ describe("<AccountPasskeys />", () => {
 
 		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await screen.findByText("You have not added any passkeys.");
-		await user.click(screen.getByRole("button", { name: "Add passkey" }));
+		await user.click(screen.getByRole("button", { name: "Add" }));
 
 		const notice = await screen.findByRole("status");
 		expect(notice).toHaveTextContent("The passkey was not added. Try again.");
 		expect(notice.firstElementChild).toHaveClass("bg-gray-100");
 		expect(screen.queryByRole("alert")).toBeNull();
-		expect(screen.getByRole("button", { name: "Add passkey" })).toBeEnabled();
+		expect(screen.getByRole("button", { name: "Add" })).toBeEnabled();
 	});
 
 	it.each([
@@ -132,7 +132,7 @@ describe("<AccountPasskeys />", () => {
 
 			renderWithProviders(<AccountPasskeys handle="Alice" />);
 			await screen.findByText("You have not added any passkeys.");
-			await user.click(screen.getByRole("button", { name: "Add passkey" }));
+			await user.click(screen.getByRole("button", { name: "Add" }));
 
 			const alert = await screen.findByRole("alert");
 			expect(alert).toHaveTextContent("This passkey is already registered.");
@@ -157,7 +157,7 @@ describe("<AccountPasskeys />", () => {
 
 		renderWithProviders(<AccountPasskeys handle="Alice" />);
 		await screen.findByText("You have not added any passkeys.");
-		await user.click(screen.getByRole("button", { name: "Add passkey" }));
+		await user.click(screen.getByRole("button", { name: "Add" }));
 
 		const challenge = await screen.findByRole("dialog", {
 			name: "Confirm your identity",
@@ -180,7 +180,7 @@ describe("<AccountPasskeys />", () => {
 		expect(
 			await screen.findByText(/This browser cannot use passkeys here/),
 		).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Add passkey" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
 		expect(await screen.findByText("Work laptop")).toBeInTheDocument();
 	});
 

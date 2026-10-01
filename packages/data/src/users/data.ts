@@ -3,8 +3,10 @@ import {
 	type AccountLifecycleState,
 	type AccountSecurity,
 	type AccountSettings,
+	ADMINISTRATOR_ROLES,
 	type AdministeredUserDetail,
 	type AdministeredUserSearchResult,
+	type AdministratorRole,
 	type AdministratorRoleName,
 	emptyPermissions,
 	PATHOSCOPE_COLUMNS,
@@ -193,13 +195,6 @@ export type ChangePasswordResult = {
 	migrated: boolean;
 };
 
-/** A selectable administrator role with its human-readable name and description. */
-export type AdministratorRole = {
-	id: AdministratorRoleName;
-	name: string;
-	description: string;
-};
-
 /** Thrown when a requested user does not exist. */
 export class UserNotFoundError extends AppError {}
 
@@ -241,30 +236,6 @@ const DEFAULT_USER_SETTINGS: AccountSettings = {
 
 // Every member of the administrator-role enum, with its capitalized name and
 // description.
-const ADMINISTRATOR_ROLES: AdministratorRole[] = [
-	{
-		id: "full",
-		name: "Full",
-		description: "Manage who is an administrator and what they can do.",
-	},
-	{
-		id: "settings",
-		name: "Settings",
-		description: "Manage instance settings.",
-	},
-	{
-		id: "users",
-		name: "Users",
-		description: "Create user accounts. Control activation of user accounts.",
-	},
-	{
-		id: "base",
-		name: "Base",
-		description:
-			"Provides ability to:\n    - Manage HMMs and common references.\n    - View all running jobs.\n    - Cancel any job.",
-	},
-];
-
 /** Merge the permissions granted by membership in a list of groups. */
 function mergePermissions(memberships: Permissions[]): Permissions {
 	const merged = emptyPermissions();
