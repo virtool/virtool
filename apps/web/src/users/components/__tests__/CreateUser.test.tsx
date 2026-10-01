@@ -199,6 +199,30 @@ describe("<CreateUser />", () => {
 		});
 	});
 
+	it("does not submit when Enter is pressed in the group search", async () => {
+		await renderWithRouter(
+			<CreateUserForm
+				onSubmit={() => {}}
+				error=""
+				groups={[createFakeGroup({ id: 1, name: "foo" })]}
+				roles={[]}
+				canAssignAdministratorRole={false}
+				canConfigureEmailDelivery={false}
+				emailDeliveryAvailable={false}
+			/>,
+		);
+
+		const combobox = screen.getByRole("combobox", { name: "Add group" });
+		const submitListener = vi.fn((event: Event) => event.preventDefault());
+		combobox.closest("form")?.addEventListener("submit", submitListener);
+
+		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
+		combobox.focus();
+		await userEvent.keyboard("{Enter}");
+
+		expect(submitListener).not.toHaveBeenCalled();
+	});
+
 	it("clears the primary group when it is removed", async () => {
 		const onSubmit = vi.fn();
 		await renderWithRouter(
