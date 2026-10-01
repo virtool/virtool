@@ -8,14 +8,9 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
+import Field, { FieldError, FieldLabel } from "@base/Field";
 import { IconButton } from "@base/Icon";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputLabel,
-	InputSimple,
-} from "@base/Input";
+import Input from "@base/Input";
 import Label from "@base/Label";
 import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
@@ -25,7 +20,7 @@ import {
 	passkeyNameSchema,
 } from "@virtool/contracts";
 import { Pencil, Trash } from "lucide-react";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRemovePasskey, useRenamePasskey } from "../queries";
 
@@ -39,7 +34,6 @@ type FormValues = {
 
 function PasskeyRename({ passkey }: AccountPasskeyItemProps) {
 	const [open, setOpen] = useState(false);
-	const inputId = useId();
 	const mutation = useRenamePasskey();
 	const {
 		formState: { errors },
@@ -78,26 +72,21 @@ function PasskeyRename({ passkey }: AccountPasskeyItemProps) {
 					Choose a name that helps you recognize this passkey.
 				</DialogDescription>
 				<form className="mt-4" onSubmit={handleSubmit(onSubmit)}>
-					<InputGroup>
-						<InputLabel htmlFor={inputId}>Name</InputLabel>
-						<InputContainer>
-							<InputSimple
-								id={inputId}
-								aria-invalid={Boolean(error) || undefined}
-								aria-describedby={error ? `${inputId}-error` : undefined}
-								maxLength={PASSKEY_NAME_MAX_LENGTH}
-								{...register("name", {
-									validate: (value) => {
-										const result = passkeyNameSchema.safeParse(value);
-										return (
-											result.success || result.error.issues[0]?.message || false
-										);
-									},
-								})}
-							/>
-							<InputError id={`${inputId}-error`}>{error}</InputError>
-						</InputContainer>
-					</InputGroup>
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<Input
+							maxLength={PASSKEY_NAME_MAX_LENGTH}
+							{...register("name", {
+								validate: (value) => {
+									const result = passkeyNameSchema.safeParse(value);
+									return (
+										result.success || result.error.issues[0]?.message || false
+									);
+								},
+							})}
+						/>
+						<FieldError>{error}</FieldError>
+					</Field>
 					<div className="flex justify-end">
 						<SaveButton disabled={mutation.isPending} />
 					</div>
