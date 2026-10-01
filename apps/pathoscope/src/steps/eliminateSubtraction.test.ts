@@ -207,6 +207,17 @@ describe("eliminateSubtractionStep", () => {
 		);
 	});
 
+	// A filter flag here would drop subtraction alignments, so reads that map
+	// better to the host would survive and be counted as viral.
+	it("converts to bam without filtering alignments", async () => {
+		const { paths, scripts } = await runStep([["r1"]], 1);
+		const script = scripts[0] ?? "";
+
+		expect(
+			script.endsWith(`| samtools view -bS - -o '${paths.toSubtractionBam}'`),
+		).toBe(true);
+	});
+
 	it("quotes every path it interpolates into the pipeline", async () => {
 		const { paths, scripts } = await runStep([["r1"]], 1);
 		const script = scripts[0] ?? "";
