@@ -125,7 +125,15 @@ export default function ComboBox<Item>({
 					<input
 						className="flex-grow min-w-0 bg-transparent outline-none text-base"
 						placeholder={placeholder}
-						{...getInputProps()}
+						{...getInputProps({
+							onKeyDown(event) {
+								// Stops Enter from submitting an enclosing form while the menu is
+								// closed. Downshift still handles the key.
+								if (event.key === "Enter") {
+									event.preventDefault();
+								}
+							},
+						})}
 					/>
 					<button
 						type="button"
