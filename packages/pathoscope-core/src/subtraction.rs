@@ -347,4 +347,59 @@ mod tests {
             "Third read should have score 42.0"
         );
     }
+
+    // The filtered alignments feed expectation maximization, which needs every
+    // secondary (0x100) alignment of a read that survives subtraction.
+    #[test]
+    fn test_process_isolate_file_keeps_secondary_alignments() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let output = temp.path().join("subtracted.bam");
+
+        let mut scores = FxHashMap::default();
+        scores.insert("read1".to_string(), 1000.0);
+
+        let subtracted = process_isolate_file(
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/test_em_with_multimapping.sam"
+            ),
+            output.to_str().unwrap(),
+            &SubtractionProcessor::new(scores),
+            1,
+        )
+        .unwrap();
+
+        assert_eq!(subtracted, HashSet::from(["read1".to_string()]));
+
+        let mut written = Vec::new();
+
+        SamReader::new(output.to_str().unwrap())
+            .unwrap()
+            .stream_chunks(|chunk| {
+                for record in chunk {
+                    written.push((
+                        String::from_utf8(record.qname().to_vec()).unwrap(),
+                        record.is_secondary(),
+                    ));
+                }
+                Ok(())
+            })
+            .unwrap();
+
+        assert_eq!(written.len(), 7);
+
+        for read_id in ["multi1", "multi2"] {
+            let flags: Vec<bool> = written
+                .iter()
+                .filter(|(id, _)| id == read_id)
+                .map(|(_, secondary)| *secondary)
+                .collect();
+
+            assert_eq!(
+                flags,
+                [false, true],
+                "{read_id} should keep both alignments"
+            );
+        }
+    }
 }

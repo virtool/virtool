@@ -61,22 +61,24 @@ describe("<UserDetail />", () => {
 			expect(screen.getByText("Change Password")).toBeInTheDocument();
 
 			expect(await screen.findByText("Groups")).toBeInTheDocument();
-			expect(screen.getByLabelText("Group 0")).toBeInTheDocument();
-			expect(screen.getByLabelText("Group 1")).toBeInTheDocument();
-			expect(screen.getByLabelText("Group 2")).toBeInTheDocument();
-			expect(screen.getByLabelText("Group 3")).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Primary group: Group 0" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Primary group: Group 1" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Primary group: Group 2" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Primary group: Group 3" }),
+			).toBeInTheDocument();
 
 			expect(
-				screen.getByRole("radiogroup", { name: "Primary group" }),
+				screen.getByRole("button", { name: "Primary group: Group 1" }),
 			).toBeInTheDocument();
 			expect(
-				screen.getByRole("radio", { name: "No primary group" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("radio", { name: "Group 1" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("radio", { name: "Group 4" }),
+				screen.getByRole("button", { name: "Primary group: Group 4" }),
 			).toBeInTheDocument();
 
 			expect(screen.getByText("Permissions")).toBeInTheDocument();
@@ -235,8 +237,12 @@ describe("<UserDetail />", () => {
 				expect(listGroups).toHaveBeenCalled();
 			});
 
-			expect(await screen.findByLabelText("Group 1")).toBeInTheDocument();
-			expect(screen.getByLabelText("Group 3")).toBeInTheDocument();
+			expect(
+				await screen.findByRole("button", { name: "Primary group: Group 1" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Primary group: Group 3" }),
+			).toBeInTheDocument();
 		});
 		it("should point to group creation when no groups exist", async () => {
 			const user = createFakeUser({ groups: [], primaryGroup: null });
@@ -256,7 +262,7 @@ describe("<UserDetail />", () => {
 			).toBeInTheDocument();
 			expect(screen.queryByLabelText("group3")).not.toBeInTheDocument();
 			expect(
-				screen.queryByRole("radiogroup", { name: "Primary group" }),
+				screen.queryByRole("button", { name: /^Primary group:/ }),
 			).not.toBeInTheDocument();
 
 			expect(getUser).toHaveBeenCalled();
