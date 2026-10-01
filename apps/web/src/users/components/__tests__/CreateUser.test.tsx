@@ -185,8 +185,9 @@ describe("<CreateUser />", () => {
 		);
 		await userEvent.click(await screen.findByRole("option", { name: "foo" }));
 
-		await userEvent.click(screen.getByRole("radio", { name: "foo" }));
-		expect(screen.getByText("Primary")).toBeInTheDocument();
+		const primary = screen.getByRole("button", { name: "Primary group: foo" });
+		await userEvent.click(primary);
+		expect(primary).toHaveAttribute("aria-pressed", "true");
 
 		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -227,12 +228,14 @@ describe("<CreateUser />", () => {
 			screen.getByText("This user is a member of every group."),
 		).toBeInTheDocument();
 
-		await userEvent.click(screen.getByRole("radio", { name: "foo" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: "Primary group: foo" }),
+		);
 		await userEvent.click(screen.getByRole("button", { name: "Remove foo" }));
 
 		expect(
-			screen.getByRole("radio", { name: "No primary group" }),
-		).toBeChecked();
+			screen.getByRole("button", { name: "Primary group: bar" }),
+		).toHaveAttribute("aria-pressed", "false");
 
 		await userEvent.type(screen.getByLabelText("Email"), "user@example.com");
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));

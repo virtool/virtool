@@ -1,11 +1,8 @@
-import { cn } from "@app/cn";
 import { useFuse } from "@app/fuse";
-import Badge from "@base/Badge";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
+import { ButtonToggle } from "@base/Button";
 import ComboBox from "@base/ComboBox";
-import Field, { FieldLabel } from "@base/Field";
 import Icon from "@base/Icon";
-import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
 import type { GroupMinimal } from "@virtool/contracts";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -36,9 +33,10 @@ type GroupMembershipFieldProps = {
 /**
  * A controlled field for a user's group membership and primary group.
  *
- * A searchable combobox adds groups. Each member is a row in a radio group
- * that selects the primary group, with a button to remove the membership. The
- * member list scrolls when it is longer than a few rows.
+ * A searchable combobox adds groups. Each member is a row with a toggle that
+ * makes it the primary group and a button to remove the membership. Pressing
+ * the toggle of the primary group leaves the user without one. The member list
+ * scrolls when it is longer than a few rows.
  */
 export default function GroupMembershipField({
 	groups,
@@ -100,58 +98,31 @@ export default function GroupMembershipField({
 		}
 
 		return (
-			<RadioGroup
-				className="mt-4"
-				aria-label="Primary group"
-				value={primaryGroupId === null ? "none" : String(primaryGroupId)}
-				onValueChange={(value) =>
-					onPrimaryGroupChange(value === "none" ? null : Number(value))
-				}
-			>
-				<BoxGroup className="mb-0 max-h-64 overflow-y-auto">
-					{sortedMembers.map((group) => {
-						const isPrimary = group.id === primaryGroupId;
-
-						return (
-							<BoxGroupSection
-								key={group.id}
-								className={cn(
-									"flex items-center gap-3",
-									isPrimary && "bg-blue-50",
-								)}
-							>
-								<Field orientation="horizontal" className="grow">
-									<RadioGroupItem value={String(group.id)} />
-									<FieldLabel className="grow capitalize cursor-pointer select-none">
-										{group.name}
-									</FieldLabel>
-								</Field>
-								{isPrimary && (
-									<Badge color="blue" variant="soft">
-										Primary
-									</Badge>
-								)}
-								<button
-									type="button"
-									aria-label={`Remove ${group.name}`}
-									className="text-gray-500 hover:text-gray-800"
-									onClick={() => onRemove(group.id)}
-								>
-									<Icon icon={X} />
-								</button>
-							</BoxGroupSection>
-						);
-					})}
-					<BoxGroupSection className="flex items-center gap-3">
-						<Field orientation="horizontal" className="grow">
-							<RadioGroupItem value="none" />
-							<FieldLabel className="grow cursor-pointer select-none">
-								No primary group
-							</FieldLabel>
-						</Field>
+			<BoxGroup className="mt-4 mb-0 max-h-64 overflow-y-auto">
+				{sortedMembers.map((group) => (
+					<BoxGroupSection key={group.id} className="flex items-center gap-3">
+						<span className="grow capitalize">{group.name}</span>
+						<ButtonToggle
+							aria-label={`Primary group: ${group.name}`}
+							className="min-h-8 bg-transparent px-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+							pressed={group.id === primaryGroupId}
+							onPressedChange={(pressed) =>
+								onPrimaryGroupChange(pressed ? group.id : null)
+							}
+						>
+							Primary
+						</ButtonToggle>
+						<button
+							type="button"
+							aria-label={`Remove ${group.name}`}
+							className="text-gray-500 hover:text-gray-800"
+							onClick={() => onRemove(group.id)}
+						>
+							<Icon icon={X} />
+						</button>
 					</BoxGroupSection>
-				</BoxGroup>
-			</RadioGroup>
+				))}
+			</BoxGroup>
 		);
 	}
 
