@@ -122,7 +122,7 @@ function AuthenticatedLayout() {
 					<div className="sticky top-0 self-start pt-18">
 						<Sidebar administratorRole={data.administratorRole} />
 					</div>
-					<main id="main-content" tabIndex={-1} className="flex-1 min-w-0 p-18">
+					<main id="main-content" className="flex-1 min-w-0 p-18 outline-none">
 						<Suspense fallback={<LoadingPlaceholder />}>
 							<Outlet />
 						</Suspense>
