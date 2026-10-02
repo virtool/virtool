@@ -75,6 +75,8 @@ Current integrations are:
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`
+- `apps/internal/src/data-migrations/main.ts`
+- `apps/internal/src/auth-remediation/main.ts`
 - `packages/workflow/src/config.ts`
 
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`
@@ -87,7 +89,7 @@ no safe default:
 
 | Variable | Value |
 | --- | --- |
-| `VT_PUBLIC_ORIGIN` | The one public origin the instance is served on, scheme and host only, such as `https://virtool.example`. |
+| `VT_PUBLIC_ORIGIN` | The one public origin the instance is served on, including its scheme, host, and optional port, such as `https://virtool.example`. |
 | `VT_AUTH_SECRET` | At least 32 characters. Generate with `openssl rand -base64 32`. |
 
 Both accept `_FILE` variants. Configure them for `apps/web`.

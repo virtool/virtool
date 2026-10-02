@@ -33,14 +33,12 @@ contents don't matter, to destinations the caller chooses. It takes `gzip:
 true` for a `.tar.gz`. Use it when you want two files out of a release archive,
 not when you want a directory back.
 
-## Zip doesn't stream, and that's not a gap to fill
+## Zip member reads
 
 `readZipMember` takes the whole archive as a `Uint8Array` and returns one
-member's bytes. It can't stream: a zip's index is a central directory written
-at the *end* of the file, so nothing can name a member until the last byte has
-arrived. That's acceptable for the one thing here that reads a zip: an NCBI
-BLAST result that's only a handful of kilobytes. Anything a user
-uploaded goes through tar, or nowhere.
+member's bytes. This implementation uses `unzipSync`, so the caller must have
+the complete archive in memory. That's acceptable for its current use, reading
+an NCBI BLAST result zip of a few kilobytes. Don't use it for large uploads.
 
 ## Extraction safety rules
 
@@ -73,6 +71,6 @@ pipeline.
 
 ## Testing
 
-`vitest run` from this directory, or `pnpm test` from the root. The tests use no
+`pnpm test` from this directory, or `pnpm test` from the root. The tests use no
 containers, and no fixtures are checked into the repo. Archives are built in-test with
 `tar-stream`'s `pack`.

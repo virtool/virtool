@@ -11,7 +11,7 @@ claim, update, and finish a job.
 `runWorkflow` knows nothing about the network, process signals, or process
 exit. It runs an explicit ordered list of steps and returns a `RunOutcome`.
 
-`runWorkflowApp`, the entrypoint called by each workflow app's `main.ts`, owns
+`runWorkflowApp`, the entrypoint called by each workflow app's `src/index.ts`, owns
 the lifecycle around that run:
 
 - installing the `SIGTERM` handler;

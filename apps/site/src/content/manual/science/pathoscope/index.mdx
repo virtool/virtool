@@ -28,9 +28,8 @@ may contain only a small number of true source sequences, reads from one source
 can align to multiple locations in the Virtool reference. This is especially
 common when an OTU contains many similar isolates.
 
-Virtool uses the [Pathoscope2 library](https://github.com/PathoScope/PathoScope) to
-reassign multi-mapped reads to their most likely source sequences. An expectation
-maximization (EM) algorithm is used to perform the reassignment. Pathoscope makes the
+Virtool uses an expectation maximization (EM) algorithm to reassign multi-mapped
+reads to their most likely source sequences. Pathoscope makes the
 assumption that source sequences with high numbers of **uniquely mapped**
 (not multi-mapped) reads are most likely to be real source sequences. Read counts are
 fractionally reassigned when a read maps to multiple genomes.

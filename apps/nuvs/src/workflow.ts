@@ -1,5 +1,5 @@
 /**
- * The Nuvs workflow: ten steps and five external tools.
+ * The Nuvs workflow: ten steps.
  *
  * Nuvs looks for viruses the reference does *not* already describe. It maps the
  * sample against every known OTU and throws those reads away, throws away what
