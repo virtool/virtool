@@ -20,10 +20,15 @@ resources it makes are valid for the schema of its branch.
 
 | Command | Result |
 | --- | --- |
-| `create administrator --handle <handle> --email <email> --password <password>` | Creates a full administrator if the database has no users. Otherwise, it makes no change. |
+| `create administrator --handle=<handle> --email=<email> --password=<password>` | Creates a full administrator if the database has no users. Otherwise, it makes no change. |
 
-`create administrator` applies the same handle, email, and minimum password
-length rules as the first-user setup page.
+Give each value in the `--name=value` form. The `--name value` form rejects a
+value that starts with `-`.
+
+`create administrator` first checks for users. If users exist, it makes no
+change and does not check the values. If no users exist, it applies the
+handle, email, and minimum password length rules of the first-user setup page.
+These rules are in `checkAccountCredentials` in `@virtool/contracts`.
 
 ## Development
 

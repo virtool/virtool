@@ -56,9 +56,25 @@ The daemon keeps the values in its state. The UI and `vtd list` never show the
 password. When you save the setting without a password, the daemon keeps the
 saved password.
 
+The daemon stores the password as plain text and gives it to each environment
+as plain text. Do not use a real or sensitive password.
+
+When you save the setting, the daemon checks the values against the rules of
+the first-user setup page and rejects values that are not valid. It checks the
+password against the default minimum length. Environments that already have
+users skip the check and make no change.
+
 The daemon runs `create administrator` from
 [`@virtool/dev-tools`](../apps/dev-tools/README.md). Worktrees on branches that
 do not have the `dev-tools` Compose service skip this step.
+
+To create an environment without the default administrator, open the menu
+next to **Create** on the worktree and clear **Create default administrator**.
+The daemon keeps this choice with the environment and skips the step on each
+later start. You cannot change the choice after you create the environment.
+To change it, delete the environment data and create the environment again.
+The environment detail page shows the choice. **Create**, **Start**, and
+`vtd up` use the default, which creates the administrator.
 
 ## Workflows
 

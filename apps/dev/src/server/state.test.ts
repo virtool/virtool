@@ -94,6 +94,59 @@ describe("StateStore", () => {
 	});
 });
 
+describe("create default administrator flag", () => {
+	it("is true by default", () => {
+		const store = createStore();
+		store.synchronizeWorktrees([
+			{ branch: "main", id: "wt-1", path: "/one" },
+			{ branch: "other", id: "wt-2", path: "/two" },
+		]);
+		store.setDesired("wt-1", "up");
+
+		expect(store.getDesiredEnvironments()[0]?.createDefaultAdministrator).toBe(
+			true,
+		);
+		expect(
+			store
+				.listEnvironments(new Map())
+				.map((environment) => environment.createDefaultAdministrator),
+		).toEqual([true, true]);
+	});
+
+	it("keeps the value from creation on later changes", () => {
+		const store = createStore();
+		store.synchronizeWorktrees([{ branch: "main", id: "wt-1", path: "/one" }]);
+		store.setDesired("wt-1", "up", false);
+		store.setDesired("wt-1", "stopped");
+		store.setDesired("wt-1", "up", true);
+
+		expect(store.getDesiredEnvironments()[0]?.createDefaultAdministrator).toBe(
+			false,
+		);
+		expect(
+			store.listEnvironments(new Map())[0]?.createDefaultAdministrator,
+		).toBe(false);
+	});
+
+	it("is true for environments from before the flag existed", () => {
+		const directory = mkdtempSync(join(tmpdir(), "virtool-dev-"));
+		const before = new StateStore(directory);
+		before.synchronizeWorktrees([{ branch: "main", id: "wt-1", path: "/one" }]);
+		before.setDesired("wt-1", "up", false);
+		before.database.exec(
+			"ALTER TABLE environments DROP COLUMN create_default_administrator",
+		);
+		before.close();
+
+		const store = new StateStore(directory);
+		stores.push(store);
+
+		expect(store.getDesiredEnvironments()[0]?.createDefaultAdministrator).toBe(
+			true,
+		);
+	});
+});
+
 it("creates safe readable slugs", () => {
 	expect(slugify("refs/heads/Feature/My change!")).toBe("feature-my-change");
 });
@@ -132,6 +185,41 @@ describe("default administrator", () => {
 			}),
 		).toThrow("Handle, email, and password are required");
 		expect(store.getDefaultAdministrator()).toBeNull();
+	});
+
+	it.each([
+		["ad", "admin@example.com", "hello world", "User name must have 3 to 30"],
+		["virtool", "admin@example.com", "hello world", "Reserved user name"],
+		["admin", "admin", "hello world", "Enter a valid email address."],
+		["admin", "admin@example.com", "short", "minimum length requirement (8)"],
+	])(
+		"rejects handle %j, email %j, and password %j",
+		(handle, email, password, message) => {
+			const store = createStore();
+
+			expect(() =>
+				store.setDefaultAdministrator({ email, handle, password }),
+			).toThrow(message);
+			expect(store.getDefaultAdministrator()).toBeNull();
+		},
+	);
+
+	it("checks the saved password against the rules", () => {
+		const store = createStore();
+		store.setDefaultAdministrator({
+			email: "admin@example.com",
+			handle: "admin",
+			password: "hello world",
+		});
+
+		expect(() =>
+			store.setDefaultAdministrator({
+				email: "admin@example.com",
+				handle: "virtool",
+				password: "",
+			}),
+		).toThrow("Reserved user name: virtool");
+		expect(store.getDefaultAdministrator()?.handle).toBe("admin");
 	});
 
 	it("clears every saved value", () => {

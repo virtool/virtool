@@ -150,8 +150,26 @@ export function createApi(
 		}),
 	);
 	app.post("/api/environments", async (context) => {
-		const mutation = (await context.req.json()) as Mutation;
-		mutate(mutation);
+		const mutation = (await context.req.json()) as Omit<
+			Mutation,
+			"createDefaultAdministrator"
+		> & { createDefaultAdministrator?: unknown };
+		const { createDefaultAdministrator } = mutation;
+		if (createDefaultAdministrator !== undefined) {
+			if (typeof createDefaultAdministrator !== "boolean") {
+				return context.text(
+					"createDefaultAdministrator must be a boolean",
+					422,
+				);
+			}
+			if (mutation.action !== "start") {
+				return context.text(
+					"Only the start action accepts createDefaultAdministrator",
+					422,
+				);
+			}
+		}
+		mutate({ ...mutation, createDefaultAdministrator });
 		return context.json({ accepted: true }, 202);
 	});
 	app.post("/api/scheduler", async (context) => {

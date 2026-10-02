@@ -267,6 +267,7 @@ export async function runDaemon(
 								: mutation.action === "stop"
 									? "stopped"
 									: "up",
+							mutation.createDefaultAdministrator,
 						);
 			if (mutation.action === "restart") {
 				reconciler.requestRestart(environmentId);

@@ -132,6 +132,77 @@ describe("management API", () => {
 		expect(mutate).not.toHaveBeenCalled();
 	});
 
+	it("passes the create default administrator flag with start", async () => {
+		const mutate = vi.fn();
+		const app = createApi(
+			new SnapshotFeed(snapshot),
+			mutate,
+			vi.fn(),
+			"/missing",
+		);
+		function send(body: unknown) {
+			return app.request("http://127.0.0.1/api/environments", {
+				body: JSON.stringify(body),
+				headers: { origin: "https://dev.localhost:9443" },
+				method: "POST",
+			});
+		}
+
+		expect(
+			(await send({ action: "start", worktreeIds: ["wt-1"] })).status,
+		).toBe(202);
+		expect(
+			(
+				await send({
+					action: "start",
+					createDefaultAdministrator: false,
+					worktreeIds: ["wt-2"],
+				})
+			).status,
+		).toBe(202);
+		expect(mutate.mock.calls.map(([mutation]) => mutation)).toEqual([
+			{
+				action: "start",
+				createDefaultAdministrator: undefined,
+				worktreeIds: ["wt-1"],
+			},
+			{
+				action: "start",
+				createDefaultAdministrator: false,
+				worktreeIds: ["wt-2"],
+			},
+		]);
+	});
+
+	it.each([
+		[
+			{ action: "start", createDefaultAdministrator: "no" },
+			"createDefaultAdministrator must be a boolean",
+		],
+		[
+			{ action: "stop", createDefaultAdministrator: false },
+			"Only the start action accepts createDefaultAdministrator",
+		],
+	])("rejects the mutation %j", async (body, message) => {
+		const mutate = vi.fn();
+		const app = createApi(
+			new SnapshotFeed(snapshot),
+			mutate,
+			vi.fn(),
+			"/missing",
+		);
+
+		const response = await app.request("http://127.0.0.1/api/environments", {
+			body: JSON.stringify({ ...body, worktreeIds: ["wt-1"] }),
+			headers: { origin: "https://dev.localhost:9443" },
+			method: "POST",
+		});
+
+		expect(response.status).toBe(422);
+		expect(await response.text()).toBe(message);
+		expect(mutate).not.toHaveBeenCalled();
+	});
+
 	it("reads logs only for known environments and services", async () => {
 		const readEnvironmentLogs = vi.fn(async () => "web | ready\n");
 		const app = createApi(
@@ -141,6 +212,7 @@ describe("management API", () => {
 					{
 						age: 1,
 						branch: "feature/logs",
+						createDefaultAdministrator: true,
 						desired: "up",
 						id: "environment-id",
 						lastError: null,

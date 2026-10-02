@@ -2,9 +2,11 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	HANDLE_MAX_LENGTH,
 	HANDLE_MIN_LENGTH,
+	INVALID_HANDLE_MESSAGE,
 	isReservedHandle,
 	isValidHandle,
-} from "@virtool/data/auth/handle";
+	RESERVED_HANDLE_MESSAGE,
+} from "@virtool/contracts";
 import { ClientError } from "../errors";
 
 export { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle };
@@ -19,10 +21,7 @@ export { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle };
 export function checkHandle(handle: string): void {
 	if (!isValidHandle(handle.trim())) {
 		setResponseStatus(400);
-		throw new ClientError(
-			`User name must have ${HANDLE_MIN_LENGTH} to ${HANDLE_MAX_LENGTH} characters, and use only letters, numbers, and _ .`,
-			400,
-		);
+		throw new ClientError(INVALID_HANDLE_MESSAGE, 400);
 	}
 }
 
@@ -36,6 +35,6 @@ export function checkHandle(handle: string): void {
 export function checkReservedHandle(handle: string): void {
 	if (isReservedHandle(handle.trim())) {
 		setResponseStatus(400);
-		throw new ClientError("Reserved user name: virtool", 400);
+		throw new ClientError(RESERVED_HANDLE_MESSAGE, 400);
 	}
 }

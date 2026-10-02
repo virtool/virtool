@@ -6,6 +6,7 @@ import {
 	type AdministeredUserSearchResult,
 	type AdministratorRoleName,
 	emptyPermissions,
+	normalizeEmail,
 	PATHOSCOPE_COLUMNS,
 	type PathoscopeColumn,
 	PERMISSION_NAMES,
@@ -32,7 +33,7 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
-import { claimEmail, normalizeEmail } from "../auth/email";
+import { claimEmail } from "../auth/email";
 import { queueEmailVerificationInTransaction } from "../auth/emailVerification";
 import {
 	CREDENTIAL_PROVIDER_ID,

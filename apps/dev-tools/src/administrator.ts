@@ -1,9 +1,12 @@
 import { parseArgs } from "node:util";
-import { checkPasswordLength } from "@virtool/contracts";
+import {
+	type AccountCredentials,
+	checkAccountCredentials,
+	normalizeEmail,
+} from "@virtool/contracts";
 import { resolveFileBacked } from "@virtool/contracts/env";
-import { isValidEmail, normalizeEmail } from "@virtool/data/auth/email";
-import { isReservedHandle, isValidHandle } from "@virtool/data/auth/handle";
 import { createDb, type Db } from "@virtool/data/db/pg";
+import { users } from "@virtool/data/db/schema/users";
 import { createEmitter } from "@virtool/data/events/emit";
 import { getSettings } from "@virtool/data/settings/data";
 import {
@@ -12,13 +15,6 @@ import {
 } from "@virtool/data/users/data";
 import { createLogger } from "@virtool/logger";
 import { z } from "zod";
-
-/** The credentials for the first administrator. */
-export type AdministratorInput = {
-	email: string;
-	handle: string;
-	password: string;
-};
 
 /** The outcome of an attempt to create the first administrator. */
 export type CreateAdministratorResult =
@@ -33,21 +29,21 @@ const AdministratorEnv = z.object({
  * Create a full administrator when the instance has no users.
  *
  * An instance that already has a user is left unchanged, so this can run each
- * time an environment starts.
+ * time an environment starts. The credentials are checked only when no user
+ * exists, so a setting that is not valid cannot stop an environment that has
+ * users.
  */
 export async function createAdministrator(
 	db: Db,
-	input: AdministratorInput,
+	input: AccountCredentials,
 ): Promise<CreateAdministratorResult> {
-	if (!isValidHandle(input.handle) || isReservedHandle(input.handle)) {
-		throw new Error(`Invalid administrator handle "${input.handle}"`);
-	}
-	const email = normalizeEmail(input.email);
-	if (!isValidEmail(email)) {
-		throw new Error(`Invalid administrator email "${input.email}"`);
+	const [anyUser] = await db.select({ id: users.id }).from(users).limit(1);
+	if (anyUser) {
+		return { status: "exists" };
 	}
 	const { minimumPasswordLength } = await getSettings(db);
-	checkPasswordLength(input.password, minimumPasswordLength);
+	checkAccountCredentials(input, minimumPasswordLength);
+	const email = normalizeEmail(input.email);
 
 	try {
 		const { user } = await createFirstAdministrator(db, {
@@ -66,8 +62,13 @@ export async function createAdministrator(
 	}
 }
 
-/** Run `create administrator --handle <handle> --email <email> --password <password>`. */
-export async function startCreateAdministrator(argv: string[]): Promise<void> {
+/**
+ * Read the `create administrator` options from `argv`.
+ *
+ * Give each value in the `--name=value` form. In the `--name value` form,
+ * `parseArgs` rejects a value that starts with `-`.
+ */
+export function parseAdministratorArgs(argv: string[]): AccountCredentials {
 	const { values } = parseArgs({
 		args: argv,
 		options: {
@@ -82,6 +83,16 @@ export async function startCreateAdministrator(argv: string[]): Promise<void> {
 			"create administrator requires --handle, --email, and --password",
 		);
 	}
+	return {
+		email: values.email,
+		handle: values.handle,
+		password: values.password,
+	};
+}
+
+/** Run `create administrator --handle=<handle> --email=<email> --password=<password>`. */
+export async function startCreateAdministrator(argv: string[]): Promise<void> {
+	const credentials = parseAdministratorArgs(argv);
 	const env = AdministratorEnv.parse(
 		resolveFileBacked(Object.keys(AdministratorEnv.shape), process.env),
 	);
@@ -93,13 +104,9 @@ export async function startCreateAdministrator(argv: string[]): Promise<void> {
 	createEmitter({ client, logger });
 
 	try {
-		const result = await createAdministrator(db, {
-			email: values.email,
-			handle: values.handle,
-			password: values.password,
-		});
+		const result = await createAdministrator(db, credentials);
 		logger.info(
-			{ handle: values.handle, ...result },
+			{ handle: credentials.handle, ...result },
 			result.status === "created"
 				? "created administrator"
 				: "skipped administrator because users exist",

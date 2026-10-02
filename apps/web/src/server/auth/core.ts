@@ -1,5 +1,4 @@
-import type { User } from "@virtool/contracts";
-import { isValidHandle } from "@virtool/data/auth/handle";
+import { isValidHandle, type User } from "@virtool/contracts";
 import { updateAuthPassword } from "@virtool/data/auth/identity";
 import { isBcryptHash } from "@virtool/data/auth/migration";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";

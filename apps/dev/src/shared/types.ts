@@ -16,6 +16,8 @@ export type ObservedState =
 export type Environment = {
 	age: number | null;
 	branch: string;
+	/** Whether the daemon creates the default administrator when the environment starts. */
+	createDefaultAdministrator: boolean;
 	desired: DesiredState;
 	id: string | null;
 	lastError: string | null;
@@ -110,5 +112,7 @@ export type Mutation = {
 		| "retry"
 		| "start"
 		| "stop";
+	/** Used only by `start` when it creates the environment. The default is `true`. */
+	createDefaultAdministrator?: boolean;
 	worktreeIds: string[];
 };

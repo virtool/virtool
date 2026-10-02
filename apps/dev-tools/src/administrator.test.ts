@@ -6,7 +6,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createAdministrator } from "./administrator";
+import { createAdministrator, parseAdministratorArgs } from "./administrator";
 
 let database: TestDatabase;
 let db: Db;
@@ -64,18 +64,52 @@ describe("createAdministrator", () => {
 	it("rejects a reserved handle", async () => {
 		await expect(
 			createAdministrator(db, { ...input, handle: "virtool" }),
-		).rejects.toThrow('Invalid administrator handle "virtool"');
+		).rejects.toThrow("Reserved user name: virtool");
 	});
 
 	it("rejects an invalid email", async () => {
 		await expect(
 			createAdministrator(db, { ...input, email: "admin" }),
-		).rejects.toThrow('Invalid administrator email "admin"');
+		).rejects.toThrow("Enter a valid email address.");
 	});
 
 	it("rejects a password shorter than the configured minimum", async () => {
 		await expect(
 			createAdministrator(db, { ...input, password: "short" }),
 		).rejects.toThrow("Password does not meet minimum length requirement (8)");
+	});
+
+	it("does not check the credentials when users exist", async () => {
+		await seedUser(db, { handle: "alice" });
+
+		const result = await createAdministrator(db, {
+			email: "admin",
+			handle: "virtool",
+			password: "short",
+		});
+
+		expect(result).toEqual({ status: "exists" });
+	});
+});
+
+describe("parseAdministratorArgs", () => {
+	it("reads values that start with a hyphen", () => {
+		expect(
+			parseAdministratorArgs([
+				"--handle=admin",
+				"--email=admin@example.com",
+				"--password=-secret123",
+			]),
+		).toEqual({
+			email: "admin@example.com",
+			handle: "admin",
+			password: "-secret123",
+		});
+	});
+
+	it("requires every option", () => {
+		expect(() => parseAdministratorArgs(["--handle=admin"])).toThrow(
+			"create administrator requires --handle, --email, and --password",
+		);
 	});
 });

@@ -365,7 +365,9 @@ export class Reconciler {
 		);
 		await writeFile(composeFile, rendered.stdout);
 		// Worktrees from before dev-tools existed have no service to run.
-		const credentials = this.store.getDefaultAdministratorCredentials();
+		const credentials = environment.createDefaultAdministrator
+			? this.store.getDefaultAdministratorCredentials()
+			: null;
 		const administrator =
 			credentials &&
 			(await this.listServices(envFile, composeFile, environment)).includes(
@@ -430,12 +432,9 @@ export class Reconciler {
 				DEV_TOOLS_SERVICE,
 				"create",
 				"administrator",
-				"--handle",
-				administrator.handle,
-				"--email",
-				administrator.email,
-				"--password",
-				administrator.password,
+				`--handle=${administrator.handle}`,
+				`--email=${administrator.email}`,
+				`--password=${administrator.password}`,
 			]);
 			if (!this.isStillDesired(environment.id, "up")) {
 				return;

@@ -17,7 +17,7 @@ export function lower(column: AnyPgColumn): SQL {
 
 /**
  * A column trimmed and folded to lower case for normalized-email indexes.
- * Must match `normalizeEmail` in `src/auth/email.ts`.
+ * Must match `normalizeEmail` in `@virtool/contracts`.
  */
 export function lowerTrim(column: AnyPgColumn): SQL {
 	return sql`lower(btrim(${column}))`;
