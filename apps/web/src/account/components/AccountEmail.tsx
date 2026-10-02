@@ -40,7 +40,7 @@ function EmailStatus({ email, emailVerified, pendingEmail }: EmailStatusProps) {
 					{email || "No email address on file."}
 				</span>
 				{email && (
-					<Label color={emailVerified ? "green" : "orange"}>
+					<Label color={emailVerified ? "green" : "gray"}>
 						{emailVerified ? "Verified" : "Not verified"}
 					</Label>
 				)}
