@@ -7,3 +7,6 @@ export const WORKFLOWS = [
 	"nuvs",
 	"pathoscope",
 ] as const;
+
+/** The Compose service that runs `@virtool/dev-tools` commands. */
+export const DEV_TOOLS_SERVICE = "dev-tools";

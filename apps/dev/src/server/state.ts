@@ -2,13 +2,23 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import {
+	checkAccountCredentials,
+	DEFAULT_MINIMUM_PASSWORD_LENGTH,
+} from "@virtool/contracts";
 import type {
+	DefaultAdministrator,
 	DesiredState,
 	Environment,
 	OpenPullRequest,
 	Operation,
 } from "../shared/types.ts";
 import { CONFIG_VERSION } from "./constants.ts";
+
+/** Default administrator credentials, which the UI never receives. */
+export type DefaultAdministratorCredentials = DefaultAdministrator & {
+	password: string;
+};
 
 type WorktreeInput = {
 	branch: string;
@@ -18,6 +28,7 @@ type WorktreeInput = {
 
 type EnvironmentRow = {
 	branch: string;
+	create_default_administrator: number | null;
 	created_at: number | null;
 	desired: DesiredState | null;
 	environment_id: string | null;
@@ -39,6 +50,7 @@ type OperationRow = {
 };
 
 type DesiredEnvironmentRow = {
+	createDefaultAdministrator: number;
 	desired: DesiredState;
 	generation: number;
 	id: string;
@@ -107,7 +119,8 @@ export class StateStore {
 				config_version INTEGER NOT NULL,
 				last_error TEXT,
 				cleanup_step TEXT,
-				workflow_enabled INTEGER NOT NULL DEFAULT 1
+				workflow_enabled INTEGER NOT NULL DEFAULT 1,
+				create_default_administrator INTEGER NOT NULL DEFAULT 1
 			) STRICT;
 			CREATE TABLE IF NOT EXISTS operations (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,12 +142,12 @@ export class StateStore {
 		const environmentColumns = this.database
 			.prepare("PRAGMA table_info(environments)")
 			.all() as unknown as Array<{ name: string }>;
-		if (
-			!environmentColumns.some((column) => column.name === "workflow_enabled")
-		) {
-			this.database.exec(
-				"ALTER TABLE environments ADD COLUMN workflow_enabled INTEGER NOT NULL DEFAULT 1",
-			);
+		for (const column of ["workflow_enabled", "create_default_administrator"]) {
+			if (!environmentColumns.some(({ name }) => name === column)) {
+				this.database.exec(
+					`ALTER TABLE environments ADD COLUMN ${column} INTEGER NOT NULL DEFAULT 1`,
+				);
+			}
 		}
 	}
 
@@ -187,7 +200,15 @@ export class StateStore {
 		}
 	}
 
-	ensureEnvironment(worktreeId: string): string {
+	/**
+	 * Get the environment of a worktree, and create it when it does not exist.
+	 *
+	 * `createDefaultAdministrator` applies only when this call creates the environment.
+	 */
+	ensureEnvironment(
+		worktreeId: string,
+		createDefaultAdministrator = true,
+	): string {
 		const existing = this.database
 			.prepare("SELECT id FROM environments WHERE worktree_id = ?")
 			.get(worktreeId) as { id: string } | undefined;
@@ -205,15 +226,30 @@ export class StateStore {
 		this.database
 			.prepare(`
 				INSERT INTO environments
-					(id, worktree_id, name, desired, created_at, config_version)
-				VALUES (?, ?, ?, 'stopped', ?, ?)
+					(id, worktree_id, name, desired, created_at, config_version,
+						create_default_administrator)
+				VALUES (?, ?, ?, 'stopped', ?, ?, ?)
 			`)
-			.run(id, worktreeId, name, Date.now(), CONFIG_VERSION);
+			.run(
+				id,
+				worktreeId,
+				name,
+				Date.now(),
+				CONFIG_VERSION,
+				createDefaultAdministrator ? 1 : 0,
+			);
 		return id;
 	}
 
-	setDesired(worktreeId: string, desired: DesiredState): string {
-		const environmentId = this.ensureEnvironment(worktreeId);
+	setDesired(
+		worktreeId: string,
+		desired: DesiredState,
+		createDefaultAdministrator = true,
+	): string {
+		const environmentId = this.ensureEnvironment(
+			worktreeId,
+			createDefaultAdministrator,
+		);
 		this.database
 			.prepare(
 				"UPDATE environments SET desired = ?, last_error = NULL WHERE id = ?",
@@ -236,6 +272,7 @@ export class StateStore {
 	}
 
 	getDesiredEnvironments(): Array<{
+		createDefaultAdministrator: boolean;
 		desired: DesiredState;
 		generation: number;
 		id: string;
@@ -248,12 +285,17 @@ export class StateStore {
 		const rows = this.database
 			.prepare(`
 				SELECT e.id, e.name, e.desired, e.generation, e.last_error AS lastError,
+					e.create_default_administrator AS createDefaultAdministrator,
 					w.id AS worktreeId, w.path, w.present
 				FROM environments e JOIN worktrees w ON w.id = e.worktree_id
 				ORDER BY e.created_at
 			`)
 			.all() as unknown as DesiredEnvironmentRow[];
-		return rows.map((row) => ({ ...row, present: row.present === 1 }));
+		return rows.map((row) => ({
+			...row,
+			createDefaultAdministrator: row.createDefaultAdministrator === 1,
+			present: row.present === 1,
+		}));
 	}
 
 	setDesiredByEnvironment(environmentId: string, desired: DesiredState): void {
@@ -357,7 +399,8 @@ export class StateStore {
 		const rows = this.database
 			.prepare(`
 				SELECT w.id AS worktree_id, w.path, w.branch, e.id AS environment_id,
-					e.name, e.desired, e.created_at, e.last_error, e.workflow_enabled
+					e.name, e.desired, e.created_at, e.last_error, e.workflow_enabled,
+					e.create_default_administrator
 				FROM worktrees w LEFT JOIN environments e ON e.worktree_id = w.id
 				WHERE w.present = 1 OR e.id IS NOT NULL
 				ORDER BY w.path
@@ -385,6 +428,7 @@ export class StateStore {
 			return {
 				age: row.created_at,
 				branch: row.branch,
+				createDefaultAdministrator: row.create_default_administrator !== 0,
 				desired: row.desired ?? "absent",
 				id: row.environment_id,
 				lastError: row.last_error,
@@ -445,6 +489,64 @@ export class StateStore {
 				WHERE status IN ('pending', 'running')
 			`)
 			.run(Date.now());
+	}
+
+	getDefaultAdministrator(): DefaultAdministrator | null {
+		const credentials = this.getDefaultAdministratorCredentials();
+		return credentials
+			? { email: credentials.email, handle: credentials.handle }
+			: null;
+	}
+
+	getDefaultAdministratorCredentials(): DefaultAdministratorCredentials | null {
+		const handle = this.getMeta("default_administrator_handle");
+		const email = this.getMeta("default_administrator_email");
+		const password = this.getMeta("default_administrator_password");
+		return handle && email && password ? { email, handle, password } : null;
+	}
+
+	/**
+	 * Save the default administrator, keeping the saved password when `password` is empty.
+	 *
+	 * New environments have the default minimum password length, so the check
+	 * uses that value.
+	 */
+	setDefaultAdministrator(input: {
+		email: string;
+		handle: string;
+		password: string;
+	}): void {
+		const handle = input.handle.trim();
+		const email = input.email.trim();
+		const password =
+			input.password || this.getMeta("default_administrator_password");
+		if (!handle || !email || !password) {
+			throw new Error("Handle, email, and password are required");
+		}
+		checkAccountCredentials(
+			{ email, handle, password },
+			DEFAULT_MINIMUM_PASSWORD_LENGTH,
+		);
+		this.database.exec("BEGIN IMMEDIATE");
+		try {
+			this.setMeta("default_administrator_handle", handle);
+			this.setMeta("default_administrator_email", email);
+			this.setMeta("default_administrator_password", password);
+			this.database.exec("COMMIT");
+		} catch (error) {
+			this.database.exec("ROLLBACK");
+			throw error;
+		}
+	}
+
+	clearDefaultAdministrator(): void {
+		this.database
+			.prepare("DELETE FROM meta WHERE key IN (?, ?, ?)")
+			.run(
+				"default_administrator_email",
+				"default_administrator_handle",
+				"default_administrator_password",
+			);
 	}
 
 	setWorkflowConcurrency(value: number): void {

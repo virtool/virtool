@@ -16,6 +16,8 @@ export type ObservedState =
 export type Environment = {
 	age: number | null;
 	branch: string;
+	/** Whether the daemon creates the default administrator when the environment starts. */
+	createDefaultAdministrator: boolean;
 	desired: DesiredState;
 	id: string | null;
 	lastError: string | null;
@@ -76,8 +78,15 @@ export type SchedulerState = {
 	queues: Record<string, Partial<Record<Workflow, number>>>;
 };
 
+/** The administrator the daemon creates in environments that have no users. */
+export type DefaultAdministrator = {
+	email: string;
+	handle: string;
+};
+
 /** A complete management UI state snapshot. */
 export type Snapshot = {
+	defaultAdministrator: DefaultAdministrator | null;
 	environments: Environment[];
 	repositoryId: string;
 	scheduler: SchedulerState;
@@ -103,5 +112,7 @@ export type Mutation = {
 		| "retry"
 		| "start"
 		| "stop";
+	/** Used only by `start` when it creates the environment. The default is `true`. */
+	createDefaultAdministrator?: boolean;
 	worktreeIds: string[];
 };

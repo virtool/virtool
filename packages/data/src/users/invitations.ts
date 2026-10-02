@@ -4,9 +4,9 @@ import {
 	INVITATION_LIFETIME_HOURS,
 	type Invitation,
 	type InvitationDelivery,
+	normalizeEmail,
 } from "@virtool/contracts";
 import { and, desc, eq, max } from "drizzle-orm";
-import { normalizeEmail } from "../auth/email";
 import {
 	issueSetupTokenInTransaction,
 	lockUserSetupCredentials,

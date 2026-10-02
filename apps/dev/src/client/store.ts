@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { Snapshot } from "../shared/types.ts";
 
 const EMPTY: Snapshot = {
+	defaultAdministrator: null,
 	environments: [],
 	repositoryId: "",
 	scheduler: {

@@ -146,6 +146,25 @@ services:
       - ${VT_DEV_WORKTREE}/apps/web/public:/repo/apps/web/public:ro
       - ${VT_DEV_WORKTREE}/packages:/repo/packages:ro
 
+  # One-shot developer commands, run by the daemon with `compose run --rm`.
+  dev-tools:
+    build: *build
+    working_dir: /repo/apps/dev-tools
+    # Build output goes to stderr so stdout carries only command output.
+    entrypoint: [/bin/sh, -ec, 'pnpm build >&2 && exec node dist/index.mjs "$$@"', dev-tools]
+    environment:
+      VT_POSTGRES_URL_FILE: /run/virtool-dev/postgres-url
+    labels: *labels
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
+      - ${VT_DEV_WORKTREE}/apps/dev-tools/src:/repo/apps/dev-tools/src:ro
+      - ${VT_DEV_WORKTREE}/packages/archive/src:/repo/packages/archive/src:ro
+      - ${VT_DEV_WORKTREE}/packages/contracts/src:/repo/packages/contracts/src:ro
+      - ${VT_DEV_WORKTREE}/packages/data/src:/repo/packages/data/src:ro
+      - ${VT_DEV_WORKTREE}/packages/logger/src:/repo/packages/logger/src:ro
+      - ${VT_DEV_WORKTREE}/packages/sqlite/src:/repo/packages/sqlite/src:ro
+      - ${VT_DEV_WORKTREE}/packages/storage/src:/repo/packages/storage/src:ro
+
   workflow-create-sample:
     profiles: [workflow]
     build:

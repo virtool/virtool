@@ -1,3 +1,8 @@
+import {
+	isValidEmail,
+	isValidHandle,
+	normalizeEmail,
+} from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import type { Db } from "../db/pg";
@@ -9,8 +14,6 @@ import {
 	credentialAccountId,
 	syncCredentialPassword,
 } from "./credential";
-import { isValidEmail, normalizeEmail } from "./email";
-import { isValidHandle } from "./handle";
 
 /** The expected Better Auth schema is not present. */
 export class AuthSchemaError extends AppError {}

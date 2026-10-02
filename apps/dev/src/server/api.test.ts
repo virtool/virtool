@@ -4,6 +4,7 @@ import type { Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
 
 const snapshot: Snapshot = {
+	defaultAdministrator: null,
 	environments: [],
 	repositoryId: "repo",
 	scheduler: {
@@ -131,6 +132,77 @@ describe("management API", () => {
 		expect(mutate).not.toHaveBeenCalled();
 	});
 
+	it("passes the create default administrator flag with start", async () => {
+		const mutate = vi.fn();
+		const app = createApi(
+			new SnapshotFeed(snapshot),
+			mutate,
+			vi.fn(),
+			"/missing",
+		);
+		function send(body: unknown) {
+			return app.request("http://127.0.0.1/api/environments", {
+				body: JSON.stringify(body),
+				headers: { origin: "https://dev.localhost:9443" },
+				method: "POST",
+			});
+		}
+
+		expect(
+			(await send({ action: "start", worktreeIds: ["wt-1"] })).status,
+		).toBe(202);
+		expect(
+			(
+				await send({
+					action: "start",
+					createDefaultAdministrator: false,
+					worktreeIds: ["wt-2"],
+				})
+			).status,
+		).toBe(202);
+		expect(mutate.mock.calls.map(([mutation]) => mutation)).toEqual([
+			{
+				action: "start",
+				createDefaultAdministrator: undefined,
+				worktreeIds: ["wt-1"],
+			},
+			{
+				action: "start",
+				createDefaultAdministrator: false,
+				worktreeIds: ["wt-2"],
+			},
+		]);
+	});
+
+	it.each([
+		[
+			{ action: "start", createDefaultAdministrator: "no" },
+			"createDefaultAdministrator must be a boolean",
+		],
+		[
+			{ action: "stop", createDefaultAdministrator: false },
+			"Only the start action accepts createDefaultAdministrator",
+		],
+	])("rejects the mutation %j", async (body, message) => {
+		const mutate = vi.fn();
+		const app = createApi(
+			new SnapshotFeed(snapshot),
+			mutate,
+			vi.fn(),
+			"/missing",
+		);
+
+		const response = await app.request("http://127.0.0.1/api/environments", {
+			body: JSON.stringify({ ...body, worktreeIds: ["wt-1"] }),
+			headers: { origin: "https://dev.localhost:9443" },
+			method: "POST",
+		});
+
+		expect(response.status).toBe(422);
+		expect(await response.text()).toBe(message);
+		expect(mutate).not.toHaveBeenCalled();
+	});
+
 	it("reads logs only for known environments and services", async () => {
 		const readEnvironmentLogs = vi.fn(async () => "web | ready\n");
 		const app = createApi(
@@ -140,6 +212,7 @@ describe("management API", () => {
 					{
 						age: 1,
 						branch: "feature/logs",
+						createDefaultAdministrator: true,
 						desired: "up",
 						id: "environment-id",
 						lastError: null,
@@ -193,5 +266,47 @@ describe("management API", () => {
 		expect(response.status).toBe(200);
 		expect(await response.text()).toBe("daemon ready\n");
 		expect(readDaemonLogs).toHaveBeenCalledOnce();
+	});
+
+	it("saves the default administrator and reports invalid input as text", async () => {
+		const set = vi.fn((input: { password: string }) => {
+			if (!input.password) {
+				throw new Error("Handle, email, and password are required");
+			}
+		});
+		const app = createApi(
+			new SnapshotFeed(snapshot),
+			vi.fn(),
+			vi.fn(),
+			"/missing",
+			undefined,
+			undefined,
+			undefined,
+			{ clear: vi.fn(), set },
+		);
+		function save(password: string) {
+			return app.request("http://127.0.0.1/api/default-administrator", {
+				body: JSON.stringify({
+					email: "admin@example.com",
+					handle: "admin",
+					password,
+				}),
+				headers: { origin: "https://dev.localhost:9443" },
+				method: "POST",
+			});
+		}
+
+		expect((await save("hello world")).status).toBe(202);
+		expect(set).toHaveBeenCalledWith({
+			email: "admin@example.com",
+			handle: "admin",
+			password: "hello world",
+		});
+
+		const invalid = await save("");
+		expect(invalid.status).toBe(422);
+		expect(await invalid.text()).toBe(
+			"Handle, email, and password are required",
+		);
 	});
 });

@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import type { DesiredState } from "../shared/types.ts";
 import type { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
-import { CONFIG_VERSION } from "./constants.ts";
+import { CONFIG_VERSION, DEV_TOOLS_SERVICE } from "./constants.ts";
 import {
 	DockerObserver,
 	type EnvironmentObservation,
@@ -364,6 +364,17 @@ export class Reconciler {
 			{ cwd: environment.path },
 		);
 		await writeFile(composeFile, rendered.stdout);
+		// Worktrees from before dev-tools existed have no service to run.
+		const credentials = environment.createDefaultAdministrator
+			? this.store.getDefaultAdministratorCredentials()
+			: null;
+		const administrator =
+			credentials &&
+			(await this.listServices(envFile, composeFile, environment)).includes(
+				DEV_TOOLS_SERVICE,
+			)
+				? credentials
+				: null;
 		this.store.updateOperation(
 			operationId,
 			"running",
@@ -394,6 +405,7 @@ export class Reconciler {
 				"jobs-api",
 				"tasks",
 				"web",
+				...(administrator ? [DEV_TOOLS_SERVICE] : []),
 			]),
 		);
 		if (!this.isStillDesired(environment.id, "up")) {
@@ -407,6 +419,29 @@ export class Reconciler {
 		]);
 		if (!this.isStillDesired(environment.id, "up")) {
 			return;
+		}
+		if (administrator) {
+			this.store.updateOperation(
+				operationId,
+				"running",
+				"creating default administrator",
+			);
+			// The default administrator password is a dummy for local development,
+			// not a secret. Passing it in argv, where command errors and the dev UI
+			// can show it, is intentional.
+			await this.compose(environment, envFile, composeFile, [
+				"run",
+				"--rm",
+				DEV_TOOLS_SERVICE,
+				"create",
+				"administrator",
+				`--handle=${administrator.handle}`,
+				`--email=${administrator.email}`,
+				`--password=${administrator.password}`,
+			]);
+			if (!this.isStillDesired(environment.id, "up")) {
+				return;
+			}
 		}
 		this.store.updateOperation(operationId, "running", "starting services");
 		await this.compose(environment, envFile, composeFile, [
@@ -559,6 +594,29 @@ export class Reconciler {
 			],
 			{ cwd: this.primaryWorktree },
 		);
+	}
+
+	private async listServices(
+		envFile: string,
+		composeFile: string,
+		environment: DesiredEnvironment,
+	): Promise<string[]> {
+		const { stdout } = await this.run(
+			"docker",
+			[
+				"compose",
+				"--env-file",
+				envFile,
+				"--project-name",
+				this.environmentProject(environment.id),
+				"--file",
+				composeFile,
+				"config",
+				"--services",
+			],
+			{ cwd: this.primaryWorktree },
+		);
+		return stdout.split("\n").filter(Boolean);
 	}
 
 	private sharedEnvironment(): NodeJS.ProcessEnv {

@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import {
 	Check,
+	ChevronDown,
 	Circle,
 	CircleX,
 	Copy,
@@ -20,8 +21,9 @@ import {
 	Play,
 	Search,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type {
+	DefaultAdministrator,
 	Environment,
 	Mutation,
 	Operation,
@@ -45,6 +47,7 @@ const STARTUP_STAGES = [
 	["initializing database and storage", "Initialize database and storage"],
 	["building core image", "Build core image"],
 	["running migrations", "Run migrations"],
+	["creating default administrator", "Create default administrator"],
 	["starting services", "Start services"],
 	["checking HTTPS readiness", "Check HTTPS readiness"],
 ] as const;
@@ -401,12 +404,119 @@ function getEnvironmentStatus(environment: Environment): {
 	};
 }
 
+function CreateEnvironmentButton({
+	branch,
+	defaultAdministrator,
+	disabled,
+	onCreate,
+}: {
+	branch: string;
+	defaultAdministrator: DefaultAdministrator | null;
+	disabled: boolean;
+	onCreate: (createDefaultAdministrator?: boolean) => void;
+}) {
+	const dialog = useRef<HTMLDialogElement>(null);
+	const headingId = useId();
+	const [createAdministrator, setCreateAdministrator] = useState(true);
+	function close(): void {
+		dialog.current?.close();
+	}
+	function create(): void {
+		close();
+		onCreate(defaultAdministrator ? createAdministrator : undefined);
+	}
+	return (
+		<>
+			<div className="flex">
+				<Button
+					className="rounded-r-none"
+					disabled={disabled}
+					onClick={() => onCreate()}
+				>
+					Create
+				</Button>
+				<Button
+					aria-haspopup="dialog"
+					aria-label="More create options"
+					className="-ml-px rounded-l-none border-l-slate-300 px-1.5"
+					disabled={disabled}
+					onClick={() => dialog.current?.showModal()}
+				>
+					<ChevronDown aria-hidden="true" />
+				</Button>
+			</div>
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: a click on the dialog element itself is a click on the backdrop, and Escape closes the dialog without a key handler */}
+			<dialog
+				aria-labelledby={headingId}
+				className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-xl border border-slate-200 bg-white p-0 text-sm text-slate-900 shadow-lg backdrop:bg-slate-900/30"
+				onClick={(event) => {
+					if (event.target === event.currentTarget) {
+						close();
+					}
+				}}
+				onClose={() => setCreateAdministrator(true)}
+				ref={dialog}
+			>
+				<form
+					className="grid gap-4 p-5"
+					onSubmit={(event) => {
+						event.preventDefault();
+						create();
+					}}
+				>
+					<div>
+						<h2 className="text-base font-semibold" id={headingId}>
+							Create environment
+						</h2>
+						<p className="mt-1 break-all text-xs text-slate-500">{branch}</p>
+					</div>
+					<div>
+						<label className="flex items-center gap-2 font-medium">
+							<input
+								checked={Boolean(defaultAdministrator) && createAdministrator}
+								className="size-4 accent-emerald-700"
+								disabled={!defaultAdministrator}
+								onChange={(event) =>
+									setCreateAdministrator(event.target.checked)
+								}
+								type="checkbox"
+							/>
+							Create default administrator
+						</label>
+						{!defaultAdministrator && (
+							<p className="mt-1 text-xs text-slate-500">
+								No default administrator is set. Set one on the{" "}
+								<Link
+									className="font-semibold text-emerald-800 hover:underline"
+									onClick={close}
+									to="/shared"
+								>
+									Shared
+								</Link>{" "}
+								page.
+							</p>
+						)}
+					</div>
+					<div className="flex justify-end gap-2">
+						<Button onClick={close}>Cancel</Button>
+						<Button type="submit" variant="primary">
+							Create
+						</Button>
+					</div>
+				</form>
+			</dialog>
+		</>
+	);
+}
+
 function EnvironmentCard({
 	environment,
 	connected,
+	defaultAdministrator,
 }: {
 	environment: Environment;
 	connected: boolean;
+	defaultAdministrator: DefaultAdministrator | null;
 }) {
 	const action = useAction();
 	const workflowAction = useAction();
@@ -423,7 +533,10 @@ function EnvironmentCard({
 			setWorkflowTarget(null);
 		}
 	}, [environment.workflowEnabled, workflowTarget]);
-	async function act(value: Mutation["action"]): Promise<void> {
+	async function act(
+		value: Mutation["action"],
+		createDefaultAdministrator?: boolean,
+	): Promise<void> {
 		const isWorkflowAction =
 			value === "enable_workflows" || value === "disable_workflows";
 		if (isWorkflowAction) {
@@ -436,6 +549,7 @@ function EnvironmentCard({
 			() =>
 				post("/api/environments", {
 					action: value,
+					createDefaultAdministrator,
 					worktreeIds: [environment.worktreeId],
 				}),
 			isWorkflowAction ? null : "Request accepted.",
@@ -459,9 +573,14 @@ function EnvironmentCard({
 			<article className={`${PANEL} px-4 py-2.5`}>
 				<div className="flex min-w-0 items-center gap-3">
 					{branchLink}
-					<Button disabled={disabled} onClick={() => void act("start")}>
-						Create
-					</Button>
+					<CreateEnvironmentButton
+						branch={environment.branch}
+						defaultAdministrator={defaultAdministrator}
+						disabled={disabled}
+						onCreate={(createDefaultAdministrator) =>
+							void act("start", createDefaultAdministrator)
+						}
+					/>
 				</div>
 				<Feedback error={action.error} message={action.message} />
 			</article>
@@ -682,6 +801,12 @@ function EnvironmentDetails({
 					</code>
 					<div className="flex flex-wrap gap-4 text-xs text-slate-500">
 						<span>Desired state: {environment.desired}</span>
+						{environment.id && (
+							<span>
+								Default administrator:{" "}
+								{environment.createDefaultAdministrator ? "on" : "off"}
+							</span>
+						)}
 						{environment.age !== null && (
 							<time dateTime={new Date(environment.age).toISOString()}>
 								Created {new Date(environment.age).toISOString()}
@@ -1148,6 +1273,123 @@ function Logs({ environments }: { environments: Environment[] }) {
 	);
 }
 
+function DefaultAdministratorSettings({
+	connected,
+	value,
+}: {
+	connected: boolean;
+	value: DefaultAdministrator | null;
+}) {
+	const [draft, setDraft] = useState<{
+		email: string;
+		handle: string;
+		password: string;
+	} | null>(null);
+	const form = draft ?? {
+		email: value?.email ?? "",
+		handle: value?.handle ?? "",
+		password: "",
+	};
+	const action = useAction();
+	const inputClassName = "rounded-lg border border-slate-200 px-3 py-1.5";
+	return (
+		<section
+			aria-labelledby="default-administrator-heading"
+			className={`${PANEL} p-4`}
+		>
+			<h2 className="text-sm font-semibold" id="default-administrator-heading">
+				Default administrator
+			</h2>
+			<p className="mt-1 text-xs text-slate-500">
+				Created after migrations in each environment that has no users. Existing
+				users are never changed.
+			</p>
+			<form
+				className="mt-3 flex flex-wrap items-end gap-3 text-sm"
+				onSubmit={(event) => {
+					event.preventDefault();
+					void action.run(async () => {
+						await post("/api/default-administrator", form);
+						setDraft(null);
+					}, "Default administrator saved.");
+				}}
+			>
+				<label className="grid gap-1 font-medium">
+					Handle
+					<input
+						autoComplete="off"
+						className={inputClassName}
+						value={form.handle}
+						onChange={(event) =>
+							setDraft({ ...form, handle: event.target.value })
+						}
+					/>
+				</label>
+				<label className="grid gap-1 font-medium">
+					Email
+					<input
+						autoComplete="off"
+						className={inputClassName}
+						type="email"
+						value={form.email}
+						onChange={(event) =>
+							setDraft({ ...form, email: event.target.value })
+						}
+					/>
+				</label>
+				<label className="grid gap-1 font-medium">
+					Password
+					<input
+						aria-describedby="default-administrator-password-note"
+						autoComplete="new-password"
+						className={inputClassName}
+						placeholder={value ? "Unchanged" : undefined}
+						type="password"
+						value={form.password}
+						onChange={(event) =>
+							setDraft({ ...form, password: event.target.value })
+						}
+					/>
+				</label>
+				<Button
+					disabled={
+						!connected ||
+						action.pending ||
+						!form.handle.trim() ||
+						!form.email.trim() ||
+						(!value && !form.password)
+					}
+					type="submit"
+					variant="primary"
+				>
+					Save
+				</Button>
+				{value && (
+					<Button
+						disabled={!connected || action.pending}
+						onClick={() =>
+							void action.run(async () => {
+								await post("/api/default-administrator/clear", {});
+								setDraft(null);
+							}, "Default administrator cleared.")
+						}
+					>
+						Clear
+					</Button>
+				)}
+			</form>
+			<p
+				className="mt-2 text-xs text-slate-500"
+				id="default-administrator-password-note"
+			>
+				The daemon stores this password as plain text and gives it to each
+				environment as plain text. Do not use a real or sensitive password.
+			</p>
+			<Feedback error={action.error} message={action.message} />
+		</section>
+	);
+}
+
 function AppContent() {
 	const { snapshot, connection } = useSnapshot();
 	const connected = connection === "live";
@@ -1327,6 +1569,7 @@ function AppContent() {
 												key={environment.worktreeId}
 												environment={environment}
 												connected={connected}
+												defaultAdministrator={snapshot.defaultAdministrator}
 											/>
 										))}
 									</div>
@@ -1349,6 +1592,7 @@ function AppContent() {
 												key={environment.worktreeId}
 												environment={environment}
 												connected={connected}
+												defaultAdministrator={snapshot.defaultAdministrator}
 											/>
 										))}
 									</div>
@@ -1405,6 +1649,10 @@ function AppContent() {
 							</Button>
 						</details>
 					</section>
+					<DefaultAdministratorSettings
+						connected={connected}
+						value={snapshot.defaultAdministrator}
+					/>
 				</section>
 			)}
 			{pathname === "/workflows" && (
