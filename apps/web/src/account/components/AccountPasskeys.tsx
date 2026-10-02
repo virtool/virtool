@@ -1,4 +1,5 @@
-import { getPasskeyNotice, usePasskeySupport } from "@app/passkeys";
+import { usePasskeySupport } from "@app/passkeySupport";
+import { getPasskeyNotice } from "@app/passkeys";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";

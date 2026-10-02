@@ -1,19 +1,23 @@
-import Button from "@base/Button";
+import { cn } from "@app/cn";
+import { usePasskeySupport } from "@app/passkeySupport";
+import type { PasskeyNotice } from "@app/passkeys";
+import Button, { LinkButton } from "@base/Button";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import Input, { InputPassword } from "@base/Input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import {
 	challengeRecentAuthenticationFn,
 	getRecentAuthenticationMethodsFn,
 } from "@server/auth/recentAuthentication";
 import { useMutation } from "@tanstack/react-query";
 import { SESSION_NOT_FRESH_ERROR_NAME } from "@virtool/contracts";
+import { CircleAlert, Info, KeyRound } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import {
 	createContext,
 	type ReactNode,
 	useCallback,
 	useContext,
+	useEffect,
 	useRef,
 	useState,
 } from "react";
@@ -28,6 +32,8 @@ type PendingChallenge = {
 	reject: (reason: Error) => void;
 	resolve: () => void;
 };
+
+type Method = "password" | "totp";
 
 type ChallengeValues = {
 	code: string;
@@ -234,7 +240,7 @@ export function AuthenticationCancel({ onClick }: { onClick: () => void }) {
 		<button
 			type="button"
 			onClick={onClick}
-			className="rounded text-gray-600 hover:text-gray-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+			className="rounded text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
 		>
 			Cancel
 		</button>
@@ -256,6 +262,7 @@ export function RecentAuthenticationForm({
 	submitLabel: string;
 }) {
 	const {
+		clearErrors,
 		formState: { errors, isSubmitting },
 		handleSubmit,
 		register,
@@ -263,120 +270,246 @@ export function RecentAuthenticationForm({
 		setError,
 	} = useForm<ChallengeValues>({
 		defaultValues: { code: "", password: "" },
+		shouldUnregister: true,
 	});
 	const challengeMutation = useMutation({
 		mutationFn: challengeRecentAuthenticationFn,
 	});
-	const defaultMethod = methods?.password ? "password" : "totp";
+	const passkeySupport = usePasskeySupport();
+	const [isPasskeyPending, setPasskeyPending] = useState(false);
+	const passkeyRunning = useRef(false);
+	const [chosenMethod, setChosenMethod] = useState<Method | null>(null);
+	const [passkeyNotice, setPasskeyNotice] = useState<PasskeyNotice | null>(
+		null,
+	);
 
-	async function submitPassword({ password }: ChallengeValues) {
+	useEffect(
+		() => () => {
+			if (passkeyRunning.current) {
+				void cancelPasskey();
+			}
+		},
+		[],
+	);
+
+	if (methods === null) {
+		return (
+			<>
+				<p role="status">Loading authentication methods…</p>
+				<div className="mt-6 flex justify-center">{secondaryAction}</div>
+			</>
+		);
+	}
+
+	const hasCode = methods.password || methods.totp;
+	const showPasskey = methods.passkey && passkeySupport !== "unavailable";
+
+	if (!hasCode && !showPasskey) {
+		return (
+			<>
+				<p role="alert">
+					{methods.passkey
+						? "This browser cannot use a passkey. Use a different browser, or sign out and sign in again before retrying."
+						: "This session cannot complete verification. Sign out and sign in again before retrying."}
+				</p>
+				<div className="mt-6 flex justify-center">{secondaryAction}</div>
+			</>
+		);
+	}
+
+	const isBusy = isSubmitting || isPasskeyPending;
+	const activeMethod: Method =
+		chosenMethod && methods[chosenMethod]
+			? chosenMethod
+			: methods.password
+				? "password"
+				: "totp";
+	const field = activeMethod === "password" ? "password" : "code";
+
+	function switchMethod() {
+		resetField(field);
+		clearErrors(field);
+		setChosenMethod(activeMethod === "password" ? "totp" : "password");
+	}
+
+	async function verifyWithPasskey() {
+		if (isBusy) {
+			return;
+		}
+		setPasskeyNotice(null);
+		setPasskeyPending(true);
+		passkeyRunning.current = true;
+		try {
+			const passkeys = await import("@app/passkeys");
+			try {
+				await passkeys.verifyRecentAuthenticationWithPasskey();
+			} catch (error) {
+				if (error instanceof passkeys.PasskeyCeremonyError) {
+					setPasskeyNotice(passkeys.getPasskeyNotice(error));
+					return;
+				}
+				if (isTerminalChallengeError(error)) {
+					onFailure(normalizeError(error));
+					return;
+				}
+				throw error;
+			}
+			onSuccess();
+		} catch {
+			setPasskeyNotice({
+				message: "Your passkey could not be verified. Try again.",
+				tone: "error",
+			});
+		} finally {
+			passkeyRunning.current = false;
+			setPasskeyPending(false);
+		}
+	}
+
+	async function submit({ code, password }: ChallengeValues) {
+		setPasskeyNotice(null);
 		try {
 			await challengeMutation.mutateAsync({
-				data: { method: "password", password },
+				data:
+					activeMethod === "password"
+						? { method: "password", password }
+						: { method: "totp", code },
 			});
 			onSuccess();
 		} catch (error) {
-			resetField("password");
+			resetField(field);
 			if (isTerminalChallengeError(error)) {
 				onFailure(normalizeError(error));
 				return;
 			}
-			setError("password", {
+			setError(field, {
 				message:
 					error instanceof Error ? error.message : "Authentication failed.",
 			});
 		}
 	}
 
-	async function submitTotp({ code }: ChallengeValues) {
-		try {
-			await challengeMutation.mutateAsync({
-				data: { method: "totp", code },
-			});
-			onSuccess();
-		} catch (error) {
-			resetField("code");
-			if (isTerminalChallengeError(error)) {
-				onFailure(normalizeError(error));
-				return;
-			}
-			setError("code", {
-				message:
-					error instanceof Error ? error.message : "Authentication failed.",
-			});
-		}
+	const passkeySection = showPasskey ? (
+		<div className="flex flex-col gap-2">
+			<Button
+				className="w-full justify-center"
+				color="blue"
+				disabled={passkeySupport !== "available" || isBusy}
+				onClick={() => void verifyWithPasskey()}
+			>
+				<KeyRound aria-hidden size={16} />
+				{isPasskeyPending
+					? "Waiting for your passkey…"
+					: "Continue with a passkey"}
+			</Button>
+			{passkeyNotice ? <PasskeyNoticeText notice={passkeyNotice} /> : null}
+		</div>
+	) : null;
+
+	if (!hasCode) {
+		return (
+			<>
+				<p className="-mt-4 mb-6 text-gray-600">
+					Use your passkey to continue.
+				</p>
+				{passkeySection}
+				<div className="mt-6 flex justify-center">{secondaryAction}</div>
+			</>
+		);
 	}
 
 	return (
-		<>
-			{methods === null ? (
-				<p role="status">Loading authentication methods…</p>
-			) : !methods.password && !methods.totp ? (
-				<p role="alert">
-					This session cannot complete verification. Sign out and sign in again
-					before retrying.
-				</p>
-			) : (
-				<Tabs defaultValue={defaultMethod}>
-					{methods.password && methods.totp ? (
-						<TabsList>
-							<TabsTrigger value="password">Password</TabsTrigger>
-							<TabsTrigger value="totp">Authenticator code</TabsTrigger>
-						</TabsList>
-					) : null}
-					{methods.password ? (
-						<TabsContent value="password">
-							<form onSubmit={handleSubmit(submitPassword)}>
-								<Field>
-									<FieldLabel>Password</FieldLabel>
-									<InputPassword
-										showVisibilityToggle={false}
-										autoComplete="current-password"
-										autoFocus
-										{...register("password", {
-											required: "Enter your password.",
-										})}
-									/>
-									<FieldError errors={[errors.password]} />
-								</Field>
-								<FormActions
-									disabled={isSubmitting}
-									secondaryAction={secondaryAction}
-									submitLabel={submitLabel}
-								/>
-							</form>
-						</TabsContent>
-					) : null}
-					{methods.totp ? (
-						<TabsContent value="totp">
-							<form onSubmit={handleSubmit(submitTotp)}>
-								<Field>
-									<FieldLabel>Authenticator code</FieldLabel>
-									<Input
-										autoComplete="one-time-code"
-										inputMode="numeric"
-										autoFocus={!methods.password}
-										{...register("code", {
-											required: "Enter your authenticator code.",
-										})}
-									/>
-									<FieldError errors={[errors.code]} />
-								</Field>
-								<FormActions
-									disabled={isSubmitting}
-									secondaryAction={secondaryAction}
-									submitLabel={submitLabel}
-								/>
-							</form>
-						</TabsContent>
-					) : null}
-				</Tabs>
-			)}
-			{methods === null || (!methods.password && !methods.totp) ? (
-				<div className="mt-6 flex justify-center">{secondaryAction}</div>
+		<form onSubmit={handleSubmit(submit)}>
+			<p className="-mt-4 mb-6 text-gray-600">
+				{activeMethod === "password"
+					? showPasskey
+						? "Use a passkey, or enter your password to continue."
+						: "Enter your password to continue."
+					: showPasskey
+						? "Use a passkey, or enter the code from your authenticator app to continue."
+						: "Enter the code from your authenticator app to continue."}
+			</p>
+			{passkeySection ? (
+				<>
+					{passkeySection}
+					<div
+						aria-hidden
+						className="my-6 flex items-center gap-3 text-sm text-gray-500"
+					>
+						<span className="h-px flex-1 bg-gray-200" />
+						or
+						<span className="h-px flex-1 bg-gray-200" />
+					</div>
+				</>
 			) : null}
-		</>
+			{activeMethod === "password" ? (
+				<Field>
+					<FieldLabel>Password</FieldLabel>
+					<InputPassword
+						showVisibilityToggle={false}
+						autoComplete="current-password"
+						autoFocus
+						{...register("password", {
+							required: "Enter your password.",
+						})}
+					/>
+					<FieldError errors={[errors.password]} />
+				</Field>
+			) : (
+				<Field>
+					<FieldLabel>Authenticator code</FieldLabel>
+					<Input
+						autoComplete="one-time-code"
+						autoFocus
+						inputMode="numeric"
+						maxLength={6}
+						{...register("code", {
+							required: "Enter your authenticator code.",
+						})}
+					/>
+					<FieldError errors={[errors.code]} />
+				</Field>
+			)}
+			<FormActions
+				color={showPasskey ? "gray" : "blue"}
+				disabled={isBusy}
+				secondaryAction={secondaryAction}
+				submitLabel={submitLabel}
+				switchAction={
+					methods.password && methods.totp ? (
+						<LinkButton disabled={isBusy} onClick={switchMethod}>
+							{activeMethod === "password"
+								? "Use an authenticator code instead"
+								: "Use your password instead"}
+						</LinkButton>
+					) : null
+				}
+			/>
+		</form>
 	);
+}
+
+function PasskeyNoticeText({ notice }: { notice: PasskeyNotice }) {
+	const isError = notice.tone === "error";
+	const Icon = isError ? CircleAlert : Info;
+
+	return (
+		<p
+			role={isError ? "alert" : "status"}
+			className={cn(
+				"flex items-center gap-1 font-medium",
+				isError ? "text-red-600" : "text-gray-600",
+			)}
+		>
+			<Icon aria-hidden className="shrink-0" size={14} />
+			{notice.message}
+		</p>
+	);
+}
+
+async function cancelPasskey() {
+	const { cancelPasskeyCeremony } = await import("@app/passkeys");
+	cancelPasskeyCeremony();
 }
 
 function normalizeError(error: unknown): Error {
@@ -389,25 +522,32 @@ function isTerminalChallengeError(error: unknown): boolean {
 }
 
 function FormActions({
+	color,
 	disabled,
 	secondaryAction,
 	submitLabel,
+	switchAction,
 }: {
+	color: "blue" | "gray";
 	disabled: boolean;
 	secondaryAction: ReactNode;
 	submitLabel: string;
+	switchAction: ReactNode;
 }) {
 	return (
 		<div className="mt-6 flex flex-col items-center gap-4">
 			<Button
 				className="w-full justify-center"
-				color="blue"
+				color={color}
 				disabled={disabled}
 				type="submit"
 			>
 				{submitLabel}
 			</Button>
-			{secondaryAction}
+			<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+				{switchAction}
+				{secondaryAction}
+			</div>
 		</div>
 	);
 }

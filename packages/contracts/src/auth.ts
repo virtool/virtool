@@ -2,6 +2,13 @@
 export const AUTH_BASE_PATH = "/api/auth";
 
 /**
+ * The path, below {@link AUTH_BASE_PATH}, that issues passkey options for
+ * recent authentication.
+ */
+export const RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH =
+	"/virtool-session/passkey-options";
+
+/**
  * Name of the error the server auth middleware throws when a request has no
  * valid session. Shared so the server that throws it, the client serialization
  * adapter that carries it across the boundary, and the query retry guard that

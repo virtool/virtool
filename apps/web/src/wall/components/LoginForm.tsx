@@ -1,9 +1,9 @@
 import { cn } from "@app/cn";
+import { usePasskeySupport } from "@app/passkeySupport";
 import {
 	cancelPasskeyCeremony,
 	getPasskeyNotice,
 	signInWithPasskeyAutofill,
-	usePasskeySupport,
 } from "@app/passkeys";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";

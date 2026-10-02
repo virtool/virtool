@@ -31,13 +31,13 @@ import {
 	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
+import { usePasskeySupport } from "../passkeySupport";
 import {
 	addPasskey,
 	getPasskeyNotice,
 	PasskeyCeremonyError,
 	signInWithPasskey,
 	signInWithPasskeyAutofill,
-	usePasskeySupport,
 	useSingleCeremony,
 } from "../passkeys";
 

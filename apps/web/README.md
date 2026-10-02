@@ -209,8 +209,10 @@ server-function authentication and CSRF middleware, so Better Auth performs its
 own origin check against `VT_PUBLIC_ORIGIN`.
 
 Recent-authentication challenges pass through Better Auth's HTTP handler at
-`/api/auth/virtool-session/challenge`. Password and TOTP share a limit of five
-attempts per minute per IP. An atomic database-backed counter in
+`/api/auth/virtool-session/challenge`. Password, TOTP, and passkey share a limit
+of five attempts per minute per IP. The passkey options path,
+`/api/auth/virtool-session/passkey-options`, has its own limit of five requests
+per minute per IP. An atomic database-backed counter in
 `auth_rate_limits` shares the budget across web instances, including concurrent
 requests. Direct `auth.api` calls bypass this
 limiter; challenge verification must enter through the handler.
@@ -300,12 +302,25 @@ restricted setup credentials, forced-reset sessions, MFA-enrollment sessions,
 and retained legacy sessions cannot. A stale protected call returns 403 with the
 stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
 insufficient operation-specific authority remains an ordinary 403. The client
-responds only to the code: it opens one shared full-page password or TOTP challenge,
-then retries each waiting mutation once. Cancellation leaves the ordinary
+responds only to the code: it opens one shared full-page passkey, password, or
+TOTP challenge, then retries each waiting mutation once. The challenge offers a
+passkey first when the user has one and the browser can use one. It starts the
+ceremony only when the user selects the passkey button. Cancellation leaves the ordinary
 session and form state intact and never navigates to the login wall.
 
 Step-up delegates password and TOTP verification to Better Auth, with trusted
-device disabled and recovery codes excluded. Success creates a new session
+device disabled and recovery codes excluded. Step-up does not use Better Auth's
+passkey sign-in endpoint, because that endpoint starts a session for the owner
+of any registered passkey. The recent-authentication plugin in
+`@server/auth/recentAuthenticationChallenge` runs its own ceremony instead:
+
+- The options path asks for user verification and allows only the passkeys of
+  the session user. It stores the challenge and the user id as a single-use
+  verification value for five minutes, keyed by a signed cookie of its own.
+- The challenge path consumes that value, refuses it if its user id is not the
+  session user, and finds the passkey by credential id and session user. It
+  verifies the assertion against the configured origin and RP ID with user
+  verification required, then stores the new signature counter. Success creates a new session
 through Better Auth, atomically retires the old session, installs Better Auth's
 cookie, and attributes the remainder of the request to the new non-secret
 session id. Concurrent challenges have one durable winner; losing replacement
@@ -569,6 +584,7 @@ a `rateLimit.customRules` entry. A refused request gets a 429.
 | Operation | Entry point | Policy |
 | --- | --- | --- |
 | Sign in | `authClient.signIn.passkey()` | Open, rate limited |
+| Recent authentication | `verifyRecentAuthenticationWithPasskey()` | Session user's passkeys only, rate limited |
 | Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
 | List | `findPasskeysFn` | `authenticated()`, Better Auth session only |
 | Rename | `renamePasskeyFn` | `passkey.security.update` |
@@ -612,8 +628,10 @@ In the browser, `@app/passkeys` loads the auth client only when a ceremony
 starts. It maps the client's errors to fixed messages and never shows a browser
 or server message. A stale session on registration opens the
 recent-authentication challenge, and then the ceremony runs again.
-`usePasskeySupport` reads WebAuthn support after hydration and reports `pending`
-during server rendering. `useSingleCeremony` lets a component run only one
+`usePasskeySupport`, in `@app/passkeySupport`, reads WebAuthn support after
+hydration and reports `pending` during server rendering. The
+recent-authentication form loads `@app/passkeys` only when the user selects a
+passkey. `useSingleCeremony` lets a component run only one
 ceremony at a time, and cancels it when the component is removed. Cancellation,
 timeout, and an unsupported browser leave password sign-in available. The login
 form does not start conditional passkey requests. After a passkey sign-in, the

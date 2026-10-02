@@ -1,20 +1,15 @@
 import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { PROTECTED_OPERATIONS } from "@server/auth/freshness";
+import { challengeRecentAuthenticationFn } from "@server/auth/recentAuthentication";
+import type { PublicKeyCredentialRequestOptionsJSON } from "@simplewebauthn/browser";
 import {
 	CLIENT_ERROR_NAME,
+	RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH,
 	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
-
-/**
- * Whether this browser can run a passkey ceremony.
- *
- * `pending` during server rendering and hydration, before the browser can be
- * asked.
- */
-export type PasskeySupport = "pending" | "unavailable" | "available";
+import { useCallback, useEffect, useRef } from "react";
 
 /** Why a passkey ceremony ended without a credential. */
 type PasskeyErrorKind =
@@ -68,30 +63,6 @@ function loadAuthClient(): Promise<AuthClient> {
 		},
 	);
 	return authClientModule;
-}
-
-function subscribe() {
-	return () => {};
-}
-
-function getSupport(): PasskeySupport {
-	return window.isSecureContext &&
-		typeof window.PublicKeyCredential === "function"
-		? "available"
-		: "unavailable";
-}
-
-function getServerSupport(): PasskeySupport {
-	return "pending";
-}
-
-/**
- * Read whether this browser can run a passkey ceremony.
- *
- * This decides only what to offer. The server still verifies every ceremony.
- */
-export function usePasskeySupport(): PasskeySupport {
-	return useSyncExternalStore(subscribe, getSupport, getServerSupport);
 }
 
 // Browsers use NotAllowedError for a user cancel, a timeout, and a request that
@@ -195,6 +166,23 @@ function toRegistrationError(error: AuthClientError): Error {
 	);
 }
 
+function toRecentAuthenticationError(error: AuthClientError): Error {
+	const browserError = toBrowserError(
+		error,
+		"Passkey verification did not finish. Try again.",
+	);
+	if (browserError) {
+		return browserError;
+	}
+	if (error.status === 429) {
+		return new PasskeyCeremonyError(
+			"failed",
+			"Too many attempts. Wait and try again.",
+		);
+	}
+	return toFailure(error, "Your passkey could not be verified. Try again.");
+}
+
 /** Sign in with a discoverable passkey through Better Auth. */
 export async function signInWithPasskey(): Promise<void> {
 	const authClient = await loadAuthClient();
@@ -235,6 +223,44 @@ export async function signInWithPasskeyAutofill(): Promise<boolean> {
 		return false;
 	}
 	throw toSignInError(error);
+}
+
+/**
+ * Confirm the identity of the signed-in user with one of their passkeys.
+ *
+ * Errors from the challenge server function pass through unchanged, so the
+ * caller can tell a refused passkey from a failure that ends the challenge.
+ */
+export async function verifyRecentAuthenticationWithPasskey(): Promise<void> {
+	const authClient = await loadAuthClient();
+	const { startAuthentication, WebAuthnError } = await import(
+		"@simplewebauthn/browser"
+	);
+
+	const options =
+		await authClient.$fetch<PublicKeyCredentialRequestOptionsJSON>(
+			RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH,
+			{ method: "GET", throw: false },
+		);
+	if (options.error) {
+		throw toRecentAuthenticationError(options.error);
+	}
+
+	const response = await startAuthentication({
+		optionsJSON: options.data,
+	}).catch((error: unknown) => {
+		throw toRecentAuthenticationError({
+			code: error instanceof WebAuthnError ? error.code : "AUTH_CANCELLED",
+			status: 400,
+		});
+	});
+
+	await challengeRecentAuthenticationFn({
+		data: {
+			method: "passkey",
+			response: { ...response, clientExtensionResults: {} },
+		},
+	});
 }
 
 /** Stop the passkey ceremony that is running, if there is one. */
@@ -289,7 +315,7 @@ export function useSingleCeremony<TVariables, T>(
 }
 
 /** A message about a failed passkey action and how strongly to show it. */
-type PasskeyNotice = {
+export type PasskeyNotice = {
 	message: string;
 	tone: "error" | "neutral";
 };
