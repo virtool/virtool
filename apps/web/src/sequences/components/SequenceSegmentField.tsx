@@ -1,7 +1,7 @@
 import { cn } from "@app/cn";
 import Box from "@base/Box";
+import Field, { FieldLabel } from "@base/Field";
 import Icon from "@base/Icon";
-import { InputGroup, InputLabel } from "@base/Input";
 import Link from "@base/Link";
 import Select, {
 	SelectButton,
@@ -83,8 +83,8 @@ export default function SequenceSegmentField({
 		));
 
 		return (
-			<InputGroup>
-				<InputLabel htmlFor="segment">Segment</InputLabel>
+			<Field>
+				<FieldLabel>Segment</FieldLabel>
 				<div className="flex flex-col [&_button]:grow [&_button]:p-2.5">
 					<Controller
 						control={control}
@@ -117,13 +117,13 @@ export default function SequenceSegmentField({
 						name="segment"
 					/>
 				</div>
-			</InputGroup>
+			</Field>
 		);
 	}
 
 	return (
-		<InputGroup>
-			<InputLabel>Segment</InputLabel>
+		<div className="mb-4 pb-2">
+			<p className="font-medium mb-2">Segment</p>
 			<Box className="flex items-center justify-between">
 				<div>
 					<h5 className="font-medium mt-0 mb-1">
@@ -144,6 +144,6 @@ export default function SequenceSegmentField({
 					</Link>
 				</div>
 			</Box>
-		</InputGroup>
+		</div>
 	);
 }

@@ -16,6 +16,20 @@ export const sampleGroups = [
 export type SampleGroup = (typeof sampleGroups)[number];
 
 /**
+ * The instance MFA policies.
+ *
+ * `settings.mfa_policy` is a `text` column closed by the
+ * `ck_settings_mfa_policy` CHECK constraint; this is the one declaration of
+ * what that constraint admits.
+ *
+ * Under `required`, a signed-in user without TOTP can only enroll or sign out.
+ */
+export const mfaPolicies = ["optional", "required"] as const;
+
+/** The instance MFA policy. */
+export type MfaPolicy = (typeof mfaPolicies)[number];
+
+/**
  * Whether the stored NCBI API key can be used.
  *
  * `configuration_error` means a key is stored but the encryption key this
@@ -55,6 +69,7 @@ export type Settings = {
 	/** The maximum accepted upload size, in bytes. */
 	maxUploadSize: number;
 	minimumPasswordLength: number;
+	mfaPolicy: MfaPolicy;
 	ncbiAvailability: NcbiAvailability;
 	sampleAllRead: boolean;
 	sampleAllWrite: boolean;

@@ -4,7 +4,7 @@ The Virtool web app. The root Dockerfile's `dist`
 target is published as `ghcr.io/virtool/web`; see [CI](../../docs/ci.md#images).
 
 Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
-[the development guide](../../dev/README.md) to run the app with `virtool-dev`.
+[the development guide](../../dev/README.md) to run the app with `vtd`.
 
 ## Key libraries
 
@@ -16,7 +16,9 @@ Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
 - **Lucide React** for icons
 - **d3** for imperative SVG charts
 - **exceljs** for server-side analysis XLSX exports
-- **Better Auth** with its passkey plugin for human authentication
+- **Better Auth** with its passkey plugin for human authentication, including
+  the browser passkey ceremonies
+- **react-qr-code** for the TOTP enrollment QR code
 
 ## Client development
 
@@ -83,8 +85,27 @@ error statuses with `getErrorStatus` from `@app/queryErrors`.
 
 Put invalidation in `useMutation` callbacks so it runs even after the component
 unmounts. Put navigation, toasts, and other view effects in `mutate` callbacks.
-Invalidate the narrowest hierarchical key; reserve `setQueryData` for frequent
-updates where repeated requests are too expensive.
+Reserve `setQueryData` for frequent updates where repeated requests are too
+expensive.
+
+A mutation that creates, updates, or deletes a record reports the change to
+`invalidateChange` (or `invalidateChanges` for a batch) in `@app/invalidate`.
+Don't invalidate a record's keys by hand. The SSE handler uses the same
+function, so a local change and a pushed change refresh the same queries:
+
+- A create refreshes the domain's `lists()`.
+- An update refreshes the record's `detail(id)` and the domain's `lists()`.
+- A delete resets the record's `detail(id)` and refreshes the domain's
+  `lists()`. A reset drops the cached data, so a view of the deleted record
+  shows its not-found state instead of stale data.
+- A domain that caches outside those two keys, such as the account or the
+  active banner, refreshes `all()`.
+- Every change also refreshes the other domains that show the record or a
+  value derived from it. For example, a label change refreshes samples, and an
+  OTU change refreshes references and unbuilt index changes.
+
+When a record starts to embed another domain's data, add that domain to the
+dependents in `@app/invalidate`.
 
 ### Styling
 
@@ -100,6 +121,22 @@ hard-coded colors. Base component colors use the shared `PaletteColor`.
 Size text containers in `rem`; reserve pixels for graphics without text. When
 an API requires a numeric size, resolve a rem value with `useRootFontSize` from
 `@app/hooks`.
+
+### Forms
+
+Put each form control in a `Field` from `@base/Field`, with a `FieldLabel`, an
+optional `FieldDescription`, and a `FieldError`. The field connects them: don't
+set `id`, `htmlFor`, `aria-invalid`, or `aria-describedby` by hand. A control
+built on a new primitive gets these props from `useFieldControl`. Use
+`orientation="horizontal"` for a checkbox, switch, or radio row. Put a
+checkbox or radio before its label, and a switch after its label. When a row
+has a description, wrap its `Field` in `FieldLabel variant="row"` (or `"card"`
+for a bordered choice) and name the control with a `FieldTitle`. A click
+anywhere in the row then toggles the control, and the description stays out
+of the control's name. Put two or
+more related controls in a `FieldSet` with a `FieldLegend`, but don't put a
+single `Field` in a `FieldSet`. To put icons, text, or buttons inside an input,
+use `InputGroup` from `@base/InputGroup`.
 
 ## Server development
 
@@ -145,7 +182,8 @@ origin and fetch-metadata headers when changing these request shapes.
 
 Every exported server function declares exactly one policy from
 `@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`,
-`permission(name)`, `setupOnly(purpose)`, or `passwordResetOnly()`. Read the
+`permission(name)`, `recentlyAuthenticated(operation)`, `setupOnly(purpose)`,
+or `passwordResetOnly()`. Read the
 discriminated principal from `context.principal` and do not perform a second
 lookup. Browser sessions, API keys, setup sessions, and forced-reset sessions
 have distinct principal kinds so a policy cannot silently widen one credential
@@ -159,9 +197,9 @@ Restricted setup credentials may complete only their named transition. Each
 [setupExceptions.ts](src/server/auth/setupExceptions.ts).
 
 Raw routes handle transports RPC can't provide, such as uploads, streaming
-downloads, SSE, probes, metrics, and `/api/auth/*`. They enforce their own
-authorization. `requireAuthenticatedRequest` accepts sessions and API keys;
-server functions are session-only. Better Auth owns sign-in, while Virtool owns
+downloads, avatar images, SSE, probes, metrics, and `/api/auth/*`. They
+enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
+and API keys; server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
 Better Auth is mounted at `/api/auth/$` and composed in
@@ -170,11 +208,64 @@ owns account state, API keys, and authorization. Its raw handler is outside the
 server-function authentication and CSRF middleware, so Better Auth performs its
 own origin check against `VT_PUBLIC_ORIGIN`.
 
+Recent-authentication challenges pass through Better Auth's HTTP handler at
+`/api/auth/virtool-session/challenge`. Password and TOTP share a limit of five
+attempts per minute per IP. An atomic database-backed counter in
+`auth_rate_limits` shares the budget across web instances, including concurrent
+requests. Direct `auth.api` calls bypass this
+limiter; challenge verification must enter through the handler.
+
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
 A user with `force_reset` receives a session that resolves to a
 `password_reset` principal, which can only inspect or end its session and
 replace the password. Virtool signs in by handle; email sign-in is off because
 `users.email` isn't globally unique.
+
+Account email changes queue a verification link and leave the current address
+and verified state in place until the new mailbox proves control. The link is
+single use and checks that the original address is still current. Repeated
+requests are rate limited. Verification links for an unverified
+current address use the same route. Changing an address supersedes outstanding
+recovery links; an existing browser session remains active.
+
+Public password recovery accepts a handle and always acknowledges requests
+the same way. Only an eligible account with a verified email receives a queued
+link. Requester and target budgets limit attempts, and disabled email delivery
+does not expose an anonymous recovery URL. An administrator with recent
+authentication can issue a one-time recovery URL, including a copy-only URL
+when delivery is unavailable. Consuming either recovery link changes the
+password and revokes browser and setup sessions and tokens; the user signs in
+again. The minimal `/recover` and `/verify-email` routes consume links now;
+the broader wall experience belongs to the later authentication UX work.
+
+Administrators create human accounts by email invitation and assign access.
+The invitee chooses a handle and password when accepting. A users administrator
+may invite an ordinary account; only a full administrator may preassign an
+administrator role. The creation response
+contains one copyable setup token only when copy delivery is selected or email
+is unavailable, and the mutation UI shows it once. Emailed generations never
+return the bearer secret to the administrator. Safe administrator metadata reads
+show the recipient address, expiry, consumption, and queued delivery
+state. Regeneration always
+invalidates older links; choosing email creates a fresh generation. Deleting a
+pending user removes the account and every link it holds.
+
+`/account-setup` captures the token from the URL fragment and removes it from
+browser history before inspection. Unusable tokens all render one response.
+Acceptance claims the invitee's chosen handle and the bound email atomically,
+then signs in through Better Auth. A queued invitation verifies its bound
+address; a copied invitation queues ordinary
+email verification when delivery is ready and otherwise follows the disconnected
+policy with recovery disabled until the address is verified.
+
+The first-instance `/setup` path accepts handle, email, and password. A global
+transaction advisory lock makes exactly one concurrent request the first full
+administrator. Bootstrap never depends on email delivery: it signs the user in
+with an unverified address and queues verification only when mail is ready.
+Lifecycle logs contain only numeric invitation/user/issuer identifiers and
+bounded outcomes. `virtool_account_lifecycle_operations_total` reports the same
+bounded invitation, bootstrap, and administrator TOTP reset operations without
+identity labels.
 
 Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
 compatible with existing foreign keys. `auth_sessions` is the target browser
@@ -182,19 +273,79 @@ session store. The legacy `sessions` table remains available to unmigrated users
 during email remediation, but Better Auth wins when both credentials are
 present. Purpose-bound setup sessions remain separate from both.
 
-Normal Better Auth sessions have two server-authoritative clocks: an idle
-deadline extended by qualifying activity and an immutable absolute deadline.
-Both default to one hour and 24 hours respectively. A persisted refresh occurs
-at most once every five minutes and never moves the absolute deadline. The
-explicit list in
-[activityEndpoints.ts](src/server/auth/activityEndpoints.ts) classifies
-user-initiated server functions. Passive reads, background refetches, SSE
-handshakes and revocation checks, API keys, retained legacy sessions, and
-restricted setup sessions authenticate without refreshing activity. The
-foreground heartbeat contract is `refreshBrowserPrincipalActivity`; browser
-activity is recorded while the authenticated document is visible. Upgrading to
-this session model invalidates existing Better Auth sessions because a SQL
-migration cannot safely apply the deployment's runtime timing configuration.
+Normal Better Auth sessions use the library's seven-day rolling lifetime and
+one-day refresh age, with no absolute cap. The authenticated shell calls
+`refreshBrowserSessionFn` once on mount and when the window regains focus.
+That function lets Better Auth extend eligible sessions and propagate its
+cookie through the TanStack Start integration. Retained legacy sessions are
+validated without extension.
+
+Security-sensitive mutations additionally require recent authentication. A
+Better Auth session is fresh for 15 minutes from its immutable `created_at`;
+the inclusive boundary is stale (`now - created_at >= 15 minutes`). Rolling
+expiry updates `updated_at` and `expires_at` but never renews freshness. The
+central inventory in `@server/auth/freshness` covers current-account password
+and email changes; administrator TOTP reset; passkey registration, removal, and
+security changes; API-key creation, permission changes, deletion, and rotation;
+revocation of another or all other browser sessions; administrator changes to
+users, administrator roles, and the MFA policy; and administrator-issued setup
+or recovery links. TOTP enrollment, disablement, and recovery-code regeneration
+use Better Auth's password check instead. See
+[Two-factor authentication](#two-factor-authentication).
+Logout and revocation of the current session remain available without recent
+authentication. Reads require it only when they reveal a one-time secret.
+
+Only a normal Better Auth browser principal can satisfy this policy. API keys,
+restricted setup credentials, forced-reset sessions, MFA-enrollment sessions,
+and retained legacy sessions cannot. A stale protected call returns 403 with the
+stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
+insufficient operation-specific authority remains an ordinary 403. The client
+responds only to the code: it opens one shared full-page password or TOTP challenge,
+then retries each waiting mutation once. Cancellation leaves the ordinary
+session and form state intact and never navigates to the login wall.
+
+Step-up delegates password and TOTP verification to Better Auth, with trusted
+device disabled and recovery codes excluded. Success creates a new session
+through Better Auth, atomically retires the old session, installs Better Auth's
+cookie, and attributes the remainder of the request to the new non-secret
+session id. Concurrent challenges have one durable winner; losing replacement
+sessions are removed. The database replacement necessarily commits before the
+response can install its cookie; if writing that response fails, the new row is
+deleted, while the retired credential stays retired and the browser must sign
+in again.
+
+Account session management uses that numeric database session id only as an
+opaque management id. Better Auth authenticates with the separate random
+`token`; its native list and revoke routes are disabled so neither that token nor
+another authentication-capable value can enter the account API. List and revoke
+queries are always scoped by the principal's numeric user id. The list contains
+only live Better Auth sessions and returns the full observed IP address, bounded
+browser/OS labels, creation time, rolling `updated_at` as last activity,
+effective expiry, and a server-derived current marker. Browser, OS, and IP are
+recognition hints from client-provided headers, not device identity or suspicion
+signals. Browser and OS labels are derived from Better Auth's bounded stored
+user agent when the list is published; missing or invalid values use explicit
+unknown fallbacks.
+
+Selected and all-other revocation require recent authentication and never end
+the current session; sign-out remains its termination path. A short-lived
+self-reference protects a replacement created by a concurrent step-up until the
+old row is deleted. Revocation takes effect on the next authoritative RPC check
+and on the next SSE recheck; client query invalidation is only a local display
+refresh and is not part of enforcement.
+
+Ordinary server functions, React Query reads and mutations, raw routes, SSE
+handshakes, revocation checks, reconnects, and HEAD probes use read-only session
+resolution (`disableRefresh: true`). The browser doesn't poll sessions, track
+input activity, send heartbeats, show a countdown, or display a warning dialog.
+An unattended tab can't extend its session through background traffic.
+
+After the authenticated shell arms `endSession()`, definitive session failures
+from refresh, query or mutation HTTP 401 responses, and SSE HTTP 401 responses
+converge on that idempotent path. It clears session storage and performs
+full-document navigation to login with “Your session ended” and a return location.
+Network and server failures are operational errors, not evidence that a session
+expired.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct
@@ -229,10 +380,11 @@ The setting and declared sizes are capped at the application ceiling of
 ### The setup boundary
 
 Some accounts are neither anonymous nor fully authenticated: an
-administrator-created account that has not been claimed, an active legacy
-account with no usable unique email, and a user under a `required` MFA policy
-who has not enrolled. Each holds a **restricted setup credential** that
-completes exactly one named transition and reaches nothing else.
+administrator-created account that has not been claimed, and an active legacy
+account with no usable unique email. Each holds a **restricted setup
+credential** that completes exactly one named transition and reaches nothing
+else. A user under the `required` MFA policy is restricted differently; see
+[Two-factor authentication](#two-factor-authentication).
 
 Login checks an unmigrated legacy identity before Better Auth. During the
 compatibility window, a matching legacy password mints a purpose-bound
@@ -244,8 +396,15 @@ whether a password reset is required. Unknown, ineligible, and wrong-password at
 generic response and constant-cost behavior. The remediation wall stages a
 normalized unique email as unverified. When delivery is enabled, only the
 emailed one-time link marks it verified; when delivery is unavailable, setup
-completes immediately and leaves `email_verified` false. Completion revokes
-legacy and setup sessions before minting one Better Auth session.
+completes immediately and leaves `email_verified` false. Online links carry
+their token in the URL fragment, which the client removes before submitting it
+to the open verification function. The token works without the initiating
+browser's cookie and never authenticates a different browser. A matching setup
+session has the same 72-hour expiry as the link and can be claimed once for one
+Better Auth session; otherwise the result screen sends the holder to login.
+Pending state is server-owned, reports terminal outbox failure, and supports a
+server-throttled repeat delivery, address change, and cancellation. Completion revokes
+legacy sessions; claiming promotion revokes the restricted setup sessions.
 
 The credential is its own cookie pair, `setup_session_id` and
 `setup_session_token`, deliberately not the session pair. `@virtool/data` owns
@@ -272,9 +431,11 @@ the rows and the purposes; this app owns the transport and the boundary.
   versa. `authorization.test.ts` pins both directions, and separately proves
   every ordinary server function refuses a restricted principal on its own.
 
-`setupExceptions` currently contains only the three email-remediation
-operations: read resumable state, submit an address, and consume its mailbox
-challenge. Invitation, recovery and required-MFA surfaces remain separate work.
+`setupExceptions` contains only email-remediation operations that require the
+restricted principal: read resumable state, submit or send an address again,
+change/cancel the pending address, and claim promotion after cross-browser
+verification. Bearer-token verification is open by design and decides only
+mailbox ownership; it does not grant application authority on its own.
 
 Raw routes reject restricted principals and always will:
 `requireAuthenticatedRequest` reads the session cookies or an `Authorization`
@@ -288,6 +449,132 @@ completed setup.
 cookies alongside the application pair, so there is one way to end a browser's
 authority rather than one per kind.
 
+### Two-factor authentication
+
+TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
+`Virtool`, six-digit codes, a 30-second period, and ten encrypted recovery
+codes minted with every enrollment. The plugin's enrollment, recovery-code
+regeneration, and disable endpoints are reachable over HTTP. Each of these
+requires the current password; they don't use the recent-authentication
+policy. Trusted devices are not enabled. `two-factor/get-totp-uri` is refused
+over HTTP, because it returns the secret again for only the password.
+Enrollment shows the secret one time, from the `enable` response.
+
+`/account/security` holds the email, password, TOTP, passkey, and session
+controls. The browser calls the TOTP endpoints through `twoFactorClient`
+([twoFactor.ts](src/account/twoFactor.ts)). The TOTP secret and recovery codes
+stay in component state only, and the mutations use `gcTime: 0`. The user must
+confirm that they saved new recovery codes before the dialog closes.
+`getAccountSecurityFn` returns the number of unused recovery codes, never the
+codes.
+
+After a correct password, an enrolled user gets Better Auth's login challenge
+instead of a session. The challenge allows five attempts, and ten failures lock
+the factor for 15 minutes.
+
+The instance MFA policy is `settings.mfa_policy`, `optional` or `required`.
+Only a full administrator with a recently authenticated session can set it,
+through `setMfaPolicyFn`. It refuses `required` until the caller has enrolled,
+so the policy can't lock out the administrator who sets it.
+
+Under `required`, a Better Auth session whose user has no confirmed TOTP
+resolves to an `mfa_enrollment` principal. A retained legacy session for such a
+user resolves to no principal and answers 401, because enrollment runs only
+through Better Auth. The user signs in again to get a Better Auth session. The
+restriction is read from the policy and `users.two_factor_enabled` on every
+request, so it applies to live sessions as soon as the policy changes or a user
+disables TOTP. It ends when the first `verify-totp` succeeds.
+
+An `mfa_enrollment` principal reaches no server function or raw route. Server
+functions answer 403 `MfaEnrollmentRequiredError`. In `/api/auth/*`, it can
+reach only `get-session`, `sign-out`, `two-factor/enable`, and
+`two-factor/verify-totp`; every other path answers 403
+`MFA_ENROLLMENT_REQUIRED`. API keys are never challenged or restricted.
+
+`resetUserTotpFn` is the recovery path for a user who has lost both their
+authenticator and their recovery codes. It requires the full administrator role
+and recent authentication, and it refuses the caller's own account. It deletes
+the factor, clears `users.two_factor_enabled`, and deletes every session of the
+target in one transaction, so under `required` the target's next sign-in is
+restricted to enrollment. The reset requires `users.two_factor_enabled`. A
+factor row without the flag is an abandoned enrollment, which does not lock the
+user out: their next `two-factor/enable` replaces it.
+
+### Passkeys
+
+A passkey is an optional primary credential. It does not replace the password,
+which stays available for sign-in and recovery. A passkey sign-in goes through
+the same account gates as a password sign-in: `users.active` and the `normal`
+lifecycle state, forced reset, and the `required` MFA policy. A passkey
+verifies the user, so a user enrolled in TOTP does not get a second-factor
+challenge after a passkey. A passkey is not a trusted device.
+
+The browser runs both ceremonies through the plugin's client in
+[`@app/authClient`](src/app/authClient.ts). The requests go to the mounted
+handler, so its forced-reset and MFA-enrollment restrictions apply to them.
+Better Auth checks recent authentication for registration with the same
+15-minute freshness window. The plugin's list, rename, and delete endpoints
+answer 404 over HTTP, because the list returns public keys and counters and the
+mutations skip recent authentication. Server functions call these three through
+`auth.api` and apply Virtool's policies.
+
+The sign-in options and verify paths each allow 3 requests per client IP in 10
+seconds, the same as Better Auth's default rule for `/sign-in/*`. The limit is
+a `rateLimit.customRules` entry. A refused request gets a 429.
+
+| Operation | Entry point | Policy |
+| --- | --- | --- |
+| Sign in | `authClient.signIn.passkey()` | Open, rate limited |
+| Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
+| List | `findPasskeysFn` | `authenticated()`, Better Auth session only |
+| Rename | `renamePasskeyFn` | `passkey.security.update` |
+| Remove | `removePasskeyFn` | `passkey.remove` |
+
+WebAuthn rules:
+
+- The one Relying Party is the configured public origin and the RP ID derived
+  from it. See [the environment guide](../../docs/env.md). A response signed for
+  another origin or RP ID is refused.
+- Both ceremonies require user verification (a PIN or biometric). The pinned
+  plugin verifies with `requireUserVerification: false`, so `afterVerification`
+  hooks in `createAuth` check the flag again. The plugin asks the browser for
+  `preferred` user verification at sign-in, so the browser can offer an
+  authenticator that the server then refuses.
+- Registration asks for a discoverable credential, so a user can sign in without
+  typing a handle.
+- Challenges are server-generated, bound to a signed cookie, valid for five
+  minutes, and deleted when they are used.
+- `auth_passkeys.credential_id` is unique across all users. Registration refuses
+  a credential that is already registered with `PASSKEY_ALREADY_REGISTERED`. A
+  concurrent registration of the same credential can fail with a server error.
+
+Registration sends the user's handle as the passkey name. The authenticator
+shows it as the account label, and it is the stored name. The user can rename
+the passkey. Names are whitespace-normalized, 1 to 64 characters, and contain
+no control characters.
+
+`findPasskeysFn` returns `PasskeySummary` values, oldest first: a management
+id, the name, the creation time, and whether the credential is synced and
+backed up. It never returns the credential id, public key, counter, or AAGUID.
+These flags describe the credential, not a device. A synced passkey can be on
+many devices.
+
+Removal can remove the final passkey, because the password remains. It does
+not change the password, TOTP, recovery codes, API keys, or sessions, including
+a session that the passkey started. A passkey that is gone, or that belongs to
+another user, is not found (404) and is not changed.
+
+In the browser, `@app/passkeys` loads the auth client only when a ceremony
+starts. It maps the client's errors to fixed messages and never shows a browser
+or server message. A stale session on registration opens the
+recent-authentication challenge, and then the ceremony runs again.
+`usePasskeySupport` reads WebAuthn support after hydration and reports `pending`
+during server rendering. `useSingleCeremony` lets a component run only one
+ceremony at a time, and cancels it when the component is removed. Cancellation,
+timeout, and an unsupported browser leave password sign-in available. The login
+form does not start conditional passkey requests. After a passkey sign-in, the
+route guards send a user who must reset their password to the reset form.
+
 ### Server push
 
 Server-pushed cache invalidations arrive through the authenticated `/events`
@@ -296,8 +583,8 @@ Postgres `client_events` channel; the route converts each event to the id-only
 `{ domain, operation, id }` wire shape. The client then refetches through the
 normal API so authorization remains at the request boundary.
 
-Adding a domain requires all three of `SseDomainSchema`, `SseMessageSchema`,
-and `reactQueryHandler`'s `domains` record. A frame that fails validation—an
+Adding a domain requires both `SseMessageSchema` and the `domains` record in
+`@app/invalidate`. A frame that fails validation—an
 unknown domain, a bad operation, a wrong id type—is contract drift and is
 reported to Sentry.
 
@@ -308,7 +595,7 @@ Because an `EventSource` error exposes no HTTP status, the client probes
 backoff. A reconnect invalidates active queries to recover events missed while
 the stream was down.
 
-Most frames invalidate the narrowest matching React Query key. `jobs` and
+Frames go through `invalidateChange`, the rule that mutations use. `jobs` and
 `tasks` update frames instead go through `createJobRefreshQueue` and
 `createTaskRefreshQueue`, which deduplicate ids, batch reads, and serialize
 waves so an older response cannot overwrite newer progress. Keep the
@@ -323,6 +610,7 @@ ordering, and counts; tasks have no collection query to invalidate.
 | `src/server/events/` | Listener, wire-shape conversion, and session revocation |
 | `src/routes/events.ts` | Authenticated SSE route, keepalive, and framing |
 | `src/app/sse/` | Connection lifecycle, validation, and query routing |
+| `src/app/invalidate.ts` | Keys each change refreshes, shared with mutations |
 | `src/jobs/refresh.ts` | Batched job refresh queue |
 | `src/tasks/refresh.ts` | Batched task refresh queue |
 
@@ -371,9 +659,6 @@ The table below covers the remaining settings and web-specific storage behavior.
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
 | `VT_PUBLIC_ORIGIN` | URL origin | Required | Public browser origin for authentication and WebAuthn, including behind a proxy. Use an HTTPS hostname (HTTP is allowed for localhost), with no path, query, fragment, or credentials. |
 | `VT_AUTH_SECRET` | String (32+ characters) | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session. |
-| `VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS` | Positive integer seconds | `3600` | Expire a normal browser session after this much time without qualifying activity. Must be shorter than the absolute lifetime. |
-| `VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS` | Positive integer seconds | `86400` | Set the immutable maximum lifetime of a normal browser session. Must leave at least one refresh interval beyond the idle lifetime. |
-| `VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS` | Positive integer seconds | `300` | Bound persisted activity refreshes to at most one write per interval. Must be shorter than the idle lifetime. |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value can't use `_FILE`. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | Encrypt secrets stored by Virtool: the Resend API key and the NCBI API key. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |

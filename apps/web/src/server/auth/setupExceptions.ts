@@ -1,7 +1,10 @@
 import type { SetupPurpose } from "@virtool/contracts";
 import {
-	completeEmailRemediationFn,
+	cancelEmailRemediationFn,
+	changeEmailRemediationFn,
 	getEmailRemediationFn,
+	promoteEmailRemediationFn,
+	resendEmailRemediationFn,
 	submitEmailRemediationFn,
 } from "./functions";
 
@@ -29,7 +32,19 @@ export type SetupEndpoint = {
  */
 export const setupEndpoints: ReadonlyArray<SetupEndpoint> = [
 	{
-		fn: completeEmailRemediationFn,
+		fn: cancelEmailRemediationFn,
+		purpose: "email_remediation",
+	},
+	{
+		fn: changeEmailRemediationFn,
+		purpose: "email_remediation",
+	},
+	{
+		fn: promoteEmailRemediationFn,
+		purpose: "email_remediation",
+	},
+	{
+		fn: resendEmailRemediationFn,
 		purpose: "email_remediation",
 	},
 	{

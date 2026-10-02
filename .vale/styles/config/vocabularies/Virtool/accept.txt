@@ -135,6 +135,7 @@ READMEs
 [Ss]tderr
 [Ss]tdout
 [Ss]tdlib
+[Ss]ystemd
 [Ss]ubcommands?
 [Ss]ubpaths?
 [Ss]ubprocess(es)?

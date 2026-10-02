@@ -236,8 +236,8 @@ export type OtuHistory = HistoryNested & {
 
 /** An OTU as it appears in a search-result list. */
 export type OtuMinimal = OtuNested & {
-	/** The OTU's abbreviation, or the empty string */
-	abbreviation: string;
+	/** The OTU's acronym, or the empty string */
+	acronym: string;
 
 	/** The reference the OTU belongs to */
 	reference: OtuReferenceNested;
@@ -299,7 +299,7 @@ const segmentSchema = z.object({
 /** Fields accepted when creating an OTU. */
 export const OtuCreateRequest = z.object({
 	name: z.string().trim().min(1),
-	abbreviation: z.string().trim().default(""),
+	acronym: z.string().trim().default(""),
 	schema: z.array(segmentSchema).default([]),
 });
 
@@ -308,7 +308,7 @@ export type OtuCreateRequest = z.infer<typeof OtuCreateRequest>;
 /** Fields accepted when updating an OTU. Only those present are changed. */
 export const OtuUpdateRequest = z.object({
 	name: z.string().trim().min(1).optional(),
-	abbreviation: z.string().trim().optional(),
+	acronym: z.string().trim().optional(),
 	schema: z.array(segmentSchema).optional(),
 });
 
@@ -332,16 +332,23 @@ export const IsolateUpdateRequest = z.object({
 export type IsolateUpdateRequest = z.infer<typeof IsolateUpdateRequest>;
 
 /**
+ * Remove whitespace from a nucleotide sequence and make it uppercase, so pasted
+ * multi-line or lowercase input matches the stored form.
+ */
+export function normalizeSequence(sequence: string): string {
+	return sequence.replace(/\s+/g, "").toUpperCase();
+}
+
+/**
  * The characters a stored nucleotide sequence may use: the four bases plus the
  * IUPAC ambiguity codes Virtool accepts.
- *
- * The sequence field enforces the pattern client-side too, so nothing reaching
- * here has whitespace to lose.
  */
+export const SEQUENCE_PATTERN = /^[ATCGNRYKM]*$/;
+
 const sequenceSchema = z
 	.string()
-	.min(1)
-	.regex(/^[ATCGNRYKM]+$/);
+	.transform(normalizeSequence)
+	.pipe(z.string().min(1).regex(SEQUENCE_PATTERN));
 
 /** Fields accepted when creating a sequence. */
 export const SequenceCreateRequest = z.object({

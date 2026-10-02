@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
@@ -7,11 +6,25 @@ import { streamSSE } from "hono/streaming";
 import type { Mutation, Snapshot } from "../shared/types.ts";
 import { MANAGEMENT_ORIGIN } from "./constants.ts";
 
-/** Mutable snapshot feed shared by API requests and SSE clients. */
+type EnvironmentLogReader = (
+	environmentId: string,
+	service?: string,
+) => Promise<string>;
+
+type DaemonLogReader = () => Promise<string>;
+
+type DefaultAdministratorSettings = {
+	clear: () => void;
+	set: (input: { email: string; handle: string; password: string }) => void;
+};
+
 export class SnapshotFeed {
 	private listeners = new Set<(snapshot: Snapshot) => void>();
 
-	constructor(private snapshot: Snapshot) {}
+	constructor(
+		private snapshot: Snapshot,
+		private readonly onFirstSubscriber: () => void = () => undefined,
+	) {}
 
 	get(): Snapshot {
 		return this.snapshot;
@@ -24,20 +37,28 @@ export class SnapshotFeed {
 		}
 	}
 
+	hasSubscribers(): boolean {
+		return this.listeners.size > 0;
+	}
+
 	subscribe(listener: (snapshot: Snapshot) => void): () => void {
 		this.listeners.add(listener);
+		if (this.listeners.size === 1) {
+			this.onFirstSubscriber();
+		}
 		return () => this.listeners.delete(listener);
 	}
 }
 
-/** Create the loopback management API and static UI application. */
 export function createApi(
 	feed: SnapshotFeed,
 	mutate: (mutation: Mutation) => void,
 	setConcurrency: (value: number) => void,
 	clientDirectory: string,
 	resetShared: () => Promise<void> = async () => undefined,
-	logPath?: string,
+	readDaemonLogs?: DaemonLogReader,
+	readEnvironmentLogs?: EnvironmentLogReader,
+	defaultAdministrator?: DefaultAdministratorSettings,
 ) {
 	const app = new Hono();
 	app.use("/api/*", async (context, next) => {
@@ -61,44 +82,94 @@ export function createApi(
 	});
 	app.get("/api/state", (context) => context.json(feed.get()));
 	app.get("/api/logs", async (context) => {
-		if (!logPath) {
+		const worktreeId = context.req.query("environment");
+		const service = context.req.query("service");
+		if (worktreeId) {
+			const environment = feed
+				.get()
+				.environments.find((candidate) => candidate.worktreeId === worktreeId);
+			if (!environment?.id) {
+				return context.json({ error: "environment not found" }, 404);
+			}
+			if (service && !Object.hasOwn(environment.services, service)) {
+				return context.json({ error: "service not found" }, 404);
+			}
+			if (!readEnvironmentLogs) {
+				return context.text("");
+			}
+			try {
+				return context.text(await readEnvironmentLogs(environment.id, service));
+			} catch {
+				return context.json({ error: "unable to load environment logs" }, 502);
+			}
+		}
+		if (service) {
+			return context.json({ error: "service requires an environment" }, 400);
+		}
+		if (!readDaemonLogs) {
 			return context.text("");
 		}
 		try {
-			const lines = (await readFile(logPath, "utf8")).split("\n");
-			return context.text(lines.slice(-200).join("\n"));
+			return context.text(await readDaemonLogs());
 		} catch {
 			return context.text("");
 		}
 	});
 	app.get("/api/events", (context) =>
 		streamSSE(context, async (stream) => {
-			let resolve: (() => void) | undefined;
-			const snapshots: Snapshot[] = [feed.get()];
+			let pending: Snapshot | undefined = feed.get();
+			let wake: (() => void) | undefined;
+			function notify(): void {
+				const done = wake;
+				wake = undefined;
+				done?.();
+			}
 			const unsubscribe = feed.subscribe((snapshot) => {
-				snapshots.push(snapshot);
-				resolve?.();
+				pending = snapshot;
+				notify();
 			});
-			stream.onAbort(() => unsubscribe());
-			while (!stream.aborted) {
-				const snapshot = snapshots.shift();
-				if (snapshot) {
-					await stream.writeSSE({
-						data: JSON.stringify(snapshot),
-						event: "state",
+			stream.onAbort(notify);
+			try {
+				while (!stream.aborted) {
+					if (pending) {
+						const snapshot = pending;
+						pending = undefined;
+						await stream.writeSSE({
+							data: JSON.stringify(snapshot),
+							event: "state",
+						});
+						continue;
+					}
+					await new Promise<void>((done) => {
+						wake = done;
 					});
-					continue;
 				}
-				await new Promise<void>((done) => {
-					resolve = done;
-				});
-				resolve = undefined;
+			} finally {
+				unsubscribe();
 			}
 		}),
 	);
 	app.post("/api/environments", async (context) => {
-		const mutation = (await context.req.json()) as Mutation;
-		mutate(mutation);
+		const mutation = (await context.req.json()) as Omit<
+			Mutation,
+			"createDefaultAdministrator"
+		> & { createDefaultAdministrator?: unknown };
+		const { createDefaultAdministrator } = mutation;
+		if (createDefaultAdministrator !== undefined) {
+			if (typeof createDefaultAdministrator !== "boolean") {
+				return context.text(
+					"createDefaultAdministrator must be a boolean",
+					422,
+				);
+			}
+			if (mutation.action !== "start") {
+				return context.text(
+					"Only the start action accepts createDefaultAdministrator",
+					422,
+				);
+			}
+		}
+		mutate({ ...mutation, createDefaultAdministrator });
 		return context.json({ accepted: true }, 202);
 	});
 	app.post("/api/scheduler", async (context) => {
@@ -112,6 +183,37 @@ export function createApi(
 			return context.json({ error: "confirmation required" }, 422);
 		}
 		await resetShared();
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/default-administrator", async (context) => {
+		const body = (await context.req.json()) as {
+			email?: unknown;
+			handle?: unknown;
+			password?: unknown;
+		};
+		if (
+			typeof body.handle !== "string" ||
+			typeof body.email !== "string" ||
+			typeof body.password !== "string"
+		) {
+			return context.text("Handle, email, and password must be strings", 422);
+		}
+		try {
+			defaultAdministrator?.set({
+				email: body.email,
+				handle: body.handle,
+				password: body.password,
+			});
+		} catch (error) {
+			return context.text(
+				error instanceof Error ? error.message : String(error),
+				422,
+			);
+		}
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/default-administrator/clear", (context) => {
+		defaultAdministrator?.clear();
 		return context.json({ accepted: true }, 202);
 	});
 	if (existsSync(clientDirectory)) {

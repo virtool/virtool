@@ -8,6 +8,7 @@ import {
 	type BrowserPrincipal,
 	FORBIDDEN_ERROR_NAME,
 	hasSufficientAdminRole,
+	isMfaEnrollmentPrincipal,
 	isPasswordResetPrincipal,
 	type PasswordResetPrincipal,
 	type SetupPrincipal,
@@ -16,8 +17,8 @@ import {
 import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
 import { db } from "../composition";
-import { refreshBrowserPrincipalActivity } from "./activity";
 import {
+	MfaEnrollmentRequiredError,
 	PasswordResetRequiredError,
 	resolveRestrictedSetup,
 	SetupRequiredError,
@@ -107,6 +108,10 @@ export const requireBrowserPrincipal = createServerOnlyFn(
 			setResponseStatus(403);
 			throw new PasswordResetRequiredError();
 		}
+		if (isMfaEnrollmentPrincipal(principal)) {
+			setResponseStatus(403);
+			throw new MfaEnrollmentRequiredError();
+		}
 		return principal;
 	},
 );
@@ -117,7 +122,8 @@ const resolveBrowserOrNull = createServerOnlyFn(async () =>
 	verifyBrowserRequest(db, getRequest()),
 );
 
-function attributePrincipal(principal: AuthenticationPrincipal): void {
+/** Attribute a resolved credential without exposing its bearer secret. */
+export function attributePrincipal(principal: AuthenticationPrincipal): void {
 	Sentry.setUser({ id: principal.userId });
 	Sentry.setContext("credential", {
 		kind: principal.kind,
@@ -179,11 +185,6 @@ export type LoadAuthenticationExceptions = () => Promise<
 	ReadonlyArray<{ url: string }>
 >;
 
-/** Resolves server functions explicitly classified as user activity. */
-export type LoadUserActivityEndpoints = () => Promise<
-	ReadonlyArray<{ url: string }>
->;
-
 // A server function's `url` is the server-fn base with its id appended, and an
 // id is base64url, so the last segment is the id `serverFnMeta` carries.
 // `middleware.test.ts` pins that against the metadata Start actually hands the
@@ -202,13 +203,6 @@ const loadAuthenticationExceptions = createServerOnlyFn(
 	async (): Promise<ReadonlyArray<{ url: string }>> => {
 		const { authenticationExceptions } = await import("./exceptions");
 		return authenticationExceptions;
-	},
-);
-
-const loadUserActivityEndpoints = createServerOnlyFn(
-	async (): Promise<ReadonlyArray<{ url: string }>> => {
-		const { userActivityEndpoints } = await import("./activityEndpoints");
-		return userActivityEndpoints;
 	},
 );
 
@@ -275,13 +269,11 @@ export function createAuthenticationMiddleware(
 	loadExceptions: LoadAuthenticationExceptions = loadAuthenticationExceptions,
 	loadSetup: LoadSetupEndpoints = loadSetupEndpoints,
 	loadPasswordReset: LoadPasswordResetEndpoints = loadPasswordResetEndpoints,
-	loadActivity: LoadUserActivityEndpoints = loadUserActivityEndpoints,
 ) {
 	// Resolved on the first call and cached: the ids never change.
 	let exceptionIds: Set<string> | null = null;
 	let setupIds: Set<string> | null = null;
 	let passwordResetIds: Set<string> | null = null;
-	let activityIds: Set<string> | null = null;
 
 	return createMiddleware({ type: "function" }).server(
 		async ({ next, serverFnMeta }) => {
@@ -295,18 +287,10 @@ export function createAuthenticationMiddleware(
 			passwordResetIds ??= new Set(
 				(await loadPasswordReset()).map((fn) => serverFnIdFromUrl(fn.url)),
 			);
-			activityIds ??= new Set(
-				(await loadActivity()).map((fn) => serverFnIdFromUrl(fn.url)),
-			);
 
 			const context: AuthContext = exceptionIds.has(serverFnMeta.id)
 				? { principal: null }
-				: await resolvePrincipal(
-						setupIds,
-						passwordResetIds,
-						activityIds.has(serverFnMeta.id),
-						serverFnMeta.id,
-					);
+				: await resolvePrincipal(setupIds, passwordResetIds, serverFnMeta.id);
 
 			return next({ context });
 		},
@@ -333,19 +317,11 @@ const resolvePrincipal = createServerOnlyFn(
 	async (
 		setupIds: Set<string>,
 		passwordResetIds: Set<string>,
-		isUserActivity: boolean,
 		serverFnId: string,
 	): Promise<AuthContext> => {
-		let browser = await resolveBrowserOrNull();
+		const browser = await resolveBrowserOrNull();
 
 		if (browser) {
-			if (browser.kind === "browser" && isUserActivity) {
-				browser = await refreshBrowserPrincipalActivity(browser, "user");
-				if (!browser) {
-					setResponseStatus(401);
-					throw new UnauthorizedError();
-				}
-			}
 			attributePrincipal(browser);
 			if (
 				isPasswordResetPrincipal(browser) &&
@@ -353,6 +329,12 @@ const resolvePrincipal = createServerOnlyFn(
 			) {
 				setResponseStatus(403);
 				throw new PasswordResetRequiredError();
+			}
+			// Enrollment runs through Better Auth's own endpoints, so no server
+			// function is reachable while it is outstanding.
+			if (isMfaEnrollmentPrincipal(browser)) {
+				setResponseStatus(403);
+				throw new MfaEnrollmentRequiredError();
 			}
 			return { principal: browser };
 		}

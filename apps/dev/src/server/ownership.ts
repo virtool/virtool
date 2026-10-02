@@ -5,7 +5,6 @@ export type Ownership = {
 	repositoryId: string;
 };
 
-/** Verify Docker labels before any destructive cleanup. */
 export function validateOwnership(
 	labels: Record<string, string>,
 	expected: Ownership,

@@ -1,14 +1,12 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 
+import { getJobTerminalRefusal } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { jobs } from "@virtool/data/db/schema/jobs";
 import { eq } from "drizzle-orm";
 
-/**
- * The states a job never leaves, and what a runner holding a key for one is
- * told.
- *
- * Reaching one of these is the **only** thing that stops a job key
+/*
+ * Reaching a terminal state is the **only** thing that stops a job key
  * authenticating. There is no expiry, no revocation list, no rotation, and no
  * way to invalidate a key while its job is still running — the column holds one
  * digest for the life of the row. So the state has to be re-read on every
@@ -16,21 +14,12 @@ import { eq } from "drizzle-orm";
  * it claimed still holds a syntactically valid credential, and this check is
  * what stops it being accepted.
  *
- * The states and their messages are one structure rather than two, so a state
- * cannot be terminal for the purposes of refusing a key and unknown for the
- * purposes of saying why. A state absent from it is not terminal.
- *
  * **This is the cancellation channel.** A running workflow learns it should
- * stop by having its next ping refused, so the message is what tells its
- * operator whether the job was cancelled, swept up by the ping timeout, or
- * already finished. See {@link verifyJobRequest} for why saying so leaks
- * nothing.
+ * stop by having its next ping refused, so the message from
+ * `getJobTerminalRefusal` is what tells its operator whether the job was
+ * cancelled, swept up by the ping timeout, or already finished. See
+ * {@link verifyJobRequest} for why saying so leaks nothing.
  */
-const TERMINAL_REFUSALS: Record<string, string> = {
-	cancelled: "Job is cancelled.",
-	failed: "Job has failed.",
-	succeeded: "Job has succeeded.",
-};
 
 /**
  * The `job-{id}` login carried by the Basic credentials.
@@ -226,7 +215,7 @@ export async function verifyJobRequest(
 
 	// Past the key comparison, so everything below is being told to a caller who
 	// has proved it holds this job's key.
-	const terminalMessage = TERMINAL_REFUSALS[row.state];
+	const terminalMessage = getJobTerminalRefusal(row.state);
 
 	if (terminalMessage) {
 		return { ok: false, terminalMessage };

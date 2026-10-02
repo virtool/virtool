@@ -28,6 +28,7 @@ import {
 } from "@virtool/data/email/settings";
 import {
 	EMAIL_TEMPLATE_VERSION,
+	MIN_EMAIL_TEMPLATE_VERSION,
 	type RenderedEmail,
 	renderEmailTemplate,
 } from "@virtool/data/email/templates";
@@ -94,7 +95,10 @@ async function deliverOne(
 		attempt: item.attemptCount,
 	};
 
-	if (item.templateVersion !== EMAIL_TEMPLATE_VERSION) {
+	if (
+		item.templateVersion < MIN_EMAIL_TEMPLATE_VERSION ||
+		item.templateVersion > EMAIL_TEMPLATE_VERSION
+	) {
 		await failEmail(
 			ctx.db,
 			target,
@@ -112,7 +116,7 @@ async function deliverOne(
 	let rendered: RenderedEmail;
 
 	try {
-		rendered = renderEmailTemplate(item.template);
+		rendered = renderEmailTemplate(item.template, item.templateVersion);
 	} catch (err) {
 		await failEmail(ctx.db, target, "the template payload failed to render");
 		ctx.metrics.recordEmailAttempt(template, "permanent");
@@ -150,6 +154,15 @@ async function deliverOne(
 			{ ...base, err },
 			"email delivery stopped: the provider client rejected the api key",
 		);
+
+		return "stop";
+	}
+
+	// A shutdown is not a provider attempt, so the row goes back unchanged
+	// instead of spending an attempt, or its last one.
+	if (outcome.outcome === "retryable" && outcome.aborted) {
+		await releaseEmailClaim(ctx.db, target);
+		logger.info({ ...base }, "email delivery aborted, claim released");
 
 		return "stop";
 	}

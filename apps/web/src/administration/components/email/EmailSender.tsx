@@ -3,7 +3,8 @@ import {
 	useUpdateEmailSettings,
 } from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldDescription, FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import type { EmailSettings } from "@virtool/contracts";
 import { useForm } from "react-hook-form";
@@ -52,24 +53,14 @@ export default function EmailSender({
 		<BoxGroup>
 			<BoxGroupSection>
 				<form onSubmit={handleSubmit(update)}>
-					<InputGroup>
-						<InputLabel htmlFor="senderName">Sender Name</InputLabel>
+					<Field>
+						<FieldLabel>Sender Name</FieldLabel>
+						<Input {...register("senderName")} />
+						<FieldError errors={[errors.senderName]} />
+					</Field>
+					<Field>
+						<FieldLabel>Sender Address</FieldLabel>
 						<Input
-							id="senderName"
-							aria-describedby="senderName-error"
-							aria-invalid={Boolean(errors.senderName) || undefined}
-							{...register("senderName")}
-						/>
-						<InputError id="senderName-error">
-							{errors.senderName?.message}
-						</InputError>
-					</InputGroup>
-					<InputGroup>
-						<InputLabel htmlFor="senderAddress">Sender Address</InputLabel>
-						<Input
-							id="senderAddress"
-							aria-describedby="senderAddress-error"
-							aria-invalid={Boolean(errors.senderAddress) || undefined}
 							{...register("senderAddress", {
 								required: "A sender address is required.",
 								pattern: {
@@ -78,21 +69,14 @@ export default function EmailSender({
 								},
 							})}
 						/>
-						<InputError id="senderAddress-error">
-							{errors.senderAddress?.message}
-						</InputError>
-					</InputGroup>
-					<InputGroup>
-						<InputLabel htmlFor="replyToAddress">
-							Reply-To Address (optional)
-						</InputLabel>
-						<p className="mb-1 text-gray-600 text-sm" id="replyToAddress-hint">
+						<FieldError errors={[errors.senderAddress]} />
+					</Field>
+					<Field>
+						<FieldLabel>Reply-To Address (optional)</FieldLabel>
+						<FieldDescription className="mt-0 mb-1">
 							Leave empty to send replies to the sender address.
-						</p>
+						</FieldDescription>
 						<Input
-							id="replyToAddress"
-							aria-describedby="replyToAddress-hint replyToAddress-error"
-							aria-invalid={Boolean(errors.replyToAddress) || undefined}
 							{...register("replyToAddress", {
 								validate: (value) =>
 									value === "" ||
@@ -100,10 +84,8 @@ export default function EmailSender({
 									"Invalid email address.",
 							})}
 						/>
-						<InputError id="replyToAddress-error">
-							{errors.replyToAddress?.message}
-						</InputError>
-					</InputGroup>
+						<FieldError errors={[errors.replyToAddress]} />
+					</Field>
 					{mutation.isError ? (
 						<p className="mb-2 text-red-600 text-sm" role="alert">
 							{getEmailErrorMessage(mutation.error)}

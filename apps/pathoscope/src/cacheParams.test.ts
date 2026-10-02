@@ -1,9 +1,9 @@
 import {
 	buildMappingIndexCacheParams,
 	deriveCacheKey,
-	type RunSubprocess,
 } from "@virtool/workflow";
-import { describe, expect, it, vi } from "vitest";
+import { createFakeSubprocessRunner } from "@virtool/workflow/testing";
+import { describe, expect, it } from "vitest";
 import {
 	buildCollapsedReferenceCacheParams,
 	getCdHitEstVersion,
@@ -34,33 +34,6 @@ const PINNED_KEYS = {
 
 const TOOL_VERSION = "2.5.4";
 const WORKFLOW_VERSION = "5.2.1";
-
-function subprocessWriting(
-	lines: readonly string[],
-	{
-		stream = "stdout",
-		fails = false,
-	}: { stream?: "stdout" | "stderr"; fails?: boolean } = {},
-): RunSubprocess {
-	return vi.fn(async (options) => {
-		for (const line of lines) {
-			await options[stream]?.(line);
-		}
-
-		if (fails) {
-			throw new Error("subprocess exited 1");
-		}
-
-		return {
-			command: options.command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
-	});
-}
 
 // The params themselves are the runtime's — every workflow that builds a bowtie2
 // index derives them the same way. What is pinned here is that *this* workflow's
@@ -94,10 +67,10 @@ describe("the shared mapping index namespaces", () => {
 });
 
 describe("buildCollapsedReferenceCacheParams", () => {
-	// FORKED from the shared namespace, deliberately: the artifact is a SQLite
+	// FORKED from the namespace older releases wrote, deliberately: the artifact is a SQLite
 	// index this code writes, and one this code did not write is not
 	// interchangeable with it.
-	it("differs from the shared namespace's key for the same inputs", () => {
+	it("differs from the older namespace's key for the same inputs", () => {
 		const params = buildCollapsedReferenceCacheParams({
 			indexId: 42,
 			toolVersion: "4.8.1",
@@ -107,7 +80,7 @@ describe("buildCollapsedReferenceCacheParams", () => {
 		expect(deriveCacheKey(params)).not.toBe(PINNED_KEYS.collapsed);
 	});
 
-	it("carries a discriminator the shared namespace's params do not", () => {
+	it("carries a discriminator the older namespace's params do not", () => {
 		const params = buildCollapsedReferenceCacheParams({
 			indexId: 42,
 			toolVersion: "4.8.1",
@@ -117,7 +90,7 @@ describe("buildCollapsedReferenceCacheParams", () => {
 		const { impl, ...withoutDiscriminator } = params;
 
 		expect(impl).toBeDefined();
-		// Removing it lands back on the shared namespace's key, which is what makes
+		// Removing it lands back on the older namespace's key, which is what makes
 		// the fork the discriminator's doing rather than an accident of some other
 		// field.
 		expect(deriveCacheKey(withoutDiscriminator)).toBe(PINNED_KEYS.collapsed);
@@ -128,28 +101,37 @@ describe("getCdHitEstVersion", () => {
 	// `cd-hit-est -h` prints its help text and exits 1. There is no --version
 	// flag, so the failure is expected and the output is parsed anyway.
 	it("parses the version out of a run that exits non-zero", async () => {
-		const runSubprocess = subprocessWriting(
-			["\t\t====== CD-HIT version 4.8.1 (built on Jan 1 2024) ======", ""],
-			{ fails: true },
-		);
+		const runSubprocess = createFakeSubprocessRunner({
+			stdout: [
+				"\t\t====== CD-HIT version 4.8.1 (built on Jan 1 2024) ======",
+				"",
+			],
+			exitCode: 1,
+		});
 
 		await expect(getCdHitEstVersion(runSubprocess)).resolves.toBe("4.8.1");
 	});
 
 	it("reads the banner from stderr as well as stdout", async () => {
-		const runSubprocess = subprocessWriting(
-			["====== CD-HIT version 4.8.1 ======"],
-			{ stream: "stderr", fails: true },
-		);
+		const runSubprocess = createFakeSubprocessRunner({
+			stderr: ["====== CD-HIT version 4.8.1 ======"],
+			exitCode: 1,
+		});
 
 		await expect(getCdHitEstVersion(runSubprocess)).resolves.toBe("4.8.1");
 	});
 
 	// A missing binary produces no matching line, and the failure names the
-	// version parse rather than the exit code.
+	// version parse rather than the spawn error.
+	it("throws when the binary is missing", async () => {
+		await expect(
+			getCdHitEstVersion(createFakeSubprocessRunner({ spawnError: "ENOENT" })),
+		).rejects.toThrow("Could not parse cd-hit-est version");
+	});
+
 	it("throws when the output carries no version", async () => {
 		await expect(
-			getCdHitEstVersion(subprocessWriting([], { fails: true })),
+			getCdHitEstVersion(createFakeSubprocessRunner({ exitCode: 1 })),
 		).rejects.toThrow("Could not parse cd-hit-est version");
 	});
 });

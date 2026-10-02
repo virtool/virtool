@@ -121,6 +121,23 @@ describe("realCookies", () => {
 		);
 	});
 
+	it("writes an explicitly extended setup max-age", () => {
+		realCookies.setSetupSession("setup_abc", "token_abc", 72 * 60 * 60);
+
+		expect(setCookie).toHaveBeenNthCalledWith(
+			1,
+			SETUP_SESSION_ID_COOKIE,
+			"setup_abc",
+			expect.objectContaining({ maxAge: 72 * 60 * 60 }),
+		);
+		expect(setCookie).toHaveBeenNthCalledWith(
+			2,
+			SETUP_SESSION_TOKEN_COOKIE,
+			"token_abc",
+			expect.objectContaining({ maxAge: 72 * 60 * 60 }),
+		);
+	});
+
 	it("clears both setup cookies from the root path", () => {
 		realCookies.clearSetup();
 

@@ -37,6 +37,7 @@ vi.mock("../composition", () => ({
 }));
 
 const { watchForRevocation } = await import("./revocation");
+const { requireAuthenticatedRequest } = await import("../auth/middleware");
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
@@ -77,12 +78,20 @@ describe("watchForRevocation", () => {
 	it("leaves a live session alone", async () => {
 		const request = await connectedRequest();
 		const onRevoked = vi.fn();
+		const [before] = await db.select().from(authSessions);
+
+		for (const method of ["GET", "HEAD", "GET"]) {
+			expect(
+				await requireAuthenticatedRequest(new Request(request, { method })),
+			).toMatchObject({ kind: "browser" });
+		}
 
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
 		await new Promise((resolve) => setTimeout(resolve, INTERVAL * 5));
 		stop();
 
 		expect(onRevoked).not.toHaveBeenCalled();
+		expect((await db.select().from(authSessions))[0]).toEqual(before);
 	});
 
 	it("reports a session that was deleted out from under the stream", async () => {

@@ -40,6 +40,7 @@ export function createFakeSettings(overrides?: Partial<Settings>): Settings {
 		ncbiAvailability: "unconfigured",
 		maxUploadSize: 5_000_000_000,
 		minimumPasswordLength: 8,
+		mfaPolicy: "optional",
 		sampleAllRead: faker.datatype.boolean(),
 		sampleAllWrite: faker.datatype.boolean(),
 		sampleGroup: "none",

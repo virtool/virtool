@@ -10,13 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AccountSetupRouteImport } from './routes/account-setup'
 import { Route as EmailRemediationRouteImport } from './routes/email-remediation'
 import { Route as EmailRemediationVerifyRouteImport } from './routes/email-remediation-verify'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as MonitoringRouteImport } from './routes/monitoring'
+import { Route as RecoverRouteImport } from './routes/recover'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdministrationRouteRouteImport } from './routes/_authenticated/administration/route'
@@ -26,12 +29,16 @@ import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/j
 import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
 import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
 import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
+import { Route as AvatarsHandleRouteImport } from './routes/avatars.$handle'
 import { Route as HealthLiveRouteImport } from './routes/health/live'
 import { Route as HealthReadyRouteImport } from './routes/health/ready'
 import { Route as UploadsUploadIdRouteImport } from './routes/uploads_.$uploadId'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
 import { Route as AuthenticatedAccountApiRouteImport } from './routes/_authenticated/account/api'
+import { Route as AuthenticatedAccountGroupsRouteImport } from './routes/_authenticated/account/groups'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
+import { Route as AuthenticatedAccountSecurityRouteImport } from './routes/_authenticated/account/security'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAdministrationIndexRouteImport } from './routes/_authenticated/administration/index'
 import { Route as AuthenticatedAdministrationBannersRouteImport } from './routes/_authenticated/administration/banners'
 import { Route as AuthenticatedAdministrationCachingRouteImport } from './routes/_authenticated/administration/caching'
@@ -95,6 +102,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountSetupRoute = AccountSetupRouteImport.update({
+  id: '/account-setup',
+  path: '/account-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmailRemediationRoute = EmailRemediationRouteImport.update({
   id: '/email-remediation',
   path: '/email-remediation',
@@ -125,9 +137,19 @@ const MonitoringRoute = MonitoringRouteImport.update({
   path: '/monitoring',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecoverRoute = RecoverRouteImport.update({
+  id: '/recover',
+  path: '/recover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -177,6 +199,11 @@ const AuthenticatedSubtractionsRoute =
     path: '/subtractions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AvatarsHandleRoute = AvatarsHandleRouteImport.update({
+  id: '/avatars/$handle',
+  path: '/avatars/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthLiveRoute = HealthLiveRouteImport.update({
   id: '/health/live',
   path: '/health/live',
@@ -203,10 +230,28 @@ const AuthenticatedAccountApiRoute = AuthenticatedAccountApiRouteImport.update({
   path: '/api',
   getParentRoute: () => AuthenticatedAccountRoute,
 } as any)
+const AuthenticatedAccountGroupsRoute =
+  AuthenticatedAccountGroupsRouteImport.update({
+    id: '/groups',
+    path: '/groups',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 const AuthenticatedAccountProfileRoute =
   AuthenticatedAccountProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSecurityRoute =
+  AuthenticatedAccountSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
 const AuthenticatedAdministrationIndexRoute =
@@ -551,13 +596,16 @@ const OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/account-setup': typeof AccountSetupRoute
   '/email-remediation': typeof EmailRemediationRoute
   '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
@@ -566,12 +614,16 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/account/api': typeof AuthenticatedAccountApiRoute
+  '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
   '/administration/email': typeof AuthenticatedAdministrationEmailRoute
@@ -632,20 +684,27 @@ export interface FileRoutesByFullPath {
   '/refs/$refId/otus/$otuId/isolates/': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/account-setup': typeof AccountSetupRoute
   '/email-remediation': typeof EmailRemediationRoute
   '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/api': typeof AuthenticatedAccountApiRoute
+  '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
   '/administration/email': typeof AuthenticatedAdministrationEmailRoute
@@ -704,13 +763,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/account-setup': typeof AccountSetupRoute
   '/email-remediation': typeof EmailRemediationRoute
   '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/_authenticated/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
@@ -719,13 +781,17 @@ export interface FileRoutesById {
   '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/_authenticated/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads_/$uploadId': typeof UploadsUploadIdRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/_authenticated/account/api': typeof AuthenticatedAccountApiRoute
+  '/_authenticated/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/_authenticated/administration/caching': typeof AuthenticatedAdministrationCachingRoute
   '/_authenticated/administration/email': typeof AuthenticatedAdministrationEmailRoute
@@ -789,13 +855,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account-setup'
     | '/email-remediation'
     | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
     | '/monitoring'
+    | '/recover'
     | '/setup'
+    | '/verify-email'
     | '/administration'
     | '/refs'
     | '/account'
@@ -804,12 +873,16 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/samples'
     | '/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
     | '/refs/$refId'
     | '/account/api'
+    | '/account/groups'
     | '/account/profile'
+    | '/account/security'
+    | '/account/settings'
     | '/administration/banners'
     | '/administration/caching'
     | '/administration/email'
@@ -870,20 +943,27 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId/isolates/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/account-setup'
     | '/email-remediation'
     | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
     | '/monitoring'
+    | '/recover'
     | '/setup'
+    | '/verify-email'
     | '/home'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
     | '/'
     | '/account/api'
+    | '/account/groups'
     | '/account/profile'
+    | '/account/security'
+    | '/account/settings'
     | '/administration/banners'
     | '/administration/caching'
     | '/administration/email'
@@ -941,13 +1021,16 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/account-setup'
     | '/email-remediation'
     | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
     | '/monitoring'
+    | '/recover'
     | '/setup'
+    | '/verify-email'
     | '/_authenticated/administration'
     | '/_authenticated/refs'
     | '/_authenticated/account'
@@ -956,13 +1039,17 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs'
     | '/_authenticated/samples'
     | '/_authenticated/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads_/$uploadId'
     | '/_authenticated/'
     | '/_authenticated/refs/$refId'
     | '/_authenticated/account/api'
+    | '/_authenticated/account/groups'
     | '/_authenticated/account/profile'
+    | '/_authenticated/account/security'
+    | '/_authenticated/account/settings'
     | '/_authenticated/administration/banners'
     | '/_authenticated/administration/caching'
     | '/_authenticated/administration/email'
@@ -1025,13 +1112,17 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AccountSetupRoute: typeof AccountSetupRoute
   EmailRemediationRoute: typeof EmailRemediationRoute
   EmailRemediationVerifyRoute: typeof EmailRemediationVerifyRoute
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   MetricsRoute: typeof MetricsRoute
   MonitoringRoute: typeof MonitoringRoute
+  RecoverRoute: typeof RecoverRoute
   SetupRoute: typeof SetupRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
+  AvatarsHandleRoute: typeof AvatarsHandleRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
@@ -1054,6 +1145,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account-setup': {
+      id: '/account-setup'
+      path: '/account-setup'
+      fullPath: '/account-setup'
+      preLoaderRoute: typeof AccountSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email-remediation': {
@@ -1098,11 +1196,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitoringRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recover': {
+      id: '/recover'
+      path: '/recover'
+      fullPath: '/recover'
+      preLoaderRoute: typeof RecoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setup': {
       id: '/setup'
       path: '/setup'
       fullPath: '/setup'
       preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -1168,6 +1280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubtractionsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/avatars/$handle': {
+      id: '/avatars/$handle'
+      path: '/avatars/$handle'
+      fullPath: '/avatars/$handle'
+      preLoaderRoute: typeof AvatarsHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/health/live': {
       id: '/health/live'
       path: '/health/live'
@@ -1203,11 +1322,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountApiRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/groups': {
+      id: '/_authenticated/account/groups'
+      path: '/groups'
+      fullPath: '/account/groups'
+      preLoaderRoute: typeof AuthenticatedAccountGroupsRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
     '/_authenticated/account/profile': {
       id: '/_authenticated/account/profile'
       path: '/profile'
       fullPath: '/account/profile'
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/security': {
+      id: '/_authenticated/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AuthenticatedAccountSecurityRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
     '/_authenticated/administration/': {
@@ -1752,13 +1892,19 @@ const AuthenticatedRefsRouteRouteWithChildren =
 
 interface AuthenticatedAccountRouteChildren {
   AuthenticatedAccountApiRoute: typeof AuthenticatedAccountApiRoute
+  AuthenticatedAccountGroupsRoute: typeof AuthenticatedAccountGroupsRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountSecurityRoute: typeof AuthenticatedAccountSecurityRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
   AuthenticatedAccountApiRoute: AuthenticatedAccountApiRoute,
+  AuthenticatedAccountGroupsRoute: AuthenticatedAccountGroupsRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountSecurityRoute: AuthenticatedAccountSecurityRoute,
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
 }
 
@@ -1922,13 +2068,17 @@ const ApiV1UploadsUploadIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AccountSetupRoute: AccountSetupRoute,
   EmailRemediationRoute: EmailRemediationRoute,
   EmailRemediationVerifyRoute: EmailRemediationVerifyRoute,
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   MetricsRoute: MetricsRoute,
   MonitoringRoute: MonitoringRoute,
+  RecoverRoute: RecoverRoute,
   SetupRoute: SetupRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
+  AvatarsHandleRoute: AvatarsHandleRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
   UploadsUploadIdRoute: UploadsUploadIdRoute,

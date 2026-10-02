@@ -1,10 +1,13 @@
-import { spawn } from "node:child_process";
-import { closeSync, mkdirSync, openSync, renameSync, statSync } from "node:fs";
-import { access, type FileHandle, open, rm } from "node:fs/promises";
 import { connect } from "node:net";
 import { join } from "node:path";
 import { runCommand } from "./server/command.ts";
 import { resolveRepository } from "./server/git.ts";
+import {
+	getDaemonServiceName,
+	installDaemonService,
+	startDaemonService,
+	stopDaemonService,
+} from "./server/service.ts";
 import { type ControlRequest, sendControlRequest } from "./server/socket.ts";
 import { StateStore } from "./server/state.ts";
 
@@ -36,87 +39,41 @@ async function waitForDaemon(path: string): Promise<void> {
 	throw new Error("Development daemon did not start");
 }
 
-async function acquireDaemonLock(path: string): Promise<FileHandle | null> {
-	try {
-		const lock = await open(path, "wx", 0o600);
-		await lock.writeFile(String(process.pid));
-		return lock;
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "EEXIST") {
-			return null;
-		}
-		throw error;
-	}
-}
-
-function openDaemonLog(stateDirectory: string): number {
-	const directory = join(stateDirectory, "logs");
-	mkdirSync(directory, { mode: 0o700, recursive: true });
-	const path = join(directory, "daemon.log");
-	try {
-		if (statSync(path).size > 5 * 1024 * 1024) {
-			renameSync(path, join(directory, "daemon.previous.log"));
-		}
-	} catch {
-		// The first daemon start has no log to rotate.
-	}
-	return openSync(path, "a", 0o600);
-}
-
 async function ensureDaemon(
 	primaryWorktree: string,
 	socketPath: string,
 	stateDirectory: string,
+	repositoryId: string,
 ): Promise<void> {
+	const service = await installDaemonService(runCommand, {
+		entry: join(primaryWorktree, "apps/dev/src/main.ts"),
+		lockPath: join(stateDirectory, "daemon.lock"),
+		node: process.execPath,
+		path: process.env.PATH ?? "/usr/local/bin:/usr/bin:/bin",
+		primaryWorktree,
+		repositoryId,
+		socketPath,
+		stateDirectory,
+	});
+	await startDaemonService(runCommand, service);
 	if (await canConnect(socketPath)) {
 		return;
 	}
-	const lockPath = join(stateDirectory, "daemon.lock");
-	const lock = await acquireDaemonLock(lockPath);
-	if (!lock) {
-		await waitForDaemon(socketPath);
-		return;
-	}
-	try {
-		if (await canConnect(socketPath)) {
-			return;
-		}
-		await rm(socketPath, { force: true });
-		const entry = join(primaryWorktree, "apps/dev/src/main.ts");
-		await access(entry);
-		const log = openDaemonLog(stateDirectory);
-		const child = spawn(
-			"pnpm",
-			[
-				"--dir",
-				primaryWorktree,
-				"--filter",
-				"@virtool/dev",
-				"exec",
-				"tsx",
-				entry,
-				"daemon",
-				"run",
-				socketPath,
-			],
-			{ detached: true, stdio: ["ignore", log, log] },
-		);
-		closeSync(log);
-		child.unref();
-		await waitForDaemon(socketPath);
-	} finally {
-		await lock.close();
-		await rm(lockPath, { force: true });
-	}
+	await waitForDaemon(socketPath);
 }
 
 export async function runCli(args: string[]): Promise<void> {
 	if (process.platform !== "linux") {
-		throw new Error("virtool-dev supports Linux only");
+		throw new Error("vtd supports Linux only");
 	}
-	const cwd = process.cwd();
+	const worktreeIndex = args.indexOf("--worktree");
+	const cwd = worktreeIndex === -1 ? process.cwd() : args[worktreeIndex + 1];
+	if (!cwd) {
+		throw new Error("--worktree requires a path");
+	}
 	const repository = await resolveRepository(runCommand, cwd);
 	const store = new StateStore(repository.stateDirectory);
+	const repositoryId = store.repositoryId;
 	const socketPath = join(
 		runtimeDirectory(),
 		"virtool-dev",
@@ -125,18 +82,28 @@ export async function runCli(args: string[]): Promise<void> {
 	store.close();
 	const [command, subcommand, ...rest] = args;
 	if (command === "daemon" && subcommand === "run") {
+		if (!process.env.INVOCATION_ID) {
+			throw new Error("The development daemon must be started by systemd");
+		}
 		const { runDaemon } = await import("./server/daemon.ts");
-		await runDaemon(repository.primaryWorktree, rest[0] ?? socketPath);
+		const reason = await runDaemon(
+			repository.primaryWorktree,
+			rest[0] ?? socketPath,
+		);
+		if (reason === "restart") {
+			process.exitCode = 75;
+		}
 		return;
 	}
 	if (command === "daemon" && subcommand === "stop") {
-		await sendControlRequest(socketPath, { command: "shutdown" });
+		await stopDaemonService(runCommand, getDaemonServiceName(repositoryId));
 		return;
 	}
 	await ensureDaemon(
 		repository.primaryWorktree,
 		socketPath,
 		repository.stateDirectory,
+		repositoryId,
 	);
 	if (command === "ui") {
 		process.stdout.write("https://dev.localhost:9443\n");
@@ -144,9 +111,8 @@ export async function runCli(args: string[]): Promise<void> {
 	}
 	const supported = new Set(["list", "remove", "stop", "up"]);
 	if (!command || !supported.has(command)) {
-		throw new Error("Usage: virtool-dev <up|stop|remove|list|ui|daemon stop>");
+		throw new Error("Usage: vtd <up|stop|remove|list|ui|daemon stop>");
 	}
-	const worktreeIndex = args.indexOf("--worktree");
 	const worktree = worktreeIndex === -1 ? cwd : args[worktreeIndex + 1];
 	const result = await sendControlRequest(socketPath, {
 		command: command as ControlRequest["command"],

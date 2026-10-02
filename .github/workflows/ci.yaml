@@ -368,7 +368,7 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
-    # Internal (apps/internal)
+    # Internal (apps/internal, apps/dev-tools)
     # -------------------------------------------------------------------------
     internal-test:
         name: Internal / Test
@@ -384,7 +384,7 @@ jobs:
             # against a real Postgres testcontainer, and pulling that image does
             # not belong in the fast package loop.
             - name: Test
-              run: pnpm --filter @virtool/internal test
+              run: pnpm --filter @virtool/internal --filter @virtool/dev-tools test
               env:
                   TZ: UTC
 
@@ -482,8 +482,8 @@ jobs:
             # the harness skips them; VT_REQUIRE_BOWTIE2 below turns that skip
             # into a failure so CI can never quietly stop checking them. It is
             # built from the root Dockerfile's own target rather than apt, so
-            # this job and the workflow images can only ever run the build the
-            # goldens were generated against.
+            # this job and the workflow images always run the same bowtie2
+            # build.
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
             - name: Build bowtie2
@@ -583,11 +583,12 @@ jobs:
             - name: Setup
               uses: ./.github/actions/setup
             # Exclusions rather than an inclusion list, so a new workspace that
-            # declares `test` is covered without editing this job. The five
-            # excluded here run in dedicated jobs: web, internal, nuvs, and the
-            # two persistence packages that share Data & Storage / Test.
+            # declares `test` is covered without editing this job. The six
+            # excluded here run in dedicated jobs: web, internal and dev-tools,
+            # nuvs, and the two persistence packages that share Data & Storage /
+            # Test.
             - name: Test
-              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" --filter "!@virtool/nuvs" test
+              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" --filter "!@virtool/dev-tools" --filter "!@virtool/nuvs" test
 
     # -------------------------------------------------------------------------
     # Data and Storage (packages/data, packages/storage)
@@ -689,9 +690,6 @@ jobs:
                       target: internal
                       workspace: apps/internal
                       images: ghcr.io/virtool/internal
-                    # These four names previously came from separate legacy
-                    # repositories shipping the Python workflow of the same
-                    # name; this repository's release supersedes them.
                     - image: create-sample
                       target: create-sample
                       workspace: apps/create-sample

@@ -151,8 +151,9 @@ async function mapWithLimit<T, R>(
 /**
  * Run one `cd-hit-est` per segment and merge the representative maps.
  *
- * Segments are sorted by name so the run is reproducible, and the file names
- * carry the segment name for the same reason.
+ * Segments are sorted by name so the run is reproducible. File names carry the
+ * segment's position in that order, not its name: segment names are free text
+ * and can hold `/` or be longer than a file name can be.
  */
 async function collapseOtuSegments(
 	otu: IndexOtu,
@@ -165,12 +166,15 @@ async function collapseOtuSegments(
 		a < b ? -1 : a > b ? 1 : 0,
 	);
 
-	const maps = await mapWithLimit(sorted, limit, ([segmentName, sequences]) =>
-		collapseSegment(
-			join(tempPath, `otu-${otu.id}-segment-${segmentName}.fa`),
-			join(tempPath, `otu-${otu.id}-segment-${segmentName}.cdhit`),
-			sequences,
-		),
+	const maps = await mapWithLimit(
+		sorted.map(([, sequences], position) => ({ position, sequences })),
+		limit,
+		({ position, sequences }) =>
+			collapseSegment(
+				join(tempPath, `otu-${otu.id}-segment-${position}.fa`),
+				join(tempPath, `otu-${otu.id}-segment-${position}.cdhit`),
+				sequences,
+			),
 	);
 
 	const merged = new Map<string, string>();
@@ -312,8 +316,8 @@ export async function writeSegmentFasta(
 /**
  * Run `cd-hit-est` over one segment and read back its clusters.
  *
- * The output is named `otu-{id}-segment-{name}.cdhit`, so the cluster file
- * cd-hit-est writes beside it is `otu-{id}-segment-{name}.cdhit.clstr`.
+ * The output is named `otu-{id}-segment-{position}.cdhit`, so the cluster file
+ * cd-hit-est writes beside it is `otu-{id}-segment-{position}.cdhit.clstr`.
  * Appending `.clstr` to the output path is what cd-hit-est actually does; do
  * not "fix" it to `.cdhit.clstr` on top of a path that already ends in
  * `.cdhit`.

@@ -45,7 +45,6 @@ function renderList(
 			<AnalysisSearchProvider
 				search={{
 					...DEFAULT_ANALYSIS_SEARCH,
-					showLowOtus: true,
 					sort: "coverage",
 					dir: "asc",
 					...search,
@@ -201,7 +200,7 @@ describe("<PathoscopeList />", () => {
 	it("should label the columns of figures in the header", () => {
 		renderList();
 
-		for (const label of ["Abbreviation", "Weight", "Depth", "Coverage"]) {
+		for (const label of ["Acronym", "Weight", "Depth", "Coverage"]) {
 			expect(headerLabels().getByText(label)).toBeInTheDocument();
 		}
 	});
@@ -214,10 +213,10 @@ describe("<PathoscopeList />", () => {
 	});
 
 	// Nothing fills the column, so a heading would sit over empty space.
-	it("should not label the abbreviation column when no hit has one", () => {
-		renderList({}, [createFakePathoscopeHit({ abbreviation: "", id: "a" })]);
+	it("should not label the acronym column when no hit has one", () => {
+		renderList({}, [createFakePathoscopeHit({ acronym: "", id: "a" })]);
 
-		expect(headerLabels().queryByText("Abbreviation")).not.toBeInTheDocument();
+		expect(headerLabels().queryByText("Acronym")).not.toBeInTheDocument();
 		expect(headerLabels().getByText("Coverage")).toBeInTheDocument();
 	});
 

@@ -59,9 +59,7 @@ docker run --rm vt-tool-bowtie2 head -1 /tools/bowtie2/2.5.4/bowtie2-build
 ### Publishing
 
 `Pathoscope / Build` compiles the image on every run and `release-ghcr`
-publishes it on release, alongside `virtool/workflow-pathoscope`'s
-`ghcr.io/virtool/pathoscope`. Both publishers use the same image name, so each
-release can overwrite the tag published by the other repository.
+publishes it to `ghcr.io/virtool/pathoscope` on release.
 
 Its release-matrix image name is also the `pathoscope` cache scope used by the
 build job. This lets the release reuse the Rust crate and tool stages instead

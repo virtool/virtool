@@ -2,16 +2,14 @@ import { useFetchAccount } from "@account/account";
 import { useCheckAdminRole } from "@administration/hooks";
 import Box, { BoxGroup, BoxGroupSection } from "@base/Box";
 import { ContainerNarrow } from "@base/Container";
-import { InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { useListGroups } from "@groups/queries";
 import RightsSelect from "@samples/components/RightsSelect";
-import { samplesQueryKeys } from "@samples/keys";
 import { useFetchSample, useUpdateSampleRights } from "@samples/queries";
-import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 
 /**
@@ -45,7 +43,6 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 		isError: isErrorGroups,
 	} = useListGroups();
 
-	const queryClient = useQueryClient();
 	const mutation = useUpdateSampleRights(sampleId);
 
 	if (
@@ -73,34 +70,16 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 
 	function handleChangeGroup(value: string) {
 		const group = value === "" ? null : parseInt(value, 10);
-		mutation.mutate(
-			{ update: { group } },
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({
-						queryKey: samplesQueryKeys.detail(sampleId),
-					});
-				},
-			},
-		);
+		mutation.mutate({ update: { group } });
 	}
 
 	function handleChangeRights(value: string, scope: "all" | "group") {
-		mutation.mutate(
-			{
-				update: {
-					[`${scope}Read`]: value.includes("r"),
-					[`${scope}Write`]: value.includes("w"),
-				},
+		mutation.mutate({
+			update: {
+				[`${scope}Read`]: value.includes("r"),
+				[`${scope}Write`]: value.includes("w"),
 			},
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({
-						queryKey: samplesQueryKeys.detail(sampleId),
-					});
-				},
-			},
-		);
+		});
 	}
 
 	if (!canModifyRights) {
@@ -124,19 +103,15 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 				</SectionHeader>
 				<BoxGroup>
 					<BoxGroupSection>
-						<InputGroup>
-							<InputLabel htmlFor="group">Group</InputLabel>
+						<Field>
+							<FieldLabel>Group</FieldLabel>
 							<Select
 								value={selectedGroupId || noGroup}
 								onValueChange={(value) =>
 									handleChangeGroup(value === noGroup ? "" : value)
 								}
 							>
-								<SelectButton
-									className="w-full"
-									icon={ChevronDown}
-									id="group"
-								/>
+								<SelectButton className="w-full" icon={ChevronDown} />
 								<SelectContent>
 									<SelectItem key={noGroup} value={noGroup}>
 										None
@@ -148,25 +123,23 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 									))}
 								</SelectContent>
 							</Select>
-						</InputGroup>
+						</Field>
 
-						<InputGroup>
-							<InputLabel htmlFor="groupRights">Group Rights</InputLabel>
+						<Field>
+							<FieldLabel>Group Rights</FieldLabel>
 							<RightsSelect
-								id="groupRights"
 								value={groupRights}
 								onChange={(value) => handleChangeRights(value, "group")}
 							/>
-						</InputGroup>
+						</Field>
 
-						<InputGroup>
-							<InputLabel htmlFor="allUsers">All {"Users'"} Rights</InputLabel>
+						<Field>
+							<FieldLabel>All {"Users'"} Rights</FieldLabel>
 							<RightsSelect
-								id="allUsers"
 								value={allRights}
 								onChange={(value) => handleChangeRights(value, "all")}
 							/>
-						</InputGroup>
+						</Field>
 					</BoxGroupSection>
 				</BoxGroup>
 			</section>

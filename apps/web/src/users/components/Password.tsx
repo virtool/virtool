@@ -1,17 +1,14 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Checkbox from "@base/Checkbox";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputSimple,
-} from "@base/Input";
+import Field, { FieldError } from "@base/Field";
+import Input from "@base/Input";
 import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { usePasswordRules } from "@forms/password";
 import { useUpdateUser } from "@users/queries";
 import { useForm } from "react-hook-form";
+import RecoveryLink from "./RecoveryLink";
 
 type PasswordProps = {
 	/** The users unique id */
@@ -49,8 +46,8 @@ export default function Password({
 
 	return (
 		<section>
-			<SectionHeader>
-				<h2>Change Password</h2>
+			<SectionHeader level={3}>
+				<h3>Change Password</h3>
 				<p>
 					Last changed <RelativeTime time={lastPasswordChange} />
 				</p>
@@ -65,30 +62,23 @@ export default function Password({
 							}),
 						)}
 					>
-						<InputGroup>
-							<InputContainer>
-								<InputSimple
-									aria-label="password"
-									id="password"
-									type="password"
-									autoComplete="new-password-for-other-user"
-									aria-required
-									aria-invalid={
-										Boolean(errors.password) || mutation.isError || undefined
-									}
-									aria-describedby={
-										errors.password || mutation.isError
-											? "password-error"
-											: undefined
-									}
-									{...register("password", passwordRules)}
-								/>
-								<InputError id="password-error">
-									{errors.password?.message ||
-										(mutation.isError && mutation.error.message)}
-								</InputError>
-							</InputContainer>
-						</InputGroup>
+						<Field>
+							<Input
+								aria-label="password"
+								type="password"
+								autoComplete="new-password-for-other-user"
+								aria-required
+								{...register("password", passwordRules)}
+							/>
+							<FieldError
+								errors={[
+									errors.password,
+									mutation.isError
+										? { message: mutation.error.message }
+										: undefined,
+								]}
+							/>
+						</Field>
 
 						<div className="flex items-center justify-between">
 							<Checkbox
@@ -102,6 +92,7 @@ export default function Password({
 					</form>
 				</BoxGroupSection>
 			</BoxGroup>
+			<RecoveryLink userId={id} />
 		</section>
 	);
 }

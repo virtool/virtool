@@ -2,6 +2,7 @@ import type { EmailTemplate } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	check,
+	foreignKey,
 	index,
 	integer,
 	jsonb,
@@ -10,6 +11,7 @@ import {
 	timestamp,
 	unique,
 } from "drizzle-orm/pg-core";
+import { setupTokens } from "./setup";
 
 /** The delivery state of an email outbox row. */
 export type EmailOutboxStatus = "queued" | "accepted" | "failed";
@@ -28,13 +30,25 @@ export const emailOutbox = pgTable(
 		next_attempt_at: timestamp("next_attempt_at").notNull(),
 		provider_message_id: text("provider_message_id"),
 		recipient: text("recipient").notNull(),
+		/**
+		 * The setup token whose link this message carries. Deleting the token
+		 * deletes the message, and a queued message whose token is no longer
+		 * usable is discarded instead of sent.
+		 */
+		setup_token_id: integer("setup_token_id"),
 		status: text("status").$type<EmailOutboxStatus>().notNull(),
 		template: jsonb("template").$type<EmailTemplate>().notNull(),
 		template_version: integer("template_version").notNull(),
 		terminal_at: timestamp("terminal_at"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.setup_token_id],
+			foreignColumns: [setupTokens.id],
+			name: "email_outbox_setup_token_id_fkey",
+		}).onDelete("cascade"),
 		unique("uq_email_outbox_idempotency_key").on(table.idempotency_key),
+		unique("uq_email_outbox_setup_token_id").on(table.setup_token_id),
 		check(
 			"ck_email_outbox_status",
 			sql`${table.status} in ('queued', 'accepted', 'failed')`,

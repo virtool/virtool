@@ -1,11 +1,15 @@
-import { access, readFile, rm, writeFile } from "node:fs/promises";
+import { access, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { request } from "node:https";
-import { join } from "node:path";
-import type { DesiredState, Environment } from "../shared/types.ts";
+import { dirname, join } from "node:path";
+import type { DesiredState } from "../shared/types.ts";
 import type { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
-import { CONFIG_VERSION } from "./constants.ts";
-import { DockerObserver } from "./docker.ts";
+import { CONFIG_VERSION, DEV_TOOLS_SERVICE } from "./constants.ts";
+import {
+	DockerObserver,
+	type EnvironmentObservation,
+	type RepositoryObservation,
+} from "./docker.ts";
 import { ensureEnvironmentFiles } from "./files.ts";
 import { getRetryDelay } from "./retry.ts";
 import type { StateStore } from "./state.ts";
@@ -18,14 +22,19 @@ function actionFor(desired: DesiredState): "remove" | "start" | "stop" {
 	return desired === "up" ? "start" : desired === "stopped" ? "stop" : "remove";
 }
 
-/** Reconciles durable desired state with Docker Compose. */
+// No timer of its own: the daemon refresh drives ticks through observe(), so an
+// idle repository costs one `docker ps` per refresh.
 export class Reconciler {
-	private readonly active = new Set<string>();
+	private readonly active = new Map<string, Promise<void>>();
 	private readonly observer: DockerObserver;
 	private readonly removalAttempts = new Map<string, number>();
 	private readonly retryAt = new Map<string, number>();
 	private readonly restarts = new Set<string>();
-	private timer: NodeJS.Timeout | undefined;
+	private observed = new Map<string, EnvironmentObservation>();
+	private sharedPromise: Promise<void> | undefined;
+	private started = false;
+	private stopping = false;
+	private tickPromise: Promise<void> | undefined;
 
 	constructor(
 		private readonly store: StateStore,
@@ -38,18 +47,20 @@ export class Reconciler {
 	}
 
 	start(): void {
-		this.timer = setInterval(() => void this.tick(), 1_000);
-		void this.tick();
+		this.started = true;
+		void this.runTick();
 	}
 
-	stop(): void {
-		if (this.timer) {
-			clearInterval(this.timer);
-		}
+	async stop(): Promise<void> {
+		this.stopping = true;
+		await this.tickPromise;
+		await Promise.all(this.active.values());
 	}
 
 	wake(): void {
-		void this.tick();
+		if (this.started) {
+			void this.runTick();
+		}
 	}
 
 	requestRestart(environmentId: string): void {
@@ -57,36 +68,85 @@ export class Reconciler {
 		this.wake();
 	}
 
+	hasActiveWork(): boolean {
+		return this.active.size > 0 || this.tickPromise !== undefined;
+	}
+
 	private async tick(): Promise<void> {
+		if (this.stopping) {
+			return;
+		}
 		for (const environment of this.store.getDesiredEnvironments()) {
 			const canRetryRemoval =
 				environment.desired === "absent" &&
 				Date.now() >= (this.retryAt.get(environment.id) ?? 0);
 			if (
 				!this.active.has(environment.id) &&
-				(!environment.lastError || canRetryRemoval)
+				(!environment.lastError || canRetryRemoval) &&
+				!this.isConverged(environment, this.observed.get(environment.id))
 			) {
-				void this.reconcile(environment).catch((error) => {
-					this.store.setEnvironmentError(
-						environment.id,
-						error instanceof Error ? error.message : String(error),
-					);
-					if (environment.desired === "absent") {
-						const attempt = this.removalAttempts.get(environment.id) ?? 0;
-						this.removalAttempts.set(environment.id, attempt + 1);
-						this.retryAt.set(
+				const promise = this.reconcile(environment)
+					.then((changed) => {
+						if (changed) {
+							this.publish();
+						}
+					})
+					.catch((error) => {
+						this.store.setEnvironmentError(
 							environment.id,
-							Date.now() + getRetryDelay(attempt),
+							error instanceof Error ? error.message : String(error),
 						);
-					}
-					this.publish();
-				});
+						if (environment.desired === "absent") {
+							const attempt = this.removalAttempts.get(environment.id) ?? 0;
+							this.removalAttempts.set(environment.id, attempt + 1);
+							this.retryAt.set(
+								environment.id,
+								Date.now() + getRetryDelay(attempt),
+							);
+						}
+						this.publish();
+					})
+					.finally(() => {
+						this.active.delete(environment.id);
+					});
+				this.active.set(environment.id, promise);
 			}
 		}
-		this.publish();
 	}
 
-	private async reconcile(environment: DesiredEnvironment): Promise<void> {
+	private isConverged(
+		environment: DesiredEnvironment,
+		observed: EnvironmentObservation | undefined,
+	): boolean {
+		if (
+			!observed ||
+			!environment.present ||
+			this.restarts.has(environment.id)
+		) {
+			return false;
+		}
+		return (
+			(environment.desired === "up" && observed.ready) ||
+			(environment.desired === "stopped" &&
+				["stopped", "missing"].includes(observed.state))
+		);
+	}
+
+	private async runTick(): Promise<void> {
+		if (this.tickPromise || this.stopping) {
+			return this.tickPromise;
+		}
+		this.tickPromise = this.tick();
+		try {
+			await this.tickPromise;
+		} finally {
+			this.tickPromise = undefined;
+		}
+	}
+
+	private async reconcile(environment: DesiredEnvironment): Promise<boolean> {
+		// A worktree is marked absent only after a successful Git listing omits it,
+		// which covers worktrees deleted without the Worktrunk removal hook.
 		if (!environment.present && environment.desired !== "absent") {
 			await this.observer.validateProjectOwnership(
 				this.environmentProject(environment.id),
@@ -99,28 +159,19 @@ export class Reconciler {
 			this.store.setDesiredByEnvironment(environment.id, "absent");
 			environment.desired = "absent";
 		}
+		const observed = await this.observer.inspectEnvironment(
+			this.environmentProject(environment.id),
+		);
+		this.observed.set(environment.id, observed);
+		if (this.isConverged(environment, observed)) {
+			return false;
+		}
 		const files = await ensureEnvironmentFiles(this.store.directory, {
 			environmentId: environment.id,
 			name: environment.name,
 			repositoryId: this.store.repositoryId,
 			worktree: environment.path,
 		});
-		const project = this.environmentProject(environment.id);
-		const observed = await this.observer.inspectEnvironment(
-			project,
-			files.composeFile,
-			this.primaryWorktree,
-		);
-		if (
-			(environment.desired === "up" && observed.ready) ||
-			(environment.desired === "stopped" &&
-				["stopped", "missing"].includes(observed.state))
-		) {
-			if (!this.restarts.has(environment.id)) {
-				return;
-			}
-		}
-		this.active.add(environment.id);
 		const operationId = this.store.startOperation(
 			environment.id,
 			actionFor(environment.desired),
@@ -166,7 +217,7 @@ export class Reconciler {
 			this.retryAt.delete(environment.id);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
-			this.store.updateOperation(operationId, "failed", "failed", message);
+			this.store.failOperation(operationId, message);
 			this.store.setEnvironmentError(environment.id, message);
 			if (environment.desired === "absent") {
 				const attempt = this.removalAttempts.get(environment.id) ?? 0;
@@ -175,9 +226,8 @@ export class Reconciler {
 			}
 		} finally {
 			this.restarts.delete(environment.id);
-			this.active.delete(environment.id);
-			this.publish();
 		}
+		return true;
 	}
 
 	private async checkConfigVersion(worktree: string): Promise<void> {
@@ -191,7 +241,19 @@ export class Reconciler {
 		}
 	}
 
-	private async ensureShared(): Promise<void> {
+	async ensureShared(): Promise<void> {
+		if (this.sharedPromise) {
+			return this.sharedPromise;
+		}
+		this.sharedPromise = this.provisionShared();
+		try {
+			await this.sharedPromise;
+		} finally {
+			this.sharedPromise = undefined;
+		}
+	}
+
+	private async provisionShared(): Promise<void> {
 		const project = this.sharedProject();
 		const file = join(this.primaryWorktree, "dev/shared.compose.yaml");
 		const initialized = this.store.getMeta("shared_initialized") === "true";
@@ -302,14 +364,29 @@ export class Reconciler {
 			{ cwd: environment.path },
 		);
 		await writeFile(composeFile, rendered.stdout);
+		// Worktrees from before dev-tools existed have no service to run.
+		const credentials = environment.createDefaultAdministrator
+			? this.store.getDefaultAdministratorCredentials()
+			: null;
+		const administrator =
+			credentials &&
+			(await this.listServices(envFile, composeFile, environment)).includes(
+				DEV_TOOLS_SERVICE,
+			)
+				? credentials
+				: null;
 		this.store.updateOperation(
 			operationId,
 			"running",
 			"initializing database and storage",
 		);
+		const worktreeOwner = await stat(environment.path);
+		await rm(join(dirname(composeFile), "postgres-url"), { force: true });
 		await this.compose(environment, envFile, composeFile, [
 			"run",
 			"--rm",
+			"--user",
+			`${worktreeOwner.uid}:${worktreeOwner.gid}`,
 			"database-init",
 		]);
 		await this.compose(environment, envFile, composeFile, [
@@ -328,6 +405,7 @@ export class Reconciler {
 				"jobs-api",
 				"tasks",
 				"web",
+				...(administrator ? [DEV_TOOLS_SERVICE] : []),
 			]),
 		);
 		if (!this.isStillDesired(environment.id, "up")) {
@@ -341,6 +419,29 @@ export class Reconciler {
 		]);
 		if (!this.isStillDesired(environment.id, "up")) {
 			return;
+		}
+		if (administrator) {
+			this.store.updateOperation(
+				operationId,
+				"running",
+				"creating default administrator",
+			);
+			// The default administrator password is a dummy for local development,
+			// not a secret. Passing it in argv, where command errors and the dev UI
+			// can show it, is intentional.
+			await this.compose(environment, envFile, composeFile, [
+				"run",
+				"--rm",
+				DEV_TOOLS_SERVICE,
+				"create",
+				"administrator",
+				`--handle=${administrator.handle}`,
+				`--email=${administrator.email}`,
+				`--password=${administrator.password}`,
+			]);
+			if (!this.isStillDesired(environment.id, "up")) {
+				return;
+			}
 		}
 		this.store.updateOperation(operationId, "running", "starting services");
 		await this.compose(environment, envFile, composeFile, [
@@ -435,13 +536,16 @@ export class Reconciler {
 			"running",
 			"deleting database and blobs",
 		);
+		// The rendered compose file comes from whichever branch last started the
+		// environment, so cleanup runs from the daemon's own definitions instead.
+		const cleanupFile = join(this.primaryWorktree, "dev/cleanup.compose.yaml");
 		const cleanup = await Promise.allSettled([
-			this.compose(environment, envFile, composeFile, [
+			this.compose(environment, envFile, cleanupFile, [
 				"run",
 				"--rm",
 				"cleanup-database",
 			]),
-			this.compose(environment, envFile, composeFile, [
+			this.compose(environment, envFile, cleanupFile, [
 				"run",
 				"--rm",
 				"cleanup-storage",
@@ -492,6 +596,29 @@ export class Reconciler {
 		);
 	}
 
+	private async listServices(
+		envFile: string,
+		composeFile: string,
+		environment: DesiredEnvironment,
+	): Promise<string[]> {
+		const { stdout } = await this.run(
+			"docker",
+			[
+				"compose",
+				"--env-file",
+				envFile,
+				"--project-name",
+				this.environmentProject(environment.id),
+				"--file",
+				composeFile,
+				"config",
+				"--services",
+			],
+			{ cwd: this.primaryWorktree },
+		);
+		return stdout.split("\n").filter(Boolean);
+	}
+
 	private sharedEnvironment(): NodeJS.ProcessEnv {
 		return {
 			...process.env,
@@ -508,51 +635,29 @@ export class Reconciler {
 		return `virtool-dev-${this.store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`;
 	}
 
-	async observe(): Promise<
-		Map<
-			string,
-			{
-				ready: boolean;
-				services: Environment["services"];
-				state: Environment["observed"];
-			}
-		>
-	> {
-		const result = new Map<
-			string,
-			{
-				ready: boolean;
-				services: Environment["services"];
-				state: Environment["observed"];
-			}
-		>();
-		await Promise.all(
-			this.store.getDesiredEnvironments().map(async (environment) => {
-				const composeFile = join(
-					this.store.directory,
-					"environments",
-					environment.id,
-					"compose.yaml",
-				);
-				result.set(
-					environment.id,
-					await this.observer.inspectEnvironment(
-						this.environmentProject(environment.id),
-						composeFile,
-						this.primaryWorktree,
-					),
-				);
-			}),
-		);
-		return result;
-	}
-
-	async inspectShared() {
-		return this.observer.inspectShared(
+	async observe(includeStorage: boolean): Promise<{
+		environments: Map<string, EnvironmentObservation>;
+		shared: RepositoryObservation["shared"];
+	}> {
+		const observation = await this.observer.observeRepository(
+			this.store.repositoryId,
 			this.sharedProject(),
-			join(this.primaryWorktree, "dev/shared.compose.yaml"),
-			this.primaryWorktree,
+			includeStorage,
 		);
+		const environments = new Map<string, EnvironmentObservation>();
+		for (const environment of this.store.getDesiredEnvironments()) {
+			environments.set(
+				environment.id,
+				observation.error
+					? { ready: false, services: {}, state: "missing" }
+					: (observation.environments.get(
+							this.environmentProject(environment.id),
+						) ?? { ready: false, services: {}, state: "stopped" }),
+			);
+		}
+		this.observed = environments;
+		this.wake();
+		return { environments, shared: observation.shared };
 	}
 
 	async resetShared(): Promise<void> {

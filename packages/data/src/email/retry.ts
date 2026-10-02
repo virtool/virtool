@@ -8,10 +8,7 @@
  * count of attempts.
  *
  * Six hours rides out a long incident while staying inside the lifetime of
- * the tokens in the auth-link templates, so a link is never delivered after
- * its token expired. No flow mints those tokens yet; a flow that adds one
- * must not give it a lifetime shorter than this value without shortening this
- * value with it.
+ * emailed auth links, so a link is never delivered after its token expired.
  */
 export const EMAIL_DELIVERY_DEADLINE_SECONDS = 6 * 3600;
 

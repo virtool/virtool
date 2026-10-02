@@ -2,7 +2,7 @@ import { useFetchAccount } from "@account/account";
 import { getDocumentTitle } from "@app/development";
 import { CONTENT_SCROLL_ID } from "@app/scroll";
 import { armSessionEnd } from "@app/session";
-import { useBrowserSessionHeartbeat } from "@app/sessionHeartbeat";
+import { useBrowserSessionRefresh } from "@app/sessionRefresh";
 import * as Sse from "@app/sse/SseConnection";
 import Banner from "@banner/components/Banner";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -19,6 +19,7 @@ import {
 	Outlet,
 	redirect,
 	useLocation,
+	useMatch,
 } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect } from "react";
 
@@ -62,7 +63,10 @@ function AuthenticatedLayout() {
 	const queryClient = useQueryClient();
 	const { data, isPending } = useFetchAccount();
 	const location = useLocation();
-	useBrowserSessionHeartbeat(Boolean(data));
+	const administrationMatch = useMatch({
+		from: "/_authenticated/administration",
+		shouldThrow: false,
+	});
 
 	useEffect(() => {
 		if (data) {
@@ -73,6 +77,7 @@ function AuthenticatedLayout() {
 			setupSse(queryClient);
 		}
 	}, [data, queryClient]);
+	useBrowserSessionRefresh(Boolean(data));
 
 	useEffect(() => {
 		if (data) {
@@ -88,6 +93,10 @@ function AuthenticatedLayout() {
 		return (
 			<Navigate to="/login" replace search={{ redirect: location.href }} />
 		);
+	}
+
+	if (administrationMatch?.context.recentAuthenticationFresh === false) {
+		return <Outlet />;
 	}
 
 	return (
@@ -113,7 +122,7 @@ function AuthenticatedLayout() {
 					<div className="sticky top-0 self-start pt-18">
 						<Sidebar administratorRole={data.administratorRole} />
 					</div>
-					<main id="main-content" tabIndex={-1} className="flex-1 min-w-0 p-18">
+					<main id="main-content" className="flex-1 min-w-0 p-18 outline-none">
 						<Suspense fallback={<LoadingPlaceholder />}>
 							<Outlet />
 						</Suspense>

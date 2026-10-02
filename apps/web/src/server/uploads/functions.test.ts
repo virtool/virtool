@@ -296,7 +296,11 @@ describe("initUpload", () => {
 				type: "reads",
 				size: 5,
 			}),
-		).rejects.toThrow("Direct uploads are unavailable");
+		).rejects.toMatchObject({
+			message: "Direct uploads are unavailable on this deployment.",
+			status: 503,
+		});
+		expect(setResponseStatus).toHaveBeenCalledWith(503);
 		expect(await db.select().from(uploadsTable)).toHaveLength(0);
 		expect(presignUpload).not.toHaveBeenCalled();
 	});
@@ -349,8 +353,10 @@ describe("initUpload", () => {
 		expect(result.blockSize).toBe(16 * 1024 * 1024);
 	});
 
-	it("rejects files larger than the application upload ceiling", async () => {
+	it("maps a file larger than the application upload ceiling to a 413", async () => {
+		testConfig.uploadsChunked = true;
 		await signIn("full");
+		await updateSettings(db, { maxUploadSize: MAX_UPLOAD_SIZE });
 
 		await expect(
 			call("initUploadFn", {
@@ -358,7 +364,10 @@ describe("initUpload", () => {
 				type: "reads",
 				size: MAX_UPLOAD_SIZE + 1,
 			}),
-		).rejects.toThrow();
+		).rejects.toMatchObject({ status: 413 });
+
+		expect(setResponseStatus).toHaveBeenCalledWith(413);
+		expect(presignUpload).not.toHaveBeenCalled();
 	});
 
 	it("refuses a file above the configured maximum before reserving it", async () => {
@@ -368,7 +377,10 @@ describe("initUpload", () => {
 
 		await expect(
 			call("initUploadFn", { name: "reads.fq.gz", type: "reads", size: 1025 }),
-		).rejects.toThrow("File exceeds the maximum upload size of 1,024 bytes.");
+		).rejects.toMatchObject({
+			message: "File exceeds the maximum upload size of 1,024 bytes.",
+			status: 413,
+		});
 
 		expect(setResponseStatus).toHaveBeenCalledWith(413);
 		expect(await db.select().from(uploadsTable)).toHaveLength(0);

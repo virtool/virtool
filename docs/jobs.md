@@ -11,7 +11,7 @@ claim, update, and finish a job.
 `runWorkflow` knows nothing about the network, process signals, or process
 exit. It runs an explicit ordered list of steps and returns a `RunOutcome`.
 
-`runWorkflowApp`, the entrypoint called by each workflow app's `main.ts`, owns
+`runWorkflowApp`, the entrypoint called by each workflow app's `src/index.ts`, owns
 the lifecycle around that run:
 
 - installing the `SIGTERM` handler;
@@ -19,7 +19,7 @@ the lifecycle around that run:
 - constructing the jobs API client and run context;
 - starting and stopping the ping loop;
 - reporting step starts and successful completion;
-- flushing Sentry; and
+- reporting failures to Sentry and flushing it; and
 - selecting the pod's exit code.
 
 The lifecycle implementation is split among `createJobsApiClient`, `claimJob`,
@@ -57,6 +57,10 @@ there is deliberately no `cancelled` flag.
 When a job enters any terminal state, its credential stops authenticating. The
 next ping receives `401`, and the ping loop calls `signals.cancel()`. The run
 then cooperatively abandons its active step and returns `cancelled`.
+
+A ping updates only a job that isn't terminal. If the job reaches a terminal
+state after the credential check but before the ping write, the ping also
+receives `401` with the terminal-state message, and doesn't record the ping.
 
 This design covers more than user cancellation. A job may already be
 `cancelled`, `failed` by the stalled-job sweep, or `succeeded`. In every case,

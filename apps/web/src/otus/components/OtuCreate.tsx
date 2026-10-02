@@ -4,7 +4,7 @@ import OtuForm from "./OtuForm";
 
 type FormValues = {
 	name: string;
-	abbreviation: string;
+	acronym: string;
 };
 
 type CreateOtuProps = {
@@ -19,9 +19,9 @@ type CreateOtuProps = {
 export default function OtuCreate({ open, refId, setOpen }: CreateOtuProps) {
 	const mutation = useCreateOtu(refId);
 
-	function handleSubmit({ name, abbreviation }: FormValues) {
+	function handleSubmit({ name, acronym }: FormValues) {
 		mutation.mutate(
-			{ name, abbreviation },
+			{ name, acronym },
 			{
 				onSuccess: () => {
 					setOpen(false);

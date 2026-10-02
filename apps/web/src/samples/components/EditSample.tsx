@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import TextArea from "@base/TextArea";
 import type { Sample } from "@virtool/contracts";
@@ -58,35 +59,29 @@ export default function EditSample({
 						),
 					)}
 				>
-					<InputGroup>
-						<InputLabel htmlFor="name">Name</InputLabel>
-						<InputSimple
-							id="name"
-							aria-required
-							aria-invalid={mutation.isError || undefined}
-							aria-describedby={mutation.isError ? "name-error" : undefined}
-							{...register("name")}
-						/>
-						<InputError id="name-error">
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<Input aria-required {...register("name")} />
+						<FieldError>
 							{mutation.isError && (mutation.error.message || "Required Field")}
-						</InputError>
-					</InputGroup>
-					<InputGroup>
-						<InputLabel htmlFor="isolate">Isolate</InputLabel>
-						<InputSimple id="isolate" {...register("isolate")} />
-					</InputGroup>
-					<InputGroup>
-						<InputLabel htmlFor="host">Host</InputLabel>
-						<InputSimple id="host" {...register("host")} />
-					</InputGroup>
-					<InputGroup>
-						<InputLabel htmlFor="locale">Locale</InputLabel>
-						<InputSimple id="locale" {...register("locale")} />
-					</InputGroup>
-					<InputGroup>
-						<InputLabel htmlFor="notes">Notes</InputLabel>
-						<TextArea id="notes" {...register("notes")} />
-					</InputGroup>
+						</FieldError>
+					</Field>
+					<Field>
+						<FieldLabel>Isolate</FieldLabel>
+						<Input {...register("isolate")} />
+					</Field>
+					<Field>
+						<FieldLabel>Host</FieldLabel>
+						<Input {...register("host")} />
+					</Field>
+					<Field>
+						<FieldLabel>Locale</FieldLabel>
+						<Input {...register("locale")} />
+					</Field>
+					<Field>
+						<FieldLabel>Notes</FieldLabel>
+						<TextArea {...register("notes")} />
+					</Field>
 
 					<SaveButton />
 				</form>

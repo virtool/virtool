@@ -1,10 +1,14 @@
 import { accountQueryKeys } from "@account/keys";
+import { signInWithPasskey, useSingleCeremony } from "@app/passkeys";
 import {
+	cancelEmailRemediationFn,
+	changeEmailRemediationFn,
 	completeEmailRemediationFn,
 	createFirstUserFn,
 	getEmailRemediationFn,
 	loginFn,
-	logoutFn,
+	promoteEmailRemediationFn,
+	resendEmailRemediationFn,
 	resetPasswordFn,
 	submitEmailRemediationFn,
 	verifyTwoFactorFn,
@@ -31,6 +35,8 @@ export function emailRemediationQueryOptions() {
 	return queryOptions({
 		queryKey: ["email-remediation"],
 		queryFn: () => getEmailRemediationFn(),
+		refetchInterval: (query) =>
+			query.state.data?.status === "pending" ? 3_000 : false,
 	});
 }
 
@@ -50,10 +56,10 @@ export function useCreateFirstUser() {
 	return useMutation<
 		Awaited<ReturnType<typeof createFirstUserFn>>,
 		Error,
-		{ handle: string; password: string }
+		{ handle: string; email: string; password: string }
 	>({
-		mutationFn: ({ handle, password }) =>
-			createFirstUserFn({ data: { handle, password } }),
+		mutationFn: ({ handle, email, password }) =>
+			createFirstUserFn({ data: { handle, email, password } }),
 		onSuccess: () => {
 			queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
 			queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
@@ -76,6 +82,25 @@ export function useLoginMutation() {
 			if (!("twoFactorRedirect" in data) && !data.reset) {
 				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 			}
+		},
+	});
+}
+
+/**
+ * Initializes a mutator that signs in with a passkey.
+ *
+ * A passkey verifies the user, so a TOTP-enrolled user does not get the
+ * second-factor step. A user who must reset their password gets a session
+ * restricted to the reset, and the route guards send them to the reset form.
+ */
+export function usePasskeySignInMutation() {
+	const queryClient = useQueryClient();
+	const ceremony = useSingleCeremony(signInWithPasskey);
+
+	return useMutation<void, Error, void>({
+		mutationFn: ceremony,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},
 	});
 }
@@ -118,6 +143,24 @@ export function useSubmitEmailRemediation() {
 	});
 }
 
+/** Send a replacement challenge for the currently staged address. */
+export function useResendEmailRemediation() {
+	return useMutation({
+		mutationFn: ({ redirect }: { redirect?: string }) =>
+			resendEmailRemediationFn({ data: { redirect } }),
+	});
+}
+
+/** Revoke the staged challenge and return to address entry. */
+export function useChangeEmailRemediation() {
+	return useMutation({ mutationFn: () => changeEmailRemediationFn() });
+}
+
+/** Promote a matching restricted browser after cross-browser verification. */
+export function usePromoteEmailRemediation() {
+	return useMutation({ mutationFn: () => promoteEmailRemediationFn() });
+}
+
 /** Complete remediation with the one-time mailbox token. */
 export function completeEmailRemediation(token: string) {
 	return completeEmailRemediationFn({ data: { token } });
@@ -125,5 +168,5 @@ export function completeEmailRemediation(token: string) {
 
 /** Abandon the restricted flow and clear every browser credential. */
 export function useCancelEmailRemediation() {
-	return useMutation({ mutationFn: () => logoutFn() });
+	return useMutation({ mutationFn: () => cancelEmailRemediationFn() });
 }

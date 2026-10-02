@@ -14,6 +14,15 @@ export async function setup() {
 		.withDatabase("virtool")
 		.withUsername("virtool")
 		.withPassword("virtool")
+		.withHealthCheck({
+			test: [
+				"CMD-SHELL",
+				"PGPASSWORD=virtool pg_isready --host localhost --username virtool --dbname virtool",
+			],
+			interval: 10_000,
+			timeout: 1_000,
+			retries: 25,
+		})
 		.withReuse()
 		.start();
 

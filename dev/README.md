@@ -2,95 +2,82 @@
 
 `@virtool/dev` is the Linux-only local development coordinator. One daemon runs
 per Git repository and manages a distinct Docker Compose environment for each
-worktree. It is intentionally specific to Virtool.
+worktree.
 
 Node 24, pnpm, Docker Engine with Compose, Git, and Worktrunk are prerequisites.
-The pnpm workspace must be installed before the first command. Mise adds
-`dev/bin` to `PATH`.
+Install the pnpm workspace before the first command. Mise adds `dev/bin` to
+`PATH`.
 
 ```shell
-virtool-dev up
-virtool-dev stop
-virtool-dev remove
-virtool-dev list
-virtool-dev ui
-virtool-dev daemon stop
+vtd up
+vtd stop
+vtd remove
+vtd list
+vtd ui
+vtd daemon stop
 ```
 
-The first command starts a detached daemon from the primary checkout. Mutations
-record desired state and return immediately with <https://dev.localhost:9443>;
-the UI reports build, migration, readiness, failure, and cleanup progress.
+The first command installs and starts a systemd user service for the
+repository. Commands return immediately; the UI at <https://dev.localhost:9443>
+shows progress, failures, and logs. The daemon restarts itself when
+`apps/dev` changes.
 
-## Architecture
+Each environment is served at `https://<environment>.localhost:9443`. Its
+hostname and data stay the same when you rename the branch or move the
+worktree. Removing a worktree with Worktrunk also removes its environment.
 
-The daemon resolves the repository through the absolute Git common directory and
-stores its generated UUID, SQLite state, operation history, secrets, rendered
-Compose inputs, and logs under `<git-common-dir>/virtool-dev/`. Its CLI uses a
-repository-specific Unix socket below `$XDG_RUNTIME_DIR/virtool-dev/`. The HTTP
-API listens only on loopback and Caddy exposes it at the management origin.
+## State
 
-The daemon continuously reconciles Git, durable desired state, and Docker. Git
-worktrees appear in the UI before an environment is created. The first `up`
-mints an immutable environment ID and hostname. Branch renames and worktree
-moves update their display values without changing the database, blob
-container, secrets, Compose project, or HTTPS origin.
+The daemon keeps its state, secrets, and logs in `<git-common-dir>/virtool-dev/`.
+Caddy's development CA root is at `<git-common-dir>/virtool-dev/root.crt`; trust
+it manually if you need to. The daemon never changes the host trust store.
 
-One repository Compose project owns Postgres, Azurite, Caddy, and their durable
-storage. Environment projects contain migrations, jobs API, tasks, and web
-services. Every managed Docker resource carries repository, environment,
-generation, and role labels. Cleanup validates those identities and never
-removes shared infrastructure.
+Use `systemctl --user status virtool-dev-<repository-id>.service` to see the
+service state.
 
-The shared gateway uses port 9443 without fallback:
+## Data safety
 
-- `https://dev.localhost:9443` serves the management UI.
-- `https://<environment>.localhost:9443` serves an environment.
-- signed `/devstoreaccount1/` requests route to shared Azurite.
+Stopping keeps all data. Removing deletes only that environment's database,
+blob container, secrets, and Docker resources. Shared Postgres, Azurite, and
+Caddy storage is never removed by environment cleanup.
 
-Caddy owns one development CA. Its public root is published at
-`<git-common-dir>/virtool-dev/root.crt` for manual trust; the service never
-changes the host trust store.
+If shared storage disappears after initialization, the daemon shows an error
+instead of recreating it. Use the shared reset control in the UI only when you
+intend to destroy all local development state.
 
-## Lifecycle and data safety
+## Default administrator
 
-Starting ensures shared infrastructure, creates the isolated database and blob
-container, writes stable mode-0600 secrets, builds the core image, migrates the
-database, starts application services, and checks readiness. Stopping preserves
-all data and identity. Removing stops writers first, then deletes only the
-target database, container, secrets, and Docker resources. Interrupted removal
-is retained and retried.
+Set a default handle, email, and password on the **Shared** page of the UI.
+After migrations, each environment that starts creates a full administrator
+with these values if its database has no users. The daemon never changes
+existing users.
 
-The daemon does not silently recreate missing shared storage. A missing volume
-after initialization is treated as possible data loss and shown as an error.
-Use the confirmed shared reset control only when destroying all local
-development state is intentional.
+The daemon keeps the values in its state. The UI and `vtd list` never show the
+password. When you save the setting without a password, the daemon keeps the
+saved password.
 
-Worktrunk's removal hook only requests asynchronous deletion. If a worktree
-disappears without the hook, cleanup is allowed only after successful Git
-inspection proves its durable worktree identity is gone and Docker ownership
-labels still match.
+The daemon stores the password as plain text and gives it to each environment
+as plain text. Do not use a real or sensitive password.
 
-## Workflows and builds
+When you save the setting, the daemon checks the values against the rules of
+the first-user setup page and rejects values that are not valid. It checks the
+password against the default minimum length. Environments that already have
+users skip the check and make no change.
 
-Core builds have priority and only one repository build runs at a time.
-Workflow images build on demand. The daemon polls the production-compatible
-jobs counts endpoint for ready environments, schedules the four bioinformatics
-executors fairly, and holds one global slot per one-shot container. The default
-repository-wide concurrency is one. Tasks remain a normal long-lived service.
+The daemon runs `create administrator` from
+[`@virtool/dev-tools`](../apps/dev-tools/README.md). Worktrees on branches that
+do not have the `dev-tools` Compose service skip this step.
 
-Executors continue to claim atomically from the jobs API and use the production
-ping, cancellation, finalization, failure, and exit contracts. Stopped, failed,
-stopping, and removing environments receive no new workflow work.
+To create an environment without the default administrator, open the menu
+next to **Create** on the worktree and clear **Create default administrator**.
+The daemon keeps this choice with the environment and skips the step on each
+later start. You cannot change the choice after you create the environment.
+To change it, delete the environment data and create the environment again.
+The environment detail page shows the choice. **Create**, **Start**, and
+`vtd up` use the default, which creates the administrator.
 
-## Rollout
+## Workflows
 
-The new service has no migration or compatibility wrapper for the former Coasts setup.
-Before uninstalling Coasts, remove its managed environments with the old branch
-and tool. The new service uses distinct projects, volumes, labels, databases,
-blob containers, secrets, and state and will neither adopt nor delete them.
-
-## Measurements
-
-Record cold start, warm start, stop, and rebuild timings from operation history
-when changing the development stack. These are comparative observations, not
-machine-independent test thresholds.
+Workflow images build on demand. The daemon runs queued workflow jobs from all
+ready environments, one at a time by default. Set the concurrency in the UI.
+Stopped and failed environments receive no new workflow jobs.

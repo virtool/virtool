@@ -1,13 +1,19 @@
 import { toScientificNotation } from "@app/format";
-import type { PathoscopeHit } from "@virtool/contracts";
+import type { PathoscopeColumn, PathoscopeHit } from "@virtool/contracts";
 
 /** Options describing how a copied table is presented. */
 type PathoscopeTableOptions = {
+	/** The columns to carry, in order */
+	columns: PathoscopeColumn[];
+
 	/** Whether to lead with a header row */
 	headers: boolean;
 
 	/** The total number of reads mapped to any OTU during the analysis */
 	mappedCount: number;
+
+	/** Whether to name an OTU by its acronym, when it has one */
+	preferAcronym: boolean;
 
 	/** Whether to render read pseudo-counts instead of weights */
 	showReads: boolean;
@@ -24,6 +30,13 @@ function sanitize(text: string): string {
 	return text.replace(/[\t\r\n]+/g, " ");
 }
 
+function formatOtuName(
+	hit: PathoscopeHit,
+	{ preferAcronym }: PathoscopeTableOptions,
+): string {
+	return sanitize(preferAcronym && hit.acronym ? hit.acronym : hit.name);
+}
+
 // Both number formatters this reaches have grouping disabled, which keeps every
 // field parseable as a number on the other side.
 function formatWeight(
@@ -35,10 +48,35 @@ function formatWeight(
 		: toScientificNotation(pi);
 }
 
-function toTsv(header: string[], rows: string[][], headers: boolean): string {
+// A row holds a cell for every column. An isolate row also names its isolate,
+// which stays beside the OTU name wherever the name column is placed.
+type Row = Record<PathoscopeColumn, string> & { isolate?: string };
+
+function arrange(row: Row, columns: PathoscopeColumn[]): string[] {
+	return columns.flatMap((column) =>
+		column === "name" && row.isolate !== undefined
+			? [row.name, row.isolate]
+			: [row[column]],
+	);
+}
+
+function toTsv(
+	header: Row,
+	rows: Row[],
+	{ columns, headers }: PathoscopeTableOptions,
+): string {
 	return (headers ? [header, ...rows] : rows)
-		.map((row) => row.join("\t"))
+		.map((row) => arrange(row, columns).join("\t"))
 		.join("\n");
+}
+
+function getHeader({ showReads }: PathoscopeTableOptions): Row {
+	return {
+		coverage: "Coverage",
+		depth: "Depth",
+		name: "Name",
+		weight: showReads ? "Reads" : "Weight",
+	};
 }
 
 /**
@@ -52,18 +90,14 @@ export function formatPathoscopeHitsAsTsv(
 	hits: PathoscopeHit[],
 	options: PathoscopeTableOptions,
 ): string {
-	const rows = hits.map((hit) => [
-		sanitize(hit.name),
-		formatWeight(hit.pi, options),
-		String(hit.depth),
-		hit.coverage.toFixed(3),
-	]);
+	const rows = hits.map((hit) => ({
+		coverage: hit.coverage.toFixed(3),
+		depth: String(hit.depth),
+		name: formatOtuName(hit, options),
+		weight: formatWeight(hit.pi, options),
+	}));
 
-	return toTsv(
-		["Name", options.showReads ? "Reads" : "Weight", "Depth", "Coverage"],
-		rows,
-		options.headers,
-	);
+	return toTsv(getHeader(options), rows, options);
 }
 
 /**
@@ -78,24 +112,14 @@ export function formatPathoscopeIsolatesAsTsv(
 	options: PathoscopeTableOptions,
 ): string {
 	const rows = hits.flatMap((hit) =>
-		hit.isolates.map((isolate) => [
-			sanitize(hit.name),
-			sanitize(isolate.name),
-			formatWeight(isolate.pi, options),
-			String(isolate.depth),
-			isolate.coverage.toFixed(3),
-		]),
+		hit.isolates.map((isolate) => ({
+			coverage: isolate.coverage.toFixed(3),
+			depth: String(isolate.depth),
+			isolate: sanitize(isolate.name),
+			name: formatOtuName(hit, options),
+			weight: formatWeight(isolate.pi, options),
+		})),
 	);
 
-	return toTsv(
-		[
-			"Name",
-			"Isolate",
-			options.showReads ? "Reads" : "Weight",
-			"Depth",
-			"Coverage",
-		],
-		rows,
-		options.headers,
-	);
+	return toTsv({ ...getHeader(options), isolate: "Isolate" }, rows, options);
 }

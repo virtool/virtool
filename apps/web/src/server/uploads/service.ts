@@ -1,10 +1,11 @@
-import { checkUploadSize, type UploadType } from "@virtool/contracts";
+import { checkUploadSize, UPLOAD_TYPES } from "@virtool/contracts";
 import { getSettings } from "@virtool/data/settings/data";
 import {
 	cancelPendingUpload,
 	createPendingUpload,
 	finalizePendingUpload,
 } from "@virtool/data/uploads/data";
+import { z } from "zod";
 import { db, storage } from "../composition";
 import { config } from "../config";
 import { logger } from "../logger";
@@ -15,12 +16,21 @@ const UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
 /** Thrown when this deployment cannot issue direct-upload credentials. */
 export class DirectUploadUnavailableError extends Error {}
 
+/**
+ * The request body that initializes a direct upload.
+ *
+ * `size` is locked here so finalize can reject a commit that does not land
+ * exactly this many bytes. It has no upper bound because `initializeUpload`
+ * checks it against the configured maximum and answers 413.
+ */
+export const uploadInitSchema = z.object({
+	name: z.string().min(1),
+	type: z.enum(UPLOAD_TYPES),
+	size: z.number().int().nonnegative(),
+});
+
 /** Values required to initialize a direct upload. */
-export type UploadInit = {
-	name: string;
-	type: UploadType;
-	size: number;
-};
+export type UploadInit = z.infer<typeof uploadInitSchema>;
 
 /** The instructions for performing a direct block upload. */
 export type UploadInstructions = {
@@ -60,7 +70,12 @@ export async function initializeUpload(
 		});
 	} catch (err) {
 		await cancelPendingUpload(db, storage, logger, upload.id, userId).catch(
-			() => {},
+			(cancelErr) => {
+				logger.error(
+					{ err: cancelErr, uploadId: upload.id },
+					"failed to cancel upload after presign failure; row left for the stale sweep",
+				);
+			},
 		);
 		throw err;
 	}

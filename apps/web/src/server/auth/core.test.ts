@@ -191,20 +191,57 @@ describe("loginLegacyIdentity", () => {
 
 describe("createFirstUser", () => {
 	it("creates the full administrator and Better Auth credential", async () => {
-		const user = await createFirstUser(db, {
+		const result = await createFirstUser(db, {
 			handle: "alice",
+			email: "alice@example.com",
 			password: "a-real-password",
+			deliveryAvailable: false,
+			getVerificationUrl: () => "https://virtool.test/verify-email",
 		});
 
-		expect(user.administratorRole).toBe("full");
+		expect(result.user.administratorRole).toBe("full");
 		expect(await db.select().from(authAccounts)).toHaveLength(1);
 	});
 
 	it("refuses a second first user", async () => {
 		await seedUser(db);
 		await expect(
-			createFirstUser(db, { handle: "bob", password: "a-real-password" }),
+			createFirstUser(db, {
+				handle: "bob",
+				email: "bob@example.com",
+				password: "a-real-password",
+				deliveryAvailable: false,
+				getVerificationUrl: () => "https://virtool.test/verify-email",
+			}),
 		).rejects.toBeInstanceOf(FirstUserExistsError);
+	});
+
+	it("allows exactly one concurrent first administrator", async () => {
+		const other = database.connect();
+		try {
+			const results = await Promise.allSettled([
+				createFirstUser(db, {
+					handle: "alice",
+					email: "alice@example.com",
+					password: "a-real-password",
+					deliveryAvailable: false,
+					getVerificationUrl: () => "https://virtool.test/verify-email",
+				}),
+				createFirstUser(other.db, {
+					handle: "bob",
+					email: "bob@example.com",
+					password: "another-real-password",
+					deliveryAvailable: false,
+					getVerificationUrl: () => "https://virtool.test/verify-email",
+				}),
+			]);
+			expect(
+				results.filter(({ status }) => status === "fulfilled"),
+			).toHaveLength(1);
+			expect(await db.select().from(users)).toHaveLength(1);
+		} finally {
+			await other.close();
+		}
 	});
 });
 

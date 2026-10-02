@@ -3,13 +3,16 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
 import { authSessions } from "../db/schema/auth";
 import { sessions } from "../db/schema/sessions";
+import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedSettings } from "../settings/test/fixtures";
 import {
 	createAuthenticatedSession,
-	createBrowserSessionTiming,
+	deleteActiveBrowserSession,
 	deleteExpiredSessions,
-	refreshBrowserSessionActivity,
+	deleteOtherBrowserSessions,
+	findActiveBrowserSessions,
 	resolveBrowserSession,
 } from "./session";
 import { seedSession, seedUser } from "./test/fixtures";
@@ -27,6 +30,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(settings);
 	await db.delete(authSessions);
 	await db.delete(users);
 });
@@ -35,150 +39,165 @@ function minutesFromNow(minutes: number): Date {
 	return new Date(Date.now() + minutes * 60 * 1000);
 }
 
-const timingConfig = {
-	idleLifetimeSeconds: 3_600,
-	absoluteLifetimeSeconds: 86_400,
-	minimumRefreshIntervalSeconds: 300,
-};
-
-describe("browser session timing", () => {
-	it("derives a new idle deadline and absolute cap from one instant", async () => {
-		const timing = await createBrowserSessionTiming(db, timingConfig);
-
-		expect(timing.expiresAt.getTime() - timing.lastActivityAt.getTime()).toBe(
-			3_600_000,
-		);
+describe("resolveBrowserSession", () => {
+	it("reads a live session without changing its expiry", async () => {
+		const userId = await seedUser(db);
+		const expiresAt = minutesFromNow(30);
+		const session = await seedSession(db, userId, { expiresAt });
 		expect(
-			timing.absoluteExpiresAt.getTime() - timing.lastActivityAt.getTime(),
-		).toBe(86_400_000);
-		expect(timing.lastRefreshedAt).toEqual(timing.lastActivityAt);
-	});
-
-	it("keeps activity read-only before the minimum refresh interval", async () => {
-		const userId = await seedUser(db);
-		const session = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(30),
-			absoluteExpiresAt: minutesFromNow(90),
-		});
-
-		const result = await refreshBrowserSessionActivity(
-			db,
-			session.sessionId,
-			userId,
-			timingConfig,
-		);
-
-		expect(result.status).toBe("not_due");
-	});
-
-	it("refreshes a due session without moving its absolute cap", async () => {
-		const userId = await seedUser(db);
-		const absoluteExpiresAt = minutesFromNow(30);
-		const session = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(10),
-			absoluteExpiresAt,
-			lastRefreshedAt: minutesFromNow(-10),
-		});
-
-		const result = await refreshBrowserSessionActivity(
-			db,
-			session.sessionId,
-			userId,
-			timingConfig,
-		);
-
-		expect(result).toMatchObject({ status: "refreshed" });
-		if (result.status === "refreshed") {
-			expect(result.timing.expiresAt).toEqual(absoluteExpiresAt);
-			expect(result.timing.absoluteExpiresAt).toEqual(absoluteExpiresAt);
-		}
-	});
-
-	it("allows at most one concurrent due refresh write", async () => {
-		const userId = await seedUser(db);
-		const session = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(30),
-			absoluteExpiresAt: minutesFromNow(90),
-			lastRefreshedAt: minutesFromNow(-10),
-		});
-
-		const results = await Promise.all(
-			Array.from({ length: 4 }, () =>
-				refreshBrowserSessionActivity(
-					db,
-					session.sessionId,
-					userId,
-					timingConfig,
-				),
-			),
-		);
-
-		expect(results.filter(({ status }) => status === "refreshed")).toHaveLength(
-			1,
-		);
-		expect(results.every(({ status }) => status !== "no_longer_valid")).toBe(
-			true,
+			await resolveBrowserSession(db, session.sessionId, userId),
+		).toMatchObject({ userId });
+		expect((await db.select().from(authSessions))[0]?.expiresAt).toEqual(
+			expiresAt,
 		);
 	});
 
-	it("does not revive an expired or deactivated session", async () => {
+	it("rejects expired sessions and deactivated users", async () => {
 		const userId = await seedUser(db);
 		const expired = await seedSession(db, userId, {
 			expiresAt: minutesFromNow(-1),
-			absoluteExpiresAt: minutesFromNow(30),
-			lastRefreshedAt: minutesFromNow(-10),
-		});
-
-		expect(
-			await refreshBrowserSessionActivity(
-				db,
-				expired.sessionId,
-				userId,
-				timingConfig,
-			),
-		).toEqual({ status: "no_longer_valid" });
-
-		const capped = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(30),
-			absoluteExpiresAt: minutesFromNow(-1),
-			lastRefreshedAt: minutesFromNow(-10),
 		});
 		expect(
-			await refreshBrowserSessionActivity(
-				db,
-				capped.sessionId,
-				userId,
-				timingConfig,
-			),
-		).toEqual({ status: "no_longer_valid" });
-
-		const live = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(30),
-			absoluteExpiresAt: minutesFromNow(90),
-			lastRefreshedAt: minutesFromNow(-10),
-		});
+			await resolveBrowserSession(db, expired.sessionId, userId),
+		).toBeNull();
+		const live = await seedSession(db, userId);
 		await db.update(users).set({ active: false }).where(eq(users.id, userId));
-
 		expect(await resolveBrowserSession(db, live.sessionId, userId)).toBeNull();
-		expect(
-			await refreshBrowserSessionActivity(
-				db,
-				live.sessionId,
-				userId,
-				timingConfig,
-			),
-		).toEqual({ status: "no_longer_valid" });
 	});
 
-	it("uses the same UTC boundaries under a non-UTC connection timezone", async () => {
-		await db.execute(sql`set time zone 'America/Vancouver'`);
+	it("restricts an unenrolled user only under the required MFA policy", async () => {
+		const userId = await seedUser(db);
+		const session = await seedSession(db, userId);
+
+		async function isRestricted() {
+			return (await resolveBrowserSession(db, session.sessionId, userId))
+				?.mfaEnrollmentRequired;
+		}
+
+		expect(await isRestricted()).toBe(false);
+
+		await seedSettings(db, { mfaPolicy: "required" });
+		expect(await isRestricted()).toBe(true);
+
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		expect(await isRestricted()).toBe(false);
+	});
+});
+
+describe("active browser sessions", () => {
+	it("lists only the user's live sessions with current first and stable ordering", async () => {
+		const userId = await seedUser(db);
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		const current = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-20),
+		});
+		const olderId = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-10),
+		});
+		const newerId = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-5),
+		});
+		await seedSession(db, userId, { expiresAt: minutesFromNow(-1) });
+		await seedSession(db, otherUserId);
+
+		const sessions = await findActiveBrowserSessions(
+			db,
+			userId,
+			current.sessionId,
+		);
+
+		expect(sessions.map(({ id }) => id)).toEqual([
+			current.sessionId,
+			newerId.sessionId,
+			olderId.sessionId,
+		]);
+		expect(sessions[0]).toMatchObject({
+			ipAddress: "127.0.0.1",
+			userAgent: "Test Browser/1.0",
+		});
+		expect(sessions[0]).not.toHaveProperty("token");
+	});
+
+	it("revokes only a live session owned by the user", async () => {
+		const userId = await seedUser(db);
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		const owned = await seedSession(db, userId);
+		const expired = await seedSession(db, userId, {
+			expiresAt: minutesFromNow(-1),
+		});
+		const foreign = await seedSession(db, otherUserId);
+
+		expect(await deleteActiveBrowserSession(db, userId, owned.sessionId)).toBe(
+			true,
+		);
+		expect(await deleteActiveBrowserSession(db, userId, owned.sessionId)).toBe(
+			false,
+		);
+		expect(
+			await deleteActiveBrowserSession(db, userId, expired.sessionId),
+		).toBe(false);
+		expect(
+			await deleteActiveBrowserSession(db, userId, foreign.sessionId),
+		).toBe(false);
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			expect.arrayContaining([
+				{ id: expired.sessionId },
+				{ id: foreign.sessionId },
+			]),
+		);
+	});
+
+	it("revokes every other session and preserves exactly the current one", async () => {
+		const userId = await seedUser(db);
+		const current = await seedSession(db, userId);
+		await seedSession(db, userId);
+		await seedSession(db, userId);
+
+		expect(
+			await deleteOtherBrowserSessions(db, userId, current.sessionId),
+		).toBe(2);
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			[{ id: current.sessionId }],
+		);
+	});
+
+	it("spares a replacement being issued for the current session", async () => {
+		const userId = await seedUser(db);
+		const current = await seedSession(db, userId);
+		const replacement = await seedSession(db, userId);
+		await db
+			.update(authSessions)
+			.set({ replacementForSessionId: current.sessionId })
+			.where(eq(authSessions.id, replacement.sessionId));
+		await seedSession(db, userId);
+
+		expect(
+			await deleteOtherBrowserSessions(db, userId, current.sessionId),
+		).toBe(1);
+		expect(
+			(await db.select({ id: authSessions.id }).from(authSessions)).map(
+				({ id }) => id,
+			),
+		).toEqual([current.sessionId, replacement.sessionId]);
+	});
+
+	it("converges when two callers revoke the same session", async () => {
+		const userId = await seedUser(db);
+		const target = await seedSession(db, userId);
+		const first = database.connect();
+		const second = database.connect();
+
 		try {
-			const timing = await createBrowserSessionTiming(db, timingConfig);
-			expect(timing.expiresAt.getTime() - timing.lastActivityAt.getTime()).toBe(
-				3_600_000,
-			);
+			const results = await Promise.all([
+				deleteActiveBrowserSession(first.db, userId, target.sessionId),
+				deleteActiveBrowserSession(second.db, userId, target.sessionId),
+			]);
+			expect(results.sort()).toEqual([false, true]);
 		} finally {
-			await db.execute(sql`set time zone 'UTC'`);
+			await Promise.all([first.close(), second.close()]);
 		}
 	});
 });
@@ -220,27 +239,15 @@ describe("deleteExpiredSessions", () => {
 		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
-	it("deletes a session whose absolute cap passed independently", async () => {
-		const userId = await seedUser(db);
-		await seedSession(db, userId, {
-			expiresAt: minutesFromNow(30),
-			absoluteExpiresAt: minutesFromNow(-1),
-		});
-
-		expect(await deleteExpiredSessions(db)).toBe(1);
-	});
-
 	it("treats the effective expiry boundary as inclusive", async () => {
 		const userId = await seedUser(db);
 		const session = await seedSession(db, userId, {
 			expiresAt: minutesFromNow(30),
-			absoluteExpiresAt: minutesFromNow(60),
 		});
 		await db
 			.update(authSessions)
 			.set({
 				expiresAt: sql`timezone('utc', clock_timestamp())`,
-				idleExpiresAt: sql`timezone('utc', clock_timestamp())`,
 			})
 			.where(eq(authSessions.id, session.sessionId));
 
@@ -251,7 +258,6 @@ describe("deleteExpiredSessions", () => {
 		const userId = await seedUser(db);
 		const session = await seedSession(db, userId, {
 			expiresAt: minutesFromNow(-1),
-			absoluteExpiresAt: minutesFromNow(60),
 		});
 		const holder = database.connect();
 		const observer = database.connect();
@@ -270,7 +276,7 @@ describe("deleteExpiredSessions", () => {
 				await tx`select id from auth_sessions where id = ${session.sessionId} for update`;
 				reportLocked();
 				await release;
-				await tx`update auth_sessions set expires_at = ${refreshedExpiry}::timestamp, idle_expires_at = ${refreshedExpiry}::timestamp where id = ${session.sessionId}`;
+				await tx`update auth_sessions set expires_at = ${refreshedExpiry}::timestamp where id = ${session.sessionId}`;
 			});
 			await locked;
 

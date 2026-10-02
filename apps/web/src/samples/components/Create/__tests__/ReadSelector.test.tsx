@@ -65,6 +65,39 @@ async function setMode(name: "Auto-pair" | "Manual"): Promise<void> {
 }
 
 describe("<ReadSelector>", () => {
+	it("filters with surrounding whitespace while preserving the typed term", async () => {
+		const alpha = createFakeFile({ name: "alpha.fastq.gz" });
+		const beta = createFakeFile({ name: "beta.fastq.gz" });
+		mockFindUploads([alpha, beta]);
+
+		renderWithProviders(<Harness files={[alpha, beta]} />);
+
+		const input = screen.getByRole("textbox", { name: "Search read files" });
+		await userEvent.type(input, "  alpha  ");
+
+		expect(input).toHaveValue("  alpha  ");
+		expect(rowButton(alpha.name)).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: new RegExp(beta.name) }),
+		).not.toBeInTheDocument();
+	});
+
+	it("shows every read file for a whitespace-only term", async () => {
+		const alpha = createFakeFile({ name: "alpha.fastq.gz" });
+		const beta = createFakeFile({ name: "beta.fastq.gz" });
+		mockFindUploads([alpha, beta]);
+
+		renderWithProviders(<Harness files={[alpha, beta]} />);
+
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Search read files" }),
+			"   ",
+		);
+
+		expect(rowButton(alpha.name)).toBeInTheDocument();
+		expect(rowButton(beta.name)).toBeInTheDocument();
+	});
+
 	it("defaults to Auto-pair mode", () => {
 		mockFindUploads([]);
 		renderWithProviders(<Harness files={[createFakeFile()]} />);

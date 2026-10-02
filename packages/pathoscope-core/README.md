@@ -79,14 +79,12 @@ htslib's headers.
 
 ## Tooling exclusions
 
-The crate has no `package.json`, so it's not a pnpm workspace, and `pnpm test`
-and `pnpm typecheck` don't reach it. Two exclusions are still needed and must
-stay:
+Two tooling exclusions are still needed:
 
 - **biome**: `!packages/pathoscope-core` in `biome.json`'s `files.includes`.
   Biome ignores `.rs`, `.toml` and the fixtures, but it does parse
-  `tests/golden/vectors.json` and wants to reformat it. That file is machine
-  generated; formatting it would only make the next regeneration fail the gate.
+  `tests/golden/vectors.json` and wants to reformat it. Keep the corpus as
+  committed; reformatting it rewrites every line without changing a value.
 - **knip**: `packages/pathoscope-core/**` in `knip.json`'s `ignore`. `hts-sys`
   vendors htslib's C source into `target/`, and that tree carries a
   `htscodecs/javascript/` directory which knip reports as unused files after any
@@ -131,10 +129,11 @@ to the pre-generated bindings that ship for some targets. Without the package,
 the build fails with `Unable to find libclang`. The requirement also applies to
 the `pathoscope-test` CI job and developer machines.
 
-The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6` and `perl`.
-Each backs a specific `ldd ... => not found` against the slim base: perl and
-libgomp1 for bowtie2, libcurl4, and libncursesw6 for samtools. `pathoscope-core`
-itself needs none of them. `hts-sys` links htslib statically.
+The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6`, `perl`,
+`python3`, and `pigz`. Bowtie2 needs `libgomp1`, Perl for its `bowtie2` wrapper,
+and Python for `bowtie2-build`; samtools needs `libcurl4` and `libncursesw6`.
+`pigz` compresses workflow output. `pathoscope-core` itself needs none of them.
+`hts-sys` links htslib statically.
 
 The `build-pathoscope` CI job and its release entry use the same `pathoscope`
 GitHub Actions cache scope. See

@@ -1,4 +1,4 @@
-import { InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import type { GroupMinimal } from "@virtool/contracts";
 import { ChevronDown } from "lucide-react";
@@ -25,13 +25,13 @@ export default function SampleUserGroup({
 	onChange,
 }: SampleUserGroupProps) {
 	return (
-		<InputGroup>
-			<InputLabel htmlFor="userGroups">User Group</InputLabel>
+		<Field>
+			<FieldLabel>User Group</FieldLabel>
 			<Select
 				value={selected || noGroup}
 				onValueChange={(value) => onChange(value === noGroup ? "" : value)}
 			>
-				<SelectButton className="w-full" icon={ChevronDown} id="userGroups" />
+				<SelectButton className="w-full" icon={ChevronDown} />
 				<SelectContent>
 					<SelectItem key={noGroup} value={noGroup}>
 						None
@@ -43,6 +43,6 @@ export default function SampleUserGroup({
 					))}
 				</SelectContent>
 			</Select>
-		</InputGroup>
+		</Field>
 	);
 }

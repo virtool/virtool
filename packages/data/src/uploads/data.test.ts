@@ -47,6 +47,10 @@ afterAll(async () => {
 	await database.drop();
 });
 
+afterEach(() => {
+	vi.restoreAllMocks();
+});
+
 beforeEach(async () => {
 	await db.delete(sampleReads);
 	await db.delete(sampleUploads);
@@ -343,6 +347,30 @@ describe("deleteUpload", () => {
 		expect(after?.removed).toBe(true);
 		expect(after?.removedAt).not.toBeNull();
 		await expect(storage.size(key)).rejects.toThrow();
+	});
+
+	it("logs a refused object delete without undoing the soft delete", async () => {
+		const userId = await seedUser(db);
+		const storage = new MemoryStorage();
+		const upload = await seedUpload(userId, { storageKey: "uploads/refused" });
+		const error = new Error("bucket refused the key");
+
+		vi.spyOn(storage, "delete").mockRejectedValue(error);
+		const logged = vi.spyOn(testLogger, "error");
+
+		await deleteUpload(db, storage, testLogger, upload.id);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+
+		expect(row?.removed).toBe(true);
+		expect(row?.storageKey).toBe("uploads/refused");
+		expect(logged).toHaveBeenCalledWith(
+			{ uploadId: upload.id, key: "uploads/refused", err: error },
+			"removed upload cleanup failed; file orphaned",
+		);
 	});
 
 	it("throws when the upload is missing or already removed", async () => {
@@ -850,6 +878,35 @@ describe("cancelPendingUpload", () => {
 			.where(eq(uploadsTable.id, upload.id));
 		expect(row?.removed).toBe(true);
 		await expect(storage.size(storageKey)).rejects.toThrow();
+	});
+
+	it("logs a refused object delete without undoing the cancellation", async () => {
+		const storage = new MemoryStorage();
+		const userId = await seedUser(db);
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+			expectedSize: 5,
+		});
+		const error = new Error("bucket refused the key");
+
+		vi.spyOn(storage, "delete").mockRejectedValue(error);
+		const logged = vi.spyOn(testLogger, "error");
+
+		await cancelPendingUpload(db, storage, testLogger, upload.id, userId);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+
+		expect(row?.removed).toBe(true);
+		expect(row?.storageKey).toBe(storageKey);
+		expect(logged).toHaveBeenCalledWith(
+			{ uploadId: upload.id, key: storageKey, err: error },
+			"cancelled upload cleanup failed; file orphaned",
+		);
 	});
 
 	it("does not cancel a finalized upload", async () => {

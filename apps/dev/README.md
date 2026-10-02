@@ -7,14 +7,13 @@ local gateway and storage services, and schedules one-shot workflow executors.
 Use the repository launcher rather than running this package directly:
 
 ```shell
-virtool-dev up
-virtool-dev ui
+vtd up
+vtd ui
 ```
 
-The server and CLI are TypeScript under `src/server` and `src/cli.ts`. The
-client-only React UI is under `src/client`, uses Tailwind CSS 4 through its Vite
-plugin, and receives snapshots over Server-Sent Events. Shared API shapes stay
-in `src/shared`; this app does not import from `@virtool/web`.
+The launcher installs and starts one foreground systemd user service per Git
+repository. systemd owns crash and source-update restarts; `vtd daemon stop`
+stops that repository's unit.
 
 ```shell
 pnpm --filter @virtool/dev test
@@ -22,5 +21,4 @@ pnpm --filter @virtool/dev typecheck
 pnpm --filter @virtool/dev build
 ```
 
-See [the development guide](../../dev/README.md) for the runtime architecture,
-data and cleanup contracts, scheduler behavior, and rollout notes.
+See [the development guide](../../dev/README.md) for usage.

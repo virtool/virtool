@@ -221,10 +221,24 @@ Two rules hold this together:
   sessions are issued only to unmigrated users. Better Auth is preferred when
   both credential families are present. Virtool re-reads account state for
   either credential and performs authorization after authentication.
-  Virtool-owned timing columns hold last qualifying activity, effective idle
-  expiry, immutable absolute expiry, and the last persisted refresh. Session
-  resolution, refresh, and cleanup compare them with PostgreSQL's UTC clock;
-  refresh is one conditional update and never rotates the bearer token.
+  Better Auth owns the rolling `expires_at` value; application authentication
+  only reads it. Session resolution and cleanup compare expiry with PostgreSQL's
+  UTC clock. Migration `0034_better_auth_rolling_sessions` removes obsolete
+  activity and deadline columns without changing existing expiry values.
+
+  Session-management reads expose the integer primary key as a non-authenticating
+  management id; only the separate random `token` authenticates. Browser, OS,
+  IP, and raw user-agent metadata are normalized or bounded when the row is
+  created. `replacement_for_session_id` is an internal, self-clearing foreign
+  key used only to keep a concurrent recent-auth replacement out of an
+  all-other-session deletion.
+
+`auth_verifications` holds Better Auth's short-lived challenges, such as passkey
+and two-factor sign-in challenges. Better Auth deletes expired rows only when it
+reads a row with `findVerificationValue`, and passkey ceremonies don't call it.
+The internal runner's `cleanup_auth_verifications` periodic task deletes rows
+whose `expires_at` has passed. Better Auth rejects expired rows, so the task
+only limits how many rows the table keeps.
 
 A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
 looks fields up by property, so `userId` and `credentialID` keep their exact
@@ -251,11 +265,12 @@ administrator's switch and stays authoritative. A deactivated account is
 unusable whatever its lifecycle state, and completing setup never activates
 anyone.
 
-A pending account keeps its handle, administrator role and group memberships,
-so an administrator states who a person is and what they may do at the moment
-of invitation. What it doesn't have is a credential: `users.password` is null,
-which the `pending_has_no_password` constraint holds, and `createPendingUser`
-is the only thing that writes the state.
+A pending account keeps its email, administrator role and group memberships.
+Its handle is empty until the invitee accepts and chooses one; the partial
+handle uniqueness index permits multiple pending invitations. It has no credential: `users.password` is null,
+which the `pending_has_no_password` constraint holds. Its Better Auth credential
+identity already exists with a null password so invitation acceptance only has
+to fill the credential, never create a second identity.
 
 Every reader that assumes an account is usable checks the state, not just
 `active`: `listUsers`, `findUsers` (which defaults to `normal` and takes
@@ -270,7 +285,8 @@ and API-key resolution.
   the issuing caller once and is never readable back. It's purpose-bound,
   expiring, single-use. `consumeSetupToken` is one conditional `UPDATE ...
   RETURNING`, so concurrent submissions of one token produce exactly one
-  winner. It's superseded when a replacement is issued.
+  winner. Replacements mark older rows superseded instead of deleting them so
+  a bearer holder can receive a bounded result without exposing account data.
 - A **restricted setup session** is what a holder gets in exchange: a
   non-secret `session_id` for attribution plus a secret whose digest is
   stored, bound to one purpose and expiring. `verifySetupSession` re-reads
@@ -279,12 +295,14 @@ and API-key resolution.
   than an application-session subtype.
 
 `src/auth/lifecycle.ts` holds one transactional completion primitive per
-purpose. Each spends the token, writes the credential and identity state,
-moves the account, and revokes every setup credential the user held in one
-transaction, so a failure rolls the whole transition back and a spent token
-never outlives the change it paid for. None of them mints a session; which
-session a completed holder gets is the calling flow's decision, and cookies
-belong to `apps/web`.
+purpose. Each spends the token and writes its credential and identity state in
+one transaction, so a failure rolls the whole transition back and a spent
+token never outlives the change it paid for. Most completions revoke setup
+credentials immediately. Email remediation retains its restricted session
+until the initiating browser claims promotion, allowing token-only
+verification in another browser without authenticating that browser. None of
+the primitives mints a session; which session a completed holder gets is the
+calling flow's decision, and cookies belong to `apps/web`.
 
 Credential state is written to both `users.password` and
 `auth_accounts.password`. The former remains part of Virtool's account and
@@ -293,6 +311,24 @@ password-change transactions; Better Auth verifies the latter.
 Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
 Nothing waits on it. Both readers refuse an expired row on sight, so there
 are no request-path scans.
+
+Account-completion tokens are invitation generations. Each records its issuer,
+copy-only or queued delivery, and distinct consumed and superseded timestamps. `src/users/invitations.ts` creates
+the pending user, identity, role/groups, token, and optional outbox message in
+one transaction. Regeneration serializes on the user's setup advisory lock and
+invalidates older generations. Deleting a pending user takes the same lock and
+cascades to its tokens. A plaintext token is returned only for a
+copy-only creation or regeneration; emailed generations expose only metadata so
+acceptance proves control of the bound mailbox.
+
+Copied invitations leave the assigned normalized email unverified. A queued
+invitation proves control of that exact address when accepted. Acceptance uses
+the token-bound address, invalidates every prior session and setup credential,
+and cannot race regeneration or deletion. The 72-hour lifetime is shared in
+`@virtool/contracts`. `cleanup_setup_state` removes other expired setup state.
+It keeps the expired live invitation of a pending user, so the administration
+view can offer a reissue. A reissue supersedes it, and the next sweep removes
+it. Deleting the user also deletes it.
 
 ## Outbound requests
 
@@ -351,6 +387,10 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.
+- Pass `setupTokenId` when the message carries a setup link. Deleting the
+  token deletes the message, and `claimDueEmails` deletes a queued message
+  whose token was consumed, superseded, or expired, so a dead link is never
+  sent.
 - Keep provider errors, retries, and the Resend SDK behind the email package.
 - Handle `{ status: "discarded" }`. It's an ordinary outcome, not an error:
   a flow that depends on the email must offer the user another route rather

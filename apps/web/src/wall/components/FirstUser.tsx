@@ -1,5 +1,6 @@
 import Button from "@base/Button";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import { usePasswordRules } from "@forms/password";
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
@@ -9,6 +10,7 @@ import { WallTitle } from "./WallTitle";
 
 type FormValues = {
 	username: string;
+	email: string;
 	password: string;
 };
 
@@ -28,7 +30,7 @@ export default function FirstUser() {
 
 	function onSubmit(data: FormValues) {
 		mutation.mutate(
-			{ handle: data.username, password: data.password },
+			{ handle: data.username, email: data.email, password: data.password },
 			{ onSuccess: () => navigate({ to: "/" }) },
 		);
 	}
@@ -41,51 +43,47 @@ export default function FirstUser() {
 			/>
 
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<InputGroup>
-					<InputLabel htmlFor="username">Username</InputLabel>
-					<InputSimple
-						aria-label="username"
-						id="username"
+				<Field>
+					<FieldLabel>Username</FieldLabel>
+					<Input
 						autoComplete="username"
 						aria-required
-						aria-invalid={Boolean(errors.username) || undefined}
-						aria-describedby={errors.username ? "username-error" : undefined}
 						{...register("username", {
 							required: "Please provide a username",
 						})}
 					/>
-					{errors.username?.message && (
-						<InputError id="username-error">
-							{errors.username.message}
-						</InputError>
-					)}
-				</InputGroup>
-				<InputGroup>
-					<InputLabel htmlFor="password">Password</InputLabel>
-					<InputSimple
-						aria-label="password"
-						id="password"
+					<FieldError errors={[errors.username]} />
+				</Field>
+				<Field>
+					<FieldLabel>Email</FieldLabel>
+					<Input
+						type="email"
+						autoComplete="email"
+						aria-required
+						{...register("email", {
+							required: "Please provide an email address",
+						})}
+					/>
+					<FieldError errors={[errors.email]} />
+				</Field>
+				<Field>
+					<FieldLabel>Password</FieldLabel>
+					<Input
 						type="password"
 						autoComplete="new-password"
 						aria-required
-						aria-invalid={Boolean(errors.password) || undefined}
-						aria-describedby={errors.password ? "password-error" : undefined}
 						{...register("password", passwordRules)}
 					/>
-					{errors.password?.message && (
-						<InputError id="password-error">
-							{errors.password.message}
-						</InputError>
-					)}
-				</InputGroup>
+					<FieldError errors={[errors.password]} />
+				</Field>
 
 				<Button type="submit" color="blue">
 					Create User
 				</Button>
 				{mutation.isError && (
-					<InputError>
+					<FieldError>
 						{mutation.error.message || "Could not create user"}
-					</InputError>
+					</FieldError>
 				)}
 			</form>
 		</WallContainer>

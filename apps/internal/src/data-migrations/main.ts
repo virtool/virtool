@@ -1,21 +1,29 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
 import {
 	getDataMigration,
-	listDataMigrationFindings,
 	listDataMigrations,
 } from "@virtool/data/data-migrations/data";
 import { createDb, type Db } from "@virtool/data/db/pg";
-import { createLogger, type Logger } from "@virtool/logger";
+import type { Logger } from "@virtool/logger";
 import { z } from "zod";
+
+import { runCommand } from "../command";
 
 import type { DataMigrationRegistry } from "./define";
 import { DATA_MIGRATIONS } from "./registry";
+import { getDataMigrationReport } from "./report";
 
 const SERVICE = "data-migrations";
 
 const DataMigrationsEnv = z.object({
 	VT_POSTGRES_URL: z.string().url(),
+	VT_SENTRY_DSN: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
+	),
 });
+
+type DataMigrationsEnvValues = z.infer<typeof DataMigrationsEnv>;
 
 /** Every environment key this entrypoint reads. */
 const DATA_MIGRATIONS_ENV_KEYS: string[] = Object.keys(DataMigrationsEnv.shape);
@@ -94,30 +102,9 @@ async function exportDataMigration(deps: Deps, key: string): Promise<boolean> {
 		return false;
 	}
 
-	const findings = await listDataMigrationFindings(deps.db, row.id);
+	const report = await getDataMigrationReport(deps.db, row);
 
-	process.stdout.write(
-		`${JSON.stringify(
-			{
-				key: row.key,
-				version: row.version,
-				kind: row.kind,
-				status: row.status,
-				attempts: row.attempts,
-				startedAt: row.startedAt,
-				finishedAt: row.finishedAt,
-				error: row.error,
-				summary: row.summary,
-				findings: findings.map((finding) => ({
-					code: finding.code,
-					subject: finding.subject,
-					detail: finding.detail,
-				})),
-			},
-			null,
-			2,
-		)}\n`,
-	);
+	process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 
 	return row.status === "passed";
 }
@@ -146,13 +133,11 @@ async function dispatch(deps: Deps, argv: readonly string[]): Promise<boolean> {
 	}
 }
 
-async function doDataMigrations(argv: readonly string[]): Promise<void> {
-	const env = DataMigrationsEnv.parse(
-		resolveFileBacked(DATA_MIGRATIONS_ENV_KEYS, process.env),
-	);
-
-	const logger = createLogger({ name: SERVICE });
-
+async function doDataMigrations(
+	env: DataMigrationsEnvValues,
+	logger: Logger,
+	argv: readonly string[],
+): Promise<void> {
 	const { client, db } = createDb(
 		{ postgresUrl: env.VT_POSTGRES_URL, postgresPoolMax: 1 },
 		SERVICE,
@@ -181,13 +166,13 @@ async function doDataMigrations(argv: readonly string[]): Promise<void> {
 export async function startDataMigrations(
 	argv: readonly string[],
 ): Promise<void> {
-	try {
-		await doDataMigrations(argv);
-	} catch (err) {
-		createLogger({ name: SERVICE }).fatal(
-			{ err },
-			"failed to inspect data migrations",
-		);
-		process.exitCode = 1;
-	}
+	await runCommand({
+		service: SERVICE,
+		failure: "failed to inspect data migrations",
+		parseEnv: () =>
+			DataMigrationsEnv.parse(
+				resolveFileBacked(DATA_MIGRATIONS_ENV_KEYS, process.env),
+			),
+		run: (env, logger) => doDataMigrations(env, logger, argv),
+	});
 }

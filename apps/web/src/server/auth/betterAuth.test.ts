@@ -1,18 +1,33 @@
-import type { AccountLifecycleState } from "@virtool/contracts";
+import { type AccountLifecycleState, AUTH_BASE_PATH } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import {
+	authAccounts,
+	authRateLimits,
+	authSessions,
+} from "@virtool/data/db/schema/auth";
+import { settings } from "@virtool/data/db/schema/settings";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-	AUTH_BASE_PATH,
-	createAuth,
-	createAuthRequestHandler,
-} from "./betterAuth";
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+import {
+	BrowserSessionEndedError,
+	revokeOtherActiveBrowserSessions,
+} from "../account/service";
+import { createAuth, createAuthRequestHandler } from "./betterAuth";
+import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
 const ORIGIN = "https://virtool.test";
 
@@ -38,11 +53,6 @@ beforeAll(async () => {
 		publicOrigin: ORIGIN,
 		webauthnRpId: "virtool.test",
 		secret: "test-auth-secret-test-auth-secret",
-		browserSessionTiming: {
-			idleLifetimeSeconds: 3_600,
-			absoluteLifetimeSeconds: 86_400,
-			minimumRefreshIntervalSeconds: 300,
-		},
 	});
 }, 60_000);
 
@@ -51,7 +61,11 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await db.delete(users);
+	await Promise.all([
+		db.delete(users),
+		db.delete(authRateLimits),
+		db.delete(settings),
+	]);
 });
 
 function post(path: string, body: unknown, origin = ORIGIN): Request {
@@ -119,6 +133,10 @@ async function seedMigratedUser(
 }
 
 describe("legacy bcrypt credentials", () => {
+	it("configures the explicit recent-authentication window", () => {
+		expect(auth.options.session?.freshAge).toBe(SESSION_FRESH_AGE_SECONDS);
+	});
+
 	it("authenticates a copied production hash without rehashing it", async () => {
 		const userId = await seedMigratedUser();
 
@@ -135,25 +153,15 @@ describe("legacy bcrypt credentials", () => {
 		const [session] = await db
 			.select({
 				userId: authSessions.userId,
-				lastActivityAt: authSessions.lastActivityAt,
+				createdAt: authSessions.createdAt,
 				expiresAt: authSessions.expiresAt,
-				idleExpiresAt: authSessions.idleExpiresAt,
-				absoluteExpiresAt: authSessions.absoluteExpiresAt,
-				lastRefreshedAt: authSessions.lastRefreshedAt,
 			})
 			.from(authSessions);
 
 		expect(session?.userId).toBe(userId);
-		expect(session?.expiresAt).toEqual(session?.idleExpiresAt);
-		expect(session?.lastRefreshedAt).toEqual(session?.lastActivityAt);
 		expect(
-			(session?.expiresAt.getTime() ?? 0) -
-				(session?.lastActivityAt.getTime() ?? 0),
-		).toBe(3_600_000);
-		expect(
-			(session?.absoluteExpiresAt.getTime() ?? 0) -
-				(session?.lastActivityAt.getTime() ?? 0),
-		).toBe(86_400_000);
+			(session?.expiresAt.getTime() ?? 0) - (session?.createdAt.getTime() ?? 0),
+		).toBeCloseTo(7 * 24 * 60 * 60_000, -2);
 
 		// Verification must not rewrite the stored hash.
 		const [account] = await db
@@ -162,6 +170,27 @@ describe("legacy bcrypt credentials", () => {
 			.where(eq(authAccounts.userId, userId));
 
 		expect(account?.password).toBe(LEGACY_HASH);
+	});
+
+	it("captures bounded session recognition metadata", async () => {
+		await seedMigratedUser();
+		const request = post("/sign-in/username", {
+			username: "alice",
+			password: LEGACY_PASSWORD,
+		});
+		request.headers.set("cf-connecting-ip", "2001:db8::1");
+		request.headers.set(
+			"user-agent",
+			`Mozilla/5.0 (Windows NT 10.0) Chrome/140.0.0.0 ${"x".repeat(600)}`,
+		);
+
+		expect((await auth.handler(request)).status).toBe(200);
+		const [session] = await db.select().from(authSessions);
+
+		expect(session).toMatchObject({
+			ipAddress: "2001:0db8:0000:0000:0000:0000:0000:0000",
+		});
+		expect(session?.userAgent).toHaveLength(512);
 	});
 
 	it("matches the handle case-insensitively", async () => {
@@ -213,6 +242,25 @@ describe("legacy bcrypt credentials", () => {
 });
 
 describe("the mounted handler", () => {
+	it.each([
+		["GET", "/list-sessions"],
+		["POST", "/revoke-session"],
+		["POST", "/revoke-sessions"],
+		["POST", "/revoke-other-sessions"],
+	])("refuses Better Auth's native %s %s surface", async (method, path) => {
+		const response = await auth.handler(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}${path}`, {
+				method,
+				headers: { "content-type": "application/json", origin: ORIGIN },
+				...(method === "POST" && {
+					body: JSON.stringify({ token: "not-a-session-token" }),
+				}),
+			}),
+		);
+
+		expect(response.status).toBe(404);
+	});
+
 	it("blocks Better Auth account operations for a forced-reset session", async () => {
 		await seedMigratedUser(LEGACY_HASH, { forceReset: true });
 		const signInResponse = await auth.handler(
@@ -240,6 +288,85 @@ describe("the mounted handler", () => {
 		expect(await response.json()).toEqual({
 			code: "PASSWORD_RESET_REQUIRED",
 			message: "Password reset required",
+		});
+	});
+
+	describe("under the required MFA policy", () => {
+		async function signInUnenrolled(): Promise<string> {
+			await seedSettings(db, { mfaPolicy: "required" });
+			await seedMigratedUser();
+			const response = await auth.handler(
+				post("/sign-in/username", {
+					username: "alice",
+					password: LEGACY_PASSWORD,
+				}),
+			);
+			const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+			if (!cookie) {
+				throw new Error("sign-in set no cookie");
+			}
+			return cookie;
+		}
+
+		function authRequest(path: string, cookie: string, body: unknown) {
+			return new Request(`${ORIGIN}${AUTH_BASE_PATH}${path}`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
+				body: JSON.stringify(body),
+			});
+		}
+
+		it("blocks account operations for an unenrolled session", async () => {
+			const cookie = await signInUnenrolled();
+			const handler = createAuthRequestHandler(db, auth);
+
+			const response = await handler(
+				authRequest("/change-password", cookie, {
+					currentPassword: LEGACY_PASSWORD,
+					newPassword: "new-password-123",
+				}),
+			);
+
+			expect(response.status).toBe(403);
+			expect(await response.json()).toEqual({
+				code: "MFA_ENROLLMENT_REQUIRED",
+				message: "TOTP enrollment required",
+			});
+		});
+
+		it("lets an unenrolled session start TOTP enrollment", async () => {
+			const cookie = await signInUnenrolled();
+			const handler = createAuthRequestHandler(db, auth);
+
+			const response = await handler(
+				authRequest("/two-factor/enable", cookie, {
+					password: LEGACY_PASSWORD,
+				}),
+			);
+
+			expect(response.status).toBe(200);
+			expect(await response.json()).toMatchObject({
+				totpURI: expect.stringMatching(/^otpauth:\/\/totp\//),
+			});
+		});
+
+		it("lifts the restriction once the user is enrolled", async () => {
+			const cookie = await signInUnenrolled();
+			await db.update(users).set({ twoFactorEnabled: true });
+			const handler = createAuthRequestHandler(db, auth);
+
+			const response = await handler(
+				authRequest("/change-password", cookie, {
+					currentPassword: "wrong-password",
+					newPassword: "new-password-123",
+				}),
+			);
+
+			expect(response.status).not.toBe(403);
 		});
 	});
 
@@ -306,6 +433,223 @@ describe("the mounted handler", () => {
 		expect(cookie).toContain("HttpOnly");
 		expect(cookie).toContain("Secure");
 		expect(cookie).toContain("SameSite=Lax");
+	});
+});
+
+describe("step-up session replacement", () => {
+	async function signInForReplacement() {
+		await seedMigratedUser();
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+		if (!cookie) {
+			throw new Error("sign-in did not set a session cookie");
+		}
+		const [session] = await db.select().from(authSessions);
+		if (!session) {
+			throw new Error("sign-in did not create a session");
+		}
+		return { cookie, session };
+	}
+
+	it("shares the challenge limit across methods and releases it after expiry", async () => {
+		const { cookie } = await signInForReplacement();
+		const password = vi.spyOn(auth.api, "verifyPassword");
+		const totp = vi.spyOn(auth.api, "verifyTOTP");
+		try {
+			for (const method of [
+				"password",
+				"totp",
+				"password",
+				"totp",
+				"password",
+			]) {
+				const request = post(
+					"/virtool-session/challenge",
+					method === "password"
+						? { method, password: "wrong-password" }
+						: { method, code: "000000" },
+				);
+				request.headers.set("cookie", cookie);
+				const response = await auth.handler(request);
+				expect(response.status).toBeGreaterThanOrEqual(400);
+				expect(response.status).toBeLessThan(429);
+			}
+			for (const method of ["password", "totp"]) {
+				const request = post(
+					"/virtool-session/challenge",
+					method === "password"
+						? { method, password: LEGACY_PASSWORD }
+						: { method, code: "000000" },
+				);
+				request.headers.set("cookie", cookie);
+				const response = await auth.handler(request);
+				expect(response.status).toBe(429);
+				expect(Number(response.headers.get("x-retry-after"))).toBeGreaterThan(
+					0,
+				);
+			}
+			expect(password).toHaveBeenCalledTimes(3);
+			expect(totp).toHaveBeenCalledTimes(2);
+			expect(totp).toHaveBeenCalledWith({
+				headers: expect.any(Headers),
+				body: { code: "000000", trustDevice: false },
+			});
+			await db.update(authRateLimits).set({ lastRequest: Date.now() - 61_000 });
+			const request = post("/virtool-session/challenge", {
+				method: "password",
+				password: LEGACY_PASSWORD,
+			});
+			request.headers.set("cookie", cookie);
+			expect((await auth.handler(request)).status).toBe(200);
+			expect(password).toHaveBeenCalledTimes(4);
+		} finally {
+			password.mockRestore();
+			totp.mockRestore();
+		}
+	});
+
+	it("shares the challenge budget across instances under concurrent requests", async () => {
+		const { cookie } = await signInForReplacement();
+		const connection = database.connect();
+		const otherAuth = createAuth({
+			db: connection.db,
+			publicOrigin: ORIGIN,
+			webauthnRpId: "virtool.test",
+			secret: "test-auth-secret-test-auth-secret",
+		});
+		try {
+			const responses = await Promise.all(
+				Array.from({ length: 10 }, async (_, index) => {
+					const request = post("/virtool-session/challenge", {
+						method: "totp",
+						code: "000000",
+					});
+					request.headers.set("cookie", cookie);
+					return (index % 2 === 0 ? auth : otherAuth).handler(request);
+				}),
+			);
+			expect(responses.map((response) => response.status).sort()).toEqual([
+				400, 400, 400, 400, 400, 429, 429, 429, 429, 429,
+			]);
+		} finally {
+			await connection.close();
+		}
+	});
+
+	it("keeps challenge budgets separate by client IP", async () => {
+		const { cookie } = await signInForReplacement();
+		for (const ip of [
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.2",
+		]) {
+			const request = post("/virtool-session/challenge", {
+				method: "totp",
+				code: "000000",
+			});
+			request.headers.set("cookie", cookie);
+			request.headers.set("x-forwarded-for", ip);
+			const response = await auth.handler(request);
+			if (ip === "192.0.2.2") {
+				expect(response.status).toBe(400);
+			}
+		}
+		const request = post("/virtool-session/challenge", {
+			method: "totp",
+			code: "000000",
+		});
+		request.headers.set("cookie", cookie);
+		request.headers.set("x-forwarded-for", "192.0.2.1");
+		expect((await auth.handler(request)).status).toBe(429);
+	});
+
+	it("creates a fresh replacement and revokes the old session", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+
+		const result = await auth.api.createStepUpSession({
+			headers: new Headers({ cookie, origin: ORIGIN }),
+			returnHeaders: true,
+		});
+		const sessions = await db.select().from(authSessions);
+
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).toBe(Number(result.response.sessionId));
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
+		expect(sessions[0]?.createdAt.getTime()).toBeGreaterThanOrEqual(
+			oldSession.createdAt.getTime(),
+		);
+		expect(sessions[0]?.ipAddress).toBe(oldSession.ipAddress);
+		expect(sessions[0]?.userAgent).toBe(oldSession.userAgent);
+		expect(sessions[0]?.replacementForSessionId).toBeNull();
+		expect(result.headers.get("set-cookie")).toContain(
+			"better-auth.session_token=",
+		);
+	});
+
+	it("preserves the replacement during concurrent all-other revocation", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const results = await Promise.allSettled([
+			auth.api.createStepUpSession({
+				headers: new Headers({ cookie, origin: ORIGIN }),
+			}),
+			revokeOtherActiveBrowserSessions(db, oldSession.userId, oldSession.id),
+		]);
+		const sessions = await db.select().from(authSessions);
+
+		expect(results[0].status).toBe("fulfilled");
+		if (results[1].status === "rejected") {
+			expect(results[1].reason).toBeInstanceOf(BrowserSessionEndedError);
+		}
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
+		expect(sessions[0]?.replacementForSessionId).toBeNull();
+	});
+
+	it("replaces a valid session older than the freshness window", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const staleCreatedAt = new Date(
+			Date.now() - (SESSION_FRESH_AGE_SECONDS + 1) * 1000,
+		);
+		await db
+			.update(authSessions)
+			.set({ createdAt: staleCreatedAt })
+			.where(eq(authSessions.id, oldSession.id));
+
+		const result = await auth.api.createStepUpSession({
+			headers: new Headers({ cookie, origin: ORIGIN }),
+		});
+
+		expect(Number(result.sessionId)).not.toBe(oldSession.id);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
+	});
+
+	it("keeps exactly one durable winner across concurrent replacements", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const headers = new Headers({ cookie, origin: ORIGIN });
+
+		const results = await Promise.allSettled([
+			auth.api.createStepUpSession({ headers }),
+			auth.api.createStepUpSession({ headers }),
+		]);
+		const sessions = await db.select().from(authSessions);
+
+		expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(
+			1,
+		);
+		expect(results.filter(({ status }) => status === "rejected")).toHaveLength(
+			1,
+		);
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
 	});
 });
 
@@ -390,6 +734,34 @@ describe("the user update endpoint", () => {
 
 		const response = await auth.handler(
 			post("/update-user", { username: "someone-else" }),
+		);
+
+		expect(response.status).toBe(404);
+	});
+});
+
+describe("the TOTP URI endpoint", () => {
+	it("is refused over HTTP, so a password alone cannot read the secret again", async () => {
+		await seedMigratedUser();
+		const signIn = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+		const handler = createAuthRequestHandler(db, auth);
+
+		const response = await handler(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}/two-factor/get-totp-uri`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
+				body: JSON.stringify({ password: LEGACY_PASSWORD }),
+			}),
 		);
 
 		expect(response.status).toBe(404);

@@ -20,6 +20,7 @@
 // keep their exact spelling even though their columns are snake_case.
 
 import {
+	bigint,
 	boolean,
 	foreignKey,
 	index,
@@ -28,6 +29,7 @@ import {
 	text,
 	timestamp,
 	unique,
+	varchar,
 } from "drizzle-orm/pg-core";
 
 import { users } from "./users";
@@ -75,15 +77,12 @@ export const authSessions = pgTable(
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		expiresAt: timestamp("expires_at").notNull(),
-		lastActivityAt: timestamp("last_activity_at").notNull(),
-		idleExpiresAt: timestamp("idle_expires_at").notNull(),
-		absoluteExpiresAt: timestamp("absolute_expires_at").notNull(),
-		lastRefreshedAt: timestamp("last_refreshed_at").notNull(),
 		token: text("token").notNull(),
 		createdAt: timestamp("created_at").notNull(),
 		updatedAt: timestamp("updated_at").notNull(),
-		ipAddress: text("ip_address"),
-		userAgent: text("user_agent"),
+		ipAddress: varchar("ip_address", { length: 45 }),
+		userAgent: varchar("user_agent", { length: 512 }),
+		replacementForSessionId: integer("replacement_for_session_id"),
 		userId: integer("user_id").notNull(),
 	},
 	(table) => [
@@ -92,9 +91,16 @@ export const authSessions = pgTable(
 			foreignColumns: [users.id],
 			name: "auth_sessions_user_id_fkey",
 		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.replacementForSessionId],
+			foreignColumns: [table.id],
+			name: "auth_sessions_replacement_for_session_id_fkey",
+		}).onDelete("set null"),
 		unique("auth_sessions_token_key").on(table.token),
 		index("idx_auth_sessions_expires_at").on(table.expiresAt),
-		index("idx_auth_sessions_absolute_expires_at").on(table.absoluteExpiresAt),
+		index("idx_auth_sessions_replacement_for_session_id").on(
+			table.replacementForSessionId,
+		),
 		index("idx_auth_sessions_user_id").on(table.userId),
 	],
 );
@@ -169,10 +175,23 @@ export const authPasskeys = pgTable(
 			foreignColumns: [users.id],
 			name: "auth_passkeys_user_id_fkey",
 		}).onDelete("cascade"),
-		index("idx_auth_passkeys_credential_id").on(table.credentialID),
+		// Better Auth looks a passkey up by credential id alone at sign-in, so two
+		// users holding the same id would make that lookup pick one arbitrarily.
+		unique("auth_passkeys_credential_id_key").on(table.credentialID),
 		index("idx_auth_passkeys_user_id").on(table.userId),
 	],
 );
 
 /** A row from the `auth_passkeys` table. */
 export type AuthPasskeyRow = typeof authPasskeys.$inferSelect;
+
+export const authRateLimits = pgTable(
+	"auth_rate_limits",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		key: text("key").notNull(),
+		count: integer("count").notNull(),
+		lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+	},
+	(table) => [unique("auth_rate_limits_key_key").on(table.key)],
+);

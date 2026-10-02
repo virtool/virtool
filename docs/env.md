@@ -75,6 +75,9 @@ Current integrations are:
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`
+- `apps/dev-tools/src/administrator.ts`
+- `apps/internal/src/data-migrations/main.ts`
+- `apps/internal/src/auth-remediation/main.ts`
 - `packages/workflow/src/config.ts`
 
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`
@@ -87,7 +90,7 @@ no safe default:
 
 | Variable | Value |
 | --- | --- |
-| `VT_PUBLIC_ORIGIN` | The one public origin the instance is served on, scheme and host only, such as `https://virtool.example`. |
+| `VT_PUBLIC_ORIGIN` | The one public origin the instance is served on, including its scheme, host, and optional port, such as `https://virtool.example`. |
 | `VT_AUTH_SECRET` | At least 32 characters. Generate with `openssl rand -base64 32`. |
 
 Both accept `_FILE` variants. Configure them for `apps/web`.
@@ -95,7 +98,8 @@ Both accept `_FILE` variants. Configure them for `apps/web`.
 `VT_PUBLIC_ORIGIN` is deliberately not inferred from the request `Host` or
 forwarded headers. WebAuthn binds a passkey to the configured origin and Relying
 Party ID, whose hostname is derived from that origin. Moving an instance to a
-new domain invalidates passkeys registered under the old one.
+new domain invalidates passkeys registered under the old one. Users must then
+sign in with their password and register new passkeys.
 
 Plain `http` is rejected except on `localhost`. The loopback addresses are
 secure contexts as well, but an RP ID must be a domain and no browser accepts an

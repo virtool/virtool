@@ -16,6 +16,37 @@ export const ADMINISTRATOR_ROLE_NAMES = [
 /** A role that grants a user administrative access to the instance. */
 export type AdministratorRoleName = (typeof ADMINISTRATOR_ROLE_NAMES)[number];
 
+/** A selectable administrator role with its human-readable name and description. */
+export type AdministratorRole = {
+	id: AdministratorRoleName;
+	name: string;
+	description: string;
+};
+
+/** Every administrator role, ordered from most to least privileged. */
+export const ADMINISTRATOR_ROLES: AdministratorRole[] = [
+	{
+		id: "full",
+		name: "Full",
+		description: "Manage who is an administrator and what they can do.",
+	},
+	{
+		id: "settings",
+		name: "Settings",
+		description: "Manage instance settings.",
+	},
+	{
+		id: "users",
+		name: "Users",
+		description: "Create user accounts. Control activation of user accounts.",
+	},
+	{
+		id: "base",
+		name: "Base",
+		description: "Manage HMMs and common references. View and cancel any job.",
+	},
+];
+
 /**
  * The permissions level of each administrator role.
  *

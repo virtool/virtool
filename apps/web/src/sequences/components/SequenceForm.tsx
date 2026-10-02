@@ -1,4 +1,5 @@
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import type { OtuSegment, OtuSequence } from "@virtool/contracts";
 import { FormProvider, useForm } from "react-hook-form";
@@ -80,28 +81,21 @@ export default function SequenceForm({
 
 				<Accession />
 
-				<InputGroup>
-					<InputLabel htmlFor="host">Host</InputLabel>
-					<InputSimple id="host" {...register("host")} />
-				</InputGroup>
+				<Field>
+					<FieldLabel>Host</FieldLabel>
+					<Input {...register("host")} />
+				</Field>
 
-				<InputGroup>
-					<InputLabel htmlFor="definition">Definition</InputLabel>
-					<InputSimple
-						id="definition"
+				<Field>
+					<FieldLabel>Definition</FieldLabel>
+					<Input
 						aria-required
-						aria-invalid={Boolean(errors.definition) || undefined}
-						aria-describedby={
-							errors.definition ? "definition-error" : undefined
-						}
 						{...register("definition", {
 							required: "Required Field",
 						})}
 					/>
-					<InputError id="definition-error">
-						{errors.definition?.message}
-					</InputError>
-				</InputGroup>
+					<FieldError errors={[errors.definition]} />
+				</Field>
 
 				<SequenceField />
 				<SaveButton />

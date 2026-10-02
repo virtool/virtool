@@ -1,5 +1,6 @@
 import { realpath } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
+import type { OpenPullRequest } from "../shared/types.ts";
 import type { CommandRunner } from "./command.ts";
 
 /** Paths that identify a Git repository and its primary checkout. */
@@ -15,6 +16,8 @@ export type GitWorktree = {
 	id: string;
 	path: string;
 };
+
+type PullRequestResult = OpenPullRequest & { headRefName: string };
 
 function absoluteGitPath(cwd: string, path: string): string {
 	return isAbsolute(path) ? path : resolve(cwd, path);
@@ -90,4 +93,36 @@ export async function discoverWorktrees(
 	).then((worktrees) =>
 		worktrees.filter((worktree): worktree is GitWorktree => worktree !== null),
 	);
+}
+
+/** Return open GitHub pull requests keyed by their source branch. */
+export async function getOpenPullRequests(
+	run: CommandRunner,
+	cwd: string,
+): Promise<Map<string, OpenPullRequest>> {
+	try {
+		const { stdout } = await run(
+			"gh",
+			[
+				"pr",
+				"list",
+				"--state",
+				"open",
+				"--json",
+				"headRefName,url,number",
+				"--limit",
+				"1000",
+			],
+			{ cwd },
+		);
+		const pullRequests = JSON.parse(stdout) as PullRequestResult[];
+		return new Map(
+			pullRequests.map(({ headRefName, number, url }) => [
+				headRefName,
+				{ number, url },
+			]),
+		);
+	} catch {
+		return new Map();
+	}
 }

@@ -21,7 +21,7 @@ same UI.
 
 The rule for everything in this package is: **match the stored and golden
 output exactly, including its bugs.** `roundHalfEven` exists because
-`Math.round` rounds half away from zero rather than half to even;
+`Math.round` rounds ties toward positive infinity rather than half to even;
 `parseHmmerTblout` reads the best-domain score and bias from each other's
 columns; `findOrfs` emits a negative coordinate. None of those are defects to
 be tidied up.

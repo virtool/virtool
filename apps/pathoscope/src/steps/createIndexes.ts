@@ -4,10 +4,10 @@ import type { Logger } from "@virtool/logger";
 import { openWorkflowIndex, writeFasta } from "@virtool/sqlite";
 import {
 	type BuildContextInput,
+	cacheFor,
 	createMappingIndex,
 	downloadToPath,
 } from "@virtool/workflow";
-import { cacheFor } from "../cache";
 import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
 import { workPaths } from "../paths";
 import { APP_VERSION } from "../version";
@@ -63,8 +63,8 @@ export const createReferenceIndexStep: PathoscopeStep = {
  * Write the collapsed reference's default isolates as one FASTA.
  *
  * Handed to {@link createMappingIndex} as a producer rather than run before it:
- * the `reference_mapping_index` namespace is shared, so a hit is the common
- * outcome and the whole collapsed reference would otherwise be scanned into a
+ * every analysis against the same index reuses one cached index, so a hit is the
+ * common outcome and the whole collapsed reference would otherwise be scanned into a
  * file nothing then reads.
  */
 async function writeDefaultIsolateFasta({
@@ -95,13 +95,15 @@ async function writeDefaultIsolateFasta({
 /**
  * Build one bowtie2 index per subtraction.
  *
- * The gzipped FASTA is handed to `bowtie2-build` directly — it reads gzip — so
- * unlike Nuvs there is nothing to decompress first.
+ * The gzipped FASTA is handed to `bowtie2-build` directly, which reads gzip.
  *
  * The genome is downloaded here rather than with the run's other inputs, and
- * only once the cache has missed. The `subtraction_mapping_index` namespace is
- * shared, so a hit is the common outcome, and a host genome is gigabytes that
+ * only once the cache has missed. Every analysis against the same subtraction
+ * reuses one cached index, so a hit is the common outcome, and a host genome is gigabytes that
  * would otherwise be pulled out of storage and never opened.
+ *
+ * Nothing reads the genome once its index is built, so it is removed straight
+ * after, whether or not the build succeeded.
  */
 export const createSubtractionIndexStep: PathoscopeStep = {
 	id: "create_subtraction_index",
@@ -114,26 +116,30 @@ export const createSubtractionIndexStep: PathoscopeStep = {
 		// Sequentially, not concurrently: `bowtie2-build --threads {proc}` is
 		// already using every core, so overlapping two of them only contends.
 		for (const subtraction of data.subtractions) {
-			await createMappingIndex({
-				cache,
-				fastaPath: subtraction.path,
-				indexKind: "subtraction_mapping_index",
-				indexPrefix: paths.subtraction(subtraction.id).indexPrefix,
-				logger,
-				parentId: subtraction.id,
-				prepareFasta: () =>
-					downloadSubtractionFasta({
-						fastaPath: subtraction.path,
-						logger,
-						storage,
-						storageKey: subtraction.storageKey,
-						subtractionId: subtraction.id,
-					}),
-				proc,
-				runSubprocess,
-				workflow: WORKFLOW_NAME,
-				workflowVersion: APP_VERSION,
-			});
+			try {
+				await createMappingIndex({
+					cache,
+					fastaPath: subtraction.path,
+					indexKind: "subtraction_mapping_index",
+					indexPrefix: paths.subtraction(subtraction.id).indexPrefix,
+					logger,
+					parentId: subtraction.id,
+					prepareFasta: () =>
+						downloadSubtractionFasta({
+							fastaPath: subtraction.path,
+							logger,
+							storage,
+							storageKey: subtraction.storageKey,
+							subtractionId: subtraction.id,
+						}),
+					proc,
+					runSubprocess,
+					workflow: WORKFLOW_NAME,
+					workflowVersion: APP_VERSION,
+				});
+			} finally {
+				await rm(subtraction.path, { force: true });
+			}
 		}
 	},
 };

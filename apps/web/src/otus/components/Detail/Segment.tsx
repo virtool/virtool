@@ -40,7 +40,11 @@ export function SegmentItem({
 	return (
 		<BoxGroupSection
 			ref={ref}
-			className={cn("flex items-center gap-3 h-12", className)}
+			className={cn(
+				"flex items-center gap-3 h-12",
+				canModify && "pl-3.5",
+				className,
+			)}
 			style={style}
 		>
 			{canModify && (

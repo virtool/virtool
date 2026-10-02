@@ -7,11 +7,11 @@ Compose environments for Git worktrees. Install Docker Engine, Node 24, pnpm,
 and Worktrunk, then run:
 
 ```shell
-virtool-dev up
-virtool-dev ui
-virtool-dev list
-virtool-dev stop
-virtool-dev remove
+vtd up
+vtd ui
+vtd list
+vtd stop
+vtd remove
 ```
 
 Lifecycle commands acknowledge immediately. Follow progress in the management

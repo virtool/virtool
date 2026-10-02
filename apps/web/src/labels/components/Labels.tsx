@@ -53,6 +53,7 @@ export function Labels() {
 						<LabelItem
 							key={label.id}
 							color={label.color}
+							count={label.count}
 							description={label.description}
 							id={label.id}
 							name={label.name}

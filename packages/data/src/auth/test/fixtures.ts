@@ -93,15 +93,17 @@ export async function seedSession(
 	db: Db,
 	userId: number,
 	{
+		createdAt = new Date(),
 		expiresAt = new Date(Date.now() + 60_000),
-		lastActivityAt = new Date(),
-		absoluteExpiresAt = expiresAt,
-		lastRefreshedAt = lastActivityAt,
+		ipAddress = "127.0.0.1",
+		updatedAt = new Date(),
+		userAgent = "Test Browser/1.0",
 	}: {
+		createdAt?: Date;
 		expiresAt?: Date;
-		lastActivityAt?: Date;
-		absoluteExpiresAt?: Date;
-		lastRefreshedAt?: Date;
+		ipAddress?: string | null;
+		updatedAt?: Date;
+		userAgent?: string | null;
 	} = {},
 ): Promise<SeededSession> {
 	const token = newSessionToken();
@@ -109,15 +111,12 @@ export async function seedSession(
 	const [session] = await db
 		.insert(authSessions)
 		.values({
-			absoluteExpiresAt,
-			createdAt: new Date(),
+			createdAt,
 			expiresAt,
-			idleExpiresAt: expiresAt,
-			ipAddress: "127.0.0.1",
-			lastActivityAt,
-			lastRefreshedAt,
+			ipAddress,
 			token,
-			updatedAt: new Date(),
+			updatedAt,
+			userAgent,
 			userId,
 		})
 		.returning({ id: authSessions.id });
@@ -173,10 +172,12 @@ export async function seedSetupToken(
 		candidateEmail,
 		expiresAt = new Date(Date.now() + 60_000),
 		consumedAt = null,
+		supersededAt = null,
 	}: {
 		candidateEmail?: string;
 		expiresAt?: Date;
 		consumedAt?: Date | null;
+		supersededAt?: Date | null;
 	} = {},
 ): Promise<SeededSetupToken> {
 	const token = randomBytes(32).toString("hex");
@@ -186,6 +187,9 @@ export async function seedSetupToken(
 		consumedAt,
 		expiresAt,
 		purpose,
+		issuerUserId: purpose === "account_completion" ? userId : undefined,
+		delivery: purpose === "account_completion" ? "queued" : undefined,
+		supersededAt,
 		tokenHash: hashToken(token),
 		userId,
 	});

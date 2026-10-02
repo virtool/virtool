@@ -1,8 +1,11 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { RunSubprocess } from "@virtool/workflow";
-import { describe, expect, it, onTestFinished, vi } from "vitest";
+import {
+	createFakeSubprocessRunner,
+	createTestWorkPath,
+	type FakeSubprocessRunner,
+} from "@virtool/workflow/testing";
+import { describe, expect, it, onTestFinished } from "vitest";
 import {
 	eliminateSubtraction,
 	findCandidateSequenceIds,
@@ -11,31 +14,22 @@ import {
 } from "./pathoscopeCore";
 
 async function tempDir(): Promise<string> {
-	const directory = await mkdtemp(join(tmpdir(), "pathoscope-core-"));
+	const { path, cleanup } = await createTestWorkPath();
 
-	onTestFinished(() => rm(directory, { force: true, recursive: true }));
+	onTestFinished(cleanup);
 
-	return directory;
+	return path;
 }
 
 /** Stands in for the binary, writing what it would have written to `--output`. */
-function coreWriting(results: unknown): RunSubprocess {
-	return vi.fn(async (options) => {
-		const outputIndex = options.command.indexOf("--output");
-
-		await writeFile(
-			options.command[outputIndex + 1] ?? "",
-			JSON.stringify(results),
-		);
-
-		return {
-			command: options.command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
+function coreWriting(results: unknown): FakeSubprocessRunner {
+	return createFakeSubprocessRunner({
+		async effect({ command }) {
+			await writeFile(
+				command[command.indexOf("--output") + 1] ?? "",
+				JSON.stringify(results),
+			);
+		},
 	});
 }
 
@@ -73,7 +67,7 @@ describe("findCandidateSequenceIds", () => {
 			},
 		);
 
-		expect(vi.mocked(runSubprocess).mock.calls[0]?.[0].command).toEqual([
+		expect(runSubprocess.commands()[0]).toEqual([
 			"pathoscope-core",
 			"candidates",
 			"--index",
@@ -129,7 +123,7 @@ describe("eliminateSubtraction", () => {
 			},
 		);
 
-		expect(vi.mocked(runSubprocess).mock.calls[0]?.[0].command).toEqual([
+		expect(runSubprocess.commands()[0]).toEqual([
 			"pathoscope-core",
 			"eliminate-subtraction",
 			"--isolate-alignments",
@@ -180,7 +174,7 @@ describe("runExpectationMaximization", () => {
 			{ alignmentPath: "/work/subtracted.bam", pScoreCutoff: 0.01 },
 		);
 
-		expect(vi.mocked(runSubprocess).mock.calls[0]?.[0].command).toEqual([
+		expect(runSubprocess.commands()[0]).toEqual([
 			"pathoscope-core",
 			"em",
 			"--alignment",

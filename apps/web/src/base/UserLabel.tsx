@@ -1,5 +1,5 @@
 import { cn } from "@app/cn";
-import { InitialIcon } from "@base/Icon";
+import { UserAvatar } from "@base/Icon";
 
 type UserLabelProps = {
 	className?: string;
@@ -13,13 +13,13 @@ type UserLabelProps = {
  * names an account rather than attributing an action to one.
  *
  * The icon is decorative: the handle it draws is already the text beside it,
- * and `InitialIcon` labels itself with it.
+ * and `UserAvatar` labels itself with it.
  */
 export default function UserLabel({ className, handle }: UserLabelProps) {
 	return (
 		<span className={cn("inline-flex items-center gap-2", className)}>
 			<span aria-hidden>
-				<InitialIcon size="md" handle={handle} />
+				<UserAvatar size="md" handle={handle} />
 			</span>
 			{handle}
 		</span>

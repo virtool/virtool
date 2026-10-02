@@ -1,0 +1,1 @@
+ALTER TABLE "setup_tokens" ADD COLUMN "superseded_at" timestamp;

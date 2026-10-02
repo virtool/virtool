@@ -1,13 +1,13 @@
 import { passkey } from "@better-auth/passkey";
+import { AUTH_BASE_PATH } from "@virtool/contracts";
+import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
-import {
-	type BrowserSessionTimingConfig,
-	createBrowserSessionTiming,
-} from "@virtool/data/auth/session";
+import { mfaEnrollmentRequired } from "@virtool/data/auth/session";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
 	authPasskeys,
+	authRateLimits,
 	authSessions,
 	authTwoFactors,
 	authVerifications,
@@ -19,16 +19,21 @@ import {
 	APIError,
 	createAuthEndpoint,
 	createAuthMiddleware,
+	sensitiveSessionMiddleware,
 } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { twoFactor, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
-
-/** Where the Better Auth handler is mounted. */
-export const AUTH_BASE_PATH = "/api/auth";
+import { createRateLimitStorage } from "./rateLimitStorage";
+import { recentAuthenticationPlugin } from "./recentAuthenticationChallenge";
+import {
+	AUTH_IP_ADDRESS_OPTIONS,
+	normalizeBrowserSessionMetadata,
+} from "./sessionMetadata";
 
 /**
  * The endpoints this instance refuses.
@@ -53,7 +58,40 @@ const REFUSED_PATHS = new Set([
 	"/sign-in/email",
 	"/is-username-available",
 	"/update-user",
+	"/list-sessions",
+	"/revoke-session",
+	"/revoke-sessions",
+	"/revoke-other-sessions",
 ]);
+
+/**
+ * Endpoints refused over HTTP only.
+ *
+ * The passkey list returns public keys and counters, and neither passkey
+ * mutation checks recent authentication. Virtool's account server functions
+ * call all three through `auth.api` and apply its own policy. The `before` hook
+ * also runs for `auth.api` calls, so the refusal is in
+ * {@link createAuthRequestHandler}.
+ */
+const HTTP_REFUSED_PATHS = new Set(
+	[
+		"/passkey/list-user-passkeys",
+		"/passkey/update-passkey",
+		"/passkey/delete-passkey",
+		// Returns the TOTP secret again for only the password. Enrollment reads
+		// it once, from `enable`.
+		"/two-factor/get-totp-uri",
+	].map((path) => `${AUTH_BASE_PATH}${path}`),
+);
+
+/**
+ * Limit passkey sign-in as Better Auth limits its own sign-in paths.
+ *
+ * Better Auth's default rule matches only paths that start with `/sign-in`.
+ * An options request writes a challenge row, so the limit also stops a caller
+ * who fills the verification table.
+ */
+const PASSKEY_SIGN_IN_RATE_LIMIT = { window: 10, max: 3 };
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -61,12 +99,11 @@ export type AuthOptions = {
 	publicOrigin: string;
 	webauthnRpId: string;
 	secret: string;
-	browserSessionTiming: BrowserSessionTimingConfig;
 };
 
-function remediationSessionPlugin() {
+function virtoolSessionPlugin(db: Db) {
 	return {
-		id: "virtool-remediation-session",
+		id: "virtool-session",
 		endpoints: {
 			createRemediationSession: createAuthEndpoint.serverOnly(
 				{
@@ -89,8 +126,89 @@ function remediationSessionPlugin() {
 					return ctx.json({ user });
 				},
 			),
+			createStepUpSession: createAuthEndpoint.serverOnly(
+				{
+					method: "POST",
+					use: [sensitiveSessionMiddleware],
+				},
+				async (ctx) => {
+					const current = ctx.context.session;
+					const sessionId = Number(current.session.id);
+					const userId = Number(current.user.id);
+					if (
+						!Number.isSafeInteger(sessionId) ||
+						!Number.isSafeInteger(userId)
+					) {
+						throw new APIError("UNAUTHORIZED");
+					}
+					const dontRememberMe = Boolean(
+						await ctx.getSignedCookie(
+							ctx.context.authCookies.dontRememberToken.name,
+							ctx.context.secret,
+						),
+					);
+
+					const replacement = await ctx.context.internalAdapter.createSession(
+						current.user.id,
+						dontRememberMe,
+						{
+							ipAddress: current.session.ipAddress,
+							userAgent: current.session.userAgent,
+							replacementForSessionId: sessionId,
+						},
+						true,
+					);
+					const deleted = await db
+						.delete(authSessions)
+						.where(
+							and(
+								eq(authSessions.id, sessionId),
+								eq(authSessions.userId, userId),
+								eq(authSessions.token, current.session.token),
+							),
+						)
+						.returning({ id: authSessions.id });
+
+					if (deleted.length !== 1) {
+						await ctx.context.internalAdapter.deleteSession(replacement.token);
+						throw new APIError("UNAUTHORIZED", {
+							code: "STEP_UP_SESSION_ENDED",
+							message: "Session ended during authentication",
+						});
+					}
+
+					try {
+						await setSessionCookie(ctx, {
+							session: replacement,
+							user: current.user,
+						});
+					} catch (err) {
+						await ctx.context.internalAdapter.deleteSession(replacement.token);
+						throw err;
+					}
+
+					return ctx.json({
+						createdAt: replacement.createdAt,
+						sessionId: replacement.id,
+					});
+				},
+			),
 		},
 	} satisfies BetterAuthPlugin;
+}
+
+function rejectUnverifiedUser(): never {
+	throw new APIError("BAD_REQUEST", {
+		code: "USER_VERIFICATION_REQUIRED",
+		message: "The authenticator did not verify the user",
+	});
+}
+
+function rejectRegisteredPasskey(): never {
+	throw new APIError("BAD_REQUEST", {
+		code: "PASSKEY_ALREADY_REGISTERED",
+		message: "Passkey already registered",
+	});
 }
 
 /**
@@ -113,13 +231,21 @@ export function createAuth({
 	publicOrigin,
 	webauthnRpId,
 	secret,
-	browserSessionTiming,
 }: AuthOptions) {
-	return betterAuth({
+	const auth = betterAuth({
 		appName: "Virtool",
 		baseURL: publicOrigin,
 		basePath: AUTH_BASE_PATH,
 		secret,
+		rateLimit: {
+			enabled: true,
+			customStorage: createRateLimitStorage(db),
+			// Keys are paths without the base path.
+			customRules: {
+				"/passkey/generate-authenticate-options": PASSKEY_SIGN_IN_RATE_LIMIT,
+				"/passkey/verify-authentication": PASSKEY_SIGN_IN_RATE_LIMIT,
+			},
+		},
 		// The one origin this instance answers on. Better Auth otherwise trusts
 		// whatever `Host` says, and every callback and WebAuthn ceremony would
 		// then validate against an attacker-supplied value.
@@ -136,22 +262,22 @@ export function createAuth({
 				verification: authVerifications,
 				twoFactor: authTwoFactors,
 				passkey: authPasskeys,
+				rateLimit: authRateLimits,
 			},
 		}),
 		session: {
-			// The cookie survives for the immutable window. The database's effective
-			// expiry starts at the shorter idle deadline and remains authoritative.
-			expiresIn: browserSessionTiming.absoluteLifetimeSeconds,
-			disableSessionRefresh: true,
 			cookieCache: { enabled: false },
+			freshAge: SESSION_FRESH_AGE_SECONDS,
 			additionalFields: {
-				lastActivityAt: { type: "date", input: false },
-				idleExpiresAt: { type: "date", input: false },
-				absoluteExpiresAt: { type: "date", input: false },
-				lastRefreshedAt: { type: "date", input: false },
+				replacementForSessionId: {
+					type: "number",
+					input: false,
+					returned: false,
+				},
 			},
 		},
 		advanced: {
+			ipAddress: AUTH_IP_ADDRESS_OPTIONS,
 			// Stated rather than left to default. Better Auth turns its origin check
 			// off whenever `NODE_ENV` is `test`, so without this the suite would
 			// exercise a configuration production never runs and prove nothing about
@@ -231,18 +357,10 @@ export function createAuth({
 							});
 						}
 
-						const timing = await createBrowserSessionTiming(
-							db,
-							browserSessionTiming,
-						);
 						return {
 							data: {
 								...session,
-								expiresAt: timing.expiresAt,
-								idleExpiresAt: timing.expiresAt,
-								lastActivityAt: timing.lastActivityAt,
-								absoluteExpiresAt: timing.absoluteExpiresAt,
-								lastRefreshedAt: timing.lastRefreshedAt,
+								...normalizeBrowserSessionMetadata(undefined, session),
 							},
 						};
 					},
@@ -250,7 +368,22 @@ export function createAuth({
 			},
 		},
 		plugins: [
-			remediationSessionPlugin(),
+			virtoolSessionPlugin(db),
+			recentAuthenticationPlugin(
+				async function verify(headers, challenge): Promise<void> {
+					if (challenge.method === "password") {
+						await auth.api.verifyPassword({
+							headers,
+							body: { password: challenge.password },
+						});
+					} else {
+						await auth.api.verifyTOTP({
+							headers,
+							body: { code: challenge.code, trustDevice: false },
+						});
+					}
+				},
+			),
 			// A Virtool handle is case-insensitive and keeps its original case for
 			// display, which is exactly the split this plugin draws between the
 			// normalized `username` it matches on and the `displayUsername` it
@@ -276,10 +409,35 @@ export function createAuth({
 				rpID: webauthnRpId,
 				rpName: "Virtool",
 				origin: publicOrigin,
-				// The authenticator must prove a person was present *and* verified —
-				// a PIN, a fingerprint, a face. Without it a passkey degrades to
-				// possession of an unlocked device.
-				authenticatorSelection: { userVerification: "required" },
+				authenticatorSelection: {
+					// Discoverable, so a user can sign in without typing a handle first.
+					residentKey: "required",
+					// The authenticator must prove a person was present *and* verified —
+					// a PIN, a fingerprint, a face. Without it a passkey degrades to
+					// possession of an unlocked device.
+					userVerification: "required",
+				},
+				// The plugin verifies both ceremonies with `requireUserVerification:
+				// false` whatever the options above ask the browser for, so the flag
+				// is checked again here, after the signature has been verified.
+				registration: {
+					async afterVerification({ verification }) {
+						const info = verification.registrationInfo;
+						if (!info?.userVerified) {
+							rejectUnverifiedUser();
+						}
+						if (await isPasskeyCredentialRegistered(db, info.credential.id)) {
+							rejectRegisteredPasskey();
+						}
+					},
+				},
+				authentication: {
+					afterVerification({ verification }) {
+						if (!verification.authenticationInfo.userVerified) {
+							rejectUnverifiedUser();
+						}
+					},
+				},
 			}),
 			// Must stay last: it copies whatever `set-cookie` the endpoints above
 			// produced onto the TanStack Start response, so a plugin registered
@@ -287,6 +445,7 @@ export function createAuth({
 			tanstackStartCookies(),
 		],
 	});
+	return auth;
 }
 
 const FORCED_RESET_ALLOWED_PATHS = new Set([
@@ -294,13 +453,29 @@ const FORCED_RESET_ALLOWED_PATHS = new Set([
 	`${AUTH_BASE_PATH}/sign-out`,
 ]);
 
-/** Wrap Better Auth's raw handler with Virtool's forced-reset restriction. */
+// Enrollment is Better Auth's own `enable` then `verify-totp`. The first
+// successful verification sets `twoFactorEnabled`, which lifts the
+// restriction on the next request.
+const MFA_ENROLLMENT_ALLOWED_PATHS = new Set([
+	`${AUTH_BASE_PATH}/get-session`,
+	`${AUTH_BASE_PATH}/sign-out`,
+	`${AUTH_BASE_PATH}/two-factor/enable`,
+	`${AUTH_BASE_PATH}/two-factor/verify-totp`,
+]);
+
+/**
+ * Wrap Better Auth's raw handler with Virtool's forced-reset and required-MFA
+ * restrictions.
+ */
 export function createAuthRequestHandler(
 	db: Db,
 	auth: ReturnType<typeof createAuth>,
 ): (request: Request) => Promise<Response> {
 	return async function handleAuthRequest(request: Request): Promise<Response> {
 		const pathname = new URL(request.url).pathname;
+		if (HTTP_REFUSED_PATHS.has(pathname)) {
+			return new Response(null, { status: 404 });
+		}
 		if (!FORCED_RESET_ALLOWED_PATHS.has(pathname)) {
 			const session = await auth.api.getSession({
 				headers: request.headers,
@@ -311,7 +486,10 @@ export function createAuthRequestHandler(
 				const userId = Number(session.user.id);
 				const [user] = Number.isSafeInteger(userId)
 					? await db
-							.select({ forceReset: users.forceReset })
+							.select({
+								forceReset: users.forceReset,
+								mfaEnrollmentRequired,
+							})
 							.from(users)
 							.where(eq(users.id, userId))
 							.limit(1)
@@ -322,6 +500,19 @@ export function createAuthRequestHandler(
 						{
 							code: "PASSWORD_RESET_REQUIRED",
 							message: "Password reset required",
+						},
+						{ status: 403 },
+					);
+				}
+
+				if (
+					user.mfaEnrollmentRequired &&
+					!MFA_ENROLLMENT_ALLOWED_PATHS.has(pathname)
+				) {
+					return Response.json(
+						{
+							code: "MFA_ENROLLMENT_REQUIRED",
+							message: "TOTP enrollment required",
 						},
 						{ status: 403 },
 					);

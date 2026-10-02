@@ -16,11 +16,14 @@ export type ObservedState =
 export type Environment = {
 	age: number | null;
 	branch: string;
+	/** Whether the daemon creates the default administrator when the environment starts. */
+	createDefaultAdministrator: boolean;
 	desired: DesiredState;
 	id: string | null;
 	lastError: string | null;
 	name: string | null;
 	observed: ObservedState;
+	openPullRequest: OpenPullRequest | null;
 	operation: Operation | null;
 	path: string;
 	ready: boolean;
@@ -28,6 +31,12 @@ export type Environment = {
 	url: string | null;
 	workflowEnabled: boolean;
 	worktreeId: string;
+};
+
+/** An open GitHub pull request associated with a worktree branch. */
+export type OpenPullRequest = {
+	number: number;
+	url: string;
 };
 
 /** Observed health for one Compose service. */
@@ -38,6 +47,7 @@ export type Operation = {
 	action: "remove" | "start" | "stop";
 	createdAt: number;
 	error: string | null;
+	finishedAt: number | null;
 	id: number;
 	progress: string;
 	status: "failed" | "pending" | "running" | "succeeded";
@@ -48,6 +58,13 @@ export type SharedState = {
 	initialized: boolean;
 	lastError: string | null;
 	services: Record<string, ServiceState>;
+	storage: SharedStorage;
+};
+
+/** Disk usage in bytes for the shared service volumes. */
+export type SharedStorage = {
+	azurite: number | null;
+	postgres: number | null;
 };
 
 /** Runtime state of the global workflow scheduler. */
@@ -56,12 +73,20 @@ export type SchedulerState = {
 	buildQueue: Array<{ environmentId: string; workflow: Workflow }>;
 	capacity: number;
 	concurrency: number;
+	errors: Record<string, string>;
 	lastError: string | null;
 	queues: Record<string, Partial<Record<Workflow, number>>>;
 };
 
+/** The administrator the daemon creates in environments that have no users. */
+export type DefaultAdministrator = {
+	email: string;
+	handle: string;
+};
+
 /** A complete management UI state snapshot. */
 export type Snapshot = {
+	defaultAdministrator: DefaultAdministrator | null;
 	environments: Environment[];
 	repositoryId: string;
 	scheduler: SchedulerState;
@@ -87,5 +112,7 @@ export type Mutation = {
 		| "retry"
 		| "start"
 		| "stop";
+	/** Used only by `start` when it creates the environment. The default is `true`. */
+	createDefaultAdministrator?: boolean;
 	worktreeIds: string[];
 };

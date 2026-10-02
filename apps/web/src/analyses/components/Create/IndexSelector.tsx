@@ -1,6 +1,7 @@
 import { cn } from "@app/cn";
 import Box from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import { FieldLabel } from "@base/Field";
 import Label from "@base/Label";
 import Select, {
 	SelectButton,
@@ -56,10 +57,6 @@ type IndexSelectorProps = {
 	indexes: IndexMinimal[];
 	selected: string;
 	onChange: (value: string) => void;
-	/** Whether the field is in an invalid state (e.g. required but empty) */
-	invalid?: boolean;
-	/** `id` of the error message describing this field, when invalid. */
-	describedById?: string;
 };
 
 /**
@@ -69,8 +66,6 @@ export default function IndexSelector({
 	indexes,
 	selected,
 	onChange,
-	invalid,
-	describedById,
 }: IndexSelectorProps) {
 	const sortedIndexes = sortBy(indexes, [(index) => index.reference.name]);
 
@@ -85,30 +80,35 @@ export default function IndexSelector({
 
 	return (
 		<div>
-			<CreateAnalysisFieldTitle>Reference</CreateAnalysisFieldTitle>
 			{indexes.length ? (
-				<Select value={selected} onValueChange={onChange}>
-					<SelectButton
-						aria-invalid={invalid || undefined}
-						aria-describedby={describedById}
-						className={cn("flex", "w-full")}
-						placeholder="Select a reference"
-						icon={ChevronDown}
-					/>
-					<SelectContent>{indexItems}</SelectContent>
-				</Select>
+				<>
+					<FieldLabel className="mb-2.5 text-base font-normal">
+						Reference
+					</FieldLabel>
+					<Select value={selected} onValueChange={onChange}>
+						<SelectButton
+							className={cn("flex", "w-full")}
+							placeholder="Select a reference"
+							icon={ChevronDown}
+						/>
+						<SelectContent>{indexItems}</SelectContent>
+					</Select>
+				</>
 			) : (
-				<Box className="mb-0">
-					<Empty className="py-12">
-						<EmptyMedia className="text-gray-400">
-							<Library size={40} strokeWidth={1.5} />
-						</EmptyMedia>
-						<EmptyTitle>No references found</EmptyTitle>
-						<EmptyDescription>
-							Build a reference index before running an analysis.
-						</EmptyDescription>
-					</Empty>
-				</Box>
+				<>
+					<CreateAnalysisFieldTitle>Reference</CreateAnalysisFieldTitle>
+					<Box className="mb-0">
+						<Empty className="py-12">
+							<EmptyMedia className="text-gray-400">
+								<Library size={40} strokeWidth={1.5} />
+							</EmptyMedia>
+							<EmptyTitle>No references found</EmptyTitle>
+							<EmptyDescription>
+								Build a reference index before running an analysis.
+							</EmptyDescription>
+						</Empty>
+					</Box>
+				</>
 			)}
 		</div>
 	);

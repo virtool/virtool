@@ -1,5 +1,6 @@
 import "@app/style.css";
 import { getDocumentTitle } from "@app/development";
+import { RecentAuthenticationProvider } from "@app/recentAuthentication";
 import { readSentryDsn, SENTRY_DSN_META_NAME } from "@app/sentryDsn";
 import { readServerNow, SERVER_NOW_META_NAME } from "@app/serverNow";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -97,7 +98,9 @@ function RootComponent() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Outlet />
+			<RecentAuthenticationProvider>
+				<Outlet />
+			</RecentAuthenticationProvider>
 		</QueryClientProvider>
 	);
 }

@@ -2,7 +2,7 @@ import { useCreateAnalysis } from "@analyses/queries";
 import Button from "@base/Button";
 import CreatedCount from "@base/CreatedCount";
 import { DialogFooter } from "@base/Dialog";
-import { InputError } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
 import Switch from "@base/Switch";
 import SubtractionSelector from "@subtraction/components/SubtractionSelector";
 import type { SubtractionOption } from "@subtraction/types";
@@ -136,39 +136,32 @@ export default function CreateAnalysisForm({
 				)}
 			/>
 
-			<Controller
-				control={control}
-				name="indexId"
-				render={({ field: { onChange, value } }) => (
-					<IndexSelector
-						indexes={indexes}
-						selected={value}
-						onChange={onChange}
-						invalid={Boolean(errors.indexId)}
-						describedById={errors.indexId ? "indexId-error" : undefined}
-					/>
-				)}
-				rules={{ required: true }}
-			/>
+			<Field className="mb-0 pb-0">
+				<Controller
+					control={control}
+					name="indexId"
+					render={({ field: { onChange, value } }) => (
+						<IndexSelector
+							indexes={indexes}
+							selected={value}
+							onChange={onChange}
+						/>
+					)}
+					rules={{ required: true }}
+				/>
 
-			<InputError id="indexId-error" className="mb-0">
-				{errors.indexId && "A reference must be selected"}
-			</InputError>
+				<FieldError className="mb-0">
+					{errors.indexId && "A reference must be selected"}
+				</FieldError>
+			</Field>
 
 			<DialogFooter className="items-center justify-between">
-				<div className="flex items-center gap-2">
-					<Switch
-						id="create-more"
-						checked={createMore}
-						onCheckedChange={setCreateMore}
-					/>
-					<label
-						className="cursor-pointer text-gray-700 text-sm"
-						htmlFor="create-more"
-					>
+				<Field className="gap-2" orientation="horizontal">
+					<Switch checked={createMore} onCheckedChange={setCreateMore} />
+					<FieldLabel className="cursor-pointer font-normal text-gray-700 text-sm">
 						Create more
-					</label>
-				</div>
+					</FieldLabel>
+				</Field>
 
 				<div className="flex items-center gap-4">
 					<CreatedCount

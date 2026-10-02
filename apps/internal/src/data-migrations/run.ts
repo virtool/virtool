@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import {
 	type DataMigrationFinding,
 	type DataMigrationRow,
@@ -187,6 +188,9 @@ export async function executeDataMigration(
 			summary: { findings: sink.found(), recorded: sink.written() },
 		});
 
+		Sentry.captureException(err, {
+			tags: { data_migration: key, data_migration_version: version },
+		});
 		logger.error({ err, error }, "a data migration attempt errored");
 
 		return finished;

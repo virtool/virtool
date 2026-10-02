@@ -1,12 +1,22 @@
 import { getRootFn } from "../root/functions";
 import { getPasswordPolicyFn } from "../settings/functions";
 import {
+	acceptAccountSetupFn,
+	completeEmailRemediationFn,
 	createFirstUserFn,
+	inspectAccountSetupFn,
 	loginFn,
 	logoutFn,
 	resetPasswordFn,
 	verifyTwoFactorFn,
 } from "./functions";
+import {
+	completePasswordRecoveryFn,
+	inspectEmailVerificationFn,
+	inspectPasswordRecoveryFn,
+	requestPasswordRecoveryFn,
+	verifyCurrentEmailFn,
+} from "./recoveryFunctions";
 
 /**
  * Server functions exempt from global authentication.
@@ -28,12 +38,20 @@ import {
  * silently becoming publicly callable.
  */
 export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
+	acceptAccountSetupFn,
 	createFirstUserFn,
+	completeEmailRemediationFn,
 	getPasswordPolicyFn,
 	getRootFn,
 	loginFn,
 	logoutFn,
 	verifyTwoFactorFn,
+	requestPasswordRecoveryFn,
+	completePasswordRecoveryFn,
+	verifyCurrentEmailFn,
+	inspectEmailVerificationFn,
+	inspectPasswordRecoveryFn,
+	inspectAccountSetupFn,
 ];
 
 /** Server functions reachable by a forced-password-reset principal. */

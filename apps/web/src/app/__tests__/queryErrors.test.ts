@@ -8,6 +8,7 @@ import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -122,6 +123,17 @@ describe("handleQueryError", () => {
 
 	it("leaves the session alone when the user merely lacks the role", () => {
 		handleQueryError(serializedAuthError(FORBIDDEN_ERROR_NAME, "Forbidden"));
+
+		expect(endSession).not.toHaveBeenCalled();
+	});
+
+	it("leaves a stale but valid session active for ordinary operations", () => {
+		handleQueryError(
+			serializedAuthError(
+				SESSION_NOT_FRESH_ERROR_NAME,
+				"Recent authentication required",
+			),
+		);
 
 		expect(endSession).not.toHaveBeenCalled();
 	});

@@ -1,37 +1,89 @@
 import { accountQueryKeys } from "@account/keys";
+import {
+	confirmTotp,
+	disableTotp,
+	enableTotp,
+	regenerateRecoveryCodes,
+	type TotpEnrollment,
+} from "@account/twoFactor";
+import { addPasskey, useSingleCeremony } from "@app/passkeys";
+import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import { resetClient } from "@app/utils";
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	createApiKeyFn,
 	deleteApiKeyFn,
 	findApiKeysFn,
+	findPasskeysFn,
+	getAccountSecurityFn,
+	removePasskeyFn,
+	renamePasskeyFn,
 	updateApiKeyFn,
 } from "@server/account/functions";
 import { logoutFn } from "@server/auth/functions";
 import {
+	getEmailDeliveryAvailableFn,
+	requestAccountEmailChangeFn,
+} from "@server/auth/recoveryFunctions";
+import {
 	changePasswordFn,
-	updateAccountEmailFn,
 	updateAccountHandleFn,
+	updateAccountSettingsFn,
 } from "@server/users/functions";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ApiKey, Permissions } from "@virtool/contracts";
+import {
+	type QueryClient,
+	queryOptions,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
+import type {
+	Account,
+	AccountSecurity,
+	AccountSettings,
+	ApiKey,
+	PasskeySummary,
+	Permissions,
+} from "@virtool/contracts";
+
+const ACCOUNT_SETTINGS_MUTATION_KEY = ["account", "settings"];
+
+/** Query options for whether this instance can send email. */
+export function emailDeliveryQueryOptions() {
+	return queryOptions({
+		queryKey: accountQueryKeys.emailDelivery(),
+		queryFn: () => getEmailDeliveryAvailableFn(),
+	});
+}
+
+/** Query options for the signed-in user's email verification and TOTP state. */
+export function accountSecurityQueryOptions() {
+	return queryOptions<AccountSecurity>({
+		queryKey: accountQueryKeys.security(),
+		queryFn: () => getAccountSecurityFn(),
+	});
+}
 
 /**
- * Initializes a mutator for updating the current account's email address
+ * Initializes a mutator for requesting verification of a new email address.
  *
- * @returns A mutator for updating the account email
+ * @returns A mutator for queuing an email challenge.
  */
 export function useUpdateAccount() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ email }: { email: string }) =>
+			requestAccountEmailChangeFn({ data: { email } }),
+	);
 
 	return useMutation<
-		Awaited<ReturnType<typeof updateAccountEmailFn>>,
+		Awaited<ReturnType<typeof requestAccountEmailChangeFn>>,
 		Error,
 		{ email: string }
 	>({
-		mutationFn: ({ email }) => updateAccountEmailFn({ data: { email } }),
+		mutationFn,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.security() });
 		},
 	});
 }
@@ -57,20 +109,91 @@ export function useUpdateHandle() {
 }
 
 /**
- * Initializes a mutator for changing the current account's password
+ * Initializes a mutator for changing the current account's settings.
+ *
+ * The cached account takes the change at once, so a control bound to a setting
+ * does not wait on the round trip. A failed change puts the old settings back.
+ *
+ * Changes run one at a time, so a quick second change cannot reach the server
+ * first and be overwritten by the one it replaced.
+ *
+ * @returns A mutator for changing the account settings
+ */
+export function useUpdateAccountSettings() {
+	const queryClient = useQueryClient();
+
+	return useMutation<
+		AccountSettings,
+		Error,
+		Partial<AccountSettings>,
+		{ previous: Account | undefined }
+	>({
+		mutationFn: (settings) => updateAccountSettingsFn({ data: settings }),
+		mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY,
+		scope: { id: "account-settings" },
+		onMutate: async (settings) => {
+			await queryClient.cancelQueries({
+				exact: true,
+				queryKey: accountQueryKeys.all(),
+			});
+
+			const previous = queryClient.getQueryData<Account>(
+				accountQueryKeys.all(),
+			);
+
+			if (previous) {
+				queryClient.setQueryData<Account>(accountQueryKeys.all(), {
+					...previous,
+					settings: { ...previous.settings, ...settings },
+				});
+			}
+
+			return { previous };
+		},
+		onError: (_error, _settings, context) => {
+			if (context?.previous) {
+				queryClient.setQueryData(accountQueryKeys.all(), context.previous);
+			}
+		},
+		onSettled: () => {
+			// A refetch while a queued change waits would show the settings from
+			// before that change.
+			if (
+				queryClient.isMutating({ mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY }) >
+				1
+			) {
+				return;
+			}
+
+			queryClient.invalidateQueries({
+				exact: true,
+				queryKey: accountQueryKeys.all(),
+			});
+		},
+	});
+}
+
+/**
+ * Initializes a mutator for changing the current account's password.
+ *
+ * The change signs out every other browser, so the refresh includes the
+ * session list.
  *
  * @returns A mutator for changing the account password
  */
 export function useChangePassword() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ oldPassword, password }: { oldPassword: string; password: string }) =>
+			changePasswordFn({ data: { oldPassword, password } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof changePasswordFn>>,
 		Error,
 		{ oldPassword: string; password: string }
 	>({
-		mutationFn: ({ oldPassword, password }) =>
-			changePasswordFn({ data: { oldPassword, password } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},
@@ -96,14 +219,17 @@ export function useFetchApiKeys() {
  */
 export function useCreateApiKey() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ name, permissions }: { name: string; permissions: Permissions }) =>
+			createApiKeyFn({ data: { name, permissions } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof createApiKeyFn>>,
 		Error,
 		{ name: string; permissions: Permissions }
 	>({
-		mutationFn: ({ name, permissions }) =>
-			createApiKeyFn({ data: { name, permissions } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
@@ -117,14 +243,17 @@ export function useCreateApiKey() {
  */
 export function useUpdateApiKey() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ keyId, permissions }: { keyId: number; permissions: Permissions }) =>
+			updateApiKeyFn({ data: { keyId, permissions } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof updateApiKeyFn>>,
 		Error,
 		{ keyId: number; permissions: Permissions }
 	>({
-		mutationFn: ({ keyId, permissions }) =>
-			updateApiKeyFn({ data: { keyId, permissions } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
@@ -138,13 +267,147 @@ export function useUpdateApiKey() {
  */
 export function useDeleteApiKey() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ keyId }: { keyId: number }) => deleteApiKeyFn({ data: { keyId } }),
+	);
 
 	return useMutation<null, Error, { keyId: number }>({
-		mutationFn: ({ keyId }) => deleteApiKeyFn({ data: { keyId } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
 	});
+}
+
+/** Query options for the current user's passkeys. */
+export function passkeysQueryOptions() {
+	return queryOptions({
+		queryKey: accountQueryKeys.passkeys(),
+		queryFn: () => findPasskeysFn(),
+	});
+}
+
+/**
+ * Initializes a mutator that registers a passkey for the current user.
+ *
+ * The variable is the name for the new passkey. A stale session gets the
+ * recent-authentication challenge, and then the whole ceremony runs again.
+ */
+export function useRegisterPasskey() {
+	const queryClient = useQueryClient();
+	const ceremony = useSingleCeremony(
+		useRecentlyAuthenticatedMutation(addPasskey),
+	);
+
+	return useMutation<void, Error, string>({
+		mutationFn: ceremony,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
+		},
+	});
+}
+
+/** Initializes a mutator that renames one of the current user's passkeys. */
+export function useRenamePasskey() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ managementId, name }: { managementId: number; name: string }) =>
+			renamePasskeyFn({ data: { managementId, name } }),
+	);
+
+	return useMutation<
+		PasskeySummary,
+		Error,
+		{ managementId: number; name: string }
+	>({
+		mutationFn,
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
+		},
+	});
+}
+
+/** Initializes a mutator that removes one of the current user's passkeys. */
+export function useRemovePasskey() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ managementId }: { managementId: number }) =>
+			removePasskeyFn({ data: { managementId } }),
+	);
+
+	return useMutation<null, Error, { managementId: number }>({
+		mutationFn,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
+		},
+	});
+}
+
+/**
+ * Initializes a mutator that starts TOTP enrollment.
+ *
+ * The result holds the TOTP secret and the recovery codes, so the cache drops
+ * it as soon as no component uses it.
+ */
+export function useEnableTotp() {
+	return useMutation<TotpEnrollment, Error, { password: string }>({
+		gcTime: 0,
+		mutationFn: ({ password }) => enableTotp(password),
+	});
+}
+
+/**
+ * Initializes a mutator that confirms TOTP enrollment with a code.
+ *
+ * Better Auth replaces the current session when TOTP turns on, so the session
+ * list refreshes too.
+ */
+export function useConfirmTotp() {
+	const queryClient = useQueryClient();
+
+	return useMutation<void, Error, { code: string }>({
+		gcTime: 0,
+		mutationFn: ({ code }) => confirmTotp(code),
+		onSuccess: () => invalidateTwoFactorQueries(queryClient),
+	});
+}
+
+/** Initializes a mutator that replaces every recovery code. */
+export function useRegenerateRecoveryCodes() {
+	const queryClient = useQueryClient();
+
+	return useMutation<string[], Error, { password: string }>({
+		gcTime: 0,
+		mutationFn: ({ password }) => regenerateRecoveryCodes(password),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.security() });
+		},
+	});
+}
+
+/**
+ * Initializes a mutator that turns TOTP off.
+ *
+ * Better Auth replaces the current session when TOTP turns off, so the session
+ * list refreshes too.
+ */
+export function useDisableTotp() {
+	const queryClient = useQueryClient();
+
+	return useMutation<void, Error, { password: string }>({
+		gcTime: 0,
+		mutationFn: ({ password }) => disableTotp(password),
+		onSuccess: () => invalidateTwoFactorQueries(queryClient),
+	});
+}
+
+function invalidateTwoFactorQueries(queryClient: QueryClient) {
+	return Promise.all([
+		queryClient.invalidateQueries({ queryKey: accountQueryKeys.security() }),
+		queryClient.invalidateQueries({
+			queryKey: accountQueryKeys.activeSessions(),
+		}),
+	]);
 }
 
 /**

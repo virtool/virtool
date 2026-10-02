@@ -1,26 +1,34 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
-import { authAccounts, authTwoFactors } from "../db/schema/auth";
+import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
+import { sessions } from "../db/schema/sessions";
 import { settings } from "../db/schema/settings";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { seedSettings } from "../settings/test/fixtures";
+import { UserNotFoundError } from "../users/data";
 import {
+	cancelEmailRemediation,
+	changeEmailRemediation,
+	claimEmailRemediationPromotion,
 	completeAccountSetup,
 	completeEmailRemediation,
-	completeTotpEnrollment,
 	EmailInUseError,
+	EmailRemediationRateLimitedError,
 	getEmailRemediationState,
-	normalizeEmail,
 	prepareEmailRemediation,
+	resendEmailRemediation,
+	resetUserTotp,
 	SetupNotEligibleError,
 	startEmailRemediation,
 	TotpNotEnrolledError,
+	verifyEmailRemediationToken,
 } from "./lifecycle";
 import { hashPassword, verifyPassword } from "./password";
+import { createAuthenticatedSession } from "./session";
 import { SetupCredentialError } from "./setup";
 import { seedSetupSession, seedSetupToken, seedUser } from "./test/fixtures";
 
@@ -60,31 +68,23 @@ async function startOfflineEmailRemediation(userId: number, email: string) {
 	return result.token;
 }
 
-describe("normalizeEmail", () => {
-	it.each([
-		["  Ada@Example.com ", "ada@example.com"],
-		["ADA@EXAMPLE.COM", "ada@example.com"],
-		["", ""],
-	])("folds %j to %j", (input, expected) => {
-		expect(normalizeEmail(input)).toBe(expected);
-	});
-});
-
 describe("completeAccountSetup", () => {
 	it("credentials a pending account and moves it to normal", async () => {
 		const userId = await seedUser(db, {
+			email: "Ada@Example.com",
 			handle: "Ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
-
-		const user = await completeAccountSetup(db, {
-			token,
-			password: "a-good-password",
-			email: "Ada@Example.com",
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "Ada@Example.com",
 		});
 
-		expect(user.lifecycleState).toBe("normal");
+		const result = await completeAccountSetup(db, {
+			token,
+			password: "a-good-password",
+		});
+
+		expect(result.user.lifecycleState).toBe("normal");
 
 		const row = await readUser(userId);
 		expect(row.email).toBe("ada@example.com");
@@ -99,13 +99,17 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("writes one Better Auth credential identity", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
-			email: "ada@example.com",
 		});
 
 		const accounts = await db.select().from(authAccounts);
@@ -116,14 +120,18 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("revokes every setup credential the account held", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 		await seedSetupSession(db, userId, "account_completion");
 
 		await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
-			email: "ada@example.com",
 		});
 
 		expect(await db.select().from(setupSessions)).toHaveLength(0);
@@ -140,27 +148,27 @@ describe("completeAccountSetup", () => {
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 	});
 
 	it("refuses an account that is not pending", async () => {
 		const userId = await seedUser(db);
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(SetupNotEligibleError);
 	});
 
-	it("refuses a deactivated account", async () => {
+	it("refuses a token without a bound address", async () => {
 		const userId = await seedUser(db, {
-			active: false,
+			email: "ada@example.com",
 			lifecycleState: "pending",
 		});
 		const { token } = await seedSetupToken(db, userId, "account_completion");
@@ -169,7 +177,27 @@ describe("completeAccountSetup", () => {
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
+			}),
+		).rejects.toBeInstanceOf(SetupNotEligibleError);
+
+		const row = await readUser(userId);
+		expect(row.lifecycleState).toBe("pending");
+	});
+
+	it("refuses a deactivated account", async () => {
+		const userId = await seedUser(db, {
+			active: false,
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
+
+		await expect(
+			completeAccountSetup(db, {
+				token,
+				password: "a-good-password",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 	});
@@ -177,16 +205,18 @@ describe("completeAccountSetup", () => {
 	it("refuses an address another account already holds", async () => {
 		await seedUser(db, { handle: "bob", email: "ada@example.com" });
 		const userId = await seedUser(db, {
+			email: "ada@example.com",
 			handle: "ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ADA@example.com",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
@@ -201,16 +231,18 @@ describe("completeAccountSetup", () => {
 			.set({ authMigratedAt: new Date() })
 			.where(eq(users.id, existing));
 		const userId = await seedUser(db, {
+			email: "ada@example.com",
 			handle: "ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
@@ -220,16 +252,18 @@ describe("completeAccountSetup", () => {
 	it("rolls the whole transition back when it fails", async () => {
 		await seedUser(db, { handle: "bob", email: "ada@example.com" });
 		const userId = await seedUser(db, {
+			email: "ada@example.com",
 			handle: "ada",
 			lifecycleState: "pending",
 		});
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "a-good-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 
@@ -243,20 +277,23 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("cannot be replayed after it commits", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
-			email: "ada@example.com",
 		});
 
 		await expect(
 			completeAccountSetup(db, {
 				token,
 				password: "another-password",
-				email: "ada@example.com",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 
@@ -264,8 +301,13 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("gives exactly one winner under concurrent completion", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "account_completion");
+		const userId = await seedUser(db, {
+			email: "ada@example.com",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion", {
+			candidateEmail: "ada@example.com",
+		});
 
 		const other = database.connect();
 
@@ -274,12 +316,10 @@ describe("completeAccountSetup", () => {
 				completeAccountSetup(db, {
 					token,
 					password: "a-good-password",
-					email: "ada@example.com",
 				}),
 				completeAccountSetup(other.db, {
 					token,
 					password: "a-good-password",
-					email: "ada@example.com",
 				}),
 			]);
 
@@ -310,8 +350,9 @@ describe("completeEmailRemediation", () => {
 		});
 
 		expect((await readUser(userId)).email).toBe("legacy@example.com");
-		expect(await getEmailRemediationState(db, userId)).toEqual({
-			email: "new@example.com",
+		expect(await getEmailRemediationState(db, userId)).toMatchObject({
+			status: "pending",
+			maskedEmail: "n***w@example.com",
 		});
 	});
 
@@ -351,8 +392,9 @@ describe("completeEmailRemediation", () => {
 				expect(row.authMigratedAt).not.toBeNull();
 			} else {
 				expect(row.authMigratedAt).toBeNull();
-				expect(await getEmailRemediationState(db, userId)).toEqual({
-					email: "second@example.com",
+				expect(await getEmailRemediationState(db, userId)).toMatchObject({
+					status: "pending",
+					maskedEmail: "s***d@example.com",
 				});
 			}
 		} finally {
@@ -537,63 +579,291 @@ describe("completeEmailRemediation", () => {
 	});
 });
 
-describe("completeTotpEnrollment", () => {
-	async function seedTwoFactor(userId: number, verified: boolean) {
+describe("email remediation journey", () => {
+	it("verifies with the bearer token alone and leaves the setup browser resumable", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const setup = await seedSetupSession(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
+
+		expect(await verifyEmailRemediationToken(db, token)).toEqual({
+			status: "verified",
+			userId,
+		});
+		expect(await db.select().from(setupSessions)).toHaveLength(1);
+		expect(await getEmailRemediationState(db, userId)).toEqual({
+			status: "verified",
+		});
+		expect(
+			await claimEmailRemediationPromotion(db, userId, setup.sessionId),
+		).toBe(true);
+		expect(await db.select().from(setupSessions)).toHaveLength(0);
+	});
+
+	it("allows exactly one promotion claim for a matching setup browser", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const setup = await seedSetupSession(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
+		await verifyEmailRemediationToken(db, token);
+		const other = database.connect();
+
+		try {
+			const claims = await Promise.all([
+				claimEmailRemediationPromotion(db, userId, setup.sessionId),
+				claimEmailRemediationPromotion(other.db, userId, setup.sessionId),
+			]);
+			expect(claims.sort()).toEqual([false, true]);
+		} finally {
+			await other.close();
+		}
+	});
+
+	it("returns an already-verified result for replay and concurrent consumption", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
+		const other = database.connect();
+
+		try {
+			const results = await Promise.all([
+				verifyEmailRemediationToken(db, token),
+				verifyEmailRemediationToken(other.db, token),
+			]);
+			expect(results.map((result) => result.status).sort()).toEqual([
+				"already_verified",
+				"verified",
+			]);
+			expect(await verifyEmailRemediationToken(db, token)).toEqual({
+				status: "already_verified",
+				userId,
+			});
+		} finally {
+			await other.close();
+		}
+	});
+
+	it("classifies expired, superseded, and unknown tokens without changing users", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const expired = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+			expiresAt: new Date(Date.now() - 1_000),
+		});
+		const superseded = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+			supersededAt: new Date(),
+		});
+
+		expect(await verifyEmailRemediationToken(db, expired.token)).toEqual({
+			status: "expired",
+			userId,
+		});
+		expect(await verifyEmailRemediationToken(db, superseded.token)).toEqual({
+			status: "superseded",
+			userId,
+		});
+		expect(await verifyEmailRemediationToken(db, "0".repeat(64))).toEqual({
+			status: "unusable",
+		});
+		expect((await readUser(userId)).authMigratedAt).toBeNull();
+	});
+
+	it("revokes the challenge on change and cancellation", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		await seedSetupSession(db, userId, "email_remediation");
+		const first = await startOfflineEmailRemediation(userId, "ada@example.com");
+
+		await changeEmailRemediation(db, userId);
+		expect(await getEmailRemediationState(db, userId)).toEqual({
+			status: "input",
+		});
+		expect(await verifyEmailRemediationToken(db, first)).toMatchObject({
+			status: "superseded",
+		});
+
+		await startOfflineEmailRemediation(userId, "ada@example.com");
+		await cancelEmailRemediation(db, userId);
+		expect(await db.select().from(setupSessions)).toHaveLength(0);
+		const live = await db
+			.select()
+			.from(setupTokens)
+			.where(isNull(setupTokens.supersededAt));
+		expect(live).toHaveLength(0);
+	});
+
+	it("reports terminal delivery failure and replaces the link on resend", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		await seedSettings(db, { emailEnabled: true });
+		await startEmailRemediation(db, {
+			deliveryAvailable: true,
+			email: "ada@example.com",
+			getVerificationUrl: (token) =>
+				`https://virtool.test/email-remediation-verify#token=${token}`,
+			userId,
+		});
+		const [message] = await db.select().from(emailOutbox);
+		if (!message) {
+			throw new Error("expected verification message");
+		}
+		await db
+			.update(emailOutbox)
+			.set({ status: "failed" })
+			.where(eq(emailOutbox.id, message.id));
+		await db
+			.update(setupTokens)
+			.set({ createdAt: new Date(Date.now() - 61_000) })
+			.where(isNull(setupTokens.supersededAt));
+
+		expect(await getEmailRemediationState(db, userId)).toMatchObject({
+			status: "pending",
+			deliveryFailed: true,
+			canResend: true,
+		});
+		await resendEmailRemediation(db, {
+			deliveryAvailable: true,
+			getVerificationUrl: (token) =>
+				`https://virtool.test/email-remediation-verify#token=${token}`,
+			userId,
+		});
+		expect(await db.select().from(emailOutbox)).toHaveLength(2);
+		const tokens = await db.select().from(setupTokens);
+		expect(tokens.filter((token) => token.supersededAt)).toHaveLength(1);
+		expect(tokens.filter((token) => !token.supersededAt)).toHaveLength(1);
+	});
+
+	it("rate-limits immediate resend attempts", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		await seedSettings(db, { emailEnabled: true });
+		const input = {
+			deliveryAvailable: true,
+			getVerificationUrl: (token: string) =>
+				`https://virtool.test/email-remediation-verify#token=${token}`,
+			userId,
+		};
+		await startEmailRemediation(db, { ...input, email: "ada@example.com" });
+
+		await expect(resendEmailRemediation(db, input)).rejects.toBeInstanceOf(
+			EmailRemediationRateLimitedError,
+		);
+		expect(await db.select().from(emailOutbox)).toHaveLength(1);
+	});
+
+	it("extends the initiating setup session to the link expiry", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const setup = await seedSetupSession(db, userId, "email_remediation");
+		await seedSettings(db, { emailEnabled: true });
+
+		await startEmailRemediation(db, {
+			deliveryAvailable: true,
+			email: "ada@example.com",
+			getVerificationUrl: () => "https://virtool.test/verify",
+			setupSessionId: setup.sessionId,
+			userId,
+		});
+
+		const [session] = await db.select().from(setupSessions);
+		const [token] = await db.select().from(setupTokens);
+		expect(session?.expiresAt).toEqual(token?.expiresAt);
+	});
+});
+
+describe("resetUserTotp", () => {
+	async function seedTwoFactor(userId: number) {
 		await db.insert(authTwoFactors).values({
 			backupCodes: "encrypted",
 			secret: "secret",
 			userId,
-			verified,
+		});
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+	}
+
+	async function seedAuthSession(userId: number) {
+		const now = new Date();
+		await db.insert(authSessions).values({
+			createdAt: now,
+			expiresAt: new Date(now.getTime() + 60_000),
+			token: `token-${userId}-${now.getTime()}-${Math.random()}`,
+			updatedAt: now,
+			userId,
 		});
 	}
 
-	it("releases the restriction once a verified enrollment exists", async () => {
+	it("removes the factor and every session of the user", async () => {
 		const userId = await seedUser(db);
-		await seedTwoFactor(userId, true);
-		await seedSetupSession(db, userId, "totp_enrollment");
+		const otherId = await seedUser(db, { handle: "bob" });
+		await seedTwoFactor(userId);
+		await seedTwoFactor(otherId);
+		await Promise.all([
+			seedAuthSession(userId),
+			seedAuthSession(userId),
+			seedAuthSession(otherId),
+		]);
 
-		const user = await completeTotpEnrollment(db, { userId });
+		const user = await resetUserTotp(db, userId);
 
 		expect(user.id).toBe(userId);
-		expect((await readUser(userId)).twoFactorEnabled).toBe(true);
-		expect(await db.select().from(setupSessions)).toHaveLength(0);
+		expect((await readUser(userId)).twoFactorEnabled).toBe(false);
+		const factors = await db.select().from(authTwoFactors);
+		expect(factors.map((row) => row.userId)).toEqual([otherId]);
+		const remaining = await db.select().from(authSessions);
+		expect(remaining.map((row) => row.userId)).toEqual([otherId]);
 	});
 
-	it("refuses an unverified enrollment and keeps the restriction", async () => {
+	it("ends the user's legacy sessions", async () => {
 		const userId = await seedUser(db);
-		await seedTwoFactor(userId, false);
-		await seedSetupSession(db, userId, "totp_enrollment");
+		await seedTwoFactor(userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
-			TotpNotEnrolledError,
-		);
+		await resetUserTotp(db, userId);
 
-		expect(await db.select().from(setupSessions)).toHaveLength(1);
+		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
-	it("refuses when nothing was enrolled at all", async () => {
+	it("resets a user whose flag is set without a factor", async () => {
 		const userId = await seedUser(db);
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		await seedAuthSession(userId);
 
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
+		await resetUserTotp(db, userId);
+
+		expect((await readUser(userId)).twoFactorEnabled).toBe(false);
+		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("leaves an abandoned enrollment and its user's sessions alone", async () => {
+		const userId = await seedUser(db);
+		await db.insert(authTwoFactors).values({
+			backupCodes: "encrypted",
+			secret: "secret",
+			userId,
+		});
+		await seedAuthSession(userId);
+
+		await expect(resetUserTotp(db, userId)).rejects.toBeInstanceOf(
 			TotpNotEnrolledError,
+		);
+
+		expect(await db.select().from(authTwoFactors)).toHaveLength(1);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
+	});
+
+	it("refuses an unknown user", async () => {
+		await expect(resetUserTotp(db, 999_999)).rejects.toBeInstanceOf(
+			UserNotFoundError,
 		);
 	});
 
-	it("refuses a deactivated user", async () => {
-		const userId = await seedUser(db, { active: false });
-		await seedTwoFactor(userId, true);
+	it("refuses a user with no factor and keeps their sessions", async () => {
+		const userId = await seedUser(db);
+		await seedAuthSession(userId);
 
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
+		await expect(resetUserTotp(db, userId)).rejects.toBeInstanceOf(
 			TotpNotEnrolledError,
 		);
-	});
 
-	it("refuses a pending account", async () => {
-		const userId = await seedUser(db, { lifecycleState: "pending" });
-		await seedTwoFactor(userId, true);
-
-		await expect(completeTotpEnrollment(db, { userId })).rejects.toBeInstanceOf(
-			TotpNotEnrolledError,
-		);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
 	});
 });

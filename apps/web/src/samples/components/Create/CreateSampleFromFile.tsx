@@ -6,8 +6,14 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
+import Field, {
+	FieldError,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+} from "@base/Field";
 import { IconButton } from "@base/Icon";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Input from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
@@ -35,11 +41,14 @@ type ReadFilesProps = {
  */
 function ReadFiles({ reads }: ReadFilesProps) {
 	return (
-		<InputGroup>
-			<div className="flex items-center justify-between">
-				<InputLabel>Read Files</InputLabel>
+		<FieldSet className="pb-2">
+			<FieldLegend
+				className="flex w-full items-center justify-between"
+				variant="label"
+			>
+				Read Files
 				<ReadPairBadge count={reads.length} />
-			</div>
+			</FieldLegend>
 			<div className="flex gap-2">
 				{reads.map((read, index) => (
 					<ReadSlot
@@ -50,7 +59,7 @@ function ReadFiles({ reads }: ReadFilesProps) {
 					/>
 				))}
 			</div>
-		</InputGroup>
+		</FieldSet>
 	);
 }
 
@@ -119,9 +128,9 @@ function CreateSampleFromFileForm({
 		<>
 			<DialogTitle>Create Sample</DialogTitle>
 
-			<InputError className="text-left">
+			<FieldError className="text-left">
 				{mutation.isError && mutation.error.message}
-			</InputError>
+			</FieldError>
 
 			{(isErrorGroups && !groups) || (isErrorAccount && !account) ? (
 				<QueryError noun="the sample form" />
@@ -131,17 +140,14 @@ function CreateSampleFromFileForm({
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<ReadFiles reads={reads} />
 
-					<InputGroup>
-						<InputLabel htmlFor="name">Name</InputLabel>
-						<InputSimple
-							id="name"
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<Input
 							aria-required
-							aria-invalid={Boolean(errors.name) || undefined}
-							aria-describedby={errors.name ? "name-error" : undefined}
 							{...register("name", { required: "Required Field" })}
 						/>
-						<InputError id="name-error">{errors.name?.message}</InputError>
-					</InputGroup>
+						<FieldError errors={[errors.name]} />
+					</Field>
 
 					<Controller
 						control={control}

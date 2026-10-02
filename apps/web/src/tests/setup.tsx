@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { RecentAuthenticationProvider } from "@app/recentAuthentication";
 import { faker } from "@faker-js/faker";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -31,6 +32,8 @@ import { indexServerFnMocks } from "./server-fn/indexes";
 import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
 import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
+import { recentAuthenticationServerFnMocks } from "./server-fn/recentAuthentication";
+import { recoveryServerFnMocks } from "./server-fn/recovery";
 import { referenceServerFnMocks } from "./server-fn/references";
 import { rootServerFnMocks } from "./server-fn/root";
 import { sampleServerFnMocks } from "./server-fn/samples";
@@ -56,6 +59,16 @@ vi.mock("@server/account/functions", async () => {
 vi.mock("@server/auth/functions", async () => {
 	const { authServerFnMocks } = await import("./server-fn/auth");
 	return authServerFnMocks;
+});
+vi.mock("@server/auth/recoveryFunctions", async () => {
+	const { recoveryServerFnMocks } = await import("./server-fn/recovery");
+	return recoveryServerFnMocks;
+});
+vi.mock("@server/auth/recentAuthentication", async () => {
+	const { recentAuthenticationServerFnMocks } = await import(
+		"./server-fn/recentAuthentication"
+	);
+	return recentAuthenticationServerFnMocks;
 });
 // Resolve the mock lazily via dynamic import. A direct reference to the
 // imported `userServerFnMocks` binding races route modules (pulled in by
@@ -137,6 +150,8 @@ beforeEach(() => {
 		...Object.values(taskServerFnMocks),
 		...Object.values(hmmServerFnMocks),
 		...Object.values(authServerFnMocks),
+		...Object.values(recoveryServerFnMocks),
+		...Object.values(recentAuthenticationServerFnMocks),
 		...Object.values(labelServerFnMocks),
 		...Object.values(rootServerFnMocks),
 		uploadServerFnMocks.findUploadsFn,
@@ -222,6 +237,15 @@ beforeEach(() => {
 	settingsServerFnMocks.getPasswordPolicyFn.mockReset();
 	mockGetPasswordPolicy();
 
+	// Resolving fresh lets route tests render the administration views rather
+	// than the authentication gate in front of them.
+	recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
+		15 * 60 * 1000,
+	);
+
+	// The security view lists passkeys, so any test rendering it needs a list.
+	accountServerFnMocks.findPasskeysFn.mockResolvedValue([]);
+
 	// Every upload begins by asking the server which transport to take. Default
 	// to the proxied path so a test that just exercises uploading does not have
 	// to stub it; tests for the chunked path override this.
@@ -266,7 +290,11 @@ export function at<T>(items: readonly T[], index: number): T {
 export function wrapWithProviders(ui: ReactNode) {
 	const queryClient = createTestQueryClient();
 
-	return <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>;
+	return (
+		<QueryClientProvider client={queryClient}>
+			<RecentAuthenticationProvider>{ui}</RecentAuthenticationProvider>
+		</QueryClientProvider>
+	);
 }
 
 export function renderWithProviders(ui: ReactNode) {
@@ -276,7 +304,9 @@ export function renderWithProviders(ui: ReactNode) {
 
 	function wrap(node: ReactNode) {
 		return (
-			<QueryClientProvider client={queryClient}>{node}</QueryClientProvider>
+			<QueryClientProvider client={queryClient}>
+				<RecentAuthenticationProvider>{node}</RecentAuthenticationProvider>
+			</QueryClientProvider>
 		);
 	}
 

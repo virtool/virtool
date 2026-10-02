@@ -1,32 +1,35 @@
-import { DEFAULT_PER_PAGE, type Paginated, paginated } from "@app/pagination";
-import { str } from "@app/searchParams";
+import { DEFAULT_PER_PAGE, paginated } from "@app/pagination";
+import { oneOf, oneOfArray, str } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
-import { ManageUsers } from "@users/components/ManageUsers";
-
-/** Search params for the user administration list. */
-type UsersSearch = Paginated & {
-	status: string;
-	term: string;
-};
+import {
+	ManageUsers,
+	type ManageUsersSearch,
+} from "@users/components/ManageUsers";
+import {
+	SORT_DIRECTIONS,
+	USER_ROLE_FILTERS,
+	USER_SORT_FIELDS,
+	USER_STATUSES,
+} from "@virtool/contracts";
 
 function validateUsersSearch(
-	input: Partial<UsersSearch> & SearchSchemaInput,
-): UsersSearch {
+	input: Partial<ManageUsersSearch> & SearchSchemaInput,
+): ManageUsersSearch {
 	return {
 		...paginated(input),
-		status: str(input.status, "active"),
+		direction: oneOf(input.direction, SORT_DIRECTIONS, "ascending"),
+		roles: oneOfArray(input.roles, USER_ROLE_FILTERS, []),
+		sort: oneOf(input.sort, USER_SORT_FIELDS, "handle"),
+		statuses: oneOfArray(input.statuses, USER_STATUSES, []),
 		term: str(input.term, ""),
 	};
 }
 
 export const Route = createFileRoute("/_authenticated/administration/users/")({
 	validateSearch: validateUsersSearch,
-	loaderDeps: ({ search: { page, status, term } }) => ({ page, status, term }),
-	loader: async ({
-		context: { queryClient },
-		deps: { page, status, term },
-	}) => {
+	loaderDeps: ({ search }) => search,
+	loader: async ({ context: { queryClient }, deps }) => {
 		const [{ usersQueryOptions }, { passwordPolicyQueryOptions }] =
 			await Promise.all([
 				import("@users/queries"),
@@ -35,13 +38,7 @@ export const Route = createFileRoute("/_authenticated/administration/users/")({
 
 		return Promise.all([
 			queryClient.ensureQueryData(
-				usersQueryOptions(
-					page,
-					DEFAULT_PER_PAGE,
-					term,
-					undefined,
-					status === "active",
-				),
+				usersQueryOptions({ ...deps, perPage: DEFAULT_PER_PAGE }),
 			),
 			// For the create-user form. Prefetched, not ensured: a failure here must
 			// not take down the page.
@@ -57,15 +54,14 @@ function UsersRoute() {
 
 	return (
 		<ManageUsers
-			page={search.page}
+			perPage={DEFAULT_PER_PAGE}
+			search={search}
 			setSearch={(next, options) =>
 				navigate({
 					search: { ...search, ...next },
 					replace: options?.replace,
 				})
 			}
-			status={search.status}
-			term={search.term}
 		/>
 	);
 }

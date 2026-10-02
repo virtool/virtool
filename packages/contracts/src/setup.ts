@@ -1,5 +1,35 @@
 import { z } from "zod";
 
+/** How long an emailed remediation link remains usable. */
+export const EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS = 72;
+
+/** Minimum delay between remediation verification messages. */
+export const EMAIL_REMEDIATION_RESEND_DELAY_SECONDS = 60;
+
+/** Authoritative state of a restricted email-remediation journey. */
+export type EmailRemediationState =
+	| { status: "input" }
+	| {
+			status: "pending";
+			maskedEmail: string;
+			expiresAt: Date;
+			resendAt: Date;
+			canResend: boolean;
+			deliveryFailed: boolean;
+	  }
+	| { status: "verified" };
+
+/** Public result of consuming an email-remediation link. */
+export type EmailRemediationVerificationResult = {
+	status:
+		| "verified"
+		| "already_verified"
+		| "expired"
+		| "superseded"
+		| "unusable";
+	authenticated: boolean;
+};
+
 /**
  * Where a Virtool human account sits between creation and ordinary use.
  *
@@ -12,8 +42,8 @@ import { z } from "zod";
  * remains authoritative: a deactivated account cannot be used whatever its
  * lifecycle state, and completing setup never activates anyone.
  *
- * `pending` means the account exists — handle, administrator role and group
- * memberships are all assigned — but has no credential and cannot be used as
+ * `pending` means the account exists with assigned access, but has no
+ * handle or credential and cannot be used as
  * an application account. `normal` means it can.
  */
 export const AccountLifecycleState = z.enum(["pending", "normal"]);
@@ -31,13 +61,15 @@ export type AccountLifecycleState = z.infer<typeof AccountLifecycleState>;
  * `account_completion` covers both an administrator's invitation and the
  * first-instance bootstrap: an account that exists but has no credential yet.
  * `email_remediation` covers an active legacy account with no usable unique
- * email. `totp_enrollment` covers a user who has authenticated under a
- * `required` MFA policy but has not enrolled.
+ * email. The remaining purposes bind email verification and password
+ * recovery to their own one-time links.
  */
 export const SetupPurpose = z.enum([
 	"account_completion",
 	"email_remediation",
-	"totp_enrollment",
+	"email_verification",
+	"password_recovery",
+	"administrator_recovery",
 ]);
 
 export type SetupPurpose = z.infer<typeof SetupPurpose>;

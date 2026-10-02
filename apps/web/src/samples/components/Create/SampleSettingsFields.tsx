@@ -4,7 +4,8 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@base/Collapsible";
-import { InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import type { GroupMinimal, Label } from "@virtool/contracts";
 import { useState } from "react";
 import DefaultSubtractionSelector from "./DefaultSubtractionSelector";
@@ -56,38 +57,35 @@ export default function SampleSettingsFields({
 						metadataColumns === 2 ? "grid-cols-2" : "grid-cols-3",
 					)}
 				>
-					<InputGroup>
-						<InputLabel htmlFor="locale">Locale</InputLabel>
-						<InputSimple
-							id="locale"
+					<Field>
+						<FieldLabel>Locale</FieldLabel>
+						<Input
 							value={value.locale}
 							onChange={(event) =>
 								onChange({ ...value, locale: event.target.value })
 							}
 						/>
-					</InputGroup>
+					</Field>
 
-					<InputGroup>
-						<InputLabel htmlFor="isolate">Isolate</InputLabel>
-						<InputSimple
-							id="isolate"
+					<Field>
+						<FieldLabel>Isolate</FieldLabel>
+						<Input
 							value={value.isolate}
 							onChange={(event) =>
 								onChange({ ...value, isolate: event.target.value })
 							}
 						/>
-					</InputGroup>
+					</Field>
 
-					<InputGroup>
-						<InputLabel htmlFor="host">Host</InputLabel>
-						<InputSimple
-							id="host"
+					<Field>
+						<FieldLabel>Host</FieldLabel>
+						<Input
 							value={value.host}
 							onChange={(event) =>
 								onChange({ ...value, host: event.target.value })
 							}
 						/>
-					</InputGroup>
+					</Field>
 				</CollapsibleContent>
 			</Collapsible>
 

@@ -16,6 +16,7 @@ import {
 	releaseEmailClaim,
 	scheduleEmailRetry,
 } from "./outbox";
+import { EMAIL_TEMPLATE_VERSION } from "./templates";
 
 let database: TestDatabase;
 let db: Db;
@@ -44,6 +45,7 @@ function input(overrides: Partial<EnqueueEmailInput> = {}): EnqueueEmailInput {
 		idempotencyKey: "email_verification/1/1",
 		recipient: "someone@example.com",
 		template: {
+			expiresInHours: 72,
 			type: "email_verification",
 			username: "alice",
 			verifyUrl: "https://virtool.example/verify?token=abc",
@@ -100,7 +102,7 @@ describe("enqueueEmail", () => {
 		expect(row.status).toBe("queued");
 		expect(row.attempt_count).toBe(0);
 		expect(row.template.type).toBe("email_verification");
-		expect(row.template_version).toBe(1);
+		expect(row.template_version).toBe(EMAIL_TEMPLATE_VERSION);
 	});
 
 	it("returns the existing row for a duplicate idempotency key", async () => {

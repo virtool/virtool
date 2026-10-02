@@ -14,6 +14,7 @@ import {
 } from "@virtool/data/indexes/data";
 import {
 	checkReferenceRight,
+	checkReferenceVisibility,
 	ReferenceArchivedError,
 	ReferenceNotFoundError,
 	resolveReferenceActor,
@@ -23,6 +24,10 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
+import {
+	assertIndexVisible,
+	assertReferenceVisible,
+} from "../references/visibility";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const indexIdSchema = z.object({ indexId: rowIdSchema });
@@ -71,9 +76,15 @@ function rethrowAsHttp(err: unknown): never {
 	throw err;
 }
 
+// A reference the caller cannot see is a 404, not a 403, so the refusal does
+// not reveal that it exists.
 const authorizeBuild = createServerOnlyFn(
 	async (referenceId: number, userId: number): Promise<void> => {
 		const actor = await resolveReferenceActor(db, userId);
+
+		if (!(await checkReferenceVisibility(db, referenceId, actor))) {
+			throw new ReferenceNotFoundError();
+		}
 
 		if (!(await checkReferenceRight(db, referenceId, "build", actor))) {
 			setResponseStatus(403);
@@ -85,24 +96,36 @@ const authorizeBuild = createServerOnlyFn(
 export const findIndexesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findIndexesSchema)
-	.handler(async ({ data }) =>
-		findIndexes(db, {
-			referenceId: data.referenceId,
-			page: data.page,
-			perPage: data.perPage,
-		}),
-	);
+	.handler(async ({ context, data }) => {
+		try {
+			await assertReferenceVisible(data.referenceId, context.principal.userId);
+
+			return await findIndexes(db, {
+				referenceId: data.referenceId,
+				page: data.page,
+				perPage: data.perPage,
+			});
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
 
 export const listReadyIndexesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(listReadyIndexesSchema)
-	.handler(async ({ data }) => listReadyIndexes(db, data.archived));
+	.handler(async ({ context, data }) => {
+		const actor = await resolveReferenceActor(db, context.principal.userId);
+
+		return listReadyIndexes(db, actor, data.archived);
+	});
 
 export const getIndexFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(indexIdSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
+			await assertIndexVisible(data.indexId, context.principal.userId);
+
 			return await getIndex(db, data.indexId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -112,9 +135,20 @@ export const getIndexFn = createServerFn({ method: "GET" })
 export const findUnbuiltChangesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findUnbuiltChangesSchema)
-	.handler(async ({ data }) =>
-		findUnbuiltByReference(db, data.referenceId, data.page, data.perPage),
-	);
+	.handler(async ({ context, data }) => {
+		try {
+			await assertReferenceVisible(data.referenceId, context.principal.userId);
+
+			return await findUnbuiltByReference(
+				db,
+				data.referenceId,
+				data.page,
+				data.perPage,
+			);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
 
 export const createIndexFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
