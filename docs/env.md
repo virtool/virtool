@@ -97,7 +97,8 @@ Both accept `_FILE` variants. Configure them for `apps/web`.
 `VT_PUBLIC_ORIGIN` is deliberately not inferred from the request `Host` or
 forwarded headers. WebAuthn binds a passkey to the configured origin and Relying
 Party ID, whose hostname is derived from that origin. Moving an instance to a
-new domain invalidates passkeys registered under the old one.
+new domain invalidates passkeys registered under the old one. Users must then
+sign in with their password and register new passkeys.
 
 Plain `http` is rejected except on `localhost`. The loopback addresses are
 secure contexts as well, but an RP ID must be a domain and no browser accepts an

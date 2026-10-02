@@ -1,6 +1,7 @@
 import Button from "@base/Button";
 import { DialogFooter } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import type { BannerColor } from "@virtool/contracts";
 import { Controller, useForm } from "react-hook-form";
 import BannerColorPicker from "./BannerColorPicker";
@@ -41,35 +42,23 @@ export default function BannerForm({
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)}>
-			<InputGroup>
-				<InputLabel htmlFor="message">Message</InputLabel>
-				<InputSimple
-					id="message"
+			<Field>
+				<FieldLabel>Message</FieldLabel>
+				<Input
 					aria-required
-					aria-invalid={Boolean(errors.message) || Boolean(error) || undefined}
-					aria-describedby={
-						errors.message || error ? "message-error" : undefined
-					}
 					{...register("message", { required: "Message is required." })}
 				/>
-				<InputError id="message-error">
-					{errors.message?.message || error}
-				</InputError>
-			</InputGroup>
-			<InputGroup>
-				<InputLabel id="color-label">Color</InputLabel>
-				<Controller
-					control={control}
-					name="color"
-					render={({ field }) => (
-						<BannerColorPicker
-							aria-labelledby="color-label"
-							value={field.value}
-							onChange={field.onChange}
-						/>
-					)}
-				/>
-			</InputGroup>
+				<FieldError errors={[errors.message]}>
+					{errors.message ? undefined : error}
+				</FieldError>
+			</Field>
+			<Controller
+				control={control}
+				name="color"
+				render={({ field }) => (
+					<BannerColorPicker value={field.value} onChange={field.onChange} />
+				)}
+			/>
 			<DialogFooter>
 				<Button color="blue" type="submit">
 					{submitLabel}

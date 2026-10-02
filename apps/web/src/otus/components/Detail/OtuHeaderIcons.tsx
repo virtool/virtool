@@ -9,7 +9,7 @@ type OtuHeaderIconsProps = {
 	id: string;
 	name: string;
 	referenceId: number;
-	abbreviation: string;
+	acronym: string;
 	onDeleted: () => void;
 };
 
@@ -20,7 +20,7 @@ export function OtuHeaderIcons({
 	id,
 	name,
 	referenceId,
-	abbreviation,
+	acronym,
 	onDeleted,
 }: OtuHeaderIconsProps) {
 	const [openEdit, setOpenEdit] = useState(false);
@@ -55,7 +55,7 @@ export function OtuHeaderIcons({
 			<OtuEdit
 				otuId={id}
 				name={name}
-				abbreviation={abbreviation}
+				acronym={acronym}
 				open={openEdit}
 				setOpen={setOpenEdit}
 			/>

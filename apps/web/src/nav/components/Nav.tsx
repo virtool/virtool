@@ -6,7 +6,7 @@ import Dropdown, {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@base/Dropdown";
-import { IconButton, InitialIcon } from "@base/Icon";
+import { IconButton, UserAvatar } from "@base/Icon";
 import Logo from "@base/Logo";
 import UploadIndicator from "@uploads/components/UploadIndicator";
 import type { AdministratorRoleName } from "@virtool/contracts";
@@ -65,7 +65,7 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 				<Dropdown>
 					<DropdownMenuTrigger aria-label="User menu">
 						<div className="bg-transparent flex items-center">
-							<InitialIcon handle={handle} size="md" />
+							<UserAvatar handle={handle} size="md" />
 						</div>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">

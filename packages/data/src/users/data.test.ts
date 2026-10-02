@@ -3,22 +3,27 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { hashPassword, verifyPassword } from "../auth/password";
 import { createAuthenticatedSession } from "../auth/session";
+import { issueSetupTokenInTransaction } from "../auth/setup";
 import { seedSession, seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { authSessions } from "../db/schema/auth";
 import { groups, userGroups } from "../db/schema/groups";
 import { sessions } from "../db/schema/sessions";
+import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
+import { seedSettings } from "../settings/test/fixtures";
 import {
 	changePassword,
-	createPendingUser,
 	createUser,
+	findAdministeredUsers,
 	findUsers,
 	GroupMembershipError,
 	getAccount,
+	getAccountSecurity,
 	getAdministratorRole,
+	getGravatarEmail,
 	getUser,
 	getUserCount,
 	InvalidPasswordError,
@@ -28,6 +33,7 @@ import {
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
+	updateAccountSettings,
 	updateUser,
 } from "./data";
 
@@ -58,6 +64,91 @@ const storedSettings = {
 	skip_quick_analyze_dialog: false,
 };
 
+describe("getAccountSecurity", () => {
+	beforeEach(async () => {
+		await db.delete(settings);
+	});
+
+	async function issueVerification(
+		userId: number,
+		candidateEmail: string,
+		lifetimeMs?: number,
+	) {
+		await db.transaction((tx) =>
+			issueSetupTokenInTransaction(tx, {
+				userId,
+				purpose: "email_verification",
+				candidateEmail,
+				sourceEmail: "alice@example.com",
+				lifetimeMs,
+			}),
+		);
+	}
+
+	it("reports an account with no pending change and no TOTP", async () => {
+		await seedSettings(db, { mfaPolicy: "optional" });
+		const userId = await seedUser(db, { email: "alice@example.com" });
+		await db
+			.update(users)
+			.set({ emailVerified: true })
+			.where(eq(users.id, userId));
+
+		expect(await getAccountSecurity(db, userId)).toEqual({
+			emailVerified: true,
+			mfaRequired: false,
+			pendingEmail: null,
+			twoFactorEnabled: false,
+		});
+	});
+
+	it("reports the address waiting for verification", async () => {
+		const userId = await seedUser(db, { email: "alice@example.com" });
+		await issueVerification(userId, "new@example.com");
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			pendingEmail: "new@example.com",
+		});
+	});
+
+	it("does not report a verification of the current address as pending", async () => {
+		const userId = await seedUser(db, { email: "Alice@Example.com" });
+		await issueVerification(userId, "alice@example.com");
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			pendingEmail: null,
+		});
+	});
+
+	it("does not report an expired verification as pending", async () => {
+		const userId = await seedUser(db, { email: "alice@example.com" });
+		await issueVerification(userId, "new@example.com", -1000);
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			pendingEmail: null,
+		});
+	});
+
+	it("reports TOTP and the required policy", async () => {
+		await seedSettings(db, { mfaPolicy: "required" });
+		const userId = await seedUser(db);
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+
+		expect(await getAccountSecurity(db, userId)).toMatchObject({
+			mfaRequired: true,
+			twoFactorEnabled: true,
+		});
+	});
+
+	it("throws for an unknown user", async () => {
+		await expect(getAccountSecurity(db, 999_999)).rejects.toThrow(
+			UserNotFoundError,
+		);
+	});
+});
+
 describe("getAccount", () => {
 	it("returns the email and settings that only the account holder may read", async () => {
 		const userId = await seedUser(db, {
@@ -70,6 +161,9 @@ describe("getAccount", () => {
 
 		expect(account.email).toBe("alice@example.com");
 		expect(account.settings).toEqual({
+			avatarSource: "initials",
+			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
+			preferAcronym: false,
 			quickAnalyzeWorkflow: "nuvs",
 			showIds: false,
 			showVersions: true,
@@ -89,6 +183,9 @@ describe("getAccount", () => {
 		const account = await getAccount(db, userId);
 
 		expect(account.settings).toEqual({
+			avatarSource: "initials",
+			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
+			preferAcronym: false,
 			quickAnalyzeWorkflow: "pathoscope",
 			showIds: false,
 			showVersions: true,
@@ -119,6 +216,90 @@ describe("getAccount", () => {
 	// is signed in", so this must throw rather than resolve undefined.
 	it("throws when the user does not exist", async () => {
 		await expect(getAccount(db, 404)).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+});
+
+describe("getGravatarEmail", () => {
+	async function seedGravatarUser({
+		active = true,
+		avatarSource = "gravatar",
+		email = " Alice@Example.com ",
+	} = {}) {
+		await seedUser(db, {
+			active,
+			email,
+			handle: "Alice",
+			settings: { avatar_source: avatarSource },
+		});
+	}
+
+	it("returns the normalized email when the user chose Gravatar", async () => {
+		await seedGravatarUser();
+
+		expect(await getGravatarEmail(db, "alice")).toBe("alice@example.com");
+	});
+
+	it.each([
+		["the user did not choose Gravatar", { avatarSource: "initials" }],
+		["the email is empty", { email: "" }],
+		["the user is deactivated", { active: false }],
+	])("returns null when %s", async (_, options) => {
+		await seedGravatarUser(options);
+
+		expect(await getGravatarEmail(db, "alice")).toBeNull();
+	});
+
+	it("returns null when no user has the handle", async () => {
+		expect(await getGravatarEmail(db, "nobody")).toBeNull();
+	});
+});
+
+describe("updateAccountSettings", () => {
+	it("writes the changed key in its stored spelling and keeps the others", async () => {
+		const userId = await seedUser(db, {
+			handle: "alice",
+			settings: storedSettings,
+		});
+
+		const settings = await updateAccountSettings(db, userId, {
+			preferAcronym: true,
+		});
+
+		expect(settings).toEqual({
+			avatarSource: "initials",
+			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
+			preferAcronym: true,
+			quickAnalyzeWorkflow: "nuvs",
+			showIds: false,
+			showVersions: true,
+			skipQuickAnalyzeDialog: false,
+		});
+
+		const [row] = await db.select().from(users).where(eq(users.id, userId));
+		expect(row?.settings).toEqual({
+			...storedSettings,
+			prefer_abbreviation: true,
+		});
+	});
+
+	it("reads back the Pathoscope columns it writes", async () => {
+		const userId = await seedUser(db, { handle: "bob" });
+
+		const settings = await updateAccountSettings(db, userId, {
+			pathoscopeColumns: ["weight", "depth"],
+		});
+
+		expect(settings.pathoscopeColumns).toEqual(["weight", "depth"]);
+		expect((await getAccount(db, userId)).settings.pathoscopeColumns).toEqual([
+			"weight",
+			"depth",
+		]);
+	});
+
+	it("throws when the user does not exist", async () => {
+		await expect(
+			updateAccountSettings(db, 404, { preferAcronym: true }),
+		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
 });
 
@@ -248,6 +429,22 @@ describe("updateUser", () => {
 		expect((await readUser(userId))?.active).toBe(true);
 	});
 
+	it("rejects an unknown group and keeps the existing membership", async () => {
+		const userId = await seedUser(db);
+		const groupId = await seedGroup(db);
+		await updateUser(db, userId, { groups: [groupId] });
+
+		await expect(
+			updateUser(db, userId, { groups: [groupId, 999] }),
+		).rejects.toBeInstanceOf(GroupMembershipError);
+
+		const memberships = await db
+			.select({ groupId: userGroups.groupId })
+			.from(userGroups)
+			.where(eq(userGroups.userId, userId));
+		expect(memberships).toEqual([{ groupId }]);
+	});
+
 	it("replaces group membership, keeping the primary flag on a group that stays", async () => {
 		const userId = await seedUser(db);
 		const keep = await seedGroup(db, { name: "keep" });
@@ -369,7 +566,7 @@ describe("changePassword", () => {
 		await seedSession(db, userId);
 		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
-		const { handle } = await changePassword(db, {
+		await changePassword(db, {
 			userId,
 			oldPassword: "old_password_123",
 			password: "new_password_123",
@@ -384,7 +581,6 @@ describe("changePassword", () => {
 		expect(
 			await db.select().from(sessions).where(eq(sessions.userId, userId)),
 		).toHaveLength(0);
-		expect(handle).toBe("alice");
 	});
 
 	it("rejects a wrong old password and leaves everything alone", async () => {
@@ -504,6 +700,17 @@ describe("findUsers", () => {
 		).toEqual(["bob"]);
 	});
 
+	// Any signed-in user may search, so the results must not show who has no
+	// second factor.
+	it("leaves out two-factor state", async () => {
+		await seedUser(db, { handle: "alice" });
+
+		const [user] = (await findUsers(db, {})).items;
+
+		expect(user).toBeDefined();
+		expect(user).not.toHaveProperty("twoFactorEnabled");
+	});
+
 	it("filters by handle substring", async () => {
 		await seedUser(db, { handle: "alice" });
 		await seedUser(db, { handle: "malice" });
@@ -517,6 +724,19 @@ describe("findUsers", () => {
 		]);
 		expect(result.foundCount).toBe(2);
 		expect(result.totalCount).toBe(3);
+	});
+
+	it("matches % and _ in the term literally", async () => {
+		await seedUser(db, { handle: "a_b" });
+		await seedUser(db, { handle: "axb" });
+		await seedUser(db, { handle: "c%d" });
+		await seedUser(db, { handle: "cxd" });
+
+		const underscore = await findUsers(db, { term: "a_b" });
+		const percent = await findUsers(db, { term: "c%d" });
+
+		expect(underscore.items.map((user) => user.handle)).toEqual(["a_b"]);
+		expect(percent.items.map((user) => user.handle)).toEqual(["c%d"]);
 	});
 
 	it("filters to administrators and to non-administrators", async () => {
@@ -555,6 +775,114 @@ describe("findUsers", () => {
 	});
 });
 
+describe("findAdministeredUsers", () => {
+	async function seedMixedUsers() {
+		await seedUser(db, {
+			handle: "carol",
+			email: "carol@example.com",
+			administratorRole: "users",
+		});
+		await seedUser(db, {
+			handle: "",
+			email: "invited@example.com",
+			lifecycleState: "pending",
+		});
+		await seedUser(db, {
+			handle: "Alice",
+			email: "zed@example.com",
+			administratorRole: "full",
+		});
+		await seedUser(db, { handle: "bob", active: false });
+	}
+
+	async function getEmails(
+		options: Parameters<typeof findAdministeredUsers>[1],
+	) {
+		return (await findAdministeredUsers(db, options)).items.map(
+			(user) => user.email,
+		);
+	}
+
+	it("returns every account with its email, pending handles last", async () => {
+		await seedMixedUsers();
+
+		const result = await findAdministeredUsers(db, {});
+
+		expect(result.items.map((user) => user.handle)).toEqual([
+			"Alice",
+			"bob",
+			"carol",
+			"",
+		]);
+		expect(result.items[0]?.email).toBe("zed@example.com");
+		expect(result.foundCount).toBe(4);
+	});
+
+	it("matches search wildcards literally", async () => {
+		await seedUser(db, { handle: "a_b", email: "one@example.com" });
+		await seedUser(db, { handle: "acb", email: "two@example.com" });
+
+		expect(await getEmails({ term: "a_b" })).toEqual(["one@example.com"]);
+		expect(await getEmails({ term: "%" })).toEqual([]);
+	});
+
+	it("filters by status", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ statuses: ["invited"] })).toEqual([
+			"invited@example.com",
+		]);
+		expect(await getEmails({ statuses: ["deactivated"] })).toEqual([""]);
+		expect(await getEmails({ statuses: ["active", "invited"] })).toEqual([
+			"zed@example.com",
+			"carol@example.com",
+			"invited@example.com",
+		]);
+	});
+
+	it("filters by role, where none means no administrator role", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ roles: ["full", "users"] })).toEqual([
+			"zed@example.com",
+			"carol@example.com",
+		]);
+		expect(await getEmails({ roles: ["none"] })).toEqual([
+			"",
+			"invited@example.com",
+		]);
+	});
+
+	it("searches handles and emails", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ term: "zed" })).toEqual(["zed@example.com"]);
+		expect(await getEmails({ term: "car" })).toEqual(["carol@example.com"]);
+	});
+
+	it("sorts by email, role, and status in either direction", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ sort: "email", direction: "descending" })).toEqual(
+			["zed@example.com", "invited@example.com", "carol@example.com", ""],
+		);
+		expect(await getEmails({ sort: "role" })).toEqual([
+			"zed@example.com",
+			"carol@example.com",
+			"",
+			"invited@example.com",
+		]);
+		expect(
+			await getEmails({ sort: "status", direction: "descending" }),
+		).toEqual([
+			"",
+			"invited@example.com",
+			"zed@example.com",
+			"carol@example.com",
+		]);
+	});
+});
+
 describe("getUser", () => {
 	it("merges permissions across the user's groups and names the primary", async () => {
 		const userId = await seedUser(db, { handle: "alice" });
@@ -581,46 +909,20 @@ describe("getUser", () => {
 		expect(user.primaryGroup).toMatchObject({ id: samples, name: "samples" });
 	});
 
+	it("reports whether the user has confirmed a TOTP enrollment", async () => {
+		const userId = await seedUser(db, { handle: "alice" });
+		expect((await getUser(db, userId)).twoFactorEnabled).toBe(false);
+
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+
+		expect((await getUser(db, userId)).twoFactorEnabled).toBe(true);
+	});
+
 	it("throws when the user does not exist", async () => {
 		await expect(getUser(db, 404)).rejects.toBeInstanceOf(UserNotFoundError);
-	});
-});
-
-describe("createPendingUser", () => {
-	it("creates an account with no credential and pending lifecycle", async () => {
-		const group = await seedGroup(db, { name: "researchers" });
-
-		const user = await createPendingUser(db, {
-			handle: "alice",
-			administratorRole: "users",
-			groups: [group],
-		});
-
-		expect(user).toMatchObject({
-			handle: "alice",
-			administratorRole: "users",
-			active: true,
-			forceReset: false,
-			lifecycleState: "pending",
-		});
-		expect(user.groups.map((entry) => entry.name)).toEqual(["researchers"]);
-
-		const [row] = await db.select().from(users).where(eq(users.id, user.id));
-		expect(row?.password).toBeNull();
-		expect(row?.settings).toEqual({
-			skip_quick_analyze_dialog: true,
-			show_ids: true,
-			show_versions: true,
-			quick_analyze_workflow: "pathoscope",
-		});
-	});
-
-	it("rejects a duplicate handle", async () => {
-		await seedUser(db, { handle: "alice" });
-
-		await expect(
-			createPendingUser(db, { handle: "Alice" }),
-		).rejects.toBeInstanceOf(UserConflictError);
 	});
 });
 
@@ -646,6 +948,9 @@ describe("createUser", () => {
 		// stored blob already uses.
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.settings).toEqual({
+			avatar_source: "initials",
+			pathoscope_columns: ["name", "weight", "depth", "coverage"],
+			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
 			show_ids: true,
 			show_versions: true,
@@ -722,27 +1027,33 @@ describe("updateUser on a pending account", () => {
 	// Setting a password here would complete the setup without the token that
 	// authorizes the transition.
 	it("refuses to set a password", async () => {
-		const user = await createPendingUser(db, { handle: "alice" });
+		const userId = await seedUser(db, {
+			handle: "",
+			lifecycleState: "pending",
+		});
 
 		await expect(
-			updateUser(db, user.id, { password: "a-real-password" }),
+			updateUser(db, userId, { password: "a-real-password" }),
 		).rejects.toBeInstanceOf(PendingAccountError);
 
-		const [row] = await db.select().from(users).where(eq(users.id, user.id));
+		const [row] = await db.select().from(users).where(eq(users.id, userId));
 		expect(row?.password).toBeNull();
 		expect(row?.lifecycleState).toBe("pending");
 	});
 
-	it("still assigns a handle, a role and groups", async () => {
-		const user = await createPendingUser(db, { handle: "alice" });
+	it("reserves the handle for the invitee while allowing group changes", async () => {
+		const userId = await seedUser(db, {
+			handle: "",
+			lifecycleState: "pending",
+		});
 		const group = await seedGroup(db, { name: "researchers" });
 
-		const updated = await updateUser(db, user.id, {
-			handle: "ada",
-			groups: [group],
-		});
+		await expect(
+			updateUser(db, userId, { handle: "ada" }),
+		).rejects.toBeInstanceOf(PendingAccountError);
+		const updated = await updateUser(db, userId, { groups: [group] });
 
-		expect(updated.handle).toBe("ada");
+		expect(updated.handle).toBe("");
 		expect(updated.groups.map((entry) => entry.name)).toEqual(["researchers"]);
 		expect(updated.lifecycleState).toBe("pending");
 	});
@@ -750,11 +1061,14 @@ describe("updateUser on a pending account", () => {
 
 describe("changePassword on a pending account", () => {
 	it("reports a bad credential rather than a lifecycle state", async () => {
-		const user = await createPendingUser(db, { handle: "alice" });
+		const userId = await seedUser(db, {
+			handle: "",
+			lifecycleState: "pending",
+		});
 
 		await expect(
 			changePassword(db, {
-				userId: user.id,
+				userId,
 				oldPassword: "anything",
 				password: "a-real-password",
 			}),

@@ -1,11 +1,9 @@
-import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { rm } from "node:fs/promises";
 import {
+	cacheFor,
 	createMappingIndex,
 	downloadToPath,
-	gunzipFile,
 } from "@virtool/workflow";
-import { cacheFor } from "../cache";
 import {
 	REFERENCE_INDEX_EXTRA_PARAMS,
 	REFERENCE_INDEX_KIND,
@@ -54,16 +52,15 @@ export const createReferenceIndexStep: NuvsStep = {
 /**
  * Build one bowtie2 index per subtraction.
  *
- * **The genome is decompressed first**, which is where this differs from
- * pathoscope: that workflow hands the gzipped FASTA to `bowtie2-build` directly,
- * which reads gzip perfectly well. The shards already sitting in the shared
- * namespace were built from the decompressed bytes, so decompressing is what
- * keeps this workflow's shards byte-identical to them.
+ * The gzipped genome is handed to `bowtie2-build` directly, which reads gzip.
  *
- * Both the download and the decompression are deferred until the cache has
- * missed. The namespace is shared, so a hit is the common outcome, and a host
- * genome is gigabytes that would otherwise be pulled out of storage, expanded,
+ * The download is deferred until the cache has missed. Every analysis against
+ * the same subtraction reuses one cached index, so a hit is the common outcome,
+ * and a host genome is gigabytes that would otherwise be pulled out of storage
  * and never opened.
+ *
+ * Nothing reads the genome once its index is built, so it is removed straight
+ * after, whether or not the build succeeded.
  */
 export const createSubtractionIndexesStep: NuvsStep = {
 	id: "create_subtraction_indexes",
@@ -75,20 +72,13 @@ export const createSubtractionIndexesStep: NuvsStep = {
 		const cache = cacheFor(context);
 
 		// Sequentially, not concurrently: `bowtie2-build --threads {proc}` is
-		// already using every core, so overlapping two of them only contends. It
-		// also keeps one decompressed genome on disk at a time.
+		// already using every core, so overlapping two of them only contends.
 		for (const subtraction of data.subtractions) {
-			const staging = await mkdtemp(
-				join(workPath, `subtraction-${subtraction.id}-`),
-			);
-
-			const fastaPath = join(staging, "subtraction.fa");
-
 			try {
 				await createMappingIndex({
 					cache,
 					extraParams: SUBTRACTION_INDEX_EXTRA_PARAMS,
-					fastaPath,
+					fastaPath: subtraction.path,
 					indexKind: SUBTRACTION_INDEX_KIND,
 					indexPrefix: paths.subtraction(subtraction.id).indexPrefix,
 					logger,
@@ -100,16 +90,9 @@ export const createSubtractionIndexesStep: NuvsStep = {
 							subtraction.path,
 						);
 
-						await gunzipFile({
-							proc,
-							runSubprocess,
-							source: subtraction.path,
-							target: fastaPath,
-						});
-
 						logger.info(
-							{ fastaPath, subtractionId: subtraction.id },
-							"decompressed subtraction genome",
+							{ fastaPath: subtraction.path, subtractionId: subtraction.id },
+							"downloaded subtraction genome",
 						);
 					},
 					proc,
@@ -118,10 +101,7 @@ export const createSubtractionIndexesStep: NuvsStep = {
 					workflowVersion: APP_VERSION,
 				});
 			} finally {
-				// The decompressed genome is an input to `bowtie2-build` and nothing
-				// reads it again. Leaving it would keep a second, larger copy of every
-				// subtraction on a disk sized for one.
-				await rm(staging, { force: true, recursive: true });
+				await rm(subtraction.path, { force: true });
 			}
 		}
 	},

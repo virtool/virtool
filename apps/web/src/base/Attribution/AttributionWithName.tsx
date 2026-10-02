@@ -1,4 +1,4 @@
-import { InitialIcon } from "@base/Icon";
+import { UserAvatar } from "@base/Icon";
 import { capitalize } from "es-toolkit";
 
 type AttributionWithNameProps = {
@@ -16,7 +16,7 @@ export default function AttributionWithName({
 		<span className={`inline-flex items-center ${className}`}>
 			{capitalize(verb)} by{" "}
 			{user ? (
-				<InitialIcon size="md" handle={user} className="mr-0.5 ml-1.5" />
+				<UserAvatar size="md" handle={user} className="mr-0.5 ml-1.5" />
 			) : null}{" "}
 			{user}
 		</span>

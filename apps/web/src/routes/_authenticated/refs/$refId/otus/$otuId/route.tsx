@@ -47,7 +47,7 @@ function OtuDetailLayout() {
 		return null;
 	}
 
-	const { id, name, abbreviation } = otu;
+	const { id, name, acronym } = otu;
 
 	return (
 		<>
@@ -55,7 +55,7 @@ function OtuDetailLayout() {
 				<ViewHeaderTitle className="items-baseline">
 					{name}{" "}
 					<small className="text-gray-500 font-semibold ml-1.5">
-						{abbreviation || <em className="font-normal">No Abbreviation</em>}
+						{acronym || <em className="font-normal">No Acronym</em>}
 					</small>
 					{archived && (
 						<Badge className="ml-3 self-center" color="gray" variant="soft">
@@ -69,7 +69,7 @@ function OtuDetailLayout() {
 								id={id}
 								referenceId={referenceId}
 								name={name}
-								abbreviation={abbreviation}
+								acronym={acronym}
 								onDeleted={() => navigate({ to: `/refs/${refId}/otus` })}
 							/>
 						)}

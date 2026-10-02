@@ -2,14 +2,12 @@ import { useFetchAccount } from "@account/account";
 import Button from "@base/Button";
 import { ContainerNarrow } from "@base/Container";
 import CreatedCount from "@base/CreatedCount";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputIconButton,
-	InputLabel,
-	InputSimple,
-} from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import InputGroup, {
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from "@base/InputGroup";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
@@ -155,9 +153,9 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<ViewHeader title="Create Sample">
 					<ViewHeaderTitle>Create Sample</ViewHeaderTitle>
-					<InputError className="text-left">
+					<FieldError className="text-left">
 						{mutation.isError && mutation.error.message}
-					</InputError>
+					</FieldError>
 				</ViewHeader>
 
 				{isError ? (
@@ -166,29 +164,27 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 					<LoadingPlaceholder className="mt-9" />
 				) : (
 					<>
-						<InputGroup>
-							<InputLabel htmlFor="name">Name</InputLabel>
-							<InputContainer align="right" className="flex">
-								<InputSimple
-									id="name"
+						<Field>
+							<FieldLabel>Name</FieldLabel>
+							<InputGroup>
+								<InputGroupInput
 									aria-required
-									aria-invalid={Boolean(errors.name) || undefined}
-									aria-describedby={errors.name ? "name-error" : undefined}
 									{...register("name", {
 										required: "Required Field",
 									})}
 								/>
 								{Boolean(watch("readFiles").length) && (
-									<InputIconButton
-										IconComponent={WandSparkles}
-										aria-label="Auto Fill"
-										tip="Auto Fill"
-										onClick={() => autofill(watch("readFiles"))}
-									/>
+									<InputGroupAddon align="inline-end">
+										<InputGroupButton
+											IconComponent={WandSparkles}
+											tip="Auto Fill"
+											onClick={() => autofill(watch("readFiles"))}
+										/>
+									</InputGroupAddon>
 								)}
-							</InputContainer>
-							<InputError id="name-error">{errors.name?.message}</InputError>
-						</InputGroup>
+							</InputGroup>
+							<FieldError errors={[errors.name]} />
+						</Field>
 
 						<Controller
 							control={control}
@@ -231,19 +227,15 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 						    passes under the bar instead of butting up against it. */}
 						<div className="sticky bottom-0 z-10 mt-4 bg-linear-to-b from-white/0 to-white to-40% pt-10 pb-4">
 							<div className="flex items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3 shadow-lg">
-								<div className="flex items-center gap-2">
+								<Field className="gap-2" orientation="horizontal">
 									<Switch
-										id="create-more"
 										checked={createMore}
 										onCheckedChange={setCreateMore}
 									/>
-									<label
-										className="cursor-pointer text-gray-700 text-sm"
-										htmlFor="create-more"
-									>
+									<FieldLabel className="cursor-pointer font-normal text-gray-700 text-sm">
 										Create more
-									</label>
-								</div>
+									</FieldLabel>
+								</Field>
 
 								<div className="flex items-center gap-4">
 									<CreatedCount

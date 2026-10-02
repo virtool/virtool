@@ -21,6 +21,7 @@ import {
 	FinalizeAnalysisRequest,
 	FinalizeSampleRequest,
 	FinalizeSubtractionRequest,
+	getJobTerminalRefusal,
 	isJobStateTerminal,
 	type Job,
 	type JobClaimed,
@@ -68,21 +69,6 @@ function notFound(message = "Not found"): JobsApiResponse {
 function conflict(message: string): JobsApiResponse {
 	return { status: 409, body: { message } };
 }
-
-/**
- * The states a job never leaves, and what a runner holding a key for one is
- * told.
- *
- * A copy of `TERMINAL_REFUSALS` in `apps/internal/src/serve/auth/verify.ts`, wording
- * and all. The message is the whole of the cancellation channel, so a fixture
- * that answered `Job is failed.` where the service answers `Job has failed.`
- * would let a run that keyed on the wording pass here and stall in production.
- */
-const TERMINAL_REFUSALS: Record<string, string> = {
-	cancelled: "Job is cancelled.",
-	failed: "Job has failed.",
-	succeeded: "Job has succeeded.",
-};
 
 /**
  * Split a path into its segments.
@@ -185,7 +171,7 @@ function handleClaim(
  * Heartbeat.
  *
  * A terminal job never reaches here: its key stops authenticating first, and
- * that refusal is the cancellation channel. See {@link TERMINAL_REFUSALS} and
+ * that refusal is the cancellation channel. See `getJobTerminalRefusal` and
  * the check at the top of {@link handleJobsApiRequest}.
  */
 function handlePing(state: JobsApiState): JobsApiResponse {
@@ -427,7 +413,7 @@ export function handleJobsApiRequest(
 	// It sits behind the server's key comparison and after the claim, which is
 	// what makes naming the state safe: only a caller already holding this job's
 	// key reaches it, and the claim is where the key is minted.
-	const refusal = TERMINAL_REFUSALS[state.job.state];
+	const refusal = getJobTerminalRefusal(state.job.state);
 
 	if (refusal) {
 		return { status: 401, body: { message: refusal } };

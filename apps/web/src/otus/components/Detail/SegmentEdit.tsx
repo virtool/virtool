@@ -10,7 +10,7 @@ type FormValues = {
 };
 
 type SegmentEditProps = {
-	abbreviation: string;
+	acronym: string;
 	editSegmentName?: string;
 	name: string;
 	otuId: string;
@@ -23,7 +23,7 @@ type SegmentEditProps = {
  * Displays a dialog to edit a segment
  */
 export default function SegmentEdit({
-	abbreviation,
+	acronym,
 	editSegmentName,
 	otuId,
 	name,
@@ -42,7 +42,7 @@ export default function SegmentEdit({
 		});
 
 		mutation.mutate(
-			{ otuId, name, abbreviation, schema: newArray },
+			{ otuId, name, acronym, schema: newArray },
 			{
 				onSuccess: () => {
 					unsetEditSegmentName();

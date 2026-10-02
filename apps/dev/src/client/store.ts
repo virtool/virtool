@@ -9,6 +9,7 @@ const EMPTY: Snapshot = {
 		buildQueue: [],
 		capacity: 0,
 		concurrency: 1,
+		errors: {},
 		lastError: null,
 		queues: {},
 	},
@@ -67,7 +68,6 @@ function subscribe(listener: () => void): () => void {
 	};
 }
 
-/** Subscribe to the daemon's cached live snapshot. */
 export function useSnapshot() {
 	return useSyncExternalStore(
 		subscribe,

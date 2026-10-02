@@ -1,7 +1,12 @@
+import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
+import Label from "@base/Label";
+import Link from "@base/Link";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
+import { Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useUpdateAccount } from "../queries";
 
@@ -10,14 +15,96 @@ type FormValues = {
 };
 
 type EmailProps = {
+	/** Whether this instance can send the verification email */
+	deliveryAvailable: boolean;
 	/** The user's current email address, or `""` if they have none on file */
 	email: string;
+	/** Whether the current address is verified */
+	emailVerified: boolean;
+	/** An address waiting for verification */
+	pendingEmail: string | null;
+	/** Whether the user can set up email delivery */
+	canManageEmail: boolean;
 };
 
+type EmailStatusProps = Pick<
+	EmailProps,
+	"email" | "emailVerified" | "pendingEmail"
+>;
+
+function EmailStatus({ email, emailVerified, pendingEmail }: EmailStatusProps) {
+	return (
+		<>
+			<div className="flex items-center gap-2">
+				<span className="font-medium">
+					{email || "No email address on file."}
+				</span>
+				{email && (
+					<Label color={emailVerified ? "green" : "orange"}>
+						{emailVerified ? "Verified" : "Not verified"}
+					</Label>
+				)}
+			</div>
+			{pendingEmail && (
+				<Alert outerClassName="mt-4 mb-0" color="blue" icon={Mail}>
+					<span>
+						We sent a verification link to <strong>{pendingEmail}</strong>. Your
+						current address stays active until you open the link.
+					</span>
+				</Alert>
+			)}
+		</>
+	);
+}
+
+type EmailUnavailableProps = Pick<
+	EmailProps,
+	"canManageEmail" | "email" | "emailVerified" | "pendingEmail"
+>;
+
+function EmailUnavailable({
+	canManageEmail,
+	email,
+	emailVerified,
+	pendingEmail,
+}: EmailUnavailableProps) {
+	return (
+		<BoxGroup>
+			<BoxGroupSection>
+				<EmailStatus
+					email={email}
+					emailVerified={emailVerified}
+					pendingEmail={pendingEmail}
+				/>
+				<p className="mt-2 text-gray-600">
+					Email delivery is not set up for this Virtool instance.{" "}
+					{canManageEmail ? (
+						<>
+							<Link className="underline" to="/administration/email">
+								Set up email delivery
+							</Link>{" "}
+							to add or change your address.
+						</>
+					) : (
+						"Ask an administrator to set it up if you want to add or change your address."
+					)}
+				</p>
+			</BoxGroupSection>
+		</BoxGroup>
+	);
+}
+
 /**
- * A component to update the accounts email address
+ * Shows the account's email address and its verification state, with a form to
+ * change it.
  */
-export default function AccountEmail({ email }: EmailProps) {
+export default function AccountEmail({
+	canManageEmail,
+	deliveryAvailable,
+	email,
+	emailVerified,
+	pendingEmail,
+}: EmailProps) {
 	const {
 		formState: { errors },
 		handleSubmit,
@@ -33,46 +120,61 @@ export default function AccountEmail({ email }: EmailProps) {
 
 	return (
 		<section>
-			<SectionHeader>
-				<h2>Email</h2>
+			<SectionHeader level={3}>
+				<h3>Email</h3>
 			</SectionHeader>
-			<BoxGroup>
-				<form onSubmit={handleSubmit(onSubmit)}>
+			{deliveryAvailable ? (
+				<BoxGroup>
 					<BoxGroupSection>
-						<InputGroup>
-							<InputLabel htmlFor="email">Email Address</InputLabel>
-							<InputSimple
-								id="email"
-								aria-invalid={Boolean(errors.email) || undefined}
-								aria-describedby={errors.email ? "email-error" : undefined}
-								{...register("email", {
-									required: "Please provide an email address",
-									pattern: {
-										value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
-										message: "Please provide a valid email address",
-									},
-								})}
-							/>
-							<InputError id="email-error">{errors.email?.message}</InputError>
-						</InputGroup>
-						{mutation.isSuccess && (
-							<p role="status">
-								A verification link has been queued. Your current address stays
-								active until you verify the new one.
-							</p>
-						)}
-						{mutation.isError && (
-							<p role="alert">Could not start email verification. Try again.</p>
-						)}
-						<footer className="flex items-center justify-end mb-4">
-							<SaveButton
-								altText="Send verification"
-								disabled={mutation.isPending}
-							/>
-						</footer>
+						<EmailStatus
+							email={email}
+							emailVerified={emailVerified}
+							pendingEmail={pendingEmail}
+						/>
 					</BoxGroupSection>
-				</form>
-			</BoxGroup>
+					<form onSubmit={handleSubmit(onSubmit)}>
+						<BoxGroupSection>
+							<Field>
+								<FieldLabel>New Email Address</FieldLabel>
+								<Input
+									{...register("email", {
+										required: "Please provide an email address",
+										pattern: {
+											value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
+											message: "Please provide a valid email address",
+										},
+									})}
+								/>
+								<FieldError errors={[errors.email]} />
+							</Field>
+							{mutation.isSuccess && (
+								<p role="status">
+									A verification link has been queued. Your current address
+									stays active until you verify the new one.
+								</p>
+							)}
+							{mutation.isError && (
+								<p role="alert">
+									Could not start email verification. Try again.
+								</p>
+							)}
+							<footer className="flex items-center justify-end mb-4">
+								<SaveButton
+									altText="Send verification"
+									disabled={mutation.isPending}
+								/>
+							</footer>
+						</BoxGroupSection>
+					</form>
+				</BoxGroup>
+			) : (
+				<EmailUnavailable
+					canManageEmail={canManageEmail}
+					email={email}
+					emailVerified={emailVerified}
+					pendingEmail={pendingEmail}
+				/>
+			)}
 		</section>
 	);
 }

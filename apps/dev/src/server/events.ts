@@ -1,6 +1,17 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 
-/** Persistent Docker event stream with bounded reconnect delay. */
+// Docker filters these server-side, so health-check exec events never reach the daemon.
+const LIFECYCLE_EVENTS = [
+	"create",
+	"destroy",
+	"die",
+	"health_status",
+	"pause",
+	"start",
+	"stop",
+	"unpause",
+];
+
 export class DockerEvents {
 	private child: ChildProcessWithoutNullStreams | undefined;
 	private reconnect: NodeJS.Timeout | undefined;
@@ -19,8 +30,11 @@ export class DockerEvents {
 			"events",
 			"--filter",
 			`label=ca.virtool.dev.repository=${this.repositoryId}`,
+			"--filter",
+			"type=container",
+			...LIFECYCLE_EVENTS.flatMap((event) => ["--filter", `event=${event}`]),
 			"--format",
-			"{{json .}}",
+			"{{.Action}}",
 		]);
 		this.child = child;
 		child.stderr.resume();

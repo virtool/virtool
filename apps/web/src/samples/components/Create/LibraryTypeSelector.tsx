@@ -1,4 +1,4 @@
-import { InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { ChevronDown } from "lucide-react";
 
@@ -15,10 +15,10 @@ export default function LibraryTypeSelector({
 	onSelect,
 }: LibraryTypeSelectorProps) {
 	return (
-		<InputGroup className="mb-6">
-			<InputLabel htmlFor="libraryType">Library Type</InputLabel>
+		<Field className="mb-6">
+			<FieldLabel>Library Type</FieldLabel>
 			<Select value={libraryType} onValueChange={onSelect}>
-				<SelectButton className="w-full" icon={ChevronDown} id="libraryType" />
+				<SelectButton className="w-full" icon={ChevronDown} />
 				<SelectContent>
 					<SelectItem
 						description="Search against whole genome references using normal reads."
@@ -34,6 +34,6 @@ export default function LibraryTypeSelector({
 					</SelectItem>
 				</SelectContent>
 			</Select>
-		</InputGroup>
+		</Field>
 	);
 }

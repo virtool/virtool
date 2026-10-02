@@ -237,6 +237,15 @@ beforeEach(() => {
 	settingsServerFnMocks.getPasswordPolicyFn.mockReset();
 	mockGetPasswordPolicy();
 
+	// Resolving fresh lets route tests render the administration views rather
+	// than the authentication gate in front of them.
+	recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
+		15 * 60 * 1000,
+	);
+
+	// The security view lists passkeys, so any test rendering it needs a list.
+	accountServerFnMocks.findPasskeysFn.mockResolvedValue([]);
+
 	// Every upload begins by asking the server which transport to take. Default
 	// to the proxied path so a test that just exercises uploading does not have
 	// to stub it; tests for the chunked path override this.

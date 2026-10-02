@@ -8,7 +8,7 @@ import { z } from "zod";
 export const rowIdSchema = z.number().int().positive();
 
 /** A search term, bounded independently of the RPC transport. */
-export const searchTermSchema = z.string().max(1000).default("");
+export const searchTermSchema = z.string().trim().max(1000).default("");
 
 /** The page number a paginated server function accepts. */
 export const pageSchema = z.number().int().positive().default(1);

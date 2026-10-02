@@ -13,6 +13,7 @@ import {
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { emailOutbox } from "../db/schema/emailOutbox";
+import { setupTokens } from "../db/schema/setup";
 import { nowUtc, secondsAgo } from "../db/time";
 import { isEmailEnabled } from "./settings";
 import { EMAIL_TEMPLATE_VERSION } from "./templates";
@@ -27,6 +28,8 @@ export type EnqueueEmailInput = {
 	/** Do not attempt delivery before this time. Defaults to now. */
 	notBefore?: Date;
 	recipient: string;
+	/** The setup token whose link the message carries, if any. */
+	setupTokenId?: number;
 	template: EmailTemplate;
 };
 
@@ -60,6 +63,7 @@ export async function enqueueEmail(
 				idempotency_key: input.idempotencyKey,
 				next_attempt_at: input.notBefore ?? nowUtc(),
 				recipient: input.recipient,
+				setup_token_id: input.setupTokenId,
 				status: "queued",
 				template: input.template,
 				template_version: EMAIL_TEMPLATE_VERSION,
@@ -113,9 +117,23 @@ function isDue(): SQL | undefined {
 	);
 }
 
+/** Whether a row carries no setup link, or one that still works. */
+function hasUsableLink(): SQL<boolean> {
+	return sql<boolean>`${emailOutbox.setup_token_id} is null or exists (
+		select 1 from ${setupTokens}
+		where ${setupTokens.id} = ${emailOutbox.setup_token_id}
+			and ${setupTokens.consumedAt} is null
+			and ${setupTokens.supersededAt} is null
+			and ${setupTokens.expiresAt} > ${nowUtc()}
+	)`;
+}
+
 /**
  * Claim up to `limit` due rows for `claimToken`, incrementing each row's
  * attempt count.
+ *
+ * A due row whose setup link was consumed, superseded, or expired is deleted
+ * instead of claimed, so a dead link is never sent.
  *
  * Candidate IDs are materialized before the update because an inline query
  * containing `clock_timestamp()` can be re-evaluated and exceed the limit.
@@ -126,16 +144,33 @@ export async function claimDueEmails(
 	options: ClaimDueEmailsOptions,
 ): Promise<ClaimedEmail[]> {
 	const rows = await db.transaction(async (tx) => {
-		const candidates = await tx
-			.select({ id: emailOutbox.id })
-			.from(emailOutbox)
-			.where(isDue())
-			.orderBy(asc(emailOutbox.next_attempt_at))
-			.limit(options.limit)
-			.for("update", { skipLocked: true });
+		let live: { id: number }[] = [];
 
-		if (candidates.length === 0) {
-			return [];
+		// An all-dead batch must not read as an empty queue to the drain loop.
+		while (live.length === 0) {
+			const candidates = await tx
+				.select({ id: emailOutbox.id, usable: hasUsableLink() })
+				.from(emailOutbox)
+				.where(isDue())
+				.orderBy(asc(emailOutbox.next_attempt_at))
+				.limit(options.limit)
+				.for("update", { skipLocked: true });
+
+			if (candidates.length === 0) {
+				return [];
+			}
+
+			const dead = candidates.filter(({ usable }) => !usable);
+			live = candidates.filter(({ usable }) => usable);
+
+			if (dead.length > 0) {
+				await tx.delete(emailOutbox).where(
+					inArray(
+						emailOutbox.id,
+						dead.map(({ id }) => id),
+					),
+				);
+			}
 		}
 
 		return tx
@@ -149,7 +184,7 @@ export async function claimDueEmails(
 				and(
 					inArray(
 						emailOutbox.id,
-						candidates.map(({ id }) => id),
+						live.map(({ id }) => id),
 					),
 					isDue(),
 				),

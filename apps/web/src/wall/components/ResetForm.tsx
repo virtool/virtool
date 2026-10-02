@@ -1,5 +1,6 @@
 import Button from "@base/Button";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import { usePasswordRules } from "@forms/password";
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
@@ -53,28 +54,20 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 				subtitle="You must set a new password before proceeding."
 			/>
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<InputGroup>
-					<InputLabel htmlFor="password">Password</InputLabel>
-					<InputSimple
-						id="password"
+				<Field>
+					<FieldLabel>Password</FieldLabel>
+					<Input
 						type="password"
 						autoComplete="new-password"
 						aria-required
-						aria-invalid={Boolean(errors.password) || undefined}
-						aria-describedby={errors.password ? "password-error" : undefined}
 						{...register("password", passwordRules)}
 					/>
-					{errors.password?.message && (
-						<InputError id="password-error">
-							{errors.password.message}
-						</InputError>
-					)}
-					{isError && (
-						<InputError>
-							{error?.message || "An error occurred during password reset"}
-						</InputError>
-					)}
-				</InputGroup>
+					<FieldError errors={[errors.password]}>
+						{errors.password || !isError
+							? undefined
+							: error?.message || "An error occurred during password reset"}
+					</FieldError>
+				</Field>
 				<Button type="submit" color="blue" disabled={isPending}>
 					Reset
 				</Button>

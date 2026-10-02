@@ -44,7 +44,7 @@ export const SPAWN_TICK_INTERVAL_MS = 30_000;
  * type rather than a backlog, which is what makes the mistake survivable rather
  * than invisible.
  *
- * A test pins this list to exactly these eight, so a ninth is a deliberate
+ * A test pins this list to exactly these ten, so an eleventh is a deliberate
  * act.
  *
  * The order is the order each tick walks.
@@ -58,6 +58,12 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	 * noticed, and auth emails are exactly the mail people wait on.
 	 */
 	{ type: "deliver_email", intervalSeconds: 30 },
+	/*
+	 * Each minute, because Nuvs analyses fail while the annotations blob is
+	 * missing. A run that finds the blob does one row lock and one storage
+	 * lookup.
+	 */
+	{ type: "recreate_hmm_annotations", intervalSeconds: 60 },
 	{ type: "refresh_hmms", intervalSeconds: 600 },
 	{ type: "timeout_jobs", intervalSeconds: 600 },
 	{ type: "evict_caches_lru", intervalSeconds: 3600 },
@@ -71,5 +77,10 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	 * so cleanup only bounds how long inert rows remain.
 	 */
 	{ type: "cleanup_setup_state", intervalSeconds: 3600 },
+	/*
+	 * Hourly. Better Auth rejects an expired verification row whatever reads it,
+	 * so cleanup only bounds the challenges left by ceremonies nobody finished.
+	 */
+	{ type: "cleanup_auth_verifications", intervalSeconds: 3600 },
 	{ type: "reap_orphaned_uploads", intervalSeconds: 86_400 },
 ];

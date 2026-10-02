@@ -33,12 +33,10 @@ function escapeUnitPath(value: string): string {
 	return escaped;
 }
 
-/** The systemd user-service name for a repository daemon. */
 export function getDaemonServiceName(repositoryId: string): string {
 	return `virtool-dev-${repositoryId}.service`;
 }
 
-/** Render the systemd user unit that owns a repository daemon. */
 export function renderDaemonService(options: {
 	entry: string;
 	lockPath: string;
@@ -71,6 +69,8 @@ WorkingDirectory=${escapeUnitPath(options.primaryWorktree)}
 Environment=${quoteUnitValue(`PATH=${options.path}`)}
 ExecStart=${exec}
 Restart=on-failure
+RestartForceExitStatus=75
+SuccessExitStatus=75
 RestartSec=1s
 KillMode=control-group
 UMask=0077
@@ -79,7 +79,6 @@ StandardError=journal
 `;
 }
 
-/** Install or refresh a repository daemon unit in the systemd user manager. */
 export async function installDaemonService(
 	run: CommandRunner,
 	options: Parameters<typeof renderDaemonService>[0] & {
@@ -98,7 +97,6 @@ export async function installDaemonService(
 	return name;
 }
 
-/** Ask the systemd user manager to start a repository daemon. */
 export async function startDaemonService(
 	run: CommandRunner,
 	name: string,
@@ -106,7 +104,6 @@ export async function startDaemonService(
 	await run("systemctl", ["--user", "start", name]);
 }
 
-/** Ask the systemd user manager to stop a repository daemon. */
 export async function stopDaemonService(
 	run: CommandRunner,
 	name: string,

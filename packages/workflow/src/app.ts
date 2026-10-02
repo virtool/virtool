@@ -1,9 +1,12 @@
 import { hostname } from "node:os";
 import * as Sentry from "@sentry/node";
+import { isJobTerminalRefusal } from "@virtool/contracts";
 import { createLogger, type Logger } from "@virtool/logger";
 import { getCommonOptions } from "@virtool/sentry";
+import { createSentryLogStream } from "@virtool/sentry/log";
 import { createStorageBackend } from "@virtool/storage";
 import { createJobsApiClient } from "./client/client";
+import { UnauthorizedError } from "./client/errors";
 import type { WorkflowRunConfig } from "./config";
 import { createWorkflowContext } from "./context";
 import { claimJob } from "./lifecycle/claim";
@@ -40,9 +43,27 @@ export type RunWorkflowAppOptions<TData, TState> = {
 	 * take the test runner down with it.
 	 */
 	exit?: (code: number) => void;
-	/** Defaults to a logger named after the workflow. */
+	/**
+	 * Defaults to a logger named after the workflow, which also forwards
+	 * `info`-and-above records to Sentry when a DSN is configured.
+	 */
 	logger?: Logger;
+	/**
+	 * Reports an error to Sentry. Defaults to `Sentry.captureException`.
+	 *
+	 * The seam exists so a test can see what the run reported without a DSN.
+	 */
+	captureException?: CaptureException;
 };
+
+/** Reports an error with the tags that identify the run it came from. */
+type CaptureException = (
+	err: unknown,
+	context: { tags: Record<string, string> },
+) => void;
+
+/** Reports an error, tagged with the workflow and, once claimed, the job. */
+type ReportError = (err: unknown, jobId?: number) => void;
 
 /** A run's signals, plus the SIGTERM handler feeding them. */
 type TerminableRunSignals = RunSignals & { dispose: () => void };
@@ -85,7 +106,7 @@ function initSentry(
 	config: WorkflowRunConfig,
 	runtimeVersion: string,
 	workflowVersion: string,
-): void {
+): boolean {
 	if (config.sentryDsn) {
 		Sentry.init({
 			...getCommonOptions(config.workflow),
@@ -99,6 +120,8 @@ function initSentry(
 		workflowName: config.workflow,
 		workflowVersion,
 	});
+
+	return config.sentryDsn !== undefined;
 }
 
 /** Identifies one runner to the jobs API by its hostname and pid. */
@@ -119,9 +142,43 @@ export async function runWorkflowApp<TData, TState>({
 	runtimeVersion,
 	workflowVersion,
 	exit = process.exit,
-	logger = createLogger({ name: config.workflow }),
+	logger: providedLogger,
+	captureException = Sentry.captureException,
 }: RunWorkflowAppOptions<TData, TState>): Promise<void> {
-	initSentry(config, runtimeVersion, workflowVersion);
+	const sentryEnabled = initSentry(config, runtimeVersion, workflowVersion);
+
+	const logger =
+		providedLogger ??
+		createLogger({
+			name: config.workflow,
+			streams: sentryEnabled
+				? [
+						{
+							level: "info" as const,
+							stream: createSentryLogStream(Sentry.logger),
+						},
+					]
+				: undefined,
+		});
+
+	// Logged errors reach Sentry only as log records, which raise no issue and
+	// trigger no alert, so every failure is also captured as an exception.
+	const reportError: ReportError = (err, jobId) => {
+		// A job can end while the ping loop is not watching, such as between the
+		// last step and the finish call. Any request can then be refused with a
+		// terminal state, and that is a cancellation, not a failure.
+		if (err instanceof UnauthorizedError && isJobTerminalRefusal(err.message)) {
+			return;
+		}
+
+		const tags: Record<string, string> = { workflow: config.workflow };
+
+		if (jobId !== undefined) {
+			tags.jobId = String(jobId);
+		}
+
+		captureException(err, { tags });
+	};
 
 	logger.info(
 		{ runtimeVersion, workflow: config.workflow, workflowVersion },
@@ -136,6 +193,7 @@ export async function runWorkflowApp<TData, TState>({
 		code = await claimAndRun({
 			config,
 			logger,
+			reportError,
 			runtimeVersion,
 			signals,
 			workflow,
@@ -156,6 +214,7 @@ export async function runWorkflowApp<TData, TState>({
 async function claimAndRun<TData, TState>({
 	config,
 	logger,
+	reportError,
 	runtimeVersion,
 	signals,
 	workflow,
@@ -163,6 +222,7 @@ async function claimAndRun<TData, TState>({
 }: {
 	config: WorkflowRunConfig;
 	logger: Logger;
+	reportError: ReportError;
 	runtimeVersion: string;
 	signals: RunSignals;
 	workflow: Workflow<TData, TState>;
@@ -196,6 +256,7 @@ async function claimAndRun<TData, TState>({
 		});
 	} catch (err) {
 		logger.error({ err }, "failed to claim a job");
+		reportError(err);
 
 		return EXIT_INFRASTRUCTURE_FAILURE;
 	}
@@ -268,6 +329,7 @@ async function claimAndRun<TData, TState>({
 			}
 
 			logger.error({ err }, "failed to prepare the workflow run");
+			reportError(err, claimed.id);
 
 			return EXIT_INFRASTRUCTURE_FAILURE;
 		}
@@ -302,6 +364,12 @@ async function claimAndRun<TData, TState>({
 					{ err },
 					"workflow succeeded but the jobs API could not be told",
 				);
+
+				// A cancellation or termination aborts the finish call itself, and
+				// that is not a failure to report.
+				if (!signals.signal.aborted) {
+					reportError(err, claimed.id);
+				}
 			}
 
 			return EXIT_OK;
@@ -309,6 +377,10 @@ async function claimAndRun<TData, TState>({
 
 		if (signals.isTerminated()) {
 			return EXIT_TERMINATED;
+		}
+
+		if (outcome.state === "failed") {
+			reportError(outcome.error, claimed.id);
 		}
 
 		return EXIT_OK;

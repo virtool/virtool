@@ -1,4 +1,8 @@
-import Input, { InputContainer, InputIconButton } from "@base/Input";
+import InputGroup, {
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from "@base/InputGroup";
 import { X } from "lucide-react";
 import BoxGroupSection from "./BoxGroupSection";
 
@@ -19,8 +23,8 @@ export default function BoxGroupSearch({
 }: BoxGroupSearchProps) {
 	return (
 		<BoxGroupSection>
-			<InputContainer align="right" className="flex align-items-center">
-				<Input
+			<InputGroup>
+				<InputGroupInput
 					value={value}
 					placeholder={placeholder}
 					aria-label={label}
@@ -29,15 +33,16 @@ export default function BoxGroupSearch({
 					}
 					autoFocus={autoFocus}
 				/>
-				<InputIconButton
-					className="flex justify-center justify-items-center absolute"
-					IconComponent={X}
-					tip="Clear"
-					color="gray"
-					onClick={() => onChange("")}
-					aria-label="clear"
-				/>
-			</InputContainer>
+				<InputGroupAddon align="inline-end">
+					<InputGroupButton
+						IconComponent={X}
+						tip="Clear"
+						color="gray"
+						onClick={() => onChange("")}
+						aria-label="clear"
+					/>
+				</InputGroupAddon>
+			</InputGroup>
 		</BoxGroupSection>
 	);
 }

@@ -1,7 +1,8 @@
 import { accountQueryKeys } from "@account/keys";
 import Alert from "@base/Alert";
 import Button from "@base/Button";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS } from "@virtool/contracts";
@@ -122,27 +123,22 @@ export default function EmailRemediation() {
 						subtitle="Your account needs a unique email address before you can continue."
 					/>
 					<form onSubmit={handleSubmit(onSubmit)}>
-						<InputGroup>
-							<InputLabel htmlFor="email">Email address</InputLabel>
-							<InputSimple
-								id="email"
+						<Field>
+							<FieldLabel>Email address</FieldLabel>
+							<Input
 								type="email"
 								autoComplete="email"
 								aria-required
-								aria-invalid={submit.isError || undefined}
-								aria-describedby={
-									submit.isError ? "remediation-error" : undefined
-								}
 								{...register("email", { required: true })}
 								autoFocus
 							/>
-							{submit.isError && (
-								<InputError id="remediation-error">
-									{submit.error.message ||
-										"Email remediation could not be completed."}
-								</InputError>
-							)}
-						</InputGroup>
+							<FieldError>
+								{submit.isError
+									? submit.error.message ||
+										"Email remediation could not be completed."
+									: undefined}
+							</FieldError>
+						</Field>
 						<div className="flex justify-between">
 							<Button
 								type="button"
@@ -174,7 +170,7 @@ export default function EmailRemediation() {
 							address.
 						</Alert>
 					)}
-					{resend.isError && <InputError>{resend.error.message}</InputError>}
+					{resend.isError && <FieldError>{resend.error.message}</FieldError>}
 					<div className="flex flex-wrap justify-between gap-2">
 						<Button
 							disabled={cancel.isPending || changeEmail.isPending}

@@ -1,19 +1,6 @@
 import Button from "@base/Button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogTitle,
-} from "@base/Dialog";
-import {
-	InputError,
-	InputGroup,
-	InputLabel,
-	InputPassword,
-	InputSimple,
-} from "@base/Input";
-import SaveButton from "@base/SaveButton";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input, { InputPassword } from "@base/Input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import {
 	challengeRecentAuthenticationFn,
@@ -21,6 +8,7 @@ import {
 } from "@server/auth/recentAuthentication";
 import { useMutation } from "@tanstack/react-query";
 import { SESSION_NOT_FRESH_ERROR_NAME } from "@virtool/contracts";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import {
 	createContext,
 	type ReactNode,
@@ -50,10 +38,17 @@ const RecentAuthenticationContext = createContext<(() => Promise<void>) | null>(
 	null,
 );
 
+const CANCELLED_ERROR_NAME = "RecentAuthenticationCancelled";
+
 function cancellationError(): Error {
 	const error = new Error("Recent authentication was cancelled.");
-	error.name = "RecentAuthenticationCancelled";
+	error.name = CANCELLED_ERROR_NAME;
 	return error;
+}
+
+/** Whether an error is the user's cancel of a recent-authentication challenge. */
+export function isRecentAuthenticationCancelled(error: unknown): boolean {
+	return error instanceof Error && error.name === CANCELLED_ERROR_NAME;
 }
 
 /** Coordinate one shared recent-authentication challenge for the application. */
@@ -177,6 +172,89 @@ function RecentAuthenticationDialog({
 	onSuccess: () => void;
 	open: boolean;
 }) {
+	return (
+		<DialogPrimitive.Root
+			open={open}
+			onOpenChange={(nextOpen) => !nextOpen && onCancel()}
+		>
+			<DialogPrimitive.Portal>
+				<DialogPrimitive.Content
+					aria-describedby={undefined}
+					className="fixed inset-0 z-dialog overflow-y-auto bg-gray-50 focus:outline-none"
+				>
+					<AuthenticationPage
+						title={
+							<DialogPrimitive.Title className="text-xl font-medium">
+								Confirm your identity
+							</DialogPrimitive.Title>
+						}
+					>
+						<RecentAuthenticationForm
+							methods={methods}
+							onFailure={onFailure}
+							onSuccess={onSuccess}
+							secondaryAction={<AuthenticationCancel onClick={onCancel} />}
+							submitLabel="Continue"
+						/>
+					</AuthenticationPage>
+				</DialogPrimitive.Content>
+			</DialogPrimitive.Portal>
+		</DialogPrimitive.Root>
+	);
+}
+
+/** A standalone surface for identity challenges. */
+export function AuthenticationPage({
+	children,
+	title,
+}: {
+	children: ReactNode;
+	title?: ReactNode;
+}) {
+	return (
+		<main className="flex min-h-dvh items-center justify-center bg-gray-50 px-6 py-12 sm:pb-32">
+			<section
+				aria-label="Confirm your identity"
+				className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-sm"
+			>
+				<div className="mb-7">
+					{title ?? (
+						<h1 className="text-xl font-medium">Confirm your identity</h1>
+					)}
+				</div>
+				{children}
+			</section>
+		</main>
+	);
+}
+
+/** A subdued escape action for an identity challenge. */
+export function AuthenticationCancel({ onClick }: { onClick: () => void }) {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className="rounded text-gray-600 hover:text-gray-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+		>
+			Cancel
+		</button>
+	);
+}
+
+/** Verify a fresh session with an available account method. */
+export function RecentAuthenticationForm({
+	methods,
+	onFailure,
+	onSuccess,
+	secondaryAction,
+	submitLabel,
+}: {
+	methods: Methods | null;
+	onFailure: (error: Error) => void;
+	onSuccess: () => void;
+	secondaryAction: ReactNode;
+	submitLabel: string;
+}) {
 	const {
 		formState: { errors, isSubmitting },
 		handleSubmit,
@@ -230,79 +308,74 @@ function RecentAuthenticationDialog({
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
-			<DialogContent>
-				<DialogTitle>Confirm it’s you</DialogTitle>
-				<DialogDescription>
-					Authenticate again to continue this security-sensitive action.
-				</DialogDescription>
-				{methods === null ? (
-					<p role="status">Loading authentication methods…</p>
-				) : !methods.password && !methods.totp ? (
-					<p role="alert">
-						This session cannot complete recent authentication. Sign out and
-						sign in again before retrying.
-					</p>
-				) : (
-					<Tabs defaultValue={defaultMethod}>
-						{methods.password && methods.totp ? (
-							<TabsList>
-								<TabsTrigger value="password">Password</TabsTrigger>
-								<TabsTrigger value="totp">Authenticator code</TabsTrigger>
-							</TabsList>
-						) : null}
-						{methods.password ? (
-							<TabsContent value="password">
-								<form onSubmit={handleSubmit(submitPassword)}>
-									<InputGroup>
-										<InputLabel htmlFor="recent-auth-password">
-											Password
-										</InputLabel>
-										<InputPassword
-											id="recent-auth-password"
-											autoComplete="current-password"
-											aria-invalid={Boolean(errors.password) || undefined}
-											{...register("password", {
-												required: "Enter your password.",
-											})}
-										/>
-										<InputError>{errors.password?.message}</InputError>
-									</InputGroup>
-									<DialogActions disabled={isSubmitting} onCancel={onCancel} />
-								</form>
-							</TabsContent>
-						) : null}
-						{methods.totp ? (
-							<TabsContent value="totp">
-								<form onSubmit={handleSubmit(submitTotp)}>
-									<InputGroup>
-										<InputLabel htmlFor="recent-auth-code">
-											Authenticator code
-										</InputLabel>
-										<InputSimple
-											id="recent-auth-code"
-											autoComplete="one-time-code"
-											inputMode="numeric"
-											aria-invalid={Boolean(errors.code) || undefined}
-											{...register("code", {
-												required: "Enter your authenticator code.",
-											})}
-										/>
-										<InputError>{errors.code?.message}</InputError>
-									</InputGroup>
-									<DialogActions disabled={isSubmitting} onCancel={onCancel} />
-								</form>
-							</TabsContent>
-						) : null}
-					</Tabs>
-				)}
-				{methods && !methods.password && !methods.totp ? (
-					<DialogFooter>
-						<Button onClick={onCancel}>Close</Button>
-					</DialogFooter>
-				) : null}
-			</DialogContent>
-		</Dialog>
+		<>
+			{methods === null ? (
+				<p role="status">Loading authentication methods…</p>
+			) : !methods.password && !methods.totp ? (
+				<p role="alert">
+					This session cannot complete verification. Sign out and sign in again
+					before retrying.
+				</p>
+			) : (
+				<Tabs defaultValue={defaultMethod}>
+					{methods.password && methods.totp ? (
+						<TabsList>
+							<TabsTrigger value="password">Password</TabsTrigger>
+							<TabsTrigger value="totp">Authenticator code</TabsTrigger>
+						</TabsList>
+					) : null}
+					{methods.password ? (
+						<TabsContent value="password">
+							<form onSubmit={handleSubmit(submitPassword)}>
+								<Field>
+									<FieldLabel>Password</FieldLabel>
+									<InputPassword
+										showVisibilityToggle={false}
+										autoComplete="current-password"
+										autoFocus
+										{...register("password", {
+											required: "Enter your password.",
+										})}
+									/>
+									<FieldError errors={[errors.password]} />
+								</Field>
+								<FormActions
+									disabled={isSubmitting}
+									secondaryAction={secondaryAction}
+									submitLabel={submitLabel}
+								/>
+							</form>
+						</TabsContent>
+					) : null}
+					{methods.totp ? (
+						<TabsContent value="totp">
+							<form onSubmit={handleSubmit(submitTotp)}>
+								<Field>
+									<FieldLabel>Authenticator code</FieldLabel>
+									<Input
+										autoComplete="one-time-code"
+										inputMode="numeric"
+										autoFocus={!methods.password}
+										{...register("code", {
+											required: "Enter your authenticator code.",
+										})}
+									/>
+									<FieldError errors={[errors.code]} />
+								</Field>
+								<FormActions
+									disabled={isSubmitting}
+									secondaryAction={secondaryAction}
+									submitLabel={submitLabel}
+								/>
+							</form>
+						</TabsContent>
+					) : null}
+				</Tabs>
+			)}
+			{methods === null || (!methods.password && !methods.totp) ? (
+				<div className="mt-6 flex justify-center">{secondaryAction}</div>
+			) : null}
+		</>
 	);
 }
 
@@ -315,19 +388,26 @@ function isTerminalChallengeError(error: unknown): boolean {
 	return (normalized as Error & { status?: number }).status !== 400;
 }
 
-function DialogActions({
+function FormActions({
 	disabled,
-	onCancel,
+	secondaryAction,
+	submitLabel,
 }: {
 	disabled: boolean;
-	onCancel: () => void;
+	secondaryAction: ReactNode;
+	submitLabel: string;
 }) {
 	return (
-		<DialogFooter className="gap-2">
-			<Button disabled={disabled} onClick={onCancel}>
-				Cancel
+		<div className="mt-6 flex flex-col items-center gap-4">
+			<Button
+				className="w-full justify-center"
+				color="blue"
+				disabled={disabled}
+				type="submit"
+			>
+				{submitLabel}
 			</Button>
-			<SaveButton altText="Continue" disabled={disabled} />
-		</DialogFooter>
+			{secondaryAction}
+		</div>
 	);
 }

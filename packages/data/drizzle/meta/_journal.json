@@ -274,6 +274,41 @@
       "when": 1790108085288,
       "tag": "0038_add_recovery_token_purposes",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1790274418597,
+      "tag": "0039_enforce_sample_name_uniqueness",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790370910079,
+      "tag": "0040_cascade_label_and_group_deletes",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790379049176,
+      "tag": "0041_add_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790630394967,
+      "tag": "0042_add_mfa_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790710545604,
+      "tag": "0043_enforce_passkey_credential_uniqueness",
+      "breakpoints": true
     }
   ]
 }

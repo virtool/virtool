@@ -9,7 +9,7 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { seedJob } from "./test/fixtures";
+import { basicAuthorization, seedJob } from "./test/fixtures";
 import { hashToken, parseBasicAuthHeader, verifyJobRequest } from "./verify";
 
 let database: TestDatabase;
@@ -36,7 +36,7 @@ beforeEach(async () => {
 function request(login: string, key: string): Request {
 	return new Request("https://jobs.virtool.test/jobs/1/ping", {
 		headers: {
-			authorization: `Basic ${Buffer.from(`${login}:${key}`).toString("base64")}`,
+			authorization: basicAuthorization(login, key),
 		},
 	});
 }
@@ -60,12 +60,12 @@ describe("hashToken", () => {
 
 describe("parseBasicAuthHeader", () => {
 	it("reads the login and key out of a well-formed header", () => {
-		const encoded = Buffer.from("job-7:secret").toString("base64");
-
-		expect(parseBasicAuthHeader(`Basic ${encoded}`)).toEqual({
-			login: "job-7",
-			key: "secret",
-		});
+		expect(parseBasicAuthHeader(basicAuthorization("job-7", "secret"))).toEqual(
+			{
+				login: "job-7",
+				key: "secret",
+			},
+		);
 	});
 
 	// RFC 7235 makes the scheme case-insensitive, and clients do send `basic`.
@@ -85,9 +85,9 @@ describe("parseBasicAuthHeader", () => {
 
 	// A key is free to contain colons; only the first one separates.
 	it("splits on the first colon only", () => {
-		const encoded = Buffer.from("job-7:a:b:c").toString("base64");
-
-		expect(parseBasicAuthHeader(`Basic ${encoded}`)?.key).toBe("a:b:c");
+		expect(
+			parseBasicAuthHeader(basicAuthorization("job-7", "a:b:c"))?.key,
+		).toBe("a:b:c");
 	});
 
 	it.each([

@@ -42,7 +42,13 @@ describe("recent authentication orchestration", () => {
 		act(() => {
 			promise = result.current(variables);
 		});
-		await userEvent.type(await screen.findByLabelText("Password"), "secret");
+		const password = await screen.findByLabelText("Password");
+		expect(
+			screen.getByRole("heading", { name: "Confirm your identity" }),
+		).toBeVisible();
+		expect(password).toHaveFocus();
+		await userEvent.type(password, "secret");
+		expect(password).toHaveAttribute("type", "password");
 		await userEvent.click(screen.getByRole("button", { name: "Continue" }));
 
 		await expect(promise).resolves.toBe("updated");

@@ -5,7 +5,10 @@ import {
 	type BrowserSessionPrincipal,
 	emptyPermissions,
 } from "@virtool/contracts";
-import { resolveBrowserSession } from "@virtool/data/auth/session";
+import {
+	mfaEnrollmentRequired,
+	resolveBrowserSession,
+} from "@virtool/data/auth/session";
 import { hashToken } from "@virtool/data/auth/tokens";
 
 import type { Db } from "@virtool/data/db/pg";
@@ -57,13 +60,19 @@ export async function verifyBrowserPrincipal(
 		return null;
 	}
 
-	return {
-		kind: row.forceReset ? "password_reset" : "browser",
+	const identity = {
 		userId,
 		sessionId,
 		createdAt: row.createdAt,
-		sessionStore: "better_auth",
+		sessionStore: "better_auth" as const,
 	};
+	if (row.forceReset) {
+		return { kind: "password_reset", ...identity };
+	}
+	if (row.mfaEnrollmentRequired) {
+		return { kind: "mfa_enrollment", ...identity };
+	}
+	return { kind: "browser", ...identity };
 }
 
 /** Resolve a retained legacy browser or forced-reset session. */
@@ -88,6 +97,7 @@ export async function verifyLegacyBrowserPrincipal(
 			active: users.active,
 			lifecycleState: users.lifecycleState,
 			forceReset: users.forceReset,
+			mfaEnrollmentRequired,
 		})
 		.from(sessions)
 		.innerJoin(users, eq(users.id, sessions.userId))
@@ -131,6 +141,12 @@ export async function verifyLegacyBrowserPrincipal(
 					userId: row.userId,
 				}
 			: null;
+	}
+
+	// Enrollment runs only through Better Auth, which cannot read a legacy
+	// session, so the user must sign in again to get one that can enroll.
+	if (row.mfaEnrollmentRequired) {
+		return null;
 	}
 
 	return {

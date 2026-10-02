@@ -1,13 +1,13 @@
 import { byteSize } from "@app/format";
 import { DialogFooter } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import ProgressBarAffixed from "@base/ProgressBarAffixed";
 import SaveButton from "@base/SaveButton";
 import TextArea from "@base/TextArea";
 import { useNavigate } from "@tanstack/react-router";
 import { UploadBar } from "@uploads/components/UploadBar";
 import { useUploadPolicy } from "@uploads/queries";
-import { useId } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
 	useCreateReference,
@@ -40,10 +40,6 @@ export function CreateReferenceForm({
 	const importMutation = useImportReference();
 	const { uploadMutation, fileName, uploadId, progress } = useUploadReference();
 	const { data: policy } = useUploadPolicy();
-
-	const nameId = useId();
-	const organismId = useId();
-	const descriptionId = useId();
 
 	const {
 		control,
@@ -143,35 +139,32 @@ export function CreateReferenceForm({
 								multiple={false}
 							/>
 
-							<InputError>{errors.upload?.message}</InputError>
+							<FieldError errors={[errors.upload]} />
 						</div>
 					)}
 				/>
 			)}
 
-			<InputGroup className="pb-0">
-				<InputLabel htmlFor={nameId}>Name</InputLabel>
-				<InputSimple
-					id={nameId}
+			<Field className="pb-0">
+				<FieldLabel>Name</FieldLabel>
+				<Input
 					aria-required
-					aria-invalid={Boolean(errors.name) || undefined}
-					aria-describedby={errors.name ? `${nameId}-error` : undefined}
 					{...register("name", { required: "Required Field" })}
 				/>
-				<InputError id={`${nameId}-error`}>{errors.name?.message}</InputError>
-			</InputGroup>
+				<FieldError errors={[errors.name]} />
+			</Field>
 
 			{mode === "empty" && (
-				<InputGroup>
-					<InputLabel htmlFor={organismId}>Organism</InputLabel>
-					<InputSimple id={organismId} {...register("organism")} />
-				</InputGroup>
+				<Field>
+					<FieldLabel>Organism</FieldLabel>
+					<Input {...register("organism")} />
+				</Field>
 			)}
 
-			<InputGroup>
-				<InputLabel htmlFor={descriptionId}>Description</InputLabel>
-				<TextArea id={descriptionId} {...register("description")} />
-			</InputGroup>
+			<Field>
+				<FieldLabel>Description</FieldLabel>
+				<TextArea {...register("description")} />
+			</Field>
 
 			<DialogFooter>
 				<SaveButton

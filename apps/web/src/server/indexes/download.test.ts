@@ -225,7 +225,7 @@ describe("handleIndexFile", () => {
 
 	// An index is only as visible as the reference it was built from. Dropping
 	// this check would expose every reference's builds to any signed-in user.
-	it("rejects a user who cannot see the reference with a 403", async () => {
+	it("returns 404 to a user who cannot see the reference", async () => {
 		const { indexId } = await seedBuild();
 		const strangerId = await seedUser(db, { handle: "bob" });
 
@@ -235,7 +235,7 @@ describe("handleIndexFile", () => {
 			"reference.fa.gz",
 		);
 
-		expect(response.status).toBe(403);
+		expect(response.status).toBe(404);
 	});
 
 	it("serves a user holding a membership row on the reference", async () => {

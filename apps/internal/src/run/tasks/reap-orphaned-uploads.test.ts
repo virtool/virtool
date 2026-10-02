@@ -12,6 +12,7 @@ import { ORPHAN_AGE_SECONDS } from "@virtool/data/uploads/data";
 import { createLogger, type Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { MemoryStorage } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
@@ -52,10 +53,6 @@ beforeEach(async () => {
 	userId = await seedUser(db);
 });
 
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
-}
-
 /**
  * Seed a reserved upload with an object behind it, aged past the body's own
  * {@link ORPHAN_AGE_SECONDS}. The window is only an argument at the data layer,
@@ -64,7 +61,7 @@ async function* body(text: string): AsyncIterable<Uint8Array> {
 async function seedOrphan(index: number): Promise<{ id: number; key: string }> {
 	const key = `uploads/orphan-${index}`;
 
-	await storage.write(key, body(key));
+	await storage.write(key, streamOf(key));
 
 	const [row] = await db
 		.insert(uploads)

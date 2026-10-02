@@ -1,5 +1,6 @@
 import Button from "@base/Button";
-import { InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -63,30 +64,23 @@ export default function TwoFactorForm({
 				}
 			/>
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<InputGroup>
-					<InputLabel htmlFor="code">
+				<Field>
+					<FieldLabel>
 						{recovery ? "Recovery code" : "Authentication code"}
-					</InputLabel>
-					<InputSimple
+					</FieldLabel>
+					<Input
 						key={recovery ? "recovery" : "authenticator"}
-						id="code"
 						autoComplete="one-time-code"
 						autoFocus
 						aria-required
-						aria-invalid={mutation.isError || undefined}
-						aria-describedby={
-							mutation.isError ? "verification-error" : undefined
-						}
 						{...register(recovery ? "recoveryCode" : "authenticatorCode", {
 							required: true,
 						})}
 					/>
-				</InputGroup>
-				{mutation.isError && (
-					<div id="verification-error" role="alert">
-						{mutation.error.message}
-					</div>
-				)}
+					<FieldError>
+						{mutation.isError ? mutation.error.message : undefined}
+					</FieldError>
+				</Field>
 				<div className="flex justify-end gap-2 my-4">
 					<Button type="button" disabled={mutation.isPending} onClick={restart}>
 						Back to login

@@ -143,6 +143,7 @@ export type Metrics = {
 	setTaskQueue: (snapshot: TaskQueueSnapshot) => void;
 	clearTaskQueue: () => void;
 	setPostgresConnections: (counts: ConnectionCounts) => void;
+	clearPostgresConnections: () => void;
 	contentType: string;
 	render: () => Promise<string>;
 };
@@ -415,6 +416,10 @@ export function createMetrics(version: string, poolMax: number): Metrics {
 				counts.idleInTransaction,
 			);
 			postgresConnections.set({ state: "other" }, counts.other);
+		},
+
+		clearPostgresConnections() {
+			postgresConnections.reset();
 		},
 
 		contentType: registry.contentType,

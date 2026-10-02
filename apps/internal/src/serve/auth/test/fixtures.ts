@@ -72,3 +72,13 @@ export async function seedJob(
 
 	return { id: job.id, key };
 }
+
+/** Build an HTTP Basic `authorization` header value from a login and key. */
+export function basicAuthorization(login: string, key: string): string {
+	return `Basic ${Buffer.from(`${login}:${key}`).toString("base64")}`;
+}
+
+/** Build the `job-{id}:{key}` Basic `authorization` header a runner sends. */
+export function jobAuthorization(job: SeededJob): string {
+	return basicAuthorization(`job-${job.id}`, job.key);
+}

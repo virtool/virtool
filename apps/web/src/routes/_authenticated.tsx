@@ -19,6 +19,7 @@ import {
 	Outlet,
 	redirect,
 	useLocation,
+	useMatch,
 } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect } from "react";
 
@@ -62,6 +63,10 @@ function AuthenticatedLayout() {
 	const queryClient = useQueryClient();
 	const { data, isPending } = useFetchAccount();
 	const location = useLocation();
+	const administrationMatch = useMatch({
+		from: "/_authenticated/administration",
+		shouldThrow: false,
+	});
 
 	useEffect(() => {
 		if (data) {
@@ -90,6 +95,10 @@ function AuthenticatedLayout() {
 		);
 	}
 
+	if (administrationMatch?.context.recentAuthenticationFresh === false) {
+		return <Outlet />;
+	}
+
 	return (
 		<>
 			<title>{getDocumentTitle("Virtool")}</title>
@@ -113,7 +122,7 @@ function AuthenticatedLayout() {
 					<div className="sticky top-0 self-start pt-18">
 						<Sidebar administratorRole={data.administratorRole} />
 					</div>
-					<main id="main-content" tabIndex={-1} className="flex-1 min-w-0 p-18">
+					<main id="main-content" className="flex-1 min-w-0 p-18 outline-none">
 						<Suspense fallback={<LoadingPlaceholder />}>
 							<Outlet />
 						</Suspense>

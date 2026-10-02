@@ -288,8 +288,8 @@ export function permission(name: Permission) {
  * The counterpart to the global middleware's allowlist, and both are required.
  * The middleware decides whether a restricted caller may reach this function
  * at all; this decides whether the purpose they hold is the one the function
- * completes, so an `email_remediation` credential cannot be spent on a TOTP
- * enrollment endpoint.
+ * completes, so a `password_recovery` credential cannot be spent on an
+ * `email_remediation` endpoint.
  *
  * An ordinary authenticated user is refused too. Reaching a setup surface
  * means a transition is outstanding, and for a user who has completed setup

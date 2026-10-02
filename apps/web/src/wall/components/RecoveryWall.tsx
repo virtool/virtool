@@ -1,6 +1,7 @@
 import { accountQueryKeys } from "@account/keys";
 import Button from "@base/Button";
-import { InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import {
 	completePasswordRecoveryFn,
 	inspectPasswordRecoveryFn,
@@ -8,7 +9,8 @@ import {
 } from "@server/auth/recoveryFunctions";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useCapturedUrlParams } from "../hooks";
 import { rootQueryKeys } from "../keys";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
@@ -30,24 +32,10 @@ export default function RecoveryWall() {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 	const [pending, setPending] = useState(false);
-	const captured = useRef(false);
 	const submitting = useRef(false);
 	const queryClient = useQueryClient();
 
-	useLayoutEffect(() => {
-		if (captured.current) {
-			return;
-		}
-		captured.current = true;
-		const fragment = new URLSearchParams(window.location.hash.slice(1));
-		const query = new URLSearchParams(window.location.search);
-		const token = fragment.get("token") ?? query.get("token");
-		const purpose = fragment.get("purpose") ?? query.get("purpose");
-		window.history.replaceState(
-			window.history.state,
-			"",
-			window.location.pathname,
-		);
+	useCapturedUrlParams(["token", "purpose"], ({ token, purpose }) => {
 		if (!token) {
 			setState({ status: "request" });
 			return;
@@ -73,7 +61,7 @@ export default function RecoveryWall() {
 				);
 				setState({ status: "unusable" });
 			});
-	}, []);
+	});
 
 	async function requestRecovery(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -137,16 +125,15 @@ export default function RecoveryWall() {
 						subtitle="Request a password reset link."
 					/>
 					<form onSubmit={requestRecovery}>
-						<InputGroup>
-							<InputLabel htmlFor="recovery-handle">Username</InputLabel>
-							<InputSimple
-								id="recovery-handle"
+						<Field>
+							<FieldLabel>Username</FieldLabel>
+							<Input
 								autoComplete="username"
 								required
 								value={handle}
 								onChange={(event) => setHandle(event.target.value)}
 							/>
-						</InputGroup>
+						</Field>
 						{error && <p role="alert">{error}</p>}
 						<Button color="blue" type="submit" disabled={pending}>
 							Send recovery link
@@ -170,17 +157,16 @@ export default function RecoveryWall() {
 						subtitle="This recovery link can be used once."
 					/>
 					<form onSubmit={completeRecovery}>
-						<InputGroup>
-							<InputLabel htmlFor="new-password">New password</InputLabel>
-							<InputSimple
-								id="new-password"
+						<Field>
+							<FieldLabel>New password</FieldLabel>
+							<Input
 								type="password"
 								autoComplete="new-password"
 								required
 								value={password}
 								onChange={(event) => setPassword(event.target.value)}
 							/>
-						</InputGroup>
+						</Field>
 						{error && <p role="alert">{error}</p>}
 						<Button color="blue" type="submit" disabled={pending}>
 							Change password

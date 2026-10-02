@@ -22,6 +22,7 @@ import {
 	text,
 	timestamp,
 	unique,
+	uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 import { users } from "./users";
@@ -34,7 +35,7 @@ import { users } from "./users";
  */
 function purposeCheck(): SQL {
 	return sql.raw(
-		"purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')",
+		"purpose in ('account_completion', 'email_remediation', 'email_verification', 'password_recovery', 'administrator_recovery')",
 	);
 }
 
@@ -43,7 +44,13 @@ export const setupTokens = pgTable(
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		userId: integer("user_id").notNull(),
+		/** Administrator who issued an account-completion link. */
+		issuerUserId: integer("issuer_user_id"),
 		purpose: text("purpose").$type<SetupPurpose>().notNull(),
+		/** Monotonic account-completion link generation for this user. */
+		generation: integer("generation").notNull().default(1),
+		/** Whether this generation was copied or placed in the email outbox. */
+		delivery: text("delivery").$type<"copy_only" | "queued">(),
 		/** Purpose-bound candidate address for an email-remediation token. */
 		candidateEmail: text("candidate_email"),
 		/** Address held by the account when an email-change link was issued. */
@@ -78,7 +85,17 @@ export const setupTokens = pgTable(
 		// Issuing a replacement supersedes the outstanding tokens for the same
 		// user and purpose, which is the only lookup by user.
 		index("idx_setup_tokens_user_id_purpose").on(table.userId, table.purpose),
+		uniqueIndex("uq_setup_tokens_live_account_completion")
+			.on(table.userId)
+			.where(
+				sql`${table.purpose} = 'account_completion' and ${table.consumedAt} is null and ${table.supersededAt} is null`,
+			),
 		check("setup_tokens_purpose_valid", purposeCheck()),
+		check("setup_tokens_generation_positive", sql`${table.generation} > 0`),
+		check(
+			"setup_tokens_invitation_metadata_valid",
+			sql`${table.purpose} <> 'account_completion' or (${table.issuerUserId} is not null and ${table.delivery} in ('copy_only', 'queued'))`,
+		),
 	],
 );
 

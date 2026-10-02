@@ -16,10 +16,10 @@ const SERVICE: Record<Workflow, string> = {
 
 type Executor = { environmentId: string; workflow: Workflow };
 
-/** Repository-wide, capacity-limited launcher for one-shot workflow containers. */
 export class WorkflowCoordinator {
 	private active: Executor[] = [];
 	private buildQueue: SchedulerState["buildQueue"] = [];
+	private errors: SchedulerState["errors"] = {};
 	private lastError: string | null = null;
 	private queues: SchedulerState["queues"] = {};
 	private tickPromise: Promise<void> | undefined;
@@ -41,6 +41,7 @@ export class WorkflowCoordinator {
 			buildQueue: this.buildQueue,
 			capacity: Math.max(0, concurrency - this.active.length),
 			concurrency,
+			errors: this.errors,
 			lastError: this.lastError,
 			queues: this.queues,
 		};
@@ -78,14 +79,30 @@ export class WorkflowCoordinator {
 							environment.workflowEnabled,
 					),
 			);
+			const errors: SchedulerState["errors"] = {};
 			const candidates: QueueCandidate[] = [];
 			const queues: SchedulerState["queues"] = {};
-			for (const environment of ready) {
-				const pending = await this.readCounts(environment.id);
-				queues[environment.id] = pending;
+			await Promise.all(
+				ready.map(async ({ id: environmentId }) => {
+					try {
+						queues[environmentId] = await this.readCounts(environmentId);
+					} catch (error) {
+						errors[environmentId] = this.recordFailure(
+							environmentId,
+							error,
+							"could not read workflow job counts",
+						);
+					}
+				}),
+			);
+			for (const { id: environmentId } of ready) {
+				const pending = queues[environmentId];
+				if (!pending) {
+					continue;
+				}
 				for (const workflow of WORKFLOWS) {
 					candidates.push({
-						environmentId: environment.id,
+						environmentId,
 						pending: pending[workflow] ?? 0,
 						workflow,
 					});
@@ -97,16 +114,36 @@ export class WorkflowCoordinator {
 				this.store.getWorkflowConcurrency() - this.active.length,
 			);
 			for (const candidate of this.fair.select(candidates, capacity)) {
-				await this.launch(candidate);
+				try {
+					await this.launch(candidate);
+				} catch (error) {
+					errors[candidate.environmentId] = this.recordFailure(
+						candidate.environmentId,
+						error,
+						"could not launch workflow executor",
+					);
+				}
 			}
+			this.errors = errors;
 			this.lastError = null;
 		} catch (error) {
 			this.buildQueue = [];
+			this.errors = {};
 			this.lastError = error instanceof Error ? error.message : String(error);
 			this.logger.error({ err: error }, "workflow scheduler tick failed");
 		} finally {
 			this.publish();
 		}
+	}
+
+	private recordFailure(
+		environmentId: string,
+		error: unknown,
+		message: string,
+	): string {
+		const reason = error instanceof Error ? error.message : String(error);
+		this.logger.warn({ environmentId, reason }, message);
+		return reason;
 	}
 
 	private async discoverExecutors(): Promise<Executor[]> {
@@ -134,10 +171,9 @@ export class WorkflowCoordinator {
 	private async readCounts(
 		environmentId: string,
 	): Promise<Partial<Record<Workflow, number>>> {
-		const { stdout } = await this.compose(environmentId, [
+		const { stdout } = await this.run("docker", [
 			"exec",
-			"-T",
-			"jobs-api",
+			`${this.project(environmentId)}-jobs-api-1`,
 			"node",
 			"-e",
 			"fetch('http://127.0.0.1:9950/jobs/counts').then(r=>{if(!r.ok)throw Error(String(r.status));return r.text()}).then(console.log)",
@@ -153,15 +189,18 @@ export class WorkflowCoordinator {
 			{ environmentId: candidate.environmentId, workflow: candidate.workflow },
 		];
 		this.publish();
-		await this.builds.run("workflow", () =>
-			this.compose(candidate.environmentId, [
-				"--profile",
-				"workflow",
-				"build",
-				SERVICE[candidate.workflow],
-			]),
-		);
-		this.buildQueue = [];
+		try {
+			await this.builds.run("workflow", () =>
+				this.compose(candidate.environmentId, [
+					"--profile",
+					"workflow",
+					"build",
+					SERVICE[candidate.workflow],
+				]),
+			);
+		} finally {
+			this.buildQueue = [];
+		}
 		await this.compose(candidate.environmentId, [
 			"--profile",
 			"workflow",
@@ -186,12 +225,16 @@ export class WorkflowCoordinator {
 				"--env-file",
 				join(directory, "environment.env"),
 				"--project-name",
-				`virtool-dev-${this.store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`,
+				this.project(environmentId),
 				"--file",
 				join(directory, "compose.yaml"),
 				...args,
 			],
 			{ cwd: this.primaryWorktree },
 		);
+	}
+
+	private project(environmentId: string): string {
+		return `virtool-dev-${this.store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`;
 	}
 }

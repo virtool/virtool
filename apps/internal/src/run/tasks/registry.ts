@@ -3,6 +3,7 @@ import type { Db } from "@virtool/data/db/pg";
 import type { StorageBackend } from "@virtool/storage";
 import type { CompleteTaskRegistry } from "../framework/define";
 import type { Metrics } from "../metrics/registry";
+import { cleanupAuthVerificationsTask } from "./cleanup-auth-verifications";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import { cleanupSetupStateTask } from "./cleanup-setup-state";
 import { cloneReferenceTask } from "./clone-reference";
@@ -12,6 +13,7 @@ import { evictCachesLruTask } from "./evict-caches-lru";
 import { importReferenceTask } from "./import-reference";
 import { installHmmsTask } from "./install-hmms";
 import { reapOrphanedUploadsTask } from "./reap-orphaned-uploads";
+import { recreateHmmAnnotationsTask } from "./recreate-hmm-annotations";
 import { refreshHmmsTask } from "./refresh-hmms";
 import { sweepBlastTask } from "./sweep-blast";
 import { timeoutJobsTask } from "./timeout-jobs";
@@ -45,6 +47,7 @@ export type TaskContext = {
  * another; `registry.test.ts` fails on any that do.
  */
 export const taskRegistry: CompleteTaskRegistry<TaskContext> = {
+	cleanup_auth_verifications: cleanupAuthVerificationsTask,
 	cleanup_sessions: cleanupSessionsTask,
 	cleanup_setup_state: cleanupSetupStateTask,
 	clone_reference: cloneReferenceTask,
@@ -54,6 +57,7 @@ export const taskRegistry: CompleteTaskRegistry<TaskContext> = {
 	import_reference: importReferenceTask,
 	install_hmms: installHmmsTask,
 	reap_orphaned_uploads: reapOrphanedUploadsTask,
+	recreate_hmm_annotations: recreateHmmAnnotationsTask,
 	refresh_hmms: refreshHmmsTask,
 	sweep_blast: sweepBlastTask,
 	timeout_jobs: timeoutJobsTask,

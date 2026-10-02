@@ -4,7 +4,8 @@ import {
 	useUpdateSettings,
 } from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
@@ -72,14 +73,9 @@ export default function CacheStorageBudget() {
 				<BoxGroup>
 					<BoxGroupSection>
 						<form onSubmit={handleSubmit(save)}>
-							<InputGroup>
-								<InputLabel htmlFor="cacheStorageBudget">
-									Budget (GB)
-								</InputLabel>
+							<Field>
+								<FieldLabel>Budget (GB)</FieldLabel>
 								<Input
-									id="cacheStorageBudget"
-									aria-describedby="cacheStorageBudget-error"
-									aria-invalid={Boolean(errors.budgetGigabytes) || undefined}
 									min={1}
 									step="any"
 									type="number"
@@ -92,10 +88,8 @@ export default function CacheStorageBudget() {
 										},
 									})}
 								/>
-								<InputError id="cacheStorageBudget-error">
-									{errors.budgetGigabytes?.message}
-								</InputError>
-							</InputGroup>
+								<FieldError errors={[errors.budgetGigabytes]} />
+							</Field>
 							<div className="flex justify-end">
 								<SaveButton />
 							</div>

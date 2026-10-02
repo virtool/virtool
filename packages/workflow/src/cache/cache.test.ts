@@ -1,12 +1,15 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { cacheKey } from "@virtool/storage";
-import { describe, expect, it, onTestFinished } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import { WorkflowError } from "../errors";
 import { createFakeJobsApiClient } from "../testing/jobsApi/fake";
 import { createJobsApiState } from "../testing/jobsApi/state";
+import { createRecordingLogger } from "../testing/logger";
 import { createTestStorage } from "../testing/storage";
 import { createTestWorkPath } from "../testing/workPath";
-import { createWorkflowCache } from "./cache";
+import { createWorkflowCache, restoreOrBuild } from "./cache";
+import { deriveCacheKey } from "./key";
 
 async function setup() {
 	const { path, cleanup } = await createTestWorkPath();
@@ -123,5 +126,83 @@ describe("createWorkflowCache", () => {
 		await cache.put("key-1", await seedArtifact(path, "reference_index"), {});
 
 		expect(await readdir(join(path, "caches"))).toEqual([]);
+	});
+});
+
+describe("restoreOrBuild", () => {
+	const params = { kind: "trimmed_reads", parent_id: 1 };
+
+	it("builds and caches the artifact on a miss", async () => {
+		const { cache, path, state } = await setup();
+		const directory = join(path, "trimmed");
+		const build = vi.fn(() => seedArtifact(path, "trimmed").then(() => {}));
+
+		await restoreOrBuild({
+			build,
+			cache,
+			directory,
+			kind: "trimmed_reads",
+			logger: createRecordingLogger().logger,
+			params,
+		});
+
+		expect(build).toHaveBeenCalledOnce();
+		expect(state.cacheRegistrations.map(({ key }) => key)).toEqual([
+			deriveCacheKey(params),
+		]);
+	});
+
+	it("restores the artifact without building on a hit", async () => {
+		const { cache, path } = await setup();
+
+		await cache.put(
+			deriveCacheKey(params),
+			await seedArtifact(join(path, "writer"), "trimmed"),
+			params,
+		);
+
+		const directory = join(path, "reader", "trimmed");
+		const build = vi.fn(() => Promise.resolve());
+
+		await restoreOrBuild({
+			build,
+			cache,
+			directory,
+			kind: "trimmed_reads",
+			logger: createRecordingLogger().logger,
+			params,
+		});
+
+		expect(build).not.toHaveBeenCalled();
+		expect(await readFile(join(directory, "reference.1.bt2"), "utf8")).toBe(
+			"shard one",
+		);
+	});
+
+	// A blob archived from a differently named directory unpacks beside the
+	// artifact. Rebuilding cannot replace the registered key, so it is refused.
+	it("fails when the blob restores outside the artifact directory", async () => {
+		const { cache, path } = await setup();
+
+		await cache.put(
+			deriveCacheKey(params),
+			await seedArtifact(join(path, "writer"), "elsewhere"),
+			params,
+		);
+
+		const build = vi.fn(() => Promise.resolve());
+
+		await expect(
+			restoreOrBuild({
+				build,
+				cache,
+				directory: join(path, "reader", "trimmed"),
+				kind: "trimmed_reads",
+				logger: createRecordingLogger().logger,
+				params,
+			}),
+		).rejects.toThrow(WorkflowError);
+
+		expect(build).not.toHaveBeenCalled();
 	});
 });

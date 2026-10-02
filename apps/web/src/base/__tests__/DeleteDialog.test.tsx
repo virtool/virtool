@@ -25,6 +25,26 @@ describe("<DeleteDialog />", () => {
 		expect(screen.getByText("Foo")).toBeInTheDocument();
 	});
 
+	it("takes a custom title and confirm label", () => {
+		renderWithProviders(
+			<DeleteDialog
+				confirmLabel="Sign out"
+				name="Firefox"
+				noun="session"
+				onConfirm={vi.fn()}
+				open
+				title="Sign out session"
+			/>,
+		);
+
+		expect(screen.getByText("Sign out session")).toBeInTheDocument();
+		expect(screen.queryByText("Delete session")).toBeNull();
+		expect(
+			screen.getByRole("button", { name: "Sign out" }),
+		).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
+	});
+
 	it("opens from its trigger", async () => {
 		renderWithProviders(
 			<DeleteDialog
@@ -107,6 +127,28 @@ describe("<DeleteDialog />", () => {
 		expect(await screen.findByRole("alert")).toHaveTextContent(
 			"Something went wrong. Please try again.",
 		);
+	});
+
+	it("stays open without an error when recent authentication is cancelled", async () => {
+		const cancelled = new Error("Recent authentication was cancelled.");
+		cancelled.name = "RecentAuthenticationCancelled";
+		const onConfirm = vi.fn().mockRejectedValue(cancelled);
+		const onOpenChange = vi.fn();
+		renderWithProviders(
+			<DeleteDialog
+				name="Foo"
+				noun="Sample"
+				onConfirm={onConfirm}
+				onOpenChange={onOpenChange}
+				open
+			/>,
+		);
+
+		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+		await waitFor(() => expect(onConfirm).toHaveBeenCalledOnce());
+		expect(screen.queryByRole("alert")).toBeNull();
+		expect(onOpenChange).not.toHaveBeenCalled();
 	});
 
 	it("closes without confirming when cancelled", async () => {

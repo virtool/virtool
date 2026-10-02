@@ -17,6 +17,7 @@ import { isJobStateTerminal } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -421,7 +422,7 @@ export async function findAnalyses(
 			.leftJoin(users, eq(users.id, analyses.user_id))
 			.where(where)
 			.orderBy(...buildOrderBy(options.sort))
-			.offset((options.page - 1) * options.perPage)
+			.offset(getPageOffset(options.page, options.perPage))
 			.limit(options.perPage),
 	]);
 
@@ -445,7 +446,7 @@ export async function findAnalyses(
 		totalCount,
 		page: options.page,
 		perPage: options.perPage,
-		pageCount: foundCount ? Math.ceil(foundCount / options.perPage) : 0,
+		pageCount: getPageCount(foundCount, options.perPage),
 		items: rows.map((row) =>
 			mapMinimal(
 				row,
@@ -537,7 +538,7 @@ export async function findRecentlyViewedAnalyses(
 		totalCount,
 		page: 1,
 		perPage,
-		pageCount: totalCount ? Math.ceil(totalCount / perPage) : 0,
+		pageCount: getPageCount(totalCount, perPage),
 		items: rows.map((row) =>
 			mapMinimal(
 				row,

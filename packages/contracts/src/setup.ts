@@ -42,8 +42,8 @@ export type EmailRemediationVerificationResult = {
  * remains authoritative: a deactivated account cannot be used whatever its
  * lifecycle state, and completing setup never activates anyone.
  *
- * `pending` means the account exists — handle, administrator role and group
- * memberships are all assigned — but has no credential and cannot be used as
+ * `pending` means the account exists with assigned access, but has no
+ * handle or credential and cannot be used as
  * an application account. `normal` means it can.
  */
 export const AccountLifecycleState = z.enum(["pending", "normal"]);
@@ -61,14 +61,12 @@ export type AccountLifecycleState = z.infer<typeof AccountLifecycleState>;
  * `account_completion` covers both an administrator's invitation and the
  * first-instance bootstrap: an account that exists but has no credential yet.
  * `email_remediation` covers an active legacy account with no usable unique
- * email. `totp_enrollment` covers a user who has authenticated under a
- * `required` MFA policy but has not enrolled. The remaining purposes bind
- * email verification and password recovery to their own one-time links.
+ * email. The remaining purposes bind email verification and password
+ * recovery to their own one-time links.
  */
 export const SetupPurpose = z.enum([
 	"account_completion",
 	"email_remediation",
-	"totp_enrollment",
 	"email_verification",
 	"password_recovery",
 	"administrator_recovery",

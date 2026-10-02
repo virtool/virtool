@@ -1,8 +1,9 @@
 import SettingsCheckbox from "@administration/components/SettingsCheckbox";
 import { BoxGroup, BoxGroupDisabled, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
+import Field, { FieldError, FieldLabel } from "@base/Field";
 import { IconButton } from "@base/Icon";
-import { InputContainer, InputError, InputSimple } from "@base/Input";
+import Input from "@base/Input";
 import SectionHeader from "@base/SectionHeader";
 import {
 	useSuspenseReference,
@@ -51,16 +52,11 @@ export function LocalSourceTypes() {
 				<p>Configure a list of allowable source types.</p>
 			</SectionHeader>
 			<SettingsCheckbox
+				description="Only allow users to select from allowed source types for isolates. If disabled, users will be able to enter any string as a source type."
 				enabled={restrictSourceTypes}
-				id="RestrictSourceTypes"
 				onToggle={handleToggle}
-			>
-				<h2>Restrict Source Types</h2>
-				<small>
-					Only allow users to to select from allowed source types for isolates.
-					If disabled, users will be able to enter any string as a source type.
-				</small>
-			</SettingsCheckbox>
+				title="Restrict Source Types"
+			/>
 			<BoxGroup>
 				<BoxGroupDisabled disabled={!restrictSourceTypes}>
 					<SourceTypeList sourceTypes={sourceTypes} onRemove={handleRemove} />
@@ -81,32 +77,27 @@ export function LocalSourceTypes() {
 					)}
 					<BoxGroupSection>
 						<form onSubmit={handleSubmit}>
-							<label className="block mb-1" htmlFor="sourceType">
-								Add Source Type{" "}
-							</label>
-							<InputContainer className="flex mb-1.5">
-								<span className="flex flex-auto mr-2.5 flex-col">
-									<InputSimple
-										id="sourceType"
-										aria-invalid={Boolean(error) || undefined}
-										aria-describedby={error ? "sourceType-error" : undefined}
-										{...register("sourceType")}
-									/>
-									<InputError id="sourceType-error">{error}</InputError>
-								</span>
-								<div
-									className="ml-auto mr-1"
-									style={{ width: "60px", height: "34px" }}
-								>
-									<Button
-										className="w-full h-full text-center justify-center"
-										color="green"
-										type="submit"
+							<Field className="mb-0 pb-0">
+								<FieldLabel className="block mb-1">Add Source Type</FieldLabel>
+								<div className="flex mb-1.5">
+									<span className="flex flex-auto mr-2.5 flex-col">
+										<Input {...register("sourceType")} />
+										<FieldError>{error}</FieldError>
+									</span>
+									<div
+										className="ml-auto mr-1"
+										style={{ width: "60px", height: "34px" }}
 									>
-										Add
-									</Button>
+										<Button
+											className="w-full h-full text-center justify-center"
+											color="green"
+											type="submit"
+										>
+											Add
+										</Button>
+									</div>
 								</div>
-							</InputContainer>
+							</Field>
 						</form>
 					</BoxGroupSection>
 				</BoxGroupDisabled>

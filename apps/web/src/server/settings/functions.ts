@@ -3,6 +3,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	type CacheUsageSnapshot,
 	MAX_UPLOAD_SIZE,
+	mfaPolicies,
 	type SampleGroup,
 	type Settings,
 	sampleGroups,
@@ -19,8 +20,10 @@ import {
 	resolveNcbiApiKey,
 	setNcbiApiKey,
 } from "@virtool/data/settings/ncbi";
+import { getUser } from "@virtool/data/users/data";
 import { z } from "zod";
-import { adminRole, open } from "../auth/policy";
+import { PROTECTED_OPERATIONS } from "../auth/freshness";
+import { adminRole, open, recentlyAuthenticated } from "../auth/policy";
 import { db, keyring } from "../composition";
 import { ClientError } from "../errors";
 
@@ -160,3 +163,37 @@ export const clearNcbiApiKeyFn = createServerFn({ method: "POST" })
 	.handler(
 		async (): Promise<Settings> => toSettings(await clearNcbiApiKey(db)),
 	);
+
+/**
+ * Set the instance MFA policy.
+ *
+ * A full-administrator function rather than a field on
+ * {@link updateSettingsFn}: `required` restricts every unenrolled user's
+ * session, which is more than the `settings` role may decide.
+ *
+ * `required` is refused until the caller has enrolled, because the policy
+ * would otherwise restrict the administrator who set it.
+ *
+ * @public
+ */
+export const setMfaPolicyFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.mfaPolicySet),
+	])
+	.validator(z.object({ mfaPolicy: z.enum(mfaPolicies) }))
+	.handler(async ({ context, data }): Promise<Settings> => {
+		if (data.mfaPolicy === "required") {
+			const caller = await getUser(db, context.principal.userId);
+
+			if (!caller.twoFactorEnabled) {
+				setResponseStatus(409);
+				throw new ClientError(
+					"Set up two-factor authentication before requiring it.",
+					409,
+				);
+			}
+		}
+
+		return toSettings(await updateSettings(db, { mfaPolicy: data.mfaPolicy }));
+	});

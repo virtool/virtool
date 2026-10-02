@@ -5,15 +5,19 @@ import {
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	PasswordTooShortError,
 } from "@virtool/contracts";
+import { isValidEmail, normalizeEmail } from "@virtool/data/auth/email";
 import {
+	AccountSetupHandleInUseError,
 	cancelEmailRemediation,
 	changeEmailRemediation,
 	checkEmailRemediationComplete,
 	claimEmailRemediationPromotion,
+	completeAccountSetup,
 	completeEmailRemediation,
 	EmailInUseError,
 	EmailRemediationRateLimitedError,
 	getEmailRemediationState,
+	inspectAccountSetup,
 	resendEmailRemediation,
 	SetupNotEligibleError,
 	startEmailRemediation,
@@ -21,15 +25,16 @@ import {
 } from "@virtool/data/auth/lifecycle";
 import { SetupCredentialError } from "@virtool/data/auth/setup";
 import { users } from "@virtool/data/db/schema/users";
-import {
-	getEmailSettings,
-	resolveEmailDelivery,
-} from "@virtool/data/email/settings";
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, keyring } from "../composition";
-import { config } from "../config";
+import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
+import { db } from "../composition";
+import {
+	getPublicLink,
+	getVerificationUrl,
+	isEmailDeliveryAvailable,
+} from "../email/delivery";
 import { ClientError } from "../errors";
 import { realCookies } from "./cookies";
 import {
@@ -83,6 +88,13 @@ function extendEmailRemediationCookies(sessionId: string) {
 }
 
 const createFirstUserSchema = z.object({
+	handle: z.string().trim().min(1),
+	email: z.string().trim().min(1).max(254),
+	password: z.string(),
+});
+
+const accountSetupSchema = z.object({
+	token: z.string().regex(/^[0-9a-f]{64}$/),
 	handle: z.string().trim().min(1),
 	password: z.string(),
 });
@@ -210,18 +222,93 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		checkHandle(data.handle);
 		checkReservedHandle(data.handle);
+		const email = normalizeEmail(data.email);
+		if (!isValidEmail(email)) {
+			setResponseStatus(400);
+			throw new ClientError("Enter a valid email address.", 400);
+		}
+		await checkConfiguredPasswordLength(db, data.password).catch(rethrowAsHttp);
 
 		try {
-			await checkConfiguredPasswordLength(db, data.password);
-
-			const user = await createFirstUser(db, {
+			const result = await createFirstUser(db, {
 				handle: data.handle,
+				email,
 				password: data.password,
+				deliveryAvailable: await isEmailDeliveryAvailable(),
+				getVerificationUrl,
 			});
 			await signInUsername(data.handle, data.password);
+			recordAccountLifecycle({
+				operation: "bootstrap",
+				outcome: "success",
+				message: "first instance administrator created",
+				userId: result.user.id,
+			});
 			setResponseStatus(201);
-			return user;
+			return result;
 		} catch (err) {
+			recordAccountLifecycle({
+				operation: "bootstrap",
+				outcome: "failure",
+				message: "first instance administrator creation failed",
+			});
+			rethrowAsHttp(err);
+		}
+	});
+
+/** Inspect a public account-setup bearer token without consuming it. */
+export const inspectAccountSetupFn = createServerFn({ method: "POST" })
+	.middleware([open()])
+	.validator(z.object({ token: accountSetupSchema.shape.token }))
+	.handler(async ({ data }) => inspectAccountSetup(db, data.token));
+
+/** Accept an invitation, establish its credential, and sign the user in. */
+export const acceptAccountSetupFn = createServerFn({ method: "POST" })
+	.middleware([open()])
+	.validator(accountSetupSchema)
+	.handler(async ({ data }) => {
+		checkHandle(data.handle);
+		checkReservedHandle(data.handle);
+		await checkConfiguredPasswordLength(db, data.password).catch(rethrowAsHttp);
+
+		try {
+			const completed = await completeAccountSetup(db, {
+				token: data.token,
+				handle: data.handle,
+				password: data.password,
+				deliveryAvailable: await isEmailDeliveryAvailable(),
+				getVerificationUrl,
+			});
+			await signInUsername(completed.user.handle, data.password);
+			recordAccountLifecycle({
+				operation: "invitation_accept",
+				outcome: "success",
+				message: "account invitation accepted",
+				userId: completed.user.id,
+			});
+			setResponseStatus(201);
+			return {
+				user: completed.user,
+				emailVerificationRequired: completed.emailVerificationRequired,
+				nextRoute: "/" as const,
+			};
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "invitation_accept",
+				outcome: "failure",
+				message: "account invitation acceptance failed",
+			});
+			if (err instanceof AccountSetupHandleInUseError) {
+				setResponseStatus(409);
+				throw new ClientError("This username is already taken.", 409);
+			}
+			if (
+				err instanceof SetupCredentialError ||
+				err instanceof SetupNotEligibleError
+			) {
+				setResponseStatus(400);
+				throw new ClientError("This account setup link cannot be used.", 400);
+			}
 			rethrowAsHttp(err);
 		}
 	});
@@ -344,11 +431,8 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 	.validator(emailRemediationSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const settings = await getEmailSettings(db);
-			const delivery = resolveEmailDelivery(settings, keyring);
 			const result = await startEmailRemediation(db, {
-				deliveryAvailable:
-					settings.enabled && delivery.availability === "ready",
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				email: data.email,
 				getVerificationUrl: (token) =>
 					getRemediationVerificationUrl(token, data.redirect),
@@ -424,11 +508,7 @@ export const completeEmailRemediationFn = createServerFn({ method: "POST" })
 	});
 
 function getRemediationVerificationUrl(token: string, redirect?: string) {
-	const fragment = new URLSearchParams({ token });
-	if (redirect) {
-		fragment.set("redirect", redirect);
-	}
-	return `${config.publicOrigin}/email-remediation-verify#${fragment}`;
+	return getPublicLink("/email-remediation-verify", { token, redirect });
 }
 
 /** Send a replacement mailbox challenge for the staged address. */
@@ -437,11 +517,8 @@ export const resendEmailRemediationFn = createServerFn({ method: "POST" })
 	.validator(z.object({ redirect: z.string().max(2048).optional() }))
 	.handler(async ({ context, data }) => {
 		try {
-			const settings = await getEmailSettings(db);
-			const delivery = resolveEmailDelivery(settings, keyring);
 			const result = await resendEmailRemediation(db, {
-				deliveryAvailable:
-					settings.enabled && delivery.availability === "ready",
+				deliveryAvailable: await isEmailDeliveryAvailable(),
 				getVerificationUrl: (token) =>
 					getRemediationVerificationUrl(token, data.redirect),
 				setupSessionId: context.principal.sessionId,

@@ -37,6 +37,7 @@ import { authenticated } from "../auth/policy";
 import { db, storage } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
+import { isReferenceVisible } from "../references/visibility";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const analysisIdSchema = z.object({
@@ -242,6 +243,11 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 			if (!(await checkSampleRight(db, data.sampleId, actor, "write"))) {
 				setResponseStatus(403);
 				throw new ForbiddenError();
+			}
+
+			// A reference the caller cannot see is refused as if it did not exist.
+			if (!(await isReferenceVisible(data.refId, context.principal.userId))) {
+				throw new AnalysisRelationNotFoundError("Reference does not exist");
 			}
 
 			const analysis = await createAnalysis(db, {

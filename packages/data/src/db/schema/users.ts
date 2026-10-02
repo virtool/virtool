@@ -72,7 +72,10 @@ export const users = pgTable(
 	(table) => [
 		unique("users_legacy_id_key").on(table.legacyId),
 		unique("users_username_key").on(table.username),
-		uniqueIndex("users_handle_lower_unique").on(lower(table.handle)),
+		// Pending invitations have no handle until acceptance.
+		uniqueIndex("users_handle_lower_unique")
+			.on(lower(table.handle))
+			.where(sql`${table.handle} <> ''`),
 		// Normalized email is unique among migrated identities only. A plain
 		// unique index could not be created: legacy rows share the empty string
 		// and hold duplicate addresses, which is the population the audit exists

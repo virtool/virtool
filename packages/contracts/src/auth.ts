@@ -1,3 +1,6 @@
+/** The path where the Better Auth handler is mounted. */
+export const AUTH_BASE_PATH = "/api/auth";
+
 /**
  * Name of the error the server auth middleware throws when a request has no
  * valid session. Shared so the server that throws it, the client serialization
@@ -28,3 +31,9 @@ export const SETUP_REQUIRED_ERROR_NAME = "SetupRequiredError";
 
 /** Error name returned when a signed-in user must replace their password. */
 export const PASSWORD_RESET_REQUIRED_ERROR_NAME = "PasswordResetRequiredError";
+
+/**
+ * Error name returned when instance policy requires TOTP and the signed-in
+ * user has not enrolled.
+ */
+export const MFA_ENROLLMENT_REQUIRED_ERROR_NAME = "MfaEnrollmentRequiredError";

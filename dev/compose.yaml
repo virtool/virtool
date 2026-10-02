@@ -37,7 +37,7 @@ x-volumes: &volumes
   - ${VT_DEV_WORKTREE}/packages/data/drizzle:/repo/packages/data/drizzle:ro
 
 x-workflow-environment: &workflow-environment
-  VT_JOBS_API_URL: http://jobs-api:9950
+  VT_JOBS_API_URL: http://jobs-api-${VT_DEV_ENVIRONMENT_ID}:9950
   VT_TIMEOUT: "120"
   VT_WORK_PATH: /work
   VT_STORAGE_BACKEND: azure
@@ -67,25 +67,6 @@ services:
       - az storage container create --name "${VT_DEV_BLOB_CONTAINER}" --output none
     labels: *labels
 
-  cleanup-database:
-    image: postgres:18
-    environment:
-      PGPASSWORD: virtool
-      VT_DEV_DATABASE: ${VT_DEV_DATABASE}
-    entrypoint: [/bin/sh, /run/virtool-dev/cleanup-database.sh]
-    labels: *labels
-    volumes:
-      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
-
-  cleanup-storage:
-    image: mcr.microsoft.com/azure-cli:2.89.1
-    environment:
-      AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
-    entrypoint: [/bin/sh, -ec]
-    command:
-      - az storage container delete --name "${VT_DEV_BLOB_CONTAINER}" --output none
-    labels: *labels
-
   migration:
     build: *build
     working_dir: /repo/apps/internal
@@ -108,9 +89,15 @@ services:
     labels: *labels
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:9950/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 2s
-      retries: 30
+      retries: 3
+    networks:
+      default:
+        # All environments share one network, so the service name is not unique.
+        aliases: ["jobs-api-${VT_DEV_ENVIRONMENT_ID}"]
     volumes: *volumes
 
   tasks:
@@ -122,7 +109,9 @@ services:
     labels: *labels
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:9900/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 2s
       retries: 30
     volumes: *volumes
@@ -143,7 +132,9 @@ services:
     labels: *labels
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:9900/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 2s
       retries: 30
     networks:

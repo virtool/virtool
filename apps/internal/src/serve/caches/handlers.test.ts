@@ -9,9 +9,10 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { createLogger } from "@virtool/logger";
 import { cacheKey, MemoryStorage } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { seedJob } from "../auth/test/fixtures";
+import { jobAuthorization, seedJob } from "../auth/test/fixtures";
 import type { ReadHandlerDeps } from "../http";
 import {
 	type CacheHandlerDeps,
@@ -27,7 +28,7 @@ let db: Db;
 let storage: MemoryStorage;
 let deps: CacheHandlerDeps;
 let readDeps: ReadHandlerDeps;
-let credential: string;
+let authorization: string;
 
 const logger = createLogger({ name: "test", level: "silent" });
 
@@ -47,7 +48,7 @@ beforeEach(async () => {
 
 	const job = await seedJob(db, await seedUser(db));
 
-	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
+	authorization = jobAuthorization(job);
 	storage = new MemoryStorage();
 	deps = { db, storage, logger };
 
@@ -56,15 +57,11 @@ beforeEach(async () => {
 	readDeps = { db };
 });
 
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
-}
-
 function get(key: string, authenticated = true): Request {
 	return new Request(
 		`https://jobs.virtool.test/caches/${encodeURIComponent(key)}`,
 		{
-			headers: authenticated ? { authorization: `Basic ${credential}` } : {},
+			headers: authenticated ? { authorization } : {},
 		},
 	);
 }
@@ -74,7 +71,7 @@ function post(payload: unknown, authenticated = true): Request {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
-			...(authenticated ? { authorization: `Basic ${credential}` } : {}),
+			...(authenticated ? { authorization } : {}),
 		},
 		body: JSON.stringify(payload),
 	});
@@ -92,7 +89,7 @@ describe("handleRegisterCache", () => {
 	});
 
 	it("registers a cache and answers 201 with camelCase fields", async () => {
-		await storage.write(cacheKey(UUID_A), body("hello world!"));
+		await storage.write(cacheKey(UUID_A), streamOf("hello world!"));
 
 		const response = await handleRegisterCache(
 			deps,
@@ -115,7 +112,7 @@ describe("handleRegisterCache", () => {
 	// The declared size is not part of the contract at all, so a caller sending
 	// one gets the server's reading regardless — the extra field is ignored.
 	it("stores the size it read from storage, not one the caller sent", async () => {
-		await storage.write(cacheKey(UUID_A), body("hello world!"));
+		await storage.write(cacheKey(UUID_A), streamOf("hello world!"));
 
 		const response = await handleRegisterCache(
 			deps,
@@ -148,7 +145,7 @@ describe("handleRegisterCache", () => {
 	// Without this, a job-authenticated caller could point a cache row at a
 	// sample or index object, which LRU cache eviction would then delete.
 	it("cannot produce a row pointing outside caches/v1/", async () => {
-		await storage.write("samples/1/reads_1.fq.gz", body("not a cache"));
+		await storage.write("samples/1/reads_1.fq.gz", streamOf("not a cache"));
 
 		const response = await handleRegisterCache(
 			deps,
@@ -190,7 +187,7 @@ describe("handleRegisterCache", () => {
 		const request = new Request("https://jobs.virtool.test/caches", {
 			method: "POST",
 			headers: {
-				authorization: `Basic ${credential}`,
+				authorization,
 				"content-type": "application/json",
 			},
 			body: "{",
@@ -203,8 +200,8 @@ describe("handleRegisterCache", () => {
 	// the winner's blob and its own orphan is reclaimed, because an orphan has no
 	// row for LRU eviction to walk.
 	it("answers 200 with the winner's row when the key already exists", async () => {
-		await storage.write(cacheKey(UUID_A), body("aaa"));
-		await storage.write(cacheKey(UUID_B), body("aaa"));
+		await storage.write(cacheKey(UUID_A), streamOf("aaa"));
+		await storage.write(cacheKey(UUID_B), streamOf("aaa"));
 
 		const first = await handleRegisterCache(
 			deps,
@@ -234,7 +231,7 @@ describe("handleRegisterCache", () => {
 	// re-selects the caller's own row, so the object it names must survive — a
 	// row pointing at a deleted blob is unreadable and unrepairable.
 	it("leaves the object in place when a retry repeats the same uuid", async () => {
-		await storage.write(cacheKey(UUID_A), body("hello world!"));
+		await storage.write(cacheKey(UUID_A), streamOf("hello world!"));
 
 		const payload = {
 			key: "trimmed-reads:abc",
@@ -287,7 +284,7 @@ describe("handleGetCache", () => {
 	// blob at all, because `storageKey` is a per-write uuid and is not derivable
 	// from the cache key.
 	it("resolves a registered key to the storage key and server-read size", async () => {
-		await storage.write(cacheKey(UUID_A), body("hello world!"));
+		await storage.write(cacheKey(UUID_A), streamOf("hello world!"));
 
 		await handleRegisterCache(
 			deps,
@@ -315,7 +312,7 @@ describe("handleGetCache", () => {
 	// Metadata only. The workflow reads the bytes from the bucket itself, so a
 	// body here would put this service on the data path.
 	it("relays no cache bytes", async () => {
-		await storage.write(cacheKey(UUID_A), body("hello world!"));
+		await storage.write(cacheKey(UUID_A), streamOf("hello world!"));
 
 		await handleRegisterCache(
 			deps,
