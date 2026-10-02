@@ -61,9 +61,7 @@ export default function AccountProfile() {
 				<BoxGroup>
 					<BoxGroupSection className="flex flex-wrap gap-2">
 						{groups.length ? (
-							groups
-								.toSorted((a, b) => a.name.localeCompare(b.name))
-								.map(({ id, name }) => <Label key={id}>{name}</Label>)
+							groups.map(({ id, name }) => <Label key={id}>{name}</Label>)
 						) : (
 							<span className="text-gray-600">
 								You do not belong to any groups.
