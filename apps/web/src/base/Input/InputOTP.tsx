@@ -17,8 +17,9 @@ type InputOTPProps = Omit<
 };
 
 /**
- * A full-width one-time code input that shows one box for each character. Inside a
- * `Field`, it takes its `id` and ARIA connections from the field.
+ * A one-time code input that shows one box for each character, split into two
+ * groups. It fills the width of its container. Inside a `Field`, it takes its `id` and ARIA connections from the
+ * field.
  */
 export default function InputOTP({
 	className,
@@ -26,11 +27,12 @@ export default function InputOTP({
 	...props
 }: InputOTPProps) {
 	const fieldProps = useFieldControl(props);
+	const split = Math.ceil(length / 2);
 
 	return (
 		<OTPInput
 			containerClassName={cn(
-				"group flex w-full items-center has-disabled:opacity-50",
+				"group flex w-full items-center gap-2 has-disabled:opacity-50",
 				className,
 			)}
 			className="disabled:cursor-not-allowed"
@@ -40,13 +42,22 @@ export default function InputOTP({
 			{...props}
 			{...fieldProps}
 		>
-			<div className="flex w-full items-center">
-				{Array.from({ length }, (_, index) => (
-					// biome-ignore lint/suspicious/noArrayIndexKey: slots are positional
-					<InputOTPSlot key={index} index={index} />
-				))}
-			</div>
+			<InputOTPGroup start={0} end={split} />
+			<div aria-hidden className="h-0.5 w-3 rounded-full bg-gray-400" />
+			<InputOTPGroup start={split} end={length} />
 		</OTPInput>
+	);
+}
+
+function InputOTPGroup({ start, end }: { start: number; end: number }) {
+	return (
+		<div className="flex flex-1 items-center gap-2">
+			{Array.from({ length: end - start }, (_, offset) => start + offset).map(
+				(index) => (
+					<InputOTPSlot key={index} index={index} />
+				),
+			)}
+		</div>
 	);
 }
 
@@ -58,9 +69,8 @@ function InputOTPSlot({ index }: { index: number }) {
 		<div
 			data-active={slot?.isActive}
 			className={cn(
-				"relative flex h-10 flex-1 items-center justify-center -ml-px border border-gray-300 bg-white font-mono text-lg transition-[color,box-shadow]",
-				"first:ml-0 first:rounded-l last:rounded-r",
-				"data-[active=true]:z-10 data-[active=true]:border-blue-500 data-[active=true]:ring-2 data-[active=true]:ring-blue-500/50",
+				"relative flex h-11 min-w-0 flex-1 items-center justify-center rounded border border-gray-300 bg-white font-mono text-xl transition-[color,box-shadow]",
+				"data-[active=true]:border-blue-500 data-[active=true]:ring-2 data-[active=true]:ring-blue-500/50",
 				"group-has-aria-invalid:border-red-500 group-has-aria-invalid:data-[active=true]:ring-red-500/50",
 			)}
 		>
