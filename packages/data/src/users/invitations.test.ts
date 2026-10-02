@@ -104,6 +104,7 @@ describe("account invitations", () => {
 			.where(eq(users.id, created.user.id));
 		expect(row?.password).toBeNull();
 		expect(row?.settings).toEqual({
+			avatar_source: "initials",
 			pathoscope_columns: ["name", "weight", "depth", "coverage"],
 			prefer_abbreviation: false,
 			skip_quick_analyze_dialog: true,
