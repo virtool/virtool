@@ -1,9 +1,10 @@
 import CopyField from "@base/CopyField";
 import { DialogFooter } from "@base/Dialog";
 import Field, { FieldError, FieldLabel } from "@base/Field";
-import Input from "@base/Input";
+import { InputOTP } from "@base/Input";
 import SaveButton from "@base/SaveButton";
-import { useForm } from "react-hook-form";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Controller, useForm } from "react-hook-form";
 import QRCode from "react-qr-code";
 import { useConfirmTotp } from "../queries";
 import {
@@ -31,9 +32,9 @@ export default function TwoFactorCode({
 }: TwoFactorCodeProps) {
 	const mutation = useConfirmTotp();
 	const {
+		control,
 		formState: { errors },
 		handleSubmit,
-		register,
 	} = useForm<CodeFormValues>({ defaultValues: { code: "" } });
 
 	function onSubmit({ code }: CodeFormValues) {
@@ -54,18 +55,26 @@ export default function TwoFactorCode({
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<Field>
 					<FieldLabel>Code</FieldLabel>
-					<Input
-						autoComplete="one-time-code"
-						aria-required
-						inputMode="numeric"
-						maxLength={6}
-						{...register("code", {
+					<Controller
+						name="code"
+						control={control}
+						rules={{
 							required: "Enter the code from your authenticator app",
 							pattern: {
 								value: /^\d{6}$/,
 								message: "Enter the 6-digit code",
 							},
-						})}
+						}}
+						render={({ field }) => (
+							<InputOTP
+								autoComplete="one-time-code"
+								aria-required
+								inputMode="numeric"
+								length={6}
+								pattern={REGEXP_ONLY_DIGITS}
+								{...field}
+							/>
+						)}
 					/>
 					<FieldError
 						errors={[
