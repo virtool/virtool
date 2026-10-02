@@ -167,6 +167,11 @@ function toRegistrationError(error: AuthClientError): Error {
 }
 
 function toRecentAuthenticationError(error: AuthClientError): Error {
+	if (error.status === 401 && error.code === "UNAUTHORIZED") {
+		return Object.assign(new Error("Unauthorized"), {
+			name: UNAUTHORIZED_ERROR_NAME,
+		});
+	}
 	const browserError = toBrowserError(
 		error,
 		"Passkey verification did not finish. Try again.",

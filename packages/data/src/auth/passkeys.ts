@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
 import { authPasskeys } from "../db/schema/auth";
 
@@ -78,11 +78,22 @@ export async function getUserPasskey(
 	return row;
 }
 
-/** Store the signature counter an authenticator reported for a passkey. */
+/**
+ * Store the signature counter an authenticator reported for a passkey.
+ *
+ * The counter only moves forward. Returns `false` when the stored counter
+ * already reached `counter`, as when a concurrent assertion stored it first.
+ */
 export async function setPasskeyCounter(
 	db: DbOrTx,
 	id: number,
 	counter: number,
-): Promise<void> {
-	await db.update(authPasskeys).set({ counter }).where(eq(authPasskeys.id, id));
+): Promise<boolean> {
+	const rows = await db
+		.update(authPasskeys)
+		.set({ counter })
+		.where(and(eq(authPasskeys.id, id), lt(authPasskeys.counter, counter)))
+		.returning({ id: authPasskeys.id });
+
+	return rows.length > 0;
 }

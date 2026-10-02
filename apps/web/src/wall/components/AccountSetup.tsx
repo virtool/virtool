@@ -22,7 +22,8 @@ type SetupState =
 	| { status: "loading" }
 	| { status: "unusable" }
 	| { status: "ready"; token: string; email: string; expiresAt: Date }
-	| { status: "verification_queued"; email: string };
+	| { status: "verification_queued"; email: string }
+	| { status: "accepted" };
 
 /** The public wall that accepts an invitation link. */
 export default function AccountSetup() {
@@ -73,14 +74,17 @@ export default function AccountSetup() {
 				setState({ status: "verification_queued", email: state.email });
 				return;
 			}
-			await follow();
 		} catch (error) {
 			setSubmissionError(
 				getWallErrorMessage(error, "Account setup failed. Try again."),
 			);
+			return;
 		} finally {
 			submitting.current = false;
 		}
+		// The invitation is spent, so a failure here must not look like a failed
+		// setup.
+		await follow().catch(() => setState({ status: "accepted" }));
 	}
 
 	if (state.status === "loading") {
@@ -102,6 +106,23 @@ export default function AccountSetup() {
 					subtitle="This account setup link cannot be used. Ask an administrator for a new invitation."
 				/>
 				<Link to="/login">Go to sign in</Link>
+			</WallContainer>
+		);
+	}
+
+	if (state.status === "accepted") {
+		return (
+			<WallContainer>
+				<WallTitle
+					title="Your account is ready"
+					subtitle="Virtool could not be reached to finish signing you in."
+				/>
+				<Button
+					color="blue"
+					onClick={() => void follow().catch(() => undefined)}
+				>
+					Continue to Virtool
+				</Button>
 			</WallContainer>
 		);
 	}

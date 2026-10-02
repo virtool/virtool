@@ -250,11 +250,12 @@ export function recentAuthenticationPlugin({
 						rejectPasskey();
 					}
 
-					await setPasskeyCounter(
-						db,
-						passkey.id,
-						verification.authenticationInfo.newCounter,
-					);
+					// An authenticator without a counter always reports zero.
+					const { newCounter } = verification.authenticationInfo;
+					const advanced = await setPasskeyCounter(db, passkey.id, newCounter);
+					if (!advanced && newCounter > 0) {
+						rejectPasskey();
+					}
 					return ctx.json({ status: true });
 				},
 			),
