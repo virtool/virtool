@@ -41,7 +41,7 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 				<NavLink ariaLabel="Dashboard" to="/">
 					{/* No `color`, so the logo follows the link's own text colour and
 					    inverts with it when `/` is the active route. */}
-					<Logo className="m-0" height={28} />
+					<Logo className="m-0" height={23} />
 				</NavLink>
 				<NavLink to="/jobs" search={{ state: "running" }}>
 					Jobs
