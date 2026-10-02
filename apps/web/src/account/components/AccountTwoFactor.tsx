@@ -45,7 +45,7 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 				<BoxGroupSection className="flex items-center justify-between gap-4">
 					<div className="flex flex-col gap-1">
 						<div className="flex items-center gap-2">
-							<span className="font-medium text-lg">Authenticator app</span>
+							<span className="font-medium text-base">Authenticator app</span>
 							<Label color={twoFactorEnabled ? "green" : "gray"}>
 								{twoFactorEnabled ? "On" : "Off"}
 							</Label>
