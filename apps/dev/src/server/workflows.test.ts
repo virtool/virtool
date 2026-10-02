@@ -35,6 +35,7 @@ function createEnvironment(id: string): Environment {
 	return {
 		age: 1,
 		branch: id,
+		createDefaultAdministrator: true,
 		desired: "up",
 		id,
 		lastError: null,

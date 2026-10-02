@@ -2,15 +2,17 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Snapshot } from "../shared/types.ts";
 import App from "./App.tsx";
 
 const snapshot: Snapshot = {
+	defaultAdministrator: null,
 	environments: [
 		{
 			age: 1,
 			branch: "feature/test",
+			createDefaultAdministrator: true,
 			desired: "up",
 			id: "environment",
 			lastError: null,
@@ -494,7 +496,11 @@ it("lists uncreated worktrees in their own section", async () => {
 			.map((link) => link.textContent),
 	).toEqual(["feature/test", "failed", "stopped", "uncreated"]);
 	const uncreated = screen.getByRole("region", { name: "No environment" });
-	expect(within(uncreated).getByText("uncreated")).toBeVisible();
+	expect(
+		within(uncreated).getByRole("link", {
+			name: "View details for uncreated",
+		}),
+	).toBeVisible();
 	expect(within(uncreated).queryByText("not created")).not.toBeInTheDocument();
 	expect(
 		within(screen.getByRole("region", { name: "Environments" })).queryByText(
@@ -513,4 +519,190 @@ it("lists uncreated worktrees in their own section", async () => {
 			}),
 		}),
 	);
+});
+
+it("saves the default administrator without showing the saved password", async () => {
+	snapshot.defaultAdministrator = {
+		email: "admin@example.com",
+		handle: "admin",
+	};
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+
+	expect(screen.getByLabelText("Handle")).toHaveValue("admin");
+	expect(screen.getByLabelText("Password")).toHaveValue("");
+	await user.clear(screen.getByLabelText("Handle"));
+	await user.type(screen.getByLabelText("Handle"), "boss");
+	await user.click(screen.getByRole("button", { name: "Save" }));
+
+	expect(fetch).toHaveBeenCalledWith(
+		"/api/default-administrator",
+		expect.objectContaining({
+			body: JSON.stringify({
+				email: "admin@example.com",
+				handle: "boss",
+				password: "",
+			}),
+		}),
+	);
+	expect(await screen.findByText("Default administrator saved.")).toBeVisible();
+});
+
+it("requires a password before the first default administrator save", async () => {
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+	await user.type(screen.getByLabelText("Handle"), "admin");
+	await user.type(screen.getByLabelText("Email"), "admin@example.com");
+
+	expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+	expect(
+		screen.queryByRole("button", { name: "Clear" }),
+	).not.toBeInTheDocument();
+});
+
+it("warns that the default administrator password is plain text", async () => {
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+
+	expect(screen.getByLabelText("Password")).toHaveAccessibleDescription(
+		"The daemon stores this password as plain text and gives it to each environment as plain text. Do not use a real or sensitive password.",
+	);
+});
+
+it("shows why the daemon rejects a default administrator", async () => {
+	vi.mocked(fetch).mockResolvedValueOnce(
+		new Response("Reserved user name: virtool", { status: 422 }),
+	);
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+	await user.type(screen.getByLabelText("Handle"), "virtool");
+	await user.type(screen.getByLabelText("Email"), "admin@example.com");
+	await user.type(screen.getByLabelText("Password"), "hello world");
+	await user.click(screen.getByRole("button", { name: "Save" }));
+
+	expect(await screen.findByRole("alert")).toHaveTextContent(
+		"Reserved user name: virtool",
+	);
+});
+
+describe("create options", () => {
+	beforeEach(() => {
+		Object.assign(HTMLDialogElement.prototype, {
+			close(this: HTMLDialogElement) {
+				this.removeAttribute("open");
+				this.dispatchEvent(new Event("close"));
+			},
+			showModal(this: HTMLDialogElement) {
+				this.setAttribute("open", "");
+			},
+		});
+		snapshot.environments = [
+			{
+				...getEnvironment(),
+				branch: "feature/new",
+				id: null,
+				observed: "not_created",
+				ready: false,
+				url: null,
+				worktreeId: "new",
+			},
+		];
+		snapshot.defaultAdministrator = {
+			email: "admin@example.com",
+			handle: "admin",
+		};
+	});
+
+	function getRequestBody() {
+		const [, init] = vi.mocked(fetch).mock.lastCall ?? [];
+		return JSON.parse(String(init?.body));
+	}
+
+	it("creates with the default from the main button", async () => {
+		const user = userEvent.setup();
+		await renderApp();
+
+		await user.click(screen.getByRole("button", { name: "Create" }));
+
+		expect(getRequestBody()).toEqual({
+			action: "start",
+			worktreeIds: ["new"],
+		});
+	});
+
+	it("creates without the default administrator from the dialog", async () => {
+		const user = userEvent.setup();
+		await renderApp();
+
+		await user.click(
+			screen.getByRole("button", { name: "More create options" }),
+		);
+		const dialog = screen.getByRole("dialog", { name: "Create environment" });
+		expect(within(dialog).getByText("feature/new")).toBeVisible();
+		const checkbox = within(dialog).getByRole("checkbox", {
+			name: "Create default administrator",
+		});
+		expect(checkbox).toBeChecked();
+		await user.click(checkbox);
+		await user.click(within(dialog).getByRole("button", { name: "Create" }));
+
+		expect(getRequestBody()).toEqual({
+			action: "start",
+			createDefaultAdministrator: false,
+			worktreeIds: ["new"],
+		});
+		expect(dialog).not.toHaveAttribute("open");
+	});
+
+	it("closes the dialog without a request on cancel", async () => {
+		const user = userEvent.setup();
+		await renderApp();
+
+		await user.click(
+			screen.getByRole("button", { name: "More create options" }),
+		);
+		const dialog = screen.getByRole("dialog", { name: "Create environment" });
+		await user.click(within(dialog).getByRole("checkbox"));
+		await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+		expect(dialog).not.toHaveAttribute("open");
+		expect(fetch).not.toHaveBeenCalled();
+		await user.click(
+			screen.getByRole("button", { name: "More create options" }),
+		);
+		expect(within(dialog).getByRole("checkbox")).toBeChecked();
+	});
+
+	it("disables the checkbox when no default administrator is set", async () => {
+		snapshot.defaultAdministrator = null;
+		const user = userEvent.setup();
+		await renderApp();
+
+		await user.click(
+			screen.getByRole("button", { name: "More create options" }),
+		);
+		const dialog = screen.getByRole("dialog", { name: "Create environment" });
+		expect(within(dialog).getByRole("checkbox")).toBeDisabled();
+		expect(
+			within(dialog).getByRole("link", { name: "Shared" }),
+		).toHaveAttribute("href", "/shared");
+		await user.click(within(dialog).getByRole("button", { name: "Create" }));
+
+		expect(getRequestBody()).toEqual({
+			action: "start",
+			worktreeIds: ["new"],
+		});
+	});
+});
+
+it("shows when an environment does not create the default administrator", async () => {
+	getEnvironment().createDefaultAdministrator = false;
+	await renderApp();
+	await openEnvironmentDetails();
+
+	expect(screen.getByText("Default administrator: off")).toBeVisible();
 });

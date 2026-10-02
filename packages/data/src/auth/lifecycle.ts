@@ -3,6 +3,10 @@ import {
 	EMAIL_REMEDIATION_RESEND_DELAY_SECONDS,
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	type EmailRemediationState,
+	isReservedHandle,
+	isValidEmail,
+	isValidHandle,
+	normalizeEmail,
 	type User,
 } from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
@@ -19,14 +23,8 @@ import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getUser, UserNotFoundError } from "../users/data";
-import {
-	claimEmail,
-	EmailInUseError,
-	isValidEmail,
-	normalizeEmail,
-} from "./email";
+import { claimEmail, EmailInUseError } from "./email";
 import { queueEmailVerificationInTransaction } from "./emailVerification";
-import { isReservedHandle, isValidHandle } from "./handle";
 import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
 import { hashPassword } from "./password";
 import {
@@ -52,8 +50,6 @@ export class EmailRemediationRateLimitedError extends AppError {}
 
 /** Thrown when a user has no TOTP enrollment to act on. */
 export class TotpNotEnrolledError extends AppError {}
-
-export { normalizeEmail } from "./email";
 
 /**
  * Give a user the Better Auth credential identity that lets the interactive

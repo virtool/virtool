@@ -191,6 +191,7 @@ RUN cargo build --release --bin quality-core
 FROM base AS dev
 COPY apps/web ./apps/web
 COPY apps/internal ./apps/internal
+COPY apps/dev-tools ./apps/dev-tools
 # The development web process runs with the source owner's UID, which cannot
 # read root's Corepack cache. Keep the downloaded package manager readable.
 RUN mkdir -p /opt/corepack \

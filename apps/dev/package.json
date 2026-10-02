@@ -12,7 +12,8 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^2.1.1",
-		"@tanstack/react-router": "^1.170.39",
+		"@tanstack/react-router": "^1.170.41",
+		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"hono": "^4.13.9",
 		"lucide-react": "^1.43.0",
@@ -32,6 +33,6 @@
 		"tsdown": "^0.23.0",
 		"tsx": "^4.20.6",
 		"vite": "^8.3.2",
-		"vitest": "^5.0.1"
+		"vitest": "^5.0.3"
 	}
 }

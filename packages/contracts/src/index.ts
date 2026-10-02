@@ -1,3 +1,4 @@
+export * from "./accountCredentials";
 export * from "./administrators";
 export * from "./analyses";
 export * from "./apiKeys";
@@ -5,8 +6,10 @@ export * from "./auth";
 export * from "./banners";
 export * from "./caches";
 export * from "./email";
+export * from "./emailAddress";
 export * from "./errors";
 export * from "./groups";
+export * from "./handle";
 export * from "./hmms";
 export * from "./indexes";
 export * from "./invitations";

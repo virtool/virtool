@@ -3,6 +3,9 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
 	AVATAR_SOURCES,
+	INVALID_EMAIL_MESSAGE,
+	isValidEmail,
+	normalizeEmail,
 	PATHOSCOPE_COLUMNS,
 	PasswordTooShortError,
 	SORT_DIRECTIONS,
@@ -10,11 +13,7 @@ import {
 	USER_SORT_FIELDS,
 	USER_STATUSES,
 } from "@virtool/contracts";
-import {
-	EmailInUseError,
-	isValidEmail,
-	normalizeEmail,
-} from "@virtool/data/auth/email";
+import { EmailInUseError } from "@virtool/data/auth/email";
 import {
 	resetUserTotp,
 	TotpNotEnrolledError,
@@ -285,7 +284,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 		const email = normalizeEmail(data.email);
 		if (!isValidEmail(email)) {
 			setResponseStatus(400);
-			throw new ClientError("Enter a valid email address.", 400);
+			throw new ClientError(INVALID_EMAIL_MESSAGE, 400);
 		}
 
 		try {

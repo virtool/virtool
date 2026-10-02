@@ -19,7 +19,6 @@ import {
 	EmailInUseError,
 	EmailRemediationRateLimitedError,
 	getEmailRemediationState,
-	normalizeEmail,
 	prepareEmailRemediation,
 	resendEmailRemediation,
 	resetUserTotp,
@@ -68,16 +67,6 @@ async function startOfflineEmailRemediation(userId: number, email: string) {
 	}
 	return result.token;
 }
-
-describe("normalizeEmail", () => {
-	it.each([
-		["  Ada@Example.com ", "ada@example.com"],
-		["ADA@EXAMPLE.COM", "ada@example.com"],
-		["", ""],
-	])("folds %j to %j", (input, expected) => {
-		expect(normalizeEmail(input)).toBe(expected);
-	});
-});
 
 describe("completeAccountSetup", () => {
 	it("credentials a pending account and moves it to normal", async () => {

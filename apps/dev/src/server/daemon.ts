@@ -53,6 +53,7 @@ async function hashDirectory(path: string): Promise<string> {
 
 function emptySnapshot(repositoryId: string, concurrency: number): Snapshot {
 	return {
+		defaultAdministrator: null,
 		environments: [],
 		repositoryId,
 		scheduler: {
@@ -216,6 +217,7 @@ export async function runDaemon(
 				const updateAvailable = currentHash !== primaryHash;
 				feed.set({
 					...feed.get(),
+					defaultAdministrator: store.getDefaultAdministrator(),
 					environments,
 					scheduler: workflows.getState(),
 					shared,
@@ -265,6 +267,7 @@ export async function runDaemon(
 								: mutation.action === "stop"
 									? "stopped"
 									: "up",
+							mutation.createDefaultAdministrator,
 						);
 			if (mutation.action === "restart") {
 				reconciler.requestRestart(environmentId);
@@ -349,6 +352,16 @@ export async function runDaemon(
 				{ cwd: repository.primaryWorktree },
 			);
 			return stdout;
+		},
+		{
+			clear: () => {
+				store.clearDefaultAdministrator();
+				requestRefresh();
+			},
+			set: (input) => {
+				store.setDefaultAdministrator(input);
+				requestRefresh();
+			},
 		},
 	);
 	const httpSocketPath = join(repository.stateDirectory, "http.sock");

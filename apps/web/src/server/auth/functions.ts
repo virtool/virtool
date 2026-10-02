@@ -3,9 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import {
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
+	INVALID_EMAIL_MESSAGE,
+	isValidEmail,
+	normalizeEmail,
 	PasswordTooShortError,
 } from "@virtool/contracts";
-import { isValidEmail, normalizeEmail } from "@virtool/data/auth/email";
 import {
 	AccountSetupHandleInUseError,
 	cancelEmailRemediation,
@@ -225,7 +227,7 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 		const email = normalizeEmail(data.email);
 		if (!isValidEmail(email)) {
 			setResponseStatus(400);
-			throw new ClientError("Enter a valid email address.", 400);
+			throw new ClientError(INVALID_EMAIL_MESSAGE, 400);
 		}
 		await checkConfiguredPasswordLength(db, data.password).catch(rethrowAsHttp);
 

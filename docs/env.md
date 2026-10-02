@@ -75,6 +75,7 @@ Current integrations are:
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`
+- `apps/dev-tools/src/administrator.ts`
 - `apps/internal/src/data-migrations/main.ts`
 - `apps/internal/src/auth-remediation/main.ts`
 - `packages/workflow/src/config.ts`

@@ -1,4 +1,8 @@
-import { EMAIL_REMEDIATION_RESEND_DELAY_SECONDS } from "@virtool/contracts";
+import {
+	EMAIL_REMEDIATION_RESEND_DELAY_SECONDS,
+	isValidEmail,
+	normalizeEmail,
+} from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 
 import type { Db, DbOrTx } from "../db/pg";
@@ -7,7 +11,7 @@ import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-import { claimEmail, isValidEmail, normalizeEmail } from "./email";
+import { claimEmail } from "./email";
 import {
 	consumeSetupToken,
 	issueSetupTokenInTransaction,
