@@ -15,6 +15,7 @@ export const accountQueryKeys = {
 	activeSessions: () => [...accountKeys.all(), "sessions"] as const,
 	passkeys: () => [...accountKeys.all(), "passkeys"] as const,
 	emailDelivery: () => [...accountKeys.all(), "emailDelivery"] as const,
+	security: () => [...accountKeys.all(), "security"] as const,
 	recentAuthentication: () =>
 		[...accountKeys.all(), "recentAuthentication"] as const,
 };

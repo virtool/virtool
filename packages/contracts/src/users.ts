@@ -71,6 +71,12 @@ export const PATHOSCOPE_COLUMNS = [
 /** A column of a Pathoscope export. */
 export type PathoscopeColumn = (typeof PATHOSCOPE_COLUMNS)[number];
 
+/** The sources an avatar can come from, in the order the UI lists them. */
+export const AVATAR_SOURCES = ["initials", "gravatar"] as const;
+
+/** A source for the image that represents a user. */
+export type AvatarSource = (typeof AVATAR_SOURCES)[number];
+
 /**
  * A signed-in user's client-side preferences.
  *
@@ -86,6 +92,8 @@ export type AccountSettings = {
 	showIds: boolean;
 	showVersions: boolean;
 	skipQuickAnalyzeDialog: boolean;
+	/** Where the image that represents the user comes from */
+	avatarSource: AvatarSource;
 };
 
 /**
@@ -98,6 +106,20 @@ export type AccountSettings = {
 export type Account = User & {
 	email: string;
 	settings: AccountSettings;
+};
+
+/** The signed-in user's email verification, TOTP, and recovery-code state. */
+export type AccountSecurity = {
+	/** Whether the current address is verified */
+	emailVerified: boolean;
+	/** Whether the instance requires every user to use TOTP */
+	mfaRequired: boolean;
+	/** An address waiting for verification; the current address stays active */
+	pendingEmail: string | null;
+	/** Unused recovery codes, or `null` without TOTP */
+	recoveryCodesRemaining: number | null;
+	/** Whether the user has confirmed a TOTP enrollment */
+	twoFactorEnabled: boolean;
 };
 
 /** A page of users. */

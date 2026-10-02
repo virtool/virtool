@@ -1,6 +1,12 @@
-import type { ApiKey, PasskeySummary, Permissions } from "@virtool/contracts";
+import type {
+	AccountSecurity,
+	ActiveBrowserSession,
+	ApiKey,
+	PasskeySummary,
+	Permissions,
+} from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
-import { createFakeApiKey } from "../fake/account";
+import { createFakeAccountSecurity, createFakeApiKey } from "../fake/account";
 
 /**
  * Mock handles for the `@server/account/functions` server-fn module. Wired in
@@ -14,11 +20,30 @@ export const accountServerFnMocks = {
 	updateApiKeyFn: vi.fn(),
 	deleteApiKeyFn: vi.fn(),
 	findPasskeysFn: vi.fn(),
+	getAccountSecurityFn: vi.fn(),
 	renamePasskeyFn: vi.fn(),
 	removePasskeyFn: vi.fn(),
 	revokeBrowserSessionFn: vi.fn(),
 	revokeOtherBrowserSessionsFn: vi.fn(),
 };
+
+/** Sets up getAccountSecurity to resolve with the given security state. */
+export function mockGetAccountSecurity(
+	overrides?: Partial<AccountSecurity>,
+): Mock {
+	accountServerFnMocks.getAccountSecurityFn.mockResolvedValue(
+		createFakeAccountSecurity(overrides),
+	);
+	return accountServerFnMocks.getAccountSecurityFn;
+}
+
+/** Sets up findActiveBrowserSessions to resolve with the given sessions. */
+export function mockFindActiveBrowserSessions(
+	sessions: ActiveBrowserSession[],
+): Mock {
+	accountServerFnMocks.findActiveBrowserSessionsFn.mockResolvedValue(sessions);
+	return accountServerFnMocks.findActiveBrowserSessionsFn;
+}
 
 /** Sets up findPasskeys to resolve with the given passkeys. */
 export function mockFindPasskeys(passkeys: PasskeySummary[]): Mock {

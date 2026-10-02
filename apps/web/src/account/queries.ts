@@ -1,4 +1,11 @@
 import { accountQueryKeys } from "@account/keys";
+import {
+	confirmTotp,
+	disableTotp,
+	enableTotp,
+	regenerateRecoveryCodes,
+	type TotpEnrollment,
+} from "@account/twoFactor";
 import { addPasskey, useSingleCeremony } from "@app/passkeys";
 import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import { resetClient } from "@app/utils";
@@ -8,6 +15,7 @@ import {
 	deleteApiKeyFn,
 	findApiKeysFn,
 	findPasskeysFn,
+	getAccountSecurityFn,
 	removePasskeyFn,
 	renamePasskeyFn,
 	updateApiKeyFn,
@@ -23,6 +31,7 @@ import {
 	updateAccountSettingsFn,
 } from "@server/users/functions";
 import {
+	type QueryClient,
 	queryOptions,
 	useMutation,
 	useQuery,
@@ -30,6 +39,7 @@ import {
 } from "@tanstack/react-query";
 import type {
 	Account,
+	AccountSecurity,
 	AccountSettings,
 	ApiKey,
 	PasskeySummary,
@@ -46,12 +56,21 @@ export function emailDeliveryQueryOptions() {
 	});
 }
 
+/** Query options for the signed-in user's email verification and TOTP state. */
+export function accountSecurityQueryOptions() {
+	return queryOptions<AccountSecurity>({
+		queryKey: accountQueryKeys.security(),
+		queryFn: () => getAccountSecurityFn(),
+	});
+}
+
 /**
  * Initializes a mutator for requesting verification of a new email address.
  *
  * @returns A mutator for queuing an email challenge.
  */
 export function useUpdateAccount() {
+	const queryClient = useQueryClient();
 	const mutationFn = useRecentlyAuthenticatedMutation(
 		({ email }: { email: string }) =>
 			requestAccountEmailChangeFn({ data: { email } }),
@@ -63,6 +82,9 @@ export function useUpdateAccount() {
 		{ email: string }
 	>({
 		mutationFn,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.security() });
+		},
 	});
 }
 
@@ -152,7 +174,10 @@ export function useUpdateAccountSettings() {
 }
 
 /**
- * Initializes a mutator for changing the current account's password
+ * Initializes a mutator for changing the current account's password.
+ *
+ * The change signs out every other browser, so the refresh includes the
+ * session list.
  *
  * @returns A mutator for changing the account password
  */
@@ -316,6 +341,73 @@ export function useRemovePasskey() {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
 		},
 	});
+}
+
+/**
+ * Initializes a mutator that starts TOTP enrollment.
+ *
+ * The result holds the TOTP secret and the recovery codes, so the cache drops
+ * it as soon as no component uses it.
+ */
+export function useEnableTotp() {
+	return useMutation<TotpEnrollment, Error, { password: string }>({
+		gcTime: 0,
+		mutationFn: ({ password }) => enableTotp(password),
+	});
+}
+
+/**
+ * Initializes a mutator that confirms TOTP enrollment with a code.
+ *
+ * Better Auth replaces the current session when TOTP turns on, so the session
+ * list refreshes too.
+ */
+export function useConfirmTotp() {
+	const queryClient = useQueryClient();
+
+	return useMutation<void, Error, { code: string }>({
+		gcTime: 0,
+		mutationFn: ({ code }) => confirmTotp(code),
+		onSuccess: () => invalidateTwoFactorQueries(queryClient),
+	});
+}
+
+/** Initializes a mutator that replaces every recovery code. */
+export function useRegenerateRecoveryCodes() {
+	const queryClient = useQueryClient();
+
+	return useMutation<string[], Error, { password: string }>({
+		gcTime: 0,
+		mutationFn: ({ password }) => regenerateRecoveryCodes(password),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: accountQueryKeys.security() });
+		},
+	});
+}
+
+/**
+ * Initializes a mutator that turns TOTP off.
+ *
+ * Better Auth replaces the current session when TOTP turns off, so the session
+ * list refreshes too.
+ */
+export function useDisableTotp() {
+	const queryClient = useQueryClient();
+
+	return useMutation<void, Error, { password: string }>({
+		gcTime: 0,
+		mutationFn: ({ password }) => disableTotp(password),
+		onSuccess: () => invalidateTwoFactorQueries(queryClient),
+	});
+}
+
+function invalidateTwoFactorQueries(queryClient: QueryClient) {
+	return Promise.all([
+		queryClient.invalidateQueries({ queryKey: accountQueryKeys.security() }),
+		queryClient.invalidateQueries({
+			queryKey: accountQueryKeys.activeSessions(),
+		}),
+	]);
 }
 
 /**

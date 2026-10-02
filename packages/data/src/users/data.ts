@@ -1,10 +1,15 @@
 import {
 	type Account,
 	type AccountLifecycleState,
+	type AccountSecurity,
 	type AccountSettings,
+	ADMINISTRATOR_ROLES,
 	type AdministeredUserDetail,
 	type AdministeredUserSearchResult,
+	type AdministratorRole,
 	type AdministratorRoleName,
+	AVATAR_SOURCES,
+	type AvatarSource,
 	emptyPermissions,
 	PATHOSCOPE_COLUMNS,
 	type PathoscopeColumn,
@@ -56,6 +61,8 @@ import {
 	groups as groupsTable,
 	userGroups as userGroupsTable,
 } from "../db/schema/groups";
+import { settings as settingsTable } from "../db/schema/settings";
+import { setupTokens } from "../db/schema/setup";
 import { type UserRow, users as usersTable } from "../db/schema/users";
 import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
@@ -90,6 +97,7 @@ type StoredAccountSettings = {
 	show_ids: boolean;
 	show_versions: boolean;
 	skip_quick_analyze_dialog: boolean;
+	avatar_source: AvatarSource;
 };
 
 /**
@@ -115,6 +123,9 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 		skipQuickAnalyzeDialog:
 			blob.skip_quick_analyze_dialog ??
 			DEFAULT_USER_SETTINGS.skipQuickAnalyzeDialog,
+		avatarSource: AVATAR_SOURCES.includes(blob.avatar_source as AvatarSource)
+			? (blob.avatar_source as AvatarSource)
+			: DEFAULT_USER_SETTINGS.avatarSource,
 	};
 }
 
@@ -129,6 +140,7 @@ function toStoredAccountSettings(
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
 		skip_quick_analyze_dialog: settings.skipQuickAnalyzeDialog,
+		avatar_source: settings.avatarSource,
 	};
 }
 
@@ -184,21 +196,10 @@ export type ChangePasswordValues = {
 	password: string;
 };
 
-/**
- * A completed password change, with the session credentials that replace the
- * ones the change revoked.
- */
+/** A completed password change. */
 export type ChangePasswordResult = {
 	account: Account;
-	handle: string;
 	migrated: boolean;
-};
-
-/** A selectable administrator role with its human-readable name and description. */
-export type AdministratorRole = {
-	id: AdministratorRoleName;
-	name: string;
-	description: string;
 };
 
 /** Thrown when a requested user does not exist. */
@@ -238,34 +239,11 @@ const DEFAULT_USER_SETTINGS: AccountSettings = {
 	showIds: true,
 	showVersions: true,
 	quickAnalyzeWorkflow: "pathoscope",
+	avatarSource: "initials",
 };
 
 // Every member of the administrator-role enum, with its capitalized name and
 // description.
-const ADMINISTRATOR_ROLES: AdministratorRole[] = [
-	{
-		id: "full",
-		name: "Full",
-		description: "Manage who is an administrator and what they can do.",
-	},
-	{
-		id: "settings",
-		name: "Settings",
-		description: "Manage instance settings.",
-	},
-	{
-		id: "users",
-		name: "Users",
-		description: "Create user accounts. Control activation of user accounts.",
-	},
-	{
-		id: "base",
-		name: "Base",
-		description:
-			"Provides ability to:\n    - Manage HMMs and common references.\n    - View all running jobs.\n    - Cancel any job.",
-	},
-];
-
 /** Merge the permissions granted by membership in a list of groups. */
 function mergePermissions(memberships: Permissions[]): Permissions {
 	const merged = emptyPermissions();
@@ -582,6 +560,41 @@ export async function getUser(
 	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
 }
 
+/**
+ * Get the email whose Gravatar represents the user with `handle`, or `null`
+ * when the user has none to show.
+ *
+ * Only an active user who chose Gravatar has one.
+ */
+export async function getGravatarEmail(
+	db: Db,
+	handle: string,
+): Promise<string | null> {
+	const [row] = await db
+		.select({
+			active: usersTable.active,
+			email: usersTable.email,
+			settings: usersTable.settings,
+		})
+		.from(usersTable)
+		.where(
+			and(
+				sql`lower(${usersTable.handle}) = lower(${handle})`,
+				sql`${usersTable.handle} <> ''`,
+			),
+		)
+		.limit(1);
+
+	if (
+		!row?.active ||
+		fromStoredAccountSettings(row.settings).avatarSource !== "gravatar"
+	) {
+		return null;
+	}
+
+	return normalizeEmail(row.email) || null;
+}
+
 /** Read the signed-in user's own account, including their email and settings. */
 export async function getAccount(db: Db, userId: number): Promise<Account> {
 	const [row] = await db
@@ -603,6 +616,65 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 	};
 }
 
+/**
+ * Read the signed-in user's email verification and TOTP state.
+ *
+ * The recovery-code count is not here. Better Auth holds the codes encrypted,
+ * so the caller counts them through Better Auth.
+ */
+export async function getAccountSecurity(
+	db: Db,
+	userId: number,
+): Promise<Omit<AccountSecurity, "recoveryCodesRemaining">> {
+	const [[row], [pending], [policy]] = await Promise.all([
+		db
+			.select({
+				email: usersTable.email,
+				emailVerified: usersTable.emailVerified,
+				twoFactorEnabled: usersTable.twoFactorEnabled,
+			})
+			.from(usersTable)
+			.where(eq(usersTable.id, userId))
+			.limit(1),
+		db
+			.select({ candidateEmail: setupTokens.candidateEmail })
+			.from(setupTokens)
+			.where(
+				and(
+					eq(setupTokens.userId, userId),
+					eq(setupTokens.purpose, "email_verification"),
+					isNull(setupTokens.consumedAt),
+					isNull(setupTokens.supersededAt),
+					sql`${setupTokens.expiresAt} > timezone('utc', clock_timestamp())`,
+				),
+			)
+			.limit(1),
+		db
+			.select({ mfaPolicy: settingsTable.mfaPolicy })
+			.from(settingsTable)
+			.where(eq(settingsTable.id, 1))
+			.limit(1),
+	]);
+
+	if (!row) {
+		throw new UserNotFoundError();
+	}
+
+	// A token for the current address verifies it and changes nothing.
+	const candidateEmail = pending?.candidateEmail ?? null;
+	const pendingEmail =
+		candidateEmail && candidateEmail !== normalizeEmail(row.email)
+			? candidateEmail
+			: null;
+
+	return {
+		emailVerified: row.emailVerified,
+		mfaRequired: policy?.mfaPolicy === "required",
+		pendingEmail,
+		twoFactorEnabled: row.twoFactorEnabled ?? false,
+	};
+}
+
 const STORED_ACCOUNT_SETTINGS_KEYS: {
 	[K in keyof AccountSettings]: keyof StoredAccountSettings;
 } = {
@@ -612,6 +684,7 @@ const STORED_ACCOUNT_SETTINGS_KEYS: {
 	showIds: "show_ids",
 	showVersions: "show_versions",
 	skipQuickAnalyzeDialog: "skip_quick_analyze_dialog",
+	avatarSource: "avatar_source",
 };
 
 /**
@@ -665,7 +738,6 @@ export async function changePassword(
 	const [existing] = await db
 		.select({
 			authMigratedAt: usersTable.authMigratedAt,
-			handle: usersTable.handle,
 			password: usersTable.password,
 		})
 		.from(usersTable)
@@ -745,7 +817,6 @@ export async function changePassword(
 
 	return {
 		account: await getAccount(db, userId),
-		handle: existing.handle,
 		migrated: existing.authMigratedAt !== null,
 	};
 }

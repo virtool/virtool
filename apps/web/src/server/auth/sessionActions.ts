@@ -25,11 +25,7 @@ export const signOut = createServerOnlyFn(async () => {
 	return auth.api.signOut({ headers: getRequest().headers });
 });
 
-/**
- * Mint a replacement Better Auth session.
- *
- * @public
- */
+/** Mint a replacement Better Auth session. */
 export const createReplacementSession = createServerOnlyFn(
 	async (userId: number) => {
 		const [{ getRequest }, { auth }] = await Promise.all([

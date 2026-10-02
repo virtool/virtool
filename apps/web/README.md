@@ -18,6 +18,7 @@ Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
 - **exceljs** for server-side analysis XLSX exports
 - **Better Auth** with its passkey plugin for human authentication, including
   the browser passkey ceremonies
+- **react-qr-code** for the TOTP enrollment QR code
 
 ## Client development
 
@@ -196,9 +197,9 @@ Restricted setup credentials may complete only their named transition. Each
 [setupExceptions.ts](src/server/auth/setupExceptions.ts).
 
 Raw routes handle transports RPC can't provide, such as uploads, streaming
-downloads, SSE, probes, metrics, and `/api/auth/*`. They enforce their own
-authorization. `requireAuthenticatedRequest` accepts sessions and API keys;
-server functions are session-only. Better Auth owns sign-in, while Virtool owns
+downloads, avatar images, SSE, probes, metrics, and `/api/auth/*`. They
+enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
+and API keys; server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
 Better Auth is mounted at `/api/auth/$` and composed in
@@ -455,7 +456,17 @@ TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
 codes minted with every enrollment. The plugin's enrollment, recovery-code
 regeneration, and disable endpoints are reachable over HTTP. Each of these
 requires the current password; they don't use the recent-authentication
-policy. Trusted devices are not enabled.
+policy. Trusted devices are not enabled. `two-factor/get-totp-uri` is refused
+over HTTP, because it returns the secret again for only the password.
+Enrollment shows the secret one time, from the `enable` response.
+
+`/account/security` holds the email, password, TOTP, passkey, and session
+controls. The browser calls the TOTP endpoints through `twoFactorClient`
+([twoFactor.ts](src/account/twoFactor.ts)). The TOTP secret and recovery codes
+stay in component state only, and the mutations use `gcTime: 0`. The user must
+confirm that they saved new recovery codes before the dialog closes.
+`getAccountSecurityFn` returns the number of unused recovery codes, never the
+codes.
 
 After a correct password, an enrolled user gets Better Auth's login challenge
 instead of a session. The challenge allows five attempts, and ten failures lock

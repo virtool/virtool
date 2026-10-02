@@ -29,6 +29,7 @@ import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/j
 import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
 import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
 import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
+import { Route as AvatarsHandleRouteImport } from './routes/avatars.$handle'
 import { Route as HealthLiveRouteImport } from './routes/health/live'
 import { Route as HealthReadyRouteImport } from './routes/health/ready'
 import { Route as UploadsUploadIdRouteImport } from './routes/uploads_.$uploadId'
@@ -36,6 +37,7 @@ import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAccountApiRouteImport } from './routes/_authenticated/account/api'
 import { Route as AuthenticatedAccountGroupsRouteImport } from './routes/_authenticated/account/groups'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
+import { Route as AuthenticatedAccountSecurityRouteImport } from './routes/_authenticated/account/security'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAdministrationIndexRouteImport } from './routes/_authenticated/administration/index'
 import { Route as AuthenticatedAdministrationBannersRouteImport } from './routes/_authenticated/administration/banners'
@@ -197,6 +199,11 @@ const AuthenticatedSubtractionsRoute =
     path: '/subtractions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AvatarsHandleRoute = AvatarsHandleRouteImport.update({
+  id: '/avatars/$handle',
+  path: '/avatars/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthLiveRoute = HealthLiveRouteImport.update({
   id: '/health/live',
   path: '/health/live',
@@ -233,6 +240,12 @@ const AuthenticatedAccountProfileRoute =
   AuthenticatedAccountProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSecurityRoute =
+  AuthenticatedAccountSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
 const AuthenticatedAccountSettingsRoute =
@@ -601,6 +614,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
@@ -608,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/account/api': typeof AuthenticatedAccountApiRoute
   '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
@@ -680,6 +695,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
@@ -687,6 +703,7 @@ export interface FileRoutesByTo {
   '/account/api': typeof AuthenticatedAccountApiRoute
   '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
@@ -764,6 +781,7 @@ export interface FileRoutesById {
   '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/_authenticated/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads_/$uploadId': typeof UploadsUploadIdRoute
@@ -772,6 +790,7 @@ export interface FileRoutesById {
   '/_authenticated/account/api': typeof AuthenticatedAccountApiRoute
   '/_authenticated/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/account/security': typeof AuthenticatedAccountSecurityRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/administration/banners': typeof AuthenticatedAdministrationBannersRoute
   '/_authenticated/administration/caching': typeof AuthenticatedAdministrationCachingRoute
@@ -854,6 +873,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/samples'
     | '/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
@@ -861,6 +881,7 @@ export interface FileRouteTypes {
     | '/account/api'
     | '/account/groups'
     | '/account/profile'
+    | '/account/security'
     | '/account/settings'
     | '/administration/banners'
     | '/administration/caching'
@@ -933,6 +954,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/verify-email'
     | '/home'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
@@ -940,6 +962,7 @@ export interface FileRouteTypes {
     | '/account/api'
     | '/account/groups'
     | '/account/profile'
+    | '/account/security'
     | '/account/settings'
     | '/administration/banners'
     | '/administration/caching'
@@ -1016,6 +1039,7 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs'
     | '/_authenticated/samples'
     | '/_authenticated/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads_/$uploadId'
@@ -1024,6 +1048,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account/api'
     | '/_authenticated/account/groups'
     | '/_authenticated/account/profile'
+    | '/_authenticated/account/security'
     | '/_authenticated/account/settings'
     | '/_authenticated/administration/banners'
     | '/_authenticated/administration/caching'
@@ -1097,6 +1122,7 @@ export interface RootRouteChildren {
   RecoverRoute: typeof RecoverRoute
   SetupRoute: typeof SetupRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  AvatarsHandleRoute: typeof AvatarsHandleRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
@@ -1254,6 +1280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubtractionsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/avatars/$handle': {
+      id: '/avatars/$handle'
+      path: '/avatars/$handle'
+      fullPath: '/avatars/$handle'
+      preLoaderRoute: typeof AvatarsHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/health/live': {
       id: '/health/live'
       path: '/health/live'
@@ -1301,6 +1334,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/account/profile'
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/security': {
+      id: '/_authenticated/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AuthenticatedAccountSecurityRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
     '/_authenticated/account/settings': {
@@ -1854,6 +1894,7 @@ interface AuthenticatedAccountRouteChildren {
   AuthenticatedAccountApiRoute: typeof AuthenticatedAccountApiRoute
   AuthenticatedAccountGroupsRoute: typeof AuthenticatedAccountGroupsRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountSecurityRoute: typeof AuthenticatedAccountSecurityRoute
   AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
@@ -1862,6 +1903,7 @@ const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
   AuthenticatedAccountApiRoute: AuthenticatedAccountApiRoute,
   AuthenticatedAccountGroupsRoute: AuthenticatedAccountGroupsRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountSecurityRoute: AuthenticatedAccountSecurityRoute,
   AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
 }
@@ -2036,6 +2078,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecoverRoute: RecoverRoute,
   SetupRoute: SetupRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  AvatarsHandleRoute: AvatarsHandleRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
   UploadsUploadIdRoute: UploadsUploadIdRoute,

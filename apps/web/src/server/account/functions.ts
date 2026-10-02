@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import {
+	type AccountSecurity,
 	DEFAULT_PASSKEY_NAME,
 	type PasskeySummary,
 	passkeyNameSchema,
@@ -13,6 +14,7 @@ import {
 	findApiKeys,
 	updateApiKey,
 } from "@virtool/data/account/data";
+import { getAccountSecurity } from "@virtool/data/users/data";
 import { APIError } from "better-auth/api";
 import { z } from "zod";
 import {
@@ -321,4 +323,26 @@ export const removePasskeyFn = createServerFn({ method: "POST" })
 		} catch (err) {
 			return rethrowPasskeyError(err);
 		}
+	});
+
+/**
+ * Read the signed-in user's email verification, TOTP, and recovery-code state.
+ *
+ * Only the number of recovery codes leaves the server, never the codes.
+ */
+export const getAccountSecurityFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async ({ context }): Promise<AccountSecurity> => {
+		const security = await getAccountSecurity(db, context.principal.userId);
+
+		if (!security.twoFactorEnabled) {
+			return { ...security, recoveryCodesRemaining: null };
+		}
+
+		const { auth } = await loadAuth();
+		const { backupCodes } = await auth.api.viewBackupCodes({
+			body: { userId: String(context.principal.userId) },
+		});
+
+		return { ...security, recoveryCodesRemaining: backupCodes.length };
 	});

@@ -34,6 +34,10 @@ type DeleteDialogProps = {
 	name: string;
 	/** The type of item being deleted (e.g. "Sample"); titles the dialog "Delete {noun}" */
 	noun: string;
+	/** Overrides the "Delete {noun}" title */
+	title?: string;
+	/** Overrides the "Confirm" button text */
+	confirmLabel?: string;
 	/** Overrides the default confirmation prompt */
 	message?: ReactNode;
 	/**
@@ -58,6 +62,8 @@ type DeleteDialogProps = {
 export default function DeleteDialog({
 	name,
 	noun,
+	title,
+	confirmLabel = "Confirm",
 	message,
 	onConfirm,
 	trigger,
@@ -130,7 +136,7 @@ export default function DeleteDialog({
 					)}
 				>
 					<AlertDialogPrimitive.Title className="font-medium pb-4 text-2xl">
-						{`Delete ${noun}`}
+						{title ?? `Delete ${noun}`}
 					</AlertDialogPrimitive.Title>
 					<AlertDialogPrimitive.Description>
 						{message ?? (
@@ -149,7 +155,7 @@ export default function DeleteDialog({
 							<Button color="gray">Cancel</Button>
 						</AlertDialogPrimitive.Cancel>
 						<Button color="red" onClick={handleConfirm}>
-							Confirm
+							{confirmLabel}
 						</Button>
 					</div>
 				</AlertDialogPrimitive.Content>
