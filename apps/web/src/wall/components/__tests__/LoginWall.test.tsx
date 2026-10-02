@@ -1,6 +1,7 @@
 import { accountQueryKeys } from "@account/keys";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { authServerFnMocks } from "@tests/server-fn/auth";
 import { mockGetPasswordPolicy } from "@tests/server-fn/settings";
 import {
 	mockGetAccountMfaEnrollmentRequired,
@@ -47,6 +48,25 @@ describe("<LoginWall />", () => {
 				screen.getByText("Your session ended. Sign in again."),
 			).toBeInTheDocument();
 		});
+	});
+
+	it("drops the session notice once the password is accepted", async () => {
+		authServerFnMocks.loginFn.mockResolvedValue({ twoFactorRedirect: true });
+		const { router } = await renderWall(
+			"/login?reason=session-ended&redirect=%2Fsamples",
+		);
+
+		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+		await userEvent.type(screen.getByLabelText("Password"), "password");
+		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+		expect(
+			await screen.findByLabelText("Authentication code"),
+		).toBeInTheDocument();
+		await waitFor(() =>
+			expect(router.state.location.search).toEqual({ redirect: "/samples" }),
+		);
+		expect(screen.queryByText(/session ended/i)).not.toBeInTheDocument();
 	});
 
 	it("says nothing about a session to a user who simply visits the wall", async () => {

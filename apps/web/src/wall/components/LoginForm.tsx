@@ -10,7 +10,7 @@ import Field, { FieldLabel } from "@base/Field";
 import Input from "@base/Input";
 import { Link } from "@tanstack/react-router";
 import { CircleAlert, Info, KeyRound } from "lucide-react";
-import { useEffect, useEffectEvent, useState } from "react";
+import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
 import { useForm } from "react-hook-form";
 import { getWallErrorMessage } from "../errors";
 import { useFollowAuthNextStep } from "../hooks";
@@ -23,6 +23,10 @@ import TwoFactorForm from "./TwoFactorForm";
 import { WallTitle } from "./WallTitle";
 
 type LoginFormProps = {
+	/** Content shown below the title on the sign-in step only. */
+	notice?: ReactNode;
+	/** Called when the password is accepted and a two-factor challenge starts. */
+	onChallenge?: () => void;
 	/** URL to navigate to after a successful login. Defaults to "/". */
 	redirect?: string;
 	/** Shows the forced-reset form after the password has been authenticated. */
@@ -36,6 +40,8 @@ type FormValues = {
 
 /** Handles the user login process. */
 export default function LoginForm({
+	notice,
+	onChallenge,
 	redirect,
 	setResetRequired,
 }: LoginFormProps) {
@@ -93,6 +99,7 @@ export default function LoginForm({
 	function onSignedIn(data: LoginResult) {
 		if ("twoFactorRedirect" in data) {
 			setTwoFactor(true);
+			onChallenge?.();
 			return;
 		}
 		void continueSignIn();
@@ -147,6 +154,7 @@ export default function LoginForm({
 				title="Sign in"
 				subtitle="Sign in with your Virtool account."
 			/>
+			{notice}
 
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<Field>
