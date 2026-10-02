@@ -155,19 +155,16 @@ it("gives each default administrator value as one argument", async () => {
 	reconciler.start();
 	await reconciler.stop();
 
-	const [, args, options] =
-		run.mock.calls.find(([, args]) => args.includes("administrator")) ?? [];
-	expect(args?.slice(args.indexOf("--env"))).toEqual([
-		"--env",
-		"VT_ADMINISTRATOR_PASSWORD",
-		"dev-tools",
+	const administrator = run.mock.calls
+		.map(([, args]) => args)
+		.find((args) => args.includes("administrator"));
+	expect(administrator?.slice(administrator.indexOf("create"))).toEqual([
 		"create",
 		"administrator",
 		"--handle=admin",
 		"--email=admin@example.com",
+		"--password=-secret123",
 	]);
-	expect(args?.join(" ")).not.toContain("secret123");
-	expect(options?.env?.VT_ADMINISTRATOR_PASSWORD).toBe("-secret123");
 });
 
 describe("default administrator step", () => {

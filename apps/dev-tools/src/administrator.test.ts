@@ -95,16 +95,21 @@ describe("createAdministrator", () => {
 describe("parseAdministratorArgs", () => {
 	it("reads values that start with a hyphen", () => {
 		expect(
-			parseAdministratorArgs(["--handle=admin", "--email=-admin@example.com"]),
+			parseAdministratorArgs([
+				"--handle=admin",
+				"--email=admin@example.com",
+				"--password=-secret123",
+			]),
 		).toEqual({
-			email: "-admin@example.com",
+			email: "admin@example.com",
 			handle: "admin",
+			password: "-secret123",
 		});
 	});
 
 	it("requires every option", () => {
 		expect(() => parseAdministratorArgs(["--handle=admin"])).toThrow(
-			"create administrator requires --handle and --email",
+			"create administrator requires --handle, --email, and --password",
 		);
 	});
 });

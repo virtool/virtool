@@ -20,15 +20,10 @@ resources it makes are valid for the schema of its branch.
 
 | Command | Result |
 | --- | --- |
-| `create administrator --handle=<handle> --email=<email>` | Creates a full administrator if the database has no users. Otherwise, it makes no change. |
+| `create administrator --handle=<handle> --email=<email> --password=<password>` | Creates a full administrator if the database has no users. Otherwise, it makes no change. |
 
 Give each value in the `--name=value` form. The `--name value` form rejects a
 value that starts with `-`.
-
-`create administrator` reads the password from `VT_ADMINISTRATOR_PASSWORD`
-(or `VT_ADMINISTRATOR_PASSWORD_FILE`), not from an argument. A failed
-command's error message contains its arguments, and the dev UI shows that
-message.
 
 `create administrator` first checks for users. If users exist, it makes no
 change and does not check the values. If no users exist, it applies the

@@ -4,11 +4,7 @@ import { dirname, join } from "node:path";
 import type { DesiredState } from "../shared/types.ts";
 import type { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
-import {
-	ADMINISTRATOR_PASSWORD_ENV,
-	CONFIG_VERSION,
-	DEV_TOOLS_SERVICE,
-} from "./constants.ts";
+import { CONFIG_VERSION, DEV_TOOLS_SERVICE } from "./constants.ts";
 import {
 	DockerObserver,
 	type EnvironmentObservation,
@@ -430,28 +426,19 @@ export class Reconciler {
 				"running",
 				"creating default administrator",
 			);
-			// A failed command's error message holds its arguments, so the
-			// password goes through the environment.
-			await this.compose(
-				environment,
-				envFile,
-				composeFile,
-				[
-					"run",
-					"--rm",
-					"--env",
-					ADMINISTRATOR_PASSWORD_ENV,
-					DEV_TOOLS_SERVICE,
-					"create",
-					"administrator",
-					`--handle=${administrator.handle}`,
-					`--email=${administrator.email}`,
-				],
-				{
-					...process.env,
-					[ADMINISTRATOR_PASSWORD_ENV]: administrator.password,
-				},
-			);
+			// The default administrator password is a dummy for local development,
+			// not a secret. Passing it in argv, where command errors and the dev UI
+			// can show it, is intentional.
+			await this.compose(environment, envFile, composeFile, [
+				"run",
+				"--rm",
+				DEV_TOOLS_SERVICE,
+				"create",
+				"administrator",
+				`--handle=${administrator.handle}`,
+				`--email=${administrator.email}`,
+				`--password=${administrator.password}`,
+			]);
 			if (!this.isStillDesired(environment.id, "up")) {
 				return;
 			}
@@ -592,7 +579,6 @@ export class Reconciler {
 		envFile: string,
 		composeFile: string,
 		args: string[],
-		env?: NodeJS.ProcessEnv,
 	): Promise<void> {
 		await this.run(
 			"docker",
@@ -606,7 +592,7 @@ export class Reconciler {
 				composeFile,
 				...args,
 			],
-			{ cwd: this.primaryWorktree, env },
+			{ cwd: this.primaryWorktree },
 		);
 	}
 
