@@ -54,7 +54,7 @@ function AdministrationLayout() {
 			</ViewHeader>
 			<div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-start lg:gap-10">
 				<AdministrationSidebar administratorRole={account.administratorRole} />
-				<ContainerNarrow>
+				<ContainerNarrow className="min-w-0 shrink">
 					<Outlet />
 				</ContainerNarrow>
 			</div>

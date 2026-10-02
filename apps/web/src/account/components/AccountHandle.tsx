@@ -51,12 +51,12 @@ export default function AccountHandle({ avatarSource, handle }: HandleProps) {
 						className="flex items-start justify-between gap-3"
 						onSubmit={handleSubmit(onSubmit)}
 					>
-						<div className="flex h-9 items-center gap-2 font-medium">
+						<div className="flex h-9 min-w-0 items-center gap-2 font-medium">
 							<UserAvatar handle={handle} size="lg" />
-							<span>{handle}</span>
+							<span className="truncate">{handle}</span>
 						</div>
-						<div className="flex w-full max-w-sm items-start gap-3">
-							<Field className="mb-0 flex-1 pb-0">
+						<div className="flex w-full min-w-0 max-w-sm items-start gap-3">
+							<Field className="mb-0 min-w-0 flex-1 pb-0">
 								<Input
 									aria-label="Handle"
 									autoComplete="off"
