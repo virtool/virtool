@@ -7,7 +7,8 @@ import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import ExternalLink from "@base/ExternalLink";
-import { InputError, InputGroup, InputLabel, InputPassword } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import { InputPassword } from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { TriangleAlert } from "lucide-react";
@@ -82,12 +83,9 @@ export default function NcbiApiKey() {
 				) : null}
 				<BoxGroupSection>
 					<form onSubmit={handleSubmit(save)}>
-						<InputGroup>
-							<InputLabel htmlFor="ncbiApiKey">API Key</InputLabel>
+						<Field>
+							<FieldLabel>API Key</FieldLabel>
 							<InputPassword
-								id="ncbiApiKey"
-								aria-describedby="ncbiApiKey-error"
-								aria-invalid={Boolean(errors.apiKey) || undefined}
 								autoComplete="off"
 								placeholder={
 									data.hasNcbiApiKey
@@ -98,10 +96,8 @@ export default function NcbiApiKey() {
 									required: "An API key is required.",
 								})}
 							/>
-							<InputError id="ncbiApiKey-error">
-								{errors.apiKey?.message}
-							</InputError>
-						</InputGroup>
+							<FieldError errors={[errors.apiKey]} />
+						</Field>
 						<div className="flex justify-end gap-2">
 							{data.hasNcbiApiKey ? (
 								<Button

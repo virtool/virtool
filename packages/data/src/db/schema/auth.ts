@@ -175,7 +175,9 @@ export const authPasskeys = pgTable(
 			foreignColumns: [users.id],
 			name: "auth_passkeys_user_id_fkey",
 		}).onDelete("cascade"),
-		index("idx_auth_passkeys_credential_id").on(table.credentialID),
+		// Better Auth looks a passkey up by credential id alone at sign-in, so two
+		// users holding the same id would make that lookup pick one arbitrarily.
+		unique("auth_passkeys_credential_id_key").on(table.credentialID),
 		index("idx_auth_passkeys_user_id").on(table.userId),
 	],
 );

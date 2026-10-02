@@ -35,9 +35,9 @@ describe("<FirstUser />", () => {
 
 		const { router } = await renderSetup();
 
-		await userEvent.type(screen.getByLabelText("username"), account.handle);
-		await userEvent.type(screen.getByLabelText("email"), "alice@example.com");
-		await userEvent.type(screen.getByLabelText("password"), "supersecret");
+		await userEvent.type(screen.getByLabelText("Username"), account.handle);
+		await userEvent.type(screen.getByLabelText("Email"), "alice@example.com");
+		await userEvent.type(screen.getByLabelText("Password"), "supersecret");
 		await userEvent.click(screen.getByRole("button", { name: /Create User/i }));
 
 		await waitFor(() => {
@@ -51,9 +51,9 @@ describe("<FirstUser />", () => {
 
 		const { router } = await renderSetup();
 
-		await userEvent.type(screen.getByLabelText("username"), "bob");
-		await userEvent.type(screen.getByLabelText("email"), "bob@example.com");
-		await userEvent.type(screen.getByLabelText("password"), "supersecret");
+		await userEvent.type(screen.getByLabelText("Username"), "bob");
+		await userEvent.type(screen.getByLabelText("Email"), "bob@example.com");
+		await userEvent.type(screen.getByLabelText("Password"), "supersecret");
 		await userEvent.click(screen.getByRole("button", { name: /Create User/i }));
 
 		expect(

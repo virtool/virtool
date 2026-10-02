@@ -24,7 +24,7 @@ import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 const getRequest = vi.fn();
 const setCookie = vi.fn();
 const setResponseStatus = vi.fn();
-const signInUsername = vi.fn();
+const createRemediationSession = vi.fn();
 let currentUserId: number | null = null;
 let currentSessionId: number | null = null;
 
@@ -53,7 +53,7 @@ vi.mock("../auth/instance", () => ({
 							user: { id: currentUserId },
 						},
 			),
-			signInUsername,
+			createRemediationSession,
 		},
 	},
 }));
@@ -160,10 +160,8 @@ describe("changePassword", () => {
 			.where(eq(authSessions.userId, userId));
 
 		expect(rows).toHaveLength(0);
-		expect(signInUsername).toHaveBeenCalledWith(
-			expect.objectContaining({
-				body: expect.objectContaining({ password: "new_password_123" }),
-			}),
+		expect(createRemediationSession).toHaveBeenCalledWith(
+			expect.objectContaining({ body: { userId } }),
 		);
 	});
 

@@ -2,7 +2,7 @@ import { useFetchAccount } from "@account/account";
 import { useCheckAdminRole } from "@administration/hooks";
 import Box, { BoxGroup, BoxGroupSection } from "@base/Box";
 import { ContainerNarrow } from "@base/Container";
-import { InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
@@ -103,19 +103,15 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 				</SectionHeader>
 				<BoxGroup>
 					<BoxGroupSection>
-						<InputGroup>
-							<InputLabel htmlFor="group">Group</InputLabel>
+						<Field>
+							<FieldLabel>Group</FieldLabel>
 							<Select
 								value={selectedGroupId || noGroup}
 								onValueChange={(value) =>
 									handleChangeGroup(value === noGroup ? "" : value)
 								}
 							>
-								<SelectButton
-									className="w-full"
-									icon={ChevronDown}
-									id="group"
-								/>
+								<SelectButton className="w-full" icon={ChevronDown} />
 								<SelectContent>
 									<SelectItem key={noGroup} value={noGroup}>
 										None
@@ -127,25 +123,23 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 									))}
 								</SelectContent>
 							</Select>
-						</InputGroup>
+						</Field>
 
-						<InputGroup>
-							<InputLabel htmlFor="groupRights">Group Rights</InputLabel>
+						<Field>
+							<FieldLabel>Group Rights</FieldLabel>
 							<RightsSelect
-								id="groupRights"
 								value={groupRights}
 								onChange={(value) => handleChangeRights(value, "group")}
 							/>
-						</InputGroup>
+						</Field>
 
-						<InputGroup>
-							<InputLabel htmlFor="allUsers">All {"Users'"} Rights</InputLabel>
+						<Field>
+							<FieldLabel>All {"Users'"} Rights</FieldLabel>
 							<RightsSelect
-								id="allUsers"
 								value={allRights}
 								onChange={(value) => handleChangeRights(value, "all")}
 							/>
-						</InputGroup>
+						</Field>
 					</BoxGroupSection>
 				</BoxGroup>
 			</section>

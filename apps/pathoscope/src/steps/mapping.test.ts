@@ -64,6 +64,18 @@ describe("mapIsolatesStep", () => {
 		expect(script.startsWith(PIPEFAIL_PREFIX)).toBe(true);
 	});
 
+	// bowtie2 `-k 100` flags every alignment after a read's first as secondary.
+	// A filter flag here would drop the multi-mapping alignments that
+	// expectation maximization reassigns.
+	it("converts to bam without filtering alignments", async () => {
+		const { paths, script } = await runStep(["reads_1.fq.gz"]);
+
+		expect(script).toContain("-k 100");
+		expect(
+			script.endsWith(`| samtools view -bS - -o '${paths.isolateBam}'`),
+		).toBe(true);
+	});
+
 	it("quotes every path it interpolates into the pipeline", async () => {
 		const { paths, script } = await runStep(["reads_1.fq.gz"]);
 

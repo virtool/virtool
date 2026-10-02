@@ -1,5 +1,5 @@
 /**
- * The create_subtraction workflow: two steps and one external tool.
+ * The create_subtraction workflow: two steps.
  *
  * A user uploads a genome; this turns it into a subtraction an analysis can
  * eliminate reads against. It counts the genome's sequences and nucleotides with
@@ -7,8 +7,8 @@
  *
  * **There is deliberately no third step building a bowtie2 index.** Nothing
  * reads `.bt2` shards — both analysis workflows build a subtraction's index
- * locally — and the finalize route accepts the genome alone. So the image
- * carries `seqkit` and no other binary.
+ * locally — and the finalize route accepts the genome alone. The image does
+ * not need Bowtie2.
  *
  * **Nothing here decompresses the genome to disk.** `seqkit` reads gzip
  * natively, so no step needs a plain FASTA. Don't add a decompress step to make

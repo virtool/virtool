@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
+import { FieldLabel } from "@base/Field";
 import Icon from "@base/Icon";
-import { InputLabel } from "@base/Input";
 import { useCombobox } from "downshift";
 import { ChevronDown } from "lucide-react";
 import { Popover } from "radix-ui";
@@ -98,13 +98,13 @@ export default function ComboBox<Item>({
 
 	return (
 		<div>
-			<InputLabel
+			<FieldLabel
 				className={cn(hideLabel && "sr-only")}
 				htmlFor={labelProps.htmlFor}
 				id={labelProps.id}
 			>
 				{label}
-			</InputLabel>
+			</FieldLabel>
 			<Popover.Root open={isOpen} onOpenChange={() => {}}>
 				<Popover.Anchor
 					className={cn(
@@ -125,7 +125,15 @@ export default function ComboBox<Item>({
 					<input
 						className="flex-grow min-w-0 bg-transparent outline-none text-base"
 						placeholder={placeholder}
-						{...getInputProps()}
+						{...getInputProps({
+							onKeyDown(event) {
+								// Stops Enter from submitting an enclosing form while the menu is
+								// closed. Downshift still handles the key.
+								if (event.key === "Enter") {
+									event.preventDefault();
+								}
+							},
+						})}
 					/>
 					<button
 						type="button"

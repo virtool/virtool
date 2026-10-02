@@ -1,5 +1,5 @@
 import { useCheckAdminRole } from "@administration/hooks";
-import { InitialIcon } from "@base/Icon";
+import { InitialIcon, UserAvatar } from "@base/Icon";
 import Label from "@base/Label";
 import Link from "@base/Link";
 import type { PaletteColor } from "@base/types";
@@ -44,7 +44,7 @@ export function UserItem({ user }: UserItemProps) {
 						<InitialIcon size="md" icon={MailClock} label="Invited user" />
 					) : (
 						<span aria-hidden className="flex">
-							<InitialIcon size="md" handle={user.handle} />
+							<UserAvatar size="md" handle={user.handle} />
 						</span>
 					)}
 					{canEdit ? (

@@ -1,7 +1,8 @@
 import { pluralize } from "@app/format";
 import { BoxGroupSection } from "@base/Box";
 import Button, { ButtonToggle } from "@base/Button";
-import { InputSimple } from "@base/Input";
+import { FieldSet } from "@base/Field";
+import Input from "@base/Input";
 import Popover from "@base/Popover";
 import Tooltip from "@base/Tooltip";
 import { Info, Regex, ReplaceAll } from "lucide-react";
@@ -51,11 +52,11 @@ export default function BulkRename({
 			<span className="mr-2 shrink-0 font-medium" aria-live="polite">
 				{pluralize(names.length, "sample")}
 			</span>
-			<fieldset
+			<FieldSet
 				aria-label="Bulk rename"
-				className="ml-auto flex min-w-0 items-center rounded shadow-xs"
+				className="mb-0 ml-auto flex min-w-0 items-center rounded shadow-xs"
 			>
-				<InputSimple
+				<Input
 					aria-label="Match text"
 					aria-invalid={Boolean(error)}
 					aria-describedby={error ? errorId : undefined}
@@ -64,7 +65,7 @@ export default function BulkRename({
 					value={match}
 					onChange={(event) => onMatchChange(event.target.value)}
 				/>
-				<InputSimple
+				<Input
 					aria-label="Replacement"
 					className="-ml-px h-9 w-50 min-w-0 max-w-50 rounded-none focus-visible:z-10"
 					placeholder="Replacement"
@@ -93,7 +94,7 @@ export default function BulkRename({
 						{changedCount > 0 && pluralize(changedCount, "name")}
 					</Button>
 				</Tooltip>
-			</fieldset>
+			</FieldSet>
 			{canUndo && (
 				<Button size="small" onClick={onUndo}>
 					Undo rename

@@ -1,5 +1,5 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { InitialIcon } from "@base/Icon";
+import { UserAvatar } from "@base/Icon";
 import SectionHeader from "@base/SectionHeader";
 import type { UserNested } from "@virtool/contracts";
 
@@ -11,7 +11,7 @@ export function GroupMembers({ members }: MemberProps) {
 	const memberComponents = members.map((member: UserNested) => (
 		<BoxGroupSection key={member.id}>
 			<div className="flex gap-2.5">
-				<InitialIcon handle={member.handle} size="md" />
+				<UserAvatar handle={member.handle} size="md" />
 				{member.handle}
 			</div>
 		</BoxGroupSection>

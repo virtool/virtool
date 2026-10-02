@@ -361,4 +361,42 @@ mod tests {
             "Reads should be unique"
         );
     }
+
+    // bowtie2 `-k` flags every alignment after a read's first as secondary
+    // (0x100). Expectation maximization needs those alignments, so a filter on
+    // the flag would silently turn multi-mapping reads into unique ones.
+    #[test]
+    fn test_build_matrix_keeps_secondary_alignments() {
+        let matrix = build_matrix(
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/test_em_with_multimapping.sam"
+            ),
+            None,
+        )
+        .unwrap();
+
+        for read_id in ["multi1", "multi2"] {
+            let read_index = matrix
+                .reads
+                .iter()
+                .position(|read| read == read_id)
+                .unwrap() as i32;
+
+            let (ref_indices, _, _, _) = matrix
+                .multi_mapping_reads
+                .get(&read_index)
+                .unwrap_or_else(|| panic!("{read_id} should be multi-mapping"));
+
+            let mut refs: Vec<&str> = ref_indices
+                .iter()
+                .map(|&index| matrix.refs[index as usize].as_str())
+                .collect();
+            refs.sort();
+
+            assert_eq!(refs, ["ref1", "ref2"], "{read_id} should map to both refs");
+        }
+
+        assert_eq!(matrix.unique_reads.len(), 4);
+    }
 }

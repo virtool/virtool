@@ -14,7 +14,7 @@ never `npm` or `bun`.
 | [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
 | [`@virtool/dev`](apps/dev/README.md) | Local worktree environments and workflow scheduling. |
 | [`@virtool/dev-tools`](apps/dev-tools/README.md) | Development commands that act on one environment's data. |
-| [`@virtool/internal`](apps/internal/README.md) | One image, three subcommands: `serve` (jobs API), `run` (task spawner and runner), `migrate` (Drizzle migrations). |
+| [`@virtool/internal`](apps/internal/README.md) | One image for the jobs API, task runner, migrations, data migrations, and authentication remediation. |
 | [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
 | [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA. |
 | [`@virtool/pathoscope`](apps/pathoscope/README.md) | Quantifies known viruses in a sample. |

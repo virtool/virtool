@@ -2,8 +2,8 @@ import { useFetchAccount } from "@account/account";
 import AdministratorRoleSelect from "@administration/components/AdministratorRoleSelect";
 import { useCheckAdminRole } from "@administration/hooks";
 import { useGetAdministratorRoles } from "@administration/queries";
+import Field, { FieldLabel } from "@base/Field";
 import { IconButton } from "@base/Icon";
-import { InputLabel } from "@base/Input";
 import { useSetAdministratorRole } from "@users/queries";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { Trash } from "lucide-react";
@@ -40,12 +40,11 @@ export default function UserAdministratorRole({
 	}
 
 	return (
-		<div className="mb-4">
-			<InputLabel htmlFor={`role-${id}`}>Administrator Role</InputLabel>
+		<Field>
+			<FieldLabel>Administrator Role</FieldLabel>
 			<div className="flex items-center gap-2">
 				<AdministratorRoleSelect
 					className="grow"
-					id={`role-${id}`}
 					onChange={onChange}
 					roles={roles}
 					value={role ?? undefined}
@@ -59,6 +58,6 @@ export default function UserAdministratorRole({
 					/>
 				)}
 			</div>
-		</div>
+		</Field>
 	);
 }

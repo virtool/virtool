@@ -233,6 +233,13 @@ Two rules hold this together:
   key used only to keep a concurrent recent-auth replacement out of an
   all-other-session deletion.
 
+`auth_verifications` holds Better Auth's short-lived challenges, such as passkey
+and two-factor sign-in challenges. Better Auth deletes expired rows only when it
+reads a row with `findVerificationValue`, and passkey ceremonies don't call it.
+The internal runner's `cleanup_auth_verifications` periodic task deletes rows
+whose `expires_at` has passed. Better Auth rejects expired rows, so the task
+only limits how many rows the table keeps.
+
 A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
 looks fields up by property, so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.

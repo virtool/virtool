@@ -1,6 +1,7 @@
 import { cn } from "@app/cn";
 import { bannerColorClasses } from "@banner/types";
 import { BoxGroupSection } from "@base/Box";
+import Field, { FieldLabel } from "@base/Field";
 import { RadioGroupItem } from "@base/RadioGroup";
 import type { BannerColor } from "@virtool/contracts";
 import type { BannerFormValues } from "./BannerForm";
@@ -26,27 +27,24 @@ export default function BannerItem({
 	onEdit,
 	onRemove,
 }: BannerItemProps) {
-	const radioId = `banner-${id}`;
-
 	return (
 		<BoxGroupSection className="flex items-center gap-3">
-			<RadioGroupItem id={radioId} value={id.toString()} />
-			<label
-				htmlFor={radioId}
-				className="flex grow items-center gap-3 min-w-0 cursor-pointer"
-			>
-				<span
-					className={cn(
-						bannerColorClasses[color],
-						"h-5",
-						"w-5",
-						"shrink-0",
-						"rounded-full",
-					)}
-					aria-hidden="true"
-				/>
-				<span className="grow truncate">{message}</span>
-			</label>
+			<Field className="min-w-0 grow" orientation="horizontal">
+				<RadioGroupItem value={id.toString()} />
+				<FieldLabel className="flex min-w-0 grow cursor-pointer items-center gap-3 font-normal">
+					<span
+						className={cn(
+							bannerColorClasses[color],
+							"h-5",
+							"w-5",
+							"shrink-0",
+							"rounded-full",
+						)}
+						aria-hidden="true"
+					/>
+					<span className="grow truncate">{message}</span>
+				</FieldLabel>
+			</Field>
 			<div className="flex items-center gap-1">
 				<EditBanner
 					color={color}

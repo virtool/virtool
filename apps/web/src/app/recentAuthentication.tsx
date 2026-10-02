@@ -1,11 +1,6 @@
 import Button from "@base/Button";
-import {
-	InputError,
-	InputGroup,
-	InputLabel,
-	InputPassword,
-	InputSimple,
-} from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input, { InputPassword } from "@base/Input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import {
 	challengeRecentAuthenticationFn,
@@ -43,10 +38,17 @@ const RecentAuthenticationContext = createContext<(() => Promise<void>) | null>(
 	null,
 );
 
+const CANCELLED_ERROR_NAME = "RecentAuthenticationCancelled";
+
 function cancellationError(): Error {
 	const error = new Error("Recent authentication was cancelled.");
-	error.name = "RecentAuthenticationCancelled";
+	error.name = CANCELLED_ERROR_NAME;
 	return error;
+}
+
+/** Whether an error is the user's cancel of a recent-authentication challenge. */
+export function isRecentAuthenticationCancelled(error: unknown): boolean {
+	return error instanceof Error && error.name === CANCELLED_ERROR_NAME;
 }
 
 /** Coordinate one shared recent-authentication challenge for the application. */
@@ -325,22 +327,18 @@ export function RecentAuthenticationForm({
 					{methods.password ? (
 						<TabsContent value="password">
 							<form onSubmit={handleSubmit(submitPassword)}>
-								<InputGroup>
-									<InputLabel htmlFor="recent-auth-password">
-										Password
-									</InputLabel>
+								<Field>
+									<FieldLabel>Password</FieldLabel>
 									<InputPassword
-										id="recent-auth-password"
 										showVisibilityToggle={false}
 										autoComplete="current-password"
 										autoFocus
-										aria-invalid={Boolean(errors.password) || undefined}
 										{...register("password", {
 											required: "Enter your password.",
 										})}
 									/>
-									<InputError>{errors.password?.message}</InputError>
-								</InputGroup>
+									<FieldError errors={[errors.password]} />
+								</Field>
 								<FormActions
 									disabled={isSubmitting}
 									secondaryAction={secondaryAction}
@@ -352,22 +350,18 @@ export function RecentAuthenticationForm({
 					{methods.totp ? (
 						<TabsContent value="totp">
 							<form onSubmit={handleSubmit(submitTotp)}>
-								<InputGroup>
-									<InputLabel htmlFor="recent-auth-code">
-										Authenticator code
-									</InputLabel>
-									<InputSimple
-										id="recent-auth-code"
+								<Field>
+									<FieldLabel>Authenticator code</FieldLabel>
+									<Input
 										autoComplete="one-time-code"
 										inputMode="numeric"
 										autoFocus={!methods.password}
-										aria-invalid={Boolean(errors.code) || undefined}
 										{...register("code", {
 											required: "Enter your authenticator code.",
 										})}
 									/>
-									<InputError>{errors.code?.message}</InputError>
-								</InputGroup>
+									<FieldError errors={[errors.code]} />
+								</Field>
 								<FormActions
 									disabled={isSubmitting}
 									secondaryAction={secondaryAction}

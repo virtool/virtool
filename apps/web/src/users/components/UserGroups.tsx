@@ -1,16 +1,11 @@
-import { useFuse } from "@app/fuse";
-import { BoxGroup, BoxGroupSection } from "@base/Box";
-import ComboBox from "@base/ComboBox";
-import Icon from "@base/Icon";
 import Link from "@base/Link";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
-import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
 import SectionHeader from "@base/SectionHeader";
 import { useListGroups } from "@groups/queries";
 import { useUpdateUser } from "@users/queries";
 import type { GroupMinimal } from "@virtool/contracts";
-import { X } from "lucide-react";
+import GroupMembershipField from "./GroupMembershipField";
 
 /** A stable empty fallback so `useFuse` doesn't reset its term while loading */
 const NO_GROUPS: GroupMinimal[] = [];
@@ -28,10 +23,6 @@ type UserGroupsProps = {
 
 /**
  * Manages a user's group membership and primary group.
- *
- * A single-select combobox adds groups to the membership list. Each member is
- * a row in a radio group that selects the primary group, with a button to
- * revoke membership.
  */
 export default function UserGroups({
 	memberGroups,
@@ -41,12 +32,7 @@ export default function UserGroups({
 	const { data, isPending, isError } = useListGroups();
 	const mutation = useUpdateUser();
 
-	const [results, term, setTerm] = useFuse<GroupMinimal>(data ?? NO_GROUPS, [
-		"name",
-	]);
-
-	const memberIds = new Set(memberGroups.map((group) => group.id));
-	const availableGroups = results.filter((group) => !memberIds.has(group.id));
+	const memberIds = memberGroups.map((group) => group.id);
 
 	function addGroup(id: number) {
 		mutation.mutate({
@@ -59,20 +45,20 @@ export default function UserGroups({
 		mutation.mutate({
 			userId,
 			update: {
-				groups: [...memberIds].filter((memberId) => memberId !== id),
+				groups: memberIds.filter((memberId) => memberId !== id),
 				...(primaryGroup?.id === id ? { primaryGroup: null } : {}),
 			},
 		});
 	}
 
-	function setPrimaryGroup(value: string) {
+	function setPrimaryGroup(id: number | null) {
 		mutation.mutate({
 			userId,
-			update: { primaryGroup: value === "none" ? null : Number(value) },
+			update: { primaryGroup: id },
 		});
 	}
 
-	function renderAdd() {
+	function renderAddPlaceholder() {
 		if (isError && !data) {
 			return <QueryError noun="groups" />;
 		}
@@ -96,92 +82,26 @@ export default function UserGroups({
 			);
 		}
 
-		if (availableGroups.length === 0) {
-			return (
-				<p className="text-gray-500">This user is a member of every group.</p>
-			);
-		}
-
-		return (
-			<ComboBox<GroupMinimal>
-				label="Add group"
-				hideLabel
-				items={availableGroups}
-				selectedItem={null}
-				onChange={(group) => {
-					addGroup(group.id);
-					setTerm("");
-				}}
-				term={term}
-				onTermChange={setTerm}
-				itemToKey={(group) => String(group.id)}
-				itemToString={(group) => group.name}
-				renderOption={(group) => (
-					<span className="capitalize">{group.name}</span>
-				)}
-				placeholder="Add group"
-			/>
-		);
+		return null;
 	}
 
-	function renderMembership() {
-		if (memberGroups.length) {
-			return (
-				<RadioGroup
-					className="mt-4"
-					aria-label="Primary group"
-					value={primaryGroup ? String(primaryGroup.id) : "none"}
-					onValueChange={setPrimaryGroup}
-				>
-					<BoxGroup>
-						{memberGroups.map((group) => (
-							<BoxGroupSection
-								key={group.id}
-								className="flex items-center gap-3"
-							>
-								<RadioGroupItem
-									id={`primary-${group.id}`}
-									value={String(group.id)}
-								/>
-								<label
-									htmlFor={`primary-${group.id}`}
-									className="grow capitalize cursor-pointer select-none"
-								>
-									{group.name}
-								</label>
-								<button
-									type="button"
-									aria-label={`Remove ${group.name}`}
-									className="text-gray-500 hover:text-gray-800"
-									onClick={() => removeGroup(group.id)}
-								>
-									<Icon icon={X} />
-								</button>
-							</BoxGroupSection>
-						))}
-						<BoxGroupSection className="flex items-center gap-3">
-							<RadioGroupItem id="primary-none" value="none" />
-							<label
-								htmlFor="primary-none"
-								className="grow cursor-pointer select-none"
-							>
-								No primary group
-							</label>
-						</BoxGroupSection>
-					</BoxGroup>
-				</RadioGroup>
-			);
-		}
+	function renderContent() {
+		const addPlaceholder = renderAddPlaceholder();
 
-		// When no groups exist at all, renderAdd already explains the situation.
-		if (data?.length === 0) {
-			return null;
+		if (data?.length === 0 && memberGroups.length === 0) {
+			return addPlaceholder;
 		}
 
 		return (
-			<p className="mt-4 text-gray-500">
-				This user is not a member of any groups.
-			</p>
+			<GroupMembershipField
+				groups={data ?? NO_GROUPS}
+				memberGroups={memberGroups}
+				primaryGroupId={primaryGroup?.id ?? null}
+				onAdd={addGroup}
+				onRemove={removeGroup}
+				onPrimaryGroupChange={setPrimaryGroup}
+				addPlaceholder={addPlaceholder}
+			/>
 		);
 	}
 
@@ -190,8 +110,7 @@ export default function UserGroups({
 			<SectionHeader level={3}>
 				<h3>Groups</h3>
 			</SectionHeader>
-			{renderAdd()}
-			{renderMembership()}
+			{renderContent()}
 		</div>
 	);
 }

@@ -19,6 +19,7 @@ export * from "./json";
 export * from "./labels";
 export * from "./nuvs";
 export * from "./otus";
+export * from "./passkeys";
 export * from "./passwordPolicy";
 export * from "./pathoscope";
 export * from "./permissions";

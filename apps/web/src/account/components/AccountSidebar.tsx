@@ -1,12 +1,12 @@
 import type { SideNavGroup } from "@base/Nav";
 import { SideNav } from "@base/Nav";
-import { KeyRound, Settings, UserRound, UsersRound } from "lucide-react";
+import { KeyRound, Settings, ShieldCheck, UserRound } from "lucide-react";
 
 const groups: SideNavGroup[] = [
 	{
 		items: [
 			{ icon: UserRound, label: "Profile", to: "/account/profile" },
-			{ icon: UsersRound, label: "Groups", to: "/account/groups" },
+			{ icon: ShieldCheck, label: "Security", to: "/account/security" },
 			{ icon: Settings, label: "Settings", to: "/account/settings" },
 			{ icon: KeyRound, label: "API Keys", to: "/account/api" },
 		],

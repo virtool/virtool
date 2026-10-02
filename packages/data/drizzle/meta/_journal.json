@@ -302,6 +302,13 @@
       "when": 1790630394967,
       "tag": "0042_add_mfa_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790710545604,
+      "tag": "0043_enforce_passkey_credential_uniqueness",
+      "breakpoints": true
     }
   ]
 }

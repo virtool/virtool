@@ -5,7 +5,8 @@ import {
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import DeleteDialog from "@base/DeleteDialog";
-import { InputError, InputGroup, InputLabel, InputPassword } from "@base/Input";
+import Field, { FieldDescription, FieldError, FieldLabel } from "@base/Field";
+import { InputPassword } from "@base/Input";
 import type { EmailSettings } from "@virtool/contracts";
 import { useForm } from "react-hook-form";
 import { getEmailErrorMessage } from "./errors";
@@ -49,18 +50,16 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 		<BoxGroup>
 			<BoxGroupSection>
 				<form onSubmit={handleSubmit(save)}>
-					<InputGroup>
-						<InputLabel htmlFor="emailApiKey">Resend API Key</InputLabel>
-						<p className="mb-1 text-gray-600 text-sm" id="emailApiKey-hint">
+					<Field>
+						<FieldLabel>Resend API Key</FieldLabel>
+						<FieldDescription className="mt-0 mb-1">
 							Your key is kept secure and is not shown here. Enter a new key to
 							replace the current one.
-						</p>
+						</FieldDescription>
 						<div className="flex items-start gap-3">
 							<div className="min-w-0 flex-1">
 								<InputPassword
-									id="emailApiKey"
-									aria-describedby="emailApiKey-hint emailApiKey-status emailApiKey-error"
-									aria-invalid={Boolean(errors.apiKey) || undefined}
+									aria-describedby="emailApiKey-status"
 									autoComplete="off"
 									{...register("apiKey", {
 										validate: (value) =>
@@ -98,10 +97,8 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 								{settings.hasApiKey ? "Replace Key" : "Save Key"}
 							</Button>
 						</div>
-						<InputError id="emailApiKey-error">
-							{errors.apiKey?.message}
-						</InputError>
-					</InputGroup>
+						<FieldError errors={[errors.apiKey]} />
+					</Field>
 					{error ? (
 						<p className="mb-2 text-red-600 text-sm" role="alert">
 							{error}

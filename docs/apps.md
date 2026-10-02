@@ -8,8 +8,10 @@ what lets a change to `@virtool/data` be visible to every consumer with
 no intermediate build step.
 
 A plain `node` process can't import a `.ts` file, so the apps are where
-the compilation happens: **each non-Vite app bundles to a single
-`dist/index.mjs` with every `@virtool/*` package inlined from source.**
+the compilation happens. **The workflow apps and `@virtool/internal` bundle
+to `dist/index.mjs`, with `@virtool/*` packages inlined from source.**
+`@virtool/dev` builds its Node entry with tsdown and its management UI with Vite;
+`@virtool/web` and `@virtool/site` use Vite-based builds.
 
 Don't "fix" the asymmetry by giving the packages a `dist` build. The
 apps bundling isn't a workaround for the packages being unbuilt. It's
@@ -20,7 +22,8 @@ any consumer saw a change, and the type-declaration trap that
 
 ## Bundling with tsdown
 
-`tsdown` is the Rolldown-backed bundler for non-Vite apps.
+`tsdown` is the Rolldown-backed bundler for the workflow apps,
+`@virtool/internal`, and the Node side of `@virtool/dev`.
 
 Knip's `tsdown` plugin reads two settings from `tsdown.config.ts`:
 
@@ -81,14 +84,14 @@ The checked-in lockfile is generated with the pnpm version pinned in the
 root `package.json`. Keep that version aligned anywhere the lockfile is
 regenerated so injected dependency snapshots remain deterministic.
 
-Each app sets `"files": ["dist"]` so `pnpm deploy` packs the bundle
-alongside the manifest and `node_modules`. Without it the deployed tree
+Each deployed tsdown app sets `"files": ["dist"]` so `pnpm deploy` packs the
+bundle alongside the manifest and `node_modules`. Without it the deployed tree
 has the dependencies and none of the code.
 
-If an app's externals list is ever empty, the deploy step can be skipped
-for that image. Every app has one today.
+If a deployed app's externals list is ever empty, the deploy step can be
+skipped for that image. Every deployed tsdown app has one today.
 
-## Layout of an app
+## Layout of a deployed Node app
 
 ```
 apps/<name>/
@@ -110,8 +113,8 @@ Its `moduleResolution: "Bundler"` is load-bearing. It's what lets
 into `packages/storage/src/*.ts`; a `"node16"` resolution doesn't follow
 an exports map to a `.ts` file.
 
-Adding a directory in that shape is enough to be covered by `pnpm build`,
-`pnpm check`, `pnpm typecheck`, `pnpm test`, and `pnpm knip`, with no
+Adding a Node app directory in that shape is enough to be covered by
+`pnpm build`, `pnpm check`, `pnpm typecheck`, `pnpm test`, and `pnpm knip`, with no
 edits to root scripts, `knip.json`, `biome.json`, the Dockerfile install
 layer, or `pnpm-workspace.yaml`. Adding a new *image* still needs a
 Dockerfile stage and a CI matrix entry. This is the one deliberate exception.

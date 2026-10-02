@@ -4,8 +4,6 @@ updates:
       directory: "/"
       schedule:
           interval: "weekly"
-      reviewers:
-          - "igboyes"
       open-pull-requests-limit: 10
       commit-message:
           prefix: "chore(deps)"
@@ -52,8 +50,6 @@ updates:
       directory: "/"
       schedule:
           interval: "monthly"
-      reviewers:
-          - "igboyes"
       commit-message:
           prefix: "chore(deps)"
       groups:

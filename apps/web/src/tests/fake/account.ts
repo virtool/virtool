@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import {
 	type Account,
+	type AccountSecurity,
 	type AccountSettings,
 	type ApiKey,
 	PATHOSCOPE_COLUMNS,
@@ -9,6 +10,7 @@ import { createFakePermissions } from "./permissions";
 import { createFakeUser } from "./user";
 
 const defaultSettings: AccountSettings = {
+	avatarSource: "initials",
 	pathoscopeColumns: [...PATHOSCOPE_COLUMNS],
 	preferAcronym: false,
 	quickAnalyzeWorkflow: "pathoscope",
@@ -16,6 +18,20 @@ const defaultSettings: AccountSettings = {
 	showVersions: true,
 	skipQuickAnalyzeDialog: true,
 };
+
+/** Creates the security state of an account with a verified address and no TOTP. */
+export function createFakeAccountSecurity(
+	overrides?: Partial<AccountSecurity>,
+): AccountSecurity {
+	return {
+		emailVerified: true,
+		mfaRequired: false,
+		pendingEmail: null,
+		recoveryCodesRemaining: null,
+		twoFactorEnabled: false,
+		...overrides,
+	};
+}
 
 export function createFakeAccount(overrides?: Partial<Account>): Account {
 	const { settings, email, ...userProps } = overrides || {};

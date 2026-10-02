@@ -3,7 +3,7 @@ import { BoxGroup, BoxGroupSection } from "@base/Box";
 import CompactScrollList from "@base/CompactScrollList";
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
-import { InitialIcon } from "@base/Icon";
+import { UserAvatar } from "@base/Icon";
 import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
 import { useAddReferenceMember } from "@references/queries";
@@ -75,7 +75,7 @@ export default function AddReferenceUser({
 				)}
 				onClick={() => mutation.mutate({ id: user.id })}
 			>
-				<InitialIcon size="md" handle={user.handle} />
+				<UserAvatar size="md" handle={user.handle} />
 				{user.handle}
 			</button>
 		);

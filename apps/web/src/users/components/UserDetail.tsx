@@ -1,7 +1,7 @@
 import { useFetchAccount } from "@account/account";
 import { useCheckAdminRole } from "@administration/hooks";
 import Alert from "@base/Alert";
-import { InitialIcon } from "@base/Icon";
+import { InitialIcon, UserAvatar } from "@base/Icon";
 import Label from "@base/Label";
 import SectionHeader from "@base/SectionHeader";
 import { useQuery } from "@tanstack/react-query";
@@ -88,7 +88,7 @@ export default function UserDetail({ userId }: UserDetailProps) {
 							</>
 						) : (
 							<>
-								<InitialIcon size="xl" handle={handle} />
+								<UserAvatar size="xl" handle={handle} />
 								<span>{handle}</span>
 							</>
 						)}

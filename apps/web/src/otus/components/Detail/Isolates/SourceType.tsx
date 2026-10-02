@@ -1,4 +1,5 @@
-import { InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { capitalize } from "es-toolkit";
 import { ChevronDown } from "lucide-react";
@@ -27,18 +28,14 @@ export function SourceType({
 }: SourceTypeProps) {
 	if (restrictSourceTypes) {
 		return (
-			<InputGroup>
-				<InputLabel htmlFor="sourceType">Source Type</InputLabel>
+			<Field>
+				<FieldLabel>Source Type</FieldLabel>
 				<Controller
 					name="sourceType"
 					control={control}
 					render={({ field: { onChange, value } }) => (
 						<Select value={value} onValueChange={onChange}>
-							<SelectButton
-								className="w-full"
-								icon={ChevronDown}
-								id="sourceType"
-							/>
+							<SelectButton className="w-full" icon={ChevronDown} />
 							<SelectContent>
 								<SelectItem key="default" value="unknown">
 									Unknown
@@ -52,24 +49,20 @@ export function SourceType({
 						</Select>
 					)}
 				/>
-			</InputGroup>
+			</Field>
 		);
 	}
 
 	return (
-		<InputGroup>
-			<InputLabel htmlFor="sourceType">Source Type</InputLabel>
+		<Field>
+			<FieldLabel>Source Type</FieldLabel>
 			<Controller
 				name="sourceType"
 				control={control}
 				render={({ field: { onChange, value } }) => (
-					<InputSimple
-						id="sourceType"
-						onChange={onChange}
-						value={capitalize(value)}
-					/>
+					<Input onChange={onChange} value={capitalize(value)} />
 				)}
 			/>
-		</InputGroup>
+		</Field>
 	);
 }

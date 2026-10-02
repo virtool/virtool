@@ -1,6 +1,6 @@
 import Badge from "@base/Badge";
 import { BoxGroupSection } from "@base/Box";
-import { InitialIcon } from "@base/Icon";
+import { UserAvatar } from "@base/Icon";
 
 type ContributorProps = {
 	id: number;
@@ -14,7 +14,7 @@ type ContributorProps = {
 export default function Contributor({ id, count, handle }: ContributorProps) {
 	return (
 		<BoxGroupSection className="flex items-center" key={id}>
-			<InitialIcon handle={handle} size="md" className="mr-1" />
+			<UserAvatar handle={handle} size="md" className="mr-1" />
 			{handle}
 			<Badge className="ml-auto">
 				{count} change{count === 1 ? "" : "s"}

@@ -1,4 +1,4 @@
-import type { AccountLifecycleState } from "@virtool/contracts";
+import { type AccountLifecycleState, AUTH_BASE_PATH } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -26,11 +26,7 @@ import {
 	BrowserSessionEndedError,
 	revokeOtherActiveBrowserSessions,
 } from "../account/service";
-import {
-	AUTH_BASE_PATH,
-	createAuth,
-	createAuthRequestHandler,
-} from "./betterAuth";
+import { createAuth, createAuthRequestHandler } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
 const ORIGIN = "https://virtool.test";
@@ -738,6 +734,34 @@ describe("the user update endpoint", () => {
 
 		const response = await auth.handler(
 			post("/update-user", { username: "someone-else" }),
+		);
+
+		expect(response.status).toBe(404);
+	});
+});
+
+describe("the TOTP URI endpoint", () => {
+	it("is refused over HTTP, so a password alone cannot read the secret again", async () => {
+		await seedMigratedUser();
+		const signIn = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+		const handler = createAuthRequestHandler(db, auth);
+
+		const response = await handler(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}/two-factor/get-totp-uri`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
+				body: JSON.stringify({ password: LEGACY_PASSWORD }),
+			}),
 		);
 
 		expect(response.status).toBe(404);

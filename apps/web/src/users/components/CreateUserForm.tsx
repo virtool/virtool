@@ -1,12 +1,20 @@
-import Checkbox from "@base/Checkbox";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, {
+	FieldError,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+} from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
+import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
+import { ChevronDown } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import {
 	type DeliveryIntent,
 	DeliveryIntentField,
 } from "./DeliveryIntentField";
+import GroupMembershipField from "./GroupMembershipField";
 
 /** Values collected when an administrator invites a user. */
 export type CreateUserFormValues = {
@@ -47,7 +55,6 @@ export function CreateUserForm({
 		register,
 		handleSubmit,
 		control,
-		getValues,
 		setValue,
 		watch,
 	} = useForm<CreateUserFormState>({
@@ -60,6 +67,7 @@ export function CreateUserForm({
 		},
 	});
 	const selectedGroups = watch("groups");
+	const primaryGroup = watch("primaryGroup");
 	const defaultDeliveryIntent: DeliveryIntent = emailDeliveryAvailable
 		? "email"
 		: "copy_only";
@@ -73,117 +81,84 @@ export function CreateUserForm({
 
 	return (
 		<form onSubmit={handleSubmit(submit)}>
-			{groups.length > 0 && (
-				<InputGroup>
-					<InputLabel>Groups</InputLabel>
-					<Controller
-						name="groups"
-						control={control}
-						render={({ field }) => (
-							<div className="grid gap-2">
-								{groups.map((group) => (
-									<Checkbox
-										key={group.id}
-										id={`invite-group-${group.id}`}
-										label={group.name}
-										checked={field.value.includes(group.id)}
-										onClick={() => {
-											const removing = field.value.includes(group.id);
-											field.onChange(
-												removing
-													? field.value.filter((id) => id !== group.id)
-													: [...field.value, group.id],
-											);
-											if (removing && getValues("primaryGroup") === group.id) {
-												setValue("primaryGroup", null);
-											}
-										}}
-									/>
-								))}
-							</div>
-						)}
-					/>
-					<InputLabel htmlFor="primary-group">Primary group</InputLabel>
-					<Controller
-						name="primaryGroup"
-						control={control}
-						render={({ field }) => (
-							<select
-								id="primary-group"
-								value={field.value ?? ""}
-								onChange={(event) =>
-									field.onChange(
-										event.target.value ? Number(event.target.value) : null,
-									)
-								}
-							>
-								<option value="">None</option>
-								{groups
-									.filter((group) => selectedGroups.includes(group.id))
-									.map((group) => (
-										<option key={group.id} value={group.id}>
-											{group.name}
-										</option>
-									))}
-							</select>
-						)}
-					/>
-				</InputGroup>
-			)}
-			<InputGroup>
-				<InputLabel htmlFor="email">Email</InputLabel>
-				<InputSimple
-					id="email"
+			<Field>
+				<FieldLabel>Email</FieldLabel>
+				<Input
 					type="email"
 					autoComplete="off"
-					aria-invalid={Boolean(errors.email) || undefined}
 					{...register("email", {
 						required: "Please specify an email address",
 					})}
 				/>
-				<InputError>{errors.email?.message || error}</InputError>
-			</InputGroup>
+				<FieldError
+					errors={[errors.email, error ? { message: error } : undefined]}
+				/>
+			</Field>
+			{groups.length > 0 && (
+				<FieldSet>
+					<FieldLegend variant="label">Groups</FieldLegend>
+					<GroupMembershipField
+						groups={groups}
+						memberGroups={groups.filter((group) =>
+							selectedGroups.includes(group.id),
+						)}
+						primaryGroupId={primaryGroup}
+						onAdd={(id) => setValue("groups", [...selectedGroups, id])}
+						onRemove={(id) => {
+							setValue(
+								"groups",
+								selectedGroups.filter((groupId) => groupId !== id),
+							);
+							if (primaryGroup === id) {
+								setValue("primaryGroup", null);
+							}
+						}}
+						onPrimaryGroupChange={(id) => setValue("primaryGroup", id)}
+					/>
+				</FieldSet>
+			)}
 			{canAssignAdministratorRole && (
-				<InputGroup>
-					<InputLabel htmlFor="administrator-role">
-						Administrator role
-					</InputLabel>
+				<Field>
+					<FieldLabel>Administrator role</FieldLabel>
 					<Controller
 						name="administratorRole"
 						control={control}
 						render={({ field }) => (
-							<select
-								className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900"
-								id="administrator-role"
-								value={field.value ?? ""}
-								onChange={(event) => field.onChange(event.target.value || null)}
+							<Select
+								value={field.value ?? "none"}
+								onValueChange={(value) =>
+									field.onChange(
+										roles.find((role) => role.id === value)?.id ?? null,
+									)
+								}
 							>
-								<option value="">None</option>
-								{roles.map((role) => (
-									<option key={role.id} value={role.id}>
-										{role.name}
-									</option>
-								))}
-							</select>
+								<SelectButton className="w-full" icon={ChevronDown} />
+								<SelectContent>
+									<SelectItem value="none">None</SelectItem>
+									{roles.map((role) => (
+										<SelectItem key={role.id} value={role.id}>
+											{role.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						)}
 					/>
-				</InputGroup>
+				</Field>
 			)}
-			<InputGroup>
-				<Controller
-					name="deliveryIntent"
-					control={control}
-					render={({ field }) => (
-						<DeliveryIntentField
-							name={field.name}
-							value={field.value ?? defaultDeliveryIntent}
-							onChange={field.onChange}
-							emailDeliveryAvailable={emailDeliveryAvailable}
-							canConfigureEmailDelivery={canConfigureEmailDelivery}
-						/>
-					)}
-				/>
-			</InputGroup>
+			<Controller
+				name="deliveryIntent"
+				control={control}
+				render={({ field }) => (
+					<DeliveryIntentField
+						name={field.name}
+						value={field.value ?? defaultDeliveryIntent}
+						onChange={field.onChange}
+						emailDeliveryAvailable={emailDeliveryAvailable}
+						canConfigureEmailDelivery={canConfigureEmailDelivery}
+					/>
+				)}
+			/>
 			<div className="flex justify-end items-center mb-2.5">
 				<SaveButton />
 			</div>

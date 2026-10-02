@@ -1,6 +1,6 @@
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
-import Input, { InputGroup } from "../Input";
+import Input from "../Input";
 
 describe("<Input />", () => {
 	it("should forward aria attributes to the underlying input", () => {
@@ -33,19 +33,9 @@ describe("<Input />", () => {
 		expect(getByRole("textbox")).not.toHaveAttribute("aria-invalid");
 	});
 
-	it("should be marked invalid when passed an error", () => {
+	it("should be marked invalid when passed aria-invalid", () => {
 		const { getByRole } = renderWithProviders(
-			<Input aria-label="Handle" error="Handle is required" />,
-		);
-
-		expect(getByRole("textbox")).toBeInvalid();
-	});
-
-	it("should be marked invalid when a surrounding InputGroup has an error", () => {
-		const { getByRole } = renderWithProviders(
-			<InputGroup error="Handle is required">
-				<Input aria-label="Handle" />
-			</InputGroup>,
+			<Input aria-invalid aria-label="Handle" />,
 		);
 
 		expect(getByRole("textbox")).toBeInvalid();

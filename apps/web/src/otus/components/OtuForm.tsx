@@ -1,5 +1,6 @@
 import { DialogFooter } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import { useForm } from "react-hook-form";
 
@@ -37,24 +38,19 @@ export default function OtuForm({
 	return (
 		<form onSubmit={handleSubmit((values) => onSubmit({ ...values }))}>
 			<div className="grid gap-4" style={{ gridTemplateColumns: "9fr 4fr" }}>
-				<InputGroup>
-					<InputLabel htmlFor="name">Name</InputLabel>
-					<InputSimple
-						id="name"
+				<Field>
+					<FieldLabel>Name</FieldLabel>
+					<Input
 						aria-required
-						aria-invalid={Boolean(errors.name) || Boolean(error) || undefined}
-						aria-describedby={errors.name || error ? "name-error" : undefined}
 						{...register("name", { required: "Name required" })}
 					/>
-					<InputError id="name-error">
-						{errors.name?.message || error}
-					</InputError>
-				</InputGroup>
+					<FieldError>{errors.name?.message || error}</FieldError>
+				</Field>
 
-				<InputGroup>
-					<InputLabel htmlFor="acronym">Acronym</InputLabel>
-					<InputSimple id="acronym" {...register("acronym")} />
-				</InputGroup>
+				<Field>
+					<FieldLabel>Acronym</FieldLabel>
+					<Input {...register("acronym")} />
+				</Field>
 			</div>
 			<DialogFooter>
 				<SaveButton />

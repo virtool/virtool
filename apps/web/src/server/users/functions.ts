@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
+	AVATAR_SOURCES,
 	INVALID_EMAIL_MESSAGE,
 	isValidEmail,
 	normalizeEmail,
@@ -57,7 +58,7 @@ import {
 	recentlyAuthenticated,
 } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
-import { signInUsername } from "../auth/sessionActions";
+import { createReplacementSession } from "../auth/sessionActions";
 import { db } from "../composition";
 import { config } from "../config";
 import { isEmailDeliveryAvailable } from "../email/delivery";
@@ -115,6 +116,7 @@ const accountSettingsSchema = z
 		showIds: z.boolean(),
 		showVersions: z.boolean(),
 		skipQuickAnalyzeDialog: z.boolean(),
+		avatarSource: z.enum(AVATAR_SOURCES),
 	})
 	.partial();
 
@@ -465,14 +467,16 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const { account, handle, migrated } = await changePassword(db, {
+			const { account, migrated } = await changePassword(db, {
 				userId: context.principal.userId,
 				oldPassword: data.oldPassword,
 				password: data.password,
 			});
 
+			// Not a fresh sign-in: that would send a TOTP-enrolled user to the
+			// second-factor challenge with no session.
 			if (migrated) {
-				await signInUsername(handle, data.password);
+				await createReplacementSession(context.principal.userId);
 			} else {
 				await establishLegacySession(
 					db,

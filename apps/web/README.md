@@ -16,7 +16,9 @@ Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
 - **Lucide React** for icons
 - **d3** for imperative SVG charts
 - **exceljs** for server-side analysis XLSX exports
-- **Better Auth** with its passkey plugin for human authentication
+- **Better Auth** with its passkey plugin for human authentication, including
+  the browser passkey ceremonies
+- **react-qr-code** for the TOTP enrollment QR code
 
 ## Client development
 
@@ -120,6 +122,22 @@ Size text containers in `rem`; reserve pixels for graphics without text. When
 an API requires a numeric size, resolve a rem value with `useRootFontSize` from
 `@app/hooks`.
 
+### Forms
+
+Put each form control in a `Field` from `@base/Field`, with a `FieldLabel`, an
+optional `FieldDescription`, and a `FieldError`. The field connects them: don't
+set `id`, `htmlFor`, `aria-invalid`, or `aria-describedby` by hand. A control
+built on a new primitive gets these props from `useFieldControl`. Use
+`orientation="horizontal"` for a checkbox, switch, or radio row. Put a
+checkbox or radio before its label, and a switch after its label. When a row
+has a description, wrap its `Field` in `FieldLabel variant="row"` (or `"card"`
+for a bordered choice) and name the control with a `FieldTitle`. A click
+anywhere in the row then toggles the control, and the description stays out
+of the control's name. Put two or
+more related controls in a `FieldSet` with a `FieldLegend`, but don't put a
+single `Field` in a `FieldSet`. To put icons, text, or buttons inside an input,
+use `InputGroup` from `@base/InputGroup`.
+
 ## Server development
 
 ### Layers and boundaries
@@ -179,9 +197,9 @@ Restricted setup credentials may complete only their named transition. Each
 [setupExceptions.ts](src/server/auth/setupExceptions.ts).
 
 Raw routes handle transports RPC can't provide, such as uploads, streaming
-downloads, SSE, probes, metrics, and `/api/auth/*`. They enforce their own
-authorization. `requireAuthenticatedRequest` accepts sessions and API keys;
-server functions are session-only. Better Auth owns sign-in, while Virtool owns
+downloads, avatar images, SSE, probes, metrics, and `/api/auth/*`. They
+enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
+and API keys; server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
 Better Auth is mounted at `/api/auth/$` and composed in
@@ -435,10 +453,20 @@ authority rather than one per kind.
 
 TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
 `Virtool`, six-digit codes, a 30-second period, and ten encrypted recovery
-codes minted with every enrollment. The browser calls the plugin's endpoints
-through `better-auth/client` for enrollment, recovery-code regeneration, and
-disable. Each of these requires the current password; they don't use the
-recent-authentication policy. Trusted devices are not enabled.
+codes minted with every enrollment. The plugin's enrollment, recovery-code
+regeneration, and disable endpoints are reachable over HTTP. Each of these
+requires the current password; they don't use the recent-authentication
+policy. Trusted devices are not enabled. `two-factor/get-totp-uri` is refused
+over HTTP, because it returns the secret again for only the password.
+Enrollment shows the secret one time, from the `enable` response.
+
+`/account/security` holds the email, password, TOTP, passkey, and session
+controls. The browser calls the TOTP endpoints through `twoFactorClient`
+([twoFactor.ts](src/account/twoFactor.ts)). The TOTP secret and recovery codes
+stay in component state only, and the mutations use `gcTime: 0`. The user must
+confirm that they saved new recovery codes before the dialog closes.
+`getAccountSecurityFn` returns the number of unused recovery codes, never the
+codes.
 
 After a correct password, an enrolled user gets Better Auth's login challenge
 instead of a session. The challenge allows five attempts, and ten failures lock
@@ -471,6 +499,81 @@ target in one transaction, so under `required` the target's next sign-in is
 restricted to enrollment. The reset requires `users.two_factor_enabled`. A
 factor row without the flag is an abandoned enrollment, which does not lock the
 user out: their next `two-factor/enable` replaces it.
+
+### Passkeys
+
+A passkey is an optional primary credential. It does not replace the password,
+which stays available for sign-in and recovery. A passkey sign-in goes through
+the same account gates as a password sign-in: `users.active` and the `normal`
+lifecycle state, forced reset, and the `required` MFA policy. A passkey
+verifies the user, so a user enrolled in TOTP does not get a second-factor
+challenge after a passkey. A passkey is not a trusted device.
+
+The browser runs both ceremonies through the plugin's client in
+[`@app/authClient`](src/app/authClient.ts). The requests go to the mounted
+handler, so its forced-reset and MFA-enrollment restrictions apply to them.
+Better Auth checks recent authentication for registration with the same
+15-minute freshness window. The plugin's list, rename, and delete endpoints
+answer 404 over HTTP, because the list returns public keys and counters and the
+mutations skip recent authentication. Server functions call these three through
+`auth.api` and apply Virtool's policies.
+
+The sign-in options and verify paths each allow 3 requests per client IP in 10
+seconds, the same as Better Auth's default rule for `/sign-in/*`. The limit is
+a `rateLimit.customRules` entry. A refused request gets a 429.
+
+| Operation | Entry point | Policy |
+| --- | --- | --- |
+| Sign in | `authClient.signIn.passkey()` | Open, rate limited |
+| Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
+| List | `findPasskeysFn` | `authenticated()`, Better Auth session only |
+| Rename | `renamePasskeyFn` | `passkey.security.update` |
+| Remove | `removePasskeyFn` | `passkey.remove` |
+
+WebAuthn rules:
+
+- The one Relying Party is the configured public origin and the RP ID derived
+  from it. See [the environment guide](../../docs/env.md). A response signed for
+  another origin or RP ID is refused.
+- Both ceremonies require user verification (a PIN or biometric). The pinned
+  plugin verifies with `requireUserVerification: false`, so `afterVerification`
+  hooks in `createAuth` check the flag again. The plugin asks the browser for
+  `preferred` user verification at sign-in, so the browser can offer an
+  authenticator that the server then refuses.
+- Registration asks for a discoverable credential, so a user can sign in without
+  typing a handle.
+- Challenges are server-generated, bound to a signed cookie, valid for five
+  minutes, and deleted when they are used.
+- `auth_passkeys.credential_id` is unique across all users. Registration refuses
+  a credential that is already registered with `PASSKEY_ALREADY_REGISTERED`. A
+  concurrent registration of the same credential can fail with a server error.
+
+Registration sends the user's handle as the passkey name. The authenticator
+shows it as the account label, and it is the stored name. The user can rename
+the passkey. Names are whitespace-normalized, 1 to 64 characters, and contain
+no control characters.
+
+`findPasskeysFn` returns `PasskeySummary` values, oldest first: a management
+id, the name, the creation time, and whether the credential is synced and
+backed up. It never returns the credential id, public key, counter, or AAGUID.
+These flags describe the credential, not a device. A synced passkey can be on
+many devices.
+
+Removal can remove the final passkey, because the password remains. It does
+not change the password, TOTP, recovery codes, API keys, or sessions, including
+a session that the passkey started. A passkey that is gone, or that belongs to
+another user, is not found (404) and is not changed.
+
+In the browser, `@app/passkeys` loads the auth client only when a ceremony
+starts. It maps the client's errors to fixed messages and never shows a browser
+or server message. A stale session on registration opens the
+recent-authentication challenge, and then the ceremony runs again.
+`usePasskeySupport` reads WebAuthn support after hydration and reports `pending`
+during server rendering. `useSingleCeremony` lets a component run only one
+ceremony at a time, and cancels it when the component is removed. Cancellation,
+timeout, and an unsupported browser leave password sign-in available. The login
+form does not start conditional passkey requests. After a passkey sign-in, the
+route guards send a user who must reset their password to the reset form.
 
 ### Server push
 

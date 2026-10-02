@@ -34,8 +34,8 @@ proxy in the path trips and no bytes pass through the server.
   public origin, such as a Front Door route to a private storage account. It
   falls back to `downloadUrl` and then the blob endpoint.
 - **S3** and **`MemoryStorage`** leave the method undefined. Chunked direct
-  upload is an Azure capability, so a caller falls back to the proxied upload
-  route.
+  upload is an Azure capability. The web app returns `503` when it cannot
+  issue an upload URL.
 
 ## Testing
 

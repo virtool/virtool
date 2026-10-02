@@ -13,8 +13,8 @@ const FLOAT_VIEW = new DataView(new ArrayBuffer(8));
  * Round half to even, on the exact binary value of the double.
  *
  * That specification is the whole point, and JavaScript has nothing that meets
- * it. `Math.round` rounds half away from zero, and scaling by a power of ten
- * first (`Math.round(v * 1000) / 1000`) introduces its own error — it gets
+ * it. `Math.round` rounds ties toward positive infinity. Scaling by a power of
+ * ten first (`Math.round(v * 1000) / 1000`) introduces its own error — it gets
  * values such as `2.675` at two places wrong, because the stored double is
  * fractionally *below* the decimal midpoint and so must round down.
  *

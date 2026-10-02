@@ -1,5 +1,5 @@
 import { cn } from "@app/cn";
-import { useIsInvalid } from "@base/Input";
+import { useFieldControl } from "@base/Field";
 import type { ComponentProps } from "react";
 import {
 	inputBaseClasses,
@@ -8,30 +8,28 @@ import {
 } from "./styles";
 
 /** Props for the shared multi-line text input. Accepts any native textarea attribute. */
-export type TextAreaProps = ComponentProps<"textarea"> & {
-	/** Marks the textarea invalid, turning its border and focus ring red. Falls back to the error on a surrounding `InputGroup`. */
-	error?: string;
-};
+export type TextAreaProps = ComponentProps<"textarea">;
 
-export default function TextArea({
-	className,
-	error,
-	...props
-}: TextAreaProps) {
-	const invalid = useIsInvalid(error);
+/**
+ * A multi-line text input that grows with its content. Inside a `Field`, it
+ * takes its `id` and ARIA connections from the field.
+ */
+export default function TextArea({ className, ...props }: TextAreaProps) {
+	const fieldProps = useFieldControl(props);
 
 	return (
 		<textarea
-			aria-invalid={invalid || undefined}
 			className={cn(
 				inputBaseClasses,
 				inputFocusClasses,
 				inputInvalidClasses,
 				"read-only:bg-gray-100",
-				"h-56 resize-y overflow-y-scroll",
+				"field-sizing-content min-h-56 resize-y",
 				className,
 			)}
+			data-slot="textarea"
 			{...props}
+			{...fieldProps}
 		/>
 	);
 }
