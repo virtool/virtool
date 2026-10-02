@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const client = vi.hoisted(() => ({
 	addPasskey: vi.fn(),
+	browserSupportsAutofill: vi.fn(),
 	cancelCeremony: vi.fn(),
 	signInPasskey: vi.fn(),
 }));
@@ -17,6 +18,7 @@ vi.mock("@app/authClient", () => ({
 }));
 
 vi.mock("@simplewebauthn/browser", () => ({
+	browserSupportsWebAuthnAutofill: client.browserSupportsAutofill,
 	WebAuthnAbortService: { cancelCeremony: client.cancelCeremony },
 }));
 
@@ -34,6 +36,7 @@ import {
 	getPasskeyNotice,
 	PasskeyCeremonyError,
 	signInWithPasskey,
+	signInWithPasskeyAutofill,
 	usePasskeySupport,
 	useSingleCeremony,
 } from "../passkeys";
@@ -92,6 +95,44 @@ describe("usePasskeySupport", () => {
 		render(<Support />);
 
 		expect(screen.getByText("unavailable")).toBeInTheDocument();
+	});
+});
+
+describe("signInWithPasskeyAutofill", () => {
+	it("does not start a ceremony where the browser has no autofill", async () => {
+		client.browserSupportsAutofill.mockResolvedValue(false);
+
+		await expect(signInWithPasskeyAutofill()).resolves.toBe(false);
+		expect(client.signInPasskey).not.toHaveBeenCalled();
+	});
+
+	it("resolves true when an autofilled passkey signs the user in", async () => {
+		client.browserSupportsAutofill.mockResolvedValue(true);
+		client.signInPasskey.mockResolvedValue({ data: {}, error: null });
+
+		await expect(signInWithPasskeyAutofill()).resolves.toBe(true);
+		expect(client.signInPasskey).toHaveBeenCalledWith({ autoFill: true });
+	});
+
+	it.each([
+		"ERROR_CEREMONY_ABORTED",
+		"ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+		"AUTH_CANCELLED",
+	])("stops quietly on %s", async (code) => {
+		client.browserSupportsAutofill.mockResolvedValue(true);
+		client.signInPasskey.mockResolvedValue(failure(400, code));
+
+		await expect(signInWithPasskeyAutofill()).resolves.toBe(false);
+	});
+
+	it("rejects with the sign-in failure when the server refuses", async () => {
+		client.browserSupportsAutofill.mockResolvedValue(true);
+		client.signInPasskey.mockResolvedValue(failure(401, "INVALID_CREDENTIALS"));
+
+		const caught = await signInWithPasskeyAutofill().catch((err) => err);
+
+		expect(caught).toBeInstanceOf(PasskeyCeremonyError);
+		expect(caught.kind).toBe("failed");
 	});
 });
 

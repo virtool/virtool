@@ -205,6 +205,44 @@ export async function signInWithPasskey(): Promise<void> {
 }
 
 /**
+ * Offer passkeys in the autofill of the username field, where the browser
+ * supports it.
+ *
+ * The field must have `webauthn` in its `autocomplete`. Resolves `true` when a
+ * passkey signed the user in, and `false` when the browser has no autofill or
+ * the ceremony stopped, for example because an explicit passkey sign-in
+ * replaced it.
+ */
+export async function signInWithPasskeyAutofill(): Promise<boolean> {
+	const [authClient, { browserSupportsWebAuthnAutofill }] = await Promise.all([
+		loadAuthClient(),
+		import("@simplewebauthn/browser"),
+	]);
+	if (!(await browserSupportsWebAuthnAutofill())) {
+		return false;
+	}
+	const { error } = await authClient.signIn.passkey({ autoFill: true });
+	if (!error) {
+		return true;
+	}
+	const { code } = error as AuthClientError;
+	const browserError = toBrowserError({ code, status: error.status }, "");
+	if (
+		browserError?.kind === "cancelled" ||
+		browserError?.kind === "incomplete" ||
+		code === "AUTH_CANCELLED"
+	) {
+		return false;
+	}
+	throw toSignInError(error);
+}
+
+/** Stop the passkey ceremony that is running, if there is one. */
+export function cancelPasskeyCeremony() {
+	loadedAbortService?.cancelCeremony();
+}
+
+/**
  * Register a passkey for the signed-in user through Better Auth.
  *
  * `name` is the account label that the authenticator shows in its picker, and

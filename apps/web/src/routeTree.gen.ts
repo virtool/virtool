@@ -16,6 +16,7 @@ import { Route as EmailRemediationVerifyRouteImport } from './routes/email-remed
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MetricsRouteImport } from './routes/metrics'
+import { Route as MfaEnrollmentRouteImport } from './routes/mfa-enrollment'
 import { Route as MonitoringRouteImport } from './routes/monitoring'
 import { Route as RecoverRouteImport } from './routes/recover'
 import { Route as SetupRouteImport } from './routes/setup'
@@ -45,6 +46,7 @@ import { Route as AuthenticatedAdministrationCachingRouteImport } from './routes
 import { Route as AuthenticatedAdministrationEmailRouteImport } from './routes/_authenticated/administration/email'
 import { Route as AuthenticatedAdministrationGroupsRouteImport } from './routes/_authenticated/administration/groups'
 import { Route as AuthenticatedAdministrationNcbiRouteImport } from './routes/_authenticated/administration/ncbi'
+import { Route as AuthenticatedAdministrationSecurityRouteImport } from './routes/_authenticated/administration/security'
 import { Route as AuthenticatedAdministrationSettingsRouteImport } from './routes/_authenticated/administration/settings'
 import { Route as AuthenticatedAdministrationUploadsRouteImport } from './routes/_authenticated/administration/uploads'
 import { Route as AuthenticatedHmmsIndexRouteImport } from './routes/_authenticated/hmms/index'
@@ -130,6 +132,11 @@ const LoginRoute = LoginRouteImport.update({
 const MetricsRoute = MetricsRouteImport.update({
   id: '/metrics',
   path: '/metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MfaEnrollmentRoute = MfaEnrollmentRouteImport.update({
+  id: '/mfa-enrollment',
+  path: '/mfa-enrollment',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonitoringRoute = MonitoringRouteImport.update({
@@ -288,6 +295,12 @@ const AuthenticatedAdministrationNcbiRoute =
   AuthenticatedAdministrationNcbiRouteImport.update({
     id: '/ncbi',
     path: '/ncbi',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationSecurityRoute =
+  AuthenticatedAdministrationSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
 const AuthenticatedAdministrationSettingsRoute =
@@ -602,6 +615,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
+  '/mfa-enrollment': typeof MfaEnrollmentRoute
   '/monitoring': typeof MonitoringRoute
   '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
@@ -629,6 +643,7 @@ export interface FileRoutesByFullPath {
   '/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
   '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
+  '/administration/security': typeof AuthenticatedAdministrationSecurityRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
   '/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
@@ -690,6 +705,7 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
+  '/mfa-enrollment': typeof MfaEnrollmentRoute
   '/monitoring': typeof MonitoringRoute
   '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
@@ -710,6 +726,7 @@ export interface FileRoutesByTo {
   '/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
   '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
+  '/administration/security': typeof AuthenticatedAdministrationSecurityRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
   '/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
@@ -769,6 +786,7 @@ export interface FileRoutesById {
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
+  '/mfa-enrollment': typeof MfaEnrollmentRoute
   '/monitoring': typeof MonitoringRoute
   '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
@@ -797,6 +815,7 @@ export interface FileRoutesById {
   '/_authenticated/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/_authenticated/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
   '/_authenticated/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
+  '/_authenticated/administration/security': typeof AuthenticatedAdministrationSecurityRoute
   '/_authenticated/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
   '/_authenticated/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/_authenticated/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
@@ -861,6 +880,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/login'
     | '/metrics'
+    | '/mfa-enrollment'
     | '/monitoring'
     | '/recover'
     | '/setup'
@@ -888,6 +908,7 @@ export interface FileRouteTypes {
     | '/administration/email'
     | '/administration/groups'
     | '/administration/ncbi'
+    | '/administration/security'
     | '/administration/settings'
     | '/administration/uploads'
     | '/hmms/$hmmId'
@@ -949,6 +970,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/login'
     | '/metrics'
+    | '/mfa-enrollment'
     | '/monitoring'
     | '/recover'
     | '/setup'
@@ -969,6 +991,7 @@ export interface FileRouteTypes {
     | '/administration/email'
     | '/administration/groups'
     | '/administration/ncbi'
+    | '/administration/security'
     | '/administration/settings'
     | '/administration/uploads'
     | '/hmms/$hmmId'
@@ -1027,6 +1050,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/login'
     | '/metrics'
+    | '/mfa-enrollment'
     | '/monitoring'
     | '/recover'
     | '/setup'
@@ -1055,6 +1079,7 @@ export interface FileRouteTypes {
     | '/_authenticated/administration/email'
     | '/_authenticated/administration/groups'
     | '/_authenticated/administration/ncbi'
+    | '/_authenticated/administration/security'
     | '/_authenticated/administration/settings'
     | '/_authenticated/administration/uploads'
     | '/_authenticated/hmms/$hmmId'
@@ -1118,6 +1143,7 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   MetricsRoute: typeof MetricsRoute
+  MfaEnrollmentRoute: typeof MfaEnrollmentRoute
   MonitoringRoute: typeof MonitoringRoute
   RecoverRoute: typeof RecoverRoute
   SetupRoute: typeof SetupRoute
@@ -1187,6 +1213,13 @@ declare module '@tanstack/react-router' {
       path: '/metrics'
       fullPath: '/metrics'
       preLoaderRoute: typeof MetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mfa-enrollment': {
+      id: '/mfa-enrollment'
+      path: '/mfa-enrollment'
+      fullPath: '/mfa-enrollment'
+      preLoaderRoute: typeof MfaEnrollmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/monitoring': {
@@ -1390,6 +1423,13 @@ declare module '@tanstack/react-router' {
       path: '/ncbi'
       fullPath: '/administration/ncbi'
       preLoaderRoute: typeof AuthenticatedAdministrationNcbiRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/security': {
+      id: '/_authenticated/administration/security'
+      path: '/security'
+      fullPath: '/administration/security'
+      preLoaderRoute: typeof AuthenticatedAdministrationSecurityRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
     '/_authenticated/administration/settings': {
@@ -1765,6 +1805,7 @@ interface AuthenticatedAdministrationRouteRouteChildren {
   AuthenticatedAdministrationEmailRoute: typeof AuthenticatedAdministrationEmailRoute
   AuthenticatedAdministrationGroupsRoute: typeof AuthenticatedAdministrationGroupsRoute
   AuthenticatedAdministrationNcbiRoute: typeof AuthenticatedAdministrationNcbiRoute
+  AuthenticatedAdministrationSecurityRoute: typeof AuthenticatedAdministrationSecurityRoute
   AuthenticatedAdministrationSettingsRoute: typeof AuthenticatedAdministrationSettingsRoute
   AuthenticatedAdministrationUploadsRoute: typeof AuthenticatedAdministrationUploadsRoute
   AuthenticatedAdministrationIndexRoute: typeof AuthenticatedAdministrationIndexRoute
@@ -1783,6 +1824,8 @@ const AuthenticatedAdministrationRouteRouteChildren: AuthenticatedAdministration
     AuthenticatedAdministrationGroupsRoute:
       AuthenticatedAdministrationGroupsRoute,
     AuthenticatedAdministrationNcbiRoute: AuthenticatedAdministrationNcbiRoute,
+    AuthenticatedAdministrationSecurityRoute:
+      AuthenticatedAdministrationSecurityRoute,
     AuthenticatedAdministrationSettingsRoute:
       AuthenticatedAdministrationSettingsRoute,
     AuthenticatedAdministrationUploadsRoute:
@@ -2074,6 +2117,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   MetricsRoute: MetricsRoute,
+  MfaEnrollmentRoute: MfaEnrollmentRoute,
   MonitoringRoute: MonitoringRoute,
   RecoverRoute: RecoverRoute,
   SetupRoute: SetupRoute,

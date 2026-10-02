@@ -235,8 +235,8 @@ does not expose an anonymous recovery URL. An administrator with recent
 authentication can issue a one-time recovery URL, including a copy-only URL
 when delivery is unavailable. Consuming either recovery link changes the
 password and revokes browser and setup sessions and tokens; the user signs in
-again. The minimal `/recover` and `/verify-email` routes consume links now;
-the broader wall experience belongs to the later authentication UX work.
+again. `/recover` and `/verify-email` consume these links; see
+[The wall](#the-wall).
 
 Administrators create human accounts by email invitation and assign access.
 The invitee chooses a handle and password when accepting. A users administrator
@@ -449,6 +449,41 @@ completed setup.
 cookies alongside the application pair, so there is one way to end a browser's
 authority rather than one per kind.
 
+### The wall
+
+The wall is the set of routes that a browser without an ordinary session can
+open. Each route has one job:
+
+| Route | Job |
+| --- | --- |
+| `/login` | Password, passkey, and TOTP or recovery-code sign-in, and the forced password reset |
+| `/setup` | First-instance bootstrap. It redirects to `/login` when a user exists |
+| `/account-setup` | Invitation acceptance from a `#token=` link |
+| `/recover` | Recovery request and recovery-link consumption |
+| `/verify-email` | Email verification links |
+| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation |
+| `/mfa-enrollment` | TOTP enrollment under the `required` MFA policy |
+
+The server decides where a browser goes next. After every sign-in or setup
+transition, `resolveAuthNextStep` ([nextStep.ts](src/wall/nextStep.ts)) removes
+the root and account caches and fetches the account again. A rejection maps to
+one `AuthNextStep`. The `/login`, `/_authenticated`, and `/mfa-enrollment`
+guards use the same mapping, so a restricted principal never renders the
+application shell. Local success in a form is not proof that a restriction
+has lifted.
+
+`safeRedirect` keeps a redirect only if it is a local path outside the wall.
+Each wall step carries the redirect forward. Bearer tokens never go into a
+redirect, a query key, or router search state: `useCapturedUrlParams` reads them
+from the fragment or query one time and removes them from history before any
+request.
+
+The wall shows only `ClientError` messages, which the server writes for users.
+Other failures show a fixed message. The login form offers passkeys in the
+username autofill (`autocomplete="username webauthn"`) where the browser
+supports conditional mediation, and through an explicit button. An explicit
+ceremony cancels the autofill one.
+
 ### Two-factor authentication
 
 TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
@@ -474,8 +509,9 @@ the factor for 15 minutes.
 
 The instance MFA policy is `settings.mfa_policy`, `optional` or `required`.
 Only a full administrator with a recently authenticated session can set it,
-through `setMfaPolicyFn`. It refuses `required` until the caller has enrolled,
-so the policy can't lock out the administrator who sets it.
+through `setMfaPolicyFn` on the **Administration › Security** page. It refuses
+`required` until the caller has enrolled, so the policy can't lock out the
+administrator who sets it.
 
 Under `required`, a Better Auth session whose user has no confirmed TOTP
 resolves to an `mfa_enrollment` principal. A retained legacy session for such a
@@ -490,6 +526,14 @@ functions answer 403 `MfaEnrollmentRequiredError`. In `/api/auth/*`, it can
 reach only `get-session`, `sign-out`, `two-factor/enable`, and
 `two-factor/verify-totp`; every other path answers 403
 `MFA_ENROLLMENT_REQUIRED`. API keys are never challenged or restricted.
+
+The guards send an `mfa_enrollment` principal to `/mfa-enrollment`. The wall
+asks for the password, shows the QR code and setup key from the `enable`
+response, and checks a code with `verify-totp`. It then shows the recovery
+codes one time and continues only after the user confirms that they saved them.
+The secret and the codes stay in component state. A reload after the code check
+does not show the codes again; the user makes new ones on `/account/security`.
+Cancel signs the user out.
 
 `resetUserTotpFn` is the recovery path for a user who has lost both their
 authenticator and their recovery codes. It requires the full administrator role

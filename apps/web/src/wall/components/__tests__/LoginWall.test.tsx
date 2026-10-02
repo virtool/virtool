@@ -3,6 +3,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { mockGetPasswordPolicy } from "@tests/server-fn/settings";
 import {
+	mockGetAccountMfaEnrollmentRequired,
 	mockGetAccountUnauthorized,
 	userServerFnMocks,
 } from "@tests/server-fn/users";
@@ -17,6 +18,7 @@ vi.mock("@app/authClient", () => ({
 }));
 
 vi.mock("@simplewebauthn/browser", () => ({
+	browserSupportsWebAuthnAutofill: async () => false,
 	WebAuthnAbortService: { cancelCeremony: vi.fn() },
 }));
 
@@ -42,7 +44,7 @@ describe("<LoginWall />", () => {
 
 		await waitFor(() => {
 			expect(
-				screen.getByText("Your session ended. Please log in again."),
+				screen.getByText("Your session ended. Sign in again."),
 			).toBeInTheDocument();
 		});
 	});
@@ -51,7 +53,9 @@ describe("<LoginWall />", () => {
 		await renderWall("/login");
 
 		await waitFor(() => {
-			expect(screen.getByRole("button", { name: "Login" })).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Sign in" }),
+			).toBeInTheDocument();
 		});
 		expect(screen.queryByText(/session ended/i)).not.toBeInTheDocument();
 	});
@@ -75,5 +79,30 @@ describe("<LoginWall />", () => {
 		);
 
 		expect(await screen.findByText("Password Reset")).toBeInTheDocument();
+	});
+
+	it("tells a user that another browser already set up Virtool", async () => {
+		await renderWall("/login?reason=setup-complete");
+
+		expect(
+			await screen.findByText(
+				"Virtool is already set up. Sign in to continue.",
+			),
+		).toBeInTheDocument();
+	});
+
+	it("sends a user who must turn on two-factor authentication to enrollment", async () => {
+		mockGetAccountMfaEnrollmentRequired();
+
+		const { router } = await renderRoute("/login?redirect=%2Fsamples", {
+			seed: (queryClient) => {
+				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+			},
+		});
+
+		await waitFor(() =>
+			expect(router.state.location.pathname).toBe("/mfa-enrollment"),
+		);
+		expect(router.state.location.search).toEqual({ redirect: "/samples" });
 	});
 });

@@ -1,9 +1,27 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
+import { createClientError } from "@tests/server-fn/auth";
+import {
+	mockGetAccount,
+	mockGetAccountMfaEnrollmentRequired,
+	userServerFnMocks,
+} from "@tests/server-fn/users";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+} from "@virtool/contracts";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { loginMock, navigateMock, passkeyMock, verifyMock } = vi.hoisted(() => ({
+const {
+	autofillSupportMock,
+	loginMock,
+	navigateMock,
+	passkeyMock,
+	verifyMock,
+} = vi.hoisted(() => ({
+	autofillSupportMock: vi.fn(),
 	loginMock: vi.fn(),
 	navigateMock: vi.fn(),
 	passkeyMock: vi.fn(),
@@ -15,6 +33,7 @@ vi.mock("@app/authClient", () => ({
 }));
 
 vi.mock("@simplewebauthn/browser", () => ({
+	browserSupportsWebAuthnAutofill: autofillSupportMock,
 	WebAuthnAbortService: { cancelCeremony: vi.fn() },
 }));
 
@@ -44,6 +63,12 @@ function passkeyFailure(status: number, code?: string) {
 	};
 }
 
+function rejectAccount(name: string, purpose?: string) {
+	userServerFnMocks.getAccountFn.mockRejectedValue(
+		Object.assign(new Error(name), { name, purpose }),
+	);
+}
+
 function stubPasskeySupport(available: boolean) {
 	vi.stubGlobal("isSecureContext", available);
 	vi.stubGlobal(
@@ -55,7 +80,13 @@ function stubPasskeySupport(available: boolean) {
 import LoginForm from "../LoginForm";
 
 describe("<LoginForm />", () => {
+	beforeEach(() => {
+		autofillSupportMock.mockResolvedValue(false);
+		mockGetAccount(createFakeAccount());
+	});
+
 	afterEach(() => {
+		autofillSupportMock.mockReset();
 		loginMock.mockReset();
 		navigateMock.mockReset();
 		passkeyMock.mockReset();
@@ -65,6 +96,7 @@ describe("<LoginForm />", () => {
 
 	it("carries the redirect into email remediation", async () => {
 		loginMock.mockResolvedValue({ remediation: true, reset: false });
+		rejectAccount(SETUP_REQUIRED_ERROR_NAME, "email_remediation");
 		const setResetRequired = vi.fn();
 
 		renderWithProviders(
@@ -75,12 +107,13 @@ describe("<LoginForm />", () => {
 
 		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
 		await userEvent.type(screen.getByLabelText("Password"), "password");
-		await userEvent.click(screen.getByRole("button", { name: "Login" }));
+		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
 		await waitFor(() =>
 			expect(navigateMock).toHaveBeenCalledWith({
 				to: "/email-remediation",
 				search: { redirect: "/samples" },
+				replace: true,
 			}),
 		);
 	});
@@ -101,7 +134,7 @@ describe("<LoginForm />", () => {
 
 		await user.type(await screen.findByLabelText("Username"), handle);
 		await user.type(screen.getByLabelText("Password"), password);
-		await user.click(screen.getByRole("button", { name: "Login" }));
+		await user.click(screen.getByRole("button", { name: "Sign in" }));
 
 		await waitFor(() => expect(loginMock).toHaveBeenCalledTimes(1));
 		expect(loginMock).toHaveBeenCalledWith(
@@ -120,7 +153,7 @@ describe("<LoginForm />", () => {
 		const errorMessage = "Invalid handle or password.";
 		const setResetRequired = vi.fn();
 
-		loginMock.mockRejectedValue(new Error(errorMessage));
+		loginMock.mockRejectedValue(createClientError(errorMessage));
 
 		renderWithProviders(
 			<MemoryRouter>
@@ -130,7 +163,7 @@ describe("<LoginForm />", () => {
 
 		await user.type(await screen.findByLabelText("Username"), handle);
 		await user.type(screen.getByLabelText("Password"), password);
-		await user.click(screen.getByRole("button", { name: "Login" }));
+		await user.click(screen.getByRole("button", { name: "Sign in" }));
 
 		expect(await screen.findByText(errorMessage)).toBeInTheDocument();
 	});
@@ -139,9 +172,10 @@ describe("<LoginForm />", () => {
 		const user = userEvent.setup();
 		loginMock.mockResolvedValue({ twoFactorRedirect: true });
 		verifyMock.mockRejectedValueOnce(
-			new Error("Invalid or expired verification code."),
+			createClientError("Invalid or expired verification code."),
 		);
 		verifyMock.mockResolvedValueOnce({ reset: true });
+		rejectAccount(PASSWORD_RESET_REQUIRED_ERROR_NAME);
 		const setResetRequired = vi.fn();
 		renderWithProviders(
 			<MemoryRouter>
@@ -150,7 +184,7 @@ describe("<LoginForm />", () => {
 		);
 		await user.type(await screen.findByLabelText("Username"), "Alice");
 		await user.type(screen.getByLabelText("Password"), "password");
-		await user.click(screen.getByRole("button", { name: "Login" }));
+		await user.click(screen.getByRole("button", { name: "Sign in" }));
 		await user.type(
 			await screen.findByLabelText("Authentication code"),
 			"123456",
@@ -177,7 +211,134 @@ describe("<LoginForm />", () => {
 		);
 	});
 
+	it("hides an unexpected error behind a generic message", async () => {
+		loginMock.mockRejectedValue(new Error("BETTER_AUTH internal detail"));
+
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm setResetRequired={vi.fn()} />
+			</MemoryRouter>,
+		);
+
+		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+		await userEvent.type(screen.getByLabelText("Password"), "password");
+		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent("Sign-in failed. Try again.");
+		expect(alert).not.toHaveTextContent("BETTER_AUTH");
+	});
+
+	it("sends a user who must turn on two-factor authentication to enrollment", async () => {
+		loginMock.mockResolvedValue({ reset: false });
+		mockGetAccountMfaEnrollmentRequired();
+
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm redirect="/samples" setResetRequired={vi.fn()} />
+			</MemoryRouter>,
+		);
+
+		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+		await userEvent.type(screen.getByLabelText("Password"), "password");
+		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+		await waitFor(() =>
+			expect(navigateMock).toHaveBeenCalledWith({
+				to: "/mfa-enrollment",
+				search: { redirect: "/samples" },
+				replace: true,
+			}),
+		);
+	});
+
+	it("uses a numeric field for the authenticator code", async () => {
+		loginMock.mockResolvedValue({ twoFactorRedirect: true });
+
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm setResetRequired={vi.fn()} />
+			</MemoryRouter>,
+		);
+
+		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+		await userEvent.type(screen.getByLabelText("Password"), "password");
+		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+		const field = await screen.findByLabelText("Authentication code");
+		expect(field).toHaveAttribute("inputmode", "numeric");
+		expect(field).toHaveAttribute("autocomplete", "one-time-code");
+
+		await userEvent.type(field, "12ab");
+		await userEvent.click(screen.getByRole("button", { name: "Verify" }));
+		expect(
+			await screen.findByText("Enter the 6-digit code"),
+		).toBeInTheDocument();
+		expect(verifyMock).not.toHaveBeenCalled();
+	});
+
+	it("returns from the challenge to the sign-in form", async () => {
+		loginMock.mockResolvedValue({ twoFactorRedirect: true });
+
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm setResetRequired={vi.fn()} />
+			</MemoryRouter>,
+		);
+
+		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+		await userEvent.type(screen.getByLabelText("Password"), "password");
+		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Back to sign in" }),
+		);
+
+		expect(
+			await screen.findByRole("button", { name: "Sign in" }),
+		).toBeInTheDocument();
+	});
+
 	describe("passkey sign-in", () => {
+		it("offers passkeys in the username autofill", async () => {
+			stubPasskeySupport(true);
+			autofillSupportMock.mockResolvedValue(true);
+			passkeyMock.mockResolvedValue({ data: {}, error: null });
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm redirect="/samples" setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			expect(await screen.findByLabelText("Username")).toHaveAttribute(
+				"autocomplete",
+				"username webauthn",
+			);
+			await waitFor(() =>
+				expect(passkeyMock).toHaveBeenCalledWith({ autoFill: true }),
+			);
+			await waitFor(() =>
+				expect(navigateMock).toHaveBeenCalledWith({
+					to: "/samples",
+					replace: true,
+				}),
+			);
+		});
+
+		it("does not start autofill where the browser has none", async () => {
+			stubPasskeySupport(true);
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await waitFor(() => expect(autofillSupportMock).toHaveBeenCalled());
+			expect(passkeyMock).not.toHaveBeenCalled();
+			expect(screen.queryByRole("alert")).toBeNull();
+		});
+
 		it("signs in and follows the redirect", async () => {
 			stubPasskeySupport(true);
 			passkeyMock.mockResolvedValue({ data: {}, error: null });
@@ -193,7 +354,10 @@ describe("<LoginForm />", () => {
 			);
 
 			await waitFor(() =>
-				expect(navigateMock).toHaveBeenCalledWith({ to: "/samples" }),
+				expect(navigateMock).toHaveBeenCalledWith({
+					to: "/samples",
+					replace: true,
+				}),
 			);
 		});
 
@@ -216,7 +380,7 @@ describe("<LoginForm />", () => {
 				"password{enter}",
 			);
 
-			expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+			expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
 			expect(loginMock).not.toHaveBeenCalled();
 		});
 
@@ -232,7 +396,7 @@ describe("<LoginForm />", () => {
 
 			await userEvent.type(await screen.findByLabelText("Username"), "Alice");
 			await userEvent.type(screen.getByLabelText("Password"), "password");
-			await userEvent.click(screen.getByRole("button", { name: "Login" }));
+			await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
 			await waitFor(() =>
 				expect(
@@ -263,10 +427,10 @@ describe("<LoginForm />", () => {
 
 			await userEvent.type(screen.getByLabelText("Username"), "Alice");
 			await userEvent.type(screen.getByLabelText("Password"), "password");
-			await userEvent.click(screen.getByRole("button", { name: "Login" }));
+			await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
 			await waitFor(() =>
-				expect(navigateMock).toHaveBeenCalledWith({ to: "/" }),
+				expect(navigateMock).toHaveBeenCalledWith({ to: "/", replace: true }),
 			);
 		});
 
@@ -350,7 +514,7 @@ describe("<LoginForm />", () => {
 			expect(
 				screen.queryByRole("button", { name: "Sign in with a passkey" }),
 			).toBeNull();
-			expect(screen.getByRole("button", { name: "Login" })).toBeEnabled();
+			expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
 		});
 	});
 });

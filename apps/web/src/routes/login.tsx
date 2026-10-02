@@ -1,15 +1,11 @@
 import { oneOfOptional, safeRedirect } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import {
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
-	SETUP_REQUIRED_ERROR_NAME,
-} from "@virtool/contracts";
 import LoginWall from "@wall/components/LoginWall";
 
 /** Search params for the login wall. */
 type LoginSearch = {
-	reason?: "remediation-expired" | "session-ended";
+	reason?: "remediation-expired" | "session-ended" | "setup-complete";
 	redirect?: string;
 };
 
@@ -20,6 +16,7 @@ function validateLoginSearch(
 		reason: oneOfOptional(input.reason, [
 			"remediation-expired",
 			"session-ended",
+			"setup-complete",
 		] as const),
 		redirect: safeRedirect(input.redirect),
 	};
@@ -29,26 +26,20 @@ export const Route = createFileRoute("/login")({
 	validateSearch: validateLoginSearch,
 	beforeLoad: async ({ context, search }) => {
 		const { queryClient } = context;
-		const { accountQueryOptions } = await import("@account/account");
+		const [{ accountQueryOptions }, { getAuthNextStep, getAuthNextStepRoute }] =
+			await Promise.all([import("@account/account"), import("@wall/nextStep")]);
 
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
 		} catch (error) {
+			const step = getAuthNextStep(error);
 			if (
-				error instanceof Error &&
-				error.name === SETUP_REQUIRED_ERROR_NAME &&
-				(error as Error & { purpose?: string }).purpose === "email_remediation"
+				step?.type === "email_remediation" ||
+				step?.type === "mfa_enrollment"
 			) {
-				throw redirect({
-					to: "/email-remediation",
-					search: { redirect: search.redirect },
-				});
+				throw redirect(getAuthNextStepRoute(step, search.redirect));
 			}
-			return {
-				passwordResetRequired:
-					error instanceof Error &&
-					error.name === PASSWORD_RESET_REQUIRED_ERROR_NAME,
-			};
+			return { passwordResetRequired: step?.type === "password_reset" };
 		}
 
 		throw redirect({ to: search.redirect ?? "/" });

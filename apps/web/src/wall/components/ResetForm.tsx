@@ -2,8 +2,9 @@ import Button from "@base/Button";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
 import { usePasswordRules } from "@forms/password";
-import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
+import { getWallErrorMessage } from "../errors";
+import { useFollowAuthNextStep } from "../hooks";
 import { useResetPasswordMutation } from "../queries";
 import { WallTitle } from "./WallTitle";
 
@@ -22,26 +23,18 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 		defaultValues: { password: "" },
 	});
 	const resetPasswordMutation = useResetPasswordMutation();
-	const navigate = useNavigate();
+	const follow = useFollowAuthNextStep();
 	const passwordRules = usePasswordRules();
 
 	function onSubmit({ password }: { password: string }) {
+		if (resetPasswordMutation.isPending) {
+			return;
+		}
+		// The mutation rotates the session cookies. The server then says which
+		// step comes next.
 		resetPasswordMutation.mutate(
 			{ password },
-			// The mutation rotates the session cookies and invalidates the account
-			// query, but navigation still belongs to the form.
-			{
-				onSuccess: (data) => {
-					if (data.remediation) {
-						navigate({
-							to: "/email-remediation",
-							search: { redirect },
-						});
-						return;
-					}
-					navigate({ to: redirect ?? "/" });
-				},
-			},
+			{ onSuccess: () => void follow(redirect) },
 		);
 	}
 
@@ -65,7 +58,10 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 					<FieldError errors={[errors.password]}>
 						{errors.password || !isError
 							? undefined
-							: error?.message || "An error occurred during password reset"}
+							: getWallErrorMessage(
+									error,
+									"Your password could not be changed. Try again.",
+								)}
 					</FieldError>
 				</Field>
 				<Button type="submit" color="blue" disabled={isPending}>

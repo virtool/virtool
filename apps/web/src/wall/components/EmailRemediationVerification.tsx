@@ -7,7 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 import type { EmailRemediationVerificationResult } from "@virtool/contracts";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { type Dispatch, type SetStateAction, useState } from "react";
-import { useCapturedUrlParams } from "../hooks";
+import { useCapturedUrlParams, useFollowAuthNextStep } from "../hooks";
 import { rootQueryKeys } from "../keys";
 import { completeEmailRemediation } from "../queries";
 import { WallContainer } from "./WallContainer";
@@ -37,6 +37,7 @@ export default function EmailRemediationVerification() {
 	const [state, setState] = useState<VerificationState>({ status: "loading" });
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const follow = useFollowAuthNextStep();
 
 	useCapturedUrlParams(["token", "redirect"], (params) => {
 		const token = params.token;
@@ -59,12 +60,12 @@ export default function EmailRemediationVerification() {
 		if (state.status === "loading" || state.status === "interrupted") {
 			return;
 		}
-		queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
-		queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
 		if (state.authenticated) {
-			navigate({ to: state.redirect ?? "/" });
+			void follow(state.redirect);
 			return;
 		}
+		queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
+		queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
 		navigate({
 			to: "/login",
 			search: { redirect: state.redirect },

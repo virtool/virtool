@@ -1,6 +1,6 @@
 import Alert from "@base/Alert";
 import { getRouteApi } from "@tanstack/react-router";
-import { TriangleAlert } from "lucide-react";
+import { Info, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import LoginForm from "./LoginForm";
 import ResetForm from "./ResetForm";
@@ -19,12 +19,17 @@ export default function LoginWall() {
 		<WallContainer>
 			{reason === "remediation-expired" && (
 				<Alert color="orange" icon={TriangleAlert} level>
-					Your email setup expired. Log in again to continue.
+					Your email setup expired. Sign in again to continue.
+				</Alert>
+			)}
+			{reason === "setup-complete" && (
+				<Alert color="blue" icon={Info} level>
+					Virtool is already set up. Sign in to continue.
 				</Alert>
 			)}
 			{reason === "session-ended" && (
 				<Alert color="orange" icon={TriangleAlert} level>
-					Your session ended. Please log in again.
+					Your session ended. Sign in again.
 				</Alert>
 			)}
 			{passwordResetRequired || isResetRequired ? (

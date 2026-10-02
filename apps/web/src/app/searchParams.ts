@@ -25,14 +25,30 @@ export function strOptional(value: unknown): string | undefined {
 	return typeof value === "string" ? value : undefined;
 }
 
+// A redirect to one of these would return to the wall after sign-in.
+const WALL_PATHS = [
+	"/login",
+	"/setup",
+	"/account-setup",
+	"/recover",
+	"/verify-email",
+	"/email-remediation",
+	"/email-remediation-verify",
+	"/mfa-enrollment",
+];
+
 /** Return an internal post-authentication redirect, or discard it. */
 export function safeRedirect(value: unknown): string | undefined {
 	const target = strOptional(value);
 	return target?.startsWith("/") &&
 		!target.startsWith("//") &&
-		!target.startsWith("/login") &&
-		target !== "/setup" &&
-		!target.startsWith("/email-remediation")
+		!WALL_PATHS.some(
+			(path) =>
+				target === path ||
+				target.startsWith(`${path}/`) ||
+				target.startsWith(`${path}?`) ||
+				target.startsWith(`${path}#`),
+		)
 		? target
 		: undefined;
 }

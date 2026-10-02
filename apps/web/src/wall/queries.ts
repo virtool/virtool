@@ -23,13 +23,6 @@ import { rootQueryKeys } from "@wall/keys";
 /** Result of a login attempt. */
 export type LoginResult = Awaited<ReturnType<typeof loginFn>>;
 
-/** Result of a successful password reset. */
-export type ResetPasswordResult = {
-	login: false;
-	remediation: boolean;
-	reset: false;
-};
-
 /** Query options for resumable restricted email-remediation state. */
 export function emailRemediationQueryOptions() {
 	return queryOptions({
@@ -70,19 +63,13 @@ export function useCreateFirstUser() {
 /**
  * Initializes a mutator for sending a login request to the API.
  *
- * @returns A mutator for sending a login request to the API.
+ * The caller resolves the next step, which drops the previous principal's
+ * caches.
  */
 export function useLoginMutation() {
-	const queryClient = useQueryClient();
-
 	return useMutation<LoginResult, Error, { handle: string; password: string }>({
 		mutationFn: ({ handle, password }) =>
 			loginFn({ data: { handle, password } }),
-		onSuccess: (data) => {
-			if (!("twoFactorRedirect" in data) && !data.reset) {
-				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
-			}
-		},
 	});
 }
 
@@ -90,48 +77,29 @@ export function useLoginMutation() {
  * Initializes a mutator that signs in with a passkey.
  *
  * A passkey verifies the user, so a TOTP-enrolled user does not get the
- * second-factor step. A user who must reset their password gets a session
- * restricted to the reset, and the route guards send them to the reset form.
+ * second-factor step.
  */
 export function usePasskeySignInMutation() {
-	const queryClient = useQueryClient();
 	const ceremony = useSingleCeremony(signInWithPasskey);
 
 	return useMutation<void, Error, void>({
 		mutationFn: ceremony,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
-		},
 	});
 }
 
-/**
- * Initializes a mutator for sending a password reset request to the API.
- *
- * @returns A mutator for sending a password reset request to the API.
- */
+/** Initializes a mutator that changes the password of a forced-reset session. */
 export function useResetPasswordMutation() {
-	const queryClient = useQueryClient();
-
-	return useMutation<ResetPasswordResult, Error, { password: string }>({
-		mutationFn: ({ password }) => resetPasswordFn({ data: { password } }),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
-		},
+	return useMutation({
+		mutationFn: ({ password }: { password: string }) =>
+			resetPasswordFn({ data: { password } }),
 	});
 }
 
-/** Verify a second factor before refreshing authenticated account data. */
+/** Verify a second factor to finish signing in. */
 export function useVerifyTwoFactorMutation() {
-	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (data: { code: string; recovery: boolean }) =>
 			verifyTwoFactorFn({ data }),
-		onSuccess: (data) => {
-			if (!data.reset) {
-				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
-			}
-		},
 	});
 }
 
