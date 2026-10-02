@@ -29,7 +29,7 @@ function SessionItem({ session }: SessionItemProps) {
 		<BoxGroupSection className="flex items-center justify-between gap-4">
 			<div className="flex flex-col gap-1">
 				<div className="flex items-center gap-2">
-					<span className="font-medium text-lg">{name}</span>
+					<span className="font-medium text-base">{name}</span>
 					{session.isCurrent && <Label>This browser</Label>}
 				</div>
 				<span className="text-gray-600 text-sm">
@@ -96,7 +96,11 @@ function SignOutOthers() {
 			confirmLabel="Sign out all"
 			message="Sign out every browser except this one? Those browsers must sign in again to use Virtool."
 			onConfirm={() => mutation.mutateAsync()}
-			trigger={<Button color="red">Sign out other sessions</Button>}
+			trigger={
+				<Button color="red" size="medium">
+					Sign out other sessions
+				</Button>
+			}
 		/>
 	);
 }

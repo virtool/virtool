@@ -2,8 +2,10 @@ import Button from "@base/Button";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
 import { usePasswordRules } from "@forms/password";
-import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { getWallErrorMessage } from "../errors";
+import { useFollowAuthNextStep } from "../hooks";
 import { useResetPasswordMutation } from "../queries";
 import { WallTitle } from "./WallTitle";
 
@@ -22,30 +24,37 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 		defaultValues: { password: "" },
 	});
 	const resetPasswordMutation = useResetPasswordMutation();
-	const navigate = useNavigate();
+	const [continuing, setContinuing] = useState(false);
+	const [continueError, setContinueError] = useState(false);
+	const follow = useFollowAuthNextStep();
 	const passwordRules = usePasswordRules();
 
+	async function continueAfterReset() {
+		setContinuing(true);
+		setContinueError(false);
+		try {
+			await follow(redirect);
+		} catch {
+			setContinueError(true);
+		} finally {
+			setContinuing(false);
+		}
+	}
+
 	function onSubmit({ password }: { password: string }) {
+		if (resetPasswordMutation.isPending || resetPasswordMutation.isSuccess) {
+			return;
+		}
+		// The mutation rotates the session cookies. The server then says which
+		// step comes next.
 		resetPasswordMutation.mutate(
 			{ password },
-			// The mutation rotates the session cookies and invalidates the account
-			// query, but navigation still belongs to the form.
-			{
-				onSuccess: (data) => {
-					if (data.remediation) {
-						navigate({
-							to: "/email-remediation",
-							search: { redirect },
-						});
-						return;
-					}
-					navigate({ to: redirect ?? "/" });
-				},
-			},
+			{ onSuccess: () => void continueAfterReset() },
 		);
 	}
 
 	const { error, isError, isPending } = resetPasswordMutation;
+	const isBusy = isPending || continuing;
 
 	return (
 		<>
@@ -65,12 +74,30 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 					<FieldError errors={[errors.password]}>
 						{errors.password || !isError
 							? undefined
-							: error?.message || "An error occurred during password reset"}
+							: getWallErrorMessage(
+									error,
+									"Your password could not be changed. Try again.",
+								)}
 					</FieldError>
 				</Field>
-				<Button type="submit" color="blue" disabled={isPending}>
-					Reset
-				</Button>
+				{continueError ? (
+					<>
+						<p role="alert" className="my-2 font-medium text-red-600">
+							Your password was changed, but Virtool could not be reached.
+						</p>
+						<Button
+							color="blue"
+							disabled={continuing}
+							onClick={() => void continueAfterReset()}
+						>
+							Continue
+						</Button>
+					</>
+				) : (
+					<Button type="submit" color="blue" disabled={isBusy}>
+						Reset
+					</Button>
+				)}
 			</form>
 		</>
 	);

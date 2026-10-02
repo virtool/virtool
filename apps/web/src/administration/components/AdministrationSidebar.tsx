@@ -7,6 +7,7 @@ import {
 	FileUp,
 	Mail,
 	Megaphone,
+	ShieldCheck,
 	UserRound,
 	UsersRound,
 } from "lucide-react";
@@ -23,7 +24,7 @@ export default function AdministrationSidebar({
 		"settings",
 		administratorRole,
 	);
-	const canManageEmail = hasSufficientAdminRole("full", administratorRole);
+	const isFullAdministrator = hasSufficientAdminRole("full", administratorRole);
 	const groups: SideNavGroup[] = [];
 
 	if (canManageSettings) {
@@ -40,6 +41,15 @@ export default function AdministrationSidebar({
 		items: [
 			{ icon: UserRound, label: "Users", to: "/administration/users" },
 			{ icon: UsersRound, label: "Groups", to: "/administration/groups" },
+			...(isFullAdministrator
+				? [
+						{
+							icon: ShieldCheck,
+							label: "Security",
+							to: "/administration/security",
+						},
+					]
+				: []),
 		],
 	});
 
@@ -53,7 +63,7 @@ export default function AdministrationSidebar({
 		});
 	}
 
-	if (canManageEmail) {
+	if (isFullAdministrator) {
 		groups.push({
 			label: "Communication",
 			items: [

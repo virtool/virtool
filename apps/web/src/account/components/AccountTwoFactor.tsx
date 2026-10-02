@@ -45,16 +45,11 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 				<BoxGroupSection className="flex items-center justify-between gap-4">
 					<div className="flex flex-col gap-1">
 						<div className="flex items-center gap-2">
-							<span className="font-medium text-lg">Authenticator app</span>
+							<span className="font-medium text-base">Authenticator app</span>
 							<Label color={twoFactorEnabled ? "green" : "gray"}>
 								{twoFactorEnabled ? "On" : "Off"}
 							</Label>
 						</div>
-						<span className="text-gray-600 text-sm">
-							{twoFactorEnabled
-								? `${recoveryCodesRemaining ?? 0} recovery ${recoveryCodesRemaining === 1 ? "code" : "codes"} left`
-								: "Not set up"}
-						</span>
 						{mfaRequired && (
 							<span className="text-gray-600 text-sm">
 								This Virtool instance requires two-factor authentication.
@@ -68,7 +63,7 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 								<TwoFactorDisable mfaRequired={mfaRequired} />
 							</>
 						) : (
-							<Button color="blue" onClick={onSetUp}>
+							<Button color="blue" size="medium" onClick={onSetUp}>
 								Set up
 							</Button>
 						)}

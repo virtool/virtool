@@ -36,9 +36,14 @@ export const Route = createFileRoute("/_authenticated")({
 	beforeLoad: async ({ context, location }) => {
 		const { queryClient } = context;
 
-		const [{ rootQueryOptions }, { accountQueryOptions }] = await Promise.all([
+		const [
+			{ rootQueryOptions },
+			{ accountQueryOptions },
+			{ getAuthNextStep, getAuthNextStepRoute },
+		] = await Promise.all([
 			import("@nav/queries"),
 			import("@account/account"),
+			import("@wall/nextStep"),
 		]);
 
 		const rootData = await queryClient.ensureQueryData(rootQueryOptions());
@@ -49,11 +54,13 @@ export const Route = createFileRoute("/_authenticated")({
 
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
-		} catch {
-			throw redirect({
-				to: "/login",
-				search: { redirect: location.href },
-			});
+		} catch (error) {
+			throw redirect(
+				getAuthNextStepRoute(
+					getAuthNextStep(error) ?? { type: "login" },
+					location.href,
+				),
+			);
 		}
 	},
 	component: AuthenticatedLayout,

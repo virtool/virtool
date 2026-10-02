@@ -1,4 +1,5 @@
-import { getPasskeyNotice, usePasskeySupport } from "@app/passkeys";
+import { usePasskeySupport } from "@app/passkeySupport";
+import { getPasskeyNotice } from "@app/passkeys";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
@@ -69,6 +70,7 @@ export default function AccountPasskeys({ handle }: AccountPasskeysProps) {
 						<span>Add a passkey for this browser or device.</span>
 						<Button
 							color="blue"
+							size="medium"
 							disabled={support !== "available" || registerMutation.isPending}
 							onClick={() => registerMutation.mutate(handle)}
 						>

@@ -1,5 +1,9 @@
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts, authTwoFactors } from "@virtool/data/db/schema/auth";
+import {
+	authAccounts,
+	authPasskeys,
+	authTwoFactors,
+} from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -101,7 +105,11 @@ beforeEach(async () => {
 	});
 });
 
-async function signIn({ totp = false, createdAt = new Date() } = {}) {
+async function signIn({
+	totp = false,
+	passkey = false,
+	createdAt = new Date(),
+} = {}) {
 	const password = await hashPassword("correct-password");
 	const userId = await seedUser(db, { password });
 	const now = new Date();
@@ -121,6 +129,16 @@ async function signIn({ totp = false, createdAt = new Date() } = {}) {
 			verified: true,
 		});
 	}
+	if (passkey) {
+		await db.insert(authPasskeys).values({
+			backedUp: true,
+			counter: 0,
+			credentialID: "credential",
+			deviceType: "multiDevice",
+			publicKey: "public-key",
+			userId,
+		});
+	}
 	const session = await seedSession(db, userId, { createdAt });
 	currentUserId = userId;
 	currentSessionId = session.sessionId;
@@ -136,8 +154,19 @@ describe("getRecentAuthenticationMethodsFn", () => {
 		await signIn({ totp: true });
 
 		await expect(call("getRecentAuthenticationMethodsFn")).resolves.toEqual({
+			passkey: false,
 			password: true,
 			totp: true,
+		});
+	});
+
+	it("reports a registered passkey", async () => {
+		await signIn({ passkey: true });
+
+		await expect(call("getRecentAuthenticationMethodsFn")).resolves.toEqual({
+			passkey: true,
+			password: true,
+			totp: false,
 		});
 	});
 });
@@ -202,6 +231,30 @@ describe("challengeRecentAuthenticationFn", () => {
 
 		const request = handleAuthRequest.mock.calls[0]?.[0] as Request;
 		expect(await request.json()).toEqual({ method: "totp", code: "012345" });
+	});
+
+	it("forwards passkey assertions to the rate-limited handler", async () => {
+		await signIn({ passkey: true });
+		const response = {
+			id: "credential",
+			rawId: "credential",
+			type: "public-key",
+			response: {
+				clientDataJSON: "client-data",
+				authenticatorData: "authenticator-data",
+				signature: "signature",
+			},
+			clientExtensionResults: {},
+		};
+
+		await call("challengeRecentAuthenticationFn", {
+			method: "passkey",
+			response,
+		});
+
+		const request = handleAuthRequest.mock.calls[0]?.[0] as Request;
+		expect(await request.json()).toEqual({ method: "passkey", response });
+		expect(createStepUpSession).toHaveBeenCalledTimes(1);
 	});
 
 	it.each([

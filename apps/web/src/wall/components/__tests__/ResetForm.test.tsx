@@ -1,11 +1,19 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
+import { createClientError } from "@tests/server-fn/auth";
 import {
 	mockGetPasswordPolicy,
 	settingsServerFnMocks,
 } from "@tests/server-fn/settings";
+import {
+	mockGetAccount,
+	mockGetAccountMfaEnrollmentRequired,
+	userServerFnMocks,
+} from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { SETUP_REQUIRED_ERROR_NAME } from "@virtool/contracts";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { navigateMock, resetPasswordMock } = vi.hoisted(() => ({
 	navigateMock: vi.fn(),
@@ -30,6 +38,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
 import ResetForm from "../ResetForm";
 
 describe("<ResetForm />", () => {
+	beforeEach(() => {
+		mockGetAccount(createFakeAccount());
+	});
+
 	afterEach(() => {
 		navigateMock.mockReset();
 		resetPasswordMock.mockReset();
@@ -56,7 +68,7 @@ describe("<ResetForm />", () => {
 		const password = "P@ssword123";
 		const errorMessage = "Cannot reuse current password";
 
-		resetPasswordMock.mockRejectedValue(new Error(errorMessage));
+		resetPasswordMock.mockRejectedValue(createClientError(errorMessage));
 
 		renderWithProviders(<ResetForm />);
 
@@ -147,7 +159,10 @@ describe("<ResetForm />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
 
 		await waitFor(() =>
-			expect(navigateMock).toHaveBeenCalledWith({ to: "/samples" }),
+			expect(navigateMock).toHaveBeenCalledWith({
+				to: "/samples",
+				replace: true,
+			}),
 		);
 	});
 
@@ -157,6 +172,12 @@ describe("<ResetForm />", () => {
 			remediation: true,
 			reset: false,
 		});
+		userServerFnMocks.getAccountFn.mockRejectedValue(
+			Object.assign(new Error("Setup required"), {
+				name: SETUP_REQUIRED_ERROR_NAME,
+				purpose: "email_remediation",
+			}),
+		);
 
 		renderWithProviders(<ResetForm redirect="/samples" />);
 
@@ -167,6 +188,7 @@ describe("<ResetForm />", () => {
 			expect(navigateMock).toHaveBeenCalledWith({
 				to: "/email-remediation",
 				search: { redirect: "/samples" },
+				replace: true,
 			}),
 		);
 	});
@@ -179,6 +201,26 @@ describe("<ResetForm />", () => {
 		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
 
-		await waitFor(() => expect(navigateMock).toHaveBeenCalledWith({ to: "/" }));
+		await waitFor(() =>
+			expect(navigateMock).toHaveBeenCalledWith({ to: "/", replace: true }),
+		);
+	});
+
+	it("follows the server into two-factor enrollment after a reset", async () => {
+		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
+		mockGetAccountMfaEnrollmentRequired();
+
+		renderWithProviders(<ResetForm />);
+
+		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
+		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+		await waitFor(() =>
+			expect(navigateMock).toHaveBeenCalledWith({
+				to: "/mfa-enrollment",
+				search: { redirect: undefined },
+				replace: true,
+			}),
+		);
 	});
 });

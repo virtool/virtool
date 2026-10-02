@@ -15,6 +15,7 @@ export const settingsServerFnMocks = {
 	getCacheUsageFn: vi.fn(),
 	getPasswordPolicyFn: vi.fn(),
 	getSettingsFn: vi.fn(),
+	setMfaPolicyFn: vi.fn(),
 	setNcbiApiKeyFn: vi.fn(),
 	updateSettingsFn: vi.fn(),
 };
@@ -62,6 +63,7 @@ export function mockUpdateSettings(settings: Settings): Mock {
 export function mockSettingsStore(initial: Settings): {
 	clearNcbiApiKey: Mock;
 	getSettings: Mock;
+	setMfaPolicy: Mock;
 	setNcbiApiKey: Mock;
 	updateSettings: Mock;
 } {
@@ -72,6 +74,13 @@ export function mockSettingsStore(initial: Settings): {
 	settingsServerFnMocks.updateSettingsFn.mockImplementation(
 		async ({ data }: { data: Partial<Settings> }) => {
 			current = { ...current, ...data };
+			return current;
+		},
+	);
+
+	settingsServerFnMocks.setMfaPolicyFn.mockImplementation(
+		async ({ data }: { data: Pick<Settings, "mfaPolicy"> }) => {
+			current = { ...current, mfaPolicy: data.mfaPolicy };
 			return current;
 		},
 	);
@@ -93,6 +102,7 @@ export function mockSettingsStore(initial: Settings): {
 	return {
 		clearNcbiApiKey: settingsServerFnMocks.clearNcbiApiKeyFn,
 		getSettings: settingsServerFnMocks.getSettingsFn,
+		setMfaPolicy: settingsServerFnMocks.setMfaPolicyFn,
 		setNcbiApiKey: settingsServerFnMocks.setNcbiApiKeyFn,
 		updateSettings: settingsServerFnMocks.updateSettingsFn,
 	};

@@ -209,8 +209,10 @@ server-function authentication and CSRF middleware, so Better Auth performs its
 own origin check against `VT_PUBLIC_ORIGIN`.
 
 Recent-authentication challenges pass through Better Auth's HTTP handler at
-`/api/auth/virtool-session/challenge`. Password and TOTP share a limit of five
-attempts per minute per IP. An atomic database-backed counter in
+`/api/auth/virtool-session/challenge`. Password, TOTP, and passkey share a limit
+of five attempts per minute per IP. The passkey options path,
+`/api/auth/virtool-session/passkey-options`, has its own limit of five requests
+per minute per IP. An atomic database-backed counter in
 `auth_rate_limits` shares the budget across web instances, including concurrent
 requests. Direct `auth.api` calls bypass this
 limiter; challenge verification must enter through the handler.
@@ -235,8 +237,8 @@ does not expose an anonymous recovery URL. An administrator with recent
 authentication can issue a one-time recovery URL, including a copy-only URL
 when delivery is unavailable. Consuming either recovery link changes the
 password and revokes browser and setup sessions and tokens; the user signs in
-again. The minimal `/recover` and `/verify-email` routes consume links now;
-the broader wall experience belongs to the later authentication UX work.
+again. `/recover` and `/verify-email` consume these links; see
+[The wall](#the-wall).
 
 Administrators create human accounts by email invitation and assign access.
 The invitee chooses a handle and password when accepting. A users administrator
@@ -300,12 +302,25 @@ restricted setup credentials, forced-reset sessions, MFA-enrollment sessions,
 and retained legacy sessions cannot. A stale protected call returns 403 with the
 stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
 insufficient operation-specific authority remains an ordinary 403. The client
-responds only to the code: it opens one shared full-page password or TOTP challenge,
-then retries each waiting mutation once. Cancellation leaves the ordinary
+responds only to the code: it opens one shared full-page passkey, password, or
+TOTP challenge, then retries each waiting mutation once. The challenge offers a
+passkey first when the user has one and the browser can use one. It starts the
+ceremony only when the user selects the passkey button. Cancellation leaves the ordinary
 session and form state intact and never navigates to the login wall.
 
 Step-up delegates password and TOTP verification to Better Auth, with trusted
-device disabled and recovery codes excluded. Success creates a new session
+device disabled and recovery codes excluded. Step-up does not use Better Auth's
+passkey sign-in endpoint, because that endpoint starts a session for the owner
+of any registered passkey. The recent-authentication plugin in
+`@server/auth/recentAuthenticationChallenge` runs its own ceremony instead:
+
+- The options path asks for user verification and allows only the passkeys of
+  the session user. It stores the challenge and the user id as a single-use
+  verification value for five minutes, keyed by a signed cookie of its own.
+- The challenge path consumes that value, refuses it if its user id is not the
+  session user, and finds the passkey by credential id and session user. It
+  verifies the assertion against the configured origin and RP ID with user
+  verification required, then stores the new signature counter. Success creates a new session
 through Better Auth, atomically retires the old session, installs Better Auth's
 cookie, and attributes the remainder of the request to the new non-secret
 session id. Concurrent challenges have one durable winner; losing replacement
@@ -449,6 +464,41 @@ completed setup.
 cookies alongside the application pair, so there is one way to end a browser's
 authority rather than one per kind.
 
+### The wall
+
+The wall is the set of routes that a browser without an ordinary session can
+open. Each route has one job:
+
+| Route | Job |
+| --- | --- |
+| `/login` | Password, passkey, and TOTP or recovery-code sign-in, and the forced password reset |
+| `/setup` | First-instance bootstrap. It redirects to `/login` when a user exists |
+| `/account-setup` | Invitation acceptance from a `#token=` link |
+| `/recover` | Recovery request and recovery-link consumption |
+| `/verify-email` | Email verification links |
+| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation |
+| `/mfa-enrollment` | TOTP enrollment under the `required` MFA policy |
+
+The server decides where a browser goes next. After every sign-in or setup
+transition, `resolveAuthNextStep` ([nextStep.ts](src/wall/nextStep.ts)) removes
+the root and account caches and fetches the account again. A rejection maps to
+one `AuthNextStep`. The `/login`, `/_authenticated`, and `/mfa-enrollment`
+guards use the same mapping, so a restricted principal never renders the
+application shell. Local success in a form is not proof that a restriction
+has lifted.
+
+`safeRedirect` keeps a redirect only if it is a local path outside the wall.
+Each wall step carries the redirect forward. Bearer tokens never go into a
+redirect, a query key, or router search state: `useCapturedUrlParams` reads them
+from the fragment or query one time and removes them from history before any
+request.
+
+The wall shows only `ClientError` messages, which the server writes for users.
+Other failures show a fixed message. The login form offers passkeys in the
+username autofill (`autocomplete="username webauthn"`) where the browser
+supports conditional mediation, and through an explicit button. An explicit
+ceremony cancels the autofill one.
+
 ### Two-factor authentication
 
 TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
@@ -474,8 +524,9 @@ the factor for 15 minutes.
 
 The instance MFA policy is `settings.mfa_policy`, `optional` or `required`.
 Only a full administrator with a recently authenticated session can set it,
-through `setMfaPolicyFn`. It refuses `required` until the caller has enrolled,
-so the policy can't lock out the administrator who sets it.
+through `setMfaPolicyFn` on the **Administration › Security** page. It refuses
+`required` until the caller has enrolled, so the policy can't lock out the
+administrator who sets it.
 
 Under `required`, a Better Auth session whose user has no confirmed TOTP
 resolves to an `mfa_enrollment` principal. A retained legacy session for such a
@@ -490,6 +541,14 @@ functions answer 403 `MfaEnrollmentRequiredError`. In `/api/auth/*`, it can
 reach only `get-session`, `sign-out`, `two-factor/enable`, and
 `two-factor/verify-totp`; every other path answers 403
 `MFA_ENROLLMENT_REQUIRED`. API keys are never challenged or restricted.
+
+The guards send an `mfa_enrollment` principal to `/mfa-enrollment`. The wall
+asks for the password, shows the QR code and setup key from the `enable`
+response, and checks a code with `verify-totp`. It then shows the recovery
+codes one time and continues only after the user confirms that they saved them.
+The secret and the codes stay in component state. A reload after the code check
+does not show the codes again; the user makes new ones on `/account/security`.
+Cancel signs the user out.
 
 `resetUserTotpFn` is the recovery path for a user who has lost both their
 authenticator and their recovery codes. It requires the full administrator role
@@ -525,6 +584,7 @@ a `rateLimit.customRules` entry. A refused request gets a 429.
 | Operation | Entry point | Policy |
 | --- | --- | --- |
 | Sign in | `authClient.signIn.passkey()` | Open, rate limited |
+| Recent authentication | `verifyRecentAuthenticationWithPasskey()` | Session user's passkeys only, rate limited |
 | Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
 | List | `findPasskeysFn` | `authenticated()`, Better Auth session only |
 | Rename | `renamePasskeyFn` | `passkey.security.update` |
@@ -568,8 +628,10 @@ In the browser, `@app/passkeys` loads the auth client only when a ceremony
 starts. It maps the client's errors to fixed messages and never shows a browser
 or server message. A stale session on registration opens the
 recent-authentication challenge, and then the ceremony runs again.
-`usePasskeySupport` reads WebAuthn support after hydration and reports `pending`
-during server rendering. `useSingleCeremony` lets a component run only one
+`usePasskeySupport`, in `@app/passkeySupport`, reads WebAuthn support after
+hydration and reports `pending` during server rendering. The
+recent-authentication form loads `@app/passkeys` only when the user selects a
+passkey. `useSingleCeremony` lets a component run only one
 ceremony at a time, and cancels it when the component is removed. Cancellation,
 timeout, and an unsupported browser leave password sign-in available. The login
 form does not start conditional passkey requests. After a passkey sign-in, the

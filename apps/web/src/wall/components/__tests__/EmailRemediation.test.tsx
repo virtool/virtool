@@ -1,7 +1,12 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
 import { authServerFnMocks } from "@tests/server-fn/auth";
-import { mockGetAccountUnauthorized } from "@tests/server-fn/users";
+import {
+	mockGetAccount,
+	mockGetAccountMfaEnrollmentRequired,
+	mockGetAccountUnauthorized,
+} from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
 import { expect, it } from "vitest";
 
@@ -99,6 +104,7 @@ it("promotes the initiating browser after verification elsewhere", async () => {
 	authServerFnMocks.promoteEmailRemediationFn.mockResolvedValue({
 		complete: true,
 	});
+	mockGetAccount(createFakeAccount());
 	const { router } = await renderRoute(
 		"/email-remediation?redirect=%2Fsamples",
 	);
@@ -116,6 +122,7 @@ it("returns to the requested page after offline remediation", async () => {
 	authServerFnMocks.submitEmailRemediationFn.mockResolvedValue({
 		complete: true,
 	});
+	mockGetAccount(createFakeAccount());
 	const { router } = await renderRoute(
 		"/email-remediation?redirect=%2Fsamples",
 	);
@@ -166,6 +173,7 @@ it("waits for explicit Continue after same-browser verification", async () => {
 		authenticated: true,
 		canRetry: false,
 	});
+	mockGetAccount(createFakeAccount());
 	const { router } = await renderRoute("/email-remediation-verify");
 
 	expect(await screen.findByText("Email verified")).toBeInTheDocument();
@@ -234,4 +242,28 @@ it("shows a safe result for a malformed fragment token", async () => {
 	).toBeInTheDocument();
 	expect(window.location.hash).toBe("");
 	expect(authServerFnMocks.completeEmailRemediationFn).not.toHaveBeenCalled();
+});
+
+it("follows the server into two-factor enrollment after remediation", async () => {
+	authServerFnMocks.getEmailRemediationFn.mockResolvedValue({
+		status: "input",
+	});
+	authServerFnMocks.submitEmailRemediationFn.mockResolvedValue({
+		complete: true,
+	});
+	mockGetAccountMfaEnrollmentRequired();
+	const { router } = await renderRoute(
+		"/email-remediation?redirect=%2Fsamples",
+	);
+
+	await userEvent.type(
+		await screen.findByLabelText("Email address"),
+		"alice@example.com",
+	);
+	await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+	await waitFor(() =>
+		expect(router.state.location.pathname).toBe("/mfa-enrollment"),
+	);
+	expect(router.state.location.search).toEqual({ redirect: "/samples" });
 });

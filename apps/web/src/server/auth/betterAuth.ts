@@ -369,8 +369,11 @@ export function createAuth({
 		},
 		plugins: [
 			virtoolSessionPlugin(db),
-			recentAuthenticationPlugin(
-				async function verify(headers, challenge): Promise<void> {
+			recentAuthenticationPlugin({
+				db,
+				origin: publicOrigin,
+				rpID: webauthnRpId,
+				async verify(headers, challenge): Promise<void> {
 					if (challenge.method === "password") {
 						await auth.api.verifyPassword({
 							headers,
@@ -383,7 +386,7 @@ export function createAuth({
 						});
 					}
 				},
-			),
+			}),
 			// A Virtool handle is case-insensitive and keeps its original case for
 			// display, which is exactly the split this plugin draws between the
 			// normalized `username` it matches on and the `displayUsername` it

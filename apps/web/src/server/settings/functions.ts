@@ -173,8 +173,6 @@ export const clearNcbiApiKeyFn = createServerFn({ method: "POST" })
  *
  * `required` is refused until the caller has enrolled, because the policy
  * would otherwise restrict the administrator who set it.
- *
- * @public
  */
 export const setMfaPolicyFn = createServerFn({ method: "POST" })
 	.middleware([

@@ -106,7 +106,7 @@ export default function AccountPasskeyItem({
 		<BoxGroupSection className="flex items-center justify-between gap-4">
 			<div className="flex flex-col gap-1">
 				<div className="flex items-center gap-2">
-					<span className="font-medium text-lg">{passkey.name}</span>
+					<span className="font-medium text-base">{passkey.name}</span>
 					{passkey.multiDevice && <Label>Synced</Label>}
 				</div>
 				<span className="text-gray-600 text-sm">

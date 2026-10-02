@@ -95,6 +95,19 @@ export function mockGetAccountUnauthorized(): Mock {
 	return userServerFnMocks.getAccountFn;
 }
 
+/**
+ * Sets up getAccount to reject the way it does for a user who must turn on
+ * TOTP before using Virtool.
+ */
+export function mockGetAccountMfaEnrollmentRequired(): Mock {
+	const error = new Error("Two-factor enrollment required");
+	error.name = "MfaEnrollmentRequiredError";
+
+	userServerFnMocks.getAccountFn.mockRejectedValue(error);
+
+	return userServerFnMocks.getAccountFn;
+}
+
 /** Sets up getUser to resolve with the given user when matched by id. */
 export function mockGetUser(
 	userId: number,

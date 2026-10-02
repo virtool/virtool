@@ -1,4 +1,7 @@
-import { AUTH_BASE_PATH } from "@virtool/contracts";
+import {
+	AUTH_BASE_PATH,
+	RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH,
+} from "@virtool/contracts";
 import { seedSession, seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import {
@@ -73,8 +76,14 @@ function createBrowser(initialCookie?: string) {
 	}
 
 	return {
+		get(name: string) {
+			return cookies.get(name) ?? "";
+		},
 		has(name: string) {
 			return (cookies.get(name) ?? "") !== "";
+		},
+		set(name: string, value: string) {
+			cookies.set(name, value);
 		},
 		async send(method: "GET" | "POST", path: string, body?: unknown) {
 			const response = await handleAuthRequest(
@@ -508,5 +517,185 @@ describe("the mounted handler", () => {
 		);
 
 		expect(response.status).toBe(404);
+	});
+});
+
+describe("recent authentication", () => {
+	const OPTIONS_PATH = RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH;
+	const CHALLENGE_PATH = "/virtool-session/challenge";
+	const STEP_UP_COOKIE = "__Secure-better-auth.step_up_passkey";
+
+	async function stepUpOptions(browser: Browser) {
+		const response = await browser.send("GET", OPTIONS_PATH);
+		expect(response.status).toBe(200);
+		return response.json();
+	}
+
+	async function stepUp(
+		browser: Browser,
+		key: ReturnType<typeof authenticator>,
+		ceremony?: Parameters<typeof key.authenticate>[1],
+	) {
+		const body = {
+			method: "passkey",
+			response: key.authenticate(await stepUpOptions(browser), ceremony),
+		};
+		return { body, response: await browser.send("POST", CHALLENGE_PATH, body) };
+	}
+
+	it("asks only for the session user's passkeys, with user verification", async () => {
+		const alice = await enroll({ handle: "alice" });
+		await enroll({ handle: "bob" });
+		const browser = await signedInBrowser(alice.userId);
+
+		const options = await stepUpOptions(browser);
+
+		expect(options).toMatchObject({
+			rpId: RP_ID,
+			userVerification: "required",
+		});
+		expect(options.allowCredentials).toEqual([
+			expect.objectContaining({ id: alice.key.credentialId }),
+		]);
+		expect(browser.has(STEP_UP_COOKIE)).toBe(true);
+	});
+
+	it("refuses options to a user without a passkey", async () => {
+		const userId = await seedUser(db);
+		const browser = await signedInBrowser(userId);
+
+		const response = await browser.send("GET", OPTIONS_PATH);
+
+		expect(response.status).toBe(400);
+		expect(await db.select().from(authVerifications)).toEqual([]);
+	});
+
+	it("refuses options without a session", async () => {
+		const response = await createBrowser().send("GET", OPTIONS_PATH);
+
+		expect(response.status).toBe(401);
+	});
+
+	it("accepts a verified assertion from the session user's passkey", async () => {
+		const { key, userId } = await enroll();
+		const browser = await signedInBrowser(
+			userId,
+			new Date(Date.now() - SESSION_FRESH_AGE_SECONDS * 1000 - 1000),
+		);
+
+		const { response } = await stepUp(browser, key);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ status: true });
+		expect(browser.has(STEP_UP_COOKIE)).toBe(false);
+		expect(await db.select().from(authVerifications)).toEqual([]);
+	});
+
+	it("does not create a session", async () => {
+		const { key, userId } = await enroll();
+		const browser = await signedInBrowser(userId);
+
+		await stepUp(browser, key);
+
+		expect(await db.select().from(authSessions)).toHaveLength(1);
+	});
+
+	it("refuses a passkey that belongs to another user", async () => {
+		const alice = await enroll({ handle: "alice" });
+		const bob = await enroll({ handle: "bob" });
+		const browser = await signedInBrowser(alice.userId);
+
+		const { response } = await stepUp(browser, bob.key);
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({
+			code: "PASSKEY_CHALLENGE_FAILED",
+		});
+	});
+
+	it("refuses options issued to another user's session", async () => {
+		const alice = await enroll({ handle: "alice" });
+		const bob = await enroll({ handle: "bob" });
+		const aliceBrowser = await signedInBrowser(alice.userId);
+		const bobBrowser = await signedInBrowser(bob.userId);
+		const options = await stepUpOptions(bobBrowser);
+		aliceBrowser.set(STEP_UP_COOKIE, bobBrowser.get(STEP_UP_COOKIE));
+
+		const response = await aliceBrowser.send("POST", CHALLENGE_PATH, {
+			method: "passkey",
+			response: alice.key.authenticate(options),
+		});
+
+		expect(response.status).toBe(400);
+	});
+
+	it.each([
+		["without user verification", { userVerified: false }],
+		["from another origin", { origin: "https://evil.test" }],
+		["for another RP ID", { rpId: "evil.test" }],
+	])("refuses an assertion %s", async (_, ceremony) => {
+		const { key, userId } = await enroll();
+		const browser = await signedInBrowser(userId);
+
+		const { response } = await stepUp(browser, key, ceremony);
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({
+			code: "PASSKEY_CHALLENGE_FAILED",
+		});
+	});
+
+	it("consumes the challenge, so a replayed assertion is refused", async () => {
+		const { key, userId } = await enroll();
+		const browser = await signedInBrowser(userId);
+		const options = await stepUpOptions(browser);
+		const body = { method: "passkey", response: key.authenticate(options) };
+		const token = browser.get(STEP_UP_COOKIE);
+
+		expect((await browser.send("POST", CHALLENGE_PATH, body)).status).toBe(200);
+
+		browser.set(STEP_UP_COOKIE, token);
+		const replay = await browser.send("POST", CHALLENGE_PATH, body);
+		expect(replay.status).toBe(400);
+	});
+
+	it("refuses an assertion without the options cookie", async () => {
+		const { key, userId } = await enroll();
+		const browser = await signedInBrowser(userId);
+		const options = await stepUpOptions(browser);
+		const unrelated = await signedInBrowser(userId);
+
+		const response = await unrelated.send("POST", CHALLENGE_PATH, {
+			method: "passkey",
+			response: key.authenticate(options),
+		});
+
+		expect(response.status).toBe(400);
+	});
+
+	it("refuses options to a session that must reset its password", async () => {
+		const { userId } = await enroll();
+		await db
+			.update(users)
+			.set({ forceReset: true })
+			.where(eq(users.id, userId));
+		const browser = await signedInBrowser(userId);
+
+		const response = await browser.send("GET", OPTIONS_PATH);
+
+		expect(response.status).toBe(403);
+		expect(await response.json()).toMatchObject({
+			code: "PASSWORD_RESET_REQUIRED",
+		});
+	});
+
+	it("limits option requests from one address", async () => {
+		const { userId } = await enroll();
+		const browser = await signedInBrowser(userId);
+		for (let attempt = 0; attempt < 5; attempt++) {
+			expect((await browser.send("GET", OPTIONS_PATH)).status).toBe(200);
+		}
+
+		expect((await browser.send("GET", OPTIONS_PATH)).status).toBe(429);
 	});
 });

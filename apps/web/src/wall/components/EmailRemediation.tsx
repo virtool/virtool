@@ -8,7 +8,7 @@ import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS } from "@virtool/contracts";
 import { CircleCheck, MailCheck, TriangleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { rootQueryKeys } from "../keys";
+import { useFollowAuthNextStep } from "../hooks";
 import {
 	emailRemediationQueryOptions,
 	useCancelEmailRemediation,
@@ -37,14 +37,16 @@ export default function EmailRemediation() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { redirect } = remediationRouteApi.useSearch();
+	const follow = useFollowAuthNextStep();
 	const { handleSubmit, register } = useForm<FormValues>({
 		defaultValues: { email: "" },
 	});
 
 	function enterApplication() {
-		queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
-		queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
-		navigate({ to: redirect ?? "/" });
+		queryClient.removeQueries({
+			queryKey: emailRemediationQueryOptions().queryKey,
+		});
+		void follow(redirect);
 	}
 
 	function onSubmit({ email }: FormValues) {

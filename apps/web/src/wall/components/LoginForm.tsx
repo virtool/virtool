@@ -1,12 +1,19 @@
 import { cn } from "@app/cn";
-import { getPasskeyNotice, usePasskeySupport } from "@app/passkeys";
+import { usePasskeySupport } from "@app/passkeySupport";
+import {
+	cancelPasskeyCeremony,
+	getPasskeyNotice,
+	signInWithPasskeyAutofill,
+} from "@app/passkeys";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
 import Input from "@base/Input";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { CircleAlert, Info, KeyRound } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
 import { useForm } from "react-hook-form";
+import { getWallErrorMessage } from "../errors";
+import { useFollowAuthNextStep } from "../hooks";
 import {
 	type LoginResult,
 	useLoginMutation,
@@ -16,6 +23,10 @@ import TwoFactorForm from "./TwoFactorForm";
 import { WallTitle } from "./WallTitle";
 
 type LoginFormProps = {
+	/** Content shown below the title on the sign-in step only. */
+	notice?: ReactNode;
+	/** Called when the password is accepted and a two-factor challenge starts. */
+	onChallenge?: () => void;
 	/** URL to navigate to after a successful login. Defaults to "/". */
 	redirect?: string;
 	/** Shows the forced-reset form after the password has been authenticated. */
@@ -29,6 +40,8 @@ type FormValues = {
 
 /** Handles the user login process. */
 export default function LoginForm({
+	notice,
+	onChallenge,
 	redirect,
 	setResetRequired,
 }: LoginFormProps) {
@@ -37,26 +50,59 @@ export default function LoginForm({
 	const passkeyMutation = usePasskeySignInMutation();
 	const passkeySupport = usePasskeySupport();
 	const [twoFactor, setTwoFactor] = useState(false);
-	const navigate = useNavigate();
-	const isSigningIn = loginMutation.isPending || passkeyMutation.isPending;
+	const [continuing, setContinuing] = useState(false);
+	const [continueError, setContinueError] = useState<string | null>(null);
+	const follow = useFollowAuthNextStep();
+	const isSigningIn =
+		loginMutation.isPending || passkeyMutation.isPending || continuing;
+
+	const onAutofillSignIn = useEffectEvent(() => void continueSignIn());
+
+	useEffect(() => {
+		let active = true;
+		signInWithPasskeyAutofill()
+			.then((signedIn) => {
+				if (active && signedIn) {
+					onAutofillSignIn();
+				}
+			})
+			.catch(() => {
+				if (active) {
+					setContinueError(
+						"Passkey sign-in failed. Try again or sign in with your password.",
+					);
+				}
+			});
+		return () => {
+			active = false;
+			cancelPasskeyCeremony();
+		};
+	}, []);
+
+	async function continueSignIn() {
+		setContinuing(true);
+		setContinueError(null);
+		try {
+			const step = await follow(redirect);
+			if (step.type === "password_reset") {
+				setResetRequired(true);
+			} else if (step.type === "login") {
+				setContinueError("Sign-in did not finish. Try again.");
+			}
+		} catch {
+			setContinueError("Virtool could not be reached. Try again.");
+		} finally {
+			setContinuing(false);
+		}
+	}
 
 	function onSignedIn(data: LoginResult) {
 		if ("twoFactorRedirect" in data) {
 			setTwoFactor(true);
+			onChallenge?.();
 			return;
 		}
-		if (data.reset) {
-			setResetRequired(true);
-			return;
-		}
-		if ("remediation" in data && data.remediation) {
-			navigate({
-				to: "/email-remediation",
-				search: { redirect },
-			});
-			return;
-		}
-		navigate({ to: redirect ?? "/" });
+		void continueSignIn();
 	}
 
 	function onSubmit({ handle, password }: FormValues) {
@@ -64,6 +110,7 @@ export default function LoginForm({
 			return;
 		}
 		passkeyMutation.reset();
+		setContinueError(null);
 		loginMutation.mutate({ handle, password }, { onSuccess: onSignedIn });
 	}
 
@@ -72,12 +119,16 @@ export default function LoginForm({
 			return;
 		}
 		loginMutation.reset();
+		setContinueError(null);
 		passkeyMutation.mutate(undefined, {
-			onSuccess: () => navigate({ to: redirect ?? "/" }),
+			onSuccess: () => void continueSignIn(),
 		});
 	}
 
-	const { error, isError } = loginMutation;
+	const isError = loginMutation.isError || continueError !== null;
+	const errorMessage = loginMutation.isError
+		? getWallErrorMessage(loginMutation.error, "Sign-in failed. Try again.")
+		: continueError;
 	const passkeyNotice = passkeyMutation.isError
 		? getPasskeyNotice(passkeyMutation.error)
 		: null;
@@ -87,8 +138,7 @@ export default function LoginForm({
 	if (twoFactor) {
 		return (
 			<TwoFactorForm
-				redirect={redirect}
-				setResetRequired={setResetRequired}
+				onVerified={() => void continueSignIn()}
 				restart={() => {
 					setTwoFactor(false);
 					loginMutation.reset();
@@ -100,13 +150,17 @@ export default function LoginForm({
 
 	return (
 		<>
-			<WallTitle title="Login" subtitle="Login with your Virtool account." />
+			<WallTitle
+				title="Sign in"
+				subtitle="Sign in with your Virtool account."
+			/>
+			{notice}
 
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<Field>
 					<FieldLabel>Username</FieldLabel>
 					<Input
-						autoComplete="username"
+						autoComplete="username webauthn"
 						aria-required
 						aria-invalid={isError || undefined}
 						aria-describedby={isError ? "login-error" : undefined}
@@ -133,14 +187,14 @@ export default function LoginForm({
 							className="flex items-center gap-1 text-red-600 font-medium"
 						>
 							<CircleAlert aria-hidden className="shrink-0" size={14} />
-							{error?.message || "An error occurred during login"}
+							{errorMessage}
 						</div>
 					)}
 				</div>
 				<div className="flex items-center justify-between">
 					<Link to="/recover">Forgot your password?</Link>
 					<Button type="submit" color="blue" disabled={isSigningIn}>
-						Login
+						Sign in
 					</Button>
 				</div>
 			</form>

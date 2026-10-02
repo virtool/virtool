@@ -24,7 +24,7 @@ export default function ApiKeyItem({ apiKey }: ApiKeyItemProps) {
 	return (
 		<BoxGroupSection>
 			<h4 className="grid items-center grid-cols-4">
-				<span className="font-medium text-lg">{apiKey.name}</span>
+				<span className="font-medium text-base">{apiKey.name}</span>
 				<Attribution time={apiKey.createdAt} />
 				<div className="text-right">
 					{permissionCount} permission

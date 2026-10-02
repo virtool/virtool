@@ -5,6 +5,7 @@ import {
 	roleQueryKeys,
 	settingsQueryKeys,
 } from "@administration/keys";
+import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import {
 	clearEmailApiKeyFn,
 	getEmailSettingsFn,
@@ -16,6 +17,7 @@ import {
 	clearNcbiApiKeyFn,
 	getCacheUsageFn,
 	getSettingsFn,
+	setMfaPolicyFn,
 	setNcbiApiKeyFn,
 	updateSettingsFn,
 } from "@server/settings/functions";
@@ -32,6 +34,7 @@ import type {
 	CacheUsageSnapshot,
 	EmailSettings,
 	EmailTestResult,
+	MfaPolicy,
 	Settings,
 } from "@virtool/contracts";
 
@@ -129,6 +132,24 @@ export function useSetNcbiApiKey() {
 
 	return useMutation<Settings, Error, string>({
 		mutationFn: (apiKey) => setNcbiApiKeyFn({ data: { apiKey } }),
+		onSuccess: invalidate,
+	});
+}
+
+/**
+ * Set whether every user must turn on two-factor authentication.
+ *
+ * The server asks for recent authentication, so a stale session gets one
+ * identity check and one retry.
+ */
+export function useSetMfaPolicy() {
+	const invalidate = useSettingsInvalidation();
+	const mutationFn = useRecentlyAuthenticatedMutation((mfaPolicy: MfaPolicy) =>
+		setMfaPolicyFn({ data: { mfaPolicy } }),
+	);
+
+	return useMutation<Settings, Error, MfaPolicy>({
+		mutationFn,
 		onSuccess: invalidate,
 	});
 }

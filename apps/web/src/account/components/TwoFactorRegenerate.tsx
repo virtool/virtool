@@ -42,7 +42,7 @@ export default function TwoFactorRegenerate() {
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<Button as={DialogTrigger}>New recovery codes</Button>
+			<Button as={DialogTrigger}>Make new recovery codes</Button>
 			<DialogContent>
 				<DialogTitle>
 					{codes ? "Save your recovery codes" : "Make new recovery codes"}

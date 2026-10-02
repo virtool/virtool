@@ -481,6 +481,7 @@ window.HTMLElement.prototype.scrollIntoView = vi.fn();
 window.HTMLElement.prototype.releasePointerCapture = vi.fn();
 window.HTMLElement.prototype.hasPointerCapture = vi.fn();
 window.scrollTo = vi.fn();
+document.elementFromPoint = vi.fn(() => null);
 
 class ResizeObserver {
 	observe() {}

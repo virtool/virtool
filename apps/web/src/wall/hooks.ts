@@ -1,4 +1,11 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useLayoutEffect, useRef } from "react";
+import {
+	type AuthNextStep,
+	getAuthNextStepRoute,
+	resolveAuthNextStep,
+} from "./nextStep";
 
 /**
  * Read bearer parameters from the URL fragment or query, strip them from
@@ -34,4 +41,27 @@ export function useCapturedUrlParams<K extends string>(
 
 		onCapture(params);
 	}, []);
+}
+
+/**
+ * Return a function that resolves the next step from the server and navigates
+ * to it.
+ *
+ * A `password_reset` step is returned without navigation, because the login
+ * wall shows the reset form in place.
+ */
+export function useFollowAuthNextStep() {
+	const queryClient = useQueryClient();
+	const navigate = useNavigate();
+
+	return async function follow(redirect?: string): Promise<AuthNextStep> {
+		const step = await resolveAuthNextStep(queryClient);
+		if (step.type !== "password_reset") {
+			await navigate({
+				...getAuthNextStepRoute(step, redirect),
+				replace: true,
+			});
+		}
+		return step;
+	};
 }
