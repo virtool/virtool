@@ -69,6 +69,7 @@ export default function AccountPasskeys({ handle }: AccountPasskeysProps) {
 						<span>Add a passkey for this browser or device.</span>
 						<Button
 							color="blue"
+							size="medium"
 							disabled={support !== "available" || registerMutation.isPending}
 							onClick={() => registerMutation.mutate(handle)}
 						>

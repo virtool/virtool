@@ -96,7 +96,11 @@ function SignOutOthers() {
 			confirmLabel="Sign out all"
 			message="Sign out every browser except this one? Those browsers must sign in again to use Virtool."
 			onConfirm={() => mutation.mutateAsync()}
-			trigger={<Button color="red">Sign out other sessions</Button>}
+			trigger={
+				<Button color="red" size="medium">
+					Sign out other sessions
+				</Button>
+			}
 		/>
 	);
 }

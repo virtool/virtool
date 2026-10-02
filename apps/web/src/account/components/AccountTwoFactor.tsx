@@ -63,7 +63,7 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 								<TwoFactorDisable mfaRequired={mfaRequired} />
 							</>
 						) : (
-							<Button color="blue" onClick={onSetUp}>
+							<Button color="blue" size="medium" onClick={onSetUp}>
 								Set up
 							</Button>
 						)}
