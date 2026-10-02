@@ -76,7 +76,7 @@ function EmailUnavailable({
 					emailVerified={emailVerified}
 					pendingEmail={pendingEmail}
 				/>
-				<p className="mt-2 text-gray-600">
+				<p className="mt-2 mb-0 text-gray-600">
 					Email delivery is not set up for this Virtool instance.{" "}
 					{canManageEmail ? (
 						<>
