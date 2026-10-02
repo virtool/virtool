@@ -80,12 +80,11 @@ describe("<AccountTwoFactor />", () => {
 		renderWithProviders(<AccountTwoFactor />);
 
 		expect(await screen.findByText("Off")).toBeInTheDocument();
-		expect(screen.getByText("Not set up")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Set up" })).toBeInTheDocument();
 		expect(screen.queryByText(/requires two-factor/)).toBeNull();
 	});
 
-	it("shows TOTP on with the recovery codes left and the required policy", async () => {
+	it("shows TOTP on with the required policy", async () => {
 		mockGetAccountSecurity({
 			mfaRequired: true,
 			recoveryCodesRemaining: 8,
@@ -95,7 +94,6 @@ describe("<AccountTwoFactor />", () => {
 		renderWithProviders(<AccountTwoFactor />);
 
 		expect(await screen.findByText("On")).toBeInTheDocument();
-		expect(screen.getByText("8 recovery codes left")).toBeInTheDocument();
 		expect(
 			screen.getByText(
 				"This Virtool instance requires two-factor authentication.",
@@ -263,7 +261,7 @@ describe("<AccountTwoFactor />", () => {
 
 		renderWithProviders(<AccountTwoFactor />);
 		await user.click(
-			await screen.findByRole("button", { name: "New recovery codes" }),
+			await screen.findByRole("button", { name: "Make new recovery codes" }),
 		);
 		const dialog = await enterPassword(user);
 		await user.click(
@@ -283,7 +281,7 @@ describe("<AccountTwoFactor />", () => {
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
 		await user.click(
-			screen.getByRole("button", { name: "New recovery codes" }),
+			screen.getByRole("button", { name: "Make new recovery codes" }),
 		);
 
 		expect(

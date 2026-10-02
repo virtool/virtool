@@ -50,11 +50,6 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 								{twoFactorEnabled ? "On" : "Off"}
 							</Label>
 						</div>
-						<span className="text-gray-600 text-sm">
-							{twoFactorEnabled
-								? `${recoveryCodesRemaining ?? 0} recovery ${recoveryCodesRemaining === 1 ? "code" : "codes"} left`
-								: "Not set up"}
-						</span>
 						{mfaRequired && (
 							<span className="text-gray-600 text-sm">
 								This Virtool instance requires two-factor authentication.

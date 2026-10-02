@@ -16,7 +16,7 @@ export default function LinkButton({
 	return (
 		<button
 			className={cn(
-				"cursor-pointer rounded font-medium text-blue-700 outline-none hover:text-blue-900 hover:underline",
+				"cursor-pointer rounded text-sm font-medium text-blue-700 outline-none hover:text-blue-900 hover:underline",
 				"focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2",
 				"disabled:pointer-events-none disabled:opacity-50",
 				className,
