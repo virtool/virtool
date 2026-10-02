@@ -4,7 +4,11 @@ import { dirname, join } from "node:path";
 import type { DesiredState } from "../shared/types.ts";
 import type { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
-import { CONFIG_VERSION, DEV_TOOLS_SERVICE } from "./constants.ts";
+import {
+	ADMINISTRATOR_PASSWORD_ENV,
+	CONFIG_VERSION,
+	DEV_TOOLS_SERVICE,
+} from "./constants.ts";
 import {
 	DockerObserver,
 	type EnvironmentObservation,
@@ -426,16 +430,28 @@ export class Reconciler {
 				"running",
 				"creating default administrator",
 			);
-			await this.compose(environment, envFile, composeFile, [
-				"run",
-				"--rm",
-				DEV_TOOLS_SERVICE,
-				"create",
-				"administrator",
-				`--handle=${administrator.handle}`,
-				`--email=${administrator.email}`,
-				`--password=${administrator.password}`,
-			]);
+			// A failed command's error message holds its arguments, so the
+			// password goes through the environment.
+			await this.compose(
+				environment,
+				envFile,
+				composeFile,
+				[
+					"run",
+					"--rm",
+					"--env",
+					ADMINISTRATOR_PASSWORD_ENV,
+					DEV_TOOLS_SERVICE,
+					"create",
+					"administrator",
+					`--handle=${administrator.handle}`,
+					`--email=${administrator.email}`,
+				],
+				{
+					...process.env,
+					[ADMINISTRATOR_PASSWORD_ENV]: administrator.password,
+				},
+			);
 			if (!this.isStillDesired(environment.id, "up")) {
 				return;
 			}
@@ -576,6 +592,7 @@ export class Reconciler {
 		envFile: string,
 		composeFile: string,
 		args: string[],
+		env?: NodeJS.ProcessEnv,
 	): Promise<void> {
 		await this.run(
 			"docker",
@@ -589,7 +606,7 @@ export class Reconciler {
 				composeFile,
 				...args,
 			],
-			{ cwd: this.primaryWorktree },
+			{ cwd: this.primaryWorktree, env },
 		);
 	}
 

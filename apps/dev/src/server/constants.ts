@@ -10,3 +10,6 @@ export const WORKFLOWS = [
 
 /** The Compose service that runs `@virtool/dev-tools` commands. */
 export const DEV_TOOLS_SERVICE = "dev-tools";
+
+/** The variable that carries the default administrator password to `dev-tools`. */
+export const ADMINISTRATOR_PASSWORD_ENV = "VT_ADMINISTRATOR_PASSWORD";
