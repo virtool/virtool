@@ -243,22 +243,96 @@ describe("legacy bcrypt credentials", () => {
 
 describe("the mounted handler", () => {
 	it.each([
+		["POST", "/sign-in/username"],
+		["POST", "/sign-in/email"],
+		["POST", "/sign-up/email"],
+		["POST", "/is-username-available"],
+		["POST", "/update-user"],
+		["POST", "/change-password"],
+		["POST", "/verify-password"],
+		["GET", "/get-session"],
+		["POST", "/sign-out"],
 		["GET", "/list-sessions"],
 		["POST", "/revoke-session"],
 		["POST", "/revoke-sessions"],
 		["POST", "/revoke-other-sessions"],
-	])("refuses Better Auth's native %s %s surface", async (method, path) => {
-		const response = await auth.handler(
+		["POST", "/two-factor/get-totp-uri"],
+		["POST", "/two-factor/verify-backup-code"],
+		["GET", "/passkey/list-user-passkeys"],
+		["GET", "/passkey/list-user-passkeys/"],
+		["POST", "/Two-Factor/Enable"],
+		["GET", "/two-factor/enable"],
+		["GET", "/not-a-real-endpoint"],
+	])("does not serve %s %s", async (method, path) => {
+		await seedMigratedUser();
+		const signIn = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+		const handler = createAuthRequestHandler(db, auth);
+		const sessions = await db.select().from(authSessions);
+
+		const response = await handler(
 			new Request(`${ORIGIN}${AUTH_BASE_PATH}${path}`, {
 				method,
-				headers: { "content-type": "application/json", origin: ORIGIN },
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
 				...(method === "POST" && {
-					body: JSON.stringify({ token: "not-a-session-token" }),
+					body: JSON.stringify({
+						username: "alice",
+						email: "alice@virtool.test",
+						password: LEGACY_PASSWORD,
+						name: "Mallory",
+					}),
 				}),
 			}),
 		);
 
 		expect(response.status).toBe(404);
+		expect(await db.select().from(authSessions)).toEqual(sessions);
+	});
+
+	it.each([
+		["GET", "/passkey/generate-authenticate-options"],
+		["POST", "/passkey/verify-authentication"],
+		["GET", "/passkey/generate-register-options"],
+		["POST", "/passkey/verify-registration"],
+		["POST", "/two-factor/enable"],
+		["POST", "/two-factor/verify-totp"],
+		["POST", "/two-factor/generate-backup-codes"],
+		["POST", "/two-factor/disable"],
+		["GET", "/virtool-session/passkey-options"],
+		["POST", "/virtool-session/challenge"],
+	])("serves %s %s", async (method, path) => {
+		await seedMigratedUser();
+		const signIn = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+		const handler = createAuthRequestHandler(db, auth);
+
+		const response = await handler(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}${path}`, {
+				method,
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
+				...(method === "POST" && { body: JSON.stringify({}) }),
+			}),
+		);
+
+		expect(response.status).not.toBe(404);
 	});
 
 	it("blocks Better Auth account operations for a forced-reset session", async () => {
@@ -274,13 +348,14 @@ describe("the mounted handler", () => {
 
 		const handler = createAuthRequestHandler(db, auth);
 		const response = await handler(
-			new Request(`${ORIGIN}${AUTH_BASE_PATH}/change-password`, {
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}/two-factor/enable`, {
 				method: "POST",
-				headers: { cookie: cookie as string, origin: ORIGIN },
-				body: JSON.stringify({
-					currentPassword: LEGACY_PASSWORD,
-					newPassword: "new-password-123",
-				}),
+				headers: {
+					"content-type": "application/json",
+					cookie: cookie as string,
+					origin: ORIGIN,
+				},
+				body: JSON.stringify({ password: LEGACY_PASSWORD }),
 			}),
 		);
 
@@ -325,9 +400,8 @@ describe("the mounted handler", () => {
 			const handler = createAuthRequestHandler(db, auth);
 
 			const response = await handler(
-				authRequest("/change-password", cookie, {
-					currentPassword: LEGACY_PASSWORD,
-					newPassword: "new-password-123",
+				authRequest("/two-factor/generate-backup-codes", cookie, {
+					password: LEGACY_PASSWORD,
 				}),
 			);
 
@@ -360,27 +434,13 @@ describe("the mounted handler", () => {
 			const handler = createAuthRequestHandler(db, auth);
 
 			const response = await handler(
-				authRequest("/change-password", cookie, {
-					currentPassword: "wrong-password",
-					newPassword: "new-password-123",
+				authRequest("/two-factor/generate-backup-codes", cookie, {
+					password: "wrong-password",
 				}),
 			);
 
 			expect(response.status).not.toBe(403);
 		});
-	});
-
-	it("refuses public sign-up", async () => {
-		const response = await auth.handler(
-			post("/sign-up/email", {
-				email: "mallory@virtool.test",
-				password: LEGACY_PASSWORD,
-				name: "Mallory",
-			}),
-		);
-
-		expect(response.status).not.toBe(200);
-		expect(await db.select().from(users)).toHaveLength(0);
 	});
 
 	it("refuses a cross-origin request from a cookie-bearing browser", async () => {
@@ -697,74 +757,6 @@ describe("virtool account state", () => {
 
 		expect(response.status).toBe(200);
 		expect(await db.select().from(authSessions)).toHaveLength(1);
-	});
-});
-
-describe("email sign-in", () => {
-	it("is not mounted, because users.email is not unique", async () => {
-		await seedMigratedUser();
-
-		const response = await auth.handler(
-			post("/sign-in/email", {
-				email: "alice@virtool.test",
-				password: LEGACY_PASSWORD,
-			}),
-		);
-
-		expect(response.status).toBe(404);
-		expect(await db.select().from(authSessions)).toHaveLength(0);
-	});
-});
-
-describe("the username availability endpoint", () => {
-	it("is not mounted, so it cannot enumerate handles", async () => {
-		await seedMigratedUser();
-
-		const response = await auth.handler(
-			post("/is-username-available", { username: "alice" }),
-		);
-
-		expect(response.status).toBe(404);
-	});
-});
-
-describe("the user update endpoint", () => {
-	it("is not mounted, so username cannot drift from handle", async () => {
-		await seedMigratedUser();
-
-		const response = await auth.handler(
-			post("/update-user", { username: "someone-else" }),
-		);
-
-		expect(response.status).toBe(404);
-	});
-});
-
-describe("the TOTP URI endpoint", () => {
-	it("is refused over HTTP, so a password alone cannot read the secret again", async () => {
-		await seedMigratedUser();
-		const signIn = await auth.handler(
-			post("/sign-in/username", {
-				username: "alice",
-				password: LEGACY_PASSWORD,
-			}),
-		);
-		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
-		const handler = createAuthRequestHandler(db, auth);
-
-		const response = await handler(
-			new Request(`${ORIGIN}${AUTH_BASE_PATH}/two-factor/get-totp-uri`, {
-				method: "POST",
-				headers: {
-					"content-type": "application/json",
-					cookie,
-					origin: ORIGIN,
-				},
-				body: JSON.stringify({ password: LEGACY_PASSWORD }),
-			}),
-		);
-
-		expect(response.status).toBe(404);
 	});
 });
 
