@@ -274,14 +274,14 @@ describe("the mounted handler", () => {
 
 		const handler = createAuthRequestHandler(db, auth);
 		const response = await handler(
-			new Request(`${ORIGIN}${AUTH_BASE_PATH}/change-password`, {
-				method: "POST",
-				headers: { cookie: cookie as string, origin: ORIGIN },
-				body: JSON.stringify({
-					currentPassword: LEGACY_PASSWORD,
-					newPassword: "new-password-123",
-				}),
-			}),
+			new Request(
+				`${ORIGIN}${AUTH_BASE_PATH}/two-factor/generate-backup-codes`,
+				{
+					method: "POST",
+					headers: { cookie: cookie as string, origin: ORIGIN },
+					body: JSON.stringify({ password: LEGACY_PASSWORD }),
+				},
+			),
 		);
 
 		expect(response.status).toBe(403);
@@ -325,9 +325,8 @@ describe("the mounted handler", () => {
 			const handler = createAuthRequestHandler(db, auth);
 
 			const response = await handler(
-				authRequest("/change-password", cookie, {
-					currentPassword: LEGACY_PASSWORD,
-					newPassword: "new-password-123",
+				authRequest("/two-factor/generate-backup-codes", cookie, {
+					password: LEGACY_PASSWORD,
 				}),
 			);
 
@@ -360,9 +359,8 @@ describe("the mounted handler", () => {
 			const handler = createAuthRequestHandler(db, auth);
 
 			const response = await handler(
-				authRequest("/change-password", cookie, {
-					currentPassword: "wrong-password",
-					newPassword: "new-password-123",
+				authRequest("/two-factor/generate-backup-codes", cookie, {
+					password: "wrong-password",
 				}),
 			);
 
@@ -737,6 +735,43 @@ describe("the user update endpoint", () => {
 		);
 
 		expect(response.status).toBe(404);
+	});
+});
+
+describe("the change password endpoint", () => {
+	it("is not mounted, so changePasswordFn is the only password change", async () => {
+		await seedMigratedUser();
+		const signIn = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+		const [before] = await db.select().from(authAccounts);
+		expect(before?.password).toBeTruthy();
+
+		const response = await createAuthRequestHandler(
+			db,
+			auth,
+		)(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}/change-password`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
+				body: JSON.stringify({
+					currentPassword: LEGACY_PASSWORD,
+					newPassword: "new-password-123",
+				}),
+			}),
+		);
+
+		expect(response.status).toBe(404);
+		const [after] = await db.select().from(authAccounts);
+		expect(after?.password).toBe(before?.password);
 	});
 });
 

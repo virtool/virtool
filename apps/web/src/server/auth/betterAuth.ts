@@ -53,11 +53,17 @@ import {
  * signs in with away from `users.handle` and around the case-insensitive
  * uniqueness that `users_handle_lower_unique` holds. Virtool owns account
  * updates through its own server functions.
+ *
+ * `/change-password`: writes only `auth_accounts.password`. It skips the
+ * step-up, length, and reuse checks and the session, recovery-token, and
+ * `users` side effects of `changePasswordFn`. The identity reconcile then
+ * copies `users.password` back over it and reverts the change.
  */
 const REFUSED_PATHS = new Set([
 	"/sign-in/email",
 	"/is-username-available",
 	"/update-user",
+	"/change-password",
 	"/list-sessions",
 	"/revoke-session",
 	"/revoke-sessions",
