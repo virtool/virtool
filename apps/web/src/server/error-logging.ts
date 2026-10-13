@@ -16,6 +16,9 @@ import { isDatabaseUnavailable } from "@virtool/data/db/errors";
 import { ClientError } from "./errors";
 import { logger } from "./logger";
 
+const UNAVAILABLE_MESSAGE =
+	"Virtool is temporarily unavailable. Try again in a minute.";
+
 const FORBIDDEN_ERROR_NAMES = new Set([
 	FORBIDDEN_ERROR_NAME,
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
@@ -70,10 +73,7 @@ export const errorLoggingMiddleware = createMiddleware({
 			logger.warn({ err, path, serverFn }, "database unavailable");
 
 			setResponseStatus(503);
-			throw new ClientError(
-				"Virtool is temporarily unavailable. Try again in a minute.",
-				503,
-			);
+			throw new ClientError(UNAVAILABLE_MESSAGE, 503);
 		}
 
 		if (isExpectedAuthenticationError(err, status)) {
@@ -101,3 +101,30 @@ export const errorLoggingMiddleware = createMiddleware({
 		throw err;
 	}
 });
+
+/**
+ * Global request middleware that answers 503 when a raw route fails because
+ * Postgres is unreachable.
+ *
+ * Raw routes run outside the server-function middleware above, so this gives
+ * them the same outage handling: a warning, no Sentry report, and a status the
+ * caller can retry on.
+ */
+export const databaseUnavailableMiddleware = createMiddleware().server(
+	async ({ next, pathname }) => {
+		try {
+			return await next();
+		} catch (err) {
+			if (!isDatabaseUnavailable(err)) {
+				throw err;
+			}
+
+			logger.warn({ err, path: pathname }, "database unavailable");
+
+			return new Response(UNAVAILABLE_MESSAGE, {
+				status: 503,
+				headers: { "retry-after": "5" },
+			});
+		}
+	},
+);

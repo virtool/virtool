@@ -27,7 +27,9 @@ vi.mock("../logger", () => ({
 	logger: { debug, error, warn },
 }));
 
-const { errorLoggingMiddleware } = await import("../error-logging");
+const { databaseUnavailableMiddleware, errorLoggingMiddleware } = await import(
+	"../error-logging"
+);
 
 type ServerFn = (options: {
 	next: () => Promise<unknown>;
@@ -130,5 +132,45 @@ describe("errorLoggingMiddleware", () => {
 			"database unavailable",
 		);
 		expect(error).not.toHaveBeenCalled();
+	});
+});
+
+type RequestFn = (options: {
+	next: () => Promise<unknown>;
+	pathname: string;
+}) => Promise<unknown>;
+
+const runRequest = databaseUnavailableMiddleware.options
+	.server as unknown as RequestFn;
+
+describe("databaseUnavailableMiddleware", () => {
+	it("answers an unreachable database with a 503 and logs a warning", async () => {
+		const thrown = new Error("query failed", {
+			cause: { code: "CONNECT_TIMEOUT" },
+		});
+
+		const response = (await runRequest({
+			next: () => Promise.reject(thrown),
+			pathname: "/api/v1/uploads",
+		})) as Response;
+
+		expect(response.status).toBe(503);
+		expect(response.headers.get("retry-after")).toBe("5");
+		expect(warn).toHaveBeenCalledWith(
+			{ err: thrown, path: "/api/v1/uploads" },
+			"database unavailable",
+		);
+	});
+
+	it("rethrows any other failure", async () => {
+		const thrown = new Error("boom");
+
+		await expect(
+			runRequest({
+				next: () => Promise.reject(thrown),
+				pathname: "/api/v1/uploads",
+			}),
+		).rejects.toBe(thrown);
+		expect(warn).not.toHaveBeenCalled();
 	});
 });
