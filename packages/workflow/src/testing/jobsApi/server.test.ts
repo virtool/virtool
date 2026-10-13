@@ -412,8 +412,8 @@ describe("failure injection", () => {
 
 		await expect(client.getJob()).rejects.toThrow(ConflictError);
 
-		// A status is a decision the jobs API made. Repeating it five times over
-		// 25 s would be a bug, so exactly one request reached the server.
+		// A status is a decision the jobs API made. Repeating it would be a bug,
+		// so exactly one request reached the server.
 		expect(server.requests).toHaveLength(1);
 	});
 

@@ -5,7 +5,10 @@ import {
 } from "@sentry/tanstackstart-react";
 import { createAuthenticationMiddleware } from "@server/auth/middleware";
 import { buildContentSecurityPolicy, getRequestNonce } from "@server/csp";
-import { errorLoggingMiddleware } from "@server/error-logging";
+import {
+	databaseUnavailableMiddleware,
+	errorLoggingMiddleware,
+} from "@server/error-logging";
 import { metricsMiddleware } from "@server/metrics/middleware";
 import {
 	createCsrfMiddleware,
@@ -136,10 +139,12 @@ export const startInstance = createStart(() => ({
 	serializationAdapters: [serverErrorSerializationAdapter],
 	// The metrics middleware sits directly inside Sentry's so its timing covers
 	// everything the request actually pays for, including the CSRF check and the
-	// document-header rewrite below it.
+	// document-header rewrite below it. The database-outage middleware sits
+	// inside both, so its 503 is counted but never reaches Sentry.
 	requestMiddleware: [
 		sentryGlobalRequestMiddleware,
 		metricsMiddleware,
+		databaseUnavailableMiddleware,
 		csrfMiddleware,
 		documentHeadersMiddleware,
 	],

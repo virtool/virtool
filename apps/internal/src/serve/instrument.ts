@@ -36,9 +36,10 @@ export const SERVICE = "jobs-api";
  * There is deliberately no `beforeSend` filter. The web app needs one because a
  * server function signals an expected 4xx by *throwing* `ClientError`, which
  * would otherwise be reported as an incident. This service has no such
- * mechanism: a Hono handler returns a 4xx response rather than throwing, so
- * nothing routine reaches Sentry in the first place. Add a filter here only if
- * a route starts throwing for an expected outcome — and prefer not to.
+ * mechanism: a Hono handler returns a 4xx response rather than throwing, and
+ * `app.onError` answers an unreachable database with a 503 without reporting
+ * it, so nothing routine reaches Sentry in the first place. Add a filter here
+ * only if a route starts throwing for an expected outcome — and prefer not to.
  *
  * The logger is passed in because it is built before this call: it carries the
  * pino destination that forwards `info`-and-above records to Sentry, and that

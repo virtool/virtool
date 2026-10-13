@@ -1,4 +1,5 @@
 import type { Db, PgClient } from "@virtool/data/db/pg";
+import { QueryTimeoutError } from "@virtool/data/db/timeout";
 import type { Logger } from "@virtool/logger";
 import { MemoryStorage } from "@virtool/storage";
 import { describe, expect, it, vi } from "vitest";
@@ -282,6 +283,26 @@ describe("unhandled errors", () => {
 		);
 	});
 
+	// `/boom/static` also matches `/boom/:id`, which is registered later and so
+	// never runs. The label has to name the route that threw.
+	it("logs the route that threw, not the last matched one", async () => {
+		const logger = fakeLogger();
+		const app = createApp(deps({ logger }));
+
+		app.get("/boom/static", () => {
+			throw new Error("boom");
+		});
+
+		app.get("/boom/:id", (c) => c.text("unreachable"));
+
+		await app.request("/boom/static");
+
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/boom/static" }),
+			"unhandled error",
+		);
+	});
+
 	// Hono catches before the error can reach Node, so this hook is the only way
 	// a bug in a route becomes a Sentry event.
 	it("reports the error through the injected hook", async () => {
@@ -292,6 +313,89 @@ describe("unhandled errors", () => {
 		expect(captureException).toHaveBeenCalledWith(
 			expect.objectContaining({ message: "boom" }),
 		);
+	});
+});
+
+describe("database unavailable", () => {
+	function unavailableApp(overrides: Partial<AppDeps> = {}) {
+		const app = createApp(deps(overrides));
+
+		app.get("/down", () => {
+			throw new Error("Failed query", {
+				cause: {
+					code: "57P03",
+					message: "the database system is shutting down",
+				},
+			});
+		});
+
+		app.get("/slow", () => {
+			throw new QueryTimeoutError("timed out after 2000ms");
+		});
+
+		return app;
+	}
+
+	it("answers 503 with a retry hint", async () => {
+		const response = await unavailableApp().request("/down");
+
+		expect(response.status).toBe(503);
+		expect(response.headers.get("retry-after")).toBe("5");
+		expect(await response.json()).toEqual({ message: "Database unavailable" });
+	});
+
+	it("logs a warning and reports nothing", async () => {
+		const logger = fakeLogger();
+		const captureException = vi.fn();
+
+		await unavailableApp({ logger, captureException }).request("/down");
+
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/down" }),
+			"database unavailable",
+		);
+		expect(logger.error).not.toHaveBeenCalled();
+		expect(captureException).not.toHaveBeenCalled();
+	});
+
+	it("logs the route that answered, not the last matched one", async () => {
+		const logger = fakeLogger();
+		const db = new Proxy(
+			{},
+			{
+				get() {
+					throw new Error("Failed query", {
+						cause: { code: "57P03", message: "shutting down" },
+					});
+				},
+			},
+		) as Db;
+
+		await createApp(deps({ db, logger })).request("/jobs/counts");
+
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/jobs/counts" }),
+			"database unavailable",
+		);
+	});
+
+	it("answers 503 and reports nothing when a probe times out", async () => {
+		const logger = fakeLogger();
+		const captureException = vi.fn();
+
+		const response = await unavailableApp({ logger, captureException }).request(
+			"/slow",
+		);
+
+		expect(response.status).toBe(503);
+		expect(response.headers.get("retry-after")).toBe("5");
+		expect(await response.json()).toEqual({ message: "Database unavailable" });
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/slow" }),
+			"database unavailable",
+		);
+		expect(logger.error).not.toHaveBeenCalled();
+		expect(captureException).not.toHaveBeenCalled();
 	});
 });
 
@@ -308,6 +412,20 @@ describe("request metrics", () => {
 
 		expect(rendered).toContain('route="/jobs/:jobId"');
 		expect(rendered).not.toContain("12345");
+	});
+
+	// `/jobs/counts` also matches `/jobs/:jobId`, which never runs because the
+	// static route is registered first and answers.
+	it("labels a request with the route that answered it", async () => {
+		const metrics = createMetrics(10, "1.2.3");
+		const app = createApp(deps({ metrics }));
+
+		await app.request("/jobs/counts");
+
+		const rendered = await metrics.render();
+
+		expect(rendered).toContain('route="/jobs/counts"');
+		expect(rendered).not.toContain('route="/jobs/:jobId"');
 	});
 
 	it("counts a handled request under its own route", async () => {
@@ -368,5 +486,45 @@ describe("request metrics", () => {
 		expect(await metrics.render()).toContain(
 			'route="/boom",method="GET",status="error"',
 		);
+	});
+});
+
+describe("Sentry transaction name", () => {
+	// Sentry's Hono middleware names the transaction from the last matched route
+	// before dispatch. An error captured inside the handler keeps that name, so
+	// the app has to set the answering route first.
+	it("names the route that will answer, not the last matched one", async () => {
+		const setTransactionName = vi.fn();
+		const captureException = vi.fn();
+		const app = createApp(deps({ setTransactionName, captureException }));
+
+		// The fake database throws when the handler reads it, so the capture
+		// marks the moment the handler ran.
+		await app.request("/jobs/counts");
+
+		expect(setTransactionName).toHaveBeenCalledWith("GET /jobs/counts");
+		const [named] = setTransactionName.mock.invocationCallOrder;
+		const [captured] = captureException.mock.invocationCallOrder;
+
+		expect(captured).toBeDefined();
+		expect(named).toBeLessThan(captured ?? 0);
+	});
+
+	it("names a parameterized route by its pattern", async () => {
+		const setTransactionName = vi.fn();
+		const app = createApp(deps({ setTransactionName }));
+
+		await app.request("/jobs/12345/ping", { method: "PUT" });
+
+		expect(setTransactionName).toHaveBeenCalledWith("PUT /jobs/:jobId/ping");
+	});
+
+	it("names nothing when no route matched", async () => {
+		const setTransactionName = vi.fn();
+		const app = createApp(deps({ setTransactionName }));
+
+		await app.request("/no-such-route");
+
+		expect(setTransactionName).not.toHaveBeenCalled();
 	});
 });

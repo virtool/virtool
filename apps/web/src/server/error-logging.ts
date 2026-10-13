@@ -1,5 +1,9 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { getRequest, getResponseStatus } from "@tanstack/react-start/server";
+import {
+	getRequest,
+	getResponseStatus,
+	setResponseStatus,
+} from "@tanstack/react-start/server";
 import {
 	FORBIDDEN_ERROR_NAME,
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
@@ -8,7 +12,12 @@ import {
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
+import { isDatabaseUnavailable } from "@virtool/data/db/errors";
+import { ClientError } from "./errors";
 import { logger } from "./logger";
+
+const UNAVAILABLE_MESSAGE =
+	"Virtool is temporarily unavailable. Try again in a minute.";
 
 const FORBIDDEN_ERROR_NAMES = new Set([
 	FORBIDDEN_ERROR_NAME,
@@ -41,6 +50,11 @@ function isExpectedAuthenticationError(err: unknown, status: number): boolean {
  * authentication and authorization rejections omit the error object so routine
  * 401/403 responses do not emit stacks or credential-bearing details. Anything
  * else is unexpected and logged at error with its full `cause` chain.
+ *
+ * An unreachable database is the exception that is rewritten rather than only
+ * logged. Postgres restarts for maintenance, so it is logged at warn and
+ * rethrown as a 503 `ClientError`: the client shows a message it can act on,
+ * and `dropExpectedClientErrors` keeps the restart out of Sentry.
  */
 export const errorLoggingMiddleware = createMiddleware({
 	type: "function",
@@ -54,6 +68,13 @@ export const errorLoggingMiddleware = createMiddleware({
 		// failing handler on both paths.
 		const path = new URL(getRequest().url).pathname;
 		const serverFn = serverFnMeta.name;
+
+		if (isDatabaseUnavailable(err)) {
+			logger.warn({ err, path, serverFn }, "database unavailable");
+
+			setResponseStatus(503);
+			throw new ClientError(UNAVAILABLE_MESSAGE, 503);
+		}
 
 		if (isExpectedAuthenticationError(err, status)) {
 			logger.debug(
@@ -80,3 +101,30 @@ export const errorLoggingMiddleware = createMiddleware({
 		throw err;
 	}
 });
+
+/**
+ * Global request middleware that answers 503 when a raw route fails because
+ * Postgres is unreachable.
+ *
+ * Raw routes run outside the server-function middleware above, so this gives
+ * them the same outage handling: a warning, no Sentry report, and a status the
+ * caller can retry on.
+ */
+export const databaseUnavailableMiddleware = createMiddleware().server(
+	async ({ next, pathname }) => {
+		try {
+			return await next();
+		} catch (err) {
+			if (!isDatabaseUnavailable(err)) {
+				throw err;
+			}
+
+			logger.warn({ err, path: pathname }, "database unavailable");
+
+			return new Response(UNAVAILABLE_MESSAGE, {
+				status: 503,
+				headers: { "retry-after": "5" },
+			});
+		}
+	},
+);

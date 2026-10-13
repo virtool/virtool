@@ -28,8 +28,7 @@ export type JobsApiTestServer = TestServer & {
 	 * Answer the next request with `status` instead of routing it.
 	 *
 	 * Queued, so several calls set up several requests in order — which is how a
-	 * test drives the client's five retries and then lets the sixth attempt
-	 * through.
+	 * test drives the client's retries and then lets a later attempt through.
 	 */
 	respondNextWith: (status: number, body?: unknown) => void;
 
@@ -45,8 +44,8 @@ export type JobsApiTestServer = TestServer & {
 	/**
 	 * Destroy the next request's socket mid-connection.
 	 *
-	 * A genuine transport failure, which is the **only** thing the client retries
-	 * — a status it chose is a decision, not a blip. Queued alongside the other
+	 * A genuine transport failure, which the client retries along with a 503 —
+	 * any other status is a decision, not a blip. Queued alongside the other
 	 * two.
 	 */
 	destroyNextRequest: () => void;

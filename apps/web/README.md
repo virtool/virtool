@@ -208,6 +208,14 @@ owns account state, API keys, and authorization. Its raw handler is outside the
 server-function authentication and CSRF middleware, so Better Auth performs its
 own origin check against `VT_PUBLIC_ORIGIN`.
 
+The handler serves only an allow-list of Better Auth endpoints: the passkey
+sign-in and registration ceremonies, the TOTP `enable`, `verify-totp`,
+`generate-backup-codes`, and `disable` calls, and the two recent-authentication
+paths. Every other path, including one that a plugin or an upgrade adds,
+answers 404. Server functions call other endpoints through `auth.api`. To serve
+a new endpoint over HTTP, add it to `HTTP_ALLOWED_ENDPOINTS` in
+[betterAuth.ts](src/server/auth/betterAuth.ts).
+
 Recent-authentication challenges pass through Better Auth's HTTP handler at
 `/api/auth/virtool-session/challenge`. Password, TOTP, and passkey share a limit
 of five attempts per minute per IP. The passkey options path,
@@ -538,9 +546,8 @@ disables TOTP. It ends when the first `verify-totp` succeeds.
 
 An `mfa_enrollment` principal reaches no server function or raw route. Server
 functions answer 403 `MfaEnrollmentRequiredError`. In `/api/auth/*`, it can
-reach only `get-session`, `sign-out`, `two-factor/enable`, and
-`two-factor/verify-totp`; every other path answers 403
-`MFA_ENROLLMENT_REQUIRED`. API keys are never challenged or restricted.
+reach only `two-factor/enable` and `two-factor/verify-totp`; every other
+allowed path answers 403 `MFA_ENROLLMENT_REQUIRED`. API keys are never challenged or restricted.
 
 The guards send an `mfa_enrollment` principal to `/mfa-enrollment`. The wall
 asks for the password, shows the QR code and setup key from the `enable`
