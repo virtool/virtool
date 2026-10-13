@@ -430,16 +430,24 @@ describe("the mounted handler", () => {
 
 		it("lifts the restriction once the user is enrolled", async () => {
 			const cookie = await signInUnenrolled();
-			await db.update(users).set({ twoFactorEnabled: true });
 			const handler = createAuthRequestHandler(db, auth);
+			await handler(
+				authRequest("/two-factor/enable", cookie, {
+					password: LEGACY_PASSWORD,
+				}),
+			);
+			await db.update(users).set({ twoFactorEnabled: true });
 
 			const response = await handler(
 				authRequest("/two-factor/generate-backup-codes", cookie, {
-					password: "wrong-password",
+					password: LEGACY_PASSWORD,
 				}),
 			);
 
-			expect(response.status).not.toBe(403);
+			expect(response.status).toBe(200);
+			expect(await response.json()).toMatchObject({
+				backupCodes: expect.any(Array),
+			});
 		});
 	});
 
