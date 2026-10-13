@@ -1,5 +1,13 @@
 import { eq, sql } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	onTestFinished,
+} from "vitest";
 import type { Db } from "../db/pg";
 import { authSessions } from "../db/schema/auth";
 import { sessions } from "../db/schema/sessions";
@@ -14,6 +22,7 @@ import {
 	deleteOtherBrowserSessions,
 	findActiveBrowserSessions,
 	resolveBrowserSession,
+	resolveBrowserSessionForUpdate,
 } from "./session";
 import { seedSession, seedUser } from "./test/fixtures";
 
@@ -84,6 +93,107 @@ describe("resolveBrowserSession", () => {
 			.set({ twoFactorEnabled: true })
 			.where(eq(users.id, userId));
 		expect(await isRestricted()).toBe(false);
+	});
+});
+
+async function getBackendPid(db: Db): Promise<number> {
+	const [row] = await db.execute<{ pid: number }>(
+		sql`select pg_backend_pid() as pid`,
+	);
+	return Number(row?.pid);
+}
+
+/** Resolve once another backend waits on a lock, or stop polling on abort. */
+async function waitForLockWait(
+	pid: number,
+	signal: AbortSignal,
+): Promise<void> {
+	while (!signal.aborted) {
+		const [row] = await db.execute<{ waiting: boolean }>(
+			sql`select wait_event_type = 'Lock' as waiting
+				from pg_stat_activity where pid = ${pid}`,
+		);
+		if (row?.waiting) {
+			return;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 10));
+	}
+}
+
+function createLatch(): { promise: Promise<void>; release: () => void } {
+	const latch = { release: () => {} };
+	const promise = new Promise<void>((resolve) => {
+		latch.release = resolve;
+	});
+	return { promise, release: () => latch.release() };
+}
+
+describe("resolveBrowserSessionForUpdate", () => {
+	it("cannot deadlock with a credential change that deletes every session", async () => {
+		const userId = await seedUser(db);
+		await seedSession(db, userId);
+		const current = await seedSession(db, userId);
+		const credential = database.connect();
+		const revocation = database.connect();
+		const polling = new AbortController();
+		onTestFinished(async () => {
+			polling.abort();
+			await Promise.all([credential.close(), revocation.close()]);
+		});
+		const [credentialPid, revocationPid] = await Promise.all([
+			getBackendPid(credential.db),
+			getBackendPid(revocation.db),
+		]);
+		const userLocked = createLatch();
+		const revocationLocked = createLatch();
+		const sessionsDeleting = createLatch();
+
+		// Password changes and TOTP resets lock the user row, then delete every
+		// session. Each step waits until the other transaction holds or waits for
+		// its lock, which reproduces the interleaving that used to deadlock.
+		const credentialTx = credential.db.transaction(async (tx) => {
+			await tx
+				.update(users)
+				.set({ forceReset: true })
+				.where(eq(users.id, userId));
+			userLocked.release();
+			const revocationWaited = await Promise.race([
+				revocationLocked.promise.then(() => false),
+				waitForLockWait(revocationPid, polling.signal).then(() => true),
+			]);
+
+			const deleted = tx
+				.delete(authSessions)
+				.where(eq(authSessions.userId, userId))
+				.returning({ id: authSessions.id })
+				.execute();
+			await Promise.race([
+				deleted,
+				waitForLockWait(credentialPid, polling.signal),
+			]);
+			sessionsDeleting.release();
+
+			return { revocationWaited, deleted: (await deleted).length };
+		});
+		await userLocked.promise;
+
+		const revocationTx = revocation.db.transaction(async (tx) => {
+			const resolved = await resolveBrowserSessionForUpdate(
+				tx,
+				current.sessionId,
+				userId,
+			);
+			revocationLocked.release();
+			await sessionsDeleting.promise;
+			return resolved
+				? deleteOtherBrowserSessions(tx, userId, current.sessionId)
+				: null;
+		});
+
+		expect(await Promise.all([credentialTx, revocationTx])).toEqual([
+			{ revocationWaited: true, deleted: 2 },
+			null,
+		]);
 	});
 });
 
