@@ -211,6 +211,7 @@ RUN --mount=type=secret,id=sentry_auth_token \
 
 FROM node:24-bookworm-slim AS dist
 WORKDIR /ui
+ENV NODE_ENV="production"
 COPY --from=build-web /repo/apps/web/.output ./.output
 COPY --from=build-web /repo/apps/web/package.json ./package.json
 EXPOSE 9900
@@ -225,6 +226,7 @@ RUN pnpm --filter @virtool/internal build \
 
 FROM node:24-bookworm-slim AS internal
 WORKDIR /internal
+ENV NODE_ENV="production"
 COPY --from=build-internal /prod/internal ./
 # The migration SQL, for the `migrate` subcommand the migration Job runs.
 # `pnpm deploy` carries only `dist` and `node_modules`, and the migrator reads
@@ -254,6 +256,7 @@ RUN pnpm --filter @virtool/create-subtraction build \
 
 FROM node:24-bookworm-slim AS create-subtraction
 WORKDIR /workflow
+ENV NODE_ENV="production"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends pigz \
@@ -273,6 +276,7 @@ RUN pnpm --filter @virtool/create-sample build \
 
 FROM node:24-bookworm-slim AS create-sample
 WORKDIR /workflow
+ENV NODE_ENV="production"
 
 # pigz is here because `finalize` calls it, not because a copied binary needs
 # it. Nothing copied does: FastQC once forced a JRE and the full `perl` into
@@ -296,6 +300,7 @@ RUN pnpm --filter @virtool/pathoscope build \
 
 FROM node:24-bookworm-slim AS pathoscope
 WORKDIR /workflow
+ENV NODE_ENV="production"
 
 # The tools binaries are built on debian:bookworm, which carries more than this
 # slim base does. Each package here backs a specific `ldd ... => not found` or
@@ -376,6 +381,7 @@ RUN pnpm --filter @virtool/nuvs build \
 
 FROM node:24-bookworm-slim AS nuvs
 WORKDIR /workflow
+ENV NODE_ENV="production"
 
 # Each package here backs a specific runtime dependency of a copied binary.
 # libgomp1 is for the OpenMP-compiled bowtie2-align-* binaries and libbz2-1.0

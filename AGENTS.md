@@ -69,8 +69,9 @@ source, to the corresponding filter in `.github/workflows/ci.yaml`. See
 [docs/ci.md](docs/ci.md) for the filter boundaries and rationale.
 
 Every shipped image is a target in the root `Dockerfile` and builds from the
-repository root. Keep runtime stages on `node:24-bookworm-slim`; workflow tools
-are glibc-linked, so don't add an Alpine stage. Give each bioinformatics tool
+repository root. Keep runtime stages on `node:24-bookworm-slim` and set
+`NODE_ENV="production"` in each one. Workflow tools are glibc-linked, so don't
+add an Alpine stage. Give each bioinformatics tool
 its own independent build stage so a target builds only the tools it uses.
 When adding a tool, inspect the pinned entry point and install every runtime
 interpreter and shared library it needs; a missing interpreter doesn't fail

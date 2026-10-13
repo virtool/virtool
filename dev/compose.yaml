@@ -37,6 +37,8 @@ x-volumes: &volumes
   - ${VT_DEV_WORKTREE}/packages/data/drizzle:/repo/packages/data/drizzle:ro
 
 x-workflow-environment: &workflow-environment
+  # The workflow targets are the shipped images, which set production.
+  NODE_ENV: development
   VT_JOBS_API_URL: http://jobs-api-${VT_DEV_ENVIRONMENT_ID}:9950
   VT_TIMEOUT: "120"
   VT_WORK_PATH: /work
