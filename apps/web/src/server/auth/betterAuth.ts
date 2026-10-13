@@ -1,5 +1,8 @@
 import { passkey } from "@better-auth/passkey";
-import { AUTH_BASE_PATH } from "@virtool/contracts";
+import {
+	AUTH_BASE_PATH,
+	RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH,
+} from "@virtool/contracts";
 import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import { mfaEnrollmentRequired } from "@virtool/data/auth/session";
@@ -18,7 +21,6 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
 	APIError,
 	createAuthEndpoint,
-	createAuthMiddleware,
 	sensitiveSessionMiddleware,
 } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
@@ -29,59 +31,41 @@ import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 import { createRateLimitStorage } from "./rateLimitStorage";
-import { recentAuthenticationPlugin } from "./recentAuthenticationChallenge";
+import {
+	RECENT_AUTHENTICATION_PATH,
+	recentAuthenticationPlugin,
+} from "./recentAuthenticationChallenge";
 import {
 	AUTH_IP_ADDRESS_OPTIONS,
 	normalizeBrowserSessionMetadata,
 } from "./sessionMetadata";
 
 /**
- * The endpoints this instance refuses.
+ * The Better Auth endpoints the browser and Virtool's own server code call over
+ * HTTP, as `METHOD path`. Every other endpoint, including any that a plugin or
+ * an upgrade adds, answers 404.
  *
- * `/sign-in/email`: `emailAndPassword` is enabled for its password hashing, but
- * it also mounts this, and `disableSignUp` does not take it down. Virtool signs
- * in by handle: `users.email` carries no unique constraint and duplicate
- * addresses exist, so an email lookup would resolve to an arbitrary one of the
- * holders.
+ * Password and second-factor sign-in, sign-out, sessions, passwords, and the
+ * passkey list and its mutations go through `auth.api` in Virtool's server
+ * functions, which apply Virtool's policy. `/two-factor/get-totp-uri` stays
+ * out because it returns the TOTP secret again for only the password.
  *
- * `/is-username-available`: the `username` plugin mounts this unauthenticated,
- * and Virtool has no public sign-up for it to serve. It would answer whether a
- * handle exists — the enumeration the sign-in paths are shaped to withhold.
- *
- * `/update-user`: with the `username` plugin registered this writes `username`
- * and `displayUsername` straight to the row, which would drift the name a user
- * signs in with away from `users.handle` and around the case-insensitive
- * uniqueness that `users_handle_lower_unique` holds. Virtool owns account
- * updates through its own server functions.
+ * The match is exact, so a variant of a path, such as one with a trailing
+ * slash or in a different case, is refused.
  */
-const REFUSED_PATHS = new Set([
-	"/sign-in/email",
-	"/is-username-available",
-	"/update-user",
-	"/list-sessions",
-	"/revoke-session",
-	"/revoke-sessions",
-	"/revoke-other-sessions",
-]);
-
-/**
- * Endpoints refused over HTTP only.
- *
- * The passkey list returns public keys and counters, and neither passkey
- * mutation checks recent authentication. Virtool's account server functions
- * call all three through `auth.api` and apply its own policy. The `before` hook
- * also runs for `auth.api` calls, so the refusal is in
- * {@link createAuthRequestHandler}.
- */
-const HTTP_REFUSED_PATHS = new Set(
+const HTTP_ALLOWED_ENDPOINTS = new Set(
 	[
-		"/passkey/list-user-passkeys",
-		"/passkey/update-passkey",
-		"/passkey/delete-passkey",
-		// Returns the TOTP secret again for only the password. Enrollment reads
-		// it once, from `enable`.
-		"/two-factor/get-totp-uri",
-	].map((path) => `${AUTH_BASE_PATH}${path}`),
+		["GET", "/passkey/generate-authenticate-options"],
+		["POST", "/passkey/verify-authentication"],
+		["GET", "/passkey/generate-register-options"],
+		["POST", "/passkey/verify-registration"],
+		["POST", "/two-factor/enable"],
+		["POST", "/two-factor/verify-totp"],
+		["POST", "/two-factor/generate-backup-codes"],
+		["POST", "/two-factor/disable"],
+		["GET", RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH],
+		["POST", RECENT_AUTHENTICATION_PATH],
+	].map(([method, path]) => `${method} ${AUTH_BASE_PATH}${path}`),
 );
 
 /**
@@ -313,16 +297,6 @@ export function createAuth({
 					verifyPassword(password, Buffer.from(hash, "utf8")),
 			},
 		},
-		hooks: {
-			// `NOT_FOUND` because a refused endpoint is not part of this instance's
-			// surface at all. See REFUSED_PATHS for what each one would otherwise
-			// expose.
-			before: createAuthMiddleware(async (ctx) => {
-				if (REFUSED_PATHS.has(ctx.path)) {
-					throw new APIError("NOT_FOUND");
-				}
-			}),
-		},
 		databaseHooks: {
 			session: {
 				create: {
@@ -451,24 +425,17 @@ export function createAuth({
 	return auth;
 }
 
-const FORCED_RESET_ALLOWED_PATHS = new Set([
-	`${AUTH_BASE_PATH}/get-session`,
-	`${AUTH_BASE_PATH}/sign-out`,
-]);
-
 // Enrollment is Better Auth's own `enable` then `verify-totp`. The first
 // successful verification sets `twoFactorEnabled`, which lifts the
 // restriction on the next request.
 const MFA_ENROLLMENT_ALLOWED_PATHS = new Set([
-	`${AUTH_BASE_PATH}/get-session`,
-	`${AUTH_BASE_PATH}/sign-out`,
 	`${AUTH_BASE_PATH}/two-factor/enable`,
 	`${AUTH_BASE_PATH}/two-factor/verify-totp`,
 ]);
 
 /**
- * Wrap Better Auth's raw handler with Virtool's forced-reset and required-MFA
- * restrictions.
+ * Wrap Better Auth's raw handler with Virtool's endpoint allow-list and its
+ * forced-reset and required-MFA restrictions.
  */
 export function createAuthRequestHandler(
 	db: Db,
@@ -476,50 +443,49 @@ export function createAuthRequestHandler(
 ): (request: Request) => Promise<Response> {
 	return async function handleAuthRequest(request: Request): Promise<Response> {
 		const pathname = new URL(request.url).pathname;
-		if (HTTP_REFUSED_PATHS.has(pathname)) {
+		if (!HTTP_ALLOWED_ENDPOINTS.has(`${request.method} ${pathname}`)) {
 			return new Response(null, { status: 404 });
 		}
-		if (!FORCED_RESET_ALLOWED_PATHS.has(pathname)) {
-			const session = await auth.api.getSession({
-				headers: request.headers,
-				query: { disableCookieCache: true, disableRefresh: true },
-			});
 
-			if (session) {
-				const userId = Number(session.user.id);
-				const [user] = Number.isSafeInteger(userId)
-					? await db
-							.select({
-								forceReset: users.forceReset,
-								mfaEnrollmentRequired,
-							})
-							.from(users)
-							.where(eq(users.id, userId))
-							.limit(1)
-					: [];
+		const session = await auth.api.getSession({
+			headers: request.headers,
+			query: { disableCookieCache: true, disableRefresh: true },
+		});
 
-				if (!user || user.forceReset) {
-					return Response.json(
-						{
-							code: "PASSWORD_RESET_REQUIRED",
-							message: "Password reset required",
-						},
-						{ status: 403 },
-					);
-				}
+		if (session) {
+			const userId = Number(session.user.id);
+			const [user] = Number.isSafeInteger(userId)
+				? await db
+						.select({
+							forceReset: users.forceReset,
+							mfaEnrollmentRequired,
+						})
+						.from(users)
+						.where(eq(users.id, userId))
+						.limit(1)
+				: [];
 
-				if (
-					user.mfaEnrollmentRequired &&
-					!MFA_ENROLLMENT_ALLOWED_PATHS.has(pathname)
-				) {
-					return Response.json(
-						{
-							code: "MFA_ENROLLMENT_REQUIRED",
-							message: "TOTP enrollment required",
-						},
-						{ status: 403 },
-					);
-				}
+			if (!user || user.forceReset) {
+				return Response.json(
+					{
+						code: "PASSWORD_RESET_REQUIRED",
+						message: "Password reset required",
+					},
+					{ status: 403 },
+				);
+			}
+
+			if (
+				user.mfaEnrollmentRequired &&
+				!MFA_ENROLLMENT_ALLOWED_PATHS.has(pathname)
+			) {
+				return Response.json(
+					{
+						code: "MFA_ENROLLMENT_REQUIRED",
+						message: "TOTP enrollment required",
+					},
+					{ status: 403 },
+				);
 			}
 		}
 
