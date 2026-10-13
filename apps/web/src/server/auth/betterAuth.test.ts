@@ -178,7 +178,7 @@ describe("legacy bcrypt credentials", () => {
 			username: "alice",
 			password: LEGACY_PASSWORD,
 		});
-		request.headers.set("cf-connecting-ip", "2001:db8::1");
+		request.headers.set("x-forwarded-for", "2001:db8::1");
 		request.headers.set(
 			"user-agent",
 			`Mozilla/5.0 (Windows NT 10.0) Chrome/140.0.0.0 ${"x".repeat(600)}`,

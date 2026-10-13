@@ -8,7 +8,7 @@ const MAX_USER_AGENT_LENGTH = 512;
 
 /** IP address resolution shared by Better Auth and restricted sessions. */
 export const AUTH_IP_ADDRESS_OPTIONS = {
-	ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"],
+	ipAddressHeaders: ["x-forwarded-for"],
 } satisfies NonNullable<
 	NonNullable<BetterAuthOptions["advanced"]>["ipAddress"]
 >;
