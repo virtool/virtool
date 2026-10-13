@@ -1,3 +1,4 @@
+import { DrizzleQueryError } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -55,7 +56,6 @@ describe("isDatabaseUnavailable", () => {
 		"08006",
 		"CONNECT_TIMEOUT",
 		"CONNECTION_CLOSED",
-		"ECONNREFUSED",
 	])("matches %s on the error or its cause", (code) => {
 		expect(isDatabaseUnavailable({ code })).toBe(true);
 		expect(isDatabaseUnavailable(new Error("query", { cause: { code } }))).toBe(
@@ -72,6 +72,23 @@ describe("isDatabaseUnavailable", () => {
 	])("rejects %s", (code) => {
 		expect(isDatabaseUnavailable({ code })).toBe(false);
 	});
+
+	it.each(["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT"])(
+		"matches %s only as the cause of a failed query",
+		(code) => {
+			const socketError = Object.assign(new Error(code), { code });
+
+			expect(
+				isDatabaseUnavailable(
+					new DrizzleQueryError("select 1", [], socketError),
+				),
+			).toBe(true);
+			expect(isDatabaseUnavailable(socketError)).toBe(false);
+			expect(
+				isDatabaseUnavailable(new Error("upload", { cause: socketError })),
+			).toBe(false);
+		},
+	);
 
 	it("rejects errors without a code and non-objects", () => {
 		expect(isDatabaseUnavailable(new Error("boom"))).toBe(false);

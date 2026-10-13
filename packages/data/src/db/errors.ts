@@ -1,3 +1,4 @@
+import { DrizzleQueryError } from "drizzle-orm";
 import type { PostgresError } from "postgres";
 
 const FOREIGN_KEY_VIOLATION = "23503";
@@ -70,17 +71,24 @@ export function isForeignKeyViolation(
 const UNAVAILABLE_SQLSTATES = new Set(["57P01", "57P02", "57P03"]);
 
 /**
- * Codes for a connection that never opened or was cut from the far side.
- *
- * `CONNECT_TIMEOUT` and `CONNECTION_CLOSED` are postgres.js's own; the rest
- * are Node socket errors. `CONNECTION_DESTROYED` and `CONNECTION_ENDED` are
- * left out because this process raises them itself when it closes its pool,
- * and `ENOTFOUND` because a host that never resolves is a configuration fault
- * that must stay visible.
+ * postgres.js's own codes for a connection that never opened or was cut from
+ * the far side. `CONNECTION_DESTROYED` and `CONNECTION_ENDED` are left out
+ * because this process raises them itself when it closes its pool.
  */
-const UNAVAILABLE_CONNECTION_CODES = new Set([
+const POSTGRES_CONNECTION_CODES = new Set([
 	"CONNECT_TIMEOUT",
 	"CONNECTION_CLOSED",
+]);
+
+/**
+ * Node socket codes for the same failures.
+ *
+ * Every outbound client raises these, so they count only when Drizzle reports
+ * them as a query's cause; object storage or NCBI failing the same way is a
+ * different incident. `ENOTFOUND` is left out because a host that never
+ * resolves is a configuration fault that must stay visible.
+ */
+const SOCKET_CODES = new Set([
 	"ECONNREFUSED",
 	"ECONNRESET",
 	"EHOSTUNREACH",
@@ -89,12 +97,18 @@ const UNAVAILABLE_CONNECTION_CODES = new Set([
 	"EAI_AGAIN",
 ]);
 
-function isUnavailableCode(code: unknown): boolean {
+function getCode(error: unknown): unknown {
+	return error !== null && typeof error === "object"
+		? (error as { code?: unknown }).code
+		: undefined;
+}
+
+function isPostgresUnavailableCode(code: unknown): boolean {
 	return (
 		typeof code === "string" &&
 		(UNAVAILABLE_SQLSTATES.has(code) ||
 			code.startsWith("08") ||
-			UNAVAILABLE_CONNECTION_CODES.has(code))
+			POSTGRES_CONNECTION_CODES.has(code))
 	);
 }
 
@@ -109,13 +123,21 @@ export function isDatabaseUnavailable(error: unknown): boolean {
 	if (error === null || typeof error !== "object") {
 		return false;
 	}
-	if (isUnavailableCode((error as { code?: unknown }).code)) {
+
+	const cause = (error as { cause?: unknown }).cause;
+
+	if (
+		isPostgresUnavailableCode(getCode(error)) ||
+		isPostgresUnavailableCode(getCode(cause))
+	) {
 		return true;
 	}
-	const cause = (error as { cause?: unknown }).cause;
+
+	const code = getCode(cause);
+
 	return (
-		cause !== null &&
-		typeof cause === "object" &&
-		isUnavailableCode((cause as { code?: unknown }).code)
+		error instanceof DrizzleQueryError &&
+		typeof code === "string" &&
+		SOCKET_CODES.has(code)
 	);
 }
