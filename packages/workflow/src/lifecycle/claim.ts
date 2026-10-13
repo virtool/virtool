@@ -12,6 +12,20 @@ import { sleep } from "../client/retry";
 /** Delay between claim attempts while no job is available. */
 export const CLAIM_POLL_INTERVAL_MS = 2_000;
 
+/**
+ * Read a `Retry-After` given in seconds, as milliseconds.
+ *
+ * The jobs API sends one with every 503. The HTTP-date form is never sent, so
+ * it is ignored along with anything else unparseable.
+ */
+function getRetryAfterMs(headers: {
+	get: (name: string) => string | null;
+}): number | undefined {
+	const seconds = Number(headers.get("retry-after") ?? Number.NaN);
+
+	return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined;
+}
+
 /** Options for {@link claimJob}. */
 export type ClaimJobOptions = {
 	/** Cluster-internal jobs API service URL. Never the public web origin. */
@@ -49,6 +63,8 @@ export async function claimJob({
 
 	const method = "POST";
 	const path = "/jobs/claim";
+
+	let unavailable = false;
 
 	try {
 		while (!signal.aborted) {
@@ -107,15 +123,29 @@ export async function claimJob({
 
 				if (response.status === 404) {
 					await response.text();
+
+					unavailable = false;
 				} else if (response.status === 503) {
 					// The jobs API's database is restarting. Polling on outlasts it,
-					// where throwing would exit the pod as broken.
+					// where throwing would exit the pod as broken. One warning per
+					// outage is enough; every pod would otherwise log each poll.
 					await response.text();
 
-					logger.warn(
-						{ status: response.status },
-						"jobs API is unavailable while claiming a job",
+					if (!unavailable) {
+						logger.warn(
+							{ status: response.status },
+							"jobs API is unavailable while claiming a job",
+						);
+					}
+
+					unavailable = true;
+
+					await sleep(
+						getRetryAfterMs(response.headers) ?? pollIntervalMs,
+						signal,
 					);
+
+					continue;
 				} else {
 					const body = await response.text();
 

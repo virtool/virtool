@@ -147,11 +147,12 @@ describe("claimJob", () => {
 		expect(server.requests).toHaveLength(3);
 	});
 
-	it("warns and polls again after a 503", async () => {
+	it("warns once and polls again at the Retry-After delay through a 503 outage", async () => {
 		const { logger, records } = createRecordingLogger();
 
 		server = await startTestServer((_, response) => {
-			if (server && server.requests.length < 2) {
+			if (server && server.requests.length < 4) {
+				response.setHeader("retry-after", "0");
 				respondJson(response, 503, { message: "Database unavailable" });
 				return;
 			}
@@ -165,14 +166,16 @@ describe("claimJob", () => {
 			request: REQUEST,
 			logger,
 			signal: new AbortController().signal,
-			pollIntervalMs: 5,
+			// Long enough to time the test out if the Retry-After were ignored.
+			pollIntervalMs: 60_000,
 		});
 
 		expect(result).toMatchObject({ id: 9 });
-		expect(server.requests).toHaveLength(2);
+		expect(server.requests).toHaveLength(4);
 
 		const warnings = records().filter((record) => record.level === 40);
 
+		expect(warnings).toHaveLength(1);
 		expect(warnings[0]?.msg).toContain("jobs API is unavailable");
 	});
 

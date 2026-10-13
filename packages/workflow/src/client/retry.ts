@@ -2,13 +2,15 @@ import type { Logger } from "@virtool/logger";
 import { ServiceUnavailableError, TransportError } from "./errors";
 
 /**
- * Attempts after the first.
+ * Wall-clock time after the first attempt starts during which a failure is
+ * retried, in milliseconds.
  *
- * At the flat delay this spans about four minutes, which outlasts a Postgres
- * maintenance restart and still ends inside the jobs API's five-minute
- * ping-timeout sweep.
+ * Four minutes outlasts a Postgres maintenance restart and still ends inside
+ * the jobs API's five-minute ping-timeout sweep. It is a deadline rather than
+ * an attempt count because an attempt that hangs until its socket times out
+ * takes far longer than one that is answered 503.
  */
-export const MAX_RETRIES = 48;
+export const RETRY_WINDOW_MS = 240_000;
 
 /**
  * Delay between attempts, in milliseconds. **Flat, not exponential.**
@@ -47,14 +49,15 @@ export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 /** Options for {@link withRetry}. */
 export type WithRetryOptions = {
 	logger: Logger;
-	/** Attempts after the first. Defaults to {@link MAX_RETRIES}; 0 disables retrying. */
+	/** Caps the attempts after the first inside {@link RETRY_WINDOW_MS}; 0 disables retrying. */
 	retries?: number;
 	/** Cuts a retry sleep short so a cancelled run does not wait out the remaining window. */
 	signal?: AbortSignal;
 };
 
 /**
- * Run a request, retrying transport failures and 503s at a flat delay.
+ * Run a request, retrying transport failures and 503s at a flat delay until
+ * {@link RETRY_WINDOW_MS} has passed.
  *
  * Only {@link TransportError} and {@link ServiceUnavailableError} are retried.
  * Anything else — a status the control plane chose, a response that failed to
@@ -62,8 +65,10 @@ export type WithRetryOptions = {
  */
 export async function withRetry<T>(
 	attempt: () => Promise<T>,
-	{ logger, retries = MAX_RETRIES, signal }: WithRetryOptions,
+	{ logger, retries = Number.POSITIVE_INFINITY, signal }: WithRetryOptions,
 ): Promise<T> {
+	const deadline = Date.now() + RETRY_WINDOW_MS;
+
 	for (let attemptIndex = 0; ; attemptIndex++) {
 		try {
 			return await attempt();
@@ -75,7 +80,7 @@ export async function withRetry<T>(
 				throw err;
 			}
 
-			if (attemptIndex >= retries) {
+			if (attemptIndex >= retries || Date.now() + RETRY_DELAY_MS > deadline) {
 				logger.warn(
 					{ err, attempts: attemptIndex + 1 },
 					"giving up on jobs API request after exhausting retries",

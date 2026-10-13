@@ -60,7 +60,7 @@ export type RequestOptions<T> = {
 	searchParams?: Record<string, string>;
 	/** Schema the response body is parsed with. Omit for an empty response. */
 	schema?: ZodType<T>;
-	/** Attempts after the first. Defaults to `MAX_RETRIES`; 0 for the ping loop, which owns its own policy. */
+	/** Caps the attempts after the first inside `RETRY_WINDOW_MS`; 0 for the ping loop, which owns its own policy. */
 	retries?: number;
 	/** Bounds this request on top of the run's cancellation signal. */
 	signal?: AbortSignal;
