@@ -282,6 +282,26 @@ describe("unhandled errors", () => {
 		);
 	});
 
+	// `/boom/static` also matches `/boom/:id`, which is registered later and so
+	// never runs. The label has to name the route that threw.
+	it("logs the route that threw, not the last matched one", async () => {
+		const logger = fakeLogger();
+		const app = createApp(deps({ logger }));
+
+		app.get("/boom/static", () => {
+			throw new Error("boom");
+		});
+
+		app.get("/boom/:id", (c) => c.text("unreachable"));
+
+		await app.request("/boom/static");
+
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/boom/static" }),
+			"unhandled error",
+		);
+	});
+
 	// Hono catches before the error can reach Node, so this hook is the only way
 	// a bug in a route becomes a Sentry event.
 	it("reports the error through the injected hook", async () => {
@@ -308,6 +328,20 @@ describe("request metrics", () => {
 
 		expect(rendered).toContain('route="/jobs/:jobId"');
 		expect(rendered).not.toContain("12345");
+	});
+
+	// `/jobs/counts` also matches `/jobs/:jobId`, which never runs because the
+	// static route is registered first and answers.
+	it("labels a request with the route that answered it", async () => {
+		const metrics = createMetrics(10, "1.2.3");
+		const app = createApp(deps({ metrics }));
+
+		await app.request("/jobs/counts");
+
+		const rendered = await metrics.render();
+
+		expect(rendered).toContain('route="/jobs/counts"');
+		expect(rendered).not.toContain('route="/jobs/:jobId"');
 	});
 
 	it("counts a handled request under its own route", async () => {
@@ -368,5 +402,37 @@ describe("request metrics", () => {
 		expect(await metrics.render()).toContain(
 			'route="/boom",method="GET",status="error"',
 		);
+	});
+});
+
+describe("Sentry transaction name", () => {
+	// Sentry's Hono middleware names the transaction from the last matched route
+	// before dispatch. An error captured inside the handler keeps that name, so
+	// the app has to set the answering route first.
+	it("names the route that will answer, not the last matched one", async () => {
+		const setTransactionName = vi.fn();
+		const app = createApp(deps({ setTransactionName }));
+
+		await app.request("/jobs/counts");
+
+		expect(setTransactionName).toHaveBeenCalledWith("GET /jobs/counts");
+	});
+
+	it("names a parameterized route by its pattern", async () => {
+		const setTransactionName = vi.fn();
+		const app = createApp(deps({ setTransactionName }));
+
+		await app.request("/jobs/12345/ping", { method: "PUT" });
+
+		expect(setTransactionName).toHaveBeenCalledWith("PUT /jobs/:jobId/ping");
+	});
+
+	it("names nothing when no route matched", async () => {
+		const setTransactionName = vi.fn();
+		const app = createApp(deps({ setTransactionName }));
+
+		await app.request("/no-such-route");
+
+		expect(setTransactionName).not.toHaveBeenCalled();
 	});
 });

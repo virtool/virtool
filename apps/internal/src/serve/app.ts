@@ -2,8 +2,9 @@ import type { Db, PgClient } from "@virtool/data/db/pg";
 import { checkPostgres, summarizeReadiness } from "@virtool/data/health/data";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
-import { Hono } from "hono";
-import { routePath } from "hono/route";
+import { type Context, Hono } from "hono";
+import { matchedRoutes, routePath } from "hono/route";
+import { METHOD_NAME_ALL } from "hono/router";
 import { handleFinalizeAnalysis, handleGetAnalysis } from "./analyses/handlers";
 import { handleGetCache, handleRegisterCache } from "./caches/handlers";
 import { jsonError } from "./http";
@@ -87,7 +88,28 @@ export type AppDeps = {
 	 * to report to.
 	 */
 	captureException?: (err: unknown) => void;
+	/**
+	 * Name the request's Sentry transaction before its handler runs.
+	 *
+	 * Injected for the same reasons as `captureException`, and optional for the
+	 * same one.
+	 */
+	setTransactionName?: (name: string) => void;
 };
+
+/**
+ * Get the pattern of the route Hono will dispatch a request to, or `undefined`
+ * when no route matched.
+ *
+ * Hono runs every matched handler in registration order, so `GET /jobs/counts`
+ * also matches `/jobs/:jobId`, which never runs because the first handler
+ * answers. The answering route is therefore the first matched route that isn't
+ * `app.use` middleware, not the last matched route.
+ */
+function getAnsweringRoute(c: Context): string | undefined {
+	return matchedRoutes(c).find((route) => route.method !== METHOD_NAME_ALL)
+		?.path;
+}
 
 /**
  * Build the jobs API's Hono app.
@@ -111,16 +133,27 @@ export function createApp(deps: AppDeps): Hono {
 	// Every request, including ones that fall through to 404. `routePath` yields
 	// the *registered pattern* — `/jobs/:jobId`, never `/jobs/1234` — which is
 	// what keeps the label bounded by the number of routes rather than by the
-	// number of jobs.
+	// number of jobs. Read after `next()`, it names the route that answered; the
+	// last matched route can be one that never ran.
 	app.use("*", async (c, next) => {
 		const start = performance.now();
+
+		// Sentry's Hono middleware names the transaction before dispatch from the
+		// last matched route, and corrects it only once the response is ready. An
+		// error captured in between would carry `GET /jobs/:jobId` for a request
+		// that `/jobs/counts` answered.
+		const route = getAnsweringRoute(c);
+
+		if (route !== undefined) {
+			deps.setTransactionName?.(`${c.req.method} ${route}`);
+		}
 
 		try {
 			await next();
 		} finally {
 			deps.metrics.recordHttpRequest({
 				method: c.req.method,
-				route: routePath(c, -1),
+				route: routePath(c),
 				// `c.res` is a lazy getter that mints an empty 200 when nothing has
 				// set a response, so reading it unconditionally counts a request that
 				// crashed as one that succeeded. `c.finalized` is what says a response
@@ -145,12 +178,12 @@ export function createApp(deps: AppDeps): Hono {
 	// Without this the only trace of a bug in a route is Hono's default
 	// `console.error` and a plain-text 500: no pino line, and nothing in Sentry.
 	//
-	// The route label is `routePath(c, -1)` for the same reason the metrics
-	// middleware uses it — the registered pattern, never the request path, which
-	// carries ids.
+	// The route label is `routePath(c)` for the same reason the metrics
+	// middleware uses it — the registered pattern of the route that threw, never
+	// the request path, which carries ids.
 	app.onError((err, c) => {
 		deps.logger.error(
-			{ err, method: c.req.method, route: routePath(c, -1) },
+			{ err, method: c.req.method, route: routePath(c) },
 			"unhandled error",
 		);
 
