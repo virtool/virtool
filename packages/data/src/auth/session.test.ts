@@ -157,9 +157,9 @@ describe("resolveBrowserSessionForUpdate", () => {
 				.set({ forceReset: true })
 				.where(eq(users.id, userId));
 			userLocked.release();
-			await Promise.race([
-				revocationLocked.promise,
-				waitForLockWait(revocationPid, polling.signal),
+			const revocationWaited = await Promise.race([
+				revocationLocked.promise.then(() => false),
+				waitForLockWait(revocationPid, polling.signal).then(() => true),
 			]);
 
 			const deleted = tx
@@ -173,7 +173,7 @@ describe("resolveBrowserSessionForUpdate", () => {
 			]);
 			sessionsDeleting.release();
 
-			return (await deleted).length;
+			return { revocationWaited, deleted: (await deleted).length };
 		});
 		await userLocked.promise;
 
@@ -190,7 +190,10 @@ describe("resolveBrowserSessionForUpdate", () => {
 				: null;
 		});
 
-		expect(await Promise.all([credentialTx, revocationTx])).toEqual([2, null]);
+		expect(await Promise.all([credentialTx, revocationTx])).toEqual([
+			{ revocationWaited: true, deleted: 2 },
+			null,
+		]);
 	});
 });
 
