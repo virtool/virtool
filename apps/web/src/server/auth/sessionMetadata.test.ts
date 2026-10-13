@@ -62,7 +62,7 @@ describe("normalizeBrowserSessionMetadata", () => {
 		});
 	});
 
-	it("uses Cloudflare before X-Forwarded-For", () => {
+	it("uses X-Forwarded-For and ignores CF-Connecting-IP", () => {
 		expect(
 			getClientIpFromHeaders(
 				new Headers({
@@ -70,12 +70,10 @@ describe("normalizeBrowserSessionMetadata", () => {
 					"x-forwarded-for": "198.51.100.1",
 				}),
 			),
-		).toBe("192.0.2.1");
-		expect(
-			getClientIpFromHeaders(
-				new Headers({ "x-forwarded-for": "198.51.100.1" }),
-			),
 		).toBe("198.51.100.1");
+		expect(
+			getClientIpFromHeaders(new Headers({ "cf-connecting-ip": "192.0.2.1" })),
+		).toBe("127.0.0.1");
 	});
 
 	it("rejects an untrusted X-Forwarded-For chain", () => {
