@@ -191,9 +191,8 @@ in order:
 - `hangNextRequest()`: hold the response open forever. The socket stays up, so
   this is a stalled response rather than a connection failure.
 - `destroyNextRequest()`: destroy the socket mid-connection, producing a genuine
-  transport failure. That's the **only** thing the client retries; a status is a
-  decision the jobs API made, and repeating it five times over 25 s would be a
-  bug.
+  transport failure. The client retries that and a `503`; any other status is a
+  decision the jobs API made, and repeating it would be a bug.
 
 ## Seeded builders
 

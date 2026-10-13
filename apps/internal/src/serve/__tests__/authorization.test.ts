@@ -1,4 +1,5 @@
 import type { Db, PgClient } from "@virtool/data/db/pg";
+import { QueryTimeoutError } from "@virtool/data/db/timeout";
 import type { Logger } from "@virtool/logger";
 import { MemoryStorage } from "@virtool/storage";
 import { describe, expect, it, vi } from "vitest";
@@ -292,6 +293,68 @@ describe("unhandled errors", () => {
 		expect(captureException).toHaveBeenCalledWith(
 			expect.objectContaining({ message: "boom" }),
 		);
+	});
+});
+
+describe("database unavailable", () => {
+	function unavailableApp(overrides: Partial<AppDeps> = {}) {
+		const app = createApp(deps(overrides));
+
+		app.get("/down", () => {
+			throw new Error("Failed query", {
+				cause: {
+					code: "57P03",
+					message: "the database system is shutting down",
+				},
+			});
+		});
+
+		app.get("/slow", () => {
+			throw new QueryTimeoutError("timed out after 2000ms");
+		});
+
+		return app;
+	}
+
+	it("answers 503 with a retry hint", async () => {
+		const response = await unavailableApp().request("/down");
+
+		expect(response.status).toBe(503);
+		expect(response.headers.get("retry-after")).toBe("5");
+		expect(await response.json()).toEqual({ message: "Database unavailable" });
+	});
+
+	it("logs a warning and reports nothing", async () => {
+		const logger = fakeLogger();
+		const captureException = vi.fn();
+
+		await unavailableApp({ logger, captureException }).request("/down");
+
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/down" }),
+			"database unavailable",
+		);
+		expect(logger.error).not.toHaveBeenCalled();
+		expect(captureException).not.toHaveBeenCalled();
+	});
+
+	it("answers 503 and reports nothing when a probe times out", async () => {
+		const logger = fakeLogger();
+		const captureException = vi.fn();
+
+		const response = await unavailableApp({ logger, captureException }).request(
+			"/slow",
+		);
+
+		expect(response.status).toBe(503);
+		expect(response.headers.get("retry-after")).toBe("5");
+		expect(await response.json()).toEqual({ message: "Database unavailable" });
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/slow" }),
+			"database unavailable",
+		);
+		expect(logger.error).not.toHaveBeenCalled();
+		expect(captureException).not.toHaveBeenCalled();
 	});
 });
 

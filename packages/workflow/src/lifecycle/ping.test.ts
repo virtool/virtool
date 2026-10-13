@@ -8,7 +8,7 @@ import {
 	createUnreachableJobsApiClient,
 } from "../testing";
 import {
-	MAX_PING_FAILURES,
+	PING_GIVE_UP_MS,
 	PING_INTERVAL_MS,
 	PING_STAGGER_MS,
 	startPingLoop,
@@ -17,6 +17,10 @@ import {
 function pong(): JobPing {
 	return { pingedAt: new Date("2026-08-05T00:00:00Z") };
 }
+
+/** Pings an always-failing loop sends: every one up to the deadline, and the one after it. */
+const PINGS_BEFORE_GIVE_UP =
+	Math.ceil((PING_GIVE_UP_MS - PING_STAGGER_MS) / PING_INTERVAL_MS) + 1;
 
 /** What the jobs API answers a ping with once its job has finished. */
 function refused(message: string): UnauthorizedError {
@@ -125,7 +129,7 @@ describe("startPingLoop", () => {
 		await loop.stop();
 	});
 
-	it("gives up after five consecutive failures, warning what it costs", async () => {
+	it("gives up once PING_GIVE_UP_MS passes without a success, warning what it costs", async () => {
 		const { logger, records } = createRecordingLogger();
 		const signals = createRunSignals();
 
@@ -137,11 +141,9 @@ describe("startPingLoop", () => {
 			signals,
 		});
 
-		await vi.advanceTimersByTimeAsync(
-			PING_STAGGER_MS + PING_INTERVAL_MS * (MAX_PING_FAILURES + 3),
-		);
+		await vi.advanceTimersByTimeAsync(PING_GIVE_UP_MS + PING_INTERVAL_MS * 3);
 
-		expect(ping).toHaveBeenCalledTimes(MAX_PING_FAILURES);
+		expect(ping).toHaveBeenCalledTimes(PINGS_BEFORE_GIVE_UP);
 
 		const warnings = records().filter((record) => record.level === 40);
 
@@ -155,7 +157,35 @@ describe("startPingLoop", () => {
 		await loop.stop();
 	});
 
-	it("resets the failure count on success, so alternating results never give up", async () => {
+	it("aborts a hung ping at the give-up deadline", async () => {
+		const { logger, records } = createRecordingLogger();
+
+		const ping = vi.fn(
+			(signal?: AbortSignal) =>
+				new Promise<JobPing>((_, reject) => {
+					signal?.addEventListener("abort", () => reject(signal.reason), {
+						once: true,
+					});
+				}),
+		);
+
+		const loop = startPingLoop({
+			client: clientPinging(ping),
+			logger,
+			signals: createRunSignals(),
+		});
+
+		await vi.advanceTimersByTimeAsync(PING_GIVE_UP_MS + PING_INTERVAL_MS);
+
+		expect(ping).toHaveBeenCalledTimes(1);
+		expect(records().filter((record) => record.level === 40)[0]?.msg).toContain(
+			"giving up on pinging the jobs API",
+		);
+
+		await loop.stop();
+	});
+
+	it("restarts the give-up window on success, so alternating results never give up", async () => {
 		const signals = createRunSignals();
 
 		let calls = 0;
@@ -174,9 +204,11 @@ describe("startPingLoop", () => {
 			signals,
 		});
 
-		await vi.advanceTimersByTimeAsync(PING_STAGGER_MS + PING_INTERVAL_MS * 20);
+		await vi.advanceTimersByTimeAsync(
+			PING_STAGGER_MS + PING_INTERVAL_MS * (PINGS_BEFORE_GIVE_UP * 2 + 4),
+		);
 
-		expect(ping.mock.calls.length).toBeGreaterThan(MAX_PING_FAILURES * 2);
+		expect(ping.mock.calls.length).toBeGreaterThan(PINGS_BEFORE_GIVE_UP * 2);
 
 		await loop.stop();
 	});

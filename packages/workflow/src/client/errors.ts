@@ -33,9 +33,10 @@ export class JobsApiError extends WorkflowError {
  * The request never produced a response — a connection failure, a socket
  * timeout, or the per-request budget expiring.
  *
- * This is the **only** retryable failure. A status-mapped error is a decision
- * the jobs API made and repeating it five times over 25 s is a bug, which
- * is why the two are different classes rather than one carrying a flag.
+ * This and {@link ServiceUnavailableError} are the only retryable failures.
+ * Any other status-mapped error is a decision the jobs API made, and repeating
+ * it is a bug, which is why the two are different classes rather than one
+ * carrying a flag.
  */
 export class TransportError extends JobsApiError {}
 
@@ -62,6 +63,14 @@ export class ConflictError extends JobsApiError {}
 /** 500. */
 export class ServerError extends JobsApiError {}
 
+/**
+ * 503.
+ *
+ * The jobs API answers this while its database is unreachable. It is the one
+ * status the client retries, because the jobs API itself says to.
+ */
+export class ServiceUnavailableError extends JobsApiError {}
+
 type JobsApiErrorConstructor = new (
 	message: string,
 	options: JobsApiErrorOptions,
@@ -74,6 +83,7 @@ const BY_STATUS: ReadonlyMap<number, JobsApiErrorConstructor> = new Map([
 	[404, NotFoundError],
 	[409, ConflictError],
 	[500, ServerError],
+	[503, ServiceUnavailableError],
 ]);
 
 const UNDECODABLE = "could not decode response message";

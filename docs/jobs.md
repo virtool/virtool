@@ -91,20 +91,31 @@ work; the job is left for the same stalled-job sweep.
 
 ## Pings and retries
 
-Ordinary jobs API requests retry transport failures five times with a flat
-five-second delay. They never retry an HTTP response chosen by the jobs API.
+Ordinary jobs API requests retry transport failures and `503` responses with a
+flat five-second delay until four minutes have passed since the first attempt.
+The window is wall-clock time, so attempts that hang until a socket timeout
+use it up faster than fast `503` responses. The jobs API answers `503` while
+its database is unreachable, for example during an Azure Postgres maintenance
+restart. The requests never retry any other HTTP response.
 
 Ping requests turn off that client retry policy because the ping loop owns its
 failure budget:
 
 - `401` is neither retried nor counted; it cancels the run immediately.
-- Other failures are counted consecutively and a success resets the count.
-- After five consecutive failures, roughly 20 seconds, the loop logs a warning
-  and stops pinging but lets the workflow continue.
+- Other failures don't stop the loop until four minutes have passed since the
+  last successful ping. A ping in flight at that deadline is aborted.
+- At the deadline, the loop logs a warning and stops pinging but lets the
+  workflow continue.
 
-That give-up window must remain well inside the five-minute stalled-job
-timeout. If connectivity returns after the sweep has failed the job, another
-lifecycle request is refused because the credential is no longer valid.
+That give-up window must remain inside the five-minute stalled-job timeout.
+It's as long as it is so that a running job outlasts a database restart; an
+outage longer than four minutes fails the job. If connectivity returns
+after the sweep has failed the job, another lifecycle request is refused
+because the credential is no longer valid.
+
+`claimJob` polls again after a `503` rather than exiting. It waits for the
+response's `Retry-After` delay and logs one warning for each outage, not one
+for each poll.
 
 ## Outcomes and exit codes
 

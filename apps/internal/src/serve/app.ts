@@ -1,4 +1,6 @@
+import { isDatabaseUnavailable } from "@virtool/data/db/errors";
 import type { Db, PgClient } from "@virtool/data/db/pg";
+import { QueryTimeoutError } from "@virtool/data/db/timeout";
 import { checkPostgres, summarizeReadiness } from "@virtool/data/health/data";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
@@ -89,6 +91,9 @@ export type AppDeps = {
 	captureException?: (err: unknown) => void;
 };
 
+/** Seconds a caller should wait before retrying while Postgres is down. */
+const DATABASE_RETRY_AFTER_SECONDS = "5";
+
 /**
  * Build the jobs API's Hono app.
  *
@@ -149,6 +154,25 @@ export function createApp(deps: AppDeps): Hono {
 	// middleware uses it — the registered pattern, never the request path, which
 	// carries ids.
 	app.onError((err, c) => {
+		// Postgres restarts for maintenance. A 503 tells the caller to retry, and
+		// the restart is not an incident, so it is logged but not reported.
+		//
+		// A probe timeout is treated the same way. While Postgres is down, a new
+		// connection can hang past the probe's two-second bound, and a bound that
+		// wide on a small indexed read means the database is unhealthy, not that
+		// the query has a bug.
+		if (isDatabaseUnavailable(err) || err instanceof QueryTimeoutError) {
+			deps.logger.warn(
+				{ err, method: c.req.method, route: routePath(c, -1) },
+				"database unavailable",
+			);
+
+			const response = jsonError(503, "Database unavailable");
+			response.headers.set("retry-after", DATABASE_RETRY_AFTER_SECONDS);
+
+			return response;
+		}
+
 		deps.logger.error(
 			{ err, method: c.req.method, route: routePath(c, -1) },
 			"unhandled error",
