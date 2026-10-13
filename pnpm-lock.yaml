@@ -22,7 +22,7 @@ overrides:
   protobufjs@>=7.5.0 <=7.6.4: ^7.6.5
   postcss@<=8.5.22: ^8.5.23
   svgo@>=4.0.0 <4.1.0: ^4.1.0
-  handlebars@>=3.0.0 <4.7.10: ^4.7.10
+  handlebars@>=4.0.0 <4.7.10: ^4.7.10
   source-map-js@>=1.0.0 <1.2.2: ^1.2.2
   http-cache-semantics@<4.3.0: ^4.3.0
 
