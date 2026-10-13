@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withTimeout } from "./timeout";
+import { QueryTimeoutError, withTimeout } from "./timeout";
 
 /**
  * A promise that never settles.
@@ -15,7 +15,7 @@ function never(): Promise<never> {
 
 describe("withTimeout", () => {
 	it("rejects once the bound passes", async () => {
-		await expect(withTimeout(never(), 5)).rejects.toThrow("timed out");
+		await expect(withTimeout(never(), 5)).rejects.toThrow(QueryTimeoutError);
 	});
 
 	// Several probes share this helper, so a log line saying only "timed out"
@@ -24,6 +24,13 @@ describe("withTimeout", () => {
 		await expect(withTimeout(never(), 5)).rejects.toThrow(
 			"timed out after 5ms",
 		);
+	});
+
+	it("names the error class", async () => {
+		await expect(withTimeout(never(), 5)).rejects.toMatchObject({
+			name: "QueryTimeoutError",
+			message: "timed out after 5ms",
+		});
 	});
 
 	it("resolves what the promise resolved", async () => {

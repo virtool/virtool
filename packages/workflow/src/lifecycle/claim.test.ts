@@ -147,6 +147,38 @@ describe("claimJob", () => {
 		expect(server.requests).toHaveLength(3);
 	});
 
+	it("warns once and polls again at the Retry-After delay through a 503 outage", async () => {
+		const { logger, records } = createRecordingLogger();
+
+		server = await startTestServer((_, response) => {
+			if (server && server.requests.length < 4) {
+				response.setHeader("retry-after", "0");
+				respondJson(response, 503, { message: "Database unavailable" });
+				return;
+			}
+
+			respondJson(response, 200, claimed());
+		});
+
+		const result = await claimJob({
+			baseUrl: server.baseUrl,
+			workflow: "create_subtraction",
+			request: REQUEST,
+			logger,
+			signal: new AbortController().signal,
+			// Long enough to time the test out if the Retry-After were ignored.
+			pollIntervalMs: 60_000,
+		});
+
+		expect(result).toMatchObject({ id: 9 });
+		expect(server.requests).toHaveLength(4);
+
+		const warnings = records().filter((record) => record.level === 40);
+
+		expect(warnings).toHaveLength(1);
+		expect(warnings[0]?.msg).toContain("jobs API is unavailable");
+	});
+
 	it("warns and polls again when the jobs API is unreachable", async () => {
 		const { logger, records } = createRecordingLogger();
 		const controller = new AbortController();

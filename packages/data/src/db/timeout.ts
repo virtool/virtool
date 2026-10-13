@@ -1,5 +1,18 @@
 /**
- * Resolve `promise`, or reject once `ms` have passed.
+ * The rejection {@link withTimeout} gives when its bound passes first.
+ *
+ * A named class lets a caller tell a timed-out probe apart from a query error.
+ */
+export class QueryTimeoutError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "QueryTimeoutError";
+	}
+}
+
+/**
+ * Resolve `promise`, or reject with a {@link QueryTimeoutError} once `ms` have
+ * passed.
  *
  * The abandoned promise is left to settle on its own; the callers here are
  * read-only probes whose results are simply discarded.
@@ -20,7 +33,10 @@ export function withTimeout<T>(
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	const deadline = new Promise<never>((_, reject) => {
-		timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
+		timer = setTimeout(
+			() => reject(new QueryTimeoutError(`timed out after ${ms}ms`)),
+			ms,
+		);
 	});
 
 	return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));

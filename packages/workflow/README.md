@@ -62,10 +62,10 @@ ownership boundary between this package and the jobs API (`@virtool/internal`).
 
 - Claim paths are unprefixed and wire fields are camel case.
 - A pod gets its job ID and credential from the claim response.
-- Transport failures retry five times at five-second intervals. HTTP responses
-  aren't retried.
-- The ping loop treats `401` as cancellation. Five consecutive other failures
-  stop the ping loop but don't stop the workflow.
+- Transport failures and `503` responses retry at five-second intervals for
+  four minutes of wall-clock time. Other HTTP responses aren't retried.
+- The ping loop treats `401` as cancellation. Four minutes without a successful
+  ping stop the ping loop but don't stop the workflow.
 - A completed or failed workflow exits `0`; the jobs API owns those state
   transitions. A broken runner exits `1`, and `SIGTERM` exits `124`.
 
