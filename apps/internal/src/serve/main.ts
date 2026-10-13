@@ -53,6 +53,9 @@ export function startServe(): void {
 		metricsToken: config.metricsToken,
 		isReady: () => ready,
 		captureException: Sentry.captureException,
+		setTransactionName: (name) => {
+			Sentry.getIsolationScope().setTransactionName(name);
+		},
 	});
 
 	logPostgresVersion(client, logger);
