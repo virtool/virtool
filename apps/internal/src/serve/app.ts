@@ -196,7 +196,7 @@ export function createApp(deps: AppDeps): Hono {
 		// the query has a bug.
 		if (isDatabaseUnavailable(err) || err instanceof QueryTimeoutError) {
 			deps.logger.warn(
-				{ err, method: c.req.method, route: routePath(c, -1) },
+				{ err, method: c.req.method, route: routePath(c) },
 				"database unavailable",
 			);
 

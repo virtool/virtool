@@ -358,6 +358,27 @@ describe("database unavailable", () => {
 		expect(captureException).not.toHaveBeenCalled();
 	});
 
+	it("logs the route that answered, not the last matched one", async () => {
+		const logger = fakeLogger();
+		const db = new Proxy(
+			{},
+			{
+				get() {
+					throw new Error("Failed query", {
+						cause: { code: "57P03", message: "shutting down" },
+					});
+				},
+			},
+		) as Db;
+
+		await createApp(deps({ db, logger })).request("/jobs/counts");
+
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ route: "/jobs/counts" }),
+			"database unavailable",
+		);
+	});
+
 	it("answers 503 and reports nothing when a probe times out", async () => {
 		const logger = fakeLogger();
 		const captureException = vi.fn();
@@ -474,11 +495,19 @@ describe("Sentry transaction name", () => {
 	// the app has to set the answering route first.
 	it("names the route that will answer, not the last matched one", async () => {
 		const setTransactionName = vi.fn();
-		const app = createApp(deps({ setTransactionName }));
+		const captureException = vi.fn();
+		const app = createApp(deps({ setTransactionName, captureException }));
 
+		// The fake database throws when the handler reads it, so the capture
+		// marks the moment the handler ran.
 		await app.request("/jobs/counts");
 
 		expect(setTransactionName).toHaveBeenCalledWith("GET /jobs/counts");
+		const [named] = setTransactionName.mock.invocationCallOrder;
+		const [captured] = captureException.mock.invocationCallOrder;
+
+		expect(captured).toBeDefined();
+		expect(named).toBeLessThan(captured ?? 0);
 	});
 
 	it("names a parameterized route by its pattern", async () => {
