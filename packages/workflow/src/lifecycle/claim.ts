@@ -35,7 +35,7 @@ export type ClaimJobOptions = {
  *   available. Abort is an ordinary outcome — a claim timeout and a SIGTERM
  *   both land here — so it is a return value rather than an exception.
  * @throws {JobsApiError} when the jobs API answers with a status other
- *   than 200 or 404.
+ *   than 200, 404, or 503.
  */
 export async function claimJob({
 	baseUrl,
@@ -107,6 +107,15 @@ export async function claimJob({
 
 				if (response.status === 404) {
 					await response.text();
+				} else if (response.status === 503) {
+					// The jobs API's database is restarting. Polling on outlasts it,
+					// where throwing would exit the pod as broken.
+					await response.text();
+
+					logger.warn(
+						{ status: response.status },
+						"jobs API is unavailable while claiming a job",
+					);
 				} else {
 					const body = await response.text();
 

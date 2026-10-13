@@ -13,13 +13,14 @@ export const PING_INTERVAL_MS = 5_000;
 /**
  * Consecutive failures before the loop gives up.
  *
- * With retries disabled on the ping request, five failures at a 5 s cadence is
- * a give-up window of roughly 20 s. The jobs API fails a running job whose
- * last ping is more than **five minutes** old, so the pod stops heartbeating
- * well inside the sweep — which is the whole point of owning the retry policy
- * here rather than inheriting a hidden 25 s of retries per attempt.
+ * With retries disabled on the ping request, 48 failures at a 5 s cadence is a
+ * give-up window of about four minutes: long enough to outlast a Postgres
+ * maintenance restart, which the jobs API answers with 503. The jobs API fails
+ * a running job whose last ping is more than **five minutes** old, so the pod
+ * stops heartbeating inside the sweep — which is the whole point of owning the
+ * retry policy here rather than inheriting hidden retries per attempt.
  */
-export const MAX_PING_FAILURES = 5;
+export const MAX_PING_FAILURES = 48;
 
 /** A running ping loop. */
 export type PingLoop = {

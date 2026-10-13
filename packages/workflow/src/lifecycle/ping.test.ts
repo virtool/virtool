@@ -125,7 +125,7 @@ describe("startPingLoop", () => {
 		await loop.stop();
 	});
 
-	it("gives up after five consecutive failures, warning what it costs", async () => {
+	it("gives up after MAX_PING_FAILURES consecutive failures, warning what it costs", async () => {
 		const { logger, records } = createRecordingLogger();
 		const signals = createRunSignals();
 
@@ -174,7 +174,9 @@ describe("startPingLoop", () => {
 			signals,
 		});
 
-		await vi.advanceTimersByTimeAsync(PING_STAGGER_MS + PING_INTERVAL_MS * 20);
+		await vi.advanceTimersByTimeAsync(
+			PING_STAGGER_MS + PING_INTERVAL_MS * (MAX_PING_FAILURES * 2 + 4),
+		);
 
 		expect(ping.mock.calls.length).toBeGreaterThan(MAX_PING_FAILURES * 2);
 

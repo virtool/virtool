@@ -60,7 +60,7 @@ export type RequestOptions<T> = {
 	searchParams?: Record<string, string>;
 	/** Schema the response body is parsed with. Omit for an empty response. */
 	schema?: ZodType<T>;
-	/** Attempts after the first. Defaults to 5; 0 for the ping loop, which owns its own policy. */
+	/** Attempts after the first. Defaults to `MAX_RETRIES`; 0 for the ping loop, which owns its own policy. */
 	retries?: number;
 	/** Bounds this request on top of the run's cancellation signal. */
 	signal?: AbortSignal;
@@ -165,7 +165,7 @@ export function createJobsApiClient({
 			});
 		} catch (err) {
 			// A run that was cancelled or terminated aborted this request itself.
-			// Classifying that as a transport failure would retry it five times
+			// Classifying that as a transport failure would retry it for minutes
 			// against a signal that is never coming back.
 			if (runSignal.aborted || signal?.aborted) {
 				throw err;
@@ -214,9 +214,9 @@ export function createJobsApiClient({
 			request({ method: "GET", path: `/jobs/${jobId}`, schema: Job }),
 
 		// Retries are disabled so the ping loop owns the give-up window end to
-		// end. A ping that retried internally would spend 25 s of hidden attempts
-		// before the loop counted a single failure, and the pod could go over two
-		// minutes without a successful ping while believing it is healthy.
+		// end. A ping that retried internally would spend minutes of hidden
+		// attempts before the loop counted a single failure, and the pod could
+		// outlast the ping-timeout sweep while believing it is healthy.
 		ping: (signal) =>
 			request({
 				method: "PUT",

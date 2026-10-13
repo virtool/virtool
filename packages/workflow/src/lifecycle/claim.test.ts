@@ -147,6 +147,35 @@ describe("claimJob", () => {
 		expect(server.requests).toHaveLength(3);
 	});
 
+	it("warns and polls again after a 503", async () => {
+		const { logger, records } = createRecordingLogger();
+
+		server = await startTestServer((_, response) => {
+			if (server && server.requests.length < 2) {
+				respondJson(response, 503, { message: "Database unavailable" });
+				return;
+			}
+
+			respondJson(response, 200, claimed());
+		});
+
+		const result = await claimJob({
+			baseUrl: server.baseUrl,
+			workflow: "create_subtraction",
+			request: REQUEST,
+			logger,
+			signal: new AbortController().signal,
+			pollIntervalMs: 5,
+		});
+
+		expect(result).toMatchObject({ id: 9 });
+		expect(server.requests).toHaveLength(2);
+
+		const warnings = records().filter((record) => record.level === 40);
+
+		expect(warnings[0]?.msg).toContain("jobs API is unavailable");
+	});
+
 	it("warns and polls again when the jobs API is unreachable", async () => {
 		const { logger, records } = createRecordingLogger();
 		const controller = new AbortController();

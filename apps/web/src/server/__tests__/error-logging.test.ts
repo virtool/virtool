@@ -1,4 +1,5 @@
 import {
+	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
@@ -6,19 +7,24 @@ import {
 } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { debug, error, getResponseStatus } = vi.hoisted(() => ({
-	debug: vi.fn(),
-	error: vi.fn(),
-	getResponseStatus: vi.fn(),
-}));
+const { debug, error, warn, getResponseStatus, setResponseStatus } = vi.hoisted(
+	() => ({
+		debug: vi.fn(),
+		error: vi.fn(),
+		warn: vi.fn(),
+		getResponseStatus: vi.fn(),
+		setResponseStatus: vi.fn(),
+	}),
+);
 
 vi.mock("@tanstack/react-start/server", () => ({
 	getRequest: () => new Request("https://virtool.test/refs"),
 	getResponseStatus,
+	setResponseStatus,
 }));
 
 vi.mock("../logger", () => ({
-	logger: { debug, error },
+	logger: { debug, error, warn },
 }));
 
 const { errorLoggingMiddleware } = await import("../error-logging");
@@ -107,5 +113,22 @@ describe("errorLoggingMiddleware", () => {
 			"unhandled server function error",
 		);
 		expect(debug).not.toHaveBeenCalled();
+	});
+
+	it("rethrows an unreachable database as a 503 ClientError and logs a warning", async () => {
+		const thrown = new Error("query failed", {
+			cause: { code: "CONNECT_TIMEOUT" },
+		});
+		getResponseStatus.mockReturnValue(200);
+
+		const rejected = await call(thrown).catch((err: unknown) => err);
+
+		expect(rejected).toMatchObject({ name: CLIENT_ERROR_NAME, status: 503 });
+		expect(setResponseStatus).toHaveBeenCalledWith(503);
+		expect(warn).toHaveBeenCalledWith(
+			{ err: thrown, path: "/refs", serverFn: "getAccountFn" },
+			"database unavailable",
+		);
+		expect(error).not.toHaveBeenCalled();
 	});
 });

@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRecordingLogger } from "../testing";
-import { ConflictError, TransportError } from "./errors";
+import {
+	ConflictError,
+	ServiceUnavailableError,
+	TransportError,
+} from "./errors";
 import { MAX_RETRIES, RETRY_DELAY_MS, sleep, withRetry } from "./retry";
 
 function transportError(): TransportError {
@@ -19,7 +23,7 @@ describe("withRetry", () => {
 		vi.useRealTimers();
 	});
 
-	it("retries a transport failure five times at a flat delay", async () => {
+	it("retries a transport failure MAX_RETRIES times at a flat delay", async () => {
 		const attempt = vi.fn(() => Promise.reject(transportError()));
 
 		const promise = withRetry(attempt, {
@@ -31,6 +35,28 @@ describe("withRetry", () => {
 		await expect(promise).resolves.toBeInstanceOf(TransportError);
 
 		expect(attempt).toHaveBeenCalledTimes(MAX_RETRIES + 1);
+	});
+
+	it("retries a 503 and returns once it clears", async () => {
+		const attempt = vi
+			.fn<() => Promise<string>>()
+			.mockRejectedValueOnce(
+				new ServiceUnavailableError("Database unavailable", {
+					method: "POST",
+					path: "/jobs/1/finish",
+					status: 503,
+				}),
+			)
+			.mockResolvedValueOnce("done");
+
+		const promise = withRetry(attempt, {
+			logger: createRecordingLogger().logger,
+		});
+
+		await vi.runAllTimersAsync();
+
+		await expect(promise).resolves.toBe("done");
+		expect(attempt).toHaveBeenCalledTimes(2);
 	});
 
 	it("waits a flat five seconds between attempts rather than doubling", async () => {
@@ -51,13 +77,7 @@ describe("withRetry", () => {
 
 		const gaps = at.slice(1).map((time, index) => time - (at[index] ?? 0));
 
-		expect(gaps).toEqual([
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-		]);
+		expect(gaps).toEqual(Array(MAX_RETRIES).fill(RETRY_DELAY_MS));
 	});
 
 	it("logs each retry at info and the exhaustion at warn", async () => {
@@ -122,7 +142,7 @@ describe("withRetry", () => {
 		controller.abort();
 
 		// No timer is advanced, so anything that resolves here did so on the abort
-		// rather than by waiting out the remaining 25 s.
+		// rather than by waiting out the remaining window.
 		await expect(promise).resolves.toBeInstanceOf(TransportError);
 
 		expect(attempt).toHaveBeenCalledTimes(1);

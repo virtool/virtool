@@ -1,15 +1,20 @@
 import type { Logger } from "@virtool/logger";
-import { TransportError } from "./errors";
+import { ServiceUnavailableError, TransportError } from "./errors";
 
-/** Attempts after the first. */
-export const MAX_RETRIES = 5;
+/**
+ * Attempts after the first.
+ *
+ * At the flat delay this spans about four minutes, which outlasts a Postgres
+ * maintenance restart and still ends inside the jobs API's five-minute
+ * ping-timeout sweep.
+ */
+export const MAX_RETRIES = 48;
 
 /**
  * Delay between attempts, in milliseconds. **Flat, not exponential.**
  *
- * Six attempts spread over 25 s is what the jobs API's five-minute
- * ping-timeout sweep is calibrated against. Do not "improve" this into an
- * exponential backoff.
+ * The retry window is calibrated against the jobs API's five-minute
+ * ping-timeout sweep. Do not "improve" this into an exponential backoff.
  */
 export const RETRY_DELAY_MS = 5_000;
 
@@ -44,16 +49,16 @@ export type WithRetryOptions = {
 	logger: Logger;
 	/** Attempts after the first. Defaults to {@link MAX_RETRIES}; 0 disables retrying. */
 	retries?: number;
-	/** Cuts a retry sleep short so a cancelled run does not wait out the remaining 25 s. */
+	/** Cuts a retry sleep short so a cancelled run does not wait out the remaining window. */
 	signal?: AbortSignal;
 };
 
 /**
- * Run a request, retrying transport failures at a flat delay.
+ * Run a request, retrying transport failures and 503s at a flat delay.
  *
- * Only {@link TransportError} is retried. Anything else — a status the control
- * plane chose, a response that failed to parse, an abort — propagates on the
- * first attempt.
+ * Only {@link TransportError} and {@link ServiceUnavailableError} are retried.
+ * Anything else — a status the control plane chose, a response that failed to
+ * parse, an abort — propagates on the first attempt.
  */
 export async function withRetry<T>(
 	attempt: () => Promise<T>,
@@ -63,7 +68,10 @@ export async function withRetry<T>(
 		try {
 			return await attempt();
 		} catch (err) {
-			if (!(err instanceof TransportError)) {
+			if (
+				!(err instanceof TransportError) &&
+				!(err instanceof ServiceUnavailableError)
+			) {
 				throw err;
 			}
 
@@ -78,7 +86,7 @@ export async function withRetry<T>(
 
 			logger.info(
 				{ attempt: attemptIndex + 1, delayMs: RETRY_DELAY_MS, err },
-				"retrying jobs API request after transport failure",
+				"retrying jobs API request",
 			);
 
 			await sleep(RETRY_DELAY_MS, signal);
