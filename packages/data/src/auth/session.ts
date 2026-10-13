@@ -114,12 +114,25 @@ export async function deleteOtherBrowserSessions(
 	return deleted.length;
 }
 
-/** Lock and resolve the authoritative current session for a revocation transaction. */
+/**
+ * Lock and resolve the authoritative current session for a revocation transaction.
+ *
+ * The user row is locked before the session row. Credential changes lock the
+ * user row and then delete every session, so the same order prevents a
+ * deadlock with them and with a concurrent revocation from another session.
+ * `NO KEY UPDATE` does not block the foreign-key check of a new sign-in.
+ */
 export async function resolveBrowserSessionForUpdate(
 	db: DbOrTx,
 	sessionId: number,
 	userId: number,
 ): Promise<ResolvedBrowserSession | null> {
+	await db
+		.select({ id: users.id })
+		.from(users)
+		.where(eq(users.id, userId))
+		.for("no key update");
+
 	const [row] = await db
 		.select({
 			sessionId: authSessions.id,
