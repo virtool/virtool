@@ -396,6 +396,12 @@ Features enqueue mail through `enqueueEmail(db, input)` in
   a flow that depends on the email must offer the user another route rather
   than fail.
 
+A password change, a forced reset, a password that an administrator sets, a
+completed recovery, and a completed email change each queue a notice in the
+same transaction. The notice
+goes to the verified address that the account held before the change. An
+unverified address gets no notice, because it can belong to someone else.
+
 A failing row is retried with jittered exponential backoff, or on the
 provider's `Retry-After` when it sends one. Retries stop at the delivery
 deadline in `src/email/retry.ts`, which stays inside the lifetime of the tokens

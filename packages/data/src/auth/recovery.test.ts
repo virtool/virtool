@@ -373,3 +373,142 @@ describe("password recovery", () => {
 		).toHaveLength(1);
 	});
 });
+
+describe("security emails", () => {
+	async function readNotices() {
+		const rows = await db.select().from(emailOutbox);
+
+		return rows
+			.filter(
+				({ template }) =>
+					template.type === "password_changed" ||
+					template.type === "email_changed",
+			)
+			.map(({ recipient, setup_token_id, template }) => ({
+				recipient,
+				setupTokenId: setup_token_id,
+				template,
+			}));
+	}
+
+	async function changeAddress(userId: number, email: string) {
+		let token = "";
+		await beginEmailVerification(db, {
+			userId,
+			email,
+			deliveryAvailable: true,
+			getVerificationUrl(value) {
+				token = value;
+				return `https://virtool.test/verify-email#token=${value}`;
+			},
+		});
+
+		return token;
+	}
+
+	it("notifies the account after a self-service password change", async () => {
+		const userId = await seedMigratedUser();
+		await changePassword(db, {
+			userId,
+			oldPassword: "current-password-123",
+			password: "replacement-password-123",
+		});
+
+		expect(await readNotices()).toEqual([
+			{
+				recipient: "ada@example.com",
+				setupTokenId: null,
+				template: { type: "password_changed", username: "ada" },
+			},
+		]);
+	});
+
+	it("notifies the account after an administrator sets its password", async () => {
+		const userId = await seedMigratedUser();
+		await updateUser(db, userId, { password: "replacement-password-123" });
+
+		expect(await readNotices()).toEqual([
+			{
+				recipient: "ada@example.com",
+				setupTokenId: null,
+				template: { type: "password_changed", username: "ada" },
+			},
+		]);
+	});
+
+	it("does not notify for an update that leaves the password alone", async () => {
+		const userId = await seedMigratedUser();
+		await updateUser(db, userId, { forceReset: true });
+
+		expect(await readNotices()).toEqual([]);
+	});
+
+	it.each(["password_recovery", "administrator_recovery"] as const)(
+		"notifies the account after a %s reset",
+		async (purpose) => {
+			const userId = await seedMigratedUser();
+			const issued = await issueRecoveryLink(db, {
+				userId,
+				purpose,
+				deliveryAvailable: true,
+				getRecoveryUrl: (token) =>
+					`https://virtool.test/recover#token=${token}`,
+			});
+			await completePasswordRecovery(
+				db,
+				issued.token,
+				purpose,
+				"replacement-password-123",
+			);
+
+			expect(await readNotices()).toEqual([
+				{
+					recipient: "ada@example.com",
+					setupTokenId: null,
+					template: { type: "password_changed", username: "ada" },
+				},
+			]);
+		},
+	);
+
+	it("does not notify an unverified address", async () => {
+		const userId = await seedMigratedUser({ emailVerified: false });
+		await changePassword(db, {
+			userId,
+			oldPassword: "current-password-123",
+			password: "replacement-password-123",
+		});
+
+		expect(await readNotices()).toEqual([]);
+	});
+
+	it("notifies the previous address after an email change", async () => {
+		const userId = await seedMigratedUser();
+		const token = await changeAddress(userId, "new@example.com");
+		await completeEmailVerification(db, token, "change", userId);
+
+		expect(await readNotices()).toEqual([
+			{
+				recipient: "ada@example.com",
+				setupTokenId: null,
+				template: { type: "email_changed", username: "ada" },
+			},
+		]);
+	});
+
+	it("does not notify a previous address that was never verified", async () => {
+		const userId = await seedMigratedUser({ emailVerified: false });
+		const token = await changeAddress(userId, "new@example.com");
+		await completeEmailVerification(db, token, "change", userId);
+
+		expect(await readNotices()).toEqual([]);
+	});
+
+	it("does not notify when the current address is verified", async () => {
+		const userId = await seedMigratedUser({ emailVerified: false });
+		const token = await changeAddress(userId, "ada@example.com");
+		await completeEmailVerification(db, token, "current", userId);
+
+		expect(await readNotices()).toEqual([]);
+	});
+});

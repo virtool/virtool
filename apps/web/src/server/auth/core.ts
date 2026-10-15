@@ -2,6 +2,7 @@ import { isValidHandle, type User } from "@virtool/contracts";
 import { updateAuthPassword } from "@virtool/data/auth/identity";
 import { isBcryptHash } from "@virtool/data/auth/migration";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
+import { queuePasswordChangedEmail } from "@virtool/data/auth/securityEmail";
 import {
 	consumeResetSession,
 	createAuthenticatedSession,
@@ -252,6 +253,7 @@ export async function resetPassword(
 		}
 		await tx.delete(authSessions).where(eq(authSessions.userId, input.userId));
 		await invalidateUserSessions(tx, input.userId);
+		await queuePasswordChangedEmail(tx, input.userId);
 	});
 
 	return { handle: row.handle, migrated: row.authMigratedAt !== null };

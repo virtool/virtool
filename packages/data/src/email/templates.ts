@@ -1,7 +1,7 @@
 import type { EmailTemplate } from "@virtool/contracts";
 
 /** The template payload revision stored on queued email. */
-export const EMAIL_TEMPLATE_VERSION = 2;
+export const EMAIL_TEMPLATE_VERSION = 3;
 
 /** The oldest queued template payload this release can still render. */
 export const MIN_EMAIL_TEMPLATE_VERSION = 1;
@@ -43,6 +43,25 @@ function renderLinkEmail(
 	};
 }
 
+function renderNoticeEmail(
+	subject: string,
+	greeting: string,
+	notice: string,
+): RenderedEmail {
+	const advice =
+		"If you did not make this change, contact your Virtool administrator immediately.";
+
+	return {
+		subject,
+		text: `${greeting}\n\n${notice}\n\n${advice}\n`,
+		html: [
+			`<p>${escapeHtml(greeting)}</p>`,
+			`<p>${escapeHtml(notice)}</p>`,
+			`<p>${escapeHtml(advice)}</p>`,
+		].join("\n"),
+	};
+}
+
 /** Render `template` into a subject and both bodies, escaping every payload value. */
 export function renderEmailTemplate(
 	template: EmailTemplate,
@@ -58,6 +77,13 @@ export function renderEmailTemplate(
 				"If you did not expect this invitation, you can ignore this email.",
 			);
 
+		case "email_changed":
+			return renderNoticeEmail(
+				"Your Virtool email address was changed",
+				`Hello ${template.username},`,
+				"The email address on your Virtool account was changed. Virtool will no longer send email to this address.",
+			);
+
 		case "email_verification":
 			return renderLinkEmail(
 				"Verify your email address",
@@ -67,6 +93,13 @@ export function renderEmailTemplate(
 				templateVersion === 1
 					? "If you did not request this, you can ignore this email."
 					: `This link expires in ${template.expiresInHours} hours. If you did not request this, you can ignore this email.`,
+			);
+
+		case "password_changed":
+			return renderNoticeEmail(
+				"Your Virtool password was changed",
+				`Hello ${template.username},`,
+				"The password on your Virtool account was changed.",
 			);
 
 		case "password_recovery":

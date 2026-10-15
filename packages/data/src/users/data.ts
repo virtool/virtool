@@ -46,6 +46,7 @@ import {
 	updateAuthUsername,
 } from "../auth/identity";
 import { hashPassword, verifyPassword } from "../auth/password";
+import { queuePasswordChangedEmail } from "../auth/securityEmail";
 import { invalidateUserSessions } from "../auth/session";
 import {
 	invalidateUserSetupSessions,
@@ -809,6 +810,7 @@ export async function changePassword(
 		await invalidateUserSessions(tx, userId);
 		await supersedeSetupTokens(tx, userId, "password_recovery");
 		await supersedeSetupTokens(tx, userId, "administrator_recovery");
+		await queuePasswordChangedEmail(tx, userId);
 	});
 
 	// An administrator with this user's detail open sees last_password_change and
@@ -1141,6 +1143,7 @@ export async function updateUser(
 
 		if (values.password !== undefined && patch.password) {
 			await updateAuthPassword(tx, userId, patch.password);
+			await queuePasswordChangedEmail(tx, userId);
 		}
 
 		if (values.handle !== undefined) {

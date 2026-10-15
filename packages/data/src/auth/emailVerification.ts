@@ -12,6 +12,7 @@ import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { claimEmail } from "./email";
+import { queueEmailChangedEmail } from "./securityEmail";
 import {
 	consumeSetupToken,
 	issueSetupTokenInTransaction,
@@ -244,6 +245,7 @@ export async function completeEmailVerification(
 				authMigratedAt: users.authMigratedAt,
 				email: users.email,
 				emailVerified: users.emailVerified,
+				handle: users.handle,
 				lifecycleState: users.lifecycleState,
 			})
 			.from(users)
@@ -277,6 +279,7 @@ export async function completeEmailVerification(
 				supersedeSetupTokens(tx, consumed.userId, "password_recovery"),
 				supersedeSetupTokens(tx, consumed.userId, "administrator_recovery"),
 			]);
+			await queueEmailChangedEmail(tx, consumed.userId, user);
 		}
 		return consumed.userId;
 	});

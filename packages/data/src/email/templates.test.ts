@@ -34,6 +34,19 @@ describe("renderEmailTemplate", () => {
 		},
 	);
 
+	it.each(["email_changed", "password_changed"] as const)(
+		"renders the %s notice without a link",
+		(type) => {
+			const rendered = renderEmailTemplate({ type, username: "<alice>" });
+
+			expect(rendered.subject).toContain("changed");
+			expect(rendered.text).toContain("<alice>");
+			expect(rendered.text).toContain("administrator");
+			expect(rendered.html).toContain("&lt;alice&gt;");
+			expect(rendered.html).not.toContain("<a ");
+		},
+	);
+
 	it("renders the test template with both bodies", () => {
 		const rendered = renderEmailTemplate({ type: "test" });
 
