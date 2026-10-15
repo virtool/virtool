@@ -11,6 +11,7 @@ import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { CREDENTIAL_PROVIDER_ID } from "./identity";
 import { hashPassword, verifyPassword } from "./password";
+import { queuePasswordChangedEmail } from "./securityEmail";
 import {
 	consumeSetupToken,
 	invalidateUserSetupTokens,
@@ -316,6 +317,7 @@ export async function completePasswordRecovery(
 			.delete(setupSessions)
 			.where(eq(setupSessions.userId, consumed.userId));
 		await invalidateUserSetupTokens(tx, consumed.userId);
+		await queuePasswordChangedEmail(tx, consumed.userId);
 		return consumed.userId;
 	});
 	await emit("users", userId, "update");

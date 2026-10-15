@@ -6,6 +6,7 @@ import {
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import { emailOutbox } from "@virtool/data/db/schema/emailOutbox";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
@@ -13,6 +14,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -282,6 +284,25 @@ describe("resetPassword", () => {
 		).toBe(true);
 		expect(credential?.password).toBe(user?.password?.toString("utf8"));
 		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("notifies the verified address", async () => {
+		await seedSettings(db, { emailEnabled: true });
+		const userId = await seedCredentialedUser();
+		await db
+			.update(users)
+			.set({ email: "alice@example.com", emailVerified: true })
+			.where(eq(users.id, userId));
+
+		await resetPassword(db, { userId, password: "new-password-123" });
+
+		const messages = await db
+			.select()
+			.from(emailOutbox)
+			.where(eq(emailOutbox.recipient, "alice@example.com"));
+		expect(messages.map(({ template }) => template)).toEqual([
+			{ type: "password_changed", username: "alice" },
+		]);
 	});
 
 	it("refuses password reuse", async () => {

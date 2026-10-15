@@ -1,7 +1,9 @@
 /** The supported transactional email template names. */
 export const emailTemplateTypes = [
 	"account_setup",
+	"email_changed",
 	"email_verification",
+	"password_changed",
 	"password_recovery",
 	"test",
 ] as const;
@@ -12,12 +14,14 @@ export type EmailTemplateType = (typeof emailTemplateTypes)[number];
 /** A transactional email template name with its typed, recipient-safe data. */
 export type EmailTemplate =
 	| { type: "account_setup"; username: string; setupUrl: string }
+	| { type: "email_changed"; username: string }
 	| {
 			type: "email_verification";
 			username: string;
 			verifyUrl: string;
 			expiresInHours: number;
 	  }
+	| { type: "password_changed"; username: string }
 	| { type: "password_recovery"; username: string; recoveryUrl: string }
 	| { type: "test" };
 
