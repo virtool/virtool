@@ -17,8 +17,8 @@
 		"@virtool/logger": "workspace:*",
 		"hono": "^4.13.9",
 		"lucide-react": "^1.43.0",
-		"react": "^19.3.0",
-		"react-dom": "^19.3.0"
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1"
 	},
 	"devDependencies": {
 		"@tailwindcss/vite": "^4.3.3",
