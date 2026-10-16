@@ -22,7 +22,7 @@
 		"@sentry/replay": "11.7.0",
 		"@sentry/tanstackstart-react": "^11.7.0",
 		"@simplewebauthn/browser": "14.0.0",
-		"@simplewebauthn/server": "13.3.3",
+		"@simplewebauthn/server": "14.0.3",
 		"@tanstack/react-query": "^5.104.3",
 		"@tanstack/react-router": "^1.170.44",
 		"@tanstack/react-router-ssr-query": "^1.167.3",
