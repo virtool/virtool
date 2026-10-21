@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { gzipSync } from "node:zlib";
 import { createIndexArtifact, type IndexOtu } from "@virtool/sqlite";
 import {
 	buildMappingIndexCacheParams,
@@ -16,7 +17,11 @@ import {
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
-import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
+import {
+	REFERENCE_INDEX_EXTRA_PARAMS,
+	SUBTRACTION_INDEX_EXTRA_PARAMS,
+	WORKFLOW_NAME,
+} from "../cacheParams";
 import type { PathoscopeData } from "../context";
 import { workPaths } from "../paths";
 import type { PathoscopeState } from "../state";
@@ -32,7 +37,10 @@ const INDEX_ID = 7;
 const SHARD_NAME = "reference.1.bt2";
 const SUBTRACTION_ID = 9;
 const SUBTRACTION_SHARD_NAME = "subtraction.1.bt2";
-const SUBTRACTION_GENOME = "genome bytes";
+// Both records are `Prunus` once bowtie2 truncates at the first space.
+const SUBTRACTION_GENOME =
+	">Prunus persica chr1\nACGTACGT\n>Prunus persica chr2\nTTTT\n";
+const SUBTRACTION_FASTA = ">1\nACGTACGT\n>2\nTTTT\n";
 
 const OTU: IndexOtu = {
 	abbreviation: "TMV",
@@ -90,6 +98,7 @@ function referenceIndexCacheParams(): CacheParams {
 
 function subtractionIndexCacheParams(): CacheParams {
 	return buildMappingIndexCacheParams({
+		extra: SUBTRACTION_INDEX_EXTRA_PARAMS,
 		indexKind: "subtraction_mapping_index",
 		parentId: SUBTRACTION_ID,
 		toolVersion: BOWTIE2_BUILD_VERSION,
@@ -244,7 +253,7 @@ async function setupSubtraction() {
 	} = harness;
 
 	const [genome] = await testStorage.seedSubtractionFiles(SUBTRACTION_ID, [
-		{ name: "subtraction.fa.gz", contents: SUBTRACTION_GENOME },
+		{ name: "subtraction.fa.gz", contents: gzipSync(SUBTRACTION_GENOME) },
 	]);
 
 	const fastaPath = paths.subtraction(SUBTRACTION_ID).fasta;
@@ -351,13 +360,13 @@ describe("createReferenceIndexStep", () => {
 });
 
 describe("createSubtractionIndexStep", () => {
-	it("builds from the downloaded genome and caches the index on a miss", async () => {
+	it("builds from the renamed genome and caches the index on a miss", async () => {
 		const { builtFastas, fastaPath, paths, run, state } =
 			await setupSubtraction();
 
 		await run();
 
-		expect(builtFastas).toEqual([SUBTRACTION_GENOME]);
+		expect(builtFastas).toEqual([SUBTRACTION_FASTA]);
 		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 
 		expect(state.cacheRegistrations.map(({ key }) => key)).toEqual([
@@ -408,7 +417,7 @@ describe("createSubtractionIndexStep", () => {
 
 		await expect(run()).rejects.toThrow();
 
-		expect(builtFastas).toEqual([SUBTRACTION_GENOME]);
+		expect(builtFastas).toEqual([SUBTRACTION_FASTA]);
 		expect(state.cacheRegistrations).toEqual([]);
 		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 	});

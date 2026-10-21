@@ -6,10 +6,14 @@ import {
 	type BuildContextInput,
 	cacheFor,
 	createMappingIndex,
-	downloadToPath,
 } from "@virtool/workflow";
-import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
+import {
+	REFERENCE_INDEX_EXTRA_PARAMS,
+	SUBTRACTION_INDEX_EXTRA_PARAMS,
+	WORKFLOW_NAME,
+} from "../cacheParams";
 import { workPaths } from "../paths";
+import { writeSubtractionFasta } from "../subtractionFasta";
 import { APP_VERSION } from "../version";
 import type { PathoscopeStep } from "./types";
 
@@ -95,7 +99,8 @@ async function writeDefaultIsolateFasta({
 /**
  * Build one bowtie2 index per subtraction.
  *
- * The gzipped FASTA is handed to `bowtie2-build` directly, which reads gzip.
+ * The genome is decompressed on the way out of storage so its records can be
+ * renamed; see `subtractionFasta.ts` for why.
  *
  * The genome is downloaded here rather than with the run's other inputs, and
  * only once the cache has missed. Every analysis against the same subtraction
@@ -119,6 +124,7 @@ export const createSubtractionIndexStep: PathoscopeStep = {
 			try {
 				await createMappingIndex({
 					cache,
+					extraParams: SUBTRACTION_INDEX_EXTRA_PARAMS,
 					fastaPath: subtraction.path,
 					indexKind: "subtraction_mapping_index",
 					indexPrefix: paths.subtraction(subtraction.id).indexPrefix,
@@ -144,7 +150,7 @@ export const createSubtractionIndexStep: PathoscopeStep = {
 	},
 };
 
-/** Stream a subtraction's gzipped genome out of storage and onto the work path. */
+/** Stream a subtraction's genome out of storage and onto the work path. */
 async function downloadSubtractionFasta({
 	fastaPath,
 	logger,
@@ -158,7 +164,7 @@ async function downloadSubtractionFasta({
 	storageKey: string;
 	subtractionId: number;
 }): Promise<void> {
-	await downloadToPath(storage, storageKey, fastaPath);
+	await writeSubtractionFasta(storage.read(storageKey), fastaPath);
 
 	logger.info({ fastaPath, subtractionId }, "downloaded subtraction genome");
 }
