@@ -16,7 +16,7 @@ import {
 	createTestStorage,
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
-import { describe, expect, it, onTestFinished } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import {
 	REFERENCE_INDEX_EXTRA_PARAMS,
 	SUBTRACTION_INDEX_EXTRA_PARAMS,
@@ -280,6 +280,7 @@ async function setupSubtraction() {
 	return {
 		...harness,
 		fastaPath,
+		genomeKey: genome?.storageKey,
 
 		run() {
 			return createSubtractionIndexStep.run(
@@ -385,14 +386,25 @@ describe("createSubtractionIndexStep", () => {
 	// makes a hit the steady state, so a run
 	// that restores the index must not have pulled it out of storage at all.
 	it("downloads no genome on a cache hit", async () => {
-		const { builtFastas, fastaPath, paths, run, seedCachedIndex, state } =
-			await setupSubtraction();
+		const {
+			builtFastas,
+			genomeKey,
+			paths,
+			run,
+			seedCachedIndex,
+			state,
+			storage,
+		} = await setupSubtraction();
 
 		await seedCachedIndex();
 
+		// The step removes the genome whether or not it built, so only the
+		// storage reads show whether it was downloaded.
+		const read = vi.spyOn(storage, "read");
+
 		await run();
 
-		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
+		expect(read.mock.calls.map(([key]) => key)).not.toContain(genomeKey);
 		expect(builtFastas).toEqual([]);
 		expect(state.cacheRegistrations).toEqual([]);
 
