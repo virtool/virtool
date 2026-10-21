@@ -14,7 +14,7 @@ function sample(
 }
 
 describe("tracesSampler", () => {
-	it.each(["/health/live", "/health/ready"])("drops %s", (path) => {
+	it.each(["/health/live", "/health/ready", "/metrics"])("drops %s", (path) => {
 		expect(sample({ "url.path": path })).toBe(0);
 	});
 
