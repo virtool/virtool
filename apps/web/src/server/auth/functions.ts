@@ -137,8 +137,11 @@ function rethrowAsHttp(err: unknown): never {
 		setResponseStatus(400);
 		throw new ClientError("Cannot reuse current password", 400);
 	}
+	if (err instanceof EmailInUseError) {
+		setResponseStatus(409);
+		throw new ClientError("Another account uses this email address.", 409);
+	}
 	if (
-		err instanceof EmailInUseError ||
 		err instanceof SetupCredentialError ||
 		err instanceof SetupNotEligibleError
 	) {

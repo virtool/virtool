@@ -10,13 +10,36 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useCapturedUrlParams } from "../hooks";
 import { rootQueryKeys } from "../keys";
+import { getAuthNextStep } from "../nextStep";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
+
+const PENDING_EMAIL_CHANGE_KEY = "vt-pending-email-change";
+
+function storePendingEmailChange(token: string): boolean {
+	try {
+		window.sessionStorage.setItem(PENDING_EMAIL_CHANGE_KEY, token);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function takePendingEmailChange(): string | null {
+	try {
+		const token = window.sessionStorage.getItem(PENDING_EMAIL_CHANGE_KEY);
+		window.sessionStorage.removeItem(PENDING_EMAIL_CHANGE_KEY);
+		return token;
+	} catch {
+		return null;
+	}
+}
 
 type VerificationState =
 	| { status: "loading" }
 	| { status: "verified" }
 	| { status: "unusable" }
+	| { status: "sign_in_required" }
 	| {
 			status: "interrupted";
 			token: string;
@@ -42,7 +65,17 @@ export default function EmailVerificationWall() {
 				return;
 			}
 			setState({ status: "unusable" });
-		} catch {
+		} catch (error) {
+			// A change completes only for the account that requested it, so the
+			// link waits in this tab while the user signs in.
+			if (
+				mode === "change" &&
+				getAuthNextStep(error) !== null &&
+				storePendingEmailChange(token)
+			) {
+				setState({ status: "sign_in_required" });
+				return;
+			}
 			setState({ status: "interrupted", token, mode });
 		}
 	}
@@ -61,7 +94,8 @@ export default function EmailVerificationWall() {
 		}
 	}
 
-	useCapturedUrlParams(["token"], ({ token }) => {
+	useCapturedUrlParams(["token"], (params) => {
+		const token = params.token ?? takePendingEmailChange();
 		if (!token || !/^[0-9a-f]{64}$/.test(token)) {
 			setState({ status: "unusable" });
 			return;
@@ -90,6 +124,17 @@ export default function EmailVerificationWall() {
 						subtitle="This link cannot be used. Request another link from your account settings or contact an administrator."
 					/>
 					<Link to="/login">Return to login</Link>
+				</>
+			)}
+			{state.status === "sign_in_required" && (
+				<>
+					<WallTitle
+						title="Sign in to change your email"
+						subtitle="Sign in to the account that requested this change. The change completes after you sign in."
+					/>
+					<Link to="/login" search={{ redirect: "/verify-email" }}>
+						Sign in
+					</Link>
 				</>
 			)}
 			{state.status === "interrupted" && (
