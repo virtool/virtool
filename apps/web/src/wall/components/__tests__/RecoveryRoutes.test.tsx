@@ -2,6 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { recoveryServerFnMocks } from "@tests/server-fn/recovery";
 import { renderWithRouter } from "@tests/setup";
+import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
 import EmailVerificationWall from "@wall/components/EmailVerificationWall";
 import RecoveryWall from "@wall/components/RecoveryWall";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -11,6 +12,7 @@ const token = "a".repeat(64);
 beforeEach(() => {
 	vi.clearAllMocks();
 	window.history.replaceState({}, "", "/");
+	window.sessionStorage.clear();
 });
 
 it("removes a recovery bearer token before inspecting it", async () => {
@@ -59,6 +61,76 @@ it("removes a verification bearer token before inspecting it", async () => {
 	expect(recoveryServerFnMocks.verifyCurrentEmailFn).toHaveBeenCalledWith({
 		data: { token },
 	});
+});
+
+it("keeps a signed-out email-change link for after sign-in", async () => {
+	window.history.replaceState({}, "", `/verify-email?token=${token}`);
+	recoveryServerFnMocks.inspectEmailVerificationFn.mockResolvedValue({
+		status: "change",
+	});
+	recoveryServerFnMocks.completeAccountEmailChangeFn.mockRejectedValue(
+		Object.assign(new Error("Unauthorized"), { name: UNAUTHORIZED_ERROR_NAME }),
+	);
+
+	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
+	await screen.findByRole("heading", { name: "Sign in to change your email" });
+
+	expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+		"href",
+		"/login?redirect=%2Fverify-email",
+	);
+	expect(window.sessionStorage.getItem("vt-pending-email-change")).toBe(token);
+});
+
+it("completes a kept email-change link after sign-in", async () => {
+	window.sessionStorage.setItem("vt-pending-email-change", token);
+	window.history.replaceState({}, "", "/verify-email");
+	recoveryServerFnMocks.inspectEmailVerificationFn.mockResolvedValue({
+		status: "change",
+	});
+	recoveryServerFnMocks.completeAccountEmailChangeFn.mockResolvedValue({
+		status: "verified",
+	});
+
+	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
+	await screen.findByRole("heading", { name: "Email verified" });
+
+	expect(
+		recoveryServerFnMocks.completeAccountEmailChangeFn,
+	).toHaveBeenCalledWith({ data: { token } });
+	expect(window.sessionStorage.getItem("vt-pending-email-change")).toBeNull();
+});
+
+it("keeps a resumed email-change link when verification is interrupted", async () => {
+	window.sessionStorage.setItem("vt-pending-email-change", token);
+	window.history.replaceState({}, "", "/verify-email");
+	recoveryServerFnMocks.inspectEmailVerificationFn.mockRejectedValue(
+		new Error("Network error"),
+	);
+
+	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
+	await screen.findByRole("heading", { name: "Verification interrupted" });
+
+	expect(window.sessionStorage.getItem("vt-pending-email-change")).toBe(token);
+});
+
+it("drops a kept email-change link when another link is opened", async () => {
+	const otherToken = "b".repeat(64);
+	window.sessionStorage.setItem("vt-pending-email-change", token);
+	window.history.replaceState({}, "", `/verify-email?token=${otherToken}`);
+	recoveryServerFnMocks.inspectEmailVerificationFn.mockRejectedValue(
+		new Error("Network error"),
+	);
+
+	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
+	await screen.findByRole("heading", { name: "Verification interrupted" });
+
+	expect(recoveryServerFnMocks.inspectEmailVerificationFn).toHaveBeenCalledWith(
+		{
+			data: { token: otherToken },
+		},
+	);
+	expect(window.sessionStorage.getItem("vt-pending-email-change")).toBeNull();
 });
 
 it("refuses mismatched passwords before consuming the recovery link", async () => {

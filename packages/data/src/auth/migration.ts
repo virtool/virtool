@@ -14,6 +14,7 @@ import {
 	credentialAccountId,
 	syncCredentialPassword,
 } from "./credential";
+import { claimEmail, EmailInUseError } from "./email";
 
 /** The expected Better Auth schema is not present. */
 export class AuthSchemaError extends AppError {}
@@ -415,11 +416,24 @@ async function reconcileEligible(
 	}
 	const password = user.password;
 
+	const email = normalizeEmail(user.email);
+
 	return db.transaction(async (tx) => {
+		// A verified claim may have taken this address since the audit read it.
+		// The next audit reports the pair as a duplicate.
+		try {
+			await claimEmail(tx, user.id, email, { mailboxVerified: true });
+		} catch (err) {
+			if (err instanceof EmailInUseError) {
+				return "skipped";
+			}
+			throw err;
+		}
+
 		const updated = await tx
 			.update(users)
 			.set({
-				email: normalizeEmail(user.email),
+				email,
 				username: user.handle.toLowerCase(),
 				displayUsername: user.handle,
 				authMigratedAt: new Date(),

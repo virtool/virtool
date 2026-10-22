@@ -19,6 +19,7 @@ import { hashToken, newSessionToken } from "../tokens";
 export type SeedUserOptions = {
 	active?: boolean;
 	administratorRole?: AdministratorRoleName | null;
+	authMigratedAt?: Date | null;
 	email?: string;
 	forceReset?: boolean;
 	handle?: string;
@@ -54,6 +55,7 @@ export async function seedUser(
 	{
 		active = true,
 		administratorRole = null,
+		authMigratedAt = null,
 		email = "",
 		forceReset = false,
 		handle = "alice",
@@ -67,6 +69,7 @@ export async function seedUser(
 		.values({
 			active,
 			administratorRole,
+			authMigratedAt,
 			email,
 			forceReset,
 			handle,

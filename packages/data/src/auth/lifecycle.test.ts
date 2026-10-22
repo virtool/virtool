@@ -203,7 +203,11 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("refuses an address another account already holds", async () => {
-		await seedUser(db, { handle: "bob", email: "ada@example.com" });
+		await seedUser(db, {
+			authMigratedAt: new Date(),
+			handle: "bob",
+			email: "ada@example.com",
+		});
 		const userId = await seedUser(db, {
 			email: "ada@example.com",
 			handle: "ada",
@@ -222,14 +226,11 @@ describe("completeAccountSetup", () => {
 	});
 
 	it("refuses an address another account holds with surrounding whitespace", async () => {
-		const existing = await seedUser(db, {
+		await seedUser(db, {
+			authMigratedAt: new Date(),
 			handle: "bob",
 			email: " ADA@example.com ",
 		});
-		await db
-			.update(users)
-			.set({ authMigratedAt: new Date() })
-			.where(eq(users.id, existing));
 		const userId = await seedUser(db, {
 			email: "ada@example.com",
 			handle: "ada",
@@ -250,7 +251,11 @@ describe("completeAccountSetup", () => {
 	// The rollback is what makes a failed completion retryable. A spent token
 	// against an unchanged account is a link the holder can never use again.
 	it("rolls the whole transition back when it fails", async () => {
-		await seedUser(db, { handle: "bob", email: "ada@example.com" });
+		await seedUser(db, {
+			authMigratedAt: new Date(),
+			handle: "bob",
+			email: "ada@example.com",
+		});
 		const userId = await seedUser(db, {
 			email: "ada@example.com",
 			handle: "ada",
@@ -543,6 +548,82 @@ describe("completeEmailRemediation", () => {
 
 		await expect(
 			prepareEmailRemediation(db, { userId, email: "ada@example.com" }),
+		).rejects.toBeInstanceOf(EmailInUseError);
+	});
+
+	it.each([{ active: true }, { active: false }])(
+		"lets a mailbox claim an address a legacy account records (active: $active)",
+		async ({ active }) => {
+			await seedUser(db, { active, handle: "bob", email: "ada@example.com" });
+			const userId = await seedUser(db, {
+				handle: "ada",
+				email: "ada@example.com",
+			});
+			await seedSettings(db, { emailEnabled: true });
+
+			await expect(
+				startEmailRemediation(db, {
+					deliveryAvailable: true,
+					email: "ada@example.com",
+					getVerificationUrl: () => "https://virtool.test/verify",
+					userId,
+				}),
+			).resolves.toEqual({ status: "verification_required" });
+
+			const { token } = await seedSetupToken(db, userId, "email_remediation", {
+				candidateEmail: "ada@example.com",
+			});
+			await completeEmailRemediation(db, { token, userId, verified: true });
+
+			expect(await readUser(userId)).toMatchObject({
+				email: "ada@example.com",
+				emailVerified: true,
+			});
+		},
+	);
+
+	it("refuses an offline claim to an address a legacy account records", async () => {
+		await seedUser(db, { handle: "bob", email: "ada@example.com" });
+		const userId = await seedUser(db, { handle: "ada" });
+
+		await expect(
+			startEmailRemediation(db, {
+				deliveryAvailable: false,
+				email: "ada@example.com",
+				getVerificationUrl: () => "https://virtool.test/unused",
+				userId,
+			}),
+		).rejects.toBeInstanceOf(EmailInUseError);
+		expect(await db.select().from(setupTokens)).toHaveLength(0);
+	});
+
+	it("refuses an unverified completion to an address a legacy account records", async () => {
+		await seedUser(db, { handle: "bob", email: "ada@example.com" });
+		const userId = await seedUser(db, { handle: "ada" });
+		const { token } = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+		});
+
+		await expect(
+			completeEmailRemediation(db, { token, userId, verified: false }),
+		).rejects.toBeInstanceOf(EmailInUseError);
+		expect((await readUser(userId)).authMigratedAt).toBeNull();
+	});
+
+	it("refuses a mailbox claim to an address a deactivated migrated account holds", async () => {
+		await seedUser(db, {
+			active: false,
+			authMigratedAt: new Date(),
+			handle: "bob",
+			email: "ada@example.com",
+		});
+		const userId = await seedUser(db, { handle: "ada" });
+		const { token } = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+		});
+
+		await expect(
+			completeEmailRemediation(db, { token, userId, verified: true }),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
 

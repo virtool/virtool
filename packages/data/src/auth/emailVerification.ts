@@ -121,7 +121,10 @@ export async function beginEmailVerification(
 		if (candidateEmail === normalizeEmail(user.email) && user.emailVerified) {
 			throw new EmailVerificationError();
 		}
-		await claimEmail(tx, input.userId, candidateEmail);
+		// Completion proves the mailbox and claims the address again.
+		await claimEmail(tx, input.userId, candidateEmail, {
+			mailboxVerified: true,
+		});
 
 		const [current] = await tx
 			.select({
@@ -268,7 +271,9 @@ export async function completeEmailVerification(
 		) {
 			throw new SetupCredentialError();
 		}
-		await claimEmail(tx, consumed.userId, candidateEmail);
+		await claimEmail(tx, consumed.userId, candidateEmail, {
+			mailboxVerified: true,
+		});
 		await tx
 			.update(users)
 			.set({ email: candidateEmail, emailVerified: true })
