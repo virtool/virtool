@@ -21,7 +21,7 @@ export type SubtractionPaths = {
 	/** The directory archived into the subtraction mapping-index cache */
 	dir: string;
 
-	/** The gzipped source genome, handed to `bowtie2-build` without decompressing */
+	/** The decompressed genome with its records renamed, handed to `bowtie2-build` */
 	fasta: string;
 
 	/** The bowtie2 index prefix — the shards sit beside it */
@@ -129,7 +129,7 @@ export function workPaths(workPath: string): PathoscopePaths {
 					workPath,
 					"subtractions",
 					String(subtractionId),
-					"subtraction.fa.gz",
+					"subtraction.fa",
 				),
 				indexPrefix: join(dir, "subtraction"),
 			};

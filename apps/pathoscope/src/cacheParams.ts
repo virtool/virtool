@@ -9,14 +9,18 @@
  * nothing else will ever ask for — so the mapping-index namespaces are pinned by tests
  * against the keys blobs already in the bucket were written under.
  *
- * ## Two namespaces continue and one is forked
+ * ## One namespace continues and two are forked
  *
- * - `reference_mapping_index` and `subtraction_mapping_index` continue the
- *   namespaces older pathoscope releases wrote. Their params are the runtime's
- *   `buildMappingIndexCacheParams` rather than anything declared here, so this
- *   side contributes only {@link WORKFLOW_NAME} and
- *   {@link REFERENCE_INDEX_EXTRA_PARAMS} — what the index was built from. The
- *   workflow name keeps them apart from nuvs' mapping indexes.
+ * - `reference_mapping_index` continues the namespace older pathoscope
+ *   releases wrote. Its params are the runtime's `buildMappingIndexCacheParams`
+ *   rather than anything declared here, so this side contributes only
+ *   {@link WORKFLOW_NAME} and {@link REFERENCE_INDEX_EXTRA_PARAMS} — what the
+ *   index was built from. The workflow name keeps it apart from nuvs' mapping
+ *   indexes.
+ * - `subtraction_mapping_index` is **forked** by
+ *   {@link SUBTRACTION_INDEX_EXTRA_PARAMS}. Older releases indexed the genome's
+ *   own record names, which can collide, and restoring one of those indexes
+ *   brings the collision back.
  * - `collapsed_reference` is **forked**, deliberately, from the namespace older
  *   releases wrote. Its artifact is a SQLite index *this code* writes, and a
  *   collapsed index an older release wrote is not interchangeable with it.
@@ -80,6 +84,16 @@ export const REFERENCE_INDEX_EXTRA_PARAMS = {
 	collapse_identity: CD_HIT_EST_IDENTITY,
 	selection: "default_isolates",
 	source: "collapsed_reference",
+};
+
+/**
+ * What this workflow's subtraction mapping index adds: its records are named by
+ * ordinal, not by the uploaded genome's headers.
+ *
+ * Bump the value if the naming ever changes; do not remove it.
+ */
+export const SUBTRACTION_INDEX_EXTRA_PARAMS = {
+	sequence_names: "ordinal",
 };
 
 /**

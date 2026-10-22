@@ -14,9 +14,9 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1144.0",
+		"@aws-sdk/client-s3": "^3.1152.0",
 		"@aws-sdk/lib-storage": "^3.1119.0",
-		"@azure/identity": "^4.13.3",
+		"@azure/identity": "^4.14.0",
 		"@azure/storage-blob": "^12.33.0",
 		"@sentry/node": "^11.7.0",
 		"@virtool/bio": "workspace:*",
@@ -28,11 +28,11 @@
 		"pino": "^10.1.0",
 		"tar-stream": "^3.2.0",
 		"undici": "^8.10.2",
-		"zod": "^4.5.4"
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",
 		"tsdown": "^0.23.0",
-		"vitest": "^5.0.3"
+		"vitest": "^5.0.5"
 	}
 }
