@@ -435,6 +435,10 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 	.middleware([setupOnly("email_remediation")])
 	.validator(emailRemediationSchema)
 	.handler(async ({ context, data }) => {
+		if (!isValidEmail(normalizeEmail(data.email))) {
+			setResponseStatus(400);
+			throw new ClientError(INVALID_EMAIL_MESSAGE, 400);
+		}
 		try {
 			const result = await startEmailRemediation(db, {
 				deliveryAvailable: await isEmailDeliveryAvailable(),

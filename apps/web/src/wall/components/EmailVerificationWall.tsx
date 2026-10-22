@@ -25,14 +25,18 @@ function storePendingEmailChange(token: string): boolean {
 	}
 }
 
-function takePendingEmailChange(): string | null {
+function getPendingEmailChange(): string | null {
 	try {
-		const token = window.sessionStorage.getItem(PENDING_EMAIL_CHANGE_KEY);
-		window.sessionStorage.removeItem(PENDING_EMAIL_CHANGE_KEY);
-		return token;
+		return window.sessionStorage.getItem(PENDING_EMAIL_CHANGE_KEY);
 	} catch {
 		return null;
 	}
+}
+
+function clearPendingEmailChange() {
+	try {
+		window.sessionStorage.removeItem(PENDING_EMAIL_CHANGE_KEY);
+	} catch {}
 }
 
 type VerificationState =
@@ -58,6 +62,7 @@ export default function EmailVerificationWall() {
 				mode === "current"
 					? await verifyCurrentEmailFn({ data: { token } })
 					: await completeAccountEmailChangeFn({ data: { token } });
+			clearPendingEmailChange();
 			if (result.status === "verified") {
 				queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
 				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
@@ -85,6 +90,7 @@ export default function EmailVerificationWall() {
 		try {
 			const result = await inspectEmailVerificationFn({ data: { token } });
 			if (result.status === "unusable") {
+				clearPendingEmailChange();
 				setState({ status: "unusable" });
 				return;
 			}
@@ -95,8 +101,13 @@ export default function EmailVerificationWall() {
 	}
 
 	useCapturedUrlParams(["token"], (params) => {
-		const token = params.token ?? takePendingEmailChange();
+		// A newly opened link replaces any change still waiting for sign-in.
+		if (params.token) {
+			clearPendingEmailChange();
+		}
+		const token = params.token ?? getPendingEmailChange();
 		if (!token || !/^[0-9a-f]{64}$/.test(token)) {
+			clearPendingEmailChange();
 			setState({ status: "unusable" });
 			return;
 		}

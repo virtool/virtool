@@ -101,6 +101,38 @@ it("completes a kept email-change link after sign-in", async () => {
 	expect(window.sessionStorage.getItem("vt-pending-email-change")).toBeNull();
 });
 
+it("keeps a resumed email-change link when verification is interrupted", async () => {
+	window.sessionStorage.setItem("vt-pending-email-change", token);
+	window.history.replaceState({}, "", "/verify-email");
+	recoveryServerFnMocks.inspectEmailVerificationFn.mockRejectedValue(
+		new Error("Network error"),
+	);
+
+	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
+	await screen.findByRole("heading", { name: "Verification interrupted" });
+
+	expect(window.sessionStorage.getItem("vt-pending-email-change")).toBe(token);
+});
+
+it("drops a kept email-change link when another link is opened", async () => {
+	const otherToken = "b".repeat(64);
+	window.sessionStorage.setItem("vt-pending-email-change", token);
+	window.history.replaceState({}, "", `/verify-email?token=${otherToken}`);
+	recoveryServerFnMocks.inspectEmailVerificationFn.mockRejectedValue(
+		new Error("Network error"),
+	);
+
+	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
+	await screen.findByRole("heading", { name: "Verification interrupted" });
+
+	expect(recoveryServerFnMocks.inspectEmailVerificationFn).toHaveBeenCalledWith(
+		{
+			data: { token: otherToken },
+		},
+	);
+	expect(window.sessionStorage.getItem("vt-pending-email-change")).toBeNull();
+});
+
 it("refuses mismatched passwords before consuming the recovery link", async () => {
 	window.history.replaceState(
 		{},
