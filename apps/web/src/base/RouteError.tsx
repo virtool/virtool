@@ -6,7 +6,9 @@ import {
 	FORBIDDEN_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
+import { CloudOff } from "lucide-react";
 import { useEffect } from "react";
+import { EmptyDescription } from "./Empty";
 import ErrorState from "./ErrorState";
 import NotFound from "./NotFound";
 
@@ -25,14 +27,48 @@ function getStatus(error: unknown): number | undefined {
 	return getErrorStatus(error);
 }
 
+/** How often the unavailable state re-runs the route, matching `retry-after`. */
+const UNAVAILABLE_RETRY_MS = 5000;
+
+/**
+ * Stands in for the route while the server answers 503, re-running its loaders
+ * until they succeed so the page recovers without the user acting.
+ */
+function Unavailable() {
+	const router = useRouter();
+
+	useEffect(() => {
+		const interval = setInterval(
+			() => router.invalidate(),
+			UNAVAILABLE_RETRY_MS,
+		);
+		return () => clearInterval(interval);
+	}, [router]);
+
+	return (
+		<ErrorState
+			color="gray"
+			icon={<CloudOff className="size-10 text-gray-500" aria-hidden="true" />}
+			message="Virtool is temporarily unavailable"
+		>
+			<EmptyDescription>
+				This page will reload automatically when the service is back.
+			</EmptyDescription>
+			<Button color="blue" onClick={() => router.invalidate()}>
+				Try again
+			</Button>
+		</ErrorState>
+	);
+}
+
 /**
  * The router's default `errorComponent`: renders when a route loader rejects
  * or a `useSuspenseQuery` throws, instead of leaving the route blank.
  *
- * A 401/403 reads as an access problem, a 404 as a missing resource, and
- * anything else as a retryable error. "Try again" clears the cached query
- * error and re-runs the route loader, so a transient failure recovers without
- * a full page reload.
+ * A 401/403 reads as an access problem, a 404 as a missing resource, a 503 as
+ * a temporary outage that retries itself, and anything else as a retryable
+ * error. "Try again" clears the cached query error and re-runs the route
+ * loader, so a transient failure recovers without a full page reload.
  */
 export default function RouteError({ error }: ErrorComponentProps) {
 	const router = useRouter();
@@ -44,25 +80,25 @@ export default function RouteError({ error }: ErrorComponentProps) {
 		reset();
 	}, [reset]);
 
-	const status = getStatus(error);
-
-	if (status === 401) {
-		return (
-			<NotFound
-				status={401}
-				message="You need to sign in to view this resource"
-			/>
-		);
-	}
-
-	if (status === 403) {
-		return (
-			<NotFound status={403} message="You don't have access to this resource" />
-		);
-	}
-
-	if (status === 404) {
-		return <NotFound />;
+	switch (getStatus(error)) {
+		case 401:
+			return (
+				<NotFound
+					status={401}
+					message="You need to sign in to view this resource"
+				/>
+			);
+		case 403:
+			return (
+				<NotFound
+					status={403}
+					message="You don't have access to this resource"
+				/>
+			);
+		case 404:
+			return <NotFound />;
+		case 503:
+			return <Unavailable />;
 	}
 
 	return (

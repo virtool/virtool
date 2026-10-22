@@ -30,6 +30,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
+import { assertDatabaseReachable } from "./probe";
 import { createRateLimitStorage } from "./rateLimitStorage";
 import {
 	RECENT_AUTHENTICATION_PATH,
@@ -436,12 +437,29 @@ const MFA_ENROLLMENT_ALLOWED_PATHS = new Set([
 /**
  * Wrap Better Auth's raw handler with Virtool's endpoint allow-list and its
  * forced-reset and required-MFA restrictions.
+ *
+ * Better Auth answers a failed query with a bare 500, so a server error is
+ * checked against the database to let an outage reach the client as a 503.
  */
 export function createAuthRequestHandler(
 	db: Db,
 	auth: ReturnType<typeof createAuth>,
 ): (request: Request) => Promise<Response> {
 	return async function handleAuthRequest(request: Request): Promise<Response> {
+		let response: Response;
+		try {
+			response = await routeAuthRequest(request);
+		} catch (err) {
+			await assertDatabaseReachable(db);
+			throw err;
+		}
+		if (response.status >= 500) {
+			await assertDatabaseReachable(db);
+		}
+		return response;
+	};
+
+	async function routeAuthRequest(request: Request): Promise<Response> {
 		const pathname = new URL(request.url).pathname;
 		if (!HTTP_ALLOWED_ENDPOINTS.has(`${request.method} ${pathname}`)) {
 			return new Response(null, { status: 404 });
@@ -490,5 +508,5 @@ export function createAuthRequestHandler(
 		}
 
 		return auth.handler(request);
-	};
+	}
 }

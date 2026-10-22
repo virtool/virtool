@@ -164,6 +164,10 @@ unknown failures unchanged, preserving upstream error reporting. See
 [errors.ts](src/server/errors.ts) for why setting the HTTP status alone is
 insufficient. Local error mappers don't need `createServerOnlyFn` wrappers.
 
+Don't map a Postgres outage yourself. Global middleware answers 503 for it,
+and the client shows a self-retrying unavailable state, or a notice when an
+action fails.
+
 Server functions serialize an RPC body, so don't return 204, 205, or 304; return
 `null` with 200 for deletion.
 

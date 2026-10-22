@@ -8,6 +8,7 @@ import {
 	RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH,
 	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
+	UNAVAILABLE_MESSAGE,
 } from "@virtool/contracts";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -111,6 +112,9 @@ function toBrowserError(
 }
 
 function toFailure(error: AuthClientError, message: string): Error {
+	if (error.status === 503) {
+		return new PasskeyCeremonyError("failed", UNAVAILABLE_MESSAGE);
+	}
 	if (error.status >= 500 || (error.code && UNEXPECTED_CODES.has(error.code))) {
 		Sentry.captureException(new Error("Passkey ceremony failed"), {
 			extra: { code: error.code, status: error.status },

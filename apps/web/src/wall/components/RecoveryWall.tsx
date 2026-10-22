@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { isServiceUnavailable } from "@app/queryErrors";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
 import Input from "@base/Input";
@@ -25,7 +26,8 @@ type RecoveryState =
 	| { status: "acknowledged" }
 	| { status: "ready"; token: string; purpose: RecoveryPurpose }
 	| { status: "changed" }
-	| { status: "unusable" };
+	| { status: "unusable" }
+	| { status: "unavailable"; token: string; purpose: RecoveryPurpose };
 
 /** Minimal recovery entry and bearer-link completion screen. */
 export default function RecoveryWall() {
@@ -51,6 +53,11 @@ export default function RecoveryWall() {
 			setState({ status: "unusable" });
 			return;
 		}
+		inspectLink(token, purpose);
+	});
+
+	function inspectLink(token: string, purpose: RecoveryPurpose) {
+		setState({ status: "loading" });
 		void inspectPasswordRecoveryFn({ data: { token, purpose } })
 			.then((result) => {
 				setState(
@@ -59,13 +66,17 @@ export default function RecoveryWall() {
 						: { status: "unusable" },
 				);
 			})
-			.catch(() => {
+			.catch((cause: unknown) => {
+				if (isServiceUnavailable(cause)) {
+					setState({ status: "unavailable", token, purpose });
+					return;
+				}
 				setError(
 					"The recovery service could not be reached. Try opening the link again.",
 				);
 				setState({ status: "unusable" });
 			});
-	});
+	}
 
 	async function requestRecovery(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -78,8 +89,13 @@ export default function RecoveryWall() {
 		try {
 			await requestPasswordRecoveryFn({ data: { handle } });
 			setState({ status: "acknowledged" });
-		} catch {
-			setError("The request could not be completed. Try again.");
+		} catch (cause) {
+			setError(
+				getWallErrorMessage(
+					cause,
+					"The request could not be completed. Try again.",
+				),
+			);
 		} finally {
 			submitting.current = false;
 			setPending(false);
@@ -219,6 +235,20 @@ export default function RecoveryWall() {
 						subtitle="Sign in with your new password. If your account needs more setup, Virtool asks for it after you sign in."
 					/>
 					<Link to="/login">Sign in</Link>
+				</>
+			)}
+			{state.status === "unavailable" && (
+				<>
+					<WallTitle
+						title="Virtool is temporarily unavailable"
+						subtitle="Your recovery link has not been used. Try again in a minute."
+					/>
+					<Button
+						color="blue"
+						onClick={() => inspectLink(state.token, state.purpose)}
+					>
+						Try again
+					</Button>
 				</>
 			)}
 			{state.status === "unusable" && (

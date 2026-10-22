@@ -9,7 +9,10 @@ import {
 	getRecentAuthenticationMethodsFn,
 } from "@server/auth/recentAuthentication";
 import { useMutation } from "@tanstack/react-query";
-import { SESSION_NOT_FRESH_ERROR_NAME } from "@virtool/contracts";
+import {
+	SESSION_NOT_FRESH_ERROR_NAME,
+	UNAVAILABLE_MESSAGE,
+} from "@virtool/contracts";
 import { CircleAlert, Info, KeyRound } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import {
@@ -348,6 +351,10 @@ export function RecentAuthenticationForm({
 					setPasskeyNotice(passkeys.getPasskeyNotice(error));
 					return;
 				}
+				if (getChallengeStatus(error) === 503) {
+					setPasskeyNotice({ message: UNAVAILABLE_MESSAGE, tone: "error" });
+					return;
+				}
 				if (isTerminalChallengeError(error)) {
 					onFailure(normalizeError(error));
 					return;
@@ -377,7 +384,10 @@ export function RecentAuthenticationForm({
 			});
 			onSuccess();
 		} catch (error) {
-			resetField(field);
+			// An outage says nothing about what was typed, so it stays for the retry.
+			if (getChallengeStatus(error) !== 503) {
+				resetField(field);
+			}
 			if (isTerminalChallengeError(error)) {
 				onFailure(normalizeError(error));
 				return;
@@ -516,9 +526,14 @@ function normalizeError(error: unknown): Error {
 	return error instanceof Error ? error : new Error("Authentication failed.");
 }
 
+function getChallengeStatus(error: unknown): number | undefined {
+	return (normalizeError(error) as Error & { status?: number }).status;
+}
+
+// A refused credential and an outage both leave the challenge open to retry.
 function isTerminalChallengeError(error: unknown): boolean {
-	const normalized = normalizeError(error);
-	return (normalized as Error & { status?: number }).status !== 400;
+	const status = getChallengeStatus(error);
+	return status !== 400 && status !== 503;
 }
 
 function FormActions({

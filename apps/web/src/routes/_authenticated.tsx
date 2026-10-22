@@ -1,5 +1,6 @@
 import { useFetchAccount } from "@account/account";
 import { getDocumentTitle } from "@app/development";
+import { isServiceUnavailable } from "@app/queryErrors";
 import { CONTENT_SCROLL_ID } from "@app/scroll";
 import { armSessionEnd } from "@app/session";
 import { useBrowserSessionRefresh } from "@app/sessionRefresh";
@@ -55,6 +56,9 @@ export const Route = createFileRoute("/_authenticated")({
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
 		} catch (error) {
+			if (isServiceUnavailable(error)) {
+				throw error;
+			}
 			throw redirect(
 				getAuthNextStepRoute(
 					getAuthNextStep(error) ?? { type: "login" },

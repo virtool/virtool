@@ -11,13 +11,11 @@ import {
 	SESSION_NOT_FRESH_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
+	UNAVAILABLE_MESSAGE,
 } from "@virtool/contracts";
 import { isDatabaseUnavailable } from "@virtool/data/db/errors";
 import { ClientError } from "./errors";
 import { logger } from "./logger";
-
-const UNAVAILABLE_MESSAGE =
-	"Virtool is temporarily unavailable. Try again in a minute.";
 
 const FORBIDDEN_ERROR_NAMES = new Set([
 	FORBIDDEN_ERROR_NAME,

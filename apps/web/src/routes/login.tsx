@@ -1,3 +1,4 @@
+import { isServiceUnavailable } from "@app/queryErrors";
 import { oneOfOptional, safeRedirect } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
@@ -32,6 +33,9 @@ export const Route = createFileRoute("/login")({
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
 		} catch (error) {
+			if (isServiceUnavailable(error)) {
+				throw error;
+			}
 			const step = getAuthNextStep(error);
 			if (
 				step?.type === "email_remediation" ||

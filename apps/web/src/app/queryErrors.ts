@@ -18,7 +18,9 @@ export type QueryError = Error & {
 	status?: number;
 };
 
-const NON_RETRYABLE_STATUSES = new Set([401, 403, 404]);
+// A 503 is an outage that outlasts any retry here. Failing fast hands it to the
+// unavailable state, which keeps retrying while telling the user why.
+const NON_RETRYABLE_STATUSES = new Set([401, 403, 404, 503]);
 
 /**
  * The HTTP status behind a failed query.
@@ -34,6 +36,14 @@ export function getErrorStatus(error: unknown): number | undefined {
 		return undefined;
 	}
 	return (error as QueryError).status;
+}
+
+/**
+ * Whether the server answered 503 because a backing store is down, usually a
+ * Postgres maintenance restart. The outage says nothing about the session.
+ */
+export function isServiceUnavailable(error: unknown): boolean {
+	return getErrorStatus(error) === 503;
 }
 
 /**

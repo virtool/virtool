@@ -46,6 +46,16 @@ export type DbHandles = {
 const IDLE_TIMEOUT_SECONDS = 60;
 
 /**
+ * Seconds a new connection may take to become ready, from TCP connect through
+ * authentication.
+ *
+ * A healthy server is ready in well under a second. While Postgres restarts,
+ * postgres.js's default of 30 holds each request that long before it can
+ * answer 503.
+ */
+const CONNECT_TIMEOUT_SECONDS = 10;
+
+/**
  * Open a connection pool and the Drizzle handle over it.
  *
  * Call this once, at a composition root. Nothing in this package opens a pool
@@ -63,6 +73,7 @@ export function createDb(config: DbConfig, service: string): DbHandles {
 	const client = postgres(config.postgresUrl, {
 		max: config.postgresPoolMax,
 		idle_timeout: IDLE_TIMEOUT_SECONDS,
+		connect_timeout: CONNECT_TIMEOUT_SECONDS,
 		connection: { application_name: applicationName },
 	});
 

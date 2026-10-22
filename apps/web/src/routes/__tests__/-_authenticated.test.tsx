@@ -1,5 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
-import { waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { authServerFnMocks } from "@tests/server-fn/auth";
 import {
 	mockGetAccountMfaEnrollmentRequired,
@@ -7,7 +7,10 @@ import {
 	userServerFnMocks,
 } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
-import { SETUP_REQUIRED_ERROR_NAME } from "@virtool/contracts";
+import {
+	CLIENT_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+} from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
 
 describe("<AuthenticatedLayout />", () => {
@@ -70,5 +73,27 @@ describe("<AuthenticatedLayout />", () => {
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe("/email-remediation");
 		});
+	});
+
+	it("keeps a signed-in user in place while the database is down", async () => {
+		userServerFnMocks.getAccountFn.mockRejectedValue(
+			Object.assign(new Error("Virtool is temporarily unavailable."), {
+				name: CLIENT_ERROR_NAME,
+				status: 503,
+			}),
+		);
+
+		const { router } = await renderRoute("/samples", {
+			seed: (queryClient) => {
+				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+			},
+		});
+
+		await waitFor(() => {
+			expect(
+				screen.getByText("Virtool is temporarily unavailable"),
+			).toBeInTheDocument();
+		});
+		expect(router.state.location.pathname).toBe("/samples");
 	});
 });
