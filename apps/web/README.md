@@ -230,9 +230,10 @@ requests. Direct `auth.api` calls bypass this
 limiter; challenge verification must enter through the handler.
 
 Password sign-in calls `auth.api` directly, so it has its own budgets in
-`auth_rate_limits`. Each attempt spends one from the requester's IP (three per
-10 seconds) and one from the account handle (10 per 15 minutes) before any
-password check, on the legacy and the Better Auth path. A correct password
+`auth_rate_limits`. Each attempt spends one from the client IP address (three per
+10 seconds), then one from the account handle (10 per 15 minutes), before any
+password check, on the legacy and the Better Auth path. An attempt that the IP
+budget refuses doesn't spend the account budget. A correct password
 resets the account budget, so only failures accumulate. Handles without an
 account get the same budget. An exceeded budget answers 429 with
 `Retry-After`.

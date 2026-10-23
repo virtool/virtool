@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { Db } from "@virtool/data/db/pg";
 import { authRateLimits } from "@virtool/data/db/schema/auth";
 import { eq } from "drizzle-orm";
+import { logger } from "../logger";
 import { createRateLimitStorage } from "./rateLimitStorage";
 
 const LOGIN_KEY_PREFIX = "virtool:login:";
@@ -42,12 +43,14 @@ function getTargetKey(handle: string): string {
 }
 
 /**
- * Spend one attempt from the requester and account budgets before any password
- * is checked.
+ * Spend one attempt from the requester budget, then the account budget, before
+ * any password is checked.
  *
- * Every attempt is counted for the account so concurrent guesses can't overrun
- * it; {@link clearLoginFailures} gives the budget back once a password is
- * correct, so only failures accumulate.
+ * The account budget is spent only once the requester budget allows the
+ * attempt, so a blocked address can't drain other accounts' budgets. Every
+ * allowed attempt is counted for the account so concurrent guesses can't
+ * overrun it; {@link clearLoginFailures} gives the budget back once a password
+ * is correct, so only failures accumulate.
  */
 export async function checkLoginBudget(
 	db: Db,
@@ -55,28 +58,35 @@ export async function checkLoginBudget(
 	handle: string,
 ): Promise<void> {
 	const storage = getStorage(db);
-	const results = await Promise.all([
-		storage.consume(
-			`${LOGIN_KEY_PREFIX}ip:${ip || UNRESOLVED_IP}`,
-			REQUESTER_RULE,
-		),
-		storage.consume(getTargetKey(handle), TARGET_RULE),
-	]);
+	const requester = await storage.consume(
+		`${LOGIN_KEY_PREFIX}ip:${ip || UNRESOLVED_IP}`,
+		REQUESTER_RULE,
+	);
+	if (!requester.allowed) {
+		throw new LoginRateLimitedError(Math.max(1, requester.retryAfter ?? 1));
+	}
 
-	const blocked = results.filter((result) => !result.allowed);
-	if (blocked.length > 0) {
-		throw new LoginRateLimitedError(
-			Math.max(1, ...blocked.map((result) => result.retryAfter ?? 1)),
-		);
+	const target = await storage.consume(getTargetKey(handle), TARGET_RULE);
+	if (!target.allowed) {
+		throw new LoginRateLimitedError(Math.max(1, target.retryAfter ?? 1));
 	}
 }
 
-/** Reset the account budget after a correct password. */
+/**
+ * Reset the account budget after a correct password.
+ *
+ * The session already exists when this runs, so a failure is logged rather
+ * than reported as a failed sign-in.
+ */
 export async function clearLoginFailures(
 	db: Db,
 	handle: string,
 ): Promise<void> {
-	await db
-		.delete(authRateLimits)
-		.where(eq(authRateLimits.key, getTargetKey(handle)));
+	try {
+		await db
+			.delete(authRateLimits)
+			.where(eq(authRateLimits.key, getTargetKey(handle)));
+	} catch (err) {
+		logger.warn({ err }, "could not clear login failures");
+	}
 }

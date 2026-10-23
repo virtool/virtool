@@ -500,6 +500,7 @@ async function failLogin(handle: string) {
 it("limits password sign-in attempts from one address", async () => {
 	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
 
+	clientIp = "198.51.100.1";
 	for (let attempt = 0; attempt < 3; attempt++) {
 		await failLogin(`nobody-${attempt}`);
 	}
@@ -507,7 +508,24 @@ it("limits password sign-in attempts from one address", async () => {
 	await expectRateLimited("alice", password);
 	expect(await db.select().from(setupSessions)).toEqual([]);
 
+	clientIp = "198.51.100.2";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+});
+
+it("doesn't spend an account's budget on a blocked address", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+
 	clientIp = "198.51.100.1";
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await failLogin(`nobody-${attempt}`);
+	}
+	for (let attempt = 0; attempt < 10; attempt++) {
+		await expectRateLimited("alice", "wrong-password");
+	}
+
+	clientIp = "198.51.100.2";
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
 	).toEqual({ remediation: true, reset: false });
