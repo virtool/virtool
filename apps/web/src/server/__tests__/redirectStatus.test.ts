@@ -43,11 +43,14 @@ describe("redirectStatusMiddleware", () => {
 	});
 
 	it("leaves a server-function redirect alone", async () => {
-		await run({
+		const response = redirect({ to: "/login" });
+
+		const result = await run({
 			handlerType: "serverFn",
-			next: async () => ({ response: redirect({ to: "/login" }) }),
+			next: async () => ({ response }),
 		});
 
+		expect(result.response).toBe(response);
 		expect(setResponseStatus).not.toHaveBeenCalled();
 	});
 });
