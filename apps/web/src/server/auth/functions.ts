@@ -1,6 +1,10 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import {
+	getRequest,
+	setResponseHeader,
+	setResponseStatus,
+} from "@tanstack/react-start/server";
 import {
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	INVALID_EMAIL_MESSAGE,
@@ -51,6 +55,11 @@ import {
 } from "./core";
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
+import {
+	checkLoginBudget,
+	clearLoginFailures,
+	LoginRateLimitedError,
+} from "./loginRateLimit";
 import { UnauthorizedError } from "./middleware";
 import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
 import { resolveRestrictedSetup } from "./restricted";
@@ -111,6 +120,14 @@ const emailRemediationTokenSchema = z.object({
 });
 
 function rethrowAsHttp(err: unknown): never {
+	if (err instanceof LoginRateLimitedError) {
+		setResponseHeader("Retry-After", String(err.retryAfter));
+		setResponseStatus(429);
+		throw new ClientError(
+			"Too many sign-in attempts. Wait a moment and try again.",
+			429,
+		);
+	}
 	if (
 		err instanceof InvalidCredentialsError ||
 		(err instanceof APIError && err.statusCode < 500)
@@ -157,17 +174,22 @@ export const loginFn = createServerFn({ method: "POST" })
 	.validator(loginSchema)
 	.handler(async ({ data }) => {
 		try {
+			const ip = getClientIp();
+			await checkLoginBudget(db, ip, data.handle);
+
 			const legacy = await loginLegacyIdentity(db, realCookies, {
 				handle: data.handle,
 				password: data.password,
-				ip: getClientIp(),
+				ip,
 			});
 			if (legacy) {
+				await clearLoginFailures(db, data.handle);
 				setResponseStatus(201);
 				return legacy;
 			}
 
 			const result = await signInUsername(data.handle, data.password);
+			await clearLoginFailures(db, data.handle);
 
 			if ("twoFactorRedirect" in result) {
 				return { twoFactorRedirect: true as const };

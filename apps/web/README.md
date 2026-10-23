@@ -229,6 +229,14 @@ per minute per IP. An atomic database-backed counter in
 requests. Direct `auth.api` calls bypass this
 limiter; challenge verification must enter through the handler.
 
+Password sign-in calls `auth.api` directly, so it has its own budgets in
+`auth_rate_limits`. Each attempt spends one from the requester's IP (three per
+10 seconds) and one from the account handle (10 per 15 minutes) before any
+password check, on the legacy and the Better Auth path. A correct password
+resets the account budget, so only failures accumulate. Handles without an
+account get the same budget. An exceeded budget answers 429 with
+`Retry-After`.
+
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
 A user with `force_reset` receives a session that resolves to a
 `password_reset` principal, which can only inspect or end its session and
