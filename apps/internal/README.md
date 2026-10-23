@@ -457,7 +457,7 @@ setup from `@virtool/data/db/test/globalSetup`.
 ## Related documentation
 
 [`docs/apps.md`](../../docs/apps.md) covers the bundling and `pnpm deploy`
-pipeline shared by non-Vite apps. [`docs/ci.md`](../../docs/ci.md#images)
+pipeline shared by non-Vite apps. [Images](../../README.md#images)
 covers the shared image pipeline, and
 [`docs/metrics.md`](../../docs/metrics.md) the metrics conventions shared
 across services.

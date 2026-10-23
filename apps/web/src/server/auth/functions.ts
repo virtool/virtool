@@ -1,6 +1,10 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import {
+	getRequest,
+	setResponseHeader,
+	setResponseStatus,
+} from "@tanstack/react-start/server";
 import {
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	INVALID_EMAIL_MESSAGE,
@@ -32,13 +36,14 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { db } from "../composition";
+import { config } from "../config";
 import {
 	getPublicLink,
 	getVerificationUrl,
 	isEmailDeliveryAvailable,
 } from "../email/delivery";
 import { ClientError } from "../errors";
-import { realCookies } from "./cookies";
+import { getLoginDevices, realCookies, setLoginDevices } from "./cookies";
 import {
 	createFirstUser,
 	establishEmailRemediationSession,
@@ -51,6 +56,15 @@ import {
 } from "./core";
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
+import {
+	checkLoginBudget,
+	clearLoginFailures,
+	LOGIN_DEVICE_LIFETIME_SECONDS,
+	type LoginAttempt,
+	type LoginBudget,
+	LoginRateLimitedError,
+	rememberLoginDevice,
+} from "./loginRateLimit";
 import { UnauthorizedError } from "./middleware";
 import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
 import { resolveRestrictedSetup } from "./restricted";
@@ -111,6 +125,14 @@ const emailRemediationTokenSchema = z.object({
 });
 
 function rethrowAsHttp(err: unknown): never {
+	if (err instanceof LoginRateLimitedError) {
+		setResponseHeader("Retry-After", String(err.retryAfter));
+		setResponseStatus(429);
+		throw new ClientError(
+			"Too many sign-in attempts. Wait a moment and try again.",
+			429,
+		);
+	}
 	if (
 		err instanceof InvalidCredentialsError ||
 		(err instanceof APIError && err.statusCode < 500)
@@ -157,17 +179,28 @@ export const loginFn = createServerFn({ method: "POST" })
 	.validator(loginSchema)
 	.handler(async ({ data }) => {
 		try {
+			const ip = getClientIp();
+			const attempt = {
+				ip,
+				handle: data.handle,
+				devices: getLoginDevices(),
+				secret: config.authSecret,
+			};
+			const budget = await checkLoginBudget(db, attempt);
+
 			const legacy = await loginLegacyIdentity(db, realCookies, {
 				handle: data.handle,
 				password: data.password,
-				ip: getClientIp(),
+				ip,
 			});
 			if (legacy) {
+				await settleLoginBudget(attempt, budget);
 				setResponseStatus(201);
 				return legacy;
 			}
 
 			const result = await signInUsername(data.handle, data.password);
+			await settleLoginBudget(attempt, budget);
 
 			if ("twoFactorRedirect" in result) {
 				return { twoFactorRedirect: true as const };
@@ -178,6 +211,16 @@ export const loginFn = createServerFn({ method: "POST" })
 			rethrowAsHttp(err);
 		}
 	});
+
+async function settleLoginBudget(attempt: LoginAttempt, budget: LoginBudget) {
+	const [, devices] = await Promise.all([
+		clearLoginFailures(db, budget),
+		rememberLoginDevice(db, attempt),
+	]);
+	if (devices) {
+		setLoginDevices(devices, LOGIN_DEVICE_LIFETIME_SECONDS);
+	}
+}
 
 async function completeLogin(userId: number) {
 	const [user] = await db

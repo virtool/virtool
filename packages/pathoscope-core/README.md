@@ -135,10 +135,8 @@ and Python for `bowtie2-build`; samtools needs `libcurl4` and `libncursesw6`.
 `pigz` compresses workflow output. `pathoscope-core` itself needs none of them.
 `hts-sys` links htslib statically.
 
-The `build-pathoscope` CI job and its release entry use the same `pathoscope`
-GitHub Actions cache scope. See
-[Continuous integration](../../docs/ci.md#images) for the shared image build
-and release pipeline.
+See [Images](../../README.md#images) for the shared image build and release
+pipeline.
 
 **A job that exports a cache must run `docker/setup-buildx-action` first.** The
 runner's default builder uses the `docker` driver, which can't export a build

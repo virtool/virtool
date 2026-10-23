@@ -65,12 +65,12 @@ Apps bundle; packages stay source.
 | Rust crates | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
 
 Add every new workflow image or crate input, including each Dockerfile `COPY`
-source, to the corresponding filter in `.github/workflows/ci.yaml`. See
-[docs/ci.md](docs/ci.md) for the filter boundaries and rationale.
+source, to the corresponding filter in `.github/workflows/ci.yaml`. The
+comments on the filters explain their boundaries.
 
 Every shipped image is a target in the root `Dockerfile` and builds from the
-repository root. Keep runtime stages on `node:24-bookworm-slim` and set
-`NODE_ENV="production"` in each one. Workflow tools are glibc-linked, so don't
+repository root. Keep runtime stages on `node:24-bookworm-slim`, pinned by
+digest, and set `NODE_ENV="production"` in each one. Workflow tools are glibc-linked, so don't
 add an Alpine stage. Give each bioinformatics tool
 its own independent build stage so a target builds only the tools it uses.
 When adding a tool, inspect the pinned entry point and install every runtime
