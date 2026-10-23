@@ -566,5 +566,83 @@ it("clears an account's failures after a correct password", async () => {
 		expect(
 			await callServerFn(handlers, "loginFn", { handle: "alice", password }),
 		).toEqual({ remediation: true, reset: false });
+		cookies.clear();
 	}
+});
+
+async function signInFromDevice(): Promise<string> {
+	clientIp = "192.0.2.1";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+	const device = cookies.get("login_device");
+	expect(device).toMatch(/^\d+\.\d+\.[\w-]+$/);
+	cookies.clear();
+	return device as string;
+}
+
+async function lockOutAlice() {
+	for (let attempt = 0; attempt < 10; attempt++) {
+		clientIp = `198.51.100.${attempt}`;
+		await failLogin("alice");
+	}
+	clientIp = "203.0.113.1";
+	await expectRateLimited("alice", password);
+}
+
+it("lets a known browser sign in while the account is locked", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+	await lockOutAlice();
+
+	cookies.set("login_device", device);
+	clientIp = "192.0.2.2";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+});
+
+it("limits failed attempts from a known browser on its own budget", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+
+	for (let attempt = 0; attempt < 5; attempt++) {
+		cookies.set("login_device", device);
+		clientIp = `198.51.100.${attempt}`;
+		await failLogin("alice");
+	}
+
+	clientIp = "203.0.113.1";
+	await expectRateLimited("alice", password);
+
+	cookies.clear();
+	clientIp = "203.0.113.2";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+});
+
+it("ignores a known browser after a password change", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+	await db
+		.update(users)
+		.set({ lastPasswordChange: new Date(Date.now() + 1000) })
+		.where(eq(users.handle, "alice"));
+	await lockOutAlice();
+
+	cookies.set("login_device", device);
+	clientIp = "192.0.2.2";
+	await expectRateLimited("alice", password);
+});
+
+it("ignores a tampered device", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+	await lockOutAlice();
+
+	const [userId, expiresAt, mac] = device.split(".");
+	cookies.set("login_device", `${userId}.${Number(expiresAt) + 1000}.${mac}`);
+	clientIp = "192.0.2.2";
+	await expectRateLimited("alice", password);
 });

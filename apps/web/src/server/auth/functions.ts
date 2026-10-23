@@ -36,13 +36,14 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { db } from "../composition";
+import { config } from "../config";
 import {
 	getPublicLink,
 	getVerificationUrl,
 	isEmailDeliveryAvailable,
 } from "../email/delivery";
 import { ClientError } from "../errors";
-import { realCookies } from "./cookies";
+import { getLoginDevices, realCookies, setLoginDevices } from "./cookies";
 import {
 	createFirstUser,
 	establishEmailRemediationSession,
@@ -58,7 +59,11 @@ import { getClientIp } from "./ip";
 import {
 	checkLoginBudget,
 	clearLoginFailures,
+	LOGIN_DEVICE_LIFETIME_SECONDS,
+	type LoginAttempt,
+	type LoginBudget,
 	LoginRateLimitedError,
+	rememberLoginDevice,
 } from "./loginRateLimit";
 import { UnauthorizedError } from "./middleware";
 import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
@@ -175,7 +180,13 @@ export const loginFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			const ip = getClientIp();
-			await checkLoginBudget(db, ip, data.handle);
+			const attempt = {
+				ip,
+				handle: data.handle,
+				devices: getLoginDevices(),
+				secret: config.authSecret,
+			};
+			const budget = await checkLoginBudget(db, attempt);
 
 			const legacy = await loginLegacyIdentity(db, realCookies, {
 				handle: data.handle,
@@ -183,13 +194,13 @@ export const loginFn = createServerFn({ method: "POST" })
 				ip,
 			});
 			if (legacy) {
-				await clearLoginFailures(db, data.handle);
+				await settleLoginBudget(attempt, budget);
 				setResponseStatus(201);
 				return legacy;
 			}
 
 			const result = await signInUsername(data.handle, data.password);
-			await clearLoginFailures(db, data.handle);
+			await settleLoginBudget(attempt, budget);
 
 			if ("twoFactorRedirect" in result) {
 				return { twoFactorRedirect: true as const };
@@ -200,6 +211,16 @@ export const loginFn = createServerFn({ method: "POST" })
 			rethrowAsHttp(err);
 		}
 	});
+
+async function settleLoginBudget(attempt: LoginAttempt, budget: LoginBudget) {
+	const [, devices] = await Promise.all([
+		clearLoginFailures(db, budget),
+		rememberLoginDevice(db, attempt),
+	]);
+	if (devices) {
+		setLoginDevices(devices, LOGIN_DEVICE_LIFETIME_SECONDS);
+	}
+}
 
 async function completeLogin(userId: number) {
 	const [user] = await db

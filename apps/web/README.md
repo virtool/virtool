@@ -238,6 +238,13 @@ resets the account budget, so only failures accumulate. Handles without an
 account get the same budget. An exceeded budget answers 429 with
 `Retry-After`.
 
+A correct password also gives the browser a signed `login_device` cookie for
+that account, valid for 30 days and renewed on each correct sign-in. A browser
+that sends a valid device for the account spends its own budget (five per 15
+minutes) instead of the account budget, so failures from other browsers can't
+lock the owner out. A password change invalidates the account's devices. The
+cookie holds up to five accounts and isn't a credential.
+
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
 A user with `force_reset` receives a session that resolves to a
 `password_reset` principal, which can only inspect or end its session and
