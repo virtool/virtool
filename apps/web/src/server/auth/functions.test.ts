@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { createAuthenticatedSession } from "@virtool/data/auth/session";
 import {
 	seedSession,
@@ -74,7 +75,9 @@ const handlers = (await import(
 )) as SplitServerFnModule;
 let database: TestDatabase;
 const password = "correct-horse-battery-staple";
-const hash = "$2b$12$YZZHj6hv6jXthfSY0zt8oO0Sk47cjiLCTP.sQHRBYQJVJZ0ALjsxu";
+// Cost 4 keeps the rate-limit tests, which run bcrypt on every attempt, inside
+// the test timeout on a loaded CI runner.
+const hash = "$2b$04$XSctD3RKH3FLPXW98QyfVOJLW58yyGlwuiNa.3H9i9Jmht51pqvla";
 
 beforeAll(async () => {
 	database = await createTestDatabase();
@@ -450,6 +453,7 @@ it("keeps invalid codes unauthenticated and permits recovery-code continuation",
 			recovery: false,
 		}),
 	).rejects.toMatchObject({
+		name: CLIENT_ERROR_NAME,
 		message: expect.stringContaining("Invalid or expired verification code"),
 		status: 400,
 	});
@@ -481,6 +485,7 @@ async function expectRateLimited(handle: string, attempt: string) {
 	await expect(
 		callServerFn(handlers, "loginFn", { handle, password: attempt }),
 	).rejects.toMatchObject({
+		name: CLIENT_ERROR_NAME,
 		message: expect.stringContaining("Too many sign-in attempts"),
 		status: 429,
 	});
