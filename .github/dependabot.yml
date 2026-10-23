@@ -56,3 +56,22 @@ updates:
           actions:
               patterns:
                   - "*"
+    # Only the Node base image reaches published images; the other stages
+    # compile tools. The fix prefix makes each merged digest bump a patch
+    # release, so Node and Debian security fixes ship without waiting for an
+    # unrelated feat or fix.
+    - package-ecosystem: "docker"
+      directory: "/"
+      schedule:
+          interval: "daily"
+      commit-message:
+          prefix: "fix(deps)"
+      allow:
+          - dependency-name: "node"
+      ignore:
+          - dependency-name: "node"
+            update-types: ["version-update:semver-major"]
+      groups:
+          base-images:
+              patterns:
+                  - "*"
