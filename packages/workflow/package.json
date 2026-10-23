@@ -21,7 +21,7 @@
 		"@virtool/sentry": "workspace:*",
 		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
-		"execa": "^10.0.1",
+		"execa": "^10.2.0",
 		"undici": "^8.10.2",
 		"zod": "^4.6.7"
 	},
