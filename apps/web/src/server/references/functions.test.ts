@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { authSessions } from "@virtool/data/db/schema/auth";
@@ -195,7 +196,11 @@ describe("getReference", () => {
 
 		await expect(
 			call("getReferenceFn", { referenceId: 999_999 }),
-		).rejects.toMatchObject({ message: "Reference not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("returns the detail with its seeded owner membership", async () => {
@@ -329,6 +334,7 @@ describe("createReference", () => {
 				cloneFrom: sourceId,
 			}),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Source reference does not exist.",
 			status: 400,
 		});
@@ -345,7 +351,11 @@ describe("createReference", () => {
 				organism: "",
 				importFrom: 999_999,
 			}),
-		).rejects.toMatchObject({ message: "Upload does not exist.", status: 400 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Upload does not exist.",
+			status: 400,
+		});
 	});
 
 	it("imports from an existing upload", async () => {
@@ -375,7 +385,11 @@ describe("updateReference", () => {
 
 		await expect(
 			call("updateReferenceFn", { referenceId, name: "Renamed" }),
-		).rejects.toMatchObject({ message: "Reference not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("refuses a member without modify on the reference", async () => {
@@ -412,7 +426,11 @@ describe("updateReference", () => {
 
 		await expect(
 			call("updateReferenceFn", { referenceId, name: "Renamed" }),
-		).rejects.toMatchObject({ message: "Reference is archived.", status: 409 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 });
 
@@ -492,6 +510,10 @@ describe("reference membership", () => {
 
 		await expect(
 			call("removeReferenceUserFn", { referenceId, userId: 999_999 }),
-		).rejects.toMatchObject({ message: "Member not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Member not found.",
+			status: 404,
+		});
 	});
 });

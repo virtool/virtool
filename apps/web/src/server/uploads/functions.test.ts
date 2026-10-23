@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { authSessions } from "@virtool/data/db/schema/auth";
 import {
@@ -259,6 +260,7 @@ describe("deleteUpload", () => {
 		await signIn("full");
 
 		await expect(call("deleteUploadFn", { id: 404 })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Upload not found.",
 			status: 404,
 		});
@@ -271,6 +273,7 @@ describe("deleteUpload", () => {
 		await expect(
 			call("deleteUploadFn", { id: upload.id }),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Upload is reserved and in use.",
 			status: 409,
 		});
@@ -433,6 +436,7 @@ describe("finalizeChunkedUpload", () => {
 		await expect(
 			call("finalizeChunkedUploadFn", { id: upload.id }),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Upload is not complete.",
 			status: 409,
 		});
@@ -450,6 +454,7 @@ describe("finalizeChunkedUpload", () => {
 		await expect(
 			call("finalizeChunkedUploadFn", { id: upload.id }),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Upload size does not match the declared size.",
 			status: 409,
 		});

@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { seedSession, seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
@@ -194,6 +195,7 @@ describe("active browser sessions", () => {
 		await expect(
 			call("revokeBrowserSessionFn", { managementId: current?.id }),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Sign out to end the current browser session.",
 			status: 400,
 		});
@@ -265,7 +267,11 @@ describe("updateApiKey", () => {
 				keyId: created.id,
 				permissions: { create_ref: true },
 			}),
-		).rejects.toMatchObject({ message: "API key not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "API key not found.",
+			status: 404,
+		});
 		// The owner's key is untouched.
 		const [row] = await db.select().from(apiKeys);
 		expect(row?.userId).toBe(owner);
@@ -290,6 +296,7 @@ describe("deleteApiKey", () => {
 		await signIn(db, getRequest);
 
 		await expect(call("deleteApiKeyFn", { keyId: 404 })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "API key not found.",
 			status: 404,
 		});

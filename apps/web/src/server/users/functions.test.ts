@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -184,7 +185,11 @@ describe("changePassword", () => {
 				oldPassword: "wrong_password_123",
 				password: "new_password_123",
 			}),
-		).rejects.toMatchObject({ message: "Invalid credentials", status: 400 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Invalid credentials",
+			status: 400,
+		});
 
 		expect(setCookie).not.toHaveBeenCalled();
 		expect(
@@ -204,6 +209,7 @@ describe("changePassword", () => {
 				password: "short",
 			}),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Password does not meet minimum length requirement (8)",
 			status: 400,
 		});
@@ -265,6 +271,7 @@ describe("resetUserTotpFn", () => {
 		const { userId } = await signInAdministrator();
 
 		await expect(call("resetUserTotpFn", { userId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Cannot reset own two-factor authentication",
 			status: 400,
 		});
@@ -290,7 +297,11 @@ describe("resetUserTotpFn", () => {
 
 		await expect(
 			call("resetUserTotpFn", { userId: 999_999 }),
-		).rejects.toMatchObject({ message: "User not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "User not found.",
+			status: 404,
+		});
 	});
 
 	it("responds with 409 for a user with no factor", async () => {
@@ -300,6 +311,7 @@ describe("resetUserTotpFn", () => {
 		await expect(
 			call("resetUserTotpFn", { userId: targetId }),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "User has no two-factor authentication.",
 			status: 409,
 		});

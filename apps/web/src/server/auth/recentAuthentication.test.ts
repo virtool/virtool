@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -276,6 +277,7 @@ describe("challengeRecentAuthenticationFn", () => {
 				code: "012345",
 			}),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Authentication challenge failed.",
 			status: 400,
 		});
@@ -293,6 +295,7 @@ describe("challengeRecentAuthenticationFn", () => {
 				code: "012345",
 			}),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Authentication challenge failed.",
 			status: 429,
 		});
@@ -371,6 +374,7 @@ describe("challengeRecentAuthenticationFn", () => {
 				password: "correct-password",
 			}),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Authentication challenge expired.",
 			status: 409,
 		});

@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { authSessions } from "@virtool/data/db/schema/auth";
@@ -149,6 +150,7 @@ describe("reference visibility", () => {
 		const { referenceId } = await seedHiddenOtu();
 
 		await expect(call("findOtusFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Reference not found.",
 			status: 404,
 		});
@@ -158,6 +160,7 @@ describe("reference visibility", () => {
 		const { otuId } = await seedHiddenOtu();
 
 		await expect(call("getOtuFn", { otuId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "OTU not found.",
 			status: 404,
 		});
@@ -167,6 +170,7 @@ describe("reference visibility", () => {
 		const { otuId } = await seedHiddenOtu();
 
 		await expect(call("listOtuHistoryFn", { otuId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "OTU not found.",
 			status: 404,
 		});
@@ -182,7 +186,11 @@ describe("reference visibility", () => {
 				acronym: "",
 				schema: [],
 			}),
-		).rejects.toMatchObject({ message: "Reference not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("returns 404 from updateOtuFn", async () => {
@@ -190,7 +198,11 @@ describe("reference visibility", () => {
 
 		await expect(
 			call("updateOtuFn", { otuId, name: "Beta" }),
-		).rejects.toMatchObject({ message: "OTU not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "OTU not found.",
+			status: 404,
+		});
 	});
 
 	it("returns the OTU to a member holding no rights", async () => {
@@ -216,7 +228,11 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("updateOtuFn", { otuId: "nope", name: "X" }),
-		).rejects.toMatchObject({ message: "OTU not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "OTU not found.",
+			status: 404,
+		});
 	});
 
 	it("maps an isolate the OTU does not carry to a 404", async () => {
@@ -232,6 +248,7 @@ describe("authorizeOtu", () => {
 		await expect(
 			call("setIsolateAsDefaultFn", { otuId: otu.id, isolateId: "nope" }),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "OTU or isolate not found.",
 			status: 404,
 		});
@@ -286,7 +303,11 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("updateOtuFn", { otuId: otu.id, name: "Beta" }),
-		).rejects.toMatchObject({ message: "Reference is archived.", status: 409 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 
 	it("refuses a sequence write in an archived reference with a 409", async () => {
@@ -318,7 +339,11 @@ describe("authorizeOtu", () => {
 				segment: null,
 				target: null,
 			}),
-		).rejects.toMatchObject({ message: "Reference is archived.", status: 409 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 
 	it("refuses an isolate delete in an archived reference with a 409", async () => {
@@ -341,6 +366,10 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("deleteIsolateFn", { otuId: otu.id, isolateId: isolate.id }),
-		).rejects.toMatchObject({ message: "Reference is archived.", status: 409 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 });

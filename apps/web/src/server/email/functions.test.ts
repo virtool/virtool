@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import {
 	createKeyring,
 	type EncryptedValue,
@@ -214,7 +215,7 @@ describe("updateEmailSettingsFn", () => {
 
 		await expect(
 			call("updateEmailSettingsFn", { enabled: true }),
-		).rejects.toMatchObject({ status: 400 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 400 });
 	});
 
 	it("enables a configured instance and disabling preserves the key", async () => {
@@ -261,7 +262,7 @@ describe("setEmailApiKeyFn and clearEmailApiKeyFn", () => {
 
 		await expect(
 			call("setEmailApiKeyFn", { apiKey: "re_secret" }),
-		).rejects.toMatchObject({ status: 400 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 400 });
 	});
 
 	it("clearing removes the key and disables delivery", async () => {

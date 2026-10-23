@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import {
@@ -270,7 +271,7 @@ describe("getAnalysis", () => {
 
 		await expect(
 			call("getAnalysisFn", { analysisId: 123456 }),
-		).rejects.toMatchObject({ status: 404 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns 403 when the caller may not read the parent sample", async () => {
@@ -303,7 +304,7 @@ describe("getAnalysisResults", () => {
 
 		await expect(
 			call("getAnalysisResultsFn", { analysisId: 123456 }),
-		).rejects.toMatchObject({ status: 404 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns 403 when the caller may not read the parent sample", async () => {
@@ -350,7 +351,7 @@ describe("createAnalysis", () => {
 
 		await expect(
 			call("createAnalysisFn", values(123456)),
-		).rejects.toMatchObject({ status: 404 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("refuses a caller holding only the sample's read right", async () => {
@@ -372,6 +373,7 @@ describe("createAnalysis", () => {
 		await expect(
 			call("createAnalysisFn", values(sampleId)),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Reference does not exist",
 			status: 409,
 		});
@@ -387,7 +389,7 @@ describe("createAnalysis", () => {
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: archived })),
-		).rejects.toMatchObject({ status: 409 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 	});
 
 	it("returns 409 when the reference has no ready index", async () => {
@@ -399,7 +401,7 @@ describe("createAnalysis", () => {
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: unbuilt })),
-		).rejects.toMatchObject({ status: 409 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 	});
 
 	it("returns 201 and the new analysis for a caller with write rights", async () => {
@@ -430,7 +432,7 @@ describe("deleteAnalysis", () => {
 
 		await expect(
 			call("deleteAnalysisFn", { analysisId: 123456 }),
-		).rejects.toMatchObject({ status: 404 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("refuses a caller holding only the sample's read right", async () => {
@@ -455,7 +457,7 @@ describe("deleteAnalysis", () => {
 
 		await expect(
 			call("deleteAnalysisFn", { analysisId }),
-		).rejects.toMatchObject({ status: 409 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 
 		// The analysis must survive the rejected delete.
 		expect(
@@ -511,7 +513,7 @@ describe("blastNuvs", () => {
 
 		await expect(
 			call("blastNuvsFn", { analysisId, sequenceIndex: 0 }),
-		).rejects.toMatchObject({ status: 409 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 	});
 
 	it("returns 404 when there is no contig at the sequence index", async () => {
@@ -521,7 +523,7 @@ describe("blastNuvs", () => {
 
 		await expect(
 			call("blastNuvsFn", { analysisId, sequenceIndex: 4 }),
-		).rejects.toMatchObject({ status: 404 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns 201 and the pending BLAST record for a caller with write rights", async () => {

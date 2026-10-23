@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { authSessions } from "@virtool/data/db/schema/auth";
@@ -116,7 +117,7 @@ describe("getSample", () => {
 
 		await expect(
 			call("getSampleFn", { sampleId: 123456 }),
-		).rejects.toMatchObject({ status: 404 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns the sample the owner may read", async () => {
@@ -178,7 +179,7 @@ describe("updateSampleRights", () => {
 
 		await expect(
 			call("updateSampleRightsFn", { sampleId: 123456, allRead: true }),
-		).rejects.toMatchObject({ status: 404 });
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("refuses a non-owner who is not a full administrator", async () => {
@@ -252,6 +253,7 @@ describe("deleteSample", () => {
 		});
 
 		await expect(call("deleteSampleFn", { sampleId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			status: 400,
 		});
 

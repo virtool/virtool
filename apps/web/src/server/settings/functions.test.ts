@@ -1,5 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { MFA_ENROLLMENT_REQUIRED_ERROR_NAME } from "@virtool/contracts";
+import {
+	CLIENT_ERROR_NAME,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
+} from "@virtool/contracts";
 import {
 	createKeyring,
 	type EncryptedValue,
@@ -488,6 +491,7 @@ describe("setMfaPolicy", () => {
 		await expect(
 			call("setMfaPolicyFn", { mfaPolicy: "required" }),
 		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Set up two-factor authentication before requiring it.",
 			status: 409,
 		});

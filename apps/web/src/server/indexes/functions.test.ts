@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { authSessions } from "@virtool/data/db/schema/auth";
 import { legacyHistory } from "@virtool/data/db/schema/history";
@@ -186,13 +187,18 @@ describe("reference visibility", () => {
 
 		await expect(
 			call("findIndexesFn", { referenceId, page: 1, perPage: 25 }),
-		).rejects.toMatchObject({ message: "Reference not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("answers 404 from getIndexFn", async () => {
 		const { indexId } = await seedHiddenIndex();
 
 		await expect(call("getIndexFn", { indexId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Index not found.",
 			status: 404,
 		});
@@ -203,13 +209,18 @@ describe("reference visibility", () => {
 
 		await expect(
 			call("findUnbuiltChangesFn", { referenceId, page: 1, perPage: 25 }),
-		).rejects.toMatchObject({ message: "Reference not found.", status: 404 });
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("answers 404 from createIndexFn", async () => {
 		const { referenceId } = await seedHiddenIndex();
 
 		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Reference not found.",
 			status: 404,
 		});
@@ -227,6 +238,7 @@ describe("getIndexFn", () => {
 		await signInAsNewUser();
 
 		await expect(call("getIndexFn", { indexId: 404 })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Index not found.",
 			status: 404,
 		});
@@ -297,6 +309,7 @@ describe("createIndexFn", () => {
 		});
 
 		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Reference is archived",
 			status: 409,
 		});
@@ -309,6 +322,7 @@ describe("createIndexFn", () => {
 		await seedIndex(db, { referenceId, userId, version: 0, ready: false });
 
 		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "Index build already in progress",
 			status: 409,
 		});
@@ -326,6 +340,7 @@ describe("createIndexFn", () => {
 		});
 
 		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "There are unverified OTUs",
 			status: 400,
 		});
@@ -338,6 +353,7 @@ describe("createIndexFn", () => {
 		});
 
 		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			message: "There are no unbuilt changes",
 			status: 400,
 		});
