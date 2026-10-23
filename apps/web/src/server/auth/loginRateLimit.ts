@@ -26,11 +26,8 @@ const storages = new WeakMap<Db, ReturnType<typeof createRateLimitStorage>>();
 
 /** Thrown when a password sign-in exceeds its requester or account budget. */
 export class LoginRateLimitedError extends Error {
-	readonly retryAfter: number;
-
-	constructor(retryAfter: number) {
+	constructor() {
 		super("Too many sign-in attempts");
-		this.retryAfter = retryAfter;
 	}
 }
 
@@ -187,7 +184,7 @@ export async function checkLoginBudget(
 		REQUESTER_RULE,
 	);
 	if (!requester.allowed) {
-		throw new LoginRateLimitedError(Math.max(1, requester.retryAfter ?? 1));
+		throw new LoginRateLimitedError();
 	}
 
 	const device = await findLoginDevice(db, attempt);
@@ -200,7 +197,7 @@ export async function checkLoginBudget(
 		device ? DEVICE_RULE : TARGET_RULE,
 	);
 	if (!result.allowed) {
-		throw new LoginRateLimitedError(Math.max(1, result.retryAfter ?? 1));
+		throw new LoginRateLimitedError();
 	}
 
 	return budget;

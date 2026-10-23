@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { seedSession, seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
@@ -20,14 +21,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -195,8 +194,11 @@ describe("active browser sessions", () => {
 
 		await expect(
 			call("revokeBrowserSessionFn", { managementId: current?.id }),
-		).rejects.toThrow("Sign out to end the current browser session.");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Sign out to end the current browser session.",
+			status: 400,
+		});
 	});
 
 	it("revokes all other sessions and preserves the current one", async () => {
@@ -228,7 +230,6 @@ describe("createApiKey", () => {
 
 		expect(created.key).toMatch(/^[0-9a-f]{64}$/);
 		expect(created.name).toBe("Robot");
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 	});
 
 	it("does not let rolling expiry renew freshness", async () => {
@@ -266,8 +267,11 @@ describe("updateApiKey", () => {
 				keyId: created.id,
 				permissions: { create_ref: true },
 			}),
-		).rejects.toThrow("API key not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "API key not found.",
+			status: 404,
+		});
 		// The owner's key is untouched.
 		const [row] = await db.select().from(apiKeys);
 		expect(row?.userId).toBe(owner);
@@ -291,9 +295,10 @@ describe("deleteApiKey", () => {
 	it("responds with 404 when the key does not exist", async () => {
 		await signIn(db, getRequest);
 
-		await expect(call("deleteApiKeyFn", { keyId: 404 })).rejects.toThrow(
-			"API key not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("deleteApiKeyFn", { keyId: 404 })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "API key not found.",
+			status: 404,
+		});
 	});
 });

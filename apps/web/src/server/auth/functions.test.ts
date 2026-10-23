@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { createAuthenticatedSession } from "@virtool/data/auth/session";
 import {
 	seedSession,
@@ -38,12 +39,8 @@ const getRequest = vi.fn(
 			},
 		}),
 );
-const setResponseHeader = vi.fn();
-const setResponseStatus = vi.fn();
 vi.mock("@tanstack/react-start/server", () => ({
 	getRequest,
-	setResponseHeader,
-	setResponseStatus,
 	getCookie: (key: string) => cookies.get(key),
 	setCookie: (key: string, value: string) => {
 		cookies.set(key, value);
@@ -78,7 +75,9 @@ const handlers = (await import(
 )) as SplitServerFnModule;
 let database: TestDatabase;
 const password = "correct-horse-battery-staple";
-const hash = "$2b$12$YZZHj6hv6jXthfSY0zt8oO0Sk47cjiLCTP.sQHRBYQJVJZ0ALjsxu";
+// Cost 4 keeps the rate-limit tests, which run bcrypt on every attempt, inside
+// the test timeout on a loaded CI runner.
+const hash = "$2b$04$XSctD3RKH3FLPXW98QyfVOJLW58yyGlwuiNa.3H9i9Jmht51pqvla";
 
 beforeAll(async () => {
 	database = await createTestDatabase();
@@ -200,7 +199,6 @@ it("rejects an expired session without reviving it", async () => {
 	await expect(
 		callServerFn(handlers, "refreshBrowserSessionFn"),
 	).rejects.toThrow("Unauthorized");
-	expect(setResponseStatus).toHaveBeenCalledWith(401);
 });
 
 it("completes offline remediation with an unverified email and one session", async () => {
@@ -454,8 +452,11 @@ it("keeps invalid codes unauthenticated and permits recovery-code continuation",
 			code: "invalid",
 			recovery: false,
 		}),
-	).rejects.toThrow("Invalid or expired verification code");
-	expect(setResponseStatus).toHaveBeenLastCalledWith(400);
+	).rejects.toMatchObject({
+		name: CLIENT_ERROR_NAME,
+		message: expect.stringContaining("Invalid or expired verification code"),
+		status: 400,
+	});
 	expect(await db.select().from(authSessions)).toEqual([]);
 	expect(
 		await callServerFn(handlers, "verifyTwoFactorFn", {
@@ -483,12 +484,11 @@ it("rejects verification without a pending challenge", async () => {
 async function expectRateLimited(handle: string, attempt: string) {
 	await expect(
 		callServerFn(handlers, "loginFn", { handle, password: attempt }),
-	).rejects.toThrow("Too many sign-in attempts");
-	expect(setResponseStatus).toHaveBeenLastCalledWith(429);
-	expect(setResponseHeader).toHaveBeenLastCalledWith(
-		"Retry-After",
-		expect.stringMatching(/^[1-9]\d*$/),
-	);
+	).rejects.toMatchObject({
+		name: CLIENT_ERROR_NAME,
+		message: expect.stringContaining("Too many sign-in attempts"),
+		status: 429,
+	});
 }
 
 async function failLogin(handle: string) {

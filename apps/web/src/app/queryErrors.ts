@@ -110,8 +110,8 @@ export function shouldRetryQuery(
 		return false;
 	}
 	// TanStack Start server-function errors cross the boundary with only
-	// `message` preserved by default; the status set via `setResponseStatus` is
-	// not attached, and Router's ShallowErrorPlugin drops `name`.
+	// `message` preserved by default, and Router's ShallowErrorPlugin drops
+	// `name`.
 	// `serverErrorSerializationAdapter` (registered in start.ts) keeps the auth
 	// errors' `name`, so matching by name here makes a 401/403 (e.g. after
 	// logout, or an unauthenticated first visit) reject immediately instead of

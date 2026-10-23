@@ -27,14 +27,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -141,7 +139,6 @@ describe("installHmm", () => {
 			ready: false,
 			user: { id: userId },
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 
 		const [task] = await db.select().from(tasks);
 		expect(task).toMatchObject({
@@ -177,7 +174,6 @@ describe("installHmm", () => {
 		};
 
 		expect(installed).toMatchObject({ user: { id: userId } });
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 	});
 
 	it("refuses when an install is already in progress", async () => {
@@ -190,7 +186,6 @@ describe("installHmm", () => {
 			message: "Install already in progress.",
 			status: 409,
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
 		expect(fetchSpy).not.toHaveBeenCalled();
 		expect(await db.select().from(tasks)).toHaveLength(0);
 	});
@@ -200,8 +195,9 @@ describe("installHmm", () => {
 		await seedStatus();
 		mockManifest([]);
 
-		await expect(call("installHmmFn")).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(502);
+		await expect(call("installHmmFn")).rejects.toThrow(
+			"Target release does not exist",
+		);
 		expect(await db.select().from(tasks)).toHaveLength(0);
 	});
 });
@@ -215,6 +211,5 @@ describe("getHmm", () => {
 			message: "HMM not found.",
 			status: 404,
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 });

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import { AUTH_BASE_PATH } from "@virtool/contracts";
 import { hasPasskey } from "@virtool/data/auth/passkeys";
 import { resolveBrowserSession } from "@virtool/data/auth/session";
@@ -21,7 +21,6 @@ import {
 } from "./recentAuthenticationChallenge";
 
 function rejectUnsupportedSession(): never {
-	setResponseStatus(403);
 	throw new ForbiddenError();
 }
 
@@ -32,7 +31,6 @@ async function checkChallengeResponse(response: Response): Promise<void> {
 	if (response.status === 401) {
 		const body = await response.json();
 		if (body.code === "UNAUTHORIZED") {
-			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 	}
@@ -40,7 +38,6 @@ async function checkChallengeResponse(response: Response): Promise<void> {
 		throw new Error("Authentication challenge provider failed.");
 	}
 	const status = response.status === 429 ? 429 : 400;
-	setResponseStatus(status);
 	throw new ClientError("Authentication challenge failed.", status);
 }
 
@@ -50,11 +47,9 @@ function rethrowReplacementError(err: unknown): never {
 		err.statusCode === 401 &&
 		err.body?.code === "STEP_UP_SESSION_ENDED"
 	) {
-		setResponseStatus(409);
 		throw new ClientError("Authentication challenge expired.", 409);
 	}
 	if (err instanceof APIError && err.statusCode === 401) {
-		setResponseStatus(401);
 		throw new UnauthorizedError();
 	}
 	throw err;
@@ -75,7 +70,6 @@ export const getRecentAuthenticationRemainingFn = createServerFn({
 			context.principal.userId,
 		);
 		if (!session) {
-			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 		return getSessionFreshRemainingMs(session.createdAt);

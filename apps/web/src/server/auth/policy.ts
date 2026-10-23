@@ -1,5 +1,5 @@
 import { createMiddleware, createServerOnlyFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import {
 	AdministratorPermissions,
 	type AdministratorRoleName,
@@ -60,7 +60,6 @@ const resolveBrowser = createServerOnlyFn(
 			return principal;
 		}
 		if (principal && isPasswordResetPrincipal(principal)) {
-			setResponseStatus(403);
 			throw new PasswordResetRequiredError();
 		}
 		return requireBrowserPrincipal();
@@ -68,7 +67,6 @@ const resolveBrowser = createServerOnlyFn(
 );
 
 const forbid = createServerOnlyFn((): never => {
-	setResponseStatus(403);
 	throw new ForbiddenError();
 });
 
@@ -85,7 +83,6 @@ export class SessionNotFreshError extends Error {
 
 const rejectStaleSession = createServerOnlyFn(
 	(operation: ProtectedOperation): never => {
-		setResponseStatus(403);
 		throw new SessionNotFreshError(operation);
 	},
 );
@@ -104,7 +101,6 @@ const resolveSetup = createServerOnlyFn(
 		const restricted = await resolveRestrictedSetup(getRequest());
 
 		if (!restricted) {
-			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 
@@ -119,7 +115,6 @@ const resolvePasswordReset = createServerOnlyFn(
 			return principal;
 		}
 
-		setResponseStatus(401);
 		throw new UnauthorizedError();
 	},
 );
@@ -223,7 +218,6 @@ export function recentlyAuthenticated(operation: ProtectedOperation) {
 				principal.userId,
 			);
 			if (!session) {
-				setResponseStatus(401);
 				throw new UnauthorizedError();
 			}
 			if (!isSessionFresh(session.createdAt)) {

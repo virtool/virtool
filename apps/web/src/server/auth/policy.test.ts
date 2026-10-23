@@ -26,7 +26,6 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest: vi.fn(),
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
 
 let db: Db;

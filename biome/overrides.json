@@ -45,6 +45,12 @@
 						"noRestrictedImports": {
 							"level": "error",
 							"options": {
+								"paths": {
+									"@tanstack/react-start/server": {
+										"importNames": ["setResponseStatus"],
+										"message": "A server function called in-process during SSR sets its status on the rendered page. Throw ClientError with the status instead. Raw routes return a Response with their status."
+									}
+								},
 								"patterns": [
 									{
 										"group": [

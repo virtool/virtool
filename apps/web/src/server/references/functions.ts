@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ReferenceCreateRequest,
 	type ReferenceRight,
@@ -83,27 +82,21 @@ const updateReferenceGroupSchema = referenceGroupSchema.merge(rightsSchema);
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof ReferenceNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Reference not found.", 404);
 	}
 	if (err instanceof ReferenceArchivedError) {
-		setResponseStatus(409);
 		throw new ClientError("Reference is archived.", 409);
 	}
 	if (err instanceof ReferenceCloneSourceNotFoundError) {
-		setResponseStatus(400);
 		throw new ClientError("Source reference does not exist.", 400);
 	}
 	if (err instanceof ReferenceImportUploadNotFoundError) {
-		setResponseStatus(400);
 		throw new ClientError("Upload does not exist.", 400);
 	}
 	if (err instanceof ReferenceMemberNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Member not found.", 404);
 	}
 	if (err instanceof ReferenceMemberConflictError) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
@@ -127,7 +120,6 @@ const authorizeReference = createServerOnlyFn(
 		}
 
 		if (!(await checkReferenceRight(db, referenceId, right, actor))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
@@ -187,7 +179,6 @@ export const createReferenceFn = createServerFn({ method: "POST" })
 				importFrom: data.importFrom,
 				userId: context.principal.userId,
 			});
-			setResponseStatus(201);
 			return reference;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -247,7 +238,6 @@ export const addReferenceUserFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReference(referenceId, context.principal.userId, "modify");
 			const member = await addReferenceUser(db, referenceId, userId, rights);
-			setResponseStatus(201);
 			return member;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -264,7 +254,6 @@ export const addReferenceGroupFn = createServerFn({ method: "POST" })
 			// adding a user member.
 			await authorizeReference(referenceId, context.principal.userId, "modify");
 			const member = await addReferenceGroup(db, referenceId, groupId, rights);
-			setResponseStatus(201);
 			return member;
 		} catch (err) {
 			return rethrowAsHttp(err);

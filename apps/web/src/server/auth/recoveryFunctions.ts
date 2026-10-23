@@ -1,7 +1,6 @@
 import { createHmac } from "node:crypto";
 
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import { PasswordTooShortError } from "@virtool/contracts";
 import {
 	beginEmailVerification,
@@ -74,21 +73,18 @@ function digestRecoveryBudget(value: string): string {
 
 function rethrowVerificationError(error: unknown): never {
 	if (error instanceof EmailVerificationRateLimitedError) {
-		setResponseStatus(429);
 		throw new ClientError(
 			"Wait before requesting another verification email.",
 			429,
 		);
 	}
 	if (error instanceof EmailVerificationUnavailableError) {
-		setResponseStatus(503);
 		throw new ClientError("Email verification is unavailable right now.", 503);
 	}
 	if (
 		error instanceof EmailVerificationError ||
 		error instanceof EmailInUseError
 	) {
-		setResponseStatus(400);
 		throw new ClientError("This email address cannot be verified.", 400);
 	}
 	throw error;
@@ -225,11 +221,9 @@ export const completePasswordRecoveryFn = createServerFn({ method: "POST" })
 			return { status: "password_changed" as const, next: "login" as const };
 		} catch (error) {
 			if (error instanceof PasswordTooShortError) {
-				setResponseStatus(400);
 				throw new ClientError(error.message, 400);
 			}
 			if (error instanceof RecoveryPasswordReuseError) {
-				setResponseStatus(400);
 				throw new ClientError("Choose a different password.", 400);
 			}
 			if (error instanceof SetupCredentialError) {
@@ -286,7 +280,6 @@ export const issueAdministratorRecoveryFn = createServerFn({ method: "POST" })
 			};
 		} catch (error) {
 			if (error instanceof RecoveryNotEligibleError) {
-				setResponseStatus(400);
 				throw new ClientError(
 					"A recovery link cannot be issued for this user.",
 					400,

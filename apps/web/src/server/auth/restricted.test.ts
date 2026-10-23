@@ -20,14 +20,12 @@ import {
 } from "vitest";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 let db: Db;
@@ -161,7 +159,6 @@ describe("setupOnly", () => {
 		await expect(
 			handlerFor("password_recovery")({ context: {}, next }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(next).not.toHaveBeenCalled();
 	});
 
@@ -171,7 +168,6 @@ describe("setupOnly", () => {
 		await expect(
 			handlerFor("account_completion")({ context: {}, next: vi.fn() }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
-		expect(setResponseStatus).toHaveBeenCalledWith(401);
 	});
 
 	// A user who has completed setup has no transition outstanding, so a setup

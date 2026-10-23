@@ -1,4 +1,3 @@
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	HANDLE_MAX_LENGTH,
 	HANDLE_MIN_LENGTH,
@@ -20,7 +19,6 @@ export { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle };
  */
 export function checkHandle(handle: string): void {
 	if (!isValidHandle(handle.trim())) {
-		setResponseStatus(400);
 		throw new ClientError(INVALID_HANDLE_MESSAGE, 400);
 	}
 }
@@ -34,7 +32,6 @@ export function checkHandle(handle: string): void {
  */
 export function checkReservedHandle(handle: string): void {
 	if (isReservedHandle(handle.trim())) {
-		setResponseStatus(400);
 		throw new ClientError(RESERVED_HANDLE_MESSAGE, 400);
 	}
 }

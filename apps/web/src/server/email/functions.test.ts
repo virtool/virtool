@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import {
 	createKeyring,
 	type EncryptedValue,
@@ -24,14 +25,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -71,7 +70,6 @@ const handlers = (await import(
 const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
-const { ClientError } = await import("../errors");
 const { signIn } = await import("../auth/test/fixtures");
 const { seedSettings } = await import("@virtool/data/settings/test/fixtures");
 
@@ -217,8 +215,7 @@ describe("updateEmailSettingsFn", () => {
 
 		await expect(
 			call("updateEmailSettingsFn", { enabled: true }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 400 });
 	});
 
 	it("enables a configured instance and disabling preserves the key", async () => {
@@ -265,8 +262,7 @@ describe("setEmailApiKeyFn and clearEmailApiKeyFn", () => {
 
 		await expect(
 			call("setEmailApiKeyFn", { apiKey: "re_secret" }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 400 });
 	});
 
 	it("clearing removes the key and disables delivery", async () => {

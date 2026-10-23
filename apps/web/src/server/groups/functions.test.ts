@@ -27,14 +27,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -113,13 +111,11 @@ describe("error mapping", () => {
 			message: "Group not found.",
 			status: 404,
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 
 	it("carries a duplicate group's conflict status on the client error", async () => {
 		await signIn(db, getRequest, { administratorRole: "base" });
 		await call("createGroupFn", { name: "technicians" });
-		setResponseStatus.mockClear();
 
 		await expect(
 			call("createGroupFn", { name: "technicians" }),
@@ -128,7 +124,6 @@ describe("error mapping", () => {
 			message: "Group name already exists.",
 			status: 409,
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
 	});
 
 	it.each([
@@ -141,7 +136,6 @@ describe("error mapping", () => {
 		await expect(call("getGroupFn", { groupId: 999_999 })).rejects.toBe(
 			failure,
 		);
-		expect(setResponseStatus).not.toHaveBeenCalled();
 	});
 });
 
@@ -152,7 +146,6 @@ describe("createGroup", () => {
 		await expect(
 			call("createGroupFn", { name: "hackers" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(await db.select().from(groups)).toHaveLength(0);
 	});
 
@@ -160,7 +153,6 @@ describe("createGroup", () => {
 		await expect(
 			call("createGroupFn", { name: "hackers" }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
-		expect(setResponseStatus).toHaveBeenCalledWith(401);
 	});
 
 	it("allows an administrator", async () => {
@@ -182,7 +174,6 @@ describe("updateGroup", () => {
 		await expect(
 			call("updateGroupFn", { groupId, name: "renamed" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	// The exploit itself: a group's permissions are unioned into every member's,
@@ -226,7 +217,6 @@ describe("deleteGroup", () => {
 		await expect(call("deleteGroupFn", { groupId })).rejects.toBeInstanceOf(
 			ForbiddenError,
 		);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(await db.select().from(groups)).toHaveLength(1);
 	});
 

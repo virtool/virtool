@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	SORT_DIRECTIONS,
 	UPLOAD_SORT_FIELDS,
@@ -42,7 +41,6 @@ const uploadIdSchema = z.object({
 function rethrowAsHttp(err: unknown): never {
 	const response = getUploadErrorResponse(err);
 	if (response) {
-		setResponseStatus(response.status);
 		throw new ClientError(response.message, response.status);
 	}
 	throw err;

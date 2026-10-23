@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
 	AVATAR_SOURCES,
@@ -160,42 +159,33 @@ const setAdministratorRoleSchema = userIdSchema.extend({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof PasswordTooShortError) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	if (err instanceof InvalidPasswordError) {
-		setResponseStatus(400);
 		throw new ClientError("Invalid credentials", 400);
 	}
 	if (err instanceof UserNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("User not found.", 404);
 	}
 	if (err instanceof UserConflictError) {
-		setResponseStatus(409);
 		throw new ClientError("User already exists.", 409);
 	}
 	if (err instanceof EmailInUseError) {
-		setResponseStatus(409);
 		throw new ClientError("Email address is already in use.", 409);
 	}
 	if (err instanceof GroupMembershipError) {
-		setResponseStatus(400);
 		throw new ClientError("User is not a member of group.", 400);
 	}
 	if (err instanceof PendingAccountError) {
-		setResponseStatus(409);
 		throw new ClientError("User has not completed account setup.", 409);
 	}
 	if (err instanceof TotpNotEnrolledError) {
-		setResponseStatus(409);
 		throw new ClientError("User has no two-factor authentication.", 409);
 	}
 	if (
 		err instanceof InvitationNotEligibleError ||
 		err instanceof InvitationNotFoundError
 	) {
-		setResponseStatus(409);
 		throw new ClientError("Invitation is not available.", 409);
 	}
 	throw err;
@@ -283,7 +273,6 @@ export const createUserFn = createServerFn({ method: "POST" })
 		await requireInvitationAuthority(context.principal, data.administratorRole);
 		const email = normalizeEmail(data.email);
 		if (!isValidEmail(email)) {
-			setResponseStatus(400);
 			throw new ClientError(INVALID_EMAIL_MESSAGE, 400);
 		}
 
@@ -306,7 +295,6 @@ export const createUserFn = createServerFn({ method: "POST" })
 				userId: result.user.id,
 				issuerUserId: context.principal.userId,
 			});
-			setResponseStatus(201);
 			return result;
 		} catch (err) {
 			recordAccountLifecycle({
@@ -500,7 +488,6 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 	.validator(setAdministratorRoleSchema)
 	.handler(async ({ context, data }) => {
 		if (context.principal.userId === data.userId) {
-			setResponseStatus(400);
 			throw new ClientError("Cannot change own role", 400);
 		}
 
@@ -526,7 +513,6 @@ export const resetUserTotpFn = createServerFn({ method: "POST" })
 	.validator(userIdSchema)
 	.handler(async ({ context, data }) => {
 		if (context.principal.userId === data.userId) {
-			setResponseStatus(400);
 			throw new ClientError("Cannot reset own two-factor authentication", 400);
 		}
 

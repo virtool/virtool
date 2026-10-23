@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import {
 	type AccountSecurity,
 	DEFAULT_PASSKEY_NAME,
@@ -62,7 +62,6 @@ const renamePasskeySchema = managementIdSchema.extend({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof ApiKeyNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("API key not found.", 404);
 	}
 	throw err;
@@ -73,15 +72,12 @@ function rethrowSessionManagementError(
 	operation: ProtectedOperation,
 ): never {
 	if (err instanceof BrowserSessionEndedError) {
-		setResponseStatus(401);
 		throw new UnauthorizedError();
 	}
 	if (err instanceof BrowserSessionNotFreshError) {
-		setResponseStatus(403);
 		throw new SessionNotFreshError(operation);
 	}
 	if (err instanceof CurrentBrowserSessionError) {
-		setResponseStatus(400);
 		throw new ClientError("Sign out to end the current browser session.", 400);
 	}
 	throw err;
@@ -92,7 +88,6 @@ export const findActiveBrowserSessionsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
 		if (context.principal.sessionStore !== "better_auth") {
-			setResponseStatus(403);
 			throw new ClientError(
 				"Active session management is unavailable for this session.",
 				403,
@@ -168,7 +163,6 @@ export const createApiKeyFn = createServerFn({ method: "POST" })
 			name: data.name,
 			permissions: data.permissions,
 		});
-		setResponseStatus(201);
 		return { ...apiKey, key };
 	});
 
@@ -239,11 +233,9 @@ function compareCreatedAt(a: PasskeySummary, b: PasskeySummary): number {
 function rethrowPasskeyError(err: unknown): never {
 	if (err instanceof APIError) {
 		if (err.body?.code === "UNAUTHORIZED") {
-			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 		if (err.statusCode === 401 || err.statusCode === 404) {
-			setResponseStatus(404);
 			throw new ClientError("Passkey not found.", 404);
 		}
 	}
@@ -263,7 +255,6 @@ export const findPasskeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
 		if (context.principal.sessionStore !== "better_auth") {
-			setResponseStatus(403);
 			throw new ClientError(
 				"Passkey management is unavailable for this session.",
 				403,

@@ -35,7 +35,6 @@ import {
 import type { SetupEndpoint } from "./setupExceptions";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 const setContext = vi.fn();
 const setUser = vi.fn();
 
@@ -44,7 +43,6 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -317,7 +315,6 @@ describe("browser boundary", () => {
 		await expect(
 			serverHandler()({ next: vi.fn(), serverFnMeta: { id: "ordinary" } }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
-		expect(setResponseStatus).toHaveBeenLastCalledWith(401);
 	});
 
 	it("restricts force-reset sessions to the reset endpoint", async () => {
@@ -372,7 +369,6 @@ describe("required MFA boundary", () => {
 
 		expect(error).toBeInstanceOf(Error);
 		expect((error as Error).name).toBe(MFA_ENROLLMENT_REQUIRED_ERROR_NAME);
-		expect(setResponseStatus).toHaveBeenLastCalledWith(403);
 		expect(next).not.toHaveBeenCalled();
 	});
 
