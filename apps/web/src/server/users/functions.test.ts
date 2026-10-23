@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -23,7 +24,6 @@ import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
 const setCookie = vi.fn();
-const setResponseStatus = vi.fn();
 const createRemediationSession = vi.fn();
 let currentUserId: number | null = null;
 let currentSessionId: number | null = null;
@@ -33,7 +33,6 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie,
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -186,9 +185,12 @@ describe("changePassword", () => {
 				oldPassword: "wrong_password_123",
 				password: "new_password_123",
 			}),
-		).rejects.toThrow("Invalid credentials");
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Invalid credentials",
+			status: 400,
+		});
 
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
 		expect(setCookie).not.toHaveBeenCalled();
 		expect(
 			await verifyPassword(
@@ -206,9 +208,12 @@ describe("changePassword", () => {
 				oldPassword: "old_password_123",
 				password: "short",
 			}),
-		).rejects.toThrow("Password does not meet minimum length requirement (8)");
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Password does not meet minimum length requirement (8)",
+			status: 400,
+		});
 
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
 		expect(setCookie).not.toHaveBeenCalled();
 		expect(
 			await verifyPassword(
@@ -265,10 +270,11 @@ describe("resetUserTotpFn", () => {
 	it("refuses the caller's own account", async () => {
 		const { userId } = await signInAdministrator();
 
-		await expect(call("resetUserTotpFn", { userId })).rejects.toThrow(
-			"Cannot reset own two-factor authentication",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		await expect(call("resetUserTotpFn", { userId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Cannot reset own two-factor authentication",
+			status: 400,
+		});
 	});
 
 	it("refuses an administrator without the full role", async () => {
@@ -289,19 +295,25 @@ describe("resetUserTotpFn", () => {
 	it("responds with 404 for an unknown user", async () => {
 		await signInAdministrator();
 
-		await expect(call("resetUserTotpFn", { userId: 999_999 })).rejects.toThrow(
-			"User not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(
+			call("resetUserTotpFn", { userId: 999_999 }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "User not found.",
+			status: 404,
+		});
 	});
 
 	it("responds with 409 for a user with no factor", async () => {
 		await signInAdministrator();
 		const targetId = await seedUser(db, { handle: "bob" });
 
-		await expect(call("resetUserTotpFn", { userId: targetId })).rejects.toThrow(
-			"User has no two-factor authentication.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		await expect(
+			call("resetUserTotpFn", { userId: targetId }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "User has no two-factor authentication.",
+			status: 409,
+		});
 	});
 });

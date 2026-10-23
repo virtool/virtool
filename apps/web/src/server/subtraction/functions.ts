@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	createSubtraction,
 	deleteSubtraction,
@@ -45,11 +44,9 @@ const updateSubtractionSchema = subtractionIdSchema.extend({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof SubtractionNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Subtraction not found.", 404);
 	}
 	if (err instanceof SubtractionUploadNotFoundError) {
-		setResponseStatus(400);
 		throw new ClientError("Upload does not exist.", 400);
 	}
 	throw err;
@@ -93,7 +90,6 @@ export const createSubtractionFn = createServerFn({ method: "POST" })
 				uploadId: data.uploadId,
 				userId: context.principal.userId,
 			});
-			setResponseStatus(201);
 			return subtraction;
 		} catch (err) {
 			return rethrowAsHttp(err);

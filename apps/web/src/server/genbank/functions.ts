@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import type { Genbank } from "@virtool/contracts";
 import { getSettings } from "@virtool/data/settings/data";
 import { resolveNcbiApiKey } from "@virtool/data/settings/ncbi";
@@ -28,7 +27,6 @@ const accessionSchema = z.object({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof NcbiUnreachableError) {
-		setResponseStatus(502);
 		throw new ClientError("Could not reach NCBI.", 502);
 	}
 
@@ -38,7 +36,6 @@ function rethrowAsHttp(err: unknown): never {
 	if (err instanceof NcbiUnreadableError) {
 		logger.warn({ err: err.message }, "could not read genbank record");
 
-		setResponseStatus(422);
 		throw new ClientError("NCBI returned a record Virtool cannot read.", 422);
 	}
 
@@ -81,7 +78,6 @@ export const getGenbankFn = createServerFn({ method: "GET" })
 			.catch(rethrowAsHttp);
 
 		if (record === null) {
-			setResponseStatus(404);
 			throw new ClientError("Accession not found.", 404);
 		}
 

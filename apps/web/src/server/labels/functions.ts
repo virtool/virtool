@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	createLabel,
 	deleteLabel,
@@ -44,11 +43,9 @@ const findLabelsSchema = z.object({ term: searchTermSchema }).optional();
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof LabelNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Label not found.", 404);
 	}
 	if (err instanceof LabelConflictError) {
-		setResponseStatus(409);
 		throw new ClientError("Label name already exists.", 409);
 	}
 	throw err;
@@ -76,7 +73,6 @@ export const createLabelFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			const label = await createLabel(db, normalizeValues(data));
-			setResponseStatus(201);
 			return label;
 		} catch (err) {
 			return rethrowAsHttp(err);
