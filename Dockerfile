@@ -6,7 +6,10 @@
 # all onto one path. Adding a workspace must not mean editing this file.
 #
 # Every stage in this repo is Debian. Do not add an Alpine stage.
-FROM node:24-bookworm-slim AS base
+#
+# Dependabot keeps the Node digest current and each bump makes a release, so
+# don't unpin it or edit it by hand.
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS base
 RUN corepack enable
 WORKDIR /repo
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
@@ -209,7 +212,8 @@ RUN --mount=type=secret,id=sentry_auth_token \
     SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
     pnpm --filter @virtool/web build
 
-FROM node:24-bookworm-slim AS dist
+# Tooling outside this repository targets `dist` by name.
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS dist
 WORKDIR /ui
 ENV NODE_ENV="production"
 COPY --from=build-web /repo/apps/web/.output ./.output
@@ -224,7 +228,7 @@ COPY apps/internal ./apps/internal
 RUN pnpm --filter @virtool/internal build \
     && pnpm deploy --filter @virtool/internal --prod /prod/internal
 
-FROM node:24-bookworm-slim AS internal
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS internal
 WORKDIR /internal
 ENV NODE_ENV="production"
 COPY --from=build-internal /prod/internal ./
@@ -254,7 +258,7 @@ COPY apps/create-subtraction ./apps/create-subtraction
 RUN pnpm --filter @virtool/create-subtraction build \
     && pnpm deploy --filter @virtool/create-subtraction --prod /prod/create-subtraction
 
-FROM node:24-bookworm-slim AS create-subtraction
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS create-subtraction
 WORKDIR /workflow
 ENV NODE_ENV="production"
 
@@ -274,7 +278,7 @@ COPY apps/create-sample ./apps/create-sample
 RUN pnpm --filter @virtool/create-sample build \
     && pnpm deploy --filter @virtool/create-sample --prod /prod/create-sample
 
-FROM node:24-bookworm-slim AS create-sample
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS create-sample
 WORKDIR /workflow
 ENV NODE_ENV="production"
 
@@ -298,7 +302,7 @@ COPY apps/pathoscope ./apps/pathoscope
 RUN pnpm --filter @virtool/pathoscope build \
     && pnpm deploy --filter @virtool/pathoscope --prod /prod/pathoscope
 
-FROM node:24-bookworm-slim AS pathoscope
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS pathoscope
 WORKDIR /workflow
 ENV NODE_ENV="production"
 
@@ -379,7 +383,7 @@ COPY apps/nuvs ./apps/nuvs
 RUN pnpm --filter @virtool/nuvs build \
     && pnpm deploy --filter @virtool/nuvs --prod /prod/nuvs
 
-FROM node:24-bookworm-slim AS nuvs
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS nuvs
 WORKDIR /workflow
 ENV NODE_ENV="production"
 

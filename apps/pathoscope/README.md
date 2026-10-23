@@ -95,4 +95,4 @@ the Rust crate,
 [`packages/sqlite/README.md`](../../packages/sqlite/README.md) the SQLite
 reference index it reads, `docs/apps.md` the bundling and `pnpm deploy`
 pipeline every non-Vite app shares, and
-[`docs/ci.md`](../../docs/ci.md#images) the shared image pipeline.
+[Images](../../README.md#images) the shared image pipeline.
