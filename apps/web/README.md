@@ -1,7 +1,7 @@
 # @virtool/web
 
 The Virtool web app. The root Dockerfile's `dist`
-target is published as `ghcr.io/virtool/web`; see [CI](../../docs/ci.md#images).
+target is published as `ghcr.io/virtool/web`; see [Images](../../README.md#images).
 
 Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
 [the development guide](../../dev/README.md) to run the app with `vtd`.
@@ -170,8 +170,8 @@ by error name. A failed server-function call therefore answers 200, with the
 error in its body. Biome rejects `setResponseStatus` in server code.
 
 Don't map a Postgres outage yourself. Global middleware turns it into a 503
-`ClientError`, or a 503 response on a raw route, and the client shows a self-retrying unavailable state, or a notice when an
-action fails.
+`ClientError`, or a 503 response on a raw route, and the client shows a
+self-retrying unavailable state, or a notice when an action fails.
 
 Use explicit `POST` for free-text searches, structured filters, and batch reads,
 keeping their inputs out of URLs. Use explicit `GET` for simple ID lookups,
@@ -230,6 +230,21 @@ per minute per IP. An atomic database-backed counter in
 `auth_rate_limits` shares the budget across web instances, including concurrent
 requests. Direct `auth.api` calls bypass this
 limiter; challenge verification must enter through the handler.
+
+Password sign-in calls `auth.api` directly, so it has its own budgets in
+`auth_rate_limits`. Each attempt spends one from the client IP address (three per
+10 seconds), then one from the account handle (10 per 15 minutes), before any
+password check, on the legacy and the Better Auth path. An attempt that the IP
+budget refuses doesn't spend the account budget. A correct password
+resets the account budget, so only failures accumulate. Handles without an
+account get the same budget. An exceeded budget throws a 429 `ClientError`.
+
+A correct password also gives the browser a signed `login_device` cookie for
+that account, valid for 30 days and renewed on each correct sign-in. A browser
+that sends a valid device for the account spends its own budget (five per 15
+minutes) instead of the account budget, so failures from other browsers can't
+lock the owner out. A password change invalidates the account's devices. The
+cookie holds up to five accounts and isn't a credential.
 
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
 A user with `force_reset` receives a session that resolves to a

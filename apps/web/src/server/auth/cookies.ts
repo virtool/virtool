@@ -41,6 +41,13 @@ export const SETUP_SESSION_TOKEN_COOKIE = "setup_session_token";
  * it can be of any use.
  */
 const SETUP_MAX_AGE_SECONDS = 3_600;
+
+/**
+ * The accounts this browser signed in to with a correct password. Each entry
+ * gives the browser its own sign-in budget for that account. It is not a
+ * credential and authorizes nothing.
+ */
+const LOGIN_DEVICE_COOKIE = "login_device";
 const LEGACY_SESSION_MAX_AGE_SECONDS = 3_600;
 
 type Bool = boolean;
@@ -58,6 +65,22 @@ function cookieOptions(secure: Bool, maxAge: number) {
 function isSecure(): boolean {
 	return process.env.NODE_ENV === "production";
 }
+
+/** Read the browser's login devices. */
+export const getLoginDevices = createServerOnlyFn((): string | undefined =>
+	getCookie(LOGIN_DEVICE_COOKIE),
+);
+
+/** Store the browser's login devices for their full lifetime. */
+export const setLoginDevices = createServerOnlyFn(
+	(value: string, maxAgeSeconds: number): void => {
+		setCookie(
+			LOGIN_DEVICE_COOKIE,
+			value,
+			cookieOptions(isSecure(), maxAgeSeconds),
+		);
+	},
+);
 
 /** Read/write/clear access to legacy compatibility and setup cookies. */
 export type CookieAdapter = {

@@ -6,7 +6,11 @@ import {
 } from "@virtool/data/auth/test/fixtures";
 import { createKeyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import {
+	authAccounts,
+	authRateLimits,
+	authSessions,
+} from "@virtool/data/db/schema/auth";
 import { emailOutbox } from "@virtool/data/db/schema/emailOutbox";
 import { settings } from "@virtool/data/db/schema/settings";
 import { setupSessions } from "@virtool/data/db/schema/setup";
@@ -21,6 +25,7 @@ import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const cookies = new Map<string, string>();
+let clientIp: string | undefined;
 const getRequest = vi.fn(
 	() =>
 		new Request("https://virtool.test", {
@@ -29,6 +34,7 @@ const getRequest = vi.fn(
 				cookie: [...cookies]
 					.map(([key, value]) => `${key}=${value}`)
 					.join("; "),
+				...(clientIp && { "x-forwarded-for": clientIp }),
 			},
 		}),
 );
@@ -85,7 +91,9 @@ afterAll(async () => {
 });
 beforeEach(async () => {
 	cookies.clear();
+	clientIp = undefined;
 	vi.clearAllMocks();
+	await db.delete(authRateLimits);
 	await db.delete(emailOutbox);
 	await db.delete(settings);
 	await db.delete(users);
@@ -467,4 +475,169 @@ it("rejects verification without a pending challenge", async () => {
 		}),
 	).rejects.toThrow("Invalid or expired verification code");
 	expect(await db.select().from(authSessions)).toEqual([]);
+});
+
+async function expectRateLimited(handle: string, attempt: string) {
+	await expect(
+		callServerFn(handlers, "loginFn", { handle, password: attempt }),
+	).rejects.toMatchObject({
+		message: expect.stringContaining("Too many sign-in attempts"),
+		status: 429,
+	});
+}
+
+async function failLogin(handle: string) {
+	await expect(
+		callServerFn(handlers, "loginFn", { handle, password: "wrong-password" }),
+	).rejects.toThrow("Invalid handle or password.");
+}
+
+it("limits password sign-in attempts from one address", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+
+	clientIp = "198.51.100.1";
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await failLogin(`nobody-${attempt}`);
+	}
+
+	await expectRateLimited("alice", password);
+	expect(await db.select().from(setupSessions)).toEqual([]);
+
+	clientIp = "198.51.100.2";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+});
+
+it("doesn't spend an account's budget on a blocked address", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+
+	clientIp = "198.51.100.1";
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await failLogin(`nobody-${attempt}`);
+	}
+	for (let attempt = 0; attempt < 10; attempt++) {
+		await expectRateLimited("alice", "wrong-password");
+	}
+
+	clientIp = "198.51.100.2";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+});
+
+it("limits failed attempts for one account across addresses", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+
+	for (let attempt = 0; attempt < 10; attempt++) {
+		clientIp = `198.51.100.${attempt}`;
+		await failLogin(attempt % 2 === 0 ? "alice" : " ALICE ");
+	}
+
+	clientIp = "203.0.113.1";
+	await expectRateLimited("alice", password);
+	expect(await db.select().from(setupSessions)).toEqual([]);
+});
+
+it("limits a handle with no account like an existing one", async () => {
+	for (let attempt = 0; attempt < 10; attempt++) {
+		clientIp = `198.51.100.${attempt}`;
+		await failLogin("nobody");
+	}
+
+	clientIp = "203.0.113.1";
+	await expectRateLimited("nobody", password);
+});
+
+it("clears an account's failures after a correct password", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+
+	for (let round = 0; round < 2; round++) {
+		for (let attempt = 0; attempt < 9; attempt++) {
+			clientIp = `198.51.${round}.${attempt}`;
+			await failLogin("alice");
+		}
+		clientIp = `203.0.113.${round}`;
+		expect(
+			await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		).toEqual({ remediation: true, reset: false });
+		cookies.clear();
+	}
+});
+
+async function signInFromDevice(): Promise<string> {
+	clientIp = "192.0.2.1";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+	const device = cookies.get("login_device");
+	expect(device).toMatch(/^\d+\.\d+\.[\w-]+$/);
+	cookies.clear();
+	return device as string;
+}
+
+async function lockOutAlice() {
+	for (let attempt = 0; attempt < 10; attempt++) {
+		clientIp = `198.51.100.${attempt}`;
+		await failLogin("alice");
+	}
+	clientIp = "203.0.113.1";
+	await expectRateLimited("alice", password);
+}
+
+it("lets a known browser sign in while the account is locked", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+	await lockOutAlice();
+
+	cookies.set("login_device", device);
+	clientIp = "192.0.2.2";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+});
+
+it("limits failed attempts from a known browser on its own budget", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+
+	for (let attempt = 0; attempt < 5; attempt++) {
+		cookies.set("login_device", device);
+		clientIp = `198.51.100.${attempt}`;
+		await failLogin("alice");
+	}
+
+	clientIp = "203.0.113.1";
+	await expectRateLimited("alice", password);
+
+	cookies.clear();
+	clientIp = "203.0.113.2";
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+});
+
+it("ignores a known browser after a password change", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+	await db
+		.update(users)
+		.set({ lastPasswordChange: new Date(Date.now() + 1000) })
+		.where(eq(users.handle, "alice"));
+	await lockOutAlice();
+
+	cookies.set("login_device", device);
+	clientIp = "192.0.2.2";
+	await expectRateLimited("alice", password);
+});
+
+it("ignores a tampered device", async () => {
+	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	const device = await signInFromDevice();
+	await lockOutAlice();
+
+	const [userId, expiresAt, mac] = device.split(".");
+	cookies.set("login_device", `${userId}.${Number(expiresAt) + 1000}.${mac}`);
+	clientIp = "192.0.2.2";
+	await expectRateLimited("alice", password);
 });
