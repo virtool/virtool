@@ -218,6 +218,11 @@ it("keeps a recovery link through an outage", async () => {
 	expect(recoveryServerFnMocks.inspectPasswordRecoveryFn).toHaveBeenCalledTimes(
 		2,
 	);
+	expect(
+		recoveryServerFnMocks.inspectPasswordRecoveryFn,
+	).toHaveBeenNthCalledWith(2, {
+		data: { token, purpose: "password_recovery" },
+	});
 });
 
 it("says an outage interrupted email verification", async () => {
