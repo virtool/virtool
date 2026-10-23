@@ -268,8 +268,10 @@ export async function completeAccountSetup(
 			if (email !== normalizeEmail(row.email)) {
 				throw new SetupNotEligibleError();
 			}
-			await claimEmail(tx, consumed.userId, email);
 			const verified = consumed.delivery === "queued";
+			await claimEmail(tx, consumed.userId, email, {
+				mailboxVerified: verified,
+			});
 
 			await tx
 				.update(users)
@@ -527,6 +529,7 @@ export async function prepareEmailRemediation(
 async function prepareEmailRemediationInTransaction(
 	tx: DbOrTx,
 	{ email, userId }: PrepareEmailRemediationInput,
+	mailboxVerified = false,
 ): Promise<PreparedEmailRemediation> {
 	const normalized = normalizeEmail(email);
 
@@ -558,7 +561,7 @@ async function prepareEmailRemediationInTransaction(
 		throw new SetupNotEligibleError();
 	}
 
-	await claimEmail(tx, userId, normalized);
+	await claimEmail(tx, userId, normalized, { mailboxVerified });
 
 	return { email: normalized, handle: row.handle };
 }
@@ -581,10 +584,11 @@ async function startEmailRemediationInTransaction(
 		userId,
 	}: StartEmailRemediationInput,
 ): Promise<EmailRemediationStart> {
-	const prepared = await prepareEmailRemediationInTransaction(tx, {
-		email,
-		userId,
-	});
+	const prepared = await prepareEmailRemediationInTransaction(
+		tx,
+		{ email, userId },
+		deliveryAvailable,
+	);
 	const issued = await issueSetupTokenInTransaction(tx, {
 		candidateEmail: prepared.email,
 		lifetimeMs: EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS * 60 * 60 * 1000,
@@ -748,7 +752,9 @@ export async function completeEmailRemediation(
 		}
 
 		const normalized = normalizeEmail(consumed.candidateEmail);
-		await claimEmail(tx, consumed.userId, normalized);
+		await claimEmail(tx, consumed.userId, normalized, {
+			mailboxVerified: verified,
+		});
 
 		await tx
 			.update(users)

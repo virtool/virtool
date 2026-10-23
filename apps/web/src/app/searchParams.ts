@@ -40,6 +40,10 @@ const WALL_PATHS = [
 /** Return an internal post-authentication redirect, or discard it. */
 export function safeRedirect(value: unknown): string | undefined {
 	const target = strOptional(value);
+	// The email-change wall resumes a link that it holds in session storage.
+	if (target === "/verify-email") {
+		return target;
+	}
 	return target?.startsWith("/") &&
 		!target.startsWith("//") &&
 		!WALL_PATHS.some(
