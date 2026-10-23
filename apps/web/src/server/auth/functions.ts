@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import {
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	INVALID_EMAIL_MESSAGE,
@@ -115,37 +115,30 @@ function rethrowAsHttp(err: unknown): never {
 		err instanceof InvalidCredentialsError ||
 		(err instanceof APIError && err.statusCode < 500)
 	) {
-		setResponseStatus(400);
 		throw new ClientError("Invalid handle or password.", 400);
 	}
 	if (err instanceof EmailRemediationRateLimitedError) {
-		setResponseStatus(429);
 		throw new ClientError(
 			"Wait before sending another verification email.",
 			429,
 		);
 	}
 	if (err instanceof PasswordTooShortError) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	if (err instanceof FirstUserExistsError) {
-		setResponseStatus(409);
 		throw new ClientError("Virtool already has a user.", 409);
 	}
 	if (err instanceof PasswordReuseError) {
-		setResponseStatus(400);
 		throw new ClientError("Cannot reuse current password", 400);
 	}
 	if (err instanceof EmailInUseError) {
-		setResponseStatus(409);
 		throw new ClientError("Another account uses this email address.", 409);
 	}
 	if (
 		err instanceof SetupCredentialError ||
 		err instanceof SetupNotEligibleError
 	) {
-		setResponseStatus(400);
 		throw new ClientError("Email remediation could not be completed.", 400);
 	}
 	throw err;
@@ -163,7 +156,6 @@ export const loginFn = createServerFn({ method: "POST" })
 				ip: getClientIp(),
 			});
 			if (legacy) {
-				setResponseStatus(201);
 				return legacy;
 			}
 
@@ -190,7 +182,6 @@ async function completeLogin(userId: number) {
 		throw new APIError("UNAUTHORIZED");
 	}
 
-	setResponseStatus(201);
 	return { reset: user.forceReset };
 }
 
@@ -206,7 +197,6 @@ export const verifyTwoFactorFn = createServerFn({ method: "POST" })
 			return await completeLogin(Number(result.user.id));
 		} catch (err) {
 			if (err instanceof APIError && err.statusCode < 500) {
-				setResponseStatus(400);
 				throw new ClientError(
 					"Invalid or expired verification code. Try again or restart login.",
 					400,
@@ -229,7 +219,6 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 		checkReservedHandle(data.handle);
 		const email = normalizeEmail(data.email);
 		if (!isValidEmail(email)) {
-			setResponseStatus(400);
 			throw new ClientError(INVALID_EMAIL_MESSAGE, 400);
 		}
 		await checkConfiguredPasswordLength(db, data.password).catch(rethrowAsHttp);
@@ -249,7 +238,6 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 				message: "first instance administrator created",
 				userId: result.user.id,
 			});
-			setResponseStatus(201);
 			return result;
 		} catch (err) {
 			recordAccountLifecycle({
@@ -291,7 +279,6 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 				message: "account invitation accepted",
 				userId: completed.user.id,
 			});
-			setResponseStatus(201);
 			return {
 				user: completed.user,
 				emailVerificationRequired: completed.emailVerificationRequired,
@@ -304,14 +291,12 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 				message: "account invitation acceptance failed",
 			});
 			if (err instanceof AccountSetupHandleInUseError) {
-				setResponseStatus(409);
 				throw new ClientError("This username is already taken.", 409);
 			}
 			if (
 				err instanceof SetupCredentialError ||
 				err instanceof SetupNotEligibleError
 			) {
-				setResponseStatus(400);
 				throw new ClientError("This account setup link cannot be used.", 400);
 			}
 			rethrowAsHttp(err);
@@ -348,7 +333,6 @@ export const refreshBrowserSessionFn = createServerFn({ method: "POST" })
 			query: { disableCookieCache: true },
 		});
 		if (!session) {
-			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 		return null;
@@ -381,7 +365,6 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 					getClientIp(),
 				);
 			}
-			setResponseStatus(200);
 			return {
 				login: false as const,
 				remediation: !result.migrated,
@@ -436,7 +419,6 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 	.validator(emailRemediationSchema)
 	.handler(async ({ context, data }) => {
 		if (!isValidEmail(normalizeEmail(data.email))) {
-			setResponseStatus(400);
 			throw new ClientError(INVALID_EMAIL_MESSAGE, 400);
 		}
 		try {

@@ -22,7 +22,6 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),

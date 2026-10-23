@@ -26,14 +26,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -197,8 +195,7 @@ describe("getReference", () => {
 
 		await expect(
 			call("getReferenceFn", { referenceId: 999_999 }),
-		).rejects.toThrow("Reference not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({ message: "Reference not found.", status: 404 });
 	});
 
 	it("returns the detail with its seeded owner membership", async () => {
@@ -223,10 +220,9 @@ describe("getReference", () => {
 		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
-		await expect(call("getReferenceFn", { referenceId })).rejects.toThrow(
-			"Reference not found.",
+		await expect(call("getReferenceFn", { referenceId })).rejects.toMatchObject(
+			{ message: "Reference not found.", status: 404 },
 		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 
 	it("returns the detail for a full administrator who is not a member", async () => {
@@ -293,7 +289,6 @@ describe("createReference", () => {
 			organism: "virus",
 		})) as { id: number; sourceTypes: string[]; users: { id: number }[] };
 
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 		expect(reference.sourceTypes).toEqual(["isolate", "strain"]);
 		expect(reference.users).toHaveLength(1);
 		expect(reference.users[0]?.id).toBe(userId);
@@ -333,8 +328,10 @@ describe("createReference", () => {
 				organism: "",
 				cloneFrom: sourceId,
 			}),
-		).rejects.toThrow("Source reference does not exist.");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({
+			message: "Source reference does not exist.",
+			status: 400,
+		});
 		expect(await db.select().from(legacyReferences)).toHaveLength(1);
 	});
 
@@ -348,8 +345,7 @@ describe("createReference", () => {
 				organism: "",
 				importFrom: 999_999,
 			}),
-		).rejects.toThrow("Upload does not exist.");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({ message: "Upload does not exist.", status: 400 });
 	});
 
 	it("imports from an existing upload", async () => {
@@ -379,8 +375,7 @@ describe("updateReference", () => {
 
 		await expect(
 			call("updateReferenceFn", { referenceId, name: "Renamed" }),
-		).rejects.toThrow("Reference not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({ message: "Reference not found.", status: 404 });
 	});
 
 	it("refuses a member without modify on the reference", async () => {
@@ -417,8 +412,7 @@ describe("updateReference", () => {
 
 		await expect(
 			call("updateReferenceFn", { referenceId, name: "Renamed" }),
-		).rejects.toThrow("Reference is archived.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({ message: "Reference is archived.", status: 409 });
 	});
 });
 
@@ -452,7 +446,6 @@ describe("reference membership", () => {
 			modify: true,
 		})) as { id: number; modify: boolean };
 
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 		expect(member.id).toBe(group.id);
 		expect(member.modify).toBe(true);
 	});
@@ -499,7 +492,6 @@ describe("reference membership", () => {
 
 		await expect(
 			call("removeReferenceUserFn", { referenceId, userId: 999_999 }),
-		).rejects.toThrow("Member not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({ message: "Member not found.", status: 404 });
 	});
 });

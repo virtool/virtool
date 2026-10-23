@@ -9,8 +9,7 @@ import { StorageKeyNotFoundError } from "@virtool/storage";
  * A plain-text response, for the statuses a raw route answers with directly.
  *
  * A route runs outside the server-function context, so it has no `ClientError`
- * to throw and no `setResponseStatus` to call — it returns the status as a
- * response of its own.
+ * to throw. It returns the status as a response of its own.
  */
 export function textResponse(message: string, status: number): Response {
 	return new Response(message, { status });

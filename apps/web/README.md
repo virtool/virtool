@@ -158,18 +158,20 @@ Shape results in `functions.ts`, without repeating that parsing in React Query
 ### Error handling and request methods
 
 Map expected domain failures in one module-local
-`rethrowAsHttp(err: unknown): never` per `functions.ts`. Each expected 4xx branch
-sets the response status and throws `ClientError` with the same status. Throw
-unknown failures unchanged, preserving upstream error reporting. See
-[errors.ts](src/server/errors.ts) for why setting the HTTP status alone is
-insufficient. Local error mappers don't need `createServerOnlyFn` wrappers.
+`rethrowAsHttp(err: unknown): never` per `functions.ts`. Each expected branch
+throws `ClientError` with the status that names the failure. Throw unknown
+failures unchanged, preserving upstream error reporting. Local error mappers
+don't need `createServerOnlyFn` wrappers.
 
-Don't map a Postgres outage yourself. Global middleware answers 503 for it,
-and the client shows a self-retrying unavailable state, or a notice when an
+Server functions don't set response statuses. Routes call them in-process
+during server rendering, so a status set there becomes the status of the
+rendered page. The client reads the status from the error, and auth rejections
+by error name. A failed server-function call therefore answers 200, with the
+error in its body. Biome rejects `setResponseStatus` in server code.
+
+Don't map a Postgres outage yourself. Global middleware turns it into a 503
+`ClientError`, or a 503 response on a raw route, and the client shows a self-retrying unavailable state, or a notice when an
 action fails.
-
-Server functions serialize an RPC body, so don't return 204, 205, or 304; return
-`null` with 200 for deletion.
 
 Use explicit `POST` for free-text searches, structured filters, and batch reads,
 keeping their inputs out of URLs. Use explicit `GET` for simple ID lookups,

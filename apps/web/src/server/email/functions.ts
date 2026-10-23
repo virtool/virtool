@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import type { EmailSettings, EmailTestResult } from "@virtool/contracts";
 import {
 	clearEmailApiKey,
@@ -43,7 +42,6 @@ const optionalAddressSchema = z.union([z.literal(""), addressSchema]);
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof EmailConfigurationError) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	throw err;

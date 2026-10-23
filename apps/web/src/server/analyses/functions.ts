@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ANALYSIS_SORT_FIELDS,
 	AnalysisWorkflow,
@@ -74,18 +73,15 @@ const blastSchema = analysisIdSchema.extend({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof AnalysisNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Analysis not found.", 404);
 	}
 	if (err instanceof AnalysisSequenceNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Sequence not found.", 404);
 	}
 	if (
 		err instanceof AnalysisRunningError ||
 		err instanceof AnalysisNotNuvsError
 	) {
-		setResponseStatus(409);
 		throw new ClientError(err.message, 409);
 	}
 	if (
@@ -93,7 +89,6 @@ function rethrowAsHttp(err: unknown): never {
 		err instanceof AnalysisReferenceArchivedError ||
 		err instanceof AnalysisNoReadyIndexError
 	) {
-		setResponseStatus(409);
 		throw new ClientError(err.message, 409);
 	}
 	// Anything else — an unresolvable index, a corrupt results blob, a missing
@@ -125,7 +120,6 @@ const authorizeAnalysis = createServerOnlyFn(
 		// world-writable without being world-readable — so deleting, which demands
 		// both, cannot be reduced to the write check alone.
 		if (rights.some((right) => !hasSampleRight(row, actor, right))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
@@ -233,7 +227,6 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 			// A missing sample is a 404, not a 403 — the owner lookup distinguishes
 			// the two, where the rights check alone could not.
 			if ((await getSampleOwnerId(db, data.sampleId)) === null) {
-				setResponseStatus(404);
 				throw new ClientError("Sample not found.", 404);
 			}
 
@@ -241,7 +234,6 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 			const actor = await resolveSampleActor(db, context.principal.userId);
 
 			if (!(await checkSampleRight(db, data.sampleId, actor, "write"))) {
-				setResponseStatus(403);
 				throw new ForbiddenError();
 			}
 
@@ -257,8 +249,6 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 				workflow: data.workflow,
 				userId: context.principal.userId,
 			});
-
-			setResponseStatus(201);
 
 			return analysis;
 		} catch (err) {
@@ -292,8 +282,6 @@ export const blastNuvsFn = createServerFn({ method: "POST" })
 			]);
 
 			const blast = await blastNuvs(db, data.analysisId, data.sequenceIndex);
-
-			setResponseStatus(201);
 
 			return blast;
 		} catch (err) {

@@ -32,10 +32,8 @@ const getRequest = vi.fn(
 			},
 		}),
 );
-const setResponseStatus = vi.fn();
 vi.mock("@tanstack/react-start/server", () => ({
 	getRequest,
-	setResponseStatus,
 	getCookie: (key: string) => cookies.get(key),
 	setCookie: (key: string, value: string) => {
 		cookies.set(key, value);
@@ -190,7 +188,6 @@ it("rejects an expired session without reviving it", async () => {
 	await expect(
 		callServerFn(handlers, "refreshBrowserSessionFn"),
 	).rejects.toThrow("Unauthorized");
-	expect(setResponseStatus).toHaveBeenCalledWith(401);
 });
 
 it("completes offline remediation with an unverified email and one session", async () => {
@@ -444,8 +441,10 @@ it("keeps invalid codes unauthenticated and permits recovery-code continuation",
 			code: "invalid",
 			recovery: false,
 		}),
-	).rejects.toThrow("Invalid or expired verification code");
-	expect(setResponseStatus).toHaveBeenLastCalledWith(400);
+	).rejects.toMatchObject({
+		message: expect.stringContaining("Invalid or expired verification code"),
+		status: 400,
+	});
 	expect(await db.select().from(authSessions)).toEqual([]);
 	expect(
 		await callServerFn(handlers, "verifyTwoFactorFn", {

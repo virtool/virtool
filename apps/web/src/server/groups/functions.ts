@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import { permissionsSchema } from "@virtool/contracts";
 import {
 	createGroup,
@@ -45,11 +44,9 @@ const updateGroupSchema = groupIdSchema.extend({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof GroupNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Group not found.", 404);
 	}
 	if (err instanceof GroupConflictError) {
-		setResponseStatus(409);
 		throw new ClientError("Group name already exists.", 409);
 	}
 	throw err;
@@ -88,7 +85,6 @@ export const createGroupFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			const group = await createGroup(db, data.name);
-			setResponseStatus(201);
 			return group;
 		} catch (err) {
 			rethrowAsHttp(err);

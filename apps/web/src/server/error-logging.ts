@@ -1,9 +1,5 @@
 import { createMiddleware } from "@tanstack/react-start";
-import {
-	getRequest,
-	getResponseStatus,
-	setResponseStatus,
-} from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import {
 	FORBIDDEN_ERROR_NAME,
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
@@ -25,11 +21,11 @@ const FORBIDDEN_ERROR_NAMES = new Set([
 	SETUP_REQUIRED_ERROR_NAME,
 ]);
 
-function isExpectedAuthenticationError(err: unknown, status: number): boolean {
+function isExpectedAuthenticationError(err: unknown): err is Error {
 	return (
 		err instanceof Error &&
-		((status === 401 && err.name === UNAUTHORIZED_ERROR_NAME) ||
-			(status === 403 && FORBIDDEN_ERROR_NAMES.has(err.name)))
+		(err.name === UNAUTHORIZED_ERROR_NAME ||
+			FORBIDDEN_ERROR_NAMES.has(err.name))
 	);
 }
 
@@ -43,11 +39,12 @@ function isExpectedAuthenticationError(err: unknown, status: number): boolean {
  * chokepoint every server function passes through, guarantees that cause is
  * recorded regardless of how each feature maps its own domain errors.
  *
- * Intentional client errors set a 4xx status before throwing (see each
- * feature's `rethrowAsHttp`); those are logged at debug. Expected
- * authentication and authorization rejections omit the error object so routine
- * 401/403 responses do not emit stacks or credential-bearing details. Anything
- * else is unexpected and logged at error with its full `cause` chain.
+ * The error itself says whether it was expected, because the response status
+ * can't: server functions don't set one. A `ClientError` with a 4xx status (see
+ * each feature's `rethrowAsHttp`) is logged at debug. Expected authentication
+ * and authorization rejections omit the error object so routine rejections do
+ * not emit stacks or credential-bearing details. Anything else is unexpected
+ * and logged at error with its full `cause` chain.
  *
  * An unreachable database is the exception that is rewritten rather than only
  * logged. Postgres restarts for maintenance, so it is logged at warn and
@@ -60,7 +57,6 @@ export const errorLoggingMiddleware = createMiddleware({
 	try {
 		return await next();
 	} catch (err) {
-		const status = getResponseStatus();
 		// `path` is the incoming request, which during SSR is the page being
 		// rendered rather than the function's own URL. `serverFn` is what names the
 		// failing handler on both paths.
@@ -70,30 +66,21 @@ export const errorLoggingMiddleware = createMiddleware({
 		if (isDatabaseUnavailable(err)) {
 			logger.warn({ err, path, serverFn }, "database unavailable");
 
-			setResponseStatus(503);
 			throw new ClientError(UNAVAILABLE_MESSAGE, 503);
 		}
 
-		if (isExpectedAuthenticationError(err, status)) {
+		if (isExpectedAuthenticationError(err)) {
 			logger.debug(
-				{
-					errorName: err instanceof Error ? err.name : undefined,
-					path,
-					serverFn,
-					status,
-				},
+				{ errorName: err.name, path, serverFn },
 				"server function rejected request",
 			);
-		} else if (status >= 400 && status < 500) {
+		} else if (err instanceof ClientError && err.status < 500) {
 			logger.debug(
-				{ err, path, serverFn, status },
+				{ err, path, serverFn, status: err.status },
 				"server function rejected request",
 			);
 		} else {
-			logger.error(
-				{ err, path, serverFn, status },
-				"unhandled server function error",
-			);
+			logger.error({ err, path, serverFn }, "unhandled server function error");
 		}
 
 		throw err;

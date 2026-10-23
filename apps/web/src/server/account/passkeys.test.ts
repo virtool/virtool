@@ -42,7 +42,6 @@ const getRequest = vi.fn(
 
 vi.mock("@tanstack/react-start/server", () => ({
 	getRequest,
-	setResponseStatus: vi.fn(),
 	getCookie: (key: string) => cookies.get(key),
 	setCookie: (key: string, value: string, options?: { maxAge?: number }) => {
 		if (options?.maxAge === 0) {

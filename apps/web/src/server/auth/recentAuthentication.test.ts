@@ -22,7 +22,6 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 const handleAuthRequest = vi.fn();
 const createStepUpSession = vi.fn();
 const setContext = vi.fn();
@@ -31,7 +30,6 @@ let currentSessionId: number | null = null;
 
 vi.mock("@tanstack/react-start/server", () => ({
 	getRequest,
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -277,8 +275,10 @@ describe("challengeRecentAuthenticationFn", () => {
 				method: "totp",
 				code: "012345",
 			}),
-		).rejects.toThrow("Authentication challenge failed.");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({
+			message: "Authentication challenge failed.",
+			status: 400,
+		});
 	});
 
 	it("preserves the handler rate-limit status without rotating the session", async () => {
@@ -292,8 +292,10 @@ describe("challengeRecentAuthenticationFn", () => {
 				method: "totp",
 				code: "012345",
 			}),
-		).rejects.toThrow("Authentication challenge failed.");
-		expect(setResponseStatus).toHaveBeenCalledWith(429);
+		).rejects.toMatchObject({
+			message: "Authentication challenge failed.",
+			status: 429,
+		});
 		expect(createStepUpSession).not.toHaveBeenCalled();
 	});
 
@@ -320,7 +322,6 @@ describe("challengeRecentAuthenticationFn", () => {
 			}),
 		).rejects.toThrow("Authentication challenge provider failed.");
 		expect(createStepUpSession).not.toHaveBeenCalled();
-		expect(setResponseStatus).not.toHaveBeenCalled();
 	});
 
 	it("preserves unauthorized when the session ends during verification", async () => {
@@ -335,7 +336,6 @@ describe("challengeRecentAuthenticationFn", () => {
 				password: "correct-password",
 			}),
 		).rejects.toBeInstanceOf(UnauthorizedError);
-		expect(setResponseStatus).toHaveBeenCalledWith(401);
 		expect(createStepUpSession).not.toHaveBeenCalled();
 	});
 
@@ -354,7 +354,6 @@ describe("challengeRecentAuthenticationFn", () => {
 				password: "correct-password",
 			}),
 		).rejects.toBeInstanceOf(UnauthorizedError);
-		expect(setResponseStatus).toHaveBeenCalledWith(401);
 	});
 
 	it("returns an expired challenge when a concurrent replacement wins", async () => {
@@ -371,7 +370,9 @@ describe("challengeRecentAuthenticationFn", () => {
 				method: "password",
 				password: "correct-password",
 			}),
-		).rejects.toThrow("Authentication challenge expired.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			message: "Authentication challenge expired.",
+			status: 409,
+		});
 	});
 });

@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	findHmms,
 	getHmm,
@@ -26,15 +25,12 @@ const hmmIdSchema = z.object({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof HmmNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("HMM not found.", 404);
 	}
 	if (err instanceof HmmInstallConflictError) {
-		setResponseStatus(409);
 		throw new ClientError("Install already in progress.", 409);
 	}
 	if (err instanceof HmmReleaseError) {
-		setResponseStatus(502);
 		throw new Error(err.message);
 	}
 	throw err;
@@ -61,7 +57,6 @@ export const installHmmFn = createServerFn({ method: "POST" })
 	.handler(async ({ context }) => {
 		try {
 			const installed = await installUpdate(db, context.principal.userId);
-			setResponseStatus(201);
 			return installed;
 		} catch (err) {
 			return rethrowAsHttp(err);

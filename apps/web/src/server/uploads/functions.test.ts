@@ -27,7 +27,6 @@ async function* bodyOf(text: string): AsyncIterable<Uint8Array> {
 }
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 let currentSessionId: number | null = null;
 let currentUserId: number | null = null;
 
@@ -36,7 +35,6 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -245,7 +243,6 @@ describe("deleteUpload", () => {
 		await expect(
 			call("deleteUploadFn", { id: upload.id }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	it("soft-deletes an upload for a permitted user", async () => {
@@ -261,20 +258,22 @@ describe("deleteUpload", () => {
 	it("maps a missing upload to a 404", async () => {
 		await signIn("full");
 
-		await expect(call("deleteUploadFn", { id: 404 })).rejects.toThrow(
-			"Upload not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("deleteUploadFn", { id: 404 })).rejects.toMatchObject({
+			message: "Upload not found.",
+			status: 404,
+		});
 	});
 
 	it("maps a reserved upload to a 409", async () => {
 		const userId = await signIn("full");
 		const upload = await seedUpload(userId, { reserved: true });
 
-		await expect(call("deleteUploadFn", { id: upload.id })).rejects.toThrow(
-			"Upload is reserved and in use.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		await expect(
+			call("deleteUploadFn", { id: upload.id }),
+		).rejects.toMatchObject({
+			message: "Upload is reserved and in use.",
+			status: 409,
+		});
 	});
 });
 
@@ -300,7 +299,6 @@ describe("initUpload", () => {
 			message: "Direct uploads are unavailable on this deployment.",
 			status: 503,
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(503);
 		expect(await db.select().from(uploadsTable)).toHaveLength(0);
 		expect(presignUpload).not.toHaveBeenCalled();
 	});
@@ -366,7 +364,6 @@ describe("initUpload", () => {
 			}),
 		).rejects.toMatchObject({ status: 413 });
 
-		expect(setResponseStatus).toHaveBeenCalledWith(413);
 		expect(presignUpload).not.toHaveBeenCalled();
 	});
 
@@ -382,7 +379,6 @@ describe("initUpload", () => {
 			status: 413,
 		});
 
-		expect(setResponseStatus).toHaveBeenCalledWith(413);
 		expect(await db.select().from(uploadsTable)).toHaveLength(0);
 		expect(presignUpload).not.toHaveBeenCalled();
 	});
@@ -436,8 +432,10 @@ describe("finalizeChunkedUpload", () => {
 
 		await expect(
 			call("finalizeChunkedUploadFn", { id: upload.id }),
-		).rejects.toThrow("Upload is not complete.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			message: "Upload is not complete.",
+			status: 409,
+		});
 	});
 
 	it("maps a commit that does not match the declared size to a 409", async () => {
@@ -451,8 +449,10 @@ describe("finalizeChunkedUpload", () => {
 
 		await expect(
 			call("finalizeChunkedUploadFn", { id: upload.id }),
-		).rejects.toThrow("Upload size does not match the declared size.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			message: "Upload size does not match the declared size.",
+			status: 409,
+		});
 	});
 });
 

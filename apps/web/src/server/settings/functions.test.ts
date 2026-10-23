@@ -27,14 +27,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -489,8 +487,10 @@ describe("setMfaPolicy", () => {
 
 		await expect(
 			call("setMfaPolicyFn", { mfaPolicy: "required" }),
-		).rejects.toThrow("Set up two-factor authentication before requiring it.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			message: "Set up two-factor authentication before requiring it.",
+			status: 409,
+		});
 		await expect(call("getSettingsFn")).resolves.toMatchObject({
 			mfaPolicy: "optional",
 		});

@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	type CacheUsageSnapshot,
 	MAX_UPLOAD_SIZE,
@@ -62,7 +61,6 @@ function toSettings({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof NcbiConfigurationError) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 
@@ -185,7 +183,6 @@ export const setMfaPolicyFn = createServerFn({ method: "POST" })
 			const caller = await getUser(db, context.principal.userId);
 
 			if (!caller.twoFactorEnabled) {
-				setResponseStatus(409);
 				throw new ClientError(
 					"Set up two-factor authentication before requiring it.",
 					409,
