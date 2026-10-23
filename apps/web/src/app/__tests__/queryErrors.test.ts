@@ -1,6 +1,7 @@
 import {
 	getErrorStatus,
 	handleQueryError,
+	isServiceUnavailable,
 	type QueryError,
 	shouldRetryQuery,
 } from "@app/queryErrors";
@@ -67,12 +68,25 @@ describe("getErrorStatus", () => {
 	});
 });
 
+describe("isServiceUnavailable", () => {
+	it("recognizes the 503 a database outage answers with", () => {
+		expect(isServiceUnavailable(clientError(503))).toBe(true);
+	});
+
+	it.each([
+		["another server failure", clientError(500)],
+		["an error carrying no status", new Error("network down")],
+	])("rejects %s", (_label, error) => {
+		expect(isServiceUnavailable(error)).toBe(false);
+	});
+});
+
 describe("shouldRetryQuery", () => {
 	it("retries a server function failure that may yet succeed", () => {
 		expect(shouldRetryQuery(0, clientError(500))).toBe(true);
 	});
 
-	it.each([401, 403, 404])(
+	it.each([401, 403, 404, 503])(
 		"gives up immediately on a %i from a server function",
 		(status) => {
 			expect(shouldRetryQuery(0, clientError(status))).toBe(false);

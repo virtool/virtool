@@ -250,6 +250,10 @@ Keep repository-wide rules in `AGENTS.md`, detailed rationale in `docs/`, and
 app- or package-specific documentation in that directory's `README.md`. Update
 documentation in the same change as the code it describes.
 
+Don't point to source code from Markdown: no links to source files and no
+source file paths. Describe the behavior or convention, and keep
+implementation detail in code comments.
+
 Check the affected documentation when a change:
 
 - adds, removes, or replaces a dependency listed under **Key libraries** in

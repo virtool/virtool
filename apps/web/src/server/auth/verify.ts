@@ -17,6 +17,7 @@ import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import { and, eq, sql } from "drizzle-orm";
 import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
+import { assertDatabaseReachable } from "./probe";
 
 async function getBetterAuthSession(headers: Headers) {
 	const { auth } = await import("./instance");
@@ -44,7 +45,13 @@ export async function verifyBrowserPrincipal(
 		headers: Headers,
 	) => Promise<BetterAuthSession | null> = getBetterAuthSession,
 ): Promise<BrowserSessionPrincipal | null> {
-	const resolved = await resolveSession(request.headers);
+	let resolved: BetterAuthSession | null;
+	try {
+		resolved = await resolveSession(request.headers);
+	} catch (err) {
+		await assertDatabaseReachable(db);
+		throw err;
+	}
 	if (!resolved) {
 		return null;
 	}

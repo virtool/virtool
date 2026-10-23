@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { isServiceUnavailable } from "@app/queryErrors";
 import Button from "@base/Button";
 import {
 	completeAccountEmailChangeFn,
@@ -48,6 +49,7 @@ type VerificationState =
 			status: "interrupted";
 			token: string;
 			mode: "inspect" | "current" | "change";
+			unavailable: boolean;
 	  };
 
 /** Minimal token-safe mailbox verification screen. */
@@ -70,18 +72,23 @@ export default function EmailVerificationWall() {
 				return;
 			}
 			setState({ status: "unusable" });
-		} catch (error) {
+		} catch (cause) {
 			// A change completes only for the account that requested it, so the
 			// link waits in this tab while the user signs in.
 			if (
 				mode === "change" &&
-				getAuthNextStep(error) !== null &&
+				getAuthNextStep(cause) !== null &&
 				storePendingEmailChange(token)
 			) {
 				setState({ status: "sign_in_required" });
 				return;
 			}
-			setState({ status: "interrupted", token, mode });
+			setState({
+				status: "interrupted",
+				token,
+				mode,
+				unavailable: isServiceUnavailable(cause),
+			});
 		}
 	}
 
@@ -95,8 +102,13 @@ export default function EmailVerificationWall() {
 				return;
 			}
 			await verify(token, result.status);
-		} catch {
-			setState({ status: "interrupted", token, mode: "inspect" });
+		} catch (cause) {
+			setState({
+				status: "interrupted",
+				token,
+				mode: "inspect",
+				unavailable: isServiceUnavailable(cause),
+			});
 		}
 	}
 
@@ -150,10 +162,17 @@ export default function EmailVerificationWall() {
 			)}
 			{state.status === "interrupted" && (
 				<>
-					<WallTitle
-						title="Verification interrupted"
-						subtitle="Sign in to the account changing its address, then reopen this link, or try again."
-					/>
+					{state.unavailable ? (
+						<WallTitle
+							title="Virtool is temporarily unavailable"
+							subtitle="Your verification link has not been used. Try again in a minute."
+						/>
+					) : (
+						<WallTitle
+							title="Verification interrupted"
+							subtitle="Sign in to the account changing its address, then reopen this link, or try again."
+						/>
+					)}
 					<Button
 						color="blue"
 						onClick={() =>

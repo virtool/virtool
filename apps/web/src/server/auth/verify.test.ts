@@ -123,6 +123,23 @@ describe("verifyBrowserPrincipal", () => {
 			),
 		).rejects.toThrow("database unavailable");
 	});
+
+	it("surfaces an unreachable database behind a provider failure", async () => {
+		const outage = Object.assign(new Error("write CONNECT_TIMEOUT"), {
+			code: "CONNECT_TIMEOUT",
+		});
+		const unreachable = {
+			execute: vi.fn().mockRejectedValue(outage),
+		} as unknown as Db;
+
+		await expect(
+			verifyBrowserPrincipal(
+				unreachable,
+				new Request("https://virtool.test/"),
+				vi.fn().mockRejectedValue(new Error("Failed to get session")),
+			),
+		).rejects.toBe(outage);
+	});
 });
 
 describe("verifyLegacyBrowserPrincipal", () => {

@@ -3,7 +3,11 @@ import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthentication";
 import { wrapWithProviders } from "@tests/setup";
-import { SESSION_NOT_FRESH_ERROR_NAME } from "@virtool/contracts";
+import {
+	CLIENT_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	UNAVAILABLE_MESSAGE,
+} from "@virtool/contracts";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -174,6 +178,32 @@ describe("recent authentication orchestration", () => {
 		expect(operation).toHaveBeenCalledTimes(1);
 		expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
 	});
+	it("keeps the challenge and the password through an outage", async () => {
+		const operation = vi
+			.fn<(value: string) => Promise<string>>()
+			.mockRejectedValueOnce(staleError());
+		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockRejectedValue(
+			Object.assign(new Error(UNAVAILABLE_MESSAGE), {
+				name: CLIENT_ERROR_NAME,
+				status: 503,
+			}),
+		);
+		const { result } = renderHook(
+			() => useRecentlyAuthenticatedMutation(operation),
+			{ wrapper },
+		);
+
+		act(() => {
+			void result.current("unchanged");
+		});
+		await userEvent.type(await screen.findByLabelText("Password"), "secret");
+		await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+		expect(await screen.findByText(UNAVAILABLE_MESSAGE)).toBeInTheDocument();
+		expect(screen.getByLabelText("Password")).toHaveValue("secret");
+		expect(operation).toHaveBeenCalledTimes(1);
+	});
+
 	it("submits a password without an authenticator code when both methods are enrolled", async () => {
 		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
 			{ passkey: false, password: true, totp: true },

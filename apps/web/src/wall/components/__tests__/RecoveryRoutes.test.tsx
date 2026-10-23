@@ -2,7 +2,12 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { recoveryServerFnMocks } from "@tests/server-fn/recovery";
 import { renderWithRouter } from "@tests/setup";
-import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
+
+import {
+	CLIENT_ERROR_NAME,
+	UNAUTHORIZED_ERROR_NAME,
+	UNAVAILABLE_MESSAGE,
+} from "@virtool/contracts";
 import EmailVerificationWall from "@wall/components/EmailVerificationWall";
 import RecoveryWall from "@wall/components/RecoveryWall";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -183,5 +188,54 @@ it("shows the same acknowledgement whatever the account", async () => {
 		screen.getByText(
 			"If this account can receive recovery email, a link has been queued.",
 		),
+	).toBeInTheDocument();
+});
+
+function outage(): Error {
+	return Object.assign(new Error(UNAVAILABLE_MESSAGE), {
+		name: CLIENT_ERROR_NAME,
+		status: 503,
+	});
+}
+
+it("keeps a recovery link through an outage", async () => {
+	window.history.replaceState(
+		{},
+		"",
+		`/recover#token=${token}&purpose=password_recovery`,
+	);
+	recoveryServerFnMocks.inspectPasswordRecoveryFn
+		.mockRejectedValueOnce(outage())
+		.mockResolvedValueOnce({ status: "usable" });
+
+	await renderWithRouter(<RecoveryWall />, "/recover");
+	await screen.findByRole("heading", {
+		name: "Virtool is temporarily unavailable",
+	});
+	await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+	await screen.findByRole("heading", { name: "Choose a new password" });
+	expect(recoveryServerFnMocks.inspectPasswordRecoveryFn).toHaveBeenCalledTimes(
+		2,
+	);
+	expect(
+		recoveryServerFnMocks.inspectPasswordRecoveryFn,
+	).toHaveBeenNthCalledWith(2, {
+		data: { token, purpose: "password_recovery" },
+	});
+});
+
+it("says an outage interrupted email verification", async () => {
+	window.history.replaceState({}, "", `/verify-email?token=${token}`);
+	recoveryServerFnMocks.inspectEmailVerificationFn.mockRejectedValueOnce(
+		outage(),
+	);
+
+	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
+
+	expect(
+		await screen.findByRole("heading", {
+			name: "Virtool is temporarily unavailable",
+		}),
 	).toBeInTheDocument();
 });

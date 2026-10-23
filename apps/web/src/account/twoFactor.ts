@@ -1,5 +1,8 @@
 import * as Sentry from "@sentry/tanstackstart-react";
-import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
+import {
+	UNAUTHORIZED_ERROR_NAME,
+	UNAVAILABLE_MESSAGE,
+} from "@virtool/contracts";
 
 /** The one-time result of starting TOTP enrollment. */
 export type TotpEnrollment = {
@@ -33,6 +36,8 @@ function toTwoFactorError({ code, status }: AuthClientError): Error {
 		message = "The code is not correct. Enter the code your app shows now.";
 	} else if (status === 429) {
 		message = "Too many attempts. Wait and try again.";
+	} else if (status === 503) {
+		message = UNAVAILABLE_MESSAGE;
 	} else {
 		Sentry.captureException(new Error("Two-factor request failed"), {
 			extra: { code, status },

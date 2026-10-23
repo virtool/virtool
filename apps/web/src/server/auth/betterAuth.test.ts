@@ -780,3 +780,55 @@ describe("the integer user id", () => {
 		expect(second).toBeGreaterThan(first);
 	});
 });
+
+describe("createAuthRequestHandler during an outage", () => {
+	const outage = Object.assign(new Error("write CONNECT_TIMEOUT"), {
+		code: "CONNECT_TIMEOUT",
+	});
+	const unreachable = {
+		execute: vi.fn().mockRejectedValue(outage),
+	} as unknown as Db;
+	const request = new Request(`${ORIGIN}${AUTH_BASE_PATH}/two-factor/enable`, {
+		method: "POST",
+	});
+
+	it("surfaces the outage behind a bare 500", async () => {
+		const failing = {
+			api: { getSession: vi.fn().mockResolvedValue(null) },
+			handler: vi.fn().mockResolvedValue(new Response(null, { status: 500 })),
+		} as unknown as ReturnType<typeof createAuth>;
+
+		await expect(
+			createAuthRequestHandler(unreachable, failing)(request.clone()),
+		).rejects.toBe(outage);
+	});
+
+	it("surfaces the outage behind a failed session read", async () => {
+		const failing = {
+			api: {
+				getSession: vi
+					.fn()
+					.mockRejectedValue(new Error("Failed to get session")),
+			},
+			handler: vi.fn(),
+		} as unknown as ReturnType<typeof createAuth>;
+
+		await expect(
+			createAuthRequestHandler(unreachable, failing)(request.clone()),
+		).rejects.toBe(outage);
+	});
+
+	it("passes a server error through when the database is reachable", async () => {
+		const failing = {
+			api: { getSession: vi.fn().mockResolvedValue(null) },
+			handler: vi.fn().mockResolvedValue(new Response(null, { status: 500 })),
+		} as unknown as ReturnType<typeof createAuth>;
+
+		const response = await createAuthRequestHandler(
+			db,
+			failing,
+		)(request.clone());
+
+		expect(response.status).toBe(500);
+	});
+});
