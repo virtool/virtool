@@ -11,7 +11,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@hono/node-server": "^2.1.1",
+		"@hono/node-server": "^2.1.5",
 		"@tanstack/react-router": "^1.170.46",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
