@@ -69,7 +69,9 @@ vi.mock("./instance", () => ({
 	},
 }));
 const { createAuth } = await import("./betterAuth");
-const { sessionCookie, totp } = await import("./test/fixtures");
+const { assertTotpEnrollment, sessionCookie, totp } = await import(
+	"./test/fixtures"
+);
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
@@ -407,10 +409,12 @@ async function enroll(forceReset: boolean) {
 		updatedAt: new Date(),
 	});
 	await auth.api.signInUsername({ body: { username: "alice", password } });
-	const enrollment = await auth.api.enableTwoFactor({
-		headers: getRequest().headers,
-		body: { password },
-	});
+	const enrollment = assertTotpEnrollment(
+		await auth.api.enableTwoFactor({
+			headers: getRequest().headers,
+			body: { password },
+		}),
+	);
 	await auth.api.verifyTOTP({
 		headers: getRequest().headers,
 		body: { code: totp(enrollment.totpURI) },

@@ -42,6 +42,13 @@ updates:
               patterns:
                   - "vite"
                   - "@vitejs/*"
+          # The passkey plugin's inferred types must resolve to the same
+          # SimpleWebAuthn copy as the app's, so these move together.
+          auth:
+              patterns:
+                  - "better-auth"
+                  - "@better-auth/*"
+                  - "@simplewebauthn/*"
           react-hook-form:
               patterns:
                   - "react-hook-form"

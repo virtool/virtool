@@ -1,6 +1,6 @@
 import { isIP } from "node:net";
 import type { BetterAuthOptions } from "better-auth";
-import { getIp } from "better-auth/api";
+import { getIP } from "better-auth/api";
 
 const UNKNOWN_BROWSER = "Unknown browser";
 const UNKNOWN_OPERATING_SYSTEM = "Unknown operating system";
@@ -86,7 +86,7 @@ function getOperatingSystem(userAgent: string): string {
 
 /** Resolve the same proxy headers used by Virtool's other session issuers. */
 export function getClientIpFromHeaders(headers: Headers): string | null {
-	return getIp(headers, {
+	return getIP(headers, {
 		advanced: { ipAddress: AUTH_IP_ADDRESS_OPTIONS },
 	});
 }

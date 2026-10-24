@@ -64,6 +64,9 @@ export async function enableTotp(password: string): Promise<TotpEnrollment> {
 	if (error) {
 		throw toTwoFactorError(error);
 	}
+	if (data.method !== "totp") {
+		throw new Error(`Expected TOTP enrollment, got ${data.method}`);
+	}
 	return { backupCodes: data.backupCodes, totpURI: data.totpURI };
 }
 

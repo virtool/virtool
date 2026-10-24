@@ -124,7 +124,7 @@ describe("<AccountTwoFactor />", () => {
 		const user = userEvent.setup();
 		mockGetAccountSecurity();
 		twoFactor.enable.mockResolvedValue(
-			success({ backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
+			success({ method: "totp", backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
 		);
 		twoFactor.verifyTotp.mockResolvedValue(success({ status: true }));
 
@@ -176,7 +176,7 @@ describe("<AccountTwoFactor />", () => {
 		const user = userEvent.setup();
 		mockGetAccountSecurity();
 		twoFactor.enable.mockResolvedValue(
-			success({ backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
+			success({ method: "totp", backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
 		);
 		twoFactor.verifyTotp.mockResolvedValue(success({ status: true }));
 		const clipboard = vi.spyOn(navigator.clipboard, "writeText");
@@ -213,7 +213,7 @@ describe("<AccountTwoFactor />", () => {
 		const user = userEvent.setup();
 		mockGetAccountSecurity();
 		twoFactor.enable.mockResolvedValue(
-			success({ backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
+			success({ method: "totp", backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
 		);
 		twoFactor.verifyTotp.mockResolvedValue(failure(401, "INVALID_CODE"));
 
@@ -233,7 +233,7 @@ describe("<AccountTwoFactor />", () => {
 		const user = userEvent.setup();
 		mockGetAccountSecurity();
 		twoFactor.enable.mockResolvedValue(
-			success({ backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
+			success({ method: "totp", backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
 		);
 
 		renderWithProviders(<AccountTwoFactor />);

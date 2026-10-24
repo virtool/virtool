@@ -63,7 +63,9 @@ vi.mock("../auth/instance", () => ({
 }));
 
 const { createAuth } = await import("../auth/betterAuth");
-const { sessionCookie, totp } = await import("../auth/test/fixtures");
+const { assertTotpEnrollment, sessionCookie, totp } = await import(
+	"../auth/test/fixtures"
+);
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
@@ -127,10 +129,12 @@ it("reports no recovery codes without TOTP", async () => {
 
 it("reports the number of recovery codes but never the codes", async () => {
 	await signInMigratedUser();
-	const { backupCodes, totpURI } = await auth.api.enableTwoFactor({
-		headers: getRequest().headers,
-		body: { password: PASSWORD },
-	});
+	const { backupCodes, totpURI } = assertTotpEnrollment(
+		await auth.api.enableTwoFactor({
+			headers: getRequest().headers,
+			body: { password: PASSWORD },
+		}),
+	);
 	await auth.api.verifyTOTP({
 		headers: getRequest().headers,
 		body: { code: totp(totpURI) },

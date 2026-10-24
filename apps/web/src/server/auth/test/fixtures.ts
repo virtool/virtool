@@ -110,3 +110,13 @@ export function totp(uri: string) {
 		(digest.readUInt32BE(offset) & 0x7fffffff) % 1_000_000,
 	).padStart(6, "0");
 }
+
+/** Narrow a two-factor enrollment to TOTP, which exposes the secret and codes. */
+export function assertTotpEnrollment<T extends { method: string }>(
+	enrollment: T,
+): Extract<T, { method: "totp" }> {
+	if (enrollment.method !== "totp") {
+		throw new Error(`Expected TOTP enrollment, got ${enrollment.method}`);
+	}
+	return enrollment as Extract<T, { method: "totp" }>;
+}
