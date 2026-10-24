@@ -10,7 +10,6 @@ import {
 	errorLoggingMiddleware,
 } from "@server/error-logging";
 import { metricsMiddleware } from "@server/metrics/middleware";
-import { redirectStatusMiddleware } from "@server/redirectStatus";
 import {
 	createCsrfMiddleware,
 	createMiddleware,
@@ -148,7 +147,6 @@ export const startInstance = createStart(() => ({
 		databaseUnavailableMiddleware,
 		csrfMiddleware,
 		documentHeadersMiddleware,
-		redirectStatusMiddleware,
 	],
 	functionMiddleware: [
 		sentryGlobalFunctionMiddleware,

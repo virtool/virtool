@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	fromStoredJobClaim,
 	fromStoredJobStep,
@@ -43,7 +42,6 @@ const jobIdsSchema = z.object({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof JobNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Job not found.", 404);
 	}
 	throw err;

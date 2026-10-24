@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import { emit } from "@virtool/data/events/emit";
 import { findUnbuiltByReference } from "@virtool/data/history/data";
 import {
@@ -50,18 +49,15 @@ const findUnbuiltChangesSchema = referenceIdSchema.extend({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof IndexNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Index not found.", 404);
 	}
 	if (err instanceof ReferenceNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Reference not found.", 404);
 	}
 	if (
 		err instanceof IndexBuildInProgressError ||
 		err instanceof ReferenceArchivedError
 	) {
-		setResponseStatus(409);
 		throw new ClientError(err.message, 409);
 	}
 	// The two "nothing to build" outcomes are 400s upstream, not conflicts, and
@@ -70,7 +66,6 @@ function rethrowAsHttp(err: unknown): never {
 		err instanceof UnverifiedOtusError ||
 		err instanceof NoUnbuiltChangesError
 	) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
@@ -87,7 +82,6 @@ const authorizeBuild = createServerOnlyFn(
 		}
 
 		if (!(await checkReferenceRight(db, referenceId, "build", actor))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
@@ -167,7 +161,6 @@ export const createIndexFn = createServerFn({ method: "POST" })
 			// client, not just the one that started it.
 			await emit("indexes", index.id, "create");
 
-			setResponseStatus(201);
 			return index;
 		} catch (err) {
 			return rethrowAsHttp(err);

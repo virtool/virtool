@@ -21,14 +21,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -134,7 +132,6 @@ describe("createSubtraction", () => {
 
 		expect(subtraction.name).toBe("Arabidopsis");
 		expect(subtraction.nickname).toBe("plant");
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 	});
 
 	it("maps a missing upload to a 400", async () => {
@@ -151,7 +148,6 @@ describe("createSubtraction", () => {
 			message: "Upload does not exist.",
 			status: 400,
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
 	});
 });
 
@@ -166,7 +162,6 @@ describe("getSubtraction", () => {
 			message: "Subtraction not found.",
 			status: 404,
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 });
 

@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import { getTask, getTasks, TaskNotFoundError } from "@virtool/data/tasks/data";
 import { z } from "zod";
 import { authenticated } from "../auth/policy";
@@ -20,7 +19,6 @@ const taskIdsSchema = z.object({
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof TaskNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Task not found.", 404);
 	}
 	throw err;

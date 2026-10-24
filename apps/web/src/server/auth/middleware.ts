@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import { createMiddleware, createServerOnlyFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import {
 	type AdministratorRoleName,
 	type AuthenticatedPrincipal,
@@ -73,7 +73,6 @@ export const requireAdminRole = createServerOnlyFn(
 			row.administratorRole === null ||
 			!hasSufficientAdminRole(requiredRole, row.administratorRole)
 		) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
@@ -81,8 +80,7 @@ export const requireAdminRole = createServerOnlyFn(
 
 /**
  * Resolve the session for the active server-function request or reject with
- * 401. Sets the HTTP response status as a side effect so the serialized error
- * reaches the client as a real 401.
+ * `UnauthorizedError`.
  *
  * Handlers do **not** call this. They read `context.principal`, which their policy
  * put there; calling this in a handler buys a second Postgres lookup for a
@@ -101,15 +99,12 @@ export const requireBrowserPrincipal = createServerOnlyFn(
 	async (): Promise<BrowserPrincipal> => {
 		const principal = await verifyBrowserRequest(db, getRequest());
 		if (!principal) {
-			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 		if (isPasswordResetPrincipal(principal)) {
-			setResponseStatus(403);
 			throw new PasswordResetRequiredError();
 		}
 		if (isMfaEnrollmentPrincipal(principal)) {
-			setResponseStatus(403);
 			throw new MfaEnrollmentRequiredError();
 		}
 		return principal;
@@ -327,13 +322,11 @@ const resolvePrincipal = createServerOnlyFn(
 				isPasswordResetPrincipal(browser) &&
 				!passwordResetIds.has(serverFnId)
 			) {
-				setResponseStatus(403);
 				throw new PasswordResetRequiredError();
 			}
 			// Enrollment runs through Better Auth's own endpoints, so no server
 			// function is reachable while it is outstanding.
 			if (isMfaEnrollmentPrincipal(browser)) {
-				setResponseStatus(403);
 				throw new MfaEnrollmentRequiredError();
 			}
 			return { principal: browser };
@@ -342,7 +335,6 @@ const resolvePrincipal = createServerOnlyFn(
 		const restricted = await resolveRestrictedSetup(getRequest());
 
 		if (!restricted) {
-			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 
@@ -352,7 +344,6 @@ const resolvePrincipal = createServerOnlyFn(
 		attributePrincipal(principal);
 
 		if (!setupIds.has(serverFnId)) {
-			setResponseStatus(403);
 			throw new SetupRequiredError(restricted.purpose);
 		}
 

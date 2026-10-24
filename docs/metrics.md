@@ -13,6 +13,10 @@ Both HTTP implementations record an `Error` that escapes request handling as
 reserve `status="error"` for a thrown value that isn't an `Error`, where no
 response status can be reported accurately.
 
+A failed `apps/web` server-function call isn't an escaped `Error`. Start
+serializes the error into a 200 response, so `status` doesn't separate
+failed calls from successful ones for `handler_type="serverFn"`.
+
 ## HTTP label sets
 
 `apps/web` labels `virtool_http_requests_total` /

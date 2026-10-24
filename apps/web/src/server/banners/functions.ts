@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import { bannerColors } from "@virtool/contracts";
 import {
 	BannerNotFoundError,
@@ -37,7 +36,6 @@ const updateBannerSchema = idSchema
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof BannerNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Banner not found.", 404);
 	}
 	throw err;
@@ -61,7 +59,6 @@ export const createBannerFn = createServerFn({ method: "POST" })
 			data.color,
 			context.principal.userId,
 		);
-		setResponseStatus(201);
 		return banner;
 	});
 

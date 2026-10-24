@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { authSessions } from "@virtool/data/db/schema/auth";
@@ -28,14 +29,12 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
@@ -56,6 +55,7 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { signIn } = await import("../auth/test/fixtures");
+const { ForbiddenError } = await import("../auth/middleware");
 const { seedUser } = await import("@virtool/data/auth/test/fixtures");
 const { createIsolate, createOtu } = await import("@virtool/data/otus/data");
 
@@ -149,26 +149,31 @@ describe("reference visibility", () => {
 	it("returns 404 from findOtusFn", async () => {
 		const { referenceId } = await seedHiddenOtu();
 
-		await expect(call("findOtusFn", { referenceId })).rejects.toThrow(
-			"Reference not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("findOtusFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("returns 404 from getOtuFn", async () => {
 		const { otuId } = await seedHiddenOtu();
 
-		await expect(call("getOtuFn", { otuId })).rejects.toThrow("OTU not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("getOtuFn", { otuId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "OTU not found.",
+			status: 404,
+		});
 	});
 
 	it("returns 404 from listOtuHistoryFn", async () => {
 		const { otuId } = await seedHiddenOtu();
 
-		await expect(call("listOtuHistoryFn", { otuId })).rejects.toThrow(
-			"OTU not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("listOtuHistoryFn", { otuId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "OTU not found.",
+			status: 404,
+		});
 	});
 
 	it("returns 404 from createOtuFn", async () => {
@@ -181,19 +186,23 @@ describe("reference visibility", () => {
 				acronym: "",
 				schema: [],
 			}),
-		).rejects.toThrow("Reference not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
-		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("returns 404 from updateOtuFn", async () => {
 		const { otuId } = await seedHiddenOtu();
 
-		await expect(call("updateOtuFn", { otuId, name: "Beta" })).rejects.toThrow(
-			"OTU not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
-		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+		await expect(
+			call("updateOtuFn", { otuId, name: "Beta" }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "OTU not found.",
+			status: 404,
+		});
 	});
 
 	it("returns the OTU to a member holding no rights", async () => {
@@ -219,8 +228,11 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("updateOtuFn", { otuId: "nope", name: "X" }),
-		).rejects.toThrow("OTU not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "OTU not found.",
+			status: 404,
+		});
 	});
 
 	it("maps an isolate the OTU does not carry to a 404", async () => {
@@ -235,8 +247,11 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("setIsolateAsDefaultFn", { otuId: otu.id, isolateId: "nope" }),
-		).rejects.toThrow("OTU or isolate not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "OTU or isolate not found.",
+			status: 404,
+		});
 	});
 
 	it("refuses a caller without modify_otu with a 403", async () => {
@@ -251,8 +266,7 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("updateOtuFn", { otuId: otu.id, name: "Beta" }),
-		).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
+		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
 	it("updates an OTU in an active reference", async () => {
@@ -289,8 +303,11 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("updateOtuFn", { otuId: otu.id, name: "Beta" }),
-		).rejects.toThrow("Reference is archived.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 
 	it("refuses a sequence write in an archived reference with a 409", async () => {
@@ -322,8 +339,11 @@ describe("authorizeOtu", () => {
 				segment: null,
 				target: null,
 			}),
-		).rejects.toThrow("Reference is archived.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 
 	it("refuses an isolate delete in an archived reference with a 409", async () => {
@@ -346,7 +366,10 @@ describe("authorizeOtu", () => {
 
 		await expect(
 			call("deleteIsolateFn", { otuId: otu.id, isolateId: isolate.id }),
-		).rejects.toThrow("Reference is archived.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 });

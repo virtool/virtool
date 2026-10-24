@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	SAMPLE_SORT_FIELDS,
 	SampleCreateRequest,
@@ -86,11 +85,9 @@ const DELETABLE_JOB_STATES = new Set(["cancelled", "failed", "succeeded"]);
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof SampleNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Sample not found.", 404);
 	}
 	if (err instanceof SampleNameConflictError) {
-		setResponseStatus(400);
 		throw new ClientError("Sample name is already in use.", 400);
 	}
 	if (
@@ -100,15 +97,12 @@ function rethrowAsHttp(err: unknown): never {
 		err instanceof SampleGroupRequiredError ||
 		err instanceof SampleFileDuplicateError
 	) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	if (err instanceof UploadNotFoundError) {
-		setResponseStatus(400);
 		throw new ClientError("File does not exist.", 400);
 	}
 	if (err instanceof UploadReservedError) {
-		setResponseStatus(400);
 		throw new ClientError("File is already reserved.", 400);
 	}
 	throw err;
@@ -127,7 +121,6 @@ const authorizeSample = createServerOnlyFn(
 		const actor = await resolveSampleActor(db, userId);
 
 		if (!(await checkSampleRight(db, sampleId, actor, right))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
@@ -249,7 +242,6 @@ export const createSampleFn = createServerFn({ method: "POST" })
 				files: data.files,
 				userId: context.principal.userId,
 			});
-			setResponseStatus(201);
 			return sample;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -281,14 +273,12 @@ export const deleteSampleFn = createServerFn({ method: "POST" })
 			// A sample whose creation job is still running cannot be deleted.
 			if (!sample.ready) {
 				if (!sample.job) {
-					setResponseStatus(400);
 					throw new ClientError(
 						"Unfinalized samples without jobs cannot be deleted.",
 						400,
 					);
 				}
 				if (!DELETABLE_JOB_STATES.has(sample.job.state)) {
-					setResponseStatus(400);
 					throw new ClientError(
 						`Cannot delete sample with active job (current state: ${sample.job.state}).`,
 						400,
@@ -315,7 +305,6 @@ export const updateSampleRightsFn = createServerFn({ method: "POST" })
 		const ownerId = await getSampleOwnerId(db, sampleId);
 
 		if (ownerId === null) {
-			setResponseStatus(404);
 			throw new ClientError("Sample not found.", 404);
 		}
 
@@ -323,7 +312,6 @@ export const updateSampleRightsFn = createServerFn({ method: "POST" })
 
 		// Only the owner or a full administrator may change a sample's rights.
 		if (!actor.isAdmin && actor.userId !== ownerId) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 

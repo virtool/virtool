@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	IsolateCreateRequest,
 	IsolateUpdateRequest,
@@ -97,15 +96,12 @@ function rethrowAsHttp(err: unknown): never {
 		err instanceof IsolateNotFoundError ||
 		err instanceof SequenceNotFoundError
 	) {
-		setResponseStatus(404);
 		throw new ClientError(err.message, 404);
 	}
 	if (err instanceof ReferenceNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Reference not found.", 404);
 	}
 	if (err instanceof ReferenceArchivedError) {
-		setResponseStatus(409);
 		throw new ClientError("Reference is archived.", 409);
 	}
 	if (
@@ -113,14 +109,12 @@ function rethrowAsHttp(err: unknown): never {
 		err instanceof SourceTypeNotAllowedError ||
 		err instanceof SegmentNotDefinedError
 	) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
 }
 
 const notFound = createServerOnlyFn((message: string): never => {
-	setResponseStatus(404);
 	throw new ClientError(message, 404);
 });
 
@@ -168,7 +162,6 @@ const authorizeOtu = createServerOnlyFn(
 		}
 
 		if (!(await checkReferenceRight(db, reference.id, "modifyOtu", actor))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 
@@ -239,7 +232,6 @@ export const createOtuFn = createServerFn({ method: "POST" })
 			}
 
 			if (!(await checkReferenceRight(db, referenceId, "modifyOtu", actor))) {
-				setResponseStatus(403);
 				throw new ForbiddenError();
 			}
 
@@ -249,8 +241,6 @@ export const createOtuFn = createServerFn({ method: "POST" })
 				values,
 				context.principal.userId,
 			);
-
-			setResponseStatus(201);
 
 			return otu;
 		} catch (err) {
@@ -303,8 +293,6 @@ export const createIsolateFn = createServerFn({ method: "POST" })
 				values,
 				context.principal.userId,
 			);
-
-			setResponseStatus(201);
 
 			return isolate;
 		} catch (err) {
@@ -387,8 +375,6 @@ export const createSequenceFn = createServerFn({ method: "POST" })
 				values,
 				context.principal.userId,
 			);
-
-			setResponseStatus(201);
 
 			return sequence;
 		} catch (err) {
