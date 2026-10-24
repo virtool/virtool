@@ -64,7 +64,9 @@ vi.mock("../auth/instance", () => ({
 }));
 
 const { createAuth } = await import("../auth/betterAuth");
-const { sessionCookie, totp } = await import("../auth/test/fixtures");
+const { assertTotpEnrollment, sessionCookie, totp } = await import(
+	"../auth/test/fixtures"
+);
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
@@ -140,10 +142,12 @@ it("keeps a user without TOTP signed in after a password change", async () => {
 
 it("keeps a TOTP-enrolled user signed in after a password change", async () => {
 	const userId = await signInMigratedUser();
-	const { totpURI } = await auth.api.enableTwoFactor({
-		headers: getRequest().headers,
-		body: { password: OLD_PASSWORD },
-	});
+	const { totpURI } = assertTotpEnrollment(
+		await auth.api.enableTwoFactor({
+			headers: getRequest().headers,
+			body: { password: OLD_PASSWORD },
+		}),
+	);
 	await auth.api.verifyTOTP({
 		headers: getRequest().headers,
 		body: { code: totp(totpURI) },

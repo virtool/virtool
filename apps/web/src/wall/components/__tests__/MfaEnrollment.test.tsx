@@ -43,7 +43,7 @@ describe("<MfaEnrollment />", () => {
 	it("enrolls, shows the recovery codes once, and follows the server", async () => {
 		const user = userEvent.setup();
 		twoFactor.enable.mockResolvedValue({
-			data: { backupCodes: BACKUP_CODES, totpURI: TOTP_URI },
+			data: { method: "totp", backupCodes: BACKUP_CODES, totpURI: TOTP_URI },
 			error: null,
 		});
 		twoFactor.verifyTotp.mockResolvedValue({ data: {}, error: null });

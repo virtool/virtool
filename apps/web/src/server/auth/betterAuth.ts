@@ -203,10 +203,9 @@ function rejectRegisteredPasskey(): never {
  * authorization, API keys and first-user detection; `./policy` remains the
  * only authority for what a caller may do.
  *
- * Keep Better Auth and its passkey plugin pinned together on 1.6 until the
- * integer identity integration is migrated for 1.7's account model.
  * `@simplewebauthn/server` is a direct dependency so the passkey plugin's inferred
- * types are nameable across the server/browser TypeScript project boundary.
+ * types are nameable across the server/browser TypeScript project boundary. A
+ * pnpm override keeps the plugin on the same version, so there is one copy.
  *
  * Takes its dependencies as arguments so tests can build an instance against a
  * throwaway database.
@@ -274,11 +273,16 @@ export function createAuth({
 				// Auth omit `id` on insert, leaving it to the identity column, and
 				// type it as a number rather than the string it mints by default.
 				//
-				// The setting is instance-wide in 1.6 — there is no per-model
+				// The setting is instance-wide — there is no per-model
 				// switch — so the auxiliary tables are keyed the same way. That is
 				// why `packages/data/src/db/schema/auth.ts` gives each of them an
 				// identity primary key instead of a uuid.
 				generateId: "serial",
+				// The check requires every column Better Auth does not write to be
+				// nullable or defaulted, so that its inserts succeed. Better Auth
+				// never inserts into `users` here (sign-up is off), and `handle`,
+				// `lastPasswordChange` and `settings` are NOT NULL Virtool columns.
+				validateSchema: false,
 			},
 		},
 		emailAndPassword: {

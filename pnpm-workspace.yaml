@@ -39,6 +39,8 @@ allowBuilds:
 # each to one version so the presigner accepts the client. Remove once the AWS
 # packages converge on their own.
 overrides:
+  '@better-auth/passkey>@simplewebauthn/server': 14.0.3
+  '@better-auth/passkey>@simplewebauthn/browser': 14.0.0
   '@smithy/core': 3.33.3
   '@smithy/types': 4.17.2
   'brace-expansion@<1.1.21': ^1.1.21
