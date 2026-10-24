@@ -167,8 +167,8 @@ importers:
   apps/dev:
     dependencies:
       '@hono/node-server':
-        specifier: ^2.1.1
-        version: 2.1.1(hono@4.13.9)
+        specifier: ^2.1.5
+        version: 2.1.5(hono@4.13.9)
       '@tanstack/react-router':
         specifier: ^1.170.46
         version: 1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -265,8 +265,8 @@ importers:
   apps/internal:
     dependencies:
       '@hono/node-server':
-        specifier: ^2.1.1
-        version: 2.1.1(hono@4.13.9)
+        specifier: ^2.1.5
+        version: 2.1.5(hono@4.13.9)
       '@sentry/node':
         specifier: ^11.8.0
         version: 11.8.0(@babel/core@7.29.7(supports-color@10.2.2))
@@ -2135,11 +2135,11 @@ packages:
   '@hexagon/base64@1.1.28':
     resolution: {integrity: sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==}
 
-  '@hono/node-server@2.1.1':
-    resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
+  '@hono/node-server@2.1.5':
+    resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
     engines: {node: '>=20'}
     peerDependencies:
-      hono: ^4
+      hono: ^4 || ^5.0.0-0
 
   '@hookform/resolvers@6.0.0':
     resolution: {integrity: sha512-6iBzQnB+YwAveVc8HUi6QYLITn5X+xNKRMFIcNXHZlvp2aTI7yWbj4n/JodXxirMCcBc4VCjb2aYAJh4x07mVw==}
@@ -10651,7 +10651,7 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/node-server@2.1.1(hono@4.13.9)':
+  '@hono/node-server@2.1.5(hono@4.13.9)':
     dependencies:
       hono: 4.13.9
 
