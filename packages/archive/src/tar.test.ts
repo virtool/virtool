@@ -251,9 +251,11 @@ describe("extractTarToDir guards", () => {
 		const archiveStream = pack();
 		const written = pipeline(archiveStream, createWriteStream(archive));
 
-		archiveStream
-			.entry({ name: "trimmed/link", type: "symlink", linkname: "/etc/passwd" })
-			.end();
+		archiveStream.entry({
+			name: "trimmed/link",
+			type: "symlink",
+			linkname: "/etc/passwd",
+		});
 		archiveStream.finalize();
 		await written;
 
