@@ -333,7 +333,7 @@ export async function writePathAsTar(
 		} else {
 			for await (const member of walk(source, arcname)) {
 				if (member.isDirectory) {
-					archive.entry({ name: `${member.name}/`, type: "directory" }).end();
+					archive.entry({ name: `${member.name}/`, type: "directory" });
 				} else {
 					const memberInfo = await stat(member.path);
 

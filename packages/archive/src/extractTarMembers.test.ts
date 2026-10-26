@@ -38,11 +38,13 @@ async function writeArchive(path: string, members: Member[]): Promise<void> {
 
 	for (const member of members) {
 		if (member.type === "directory") {
-			archive.entry({ name: member.name, type: "directory" }).end();
+			archive.entry({ name: member.name, type: "directory" });
 		} else if (member.type === "symlink") {
-			archive
-				.entry({ name: member.name, type: "symlink", linkname: "/etc/passwd" })
-				.end();
+			archive.entry({
+				name: member.name,
+				type: "symlink",
+				linkname: "/etc/passwd",
+			});
 		} else {
 			archive.entry({ name: member.name }, member.body ?? "");
 		}
