@@ -110,6 +110,38 @@ describe("<OtuExport />", () => {
 		);
 	});
 
+	it("offers the isolate table when the isolates have no sequences", async () => {
+		await renderWithRouter(
+			<OtuExport
+				description="All 1 isolate"
+				filenameParts={[otu.name]}
+				includeIsolateTable
+				isolates={[
+					createFakeOtuIsolate({
+						sourceName: "A",
+						sourceType: "isolate",
+						sequences: [],
+					}),
+				]}
+				otu={otu}
+			/>,
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Export" }));
+
+		for (const group of ["Copy", "Download"]) {
+			expect(getGroupItem(group, "Isolate table")).not.toHaveAttribute(
+				"aria-disabled",
+			);
+
+			for (const name of ["Accessions", "FASTA", "Sequence table"]) {
+				expect(getGroupItem(group, name)).toHaveAttribute(
+					"aria-disabled",
+					"true",
+				);
+			}
+		}
+	});
+
 	it("downloads tables in the format chosen in the menu", async () => {
 		await renderExport();
 		await waitFor(() =>

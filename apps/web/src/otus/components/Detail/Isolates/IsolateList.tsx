@@ -64,13 +64,10 @@ export default function IsolateList() {
 	);
 
 	// A selection that outlived a search would be exported without being
-	// visible, so narrowing the list clears it.
+	// visible, so changing the search clears it.
 	const selection = useListSelection<OtuIsolate>({
 		getKey: (isolate) => isolate.id,
-		resetKey: results
-			.map((isolate) => isolate.id)
-			.sort()
-			.join(","),
+		resetKey: term,
 	});
 
 	// Taken from the results rather than the selection, so the export keeps the

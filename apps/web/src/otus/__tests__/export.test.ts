@@ -116,6 +116,77 @@ describe("formatSequenceTable", () => {
 	});
 });
 
+describe("formula injection", () => {
+	const unsafe = ["=1+1", "+1", "-1", "@SUM(A1)"].map((definition, index) =>
+		createFakeOtuSequence({
+			accession: `MN${index}`,
+			definition,
+			host: "Tobacco",
+			segment: null,
+			sequence: "AT",
+		}),
+	);
+
+	const unsafeSequences = getExportSequences(otu, [
+		createFakeOtuIsolate({
+			sourceName: "A",
+			sourceType: "isolate",
+			sequences: unsafe,
+		}),
+	]);
+
+	it("prefixes formula cells with a quote in CSV", () => {
+		expect(
+			formatSequenceTable(unsafeSequences, "csv").split("\n").slice(1),
+		).toEqual([
+			`"Tobacco mosaic virus","Isolate A","MN0","",2,"'=1+1","Tobacco"`,
+			`"Tobacco mosaic virus","Isolate A","MN1","",2,"'+1","Tobacco"`,
+			`"Tobacco mosaic virus","Isolate A","MN2","",2,"'-1","Tobacco"`,
+			`"Tobacco mosaic virus","Isolate A","MN3","",2,"'@SUM(A1)","Tobacco"`,
+		]);
+	});
+
+	it("prefixes formula cells with a quote in TSV", () => {
+		expect(
+			formatSequenceTable(unsafeSequences, "tsv").split("\n").slice(1),
+		).toEqual([
+			"Tobacco mosaic virus\tIsolate A\tMN0\t\t2\t'=1+1\tTobacco",
+			"Tobacco mosaic virus\tIsolate A\tMN1\t\t2\t'+1\tTobacco",
+			"Tobacco mosaic virus\tIsolate A\tMN2\t\t2\t'-1\tTobacco",
+			"Tobacco mosaic virus\tIsolate A\tMN3\t\t2\t'@SUM(A1)\tTobacco",
+		]);
+	});
+
+	it("prefixes a cell that begins with a tab", () => {
+		expect(
+			formatSequenceTable(
+				getExportSequences(otu, [
+					createFakeOtuIsolate({
+						sourceName: "A",
+						sourceType: "isolate",
+						sequences: [
+							createFakeOtuSequence({
+								accession: "MN1",
+								definition: "\t=1",
+								host: "Tobacco",
+								segment: null,
+								sequence: "AT",
+							}),
+						],
+					}),
+				]),
+				"tsv",
+			).split("\n")[1],
+		).toBe("Tobacco mosaic virus\tIsolate A\tMN1\t\t2\t' =1\tTobacco");
+	});
+
+	it("leaves a plain value unchanged", () => {
+		expect(formatSequenceTable(sequences, "tsv").split("\n")[3]).toBe(
+			"Tobacco mosaic virus\tIsolate B|2\tMN3\t\t2\tRNA1\tPepper",
+		);
+	});
+});
+
 describe("formatIsolateTable", () => {
 	it("writes one row per isolate with its accessions in segment order", () => {
 		expect(formatIsolateTable(otu, isolates, "tsv").split("\n")).toEqual([
@@ -135,6 +206,19 @@ describe("formatExportFilename", () => {
 			),
 		).toBe("tobacco_mosaic_virus.isolate_a.sequences.fa");
 	});
+
+	it("replaces unsafe characters and collapses underscores", () => {
+		expect(
+			formatExportFilename(["Virus: strain 1", "Isolate A/B", "table"], "csv"),
+		).toBe("virus_strain_1.isolate_a_b.table.csv");
+	});
+
+	it.each(["\\", "*", "?", '"', "<", ">", "|", "\u0007"])(
+		"replaces %j",
+		(character) => {
+			expect(formatExportFilename([`a${character}b`], "fa")).toBe("a_b.fa");
+		},
+	);
 });
 
 describe("describeExportRows", () => {

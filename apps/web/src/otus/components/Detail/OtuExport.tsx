@@ -1,19 +1,15 @@
 import { useFetchAccount } from "@account/account";
-import { writeToClipboard } from "@app/clipboard";
 import { downloadText } from "@app/download";
-import { useIsSecureContext, useTimedReset } from "@app/hooks";
 import type { ButtonProps } from "@base/Button";
-import Dropdown, {
+import {
 	DropdownButton,
-	DropdownMenuContent,
 	DropdownMenuGroup,
-	DropdownMenuItem,
 	DropdownMenuLabel,
-	DropdownMenuLink,
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
 	DropdownMenuSeparator,
 } from "@base/Dropdown";
+import ExportMenu, { useCopyExport } from "@base/ExportMenu";
 import Icon from "@base/Icon";
 import {
 	FASTA_HEADER_LABELS,
@@ -25,7 +21,6 @@ import {
 	getExportSequences,
 	TABLE_FORMAT_LABELS,
 } from "@otus/export";
-import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	type OtuIsolate,
 	type OtuSegment,
@@ -34,18 +29,14 @@ import {
 	type ReferenceExportFastaHeader,
 	type ReferenceExportTableFormat,
 } from "@virtool/contracts";
-import {
-	Check,
-	ClipboardCopy,
-	Download,
-	FileSpreadsheet,
-	FileText,
-	Settings,
-} from "lucide-react";
+import { Check, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { useState } from "react";
 
 /** One export the menu can copy or download. */
 type ExportItem = {
+	/** Whether the export has nothing to take */
+	disabled: boolean;
+
 	/** The file extension a download is saved with */
 	extension: string;
 
@@ -102,7 +93,6 @@ export default function OtuExport({
 	otu,
 	size,
 }: OtuExportProps) {
-	const isSecureContext = useIsSecureContext();
 	const { data: account } = useFetchAccount();
 
 	const defaultFastaHeader =
@@ -118,31 +108,32 @@ export default function OtuExport({
 	const fastaHeader = fastaHeaderOverride ?? defaultFastaHeader;
 	const tableFormat = tableFormatOverride ?? defaultTableFormat;
 
-	const [copied, setCopied] = useState(false);
+	const { copied, copy } = useCopyExport("otu-export");
 
-	useTimedReset(copied, () => setCopied(false));
-
-	const sequences = getExportSequences(otu, isolates);
-	const empty = sequences.length === 0;
+	const hasSequences = isolates.some((isolate) => isolate.sequences.length > 0);
 
 	const items: ExportItem[] = [
 		{
+			disabled: !hasSequences,
 			extension: "txt",
-			format: () => formatAccessions(sequences),
+			format: () => formatAccessions(getExportSequences(otu, isolates)),
 			label: "Accessions",
 			name: "accessions",
 			type: () => "text/plain",
 		},
 		{
+			disabled: !hasSequences,
 			extension: "fa",
-			format: () => formatFasta(sequences, fastaHeader),
+			format: () => formatFasta(getExportSequences(otu, isolates), fastaHeader),
 			label: "FASTA",
 			name: "sequences",
 			type: () => "text/plain",
 		},
 		{
+			disabled: !hasSequences,
 			extension: tableFormat,
-			format: (format) => formatSequenceTable(sequences, format),
+			format: (format) =>
+				formatSequenceTable(getExportSequences(otu, isolates), format),
 			label: "Sequence table",
 			name: "sequences",
 			type: (format) => TABLE_TYPES[format],
@@ -151,24 +142,13 @@ export default function OtuExport({
 
 	if (includeIsolateTable) {
 		items.push({
+			disabled: isolates.length === 0,
 			extension: tableFormat,
 			format: (format) => formatIsolateTable(otu, isolates, format),
 			label: "Isolate table",
 			name: "isolates",
 			type: (format) => TABLE_TYPES[format],
 		});
-	}
-
-	// Only a resolved write flips the label, so a rejected one — a revoked
-	// permission, an unfocused document — cannot claim the export was copied.
-	function handleCopy(item: ExportItem) {
-		writeToClipboard(item.format("tsv")).then(
-			() => setCopied(true),
-			(error) =>
-				Sentry.captureException(error, {
-					tags: { clipboard: "otu-export" },
-				}),
-		);
 	}
 
 	function handleDownload(item: ExportItem) {
@@ -180,110 +160,86 @@ export default function OtuExport({
 	}
 
 	return (
-		<Dropdown>
-			<DropdownButton aria-label={copied ? "Copied" : "Export"} size={size}>
-				<Icon icon={copied ? Check : Download} /> {copied ? "Copied" : "Export"}
-			</DropdownButton>
-			<DropdownMenuContent align="end">
-				<p className="mb-0 px-2 py-1.5 text-xs text-gray-500">{description}</p>
-				<DropdownMenuSeparator />
-				{/* The clipboard API is unavailable outside a secure context. */}
-				{isSecureContext && (
-					<>
-						<DropdownMenuGroup aria-labelledby="OtuExportCopy">
-							<DropdownMenuLabel id="OtuExportCopy">Copy</DropdownMenuLabel>
-							{items.map((item) => (
-								<DropdownMenuItem
-									disabled={empty}
-									key={item.label}
-									onSelect={() => handleCopy(item)}
-								>
-									<Icon icon={ClipboardCopy} /> {item.label}
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuGroup>
-						<DropdownMenuSeparator />
-					</>
-				)}
-				<DropdownMenuGroup aria-labelledby="OtuExportDownload">
-					<DropdownMenuLabel id="OtuExportDownload">Download</DropdownMenuLabel>
-					{items.map((item) => (
-						<DropdownMenuItem
-							disabled={empty}
-							key={item.label}
-							onSelect={() => handleDownload(item)}
-						>
-							<Icon
-								icon={item.extension === "txt" ? FileText : FileSpreadsheet}
-							/>{" "}
-							{item.label}
-						</DropdownMenuItem>
-					))}
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				{/* The radio items stay open when chosen, so the choice can be seen to
+		<ExportMenu
+			copyItems={items.map((item) => ({
+				disabled: item.disabled,
+				label: item.label,
+				onSelect: () => copy(item.format("tsv")),
+			}))}
+			description={description}
+			downloadItems={items.map((item) => ({
+				disabled: item.disabled,
+				icon: item.extension === "txt" ? FileText : FileSpreadsheet,
+				label: item.label,
+				onSelect: () => handleDownload(item),
+			}))}
+			id="OtuExport"
+			settingsHash="reference-exports"
+			trigger={
+				<DropdownButton aria-label={copied ? "Copied" : "Export"} size={size}>
+					<Icon icon={copied ? Check : Download} />{" "}
+					{copied ? "Copied" : "Export"}
+				</DropdownButton>
+			}
+		>
+			{/* The radio items stay open when chosen, so the choice can be seen to
 				    take before an export is picked. */}
-				<DropdownMenuGroup aria-labelledby="OtuExportFastaHeader">
-					<DropdownMenuLabel id="OtuExportFastaHeader">
-						FASTA header
-					</DropdownMenuLabel>
-					<DropdownMenuRadioGroup
-						value={fastaHeader}
-						onValueChange={(value) =>
-							setFastaHeaderOverride(value as ReferenceExportFastaHeader)
-						}
-					>
-						{REFERENCE_EXPORT_FASTA_HEADERS.map((value) => (
-							<DropdownMenuRadioItem
-								key={value}
-								onSelect={(e) => e.preventDefault()}
-								value={value}
-							>
-								{FASTA_HEADER_LABELS[value]}
-								{value === defaultFastaHeader && (
-									<>
-										{" "}
-										<DefaultTag />
-									</>
-								)}
-							</DropdownMenuRadioItem>
-						))}
-					</DropdownMenuRadioGroup>
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup aria-labelledby="OtuExportTableFormat">
-					<DropdownMenuLabel id="OtuExportTableFormat">
-						Table download format
-					</DropdownMenuLabel>
-					<DropdownMenuRadioGroup
-						value={tableFormat}
-						onValueChange={(value) =>
-							setTableFormatOverride(value as ReferenceExportTableFormat)
-						}
-					>
-						{REFERENCE_EXPORT_TABLE_FORMATS.map((value) => (
-							<DropdownMenuRadioItem
-								key={value}
-								onSelect={(e) => e.preventDefault()}
-								value={value}
-							>
-								{TABLE_FORMAT_LABELS[value]}
-								{value === defaultTableFormat && (
-									<>
-										{" "}
-										<DefaultTag />
-									</>
-								)}
-							</DropdownMenuRadioItem>
-						))}
-					</DropdownMenuRadioGroup>
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuLink hash="reference-exports" to="/account/settings">
-					<Icon icon={Settings} /> Settings
-				</DropdownMenuLink>
-			</DropdownMenuContent>
-		</Dropdown>
+			<DropdownMenuGroup aria-labelledby="OtuExportFastaHeader">
+				<DropdownMenuLabel id="OtuExportFastaHeader">
+					FASTA header
+				</DropdownMenuLabel>
+				<DropdownMenuRadioGroup
+					value={fastaHeader}
+					onValueChange={(value) =>
+						setFastaHeaderOverride(value as ReferenceExportFastaHeader)
+					}
+				>
+					{REFERENCE_EXPORT_FASTA_HEADERS.map((value) => (
+						<DropdownMenuRadioItem
+							key={value}
+							onSelect={(e) => e.preventDefault()}
+							value={value}
+						>
+							{FASTA_HEADER_LABELS[value]}
+							{value === defaultFastaHeader && (
+								<>
+									{" "}
+									<DefaultTag />
+								</>
+							)}
+						</DropdownMenuRadioItem>
+					))}
+				</DropdownMenuRadioGroup>
+			</DropdownMenuGroup>
+			<DropdownMenuSeparator />
+			<DropdownMenuGroup aria-labelledby="OtuExportTableFormat">
+				<DropdownMenuLabel id="OtuExportTableFormat">
+					Table download format
+				</DropdownMenuLabel>
+				<DropdownMenuRadioGroup
+					value={tableFormat}
+					onValueChange={(value) =>
+						setTableFormatOverride(value as ReferenceExportTableFormat)
+					}
+				>
+					{REFERENCE_EXPORT_TABLE_FORMATS.map((value) => (
+						<DropdownMenuRadioItem
+							key={value}
+							onSelect={(e) => e.preventDefault()}
+							value={value}
+						>
+							{TABLE_FORMAT_LABELS[value]}
+							{value === defaultTableFormat && (
+								<>
+									{" "}
+									<DefaultTag />
+								</>
+							)}
+						</DropdownMenuRadioItem>
+					))}
+				</DropdownMenuRadioGroup>
+			</DropdownMenuGroup>
+		</ExportMenu>
 	);
 }
 

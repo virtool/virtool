@@ -90,10 +90,22 @@ export function formatAccessions(sequences: ExportSequence[]): string {
 	return sequences.map((sequence) => sequence.accession).join("\n");
 }
 
+// Spreadsheets run a cell that begins with one of these characters as a
+// formula, so free text that does is prefixed with a quote to keep it text.
+const FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+
+function guardFormula(text: string): string {
+	return FORMULA_TRIGGER.test(text) ? `'${text}` : text;
+}
+
 // TSV has no quoting convention that spreadsheets agree on, so a tab or line
 // break in a field collapses to a space instead.
 function toTsvField(value: Cell): string {
-	return String(value).replace(/[\t\r\n]+/g, " ");
+	if (typeof value === "number") {
+		return String(value);
+	}
+
+	return guardFormula(value).replace(/[\t\r\n]+/g, " ");
 }
 
 // Every non-numeric field is quoted, numbers are written bare, and an embedded
@@ -103,7 +115,7 @@ function toCsvField(value: Cell): string {
 		return String(value);
 	}
 
-	return `"${value.replaceAll('"', '""')}"`;
+	return `"${guardFormula(value).replaceAll('"', '""')}"`;
 }
 
 function formatTable(
@@ -176,12 +188,22 @@ export function formatIsolateTable(
 	);
 }
 
+// Browsers rewrite characters that are unsafe in a filename in different ways,
+// so each run of them, whitespace, or underscores becomes one underscore.
+const UNSAFE_FILENAME_CHARACTERS = /[\s\\/:*?"<>|_\p{Cc}]+/gu;
+
 /**
  * A filename of the form `otu.isolate.kind.extension`, lower-cased with every
- * space replaced.
+ * space and unsafe character replaced.
  */
 export function formatExportFilename(parts: string[], extension: string) {
-	return `${parts.join(".").replaceAll(" ", "_")}.${extension}`.toLowerCase();
+	return `${parts.join(".").replace(UNSAFE_FILENAME_CHARACTERS, "_")}.${extension}`.toLowerCase();
+}
+
+function describeShown(shown: number, total: number, noun: string): string {
+	return shown === total
+		? pluralize(total, noun)
+		: `${shown} of ${pluralize(total, noun)}`;
 }
 
 /**
@@ -198,11 +220,9 @@ export function describeExportRows(
 		return `${pluralize(selected, noun)} selected`;
 	}
 
-	if (shown === total) {
-		return `All ${pluralize(total, noun)}`;
-	}
+	const count = describeShown(shown, total, noun);
 
-	return `${shown} of ${pluralize(total, noun)}`;
+	return shown === total ? `All ${count}` : count;
 }
 
 /** Describe a list's rows and its selection, for the list's header. */
@@ -212,10 +232,7 @@ export function describeSelection(
 	total: number,
 	noun: string,
 ): string {
-	const count =
-		shown === total
-			? pluralize(total, noun)
-			: `${shown} of ${pluralize(total, noun)}`;
+	const count = describeShown(shown, total, noun);
 
 	return selected ? `${selected} selected · ${count}` : count;
 }

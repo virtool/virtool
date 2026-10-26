@@ -82,7 +82,6 @@ export default function Sequences({
 
 	const sequences = sortSequencesBySegment(activeIsolate.sequences, otu.schema);
 
-	// Each isolate starts with an empty selection.
 	const selection = useListSelection<OtuSequence>({
 		getKey: (sequence) => sequence.id,
 		resetKey: activeIsolate.id,
