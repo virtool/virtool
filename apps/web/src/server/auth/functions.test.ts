@@ -11,6 +11,7 @@ import {
 	authAccounts,
 	authRateLimits,
 	authSessions,
+	authVerifications,
 } from "@virtool/data/db/schema/auth";
 import { emailOutbox } from "@virtool/data/db/schema/emailOutbox";
 import { settings } from "@virtool/data/db/schema/settings";
@@ -69,9 +70,8 @@ vi.mock("./instance", () => ({
 	},
 }));
 const { createAuth } = await import("./betterAuth");
-const { assertTotpEnrollment, sessionCookie, totp } = await import(
-	"./test/fixtures"
-);
+const { assertTotpEnrollment, seedTrustDevice, sessionCookie, totp } =
+	await import("./test/fixtures");
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
@@ -447,6 +447,39 @@ it.each([false, true])(
 		expect(Number(session?.user.id)).toBe(userId);
 	},
 );
+
+it("asks for TOTP at sign-in from a browser that holds a trust cookie", async () => {
+	const { userId } = await enroll(false);
+	const trust = await seedTrustDevice(db, userId);
+	cookies.set(trust.name, trust.value);
+
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ twoFactorRedirect: true });
+	expect(await db.select().from(authSessions)).toEqual([]);
+	expect(
+		await db
+			.select({ id: authVerifications.id })
+			.from(authVerifications)
+			.where(eq(authVerifications.identifier, trust.identifier)),
+	).toHaveLength(1);
+});
+
+it("refuses to trust the device when the second factor is verified", async () => {
+	const { totpURI } = await enroll(false);
+	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+
+	await expect(
+		auth.api.verifyTOTP({
+			headers: getRequest().headers,
+			body: { code: totp(totpURI), trustDevice: true },
+		}),
+	).rejects.toMatchObject({ body: { code: "TRUST_DEVICE_UNSUPPORTED" } });
+	expect(await db.select().from(authSessions)).toEqual([]);
+	expect(
+		[...cookies.keys()].filter((name) => name.endsWith("trust_device")),
+	).toEqual([]);
+});
 
 it("keeps invalid codes unauthenticated and permits recovery-code continuation", async () => {
 	const { backupCodes, userId } = await enroll(false);

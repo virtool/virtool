@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import {
 	type SeededSession,
 	type SeededSetupSession,
@@ -7,6 +7,7 @@ import {
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
+import { authVerifications } from "@virtool/data/db/schema/auth";
 import type { Mock } from "vitest";
 import {
 	SETUP_SESSION_ID_COOKIE,
@@ -119,4 +120,37 @@ export function assertTotpEnrollment<T extends { method: string }>(
 		throw new Error(`Expected TOTP enrollment, got ${enrollment.method}`);
 	}
 	return enrollment as Extract<T, { method: "totp" }>;
+}
+
+/**
+ * Record a Better Auth trusted device for `userId` and return the cookie that
+ * presents it, as the two-factor plugin would issue it.
+ */
+export async function seedTrustDevice(
+	db: Db,
+	userId: number,
+): Promise<{ identifier: string; name: string; value: string }> {
+	const identifier = `trust-device-${randomBytes(16).toString("hex")}`;
+	const token = createHmac("sha256", AUTH_SECRET)
+		.update(`${userId}!${identifier}`)
+		.digest("base64url");
+	const value = `${token}!${identifier}`;
+	const signature = createHmac("sha256", AUTH_SECRET)
+		.update(value)
+		.digest("base64");
+	const now = new Date();
+
+	await db.insert(authVerifications).values({
+		identifier,
+		value: String(userId),
+		expiresAt: new Date(now.getTime() + 60_000),
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	return {
+		identifier,
+		name: "__Secure-better-auth.trust_device",
+		value: encodeURIComponent(`${value}.${signature}`),
+	};
 }

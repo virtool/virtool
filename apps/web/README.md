@@ -538,7 +538,9 @@ TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
 codes minted with every enrollment. The plugin's enrollment, recovery-code
 regeneration, and disable endpoints are reachable over HTTP. Each of these
 requires the current password; they don't use the recent-authentication
-policy. Trusted devices are not enabled. `two-factor/get-totp-uri` is refused
+policy. Trusted devices are turned off: Better Auth refuses every request
+that asks to trust the device, over HTTP or through `auth.api`, and it
+ignores a trust cookie that a browser sends. `two-factor/get-totp-uri` is refused
 over HTTP, because it returns the secret again for only the password.
 Enrollment shows the secret one time, from the `enable` response.
 
