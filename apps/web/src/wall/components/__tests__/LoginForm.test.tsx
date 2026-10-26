@@ -16,25 +16,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
 	autofillSupportMock,
+	cancelCeremonyMock,
+	fetchMock,
 	loginMock,
 	navigateMock,
 	passkeyMock,
+	startAuthenticationMock,
 	verifyMock,
 } = vi.hoisted(() => ({
 	autofillSupportMock: vi.fn(),
+	cancelCeremonyMock: vi.fn(),
+	fetchMock: vi.fn(),
 	loginMock: vi.fn(),
 	navigateMock: vi.fn(),
 	passkeyMock: vi.fn(),
+	startAuthenticationMock: vi.fn(),
 	verifyMock: vi.fn(),
 }));
 
 vi.mock("@app/authClient", () => ({
-	authClient: { signIn: { passkey: passkeyMock } },
+	authClient: { $fetch: fetchMock, signIn: { passkey: passkeyMock } },
 }));
 
 vi.mock("@simplewebauthn/browser", () => ({
 	browserSupportsWebAuthnAutofill: autofillSupportMock,
-	WebAuthnAbortService: { cancelCeremony: vi.fn() },
+	startAuthentication: startAuthenticationMock,
+	WebAuthnAbortService: { cancelCeremony: cancelCeremonyMock },
 }));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
@@ -63,6 +70,25 @@ function passkeyFailure(status: number, code?: string) {
 	};
 }
 
+const AUTOFILL_OPTIONS = { data: { challenge: "challenge" }, error: null };
+
+function countAutofillChallenges() {
+	return fetchMock.mock.calls.filter(
+		([path]) => path === "/passkey/generate-authenticate-options",
+	).length;
+}
+
+function mockAutofill(verified: unknown = { data: {}, error: null }) {
+	autofillSupportMock.mockResolvedValue(true);
+	fetchMock.mockImplementation((path: string) =>
+		Promise.resolve(
+			path === "/passkey/generate-authenticate-options"
+				? AUTOFILL_OPTIONS
+				: verified,
+		),
+	);
+}
+
 function rejectAccount(name: string, purpose?: string) {
 	userServerFnMocks.getAccountFn.mockRejectedValue(
 		Object.assign(new Error(name), { name, purpose }),
@@ -87,9 +113,12 @@ describe("<LoginForm />", () => {
 
 	afterEach(() => {
 		autofillSupportMock.mockReset();
+		cancelCeremonyMock.mockReset();
+		fetchMock.mockReset();
 		loginMock.mockReset();
 		navigateMock.mockReset();
 		passkeyMock.mockReset();
+		startAuthenticationMock.mockReset();
 		verifyMock.mockReset();
 		vi.unstubAllGlobals();
 	});
@@ -301,8 +330,8 @@ describe("<LoginForm />", () => {
 	describe("passkey sign-in", () => {
 		it("offers passkeys in the username autofill", async () => {
 			stubPasskeySupport(true);
-			autofillSupportMock.mockResolvedValue(true);
-			passkeyMock.mockResolvedValue({ data: {}, error: null });
+			mockAutofill();
+			startAuthenticationMock.mockResolvedValue({ id: "credential" });
 
 			renderWithProviders(
 				<MemoryRouter>
@@ -315,7 +344,9 @@ describe("<LoginForm />", () => {
 				"username webauthn",
 			);
 			await waitFor(() =>
-				expect(passkeyMock).toHaveBeenCalledWith({ autoFill: true }),
+				expect(startAuthenticationMock).toHaveBeenCalledWith(
+					expect.objectContaining({ useBrowserAutofill: true }),
+				),
 			);
 			await waitFor(() =>
 				expect(navigateMock).toHaveBeenCalledWith({
@@ -335,8 +366,108 @@ describe("<LoginForm />", () => {
 			);
 
 			await waitFor(() => expect(autofillSupportMock).toHaveBeenCalled());
-			expect(passkeyMock).not.toHaveBeenCalled();
+			expect(fetchMock).not.toHaveBeenCalled();
 			expect(screen.queryByRole("alert")).toBeNull();
+		});
+
+		it("says nothing when the autofill challenge is refused", async () => {
+			stubPasskeySupport(true);
+			autofillSupportMock.mockResolvedValue(true);
+			fetchMock.mockResolvedValue(passkeyFailure(429));
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+			await new Promise((resolve) => setTimeout(resolve, 0));
+
+			expect(screen.queryByRole("alert")).toBeNull();
+			expect(screen.getByLabelText("Username")).not.toHaveAttribute(
+				"aria-invalid",
+			);
+			expect(countAutofillChallenges()).toBe(1);
+		});
+
+		it("shows a refused autofill passkey beside the passkey button and offers autofill again", async () => {
+			stubPasskeySupport(true);
+			mockAutofill(passkeyFailure(401, "INVALID_CREDENTIALS"));
+			startAuthenticationMock
+				.mockResolvedValueOnce({ id: "credential" })
+				.mockReturnValue(new Promise(() => {}));
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			expect(await screen.findByRole("alert")).toHaveTextContent(
+				"Passkey sign-in failed. Try again or sign in with your password.",
+			);
+			expect(screen.queryByText("Invalid handle or password.")).toBeNull();
+			expect(screen.getByLabelText("Username")).not.toHaveAttribute(
+				"aria-invalid",
+			);
+			await waitFor(() => expect(countAutofillChallenges()).toBe(2));
+		});
+
+		it("waits for the autofill challenge before an explicit sign-in", async () => {
+			stubPasskeySupport(true);
+			const challenge = Promise.withResolvers<typeof AUTOFILL_OPTIONS>();
+			autofillSupportMock.mockResolvedValue(true);
+			fetchMock.mockReturnValue(challenge.promise);
+			passkeyMock.mockReturnValue(new Promise(() => {}));
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+			await userEvent.click(
+				screen.getByRole("button", { name: "Sign in with a passkey" }),
+			);
+
+			expect(passkeyMock).not.toHaveBeenCalled();
+
+			challenge.resolve(AUTOFILL_OPTIONS);
+
+			await waitFor(() => expect(passkeyMock).toHaveBeenCalled());
+			expect(startAuthenticationMock).not.toHaveBeenCalled();
+		});
+
+		it("offers autofill again after an explicit sign-in is cancelled", async () => {
+			stubPasskeySupport(true);
+			mockAutofill();
+			startAuthenticationMock.mockImplementation(
+				() =>
+					new Promise((_, reject) => {
+						cancelCeremonyMock.mockImplementationOnce(() =>
+							reject(new Error("AbortError")),
+						);
+					}),
+			);
+			passkeyMock.mockResolvedValue(
+				passkeyFailure(400, "ERROR_CEREMONY_ABORTED"),
+			);
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await waitFor(() => expect(countAutofillChallenges()).toBe(1));
+			await userEvent.click(
+				screen.getByRole("button", { name: "Sign in with a passkey" }),
+			);
+
+			await waitFor(() => expect(passkeyMock).toHaveBeenCalled());
+			await waitFor(() => expect(countAutofillChallenges()).toBe(2));
 		});
 
 		it("signs in and follows the redirect", async () => {
