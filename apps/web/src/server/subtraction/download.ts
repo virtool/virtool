@@ -1,4 +1,4 @@
-import { getSubtractionFileKey } from "@virtool/data/subtraction/data";
+import { getSubtractionFileDownload } from "@virtool/data/subtraction/data";
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { db, downloadMode, storage } from "../composition";
 import { streamStorageObject, textResponse } from "../http";
@@ -33,16 +33,16 @@ export async function handleSubtractionFile(
 		return textResponse("Invalid subtraction id", 400);
 	}
 
-	const key = await getSubtractionFileKey(db, id, filename);
+	const file = await getSubtractionFileDownload(db, id, filename);
 
-	if (key === null) {
+	if (file === null) {
 		return textResponse("Not found", 404);
 	}
 
 	return streamStorageObject(
 		storage,
-		key,
-		filename,
+		file.storageKey,
+		file.filename,
 		"application/octet-stream",
 		downloadMode,
 	);

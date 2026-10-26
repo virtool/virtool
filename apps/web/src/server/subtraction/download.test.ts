@@ -103,14 +103,19 @@ async function seedFile(
 	{
 		name = "subtraction.fa.gz",
 		storageKey = mintStorageKey("subtractions", subtractionId),
-	}: { name?: string; storageKey?: string } = {},
+		type = "fasta",
+	}: {
+		name?: string;
+		storageKey?: string;
+		type?: "bowtie2" | "fasta";
+	} = {},
 ): Promise<string> {
 	await db.insert(subtractionFiles).values({
 		name,
 		subtraction_id: subtractionId,
 		size: 5,
 		storage_key: storageKey,
-		type: "fasta",
+		type,
 	});
 
 	return storageKey;
@@ -152,13 +157,35 @@ describe("handleSubtractionFile", () => {
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get("content-disposition")).toBe(
-			'attachment; filename="subtraction.fa.gz"',
+			'attachment; filename="arabidopsis.fa.gz"',
 		);
 		expect(response.headers.get("content-length")).toBe("5");
 		expect(response.headers.get("content-type")).toBe(
 			"application/octet-stream",
 		);
 		expect(await response.text()).toBe("hello");
+	});
+
+	it("names a Bowtie2 file for its registered name", async () => {
+		const subtractionId = await seedSubtraction();
+		await write(
+			await seedFile(subtractionId, {
+				name: "subtraction.1.bt2",
+				type: "bowtie2",
+			}),
+			"hello",
+		);
+
+		const response = await handleSubtractionFile(
+			await request(userId),
+			String(subtractionId),
+			"subtraction.1.bt2",
+		);
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get("content-disposition")).toBe(
+			'attachment; filename="subtraction.1.bt2"',
+		);
 	});
 
 	// A migrated subtraction's files keep the legacy key they were backfilled

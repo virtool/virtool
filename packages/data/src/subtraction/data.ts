@@ -1,5 +1,6 @@
 import {
 	computeJobProgress,
+	getSubtractionFastaName,
 	type JobWorkflow,
 	type NucleotideComposition,
 	type Subtraction,
@@ -349,43 +350,64 @@ export async function getSubtractionUpload(
 	return row ?? null;
 }
 
+/** A subtraction file's storage key and the filename it downloads as. */
+export type SubtractionFileDownload = {
+	filename: string;
+	storageKey: string;
+};
+
 /**
- * Resolve the storage key of a subtraction file by the name it is registered
- * under.
+ * Resolve the storage key and download filename of a subtraction file by the
+ * name it is registered under.
  *
  * Returns null when the subtraction, or a file of that name on it, does not
  * exist, or when the file predates keys being recorded. The key is read off the
  * matched row rather than composed, so a filename taken from a URL names no
  * object.
  *
+ * The FASTA downloads under the name derived from the subtraction, which is the
+ * name the client shows in its link. Other files keep their registered name.
+ *
  * The row's `size` is deliberately not returned. It is nullable, and it records
  * what the create job wrote rather than what the bucket currently holds — a
  * caller that needs a byte count asks storage.
  */
-export async function getSubtractionFileKey(
+export async function getSubtractionFileDownload(
 	db: DbOrTx,
 	subtractionId: number,
 	filename: string,
-): Promise<string | null> {
-	const [exists, [file]] = await Promise.all([
-		checkSubtractionExists(db, subtractionId),
-		db
-			.select({ storageKey: subtractionFiles.storage_key })
-			.from(subtractionFiles)
-			.where(
-				and(
-					eq(subtractionFiles.subtraction_id, subtractionId),
-					eq(subtractionFiles.name, filename),
-				),
-			)
-			.limit(1),
-	]);
+): Promise<SubtractionFileDownload | null> {
+	const [file] = await db
+		.select({
+			storageKey: subtractionFiles.storage_key,
+			subtractionName: subtractions.name,
+			type: subtractionFiles.type,
+		})
+		.from(subtractionFiles)
+		.innerJoin(
+			subtractions,
+			eq(subtractions.id, subtractionFiles.subtraction_id),
+		)
+		.where(
+			and(
+				eq(subtractions.id, subtractionId),
+				eq(subtractions.deleted, false),
+				eq(subtractionFiles.name, filename),
+			),
+		)
+		.limit(1);
 
-	if (!exists) {
+	if (!file?.storageKey) {
 		return null;
 	}
 
-	return file?.storageKey ?? null;
+	return {
+		filename:
+			file.type === "fasta"
+				? getSubtractionFastaName(file.subtractionName)
+				: filename,
+		storageKey: file.storageKey,
+	};
 }
 
 export async function createSubtraction(
