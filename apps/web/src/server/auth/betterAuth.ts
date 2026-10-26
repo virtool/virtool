@@ -135,21 +135,10 @@ function virtoolSessionPlugin(db: Db) {
 					) {
 						throw new APIError("UNAUTHORIZED");
 					}
-					const dontRememberMe = Boolean(
-						await ctx.getSignedCookie(
-							ctx.context.authCookies.dontRememberToken.name,
-							ctx.context.secret,
-						),
-					);
-
 					const replacement = await ctx.context.internalAdapter.createSession(
 						current.user.id,
-						dontRememberMe,
-						{
-							ipAddress: current.session.ipAddress,
-							userAgent: current.session.userAgent,
-							replacementForSessionId: sessionId,
-						},
+						false,
+						{ replacementForSessionId: sessionId },
 						true,
 					);
 					const deleted = await db

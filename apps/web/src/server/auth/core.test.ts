@@ -277,7 +277,7 @@ describe("resetPassword", () => {
 			.select()
 			.from(authAccounts)
 			.where(eq(authAccounts.userId, userId));
-		expect(result).toEqual({ handle: "alice", migrated: true });
+		expect(result).toEqual({ migrated: true });
 		expect(user?.forceReset).toBe(false);
 		expect(
 			await verifyPassword("new-password-123", user?.password as Buffer),

@@ -689,8 +689,15 @@ describe("step-up session replacement", () => {
 	it("creates a fresh replacement and revokes the old session", async () => {
 		const { cookie, session: oldSession } = await signInForReplacement();
 
+		const userAgent =
+			"Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0";
 		const result = await auth.api.createStepUpSession({
-			headers: new Headers({ cookie, origin: ORIGIN }),
+			headers: new Headers({
+				cookie,
+				origin: ORIGIN,
+				"user-agent": userAgent,
+				"x-forwarded-for": "192.0.2.10",
+			}),
 			returnHeaders: true,
 		});
 		const sessions = await db.select().from(authSessions);
@@ -701,8 +708,8 @@ describe("step-up session replacement", () => {
 		expect(sessions[0]?.createdAt.getTime()).toBeGreaterThanOrEqual(
 			oldSession.createdAt.getTime(),
 		);
-		expect(sessions[0]?.ipAddress).toBe(oldSession.ipAddress);
-		expect(sessions[0]?.userAgent).toBe(oldSession.userAgent);
+		expect(sessions[0]?.ipAddress).toBe("192.0.2.10");
+		expect(sessions[0]?.userAgent).toBe(userAgent);
 		expect(sessions[0]?.replacementForSessionId).toBeNull();
 		expect(result.headers.get("set-cookie")).toContain(
 			"better-auth.session_token=",

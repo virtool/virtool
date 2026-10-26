@@ -31,6 +31,7 @@ export async function callServerFn(
 	module: SplitServerFnModule,
 	name: string,
 	data?: unknown,
+	context: unknown = {},
 ): Promise<unknown> {
 	const handler = module[`${name}_createServerFn_handler`];
 
@@ -51,7 +52,7 @@ export async function callServerFn(
 			executedRequestMiddlewares: new Set(),
 			handlerType: "serverFn",
 		},
-		() => handler({ data, context: {} }),
+		() => handler({ data, context }),
 	);
 
 	if (error) {

@@ -195,12 +195,11 @@ export type ResetPasswordInput = {
 export async function resetPassword(
 	db: Db,
 	input: ResetPasswordInput,
-): Promise<{ handle: string; migrated: boolean }> {
+): Promise<{ migrated: boolean }> {
 	const [row] = await db
 		.select({
 			authMigratedAt: users.authMigratedAt,
 			forceReset: users.forceReset,
-			handle: users.handle,
 			password: users.password,
 		})
 		.from(users)
@@ -256,7 +255,7 @@ export async function resetPassword(
 		await queuePasswordChangedEmail(tx, input.userId);
 	});
 
-	return { handle: row.handle, migrated: row.authMigratedAt !== null };
+	return { migrated: row.authMigratedAt !== null };
 }
 
 /** Mint a replacement legacy application session after a credential change. */
