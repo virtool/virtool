@@ -1173,6 +1173,12 @@ describe("recordAnalysisView", () => {
 		expect(rows).toHaveLength(1);
 		expect(rows[0]?.viewed_at.getTime()).toBeGreaterThan(earlier.getTime());
 	});
+
+	it("throws AnalysisNotFoundError for a missing analysis", async () => {
+		await expect(
+			recordAnalysisView(db, ownerId, 999_999),
+		).rejects.toBeInstanceOf(AnalysisNotFoundError);
+	});
 });
 
 describe("findRecentlyViewedAnalyses", () => {

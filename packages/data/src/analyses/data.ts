@@ -17,6 +17,7 @@ import { isJobStateTerminal } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
+import { isForeignKeyViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -469,13 +470,24 @@ export async function recordAnalysisView(
 	userId: number,
 	analysisId: number,
 ): Promise<void> {
-	await db
-		.insert(analysisViews)
-		.values({ user_id: userId, analysis_id: analysisId, viewed_at: sql`now()` })
-		.onConflictDoUpdate({
-			target: [analysisViews.user_id, analysisViews.analysis_id],
-			set: { viewed_at: sql`now()` },
-		});
+	try {
+		await db
+			.insert(analysisViews)
+			.values({
+				user_id: userId,
+				analysis_id: analysisId,
+				viewed_at: sql`now()`,
+			})
+			.onConflictDoUpdate({
+				target: [analysisViews.user_id, analysisViews.analysis_id],
+				set: { viewed_at: sql`now()` },
+			});
+	} catch (error) {
+		if (isForeignKeyViolation(error, ["analysis_views_analysis_id_fkey"])) {
+			throw new AnalysisNotFoundError();
+		}
+		throw error;
+	}
 }
 
 /**

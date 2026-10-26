@@ -31,18 +31,9 @@ allowBuilds:
 # range (minimatch@3 pins brace-expansion@1.x, minimatch@5/9 pin @2.x); one
 # entry can't cover both without forcing a consumer onto a major version it
 # never asked for.
-# `@smithy/core` and `@smithy/types` are not advisory entries: the AWS SDK
-# packages resolve them at several patch levels (client-s3 and
-# s3-request-presigner disagree), and two copies of `@smithy/core` — which owns
-# the base `Client` class and its private fields — give `getSignedUrl` and
-# `S3Client` structurally different `Client` types that will not assign. Dedupe
-# each to one version so the presigner accepts the client. Remove once the AWS
-# packages converge on their own.
 overrides:
   '@better-auth/passkey>@simplewebauthn/server': 14.0.3
   '@better-auth/passkey>@simplewebauthn/browser': 14.0.0
-  '@smithy/core': 3.33.3
-  '@smithy/types': 4.17.2
   'brace-expansion@<1.1.21': ^1.1.21
   'brace-expansion@>=2.0.0 <2.1.7': ^2.1.7
   'brace-expansion@>=5.0.0 <5.0.12': ^5.0.12
