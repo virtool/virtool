@@ -1,18 +1,6 @@
 import { createFakeJobNested } from "@tests/fake/jobs";
 import { describe, expect, it } from "vitest";
-import { getCreateJobStatus, getSubtractionFastaName } from "../utils";
-
-describe("getSubtractionFastaName()", () => {
-	it("lowercases and replaces whitespace with underscores", () => {
-		expect(getSubtractionFastaName("Arabidopsis thaliana")).toBe(
-			"arabidopsis_thaliana.fa.gz",
-		);
-	});
-
-	it("collapses runs of whitespace", () => {
-		expect(getSubtractionFastaName("Foo  \tBar")).toBe("foo_bar.fa.gz");
-	});
-});
+import { getCreateJobStatus } from "../utils";
 
 describe("getCreateJobStatus()", () => {
 	it("is null when the subtraction has no job", () => {
