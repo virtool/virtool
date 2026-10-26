@@ -132,10 +132,11 @@ export function usePasskeyAutofill({
 
 		function restart() {
 			clearTimeout(refresh);
-			void current.current?.stop().then(start);
+			void (current.current?.stop() ?? Promise.resolve()).then(start);
 		}
 
-		start();
+		// A request from an earlier run can still be waiting for its options.
+		restart();
 
 		return () => {
 			active = false;

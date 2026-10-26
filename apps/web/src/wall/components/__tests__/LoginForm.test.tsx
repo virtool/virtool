@@ -440,6 +440,38 @@ describe("<LoginForm />", () => {
 			expect(startAuthenticationMock).not.toHaveBeenCalled();
 		});
 
+		it("waits for the earlier autofill challenge after returning from two-factor", async () => {
+			stubPasskeySupport(true);
+			const challenge = Promise.withResolvers<typeof AUTOFILL_OPTIONS>();
+			autofillSupportMock.mockResolvedValue(true);
+			fetchMock
+				.mockReturnValueOnce(challenge.promise)
+				.mockReturnValue(new Promise(() => {}));
+			loginMock.mockResolvedValue({ twoFactorRedirect: true });
+
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+
+			await waitFor(() => expect(countAutofillChallenges()).toBe(1));
+			await userEvent.type(screen.getByLabelText("Username"), "Alice");
+			await userEvent.type(screen.getByLabelText("Password"), "password");
+			await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Back to sign in" }),
+			);
+			await screen.findByRole("button", { name: "Sign in" });
+			await new Promise((resolve) => setTimeout(resolve, 0));
+
+			expect(countAutofillChallenges()).toBe(1);
+
+			challenge.resolve(AUTOFILL_OPTIONS);
+
+			await waitFor(() => expect(countAutofillChallenges()).toBe(2));
+		});
+
 		it("offers autofill again after an explicit sign-in is cancelled", async () => {
 			stubPasskeySupport(true);
 			mockAutofill();
