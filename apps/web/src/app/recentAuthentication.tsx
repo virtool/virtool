@@ -1,3 +1,4 @@
+import { accountQueryKeys } from "@account/keys";
 import { cn } from "@app/cn";
 import { usePasskeySupport } from "@app/passkeySupport";
 import type { PasskeyNotice } from "@app/passkeys";
@@ -8,7 +9,7 @@ import {
 	challengeRecentAuthenticationFn,
 	getRecentAuthenticationMethodsFn,
 } from "@server/auth/recentAuthentication";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAVAILABLE_MESSAGE,
@@ -66,6 +67,7 @@ export function RecentAuthenticationProvider({
 }: {
 	children: ReactNode;
 }) {
+	const queryClient = useQueryClient();
 	const pendingRef = useRef<PendingChallenge | null>(null);
 	const nextChallengeId = useRef(0);
 	const [pending, setPending] = useState<PendingChallenge | null>(null);
@@ -116,6 +118,9 @@ export function RecentAuthenticationProvider({
 		if (error) {
 			challenge.reject(error);
 		} else {
+			queryClient.invalidateQueries({
+				queryKey: accountQueryKeys.recentAuthentication(),
+			});
 			challenge.resolve();
 		}
 	}
@@ -137,26 +142,39 @@ export function RecentAuthenticationProvider({
 	);
 }
 
+/**
+ * Return a function that opens the shared recent-authentication challenge.
+ *
+ * It resolves when the user passes the challenge, and rejects when they cancel
+ * it or it fails.
+ */
+export function useRecentAuthenticationChallenge(): () => Promise<void> {
+	const requestChallenge = useContext(RecentAuthenticationContext);
+	if (!requestChallenge) {
+		throw new Error(
+			"useRecentAuthenticationChallenge requires RecentAuthenticationProvider",
+		);
+	}
+	return requestChallenge;
+}
+
+/** Whether an error says that the session is not fresh enough. */
+export function isSessionNotFresh(error: unknown): boolean {
+	return error instanceof Error && error.name === SESSION_NOT_FRESH_ERROR_NAME;
+}
+
 /** Add one shared challenge and one automatic retry to a sensitive mutation. */
 export function useRecentlyAuthenticatedMutation<TResult, TVariables>(
 	mutation: (variables: TVariables) => Promise<TResult>,
 ) {
-	const requestChallenge = useContext(RecentAuthenticationContext);
-	if (!requestChallenge) {
-		throw new Error(
-			"useRecentlyAuthenticatedMutation requires RecentAuthenticationProvider",
-		);
-	}
+	const requestChallenge = useRecentAuthenticationChallenge();
 
 	return useCallback(
 		async (variables: TVariables): Promise<TResult> => {
 			try {
 				return await mutation(variables);
 			} catch (error) {
-				if (
-					!(error instanceof Error) ||
-					error.name !== SESSION_NOT_FRESH_ERROR_NAME
-				) {
+				if (!isSessionNotFresh(error)) {
 					throw error;
 				}
 			}

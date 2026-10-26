@@ -53,6 +53,9 @@ function stubPasskeySupport(available: boolean) {
 describe("<AccountPasskeys />", () => {
 	beforeEach(() => {
 		stubPasskeySupport(true);
+		recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
+			10 * 60 * 1000,
+		);
 	});
 
 	afterEach(() => {
@@ -142,23 +145,7 @@ describe("<AccountPasskeys />", () => {
 		},
 	);
 
-	it("confirms the user's identity and registers again when the session is stale", async () => {
-		const user = userEvent.setup();
-		mockFindPasskeys([]);
-		addPasskey
-			.mockResolvedValueOnce(failure(403, "SESSION_NOT_FRESH"))
-			.mockResolvedValueOnce({ data: {}, error: null });
-		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
-			{ password: true, totp: false },
-		);
-		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockResolvedValue(
-			null,
-		);
-
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
-		await screen.findByText("You have not added any passkeys.");
-		await user.click(screen.getByRole("button", { name: "Add" }));
-
+	async function passChallenge(user: ReturnType<typeof userEvent.setup>) {
 		const challenge = await screen.findByRole("dialog", {
 			name: "Confirm your identity",
 		});
@@ -166,8 +153,62 @@ describe("<AccountPasskeys />", () => {
 		await user.click(
 			within(challenge).getByRole("button", { name: "Continue" }),
 		);
+	}
 
-		await waitFor(() => expect(addPasskey).toHaveBeenCalledTimes(2));
+	function mockChallenge() {
+		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
+			{ password: true, totp: false },
+		);
+		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockResolvedValue(
+			null,
+		);
+	}
+
+	it("confirms the user's identity before the ceremony when the session is not fresh for long enough", async () => {
+		const user = userEvent.setup();
+		mockFindPasskeys([]);
+		mockChallenge();
+		recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn
+			.mockResolvedValueOnce(4 * 60 * 1000)
+			.mockResolvedValue(15 * 60 * 1000);
+		addPasskey.mockResolvedValue({ data: {}, error: null });
+
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		await screen.findByText("You have not added any passkeys.");
+		await user.click(screen.getByRole("button", { name: "Add" }));
+		await passChallenge(user);
+
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"Your identity is confirmed. Select Add again to add the passkey.",
+		);
+		expect(addPasskey).not.toHaveBeenCalled();
+
+		await waitFor(() =>
+			expect(
+				recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn,
+			).toHaveBeenCalledTimes(2),
+		);
+		await user.click(screen.getByRole("button", { name: "Add" }));
+
+		await waitFor(() => expect(addPasskey).toHaveBeenCalledTimes(1));
+		await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+	});
+
+	it("does not start the ceremony again when the server says the session is stale", async () => {
+		const user = userEvent.setup();
+		mockFindPasskeys([]);
+		mockChallenge();
+		addPasskey.mockResolvedValue(failure(403, "SESSION_NOT_FRESH"));
+
+		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		await screen.findByText("You have not added any passkeys.");
+		await user.click(screen.getByRole("button", { name: "Add" }));
+		await passChallenge(user);
+
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"Your identity is confirmed. Select Add again to add the passkey.",
+		);
+		expect(addPasskey).toHaveBeenCalledTimes(1);
 		expect(screen.queryByRole("alert")).toBeNull();
 	});
 
