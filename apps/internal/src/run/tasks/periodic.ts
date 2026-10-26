@@ -74,7 +74,8 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	{ type: "cleanup_sessions", intervalSeconds: 3600 },
 	/*
 	 * Hourly. `consumeSetupToken` and `verifySetupSession` reject expired rows,
-	 * so cleanup only bounds how long inert rows remain.
+	 * and a rate-limit budget resets once its window ends, so cleanup only
+	 * bounds how long inert rows remain.
 	 */
 	{ type: "cleanup_setup_state", intervalSeconds: 3600 },
 	/*
