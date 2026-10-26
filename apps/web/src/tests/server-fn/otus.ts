@@ -59,6 +59,14 @@ export function mockCreateIsolate(overrides?: Partial<OtuIsolate>): Mock {
 	return otuServerFnMocks.createIsolateFn;
 }
 
+/** Sets up updateIsolate to resolve with an isolate carrying the given source. */
+export function mockUpdateIsolate(overrides?: Partial<OtuIsolate>): Mock {
+	otuServerFnMocks.updateIsolateFn.mockResolvedValue(
+		createFakeOtuIsolate({ sequences: [], ...overrides }),
+	);
+	return otuServerFnMocks.updateIsolateFn;
+}
+
 /** Sets up deleteIsolate to resolve, as the deletion answers with no content. */
 export function mockDeleteIsolate(): Mock {
 	otuServerFnMocks.deleteIsolateFn.mockResolvedValue(null);

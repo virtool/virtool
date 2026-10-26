@@ -45,12 +45,23 @@ export default function EditIsolate({
 	const mutation = useUpdateIsolate();
 
 	function handleSubmit({ sourceName, sourceType }: FormValues) {
-		mutation.mutate({ otuId, isolateId, sourceType, sourceName });
+		mutation.mutate(
+			{ otuId, isolateId, sourceType, sourceName },
+			{
+				onSuccess: () => {
+					onHide();
+				},
+			},
+		);
+	}
+
+	function handleHide() {
 		onHide();
+		mutation.reset();
 	}
 
 	return (
-		<Dialog open={show} onOpenChange={onHide}>
+		<Dialog open={show} onOpenChange={handleHide}>
 			<DialogPortal>
 				<DialogOverlay />
 				<DialogContent>
@@ -59,6 +70,7 @@ export default function EditIsolate({
 						sourceType={capitalize(sourceType)}
 						sourceName={sourceName}
 						allowedSourceTypes={allowedSourceTypes}
+						error={mutation.error?.message}
 						restrictSourceTypes={restrictSourceTypes}
 						onSubmit={handleSubmit}
 						showIsolateName={false}
