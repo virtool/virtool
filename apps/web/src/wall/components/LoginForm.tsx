@@ -1,19 +1,15 @@
 import { cn } from "@app/cn";
 import { usePasskeySupport } from "@app/passkeySupport";
-import {
-	cancelPasskeyCeremony,
-	getPasskeyNotice,
-	signInWithPasskeyAutofill,
-} from "@app/passkeys";
+import { getPasskeyNotice, type PasskeyNotice } from "@app/passkeys";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
 import Input from "@base/Input";
 import { Link } from "@tanstack/react-router";
 import { CircleAlert, Info, KeyRound } from "lucide-react";
-import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { getWallErrorMessage } from "../errors";
-import { useFollowAuthNextStep } from "../hooks";
+import { useFollowAuthNextStep, usePasskeyAutofill } from "../hooks";
 import {
 	type LoginResult,
 	useLoginMutation,
@@ -56,28 +52,14 @@ export default function LoginForm({
 	const isSigningIn =
 		loginMutation.isPending || passkeyMutation.isPending || continuing;
 
-	const onAutofillSignIn = useEffectEvent(() => void continueSignIn());
-
-	useEffect(() => {
-		let active = true;
-		signInWithPasskeyAutofill()
-			.then((signedIn) => {
-				if (active && signedIn) {
-					onAutofillSignIn();
-				}
-			})
-			.catch(() => {
-				if (active) {
-					setContinueError(
-						"Passkey sign-in failed. Try again or sign in with your password.",
-					);
-				}
-			});
-		return () => {
-			active = false;
-			cancelPasskeyCeremony();
-		};
-	}, []);
+	const [autofillNotice, setAutofillNotice] = useState<PasskeyNotice | null>(
+		null,
+	);
+	const stopAutofill = usePasskeyAutofill({
+		enabled: !twoFactor && !passkeyMutation.isPending && !continuing,
+		onSignedIn: () => void continueSignIn(),
+		onError: (error) => setAutofillNotice(getPasskeyNotice(error)),
+	});
 
 	async function continueSignIn() {
 		setContinuing(true);
@@ -110,6 +92,7 @@ export default function LoginForm({
 			return;
 		}
 		passkeyMutation.reset();
+		setAutofillNotice(null);
 		setContinueError(null);
 		loginMutation.mutate({ handle, password }, { onSuccess: onSignedIn });
 	}
@@ -119,8 +102,9 @@ export default function LoginForm({
 			return;
 		}
 		loginMutation.reset();
+		setAutofillNotice(null);
 		setContinueError(null);
-		passkeyMutation.mutate(undefined, {
+		passkeyMutation.mutate(stopAutofill, {
 			onSuccess: () => void continueSignIn(),
 		});
 	}
@@ -131,7 +115,7 @@ export default function LoginForm({
 		: continueError;
 	const passkeyNotice = passkeyMutation.isError
 		? getPasskeyNotice(passkeyMutation.error)
-		: null;
+		: autofillNotice;
 	const isPasskeyError = passkeyNotice?.tone === "error";
 	const PasskeyNoticeIcon = isPasskeyError ? CircleAlert : Info;
 

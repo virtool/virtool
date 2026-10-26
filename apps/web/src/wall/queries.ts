@@ -77,13 +77,18 @@ export function useLoginMutation() {
  * Initializes a mutator that signs in with a passkey.
  *
  * A passkey verifies the user, so a TOTP-enrolled user does not get the
- * second-factor step.
+ * second-factor step. The variable ends the autofill request first and
+ * resolves `true` if it signed the user in, which skips the ceremony.
  */
 export function usePasskeySignInMutation() {
 	const ceremony = useSingleCeremony(signInWithPasskey);
 
-	return useMutation<void, Error, void>({
-		mutationFn: ceremony,
+	return useMutation<void, Error, () => Promise<boolean>>({
+		mutationFn: async (stopAutofill) => {
+			if (!(await stopAutofill())) {
+				await ceremony(undefined);
+			}
+		},
 	});
 }
 

@@ -633,13 +633,23 @@ answer 404 over HTTP, because the list returns public keys and counters and the
 mutations skip recent authentication. Server functions call these three through
 `auth.api` and apply Virtool's policies.
 
-The sign-in options and verify paths each allow 3 requests per client IP in 10
-seconds, the same as Better Auth's default rule for `/sign-in/*`. The limit is
-a `rateLimit.customRules` entry. A refused request gets a 429.
+The sign-in verify path allows 3 requests per client IP in 10 seconds, the same
+as Better Auth's default rule for `/sign-in/*`. The sign-in options path allows
+10 requests per client IP in 60 seconds, because the sign-in form asks for a
+new challenge each time its autofill request starts again. The limits are
+`rateLimit.customRules` entries. A refused request gets a 429.
+
+The sign-in form keeps a passkey request in the username autofill. It starts
+the request again before the challenge expires, after a refused passkey, after
+an explicit passkey sign-in that does not finish, and after the two-factor
+step. An explicit passkey sign-in first stops the autofill request and waits
+for it to settle, because the two requests share one challenge cookie and the
+browser runs one ceremony at a time. A failure before the user picks a passkey
+from the autofill shows nothing.
 
 | Operation | Entry point | Policy |
 | --- | --- | --- |
-| Sign in | `authClient.signIn.passkey()` | Open, rate limited |
+| Sign in | `authClient.signIn.passkey()`, `startPasskeyAutofill()` | Open, rate limited |
 | Recent authentication | `verifyRecentAuthenticationWithPasskey()` | Session user's passkeys only, rate limited |
 | Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
 | List | `findPasskeysFn` | `authenticated()`, Better Auth session only |

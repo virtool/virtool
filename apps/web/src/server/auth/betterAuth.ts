@@ -74,10 +74,18 @@ const HTTP_ALLOWED_ENDPOINTS = new Set(
  * Limit passkey sign-in as Better Auth limits its own sign-in paths.
  *
  * Better Auth's default rule matches only paths that start with `/sign-in`.
- * An options request writes a challenge row, so the limit also stops a caller
- * who fills the verification table.
  */
 const PASSKEY_SIGN_IN_RATE_LIMIT = { window: 10, max: 3 };
+
+/**
+ * Limit passkey challenges separately from sign-in attempts.
+ *
+ * The sign-in form asks for a new challenge each time its autofill request
+ * starts again, so the sign-in limit would refuse a user who cancels a passkey
+ * dialog twice. An options request writes a challenge row, so the limit also
+ * stops a caller who fills the verification table.
+ */
+const PASSKEY_OPTIONS_RATE_LIMIT = { window: 60, max: 10 };
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -227,7 +235,7 @@ export function createAuth({
 			customStorage: createRateLimitStorage(db),
 			// Keys are paths without the base path.
 			customRules: {
-				"/passkey/generate-authenticate-options": PASSKEY_SIGN_IN_RATE_LIMIT,
+				"/passkey/generate-authenticate-options": PASSKEY_OPTIONS_RATE_LIMIT,
 				"/passkey/verify-authentication": PASSKEY_SIGN_IN_RATE_LIMIT,
 			},
 		},
