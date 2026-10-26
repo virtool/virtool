@@ -8,11 +8,9 @@ import NotFound from "@base/NotFound";
 import { ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "@base/View";
 import { useFetchJob } from "@jobs/queries";
 import { useFetchSubtraction } from "@subtraction/queries";
+import { getCreateJobStatus } from "@subtraction/utils";
 import {
-	getCreateJobStatus,
 	getSubtractionFastaName,
-} from "@subtraction/utils";
-import {
 	isJobStateUnsuccessful,
 	type NucleotideComposition,
 } from "@virtool/contracts";
@@ -145,11 +143,7 @@ export default function SubtractionDetail() {
 						</p>
 					</div>
 					{fastaFile ? (
-						<a
-							className="font-medium"
-							download={fastaName}
-							href={fastaFile.downloadUrl}
-						>
+						<a className="font-medium" href={fastaFile.downloadUrl}>
 							{fastaName}
 						</a>
 					) : (

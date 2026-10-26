@@ -18,7 +18,7 @@ import type {
 	UserNested,
 	WorkflowState,
 } from "@virtool/contracts";
-import { AnalysisWorkflow } from "@virtool/contracts";
+import { AnalysisWorkflow, getReadDownloadName } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import {
@@ -1035,21 +1035,30 @@ export async function checkSampleRight(
 	return hasSampleRight(row, actor, right);
 }
 
+/** A sample read file's storage key and the filename it downloads as. */
+export type SampleReadDownload = {
+	filename: string;
+	storageKey: string;
+};
+
 /**
- * The storage key of one of a sample's read files, or `null` when the sample
- * has no read by that name.
+ * The storage key and download filename of one of a sample's read files, or
+ * `null` when the sample has no read by that name.
  *
  * The row is matched on `name`, which is what the URL carries, and the key is
  * then read off that row. Nothing is composed from the caller's input, so a
  * filename carrying path segments names no object.
+ *
+ * The file downloads under the name derived from the sample, which is the name
+ * the client shows in its link.
  */
-export async function getSampleReadsFileKey(
+export async function getSampleReadDownload(
 	db: DbOrTx,
 	sampleId: number,
 	filename: string,
-): Promise<string | null> {
+): Promise<SampleReadDownload | null> {
 	const [sample] = await db
-		.select({ legacy_id: legacySamples.legacy_id })
+		.select({ legacy_id: legacySamples.legacy_id, name: legacySamples.name })
 		.from(legacySamples)
 		.where(eq(legacySamples.id, sampleId))
 		.limit(1);
@@ -1074,7 +1083,14 @@ export async function getSampleReadsFileKey(
 		)
 		.limit(1);
 
-	return read?.storageKey ?? null;
+	if (!read?.storageKey) {
+		return null;
+	}
+
+	return {
+		filename: getReadDownloadName(sample.name, filename),
+		storageKey: read.storageKey,
+	};
 }
 
 async function checkLabelsExist(db: DbOrTx, labelIds: number[]): Promise<void> {

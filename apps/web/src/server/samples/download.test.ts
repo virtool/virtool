@@ -173,7 +173,7 @@ describe("handleSampleReads", () => {
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get("content-disposition")).toBe(
-			'attachment; filename="reads_1.fq.gz"',
+			'attachment; filename="Sample_1.fq.gz"',
 		);
 		expect(response.headers.get("content-length")).toBe("5");
 		expect(response.headers.get("content-type")).toBe("application/gzip");
@@ -215,9 +215,9 @@ describe("handleSampleReads", () => {
 
 		expect(response.status).toBe(200);
 		expect(await response.text()).toBe("hello");
-		// The download is still named for the public name, not the stored one.
+		// The download is named for the sample and the read side, not the stored name.
 		expect(response.headers.get("content-disposition")).toBe(
-			'attachment; filename="reads_1.fq.gz"',
+			'attachment; filename="Sample_1.fq.gz"',
 		);
 	});
 
