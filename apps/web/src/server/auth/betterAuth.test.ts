@@ -4,6 +4,7 @@ import {
 	authAccounts,
 	authRateLimits,
 	authSessions,
+	authTwoFactors,
 } from "@virtool/data/db/schema/auth";
 import { settings } from "@virtool/data/db/schema/settings";
 import { users } from "@virtool/data/db/schema/users";
@@ -257,6 +258,8 @@ describe("the mounted handler", () => {
 		["POST", "/revoke-sessions"],
 		["POST", "/revoke-other-sessions"],
 		["POST", "/two-factor/get-totp-uri"],
+		["POST", "/two-factor/generate-backup-codes"],
+		["POST", "/two-factor/disable"],
 		["POST", "/two-factor/verify-backup-code"],
 		["GET", "/passkey/list-user-passkeys"],
 		["GET", "/passkey/list-user-passkeys/"],
@@ -305,8 +308,6 @@ describe("the mounted handler", () => {
 		["POST", "/passkey/verify-registration"],
 		["POST", "/two-factor/enable"],
 		["POST", "/two-factor/verify-totp"],
-		["POST", "/two-factor/generate-backup-codes"],
-		["POST", "/two-factor/disable"],
 		["GET", "/virtool-session/passkey-options"],
 		["POST", "/virtool-session/challenge"],
 	])("serves %s %s", async (method, path) => {
@@ -366,6 +367,45 @@ describe("the mounted handler", () => {
 		});
 	});
 
+	it("refuses to replace an enrolled TOTP factor", async () => {
+		await seedMigratedUser();
+		const signIn = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+		const handler = createAuthRequestHandler(db, auth);
+
+		function enable() {
+			return handler(
+				new Request(`${ORIGIN}${AUTH_BASE_PATH}/two-factor/enable`, {
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						cookie,
+						origin: ORIGIN,
+					},
+					body: JSON.stringify({ password: LEGACY_PASSWORD }),
+				}),
+			);
+		}
+
+		expect((await enable()).status).toBe(200);
+		await db.update(authTwoFactors).set({ verified: true });
+		await db.update(users).set({ twoFactorEnabled: true });
+		const factors = await db.select().from(authTwoFactors);
+
+		const response = await enable();
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({
+			code: "TOTP_ALREADY_ENABLED",
+		});
+		expect(await db.select().from(authTwoFactors)).toEqual(factors);
+	});
+
 	describe("under the required MFA policy", () => {
 		async function signInUnenrolled(): Promise<string> {
 			await seedSettings(db, { mfaPolicy: "required" });
@@ -400,9 +440,7 @@ describe("the mounted handler", () => {
 			const handler = createAuthRequestHandler(db, auth);
 
 			const response = await handler(
-				authRequest("/two-factor/generate-backup-codes", cookie, {
-					password: LEGACY_PASSWORD,
-				}),
+				authRequest("/passkey/verify-registration", cookie, {}),
 			);
 
 			expect(response.status).toBe(403);
@@ -439,15 +477,10 @@ describe("the mounted handler", () => {
 			await db.update(users).set({ twoFactorEnabled: true });
 
 			const response = await handler(
-				authRequest("/two-factor/generate-backup-codes", cookie, {
-					password: LEGACY_PASSWORD,
-				}),
+				authRequest("/passkey/verify-registration", cookie, {}),
 			);
 
-			expect(response.status).toBe(200);
-			expect(await response.json()).toMatchObject({
-				backupCodes: expect.any(Array),
-			});
+			expect(response.status).not.toBe(403);
 		});
 	});
 
@@ -464,6 +497,19 @@ describe("the mounted handler", () => {
 
 		expect(response.status).toBe(403);
 		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("refuses a request to trust the device", async () => {
+		const handler = createAuthRequestHandler(db, auth);
+
+		const response = await handler(
+			post("/two-factor/verify-totp", { code: "000000", trustDevice: true }),
+		);
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({
+			code: "TRUST_DEVICE_UNSUPPORTED",
+		});
 	});
 
 	it("answers 404 on an unknown path rather than falling through", async () => {

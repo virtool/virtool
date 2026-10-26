@@ -111,25 +111,35 @@ function toBrowserError(
 	return null;
 }
 
-function toFailure(error: AuthClientError, message: string): Error {
-	if (error.status === 503) {
-		return new PasskeyCeremonyError("failed", UNAVAILABLE_MESSAGE);
-	}
-	if (error.status >= 500 || (error.code && UNEXPECTED_CODES.has(error.code))) {
+function reportUnexpectedFailure(error: AuthClientError) {
+	if (
+		error.status !== 503 &&
+		(error.status >= 500 || (error.code && UNEXPECTED_CODES.has(error.code)))
+	) {
 		Sentry.captureException(new Error("Passkey ceremony failed"), {
 			extra: { code: error.code, status: error.status },
 		});
+	}
+}
+
+function toFailure(error: AuthClientError, message: string): Error {
+	reportUnexpectedFailure(error);
+	if (error.status === 503) {
+		return new PasskeyCeremonyError("failed", UNAVAILABLE_MESSAGE);
 	}
 	return new PasskeyCeremonyError("failed", message);
 }
 
 function toSignInError(error: AuthClientError): Error {
-	const browserError = toBrowserError(
-		error,
-		"Passkey sign-in did not finish. Try again, or sign in with your password.",
-	);
+	const incompleteMessage =
+		"Passkey sign-in did not finish. Try again, or sign in with your password.";
+	const browserError = toBrowserError(error, incompleteMessage);
 	if (browserError) {
 		return browserError;
+	}
+	// The challenge expired, or a newer options request replaced its cookie.
+	if (error.code === "CHALLENGE_NOT_FOUND") {
+		return new PasskeyCeremonyError("incomplete", incompleteMessage);
 	}
 	if (error.status === 429) {
 		return new PasskeyCeremonyError(
@@ -201,37 +211,91 @@ export async function signInWithPasskey(): Promise<void> {
 	}
 }
 
+/** A passkey request in the autofill of the username field. */
+export type PasskeyAutofill = {
+	/**
+	 * Resolves `true` when a passkey signed the user in, and `false` when the
+	 * request ended without one.
+	 */
+	result: Promise<boolean>;
+	/** Stop the request and wait for it to settle, resolving like `result`. */
+	stop: () => Promise<boolean>;
+};
+
 /**
  * Offer passkeys in the autofill of the username field, where the browser
  * supports it.
  *
- * The field must have `webauthn` in its `autocomplete`. Resolves `true` when a
- * passkey signed the user in, and `false` when the browser has no autofill or
- * the ceremony stopped, for example because an explicit passkey sign-in
- * replaced it.
+ * The field must have `webauthn` in its `autocomplete`. A failure before the
+ * user picks a passkey ends the request without an error, because the user
+ * did not ask for anything. Only a refused passkey rejects `result`.
  */
-export async function signInWithPasskeyAutofill(): Promise<boolean> {
-	const [authClient, { browserSupportsWebAuthnAutofill }] = await Promise.all([
-		loadAuthClient(),
-		import("@simplewebauthn/browser"),
-	]);
-	if (!(await browserSupportsWebAuthnAutofill())) {
+export function startPasskeyAutofill(): PasskeyAutofill {
+	let stopped = false;
+	const result = runPasskeyAutofill(() => stopped);
+	const settled = result.catch(() => false);
+	return {
+		result,
+		stop() {
+			if (!stopped) {
+				stopped = true;
+				cancelPasskeyCeremony();
+			}
+			return settled;
+		},
+	};
+}
+
+// A stop during the options request cannot abort the ceremony, because it has
+// not started. The request runs to the end instead, so that its challenge
+// cookie cannot replace the one of a later sign-in.
+async function runPasskeyAutofill(isStopped: () => boolean): Promise<boolean> {
+	const setup = await setUpPasskeyAutofill(isStopped).catch(() => null);
+	if (!setup || isStopped()) {
 		return false;
 	}
-	const { error } = await authClient.signIn.passkey({ autoFill: true });
-	if (!error) {
-		return true;
-	}
-	const { code } = error as AuthClientError;
-	const browserError = toBrowserError({ code, status: error.status }, "");
-	if (
-		browserError?.kind === "cancelled" ||
-		browserError?.kind === "incomplete" ||
-		code === "AUTH_CANCELLED"
-	) {
+	const { authClient, options, startAuthentication } = setup;
+
+	// The browser settles the request only when the user picks a passkey, or
+	// when a stop or a later ceremony aborts it.
+	const response = await startAuthentication({
+		optionsJSON: options,
+		useBrowserAutofill: true,
+	}).catch(() => null);
+	if (!response) {
 		return false;
 	}
-	throw toSignInError(error);
+
+	const verified = await authClient.$fetch<unknown>(
+		"/passkey/verify-authentication",
+		{
+			method: "POST",
+			body: { response: { ...response, clientExtensionResults: {} } },
+			throw: false,
+		},
+	);
+	if (verified.error) {
+		throw toSignInError(verified.error);
+	}
+	return true;
+}
+
+async function setUpPasskeyAutofill(isStopped: () => boolean) {
+	const [authClient, { browserSupportsWebAuthnAutofill, startAuthentication }] =
+		await Promise.all([loadAuthClient(), import("@simplewebauthn/browser")]);
+	if (isStopped() || !(await browserSupportsWebAuthnAutofill())) {
+		return null;
+	}
+	const options =
+		await authClient.$fetch<PublicKeyCredentialRequestOptionsJSON>(
+			"/passkey/generate-authenticate-options",
+			{ method: "GET", throw: false },
+		);
+	if (options.error) {
+		reportUnexpectedFailure(options.error);
+		return null;
+	}
+	return { authClient, options: options.data, startAuthentication };
 }
 
 /**

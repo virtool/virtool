@@ -459,7 +459,11 @@ describe("sign-in", () => {
 		const { browser, response } = await signIn(key);
 		expect(response.status).toBe(200);
 
-		const restricted = await browser.send("POST", "/two-factor/disable", {});
+		const restricted = await browser.send(
+			"POST",
+			"/passkey/verify-registration",
+			{},
+		);
 		expect(restricted.status).toBe(403);
 		expect(await restricted.json()).toMatchObject({
 			code: "PASSWORD_RESET_REQUIRED",
@@ -471,7 +475,11 @@ describe("sign-in", () => {
 		await seedSettings(db, { mfaPolicy: "required" });
 
 		const { browser } = await signIn(key);
-		const restricted = await browser.send("POST", "/two-factor/disable", {});
+		const restricted = await browser.send(
+			"POST",
+			"/passkey/verify-registration",
+			{},
+		);
 
 		expect(restricted.status).toBe(403);
 		expect(await restricted.json()).toMatchObject({
@@ -480,14 +488,14 @@ describe("sign-in", () => {
 	});
 
 	it.each([
-		["GET", "/passkey/generate-authenticate-options"],
-		["POST", "/passkey/verify-authentication"],
+		["GET", "/passkey/generate-authenticate-options", 10],
+		["POST", "/passkey/verify-authentication", 3],
 	] as const)(
-		"refuses a fourth %s %s from one address within the window",
-		async (method, path) => {
+		"refuses %s %s from one address after %i requests in the window",
+		async (method, path, max) => {
 			const browser = createBrowser();
 			const body = method === "POST" ? { response: {} } : undefined;
-			for (let attempt = 0; attempt < 3; attempt++) {
+			for (let attempt = 0; attempt < max; attempt++) {
 				expect((await browser.send(method, path, body)).status).not.toBe(429);
 			}
 
@@ -495,7 +503,7 @@ describe("sign-in", () => {
 
 			expect(response.status).toBe(429);
 			expect(await db.select().from(authRateLimits)).toEqual([
-				expect.objectContaining({ key: `${CLIENT_IP}|${path}`, count: 3 }),
+				expect.objectContaining({ key: `${CLIENT_IP}|${path}`, count: max }),
 			]);
 		},
 	);

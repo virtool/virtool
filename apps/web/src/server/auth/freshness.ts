@@ -6,6 +6,8 @@ export const PROTECTED_OPERATIONS = {
 	accountPasswordChange: "account.password.change",
 	accountEmailChange: "account.email.change",
 	totpReset: "totp.reset",
+	totpDisable: "totp.disable",
+	recoveryCodesRegenerate: "recovery_codes.regenerate",
 	passkeyRegister: "passkey.register",
 	passkeyRemove: "passkey.remove",
 	passkeySecurityUpdate: "passkey.security.update",

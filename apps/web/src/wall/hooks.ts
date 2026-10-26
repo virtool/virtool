@@ -1,6 +1,7 @@
+import { type PasskeyAutofill, startPasskeyAutofill } from "@app/passkeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
 import {
 	type AuthNextStep,
 	getAuthNextStepRoute,
@@ -63,5 +64,89 @@ export function useFollowAuthNextStep() {
 			});
 		}
 		return step;
+	};
+}
+
+// Better Auth keeps a passkey challenge for 300 seconds.
+const AUTOFILL_REFRESH_MS = 270_000;
+
+type PasskeyAutofillOptions = {
+	/** Whether the username field can offer passkeys now. */
+	enabled: boolean;
+	/** Called when a passkey from the autofill signs the user in. */
+	onSignedIn: () => void;
+	/** Called when the server refuses a passkey from the autofill. */
+	onError: (error: unknown) => void;
+};
+
+/**
+ * Keep a passkey request in the autofill of the username field while
+ * `enabled` is true.
+ *
+ * The request starts again before its challenge expires and after a refused
+ * passkey. The returned function stops the request and resolves `true` if a
+ * passkey signed the user in first. Call it before an explicit passkey
+ * sign-in, and set `enabled` to false while that sign-in runs, because two
+ * ceremonies at a time make the browser and the server drop one.
+ */
+export function usePasskeyAutofill({
+	enabled,
+	onSignedIn,
+	onError,
+}: PasskeyAutofillOptions): () => Promise<boolean> {
+	const current = useRef<PasskeyAutofill | null>(null);
+	const paused = useRef(false);
+	const signedIn = useEffectEvent(onSignedIn);
+	const failed = useEffectEvent(onError);
+
+	useEffect(() => {
+		if (!enabled) {
+			return;
+		}
+		paused.current = false;
+		let active = true;
+		let refresh: ReturnType<typeof setTimeout> | undefined;
+
+		function start() {
+			if (!active || paused.current) {
+				return;
+			}
+			const autofill = startPasskeyAutofill();
+			current.current = autofill;
+			refresh = setTimeout(restart, AUTOFILL_REFRESH_MS);
+			autofill.result.then(
+				(done) => {
+					// A stopped request reports its sign-in to the caller of the stop.
+					if (active && done && !paused.current) {
+						signedIn();
+					}
+				},
+				(error: unknown) => {
+					if (active) {
+						failed(error);
+						restart();
+					}
+				},
+			);
+		}
+
+		function restart() {
+			clearTimeout(refresh);
+			void (current.current?.stop() ?? Promise.resolve()).then(start);
+		}
+
+		// A request from an earlier run can still be waiting for its options.
+		restart();
+
+		return () => {
+			active = false;
+			clearTimeout(refresh);
+			void current.current?.stop();
+		};
+	}, [enabled]);
+
+	return async () => {
+		paused.current = true;
+		return (await current.current?.stop()) ?? false;
 	};
 }

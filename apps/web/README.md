@@ -208,6 +208,13 @@ enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
 and API keys; server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
+The CSRF middleware checks every server function and every mutating raw-route
+request that has no `Authorization` header. It requires `Sec-Fetch-Site:
+same-origin`, or a same-origin `Origin` when the browser sends no Fetch
+Metadata. API-key requests are not checked, because a browser cannot attach
+them to a forged request. `/api/auth/*` is exempt, because Better Auth does its
+own origin check.
+
 Better Auth is mounted at `/api/auth/$` and composed in
 `@server/auth/betterAuth`. It authenticates interactive users; Virtool still
 owns account state, API keys, and authorization. Its raw handler is outside the
@@ -215,9 +222,12 @@ server-function authentication and CSRF middleware, so Better Auth performs its
 own origin check against `VT_PUBLIC_ORIGIN`.
 
 The handler serves only an allow-list of Better Auth endpoints: the passkey
-sign-in and registration ceremonies, the TOTP `enable`, `verify-totp`,
-`generate-backup-codes`, and `disable` calls, and the two recent-authentication
-paths. Every other path, including one that a plugin or an upgrade adds,
+sign-in and registration ceremonies, the TOTP `enable` and `verify-totp`
+calls, and the two recent-authentication paths. `enable` checks only the
+password, so it is served because Better Auth refuses it once TOTP is on.
+`disableTotpFn` and `regenerateRecoveryCodesFn` call `disable` and
+`generate-backup-codes` through `auth.api`. They require recent authentication
+(`totp.disable` and `recovery_codes.regenerate`) and the password. Every other path, including one that a plugin or an upgrade adds,
 answers 404. Server functions call other endpoints through `auth.api`. To serve
 a new endpoint over HTTP, add it to `HTTP_ALLOWED_ENDPOINTS` in
 [betterAuth.ts](src/server/auth/betterAuth.ts).
@@ -245,6 +255,10 @@ that sends a valid device for the account spends its own budget (five per 15
 minutes) instead of the account budget, so failures from other browsers can't
 lock the owner out. A password change invalidates the account's devices. The
 cookie holds up to five accounts and isn't a credential.
+
+The hourly internal cleanup task deletes `auth_rate_limits` rows whose last
+request is more than an hour old, the longest window of any budget. A row can
+stay for up to two hours. The web server doesn't prune the table.
 
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
 A user with `force_reset` receives a session that resolves to a
@@ -538,13 +552,17 @@ TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
 codes minted with every enrollment. The plugin's enrollment, recovery-code
 regeneration, and disable endpoints are reachable over HTTP. Each of these
 requires the current password; they don't use the recent-authentication
-policy. Trusted devices are not enabled. `two-factor/get-totp-uri` is refused
+policy. Trusted devices are turned off: Better Auth refuses every request
+that asks to trust the device, over HTTP or through `auth.api`, and it
+ignores a trust cookie that a browser sends. `two-factor/get-totp-uri` is refused
 over HTTP, because it returns the secret again for only the password.
 Enrollment shows the secret one time, from the `enable` response.
 
 `/account/security` holds the email, password, TOTP, passkey, and session
-controls. The browser calls the TOTP endpoints through `twoFactorClient`
-([twoFactor.ts](src/account/twoFactor.ts)). The TOTP secret and recovery codes
+controls. The browser calls the TOTP enrollment endpoints through
+`twoFactorClient` ([twoFactor.ts](src/account/twoFactor.ts)). Turning TOTP off
+and making new recovery codes use server functions, which open the
+recent-authentication challenge when the session is stale. The TOTP secret and recovery codes
 stay in component state only, and the mutations use `gcTime: 0`. The user must
 confirm that they saved new recovery codes before the dialog closes.
 `getAccountSecurityFn` returns the number of unused recovery codes, never the
@@ -603,18 +621,35 @@ The browser runs both ceremonies through the plugin's client in
 [`@app/authClient`](src/app/authClient.ts). The requests go to the mounted
 handler, so its forced-reset and MFA-enrollment restrictions apply to them.
 Better Auth checks recent authentication for registration with the same
-15-minute freshness window. The plugin's list, rename, and delete endpoints
+15-minute freshness window, when it issues the options and again when it
+verifies the response. Registration does not use the automatic retry. Before the
+ceremony starts, the client reads the cached freshness deadline. If less than
+five minutes remain, the client opens the challenge first, because the session
+must stay fresh until verification. After a challenge, the user starts the
+ceremony again with a new click. An automatic retry can lose the browser's user
+activation, and a retry after a rejected verification leaves an orphaned
+passkey on the authenticator. The plugin's list, rename, and delete endpoints
 answer 404 over HTTP, because the list returns public keys and counters and the
 mutations skip recent authentication. Server functions call these three through
 `auth.api` and apply Virtool's policies.
 
-The sign-in options and verify paths each allow 3 requests per client IP in 10
-seconds, the same as Better Auth's default rule for `/sign-in/*`. The limit is
-a `rateLimit.customRules` entry. A refused request gets a 429.
+The sign-in verify path allows 3 requests per client IP in 10 seconds, the same
+as Better Auth's default rule for `/sign-in/*`. The sign-in options path allows
+10 requests per client IP in 60 seconds, because the sign-in form asks for a
+new challenge each time its autofill request starts again. The limits are
+`rateLimit.customRules` entries. A refused request gets a 429.
+
+The sign-in form keeps a passkey request in the username autofill. It starts
+the request again before the challenge expires, after a refused passkey, after
+an explicit passkey sign-in that does not finish, and after the two-factor
+step. An explicit passkey sign-in first stops the autofill request and waits
+for it to settle, because the two requests share one challenge cookie and the
+browser runs one ceremony at a time. A failure before the user picks a passkey
+from the autofill shows nothing.
 
 | Operation | Entry point | Policy |
 | --- | --- | --- |
-| Sign in | `authClient.signIn.passkey()` | Open, rate limited |
+| Sign in | `authClient.signIn.passkey()`, `startPasskeyAutofill()` | Open, rate limited |
 | Recent authentication | `verifyRecentAuthenticationWithPasskey()` | Session user's passkeys only, rate limited |
 | Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
 | List | `findPasskeysFn` | `authenticated()`, Better Auth session only |

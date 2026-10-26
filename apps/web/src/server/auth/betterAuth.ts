@@ -40,6 +40,7 @@ import {
 	AUTH_IP_ADDRESS_OPTIONS,
 	normalizeBrowserSessionMetadata,
 } from "./sessionMetadata";
+import { trustDeviceGuardPlugin } from "./trustDevice";
 
 /**
  * The Better Auth endpoints the browser and Virtool's own server code call over
@@ -47,9 +48,11 @@ import {
  * an upgrade adds, answers 404.
  *
  * Password and second-factor sign-in, sign-out, sessions, passwords, and the
- * passkey list and its mutations go through `auth.api` in Virtool's server
- * functions, which apply Virtool's policy. `/two-factor/get-totp-uri` stays
- * out because it returns the TOTP secret again for only the password.
+ * passkey list and its mutations, and TOTP removal and recovery-code
+ * replacement go through `auth.api` in Virtool's server functions, which apply
+ * Virtool's policy. `/two-factor/get-totp-uri` stays out because it returns the
+ * TOTP secret again for only the password. `/two-factor/enable` checks only the
+ * password, so it stays because Better Auth refuses it once TOTP is on.
  *
  * The match is exact, so a variant of a path, such as one with a trailing
  * slash or in a different case, is refused.
@@ -62,8 +65,6 @@ const HTTP_ALLOWED_ENDPOINTS = new Set(
 		["POST", "/passkey/verify-registration"],
 		["POST", "/two-factor/enable"],
 		["POST", "/two-factor/verify-totp"],
-		["POST", "/two-factor/generate-backup-codes"],
-		["POST", "/two-factor/disable"],
 		["GET", RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH],
 		["POST", RECENT_AUTHENTICATION_PATH],
 	].map(([method, path]) => `${method} ${AUTH_BASE_PATH}${path}`),
@@ -73,10 +74,18 @@ const HTTP_ALLOWED_ENDPOINTS = new Set(
  * Limit passkey sign-in as Better Auth limits its own sign-in paths.
  *
  * Better Auth's default rule matches only paths that start with `/sign-in`.
- * An options request writes a challenge row, so the limit also stops a caller
- * who fills the verification table.
  */
 const PASSKEY_SIGN_IN_RATE_LIMIT = { window: 10, max: 3 };
+
+/**
+ * Limit passkey challenges separately from sign-in attempts.
+ *
+ * The sign-in form asks for a new challenge each time its autofill request
+ * starts again, so the sign-in limit would refuse a user who cancels a passkey
+ * dialog twice. An options request writes a challenge row, so the limit also
+ * stops a caller who fills the verification table.
+ */
+const PASSKEY_OPTIONS_RATE_LIMIT = { window: 60, max: 10 };
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -226,7 +235,7 @@ export function createAuth({
 			customStorage: createRateLimitStorage(db),
 			// Keys are paths without the base path.
 			customRules: {
-				"/passkey/generate-authenticate-options": PASSKEY_SIGN_IN_RATE_LIMIT,
+				"/passkey/generate-authenticate-options": PASSKEY_OPTIONS_RATE_LIMIT,
 				"/passkey/verify-authentication": PASSKEY_SIGN_IN_RATE_LIMIT,
 			},
 		},
@@ -348,6 +357,7 @@ export function createAuth({
 		},
 		plugins: [
 			virtoolSessionPlugin(db),
+			trustDeviceGuardPlugin(),
 			recentAuthenticationPlugin({
 				db,
 				origin: publicOrigin,

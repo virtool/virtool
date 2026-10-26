@@ -8,13 +8,8 @@ type RateLimit = {
 	lastRequest: number;
 };
 
-const PRUNE_INTERVAL_MS = 60 * 60_000;
-const RETENTION_MS = 24 * 60 * 60_000;
-
 /** Consume rate limits atomically across web instances. */
 export function createRateLimitStorage(db: Db) {
-	let lastPrunedAt = Date.now();
-
 	async function get(key: string): Promise<RateLimit | undefined> {
 		const [row] = await db
 			.select({
@@ -45,13 +40,6 @@ export function createRateLimitStorage(db: Db) {
 		const now = Date.now();
 		const windowMs = rule.window * 1000;
 		const cutoff = now - windowMs;
-
-		if (now - lastPrunedAt >= PRUNE_INTERVAL_MS) {
-			lastPrunedAt = now;
-			await db
-				.delete(authRateLimits)
-				.where(lt(authRateLimits.lastRequest, now - RETENTION_MS));
-		}
 
 		const [spent] = await db
 			.insert(authRateLimits)

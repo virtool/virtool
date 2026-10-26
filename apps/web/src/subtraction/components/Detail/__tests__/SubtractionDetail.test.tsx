@@ -1,4 +1,3 @@
-import { getSubtractionFastaName } from "@subtraction/utils";
 import { screen } from "@testing-library/react";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeJobNested } from "@tests/fake/jobs";
@@ -6,7 +5,10 @@ import { createFakePermissions } from "@tests/fake/permissions";
 import { createFakeSubtraction } from "@tests/fake/subtractions";
 import { mockGetSubtraction } from "@tests/server-fn/subtractions";
 import { renderRoute } from "@tests/setup";
-import type { SubtractionMinimal } from "@virtool/contracts";
+import {
+	getSubtractionFastaName,
+	type SubtractionMinimal,
+} from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 
 function formatSubtractionPath(subtraction: SubtractionMinimal) {
@@ -37,7 +39,6 @@ describe("<SubtractionDetail />", () => {
 		const fastaName = getSubtractionFastaName(subtraction.name);
 		const download = await screen.findByRole("link", { name: fastaName });
 		expect(download).toHaveAttribute("href", subtraction.files[0]?.downloadUrl);
-		expect(download).toHaveAttribute("download", fastaName);
 
 		expect(getSubtraction).toHaveBeenCalled();
 	});

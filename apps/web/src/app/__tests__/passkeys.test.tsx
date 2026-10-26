@@ -7,11 +7,14 @@ const client = vi.hoisted(() => ({
 	addPasskey: vi.fn(),
 	browserSupportsAutofill: vi.fn(),
 	cancelCeremony: vi.fn(),
+	fetch: vi.fn(),
 	signInPasskey: vi.fn(),
+	startAuthentication: vi.fn(),
 }));
 
 vi.mock("@app/authClient", () => ({
 	authClient: {
+		$fetch: client.fetch,
 		passkey: { addPasskey: client.addPasskey },
 		signIn: { passkey: client.signInPasskey },
 	},
@@ -19,6 +22,7 @@ vi.mock("@app/authClient", () => ({
 
 vi.mock("@simplewebauthn/browser", () => ({
 	browserSupportsWebAuthnAutofill: client.browserSupportsAutofill,
+	startAuthentication: client.startAuthentication,
 	WebAuthnAbortService: { cancelCeremony: client.cancelCeremony },
 }));
 
@@ -37,7 +41,7 @@ import {
 	getPasskeyNotice,
 	PasskeyCeremonyError,
 	signInWithPasskey,
-	signInWithPasskeyAutofill,
+	startPasskeyAutofill,
 	useSingleCeremony,
 } from "../passkeys";
 
@@ -98,41 +102,139 @@ describe("usePasskeySupport", () => {
 	});
 });
 
-describe("signInWithPasskeyAutofill", () => {
-	it("does not start a ceremony where the browser has no autofill", async () => {
+describe("startPasskeyAutofill", () => {
+	const options = { data: { challenge: "challenge" }, error: null };
+	const credential = { id: "credential", clientExtensionResults: {} };
+
+	function mockAutofill({
+		challenge = options,
+		verified = { data: {}, error: null },
+	}: {
+		challenge?: unknown;
+		verified?: unknown;
+	} = {}) {
+		client.browserSupportsAutofill.mockResolvedValue(true);
+		client.fetch.mockImplementation((path: string) =>
+			Promise.resolve(
+				path === "/passkey/generate-authenticate-options"
+					? challenge
+					: verified,
+			),
+		);
+	}
+
+	it("does not ask for a challenge where the browser has no autofill", async () => {
 		client.browserSupportsAutofill.mockResolvedValue(false);
 
-		await expect(signInWithPasskeyAutofill()).resolves.toBe(false);
-		expect(client.signInPasskey).not.toHaveBeenCalled();
+		await expect(startPasskeyAutofill().result).resolves.toBe(false);
+		expect(client.fetch).not.toHaveBeenCalled();
 	});
 
 	it("resolves true when an autofilled passkey signs the user in", async () => {
-		client.browserSupportsAutofill.mockResolvedValue(true);
-		client.signInPasskey.mockResolvedValue({ data: {}, error: null });
+		mockAutofill();
+		client.startAuthentication.mockResolvedValue(credential);
 
-		await expect(signInWithPasskeyAutofill()).resolves.toBe(true);
-		expect(client.signInPasskey).toHaveBeenCalledWith({ autoFill: true });
+		await expect(startPasskeyAutofill().result).resolves.toBe(true);
+		expect(client.startAuthentication).toHaveBeenCalledWith({
+			optionsJSON: options.data,
+			useBrowserAutofill: true,
+		});
+		expect(client.fetch).toHaveBeenCalledWith(
+			"/passkey/verify-authentication",
+			expect.objectContaining({
+				body: { response: credential },
+				method: "POST",
+			}),
+		);
 	});
 
 	it.each([
-		"ERROR_CEREMONY_ABORTED",
-		"ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
-		"AUTH_CANCELLED",
-	])("stops quietly on %s", async (code) => {
-		client.browserSupportsAutofill.mockResolvedValue(true);
-		client.signInPasskey.mockResolvedValue(failure(400, code));
+		[429, "TOO_MANY_REQUESTS"],
+		[503, undefined],
+	])(
+		"ends quietly when the challenge request fails with a %i",
+		async (status, code) => {
+			mockAutofill({ challenge: failure(status, code) });
 
-		await expect(signInWithPasskeyAutofill()).resolves.toBe(false);
+			await expect(startPasskeyAutofill().result).resolves.toBe(false);
+			expect(client.startAuthentication).not.toHaveBeenCalled();
+			expect(Sentry.captureException).not.toHaveBeenCalled();
+		},
+	);
+
+	it("reports an unexpected challenge failure without showing it", async () => {
+		mockAutofill({ challenge: failure(500) });
+
+		await expect(startPasskeyAutofill().result).resolves.toBe(false);
+		expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+	});
+
+	it("ends quietly when the browser stops the ceremony", async () => {
+		mockAutofill();
+		client.startAuthentication.mockRejectedValue(new Error("NotAllowedError"));
+
+		await expect(startPasskeyAutofill().result).resolves.toBe(false);
 	});
 
 	it("rejects with the sign-in failure when the server refuses", async () => {
-		client.browserSupportsAutofill.mockResolvedValue(true);
-		client.signInPasskey.mockResolvedValue(failure(401, "INVALID_CREDENTIALS"));
+		mockAutofill({ verified: failure(401, "INVALID_CREDENTIALS") });
+		client.startAuthentication.mockResolvedValue(credential);
 
-		const caught = await signInWithPasskeyAutofill().catch((err) => err);
+		const caught = await startPasskeyAutofill().result.catch((err) => err);
 
 		expect(caught).toBeInstanceOf(PasskeyCeremonyError);
 		expect(caught.kind).toBe("failed");
+	});
+
+	it("gives a neutral notice when the challenge expired", async () => {
+		mockAutofill({ verified: failure(400, "CHALLENGE_NOT_FOUND") });
+		client.startAuthentication.mockResolvedValue(credential);
+
+		const caught = await startPasskeyAutofill().result.catch((err) => err);
+
+		expect(caught.kind).toBe("incomplete");
+		expect(getPasskeyNotice(caught)?.tone).toBe("neutral");
+	});
+
+	it("waits for the challenge before it settles a stop", async () => {
+		const challenge = Promise.withResolvers<typeof options>();
+		client.browserSupportsAutofill.mockResolvedValue(true);
+		client.fetch.mockReturnValue(challenge.promise);
+
+		const autofill = startPasskeyAutofill();
+		await vi.waitFor(() => expect(client.fetch).toHaveBeenCalled());
+		const stopped = vi.fn();
+		const stop = autofill.stop().then(stopped);
+		await Promise.resolve();
+
+		expect(stopped).not.toHaveBeenCalled();
+
+		challenge.resolve(options);
+
+		await stop;
+		expect(stopped).toHaveBeenCalledWith(false);
+		expect(client.startAuthentication).not.toHaveBeenCalled();
+	});
+
+	it("cancels a running ceremony once when stopped", async () => {
+		mockAutofill();
+		client.startAuthentication.mockImplementation(
+			() =>
+				new Promise((_, reject) => {
+					client.cancelCeremony.mockImplementation(() =>
+						reject(new Error("AbortError")),
+					);
+				}),
+		);
+
+		const autofill = startPasskeyAutofill();
+		await vi.waitFor(() =>
+			expect(client.startAuthentication).toHaveBeenCalled(),
+		);
+
+		await expect(autofill.stop()).resolves.toBe(false);
+		await expect(autofill.stop()).resolves.toBe(false);
+		expect(client.cancelCeremony).toHaveBeenCalledTimes(1);
 	});
 });
 
@@ -164,7 +266,6 @@ describe("signInWithPasskey", () => {
 	it.each([
 		[400, "USER_VERIFICATION_REQUIRED"],
 		[401, "INVALID_CREDENTIALS"],
-		[400, "CHALLENGE_NOT_FOUND"],
 	])("gives a %i %s the generic sign-in failure", async (status, code) => {
 		client.signInPasskey.mockResolvedValue(failure(status, code));
 
