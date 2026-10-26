@@ -1,7 +1,7 @@
 import { hashPassword } from "@virtool/data/auth/password";
 import { seedSession, seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts } from "@virtool/data/db/schema/auth";
+import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -66,6 +66,9 @@ const { createAuth } = await import("../auth/betterAuth");
 const { assertTotpEnrollment, sessionCookie, totp } = await import(
 	"../auth/test/fixtures"
 );
+const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
+const { SessionNotFreshError } = await import("../auth/policy");
+const { ClientError } = await import("../errors");
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
@@ -150,4 +153,86 @@ it("reports the number of recovery codes but never the codes", async () => {
 	for (const code of backupCodes) {
 		expect(serialized).not.toContain(code);
 	}
+});
+
+async function enrollTotp() {
+	await signInMigratedUser();
+	const { backupCodes, totpURI } = assertTotpEnrollment(
+		await auth.api.enableTwoFactor({
+			headers: getRequest().headers,
+			body: { password: PASSWORD },
+		}),
+	);
+	await auth.api.verifyTOTP({
+		headers: getRequest().headers,
+		body: { code: totp(totpURI) },
+	});
+	return backupCodes;
+}
+
+async function ageSessions() {
+	await db.update(authSessions).set({
+		createdAt: new Date(Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1)),
+	});
+}
+
+async function isTwoFactorEnabled() {
+	const [row] = await db
+		.select({ twoFactorEnabled: users.twoFactorEnabled })
+		.from(users);
+	return row?.twoFactorEnabled;
+}
+
+it("replaces the recovery codes for a fresh session", async () => {
+	const oldCodes = await enrollTotp();
+
+	const codes = (await callServerFn(handlers, "regenerateRecoveryCodesFn", {
+		password: PASSWORD,
+	})) as string[];
+
+	expect(codes).toHaveLength(oldCodes.length);
+	expect(codes).not.toEqual(oldCodes);
+});
+
+it("refuses to replace the recovery codes for a stale session", async () => {
+	await enrollTotp();
+	await ageSessions();
+
+	await expect(
+		callServerFn(handlers, "regenerateRecoveryCodesFn", { password: PASSWORD }),
+	).rejects.toBeInstanceOf(SessionNotFreshError);
+});
+
+it("turns TOTP off for a fresh session", async () => {
+	await enrollTotp();
+
+	expect(
+		await callServerFn(handlers, "disableTotpFn", { password: PASSWORD }),
+	).toBeNull();
+	expect(await isTwoFactorEnabled()).toBe(false);
+});
+
+it("refuses to turn TOTP off for a stale session", async () => {
+	await enrollTotp();
+	await ageSessions();
+
+	await expect(
+		callServerFn(handlers, "disableTotpFn", { password: PASSWORD }),
+	).rejects.toBeInstanceOf(SessionNotFreshError);
+	expect(await isTwoFactorEnabled()).toBe(true);
+});
+
+it("refuses to turn TOTP off with the wrong password", async () => {
+	await enrollTotp();
+
+	const error = await callServerFn(handlers, "disableTotpFn", {
+		password: "not-the-password",
+	}).catch((err: unknown) => err);
+
+	expect(error).toBeInstanceOf(ClientError);
+	expect(error).toMatchObject({
+		message: "The password is not correct.",
+		status: 400,
+	});
+	expect(await isTwoFactorEnabled()).toBe(true);
 });

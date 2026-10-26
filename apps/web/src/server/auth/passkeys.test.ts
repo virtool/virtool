@@ -459,7 +459,11 @@ describe("sign-in", () => {
 		const { browser, response } = await signIn(key);
 		expect(response.status).toBe(200);
 
-		const restricted = await browser.send("POST", "/two-factor/disable", {});
+		const restricted = await browser.send(
+			"POST",
+			"/passkey/verify-registration",
+			{},
+		);
 		expect(restricted.status).toBe(403);
 		expect(await restricted.json()).toMatchObject({
 			code: "PASSWORD_RESET_REQUIRED",
@@ -471,7 +475,11 @@ describe("sign-in", () => {
 		await seedSettings(db, { mfaPolicy: "required" });
 
 		const { browser } = await signIn(key);
-		const restricted = await browser.send("POST", "/two-factor/disable", {});
+		const restricted = await browser.send(
+			"POST",
+			"/passkey/verify-registration",
+			{},
+		);
 
 		expect(restricted.status).toBe(403);
 		expect(await restricted.json()).toMatchObject({

@@ -4,14 +4,17 @@ import {
 	accountServerFnMocks,
 	mockGetAccountSecurity,
 } from "@tests/server-fn/account";
+import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthentication";
 import { renderWithProviders } from "@tests/setup";
+import {
+	CLIENT_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+} from "@virtool/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 const { twoFactor, resetClient } = vi.hoisted(() => ({
 	twoFactor: {
-		disable: vi.fn(),
 		enable: vi.fn(),
-		generateBackupCodes: vi.fn(),
 		verifyTotp: vi.fn(),
 	},
 	resetClient: vi.fn(),
@@ -36,6 +39,12 @@ function success<T>(data: T) {
 
 function failure(status: number, code?: string) {
 	return { data: null, error: { code, message: "", status, statusText: "" } };
+}
+
+function staleSessionError() {
+	return Object.assign(new Error("Recent authentication required"), {
+		name: SESSION_NOT_FRESH_ERROR_NAME,
+	});
 }
 
 async function enterPassword(user: ReturnType<typeof userEvent.setup>) {
@@ -255,8 +264,8 @@ describe("<AccountTwoFactor />", () => {
 			recoveryCodesRemaining: 1,
 			twoFactorEnabled: true,
 		});
-		twoFactor.generateBackupCodes.mockResolvedValue(
-			success({ status: true, backupCodes: BACKUP_CODES }),
+		accountServerFnMocks.regenerateRecoveryCodesFn.mockResolvedValue(
+			BACKUP_CODES,
 		);
 
 		renderWithProviders(<AccountTwoFactor />);
@@ -268,9 +277,9 @@ describe("<AccountTwoFactor />", () => {
 			within(dialog).getByRole("button", { name: "Make new codes" }),
 		);
 
-		expect(twoFactor.generateBackupCodes).toHaveBeenCalledWith({
-			password: "hunter2hunter2",
-		});
+		expect(accountServerFnMocks.regenerateRecoveryCodesFn).toHaveBeenCalledWith(
+			{ data: { password: "hunter2hunter2" } },
+		);
 		expect(await within(dialog).findByText("aaaa-1111")).toBeInTheDocument();
 		await user.click(
 			within(dialog).getByRole("checkbox", {
@@ -295,7 +304,7 @@ describe("<AccountTwoFactor />", () => {
 			recoveryCodesRemaining: 8,
 			twoFactorEnabled: true,
 		});
-		twoFactor.disable.mockResolvedValue(success({ status: true }));
+		accountServerFnMocks.disableTotpFn.mockResolvedValue(null);
 
 		renderWithProviders(<AccountTwoFactor />);
 		await user.click(await screen.findByRole("button", { name: "Turn off" }));
@@ -303,8 +312,8 @@ describe("<AccountTwoFactor />", () => {
 		mockGetAccountSecurity();
 		await user.click(within(dialog).getByRole("button", { name: "Turn off" }));
 
-		expect(twoFactor.disable).toHaveBeenCalledWith({
-			password: "hunter2hunter2",
+		expect(accountServerFnMocks.disableTotpFn).toHaveBeenCalledWith({
+			data: { password: "hunter2hunter2" },
 		});
 		expect(await screen.findByText("Off")).toBeInTheDocument();
 		expect(screen.queryByRole("dialog")).toBeNull();
@@ -318,7 +327,7 @@ describe("<AccountTwoFactor />", () => {
 			recoveryCodesRemaining: 8,
 			twoFactorEnabled: true,
 		});
-		twoFactor.disable.mockResolvedValue(success({ status: true }));
+		accountServerFnMocks.disableTotpFn.mockResolvedValue(null);
 
 		renderWithProviders(<AccountTwoFactor />);
 		await user.click(await screen.findByRole("button", { name: "Turn off" }));
@@ -331,5 +340,103 @@ describe("<AccountTwoFactor />", () => {
 		await user.click(within(dialog).getByRole("button", { name: "Turn off" }));
 
 		await waitFor(() => expect(resetClient).toHaveBeenCalled());
+	});
+
+	it("confirms the user's identity before turning TOTP off on a stale session", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({
+			recoveryCodesRemaining: 8,
+			twoFactorEnabled: true,
+		});
+		accountServerFnMocks.disableTotpFn
+			.mockRejectedValueOnce(staleSessionError())
+			.mockResolvedValueOnce(null);
+		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
+			{ password: true, totp: false },
+		);
+		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockResolvedValue(
+			{ createdAt: new Date(), sessionId: 2 },
+		);
+
+		renderWithProviders(<AccountTwoFactor />);
+		await user.click(await screen.findByRole("button", { name: "Turn off" }));
+		const dialog = await enterPassword(user);
+		mockGetAccountSecurity();
+		await user.click(within(dialog).getByRole("button", { name: "Turn off" }));
+
+		const challenge = await screen.findByRole("dialog", {
+			name: "Confirm your identity",
+		});
+		await user.type(
+			await within(challenge).findByLabelText("Password"),
+			"hunter2hunter2",
+		);
+		await user.click(
+			within(challenge).getByRole("button", { name: "Continue" }),
+		);
+
+		expect(await screen.findByText("Off")).toBeInTheDocument();
+		expect(accountServerFnMocks.disableTotpFn).toHaveBeenCalledTimes(2);
+	});
+
+	it("shows no error when the identity check for new recovery codes is cancelled", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({
+			recoveryCodesRemaining: 1,
+			twoFactorEnabled: true,
+		});
+		accountServerFnMocks.regenerateRecoveryCodesFn.mockRejectedValue(
+			staleSessionError(),
+		);
+		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
+			{ password: true, totp: false },
+		);
+
+		renderWithProviders(<AccountTwoFactor />);
+		await user.click(
+			await screen.findByRole("button", { name: "Make new recovery codes" }),
+		);
+		const dialog = await enterPassword(user);
+		await user.click(
+			within(dialog).getByRole("button", { name: "Make new codes" }),
+		);
+		const challenge = await screen.findByRole("dialog", {
+			name: "Confirm your identity",
+		});
+		await within(challenge).findByLabelText("Password");
+		await user.click(within(challenge).getByRole("button", { name: "Cancel" }));
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole("dialog", { name: "Confirm your identity" }),
+			).toBeNull(),
+		);
+		expect(screen.queryByText("Something went wrong. Try again.")).toBeNull();
+		expect(
+			accountServerFnMocks.regenerateRecoveryCodesFn,
+		).toHaveBeenCalledTimes(1);
+	});
+
+	it("shows a refused password from the server", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({
+			recoveryCodesRemaining: 8,
+			twoFactorEnabled: true,
+		});
+		accountServerFnMocks.disableTotpFn.mockRejectedValue(
+			Object.assign(new Error("The password is not correct."), {
+				name: CLIENT_ERROR_NAME,
+				status: 400,
+			}),
+		);
+
+		renderWithProviders(<AccountTwoFactor />);
+		await user.click(await screen.findByRole("button", { name: "Turn off" }));
+		const dialog = await enterPassword(user);
+		await user.click(within(dialog).getByRole("button", { name: "Turn off" }));
+
+		expect(
+			await within(dialog).findByText("The password is not correct."),
+		).toBeInTheDocument();
 	});
 });

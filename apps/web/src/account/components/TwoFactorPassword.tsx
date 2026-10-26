@@ -1,3 +1,4 @@
+import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
 import { DialogFooter } from "@base/Dialog";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import { InputPassword } from "@base/Input";
@@ -46,7 +47,9 @@ export default function TwoFactorPassword({
 				<FieldError
 					errors={[
 						errors.password,
-						error ? { message: getTwoFactorErrorMessage(error) } : undefined,
+						error && !isRecentAuthenticationCancelled(error)
+							? { message: getTwoFactorErrorMessage(error) }
+							: undefined,
 					]}
 				/>
 			</Field>

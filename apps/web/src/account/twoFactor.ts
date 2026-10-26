@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
+	CLIENT_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 	UNAVAILABLE_MESSAGE,
 } from "@virtool/contracts";
@@ -79,29 +80,6 @@ export async function confirmTotp(code: string): Promise<void> {
 	}
 }
 
-/** Replace every recovery code. The old codes stop working. */
-export async function regenerateRecoveryCodes(
-	password: string,
-): Promise<string[]> {
-	const authClient = await loadAuthClient();
-	const { data, error } = await authClient.twoFactor.generateBackupCodes({
-		password,
-	});
-	if (error) {
-		throw toTwoFactorError(error);
-	}
-	return data.backupCodes;
-}
-
-/** Turn TOTP off. Its secret and recovery codes are deleted. */
-export async function disableTotp(password: string): Promise<void> {
-	const authClient = await loadAuthClient();
-	const { error } = await authClient.twoFactor.disable({ password });
-	if (error) {
-		throw toTwoFactorError(error);
-	}
-}
-
 /** Read the setup key from an `otpauth://` URI, for manual entry. */
 export function getTotpSecret(totpURI: string): string {
 	return new URL(totpURI).searchParams.get("secret") ?? "";
@@ -110,11 +88,15 @@ export function getTotpSecret(totpURI: string): string {
 /**
  * The message to show for a failed TOTP action.
  *
- * Only messages from this module are shown. Anything else gets a generic
- * message, because it can carry details that are not for the user.
+ * Only messages from this module and client errors from server functions are
+ * shown. Anything else gets a generic message, because it can carry details
+ * that are not for the user.
  */
 export function getTwoFactorErrorMessage(error: unknown): string {
-	if (error instanceof Error && error.name === TWO_FACTOR_ERROR_NAME) {
+	if (
+		error instanceof Error &&
+		(error.name === TWO_FACTOR_ERROR_NAME || error.name === CLIENT_ERROR_NAME)
+	) {
 		return error.message;
 	}
 	return "Something went wrong. Try again.";
