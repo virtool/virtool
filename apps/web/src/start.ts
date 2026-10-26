@@ -5,6 +5,7 @@ import {
 } from "@sentry/tanstackstart-react";
 import { createAuthenticationMiddleware } from "@server/auth/middleware";
 import { buildContentSecurityPolicy, getRequestNonce } from "@server/csp";
+import { isCsrfCandidate } from "@server/csrf";
 import {
 	databaseUnavailableMiddleware,
 	errorLoggingMiddleware,
@@ -121,11 +122,10 @@ const documentHeadersMiddleware = createMiddleware().server(
 	},
 );
 
-// Server functions are same-origin RPC endpoints callable from any site.
-// Scoping CSRF checks to serverFn requests avoids blocking regular page
-// loads and API proxy routes that don't share the same threat model.
+// Page loads and API-key requests are left unchecked: neither carries a
+// cookie-authenticated mutation that a forged cross-origin request can trigger.
 const csrfMiddleware = createCsrfMiddleware({
-	filter: (ctx) => ctx.handlerType === "serverFn",
+	filter: isCsrfCandidate,
 });
 
 // Sentry middleware go first in each list so the request span wraps the
