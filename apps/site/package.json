@@ -14,6 +14,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@astrojs/markdown-satteri": "^0.4.5",
     "@astrojs/mdx": "^8.1.1",
     "@astrojs/prism": "^4.1.1",
     "@astrojs/sitemap": "^3.7.4",
@@ -27,7 +28,7 @@
     "node-cache": "^5.1.2",
     "prettier": "^3.9.9",
     "prismjs": "^1.30.0",
-    "rehype-rewrite": "^4.0.4",
+    "satteri": "^0.10.5",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.2.2"
   },
