@@ -48,9 +48,11 @@ import { trustDeviceGuardPlugin } from "./trustDevice";
  * an upgrade adds, answers 404.
  *
  * Password and second-factor sign-in, sign-out, sessions, passwords, and the
- * passkey list and its mutations go through `auth.api` in Virtool's server
- * functions, which apply Virtool's policy. `/two-factor/get-totp-uri` stays
- * out because it returns the TOTP secret again for only the password.
+ * passkey list and its mutations, and TOTP removal and recovery-code
+ * replacement go through `auth.api` in Virtool's server functions, which apply
+ * Virtool's policy. `/two-factor/get-totp-uri` stays out because it returns the
+ * TOTP secret again for only the password. `/two-factor/enable` checks only the
+ * password, so it stays because Better Auth refuses it once TOTP is on.
  *
  * The match is exact, so a variant of a path, such as one with a trailing
  * slash or in a different case, is refused.
@@ -63,8 +65,6 @@ const HTTP_ALLOWED_ENDPOINTS = new Set(
 		["POST", "/passkey/verify-registration"],
 		["POST", "/two-factor/enable"],
 		["POST", "/two-factor/verify-totp"],
-		["POST", "/two-factor/generate-backup-codes"],
-		["POST", "/two-factor/disable"],
 		["GET", RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH],
 		["POST", RECENT_AUTHENTICATION_PATH],
 	].map(([method, path]) => `${method} ${AUTH_BASE_PATH}${path}`),

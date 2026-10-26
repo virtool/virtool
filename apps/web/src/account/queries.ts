@@ -2,9 +2,7 @@ import { accountQueryKeys } from "@account/keys";
 import { recentAuthenticationQueryOptions } from "@account/recentAuthentication";
 import {
 	confirmTotp,
-	disableTotp,
 	enableTotp,
-	regenerateRecoveryCodes,
 	type TotpEnrollment,
 } from "@account/twoFactor";
 import { addPasskey, useSingleCeremony } from "@app/passkeys";
@@ -18,9 +16,11 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	createApiKeyFn,
 	deleteApiKeyFn,
+	disableTotpFn,
 	findApiKeysFn,
 	findPasskeysFn,
 	getAccountSecurityFn,
+	regenerateRecoveryCodesFn,
 	removePasskeyFn,
 	renamePasskeyFn,
 	updateApiKeyFn,
@@ -425,10 +425,14 @@ export function useConfirmTotp() {
 /** Initializes a mutator that replaces every recovery code. */
 export function useRegenerateRecoveryCodes() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ password }: { password: string }) =>
+			regenerateRecoveryCodesFn({ data: { password } }),
+	);
 
 	return useMutation<string[], Error, { password: string }>({
 		gcTime: 0,
-		mutationFn: ({ password }) => regenerateRecoveryCodes(password),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.security() });
 		},
@@ -443,10 +447,14 @@ export function useRegenerateRecoveryCodes() {
  */
 export function useDisableTotp() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ password }: { password: string }) =>
+			disableTotpFn({ data: { password } }),
+	);
 
-	return useMutation<void, Error, { password: string }>({
+	return useMutation<null, Error, { password: string }>({
 		gcTime: 0,
-		mutationFn: ({ password }) => disableTotp(password),
+		mutationFn,
 		onSuccess: () => invalidateTwoFactorQueries(queryClient),
 	});
 }

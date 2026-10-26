@@ -215,9 +215,12 @@ server-function authentication and CSRF middleware, so Better Auth performs its
 own origin check against `VT_PUBLIC_ORIGIN`.
 
 The handler serves only an allow-list of Better Auth endpoints: the passkey
-sign-in and registration ceremonies, the TOTP `enable`, `verify-totp`,
-`generate-backup-codes`, and `disable` calls, and the two recent-authentication
-paths. Every other path, including one that a plugin or an upgrade adds,
+sign-in and registration ceremonies, the TOTP `enable` and `verify-totp`
+calls, and the two recent-authentication paths. `enable` checks only the
+password, so it is served because Better Auth refuses it once TOTP is on.
+`disableTotpFn` and `regenerateRecoveryCodesFn` call `disable` and
+`generate-backup-codes` through `auth.api`. They require recent authentication
+(`totp.disable` and `recovery_codes.regenerate`) and the password. Every other path, including one that a plugin or an upgrade adds,
 answers 404. Server functions call other endpoints through `auth.api`. To serve
 a new endpoint over HTTP, add it to `HTTP_ALLOWED_ENDPOINTS` in
 [betterAuth.ts](src/server/auth/betterAuth.ts).
@@ -549,8 +552,10 @@ over HTTP, because it returns the secret again for only the password.
 Enrollment shows the secret one time, from the `enable` response.
 
 `/account/security` holds the email, password, TOTP, passkey, and session
-controls. The browser calls the TOTP endpoints through `twoFactorClient`
-([twoFactor.ts](src/account/twoFactor.ts)). The TOTP secret and recovery codes
+controls. The browser calls the TOTP enrollment endpoints through
+`twoFactorClient` ([twoFactor.ts](src/account/twoFactor.ts)). Turning TOTP off
+and making new recovery codes use server functions, which open the
+recent-authentication challenge when the session is stale. The TOTP secret and recovery codes
 stay in component state only, and the mutations use `gcTime: 0`. The user must
 confirm that they saved new recovery codes before the dialog closes.
 `getAccountSecurityFn` returns the number of unused recovery codes, never the

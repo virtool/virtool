@@ -337,3 +337,68 @@ export const getAccountSecurityFn = createServerFn({ method: "GET" })
 
 		return { ...security, recoveryCodesRemaining: backupCodes.length };
 	});
+
+const totpPasswordSchema = z.object({
+	password: z.string().min(1),
+});
+
+function rethrowTotpError(err: unknown): never {
+	if (err instanceof APIError) {
+		if (err.body?.code === "UNAUTHORIZED") {
+			throw new UnauthorizedError();
+		}
+		if (err.body?.code === "INVALID_PASSWORD") {
+			throw new ClientError("The password is not correct.", 400);
+		}
+		if (err.body?.code === "TWO_FACTOR_NOT_ENABLED") {
+			throw new ClientError("Two-factor authentication is off.", 409);
+		}
+	}
+	throw err;
+}
+
+/**
+ * Replace every recovery code of the signed-in user. The old codes stop
+ * working.
+ */
+export const regenerateRecoveryCodesFn = createServerFn({ method: "POST" })
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.recoveryCodesRegenerate),
+	])
+	.validator(totpPasswordSchema)
+	.handler(async ({ data }): Promise<string[]> => {
+		const { auth, headers } = await loadAuth();
+		try {
+			const { backupCodes } = await auth.api.generateBackupCodes({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { password: data.password },
+			});
+			return backupCodes;
+		} catch (err) {
+			return rethrowTotpError(err);
+		}
+	});
+
+/**
+ * Turn TOTP off for the signed-in user and delete its secret and recovery
+ * codes.
+ *
+ * Better Auth replaces the current session.
+ */
+export const disableTotpFn = createServerFn({ method: "POST" })
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.totpDisable)])
+	.validator(totpPasswordSchema)
+	.handler(async ({ data }) => {
+		const { auth, headers } = await loadAuth();
+		try {
+			await auth.api.disableTwoFactor({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { password: data.password },
+			});
+			return null;
+		} catch (err) {
+			return rethrowTotpError(err);
+		}
+	});
