@@ -1,7 +1,12 @@
+import { formatIsolateName } from "@app/utils";
 import Badge from "@base/Badge";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
+import Checkbox from "@base/Checkbox";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import { useListSelection } from "@base/useListSelection";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
+import OtuExport from "@otus/components/Detail/OtuExport";
+import { describeExportRows } from "@otus/export";
 import sortSequencesBySegment from "@otus/utils";
 import { useReferenceIsArchived } from "@references/hooks";
 import type { OtuIsolate, OtuSequence } from "@virtool/contracts";
@@ -18,16 +23,31 @@ import {
 	SEQUENCE_SEGMENT_COLUMN,
 } from "./SequenceValues";
 
+type SequenceListHeaderProps = {
+	/** Whether every, some, or no sequence is selected */
+	checked: boolean | "indeterminate";
+	/** Called to select or deselect every sequence */
+	onSelectAll: () => void;
+};
+
 /**
- * Column headings for the sequence list, aligned to each row's cells.
+ * Column headings for the sequence list, aligned to each row's cells, after a
+ * select-all checkbox.
  */
-function SequenceListHeader() {
+function SequenceListHeader({ checked, onSelectAll }: SequenceListHeaderProps) {
 	return (
-		<BoxGroupSection className="flex items-center bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-			<span aria-hidden className={SEQUENCE_CHEVRON_COLUMN} />
-			<span className={SEQUENCE_ACCESSION_COLUMN}>Accession</span>
-			<span className={SEQUENCE_SEGMENT_COLUMN}>Segment</span>
-			<span className={SEQUENCE_DEFINITION_COLUMN}>Definition</span>
+		<BoxGroupSection className="flex items-center gap-4 bg-gray-50 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+			<Checkbox
+				ariaLabel="Select all sequences"
+				checked={checked}
+				onClick={onSelectAll}
+			/>
+			<span className="flex flex-1 items-center min-w-0">
+				<span aria-hidden className={SEQUENCE_CHEVRON_COLUMN} />
+				<span className={SEQUENCE_ACCESSION_COLUMN}>Accession</span>
+				<span className={SEQUENCE_SEGMENT_COLUMN}>Segment</span>
+				<span className={SEQUENCE_DEFINITION_COLUMN}>Definition</span>
+			</span>
 		</BoxGroupSection>
 	);
 }
@@ -62,12 +82,27 @@ export default function Sequences({
 
 	const sequences = sortSequencesBySegment(activeIsolate.sequences, otu.schema);
 
+	// Each isolate starts with an empty selection.
+	const selection = useListSelection<OtuSequence>({
+		getKey: (sequence) => sequence.id,
+		resetKey: activeIsolate.id,
+	});
+
+	const selectedSequences = sequences.filter(selection.isSelected);
+
 	let sequenceComponents = sequences.map((sequence) => (
 		<Sequence
 			key={sequence.id}
 			{...sequence}
 			onEdit={() => setSequenceToEdit(sequence)}
 			onDelete={() => setSequenceToDelete(sequence)}
+			onSelect={(event) =>
+				selection.select(sequence, {
+					shiftKey: event.shiftKey,
+					visibleItems: sequences,
+				})
+			}
+			selected={selection.isSelected(sequence)}
 		/>
 	));
 
@@ -94,13 +129,44 @@ export default function Sequences({
 
 	return (
 		<>
-			<div className="flex items-center font-medium mb-2">
-				<strong className="text-base pr-1">Sequences</strong>
+			<div className="flex items-center gap-1 font-medium mb-2">
+				<strong className="text-base">Sequences</strong>
 				<Badge>{sequences.length}</Badge>
+				{selectedSequences.length > 0 && (
+					<span className="ml-2 text-sm text-gray-500">
+						{selectedSequences.length} selected
+					</span>
+				)}
+				<div className="ml-auto">
+					<OtuExport
+						description={describeExportRows(
+							selectedSequences.length,
+							sequences.length,
+							sequences.length,
+							"sequence",
+						)}
+						filenameParts={[otu.name, formatIsolateName(activeIsolate)]}
+						includeIsolateTable={false}
+						isolates={[
+							{
+								...activeIsolate,
+								sequences: selectedSequences.length
+									? selectedSequences
+									: sequences,
+							},
+						]}
+						otu={otu}
+					/>
+				</div>
 			</div>
 
 			<BoxGroup>
-				{hasSequences && <SequenceListHeader />}
+				{hasSequences && (
+					<SequenceListHeader
+						checked={selection.getVisibleState(sequences)}
+						onSelectAll={() => selection.toggleVisible(sequences)}
+					/>
+				)}
 				{sequenceComponents}
 			</BoxGroup>
 

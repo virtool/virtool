@@ -14,6 +14,8 @@ const defaultSettings: AccountSettings = {
 	pathoscopeColumns: [...PATHOSCOPE_COLUMNS],
 	preferAcronym: false,
 	quickAnalyzeWorkflow: "pathoscope",
+	referenceExportFastaHeader: "full",
+	referenceExportTableFormat: "csv",
 	showIds: true,
 	showVersions: true,
 	skipQuickAnalyzeDialog: true,

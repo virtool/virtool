@@ -16,6 +16,10 @@ import {
 	type PathoscopeColumn,
 	PERMISSION_NAMES,
 	type Permissions,
+	REFERENCE_EXPORT_FASTA_HEADERS,
+	REFERENCE_EXPORT_TABLE_FORMATS,
+	type ReferenceExportFastaHeader,
+	type ReferenceExportTableFormat,
 	type SortDirection,
 	type User,
 	type UserNested,
@@ -96,6 +100,8 @@ type StoredAccountSettings = {
 	/** Stored under its older name; the model calls it `preferAcronym`. */
 	prefer_abbreviation: boolean;
 	quick_analyze_workflow: "nuvs" | "pathoscope";
+	reference_export_fasta_header: ReferenceExportFastaHeader;
+	reference_export_table_format: ReferenceExportTableFormat;
 	show_ids: boolean;
 	show_versions: boolean;
 	skip_quick_analyze_dialog: boolean;
@@ -120,6 +126,16 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAcronym,
 		quickAnalyzeWorkflow:
 			blob.quick_analyze_workflow ?? DEFAULT_USER_SETTINGS.quickAnalyzeWorkflow,
+		referenceExportFastaHeader: REFERENCE_EXPORT_FASTA_HEADERS.includes(
+			blob.reference_export_fasta_header as ReferenceExportFastaHeader,
+		)
+			? (blob.reference_export_fasta_header as ReferenceExportFastaHeader)
+			: DEFAULT_USER_SETTINGS.referenceExportFastaHeader,
+		referenceExportTableFormat: REFERENCE_EXPORT_TABLE_FORMATS.includes(
+			blob.reference_export_table_format as ReferenceExportTableFormat,
+		)
+			? (blob.reference_export_table_format as ReferenceExportTableFormat)
+			: DEFAULT_USER_SETTINGS.referenceExportTableFormat,
 		showIds: blob.show_ids ?? DEFAULT_USER_SETTINGS.showIds,
 		showVersions: blob.show_versions ?? DEFAULT_USER_SETTINGS.showVersions,
 		skipQuickAnalyzeDialog:
@@ -139,6 +155,8 @@ function toStoredAccountSettings(
 		pathoscope_columns: settings.pathoscopeColumns,
 		prefer_abbreviation: settings.preferAcronym,
 		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
+		reference_export_fasta_header: settings.referenceExportFastaHeader,
+		reference_export_table_format: settings.referenceExportTableFormat,
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
 		skip_quick_analyze_dialog: settings.skipQuickAnalyzeDialog,
@@ -241,6 +259,8 @@ const DEFAULT_USER_SETTINGS: AccountSettings = {
 	showIds: true,
 	showVersions: true,
 	quickAnalyzeWorkflow: "pathoscope",
+	referenceExportFastaHeader: "full",
+	referenceExportTableFormat: "csv",
 	avatarSource: "initials",
 };
 
@@ -683,6 +703,8 @@ const STORED_ACCOUNT_SETTINGS_KEYS: {
 	pathoscopeColumns: "pathoscope_columns",
 	preferAcronym: "prefer_abbreviation",
 	quickAnalyzeWorkflow: "quick_analyze_workflow",
+	referenceExportFastaHeader: "reference_export_fasta_header",
+	referenceExportTableFormat: "reference_export_table_format",
 	showIds: "show_ids",
 	showVersions: "show_versions",
 	skipQuickAnalyzeDialog: "skip_quick_analyze_dialog",

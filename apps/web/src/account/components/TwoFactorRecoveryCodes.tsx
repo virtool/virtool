@@ -1,4 +1,5 @@
 import { writeToClipboard } from "@app/clipboard";
+import { downloadText } from "@app/download";
 import Alert from "@base/Alert";
 import Button from "@base/Button";
 import Checkbox from "@base/Checkbox";
@@ -13,13 +14,11 @@ function formatCodes(codes: string[]): string {
 }
 
 function downloadCodes(codes: string[]) {
-	const blob = new Blob([`${formatCodes(codes)}\n`], { type: "text/plain" });
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement("a");
-	link.href = url;
-	link.download = RECOVERY_CODES_FILENAME;
-	link.click();
-	URL.revokeObjectURL(url);
+	downloadText(
+		`${formatCodes(codes)}\n`,
+		RECOVERY_CODES_FILENAME,
+		"text/plain",
+	);
 }
 
 type TwoFactorRecoveryCodesProps = {
