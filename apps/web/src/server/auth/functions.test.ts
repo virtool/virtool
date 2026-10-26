@@ -448,6 +448,44 @@ it.each([false, true])(
 	},
 );
 
+it("keeps a TOTP user signed in after a forced reset", async () => {
+	const { totpURI, userId } = await enroll(true);
+	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	await callServerFn(handlers, "verifyTwoFactorFn", {
+		code: totp(totpURI),
+		recovery: false,
+	});
+	const [reset] = await db.select().from(authSessions);
+	if (!reset) {
+		throw new Error("second factor did not create a session");
+	}
+
+	expect(
+		await callServerFn(
+			handlers,
+			"resetPasswordFn",
+			{ password: "new-correct-horse-battery-staple" },
+			{
+				principal: {
+					kind: "password_reset",
+					userId,
+					sessionId: reset.id,
+					createdAt: reset.createdAt,
+					sessionStore: "better_auth",
+				},
+			},
+		),
+	).toEqual({ login: false, remediation: false, reset: false });
+
+	const sessions = await db.select().from(authSessions);
+	expect(sessions).toHaveLength(1);
+	const session = await auth.api.getSession({
+		headers: getRequest().headers,
+	});
+	expect(Number(session?.session.id)).toBe(sessions[0]?.id);
+	expect(Number(session?.user.id)).toBe(userId);
+});
+
 it("asks for TOTP at sign-in from a browser that holds a trust cookie", async () => {
 	const { userId } = await enroll(false);
 	const trust = await seedTrustDevice(db, userId);

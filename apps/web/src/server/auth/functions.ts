@@ -394,7 +394,7 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 			});
 
 			if (result.migrated) {
-				await signInUsername(result.handle, data.password);
+				await createReplacementSession(context.principal.userId);
 			} else {
 				await establishEmailRemediationSession(
 					db,
