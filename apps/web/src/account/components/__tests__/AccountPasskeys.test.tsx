@@ -182,12 +182,10 @@ describe("<AccountPasskeys />", () => {
 			"Your identity is confirmed. Select Add again to add the passkey.",
 		);
 		expect(addPasskey).not.toHaveBeenCalled();
+		expect(
+			recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn,
+		).toHaveBeenCalledTimes(2);
 
-		await waitFor(() =>
-			expect(
-				recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn,
-			).toHaveBeenCalledTimes(2),
-		);
 		await user.click(screen.getByRole("button", { name: "Add" }));
 
 		await waitFor(() => expect(addPasskey).toHaveBeenCalledTimes(1));

@@ -316,13 +316,23 @@ export function useRegisterPasskey() {
 	const requestChallenge = useRecentAuthenticationChallenge();
 	const ceremony = useSingleCeremony(addPasskey);
 
+	// The next click reads the cached deadline, so it must already be the one
+	// that the challenge set.
+	async function confirm(): Promise<PasskeyRegistration> {
+		await requestChallenge();
+		await queryClient.fetchQuery({
+			...recentAuthenticationQueryOptions(),
+			staleTime: 0,
+		});
+		return "confirmed";
+	}
+
 	async function register(name: string): Promise<PasskeyRegistration> {
 		const { freshUntil } = await queryClient.ensureQueryData(
 			recentAuthenticationQueryOptions(),
 		);
 		if (freshUntil - Date.now() < PASSKEY_REGISTRATION_FRESHNESS_MS) {
-			await requestChallenge();
-			return "confirmed";
+			return confirm();
 		}
 		try {
 			await ceremony(name);
@@ -330,8 +340,7 @@ export function useRegisterPasskey() {
 			if (!isSessionNotFresh(error)) {
 				throw error;
 			}
-			await requestChallenge();
-			return "confirmed";
+			return confirm();
 		}
 		return "added";
 	}
