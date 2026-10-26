@@ -24,7 +24,7 @@ export const cleanupSetupStateTask = defineTask<typeof payload, TaskContext>({
 		await helpers.runStep("cleanup_expired_setup_state", async () => {
 			const [{ tokens, sessions }, rateLimits] = await Promise.all([
 				deleteExpiredSetupState(ctx.db, { signal }),
-				pruneAuthRateLimits(ctx.db),
+				pruneAuthRateLimits(ctx.db, signal),
 			]);
 
 			if (tokens > 0 || sessions > 0 || rateLimits > 0) {

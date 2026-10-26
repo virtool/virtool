@@ -246,9 +246,9 @@ minutes) instead of the account budget, so failures from other browsers can't
 lock the owner out. A password change invalidates the account's devices. The
 cookie holds up to five accounts and isn't a credential.
 
-The internal task runner deletes `auth_rate_limits` rows an hour after their
-last request, which is the longest window of any budget. The web server doesn't
-prune the table.
+The hourly internal cleanup task deletes `auth_rate_limits` rows whose last
+request is more than an hour old, the longest window of any budget. A row can
+stay for up to two hours. The web server doesn't prune the table.
 
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
 A user with `force_reset` receives a session that resolves to a
