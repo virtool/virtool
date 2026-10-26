@@ -1,4 +1,4 @@
-import { pruneRecoveryRequestBudgets } from "@virtool/data/auth/recoveryRateLimit";
+import { pruneAuthRateLimits } from "@virtool/data/auth/rateLimits";
 import { deleteExpiredSetupState } from "@virtool/data/auth/setup";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
@@ -10,7 +10,8 @@ import type { TaskContext } from "./registry";
 const payload = z.object({});
 
 /**
- * Delete expired setup tokens and restricted setup sessions.
+ * Delete expired setup tokens, restricted setup sessions, and auth rate-limit
+ * rows.
  *
  * It is idempotent as a reclaim requires: a re-run deletes whatever is expired
  * when it runs, which is nothing if the first attempt got there.
@@ -23,7 +24,7 @@ export const cleanupSetupStateTask = defineTask<typeof payload, TaskContext>({
 		await helpers.runStep("cleanup_expired_setup_state", async () => {
 			const [{ tokens, sessions }, rateLimits] = await Promise.all([
 				deleteExpiredSetupState(ctx.db, { signal }),
-				pruneRecoveryRequestBudgets(ctx.db),
+				pruneAuthRateLimits(ctx.db),
 			]);
 
 			if (tokens > 0 || sessions > 0 || rateLimits > 0) {

@@ -1,4 +1,4 @@
-import { and, lt, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 import type { Db } from "../db/pg";
 import { authRateLimits } from "../db/schema/auth";
@@ -49,18 +49,4 @@ export async function checkRecoveryRequestBudget(
 		),
 	]);
 	return requesterAllowed && targetAllowed;
-}
-
-/** Remove only Virtool's expired recovery budgets from the shared rate-limit table. */
-export async function pruneRecoveryRequestBudgets(db: Db): Promise<number> {
-	const deleted = await db
-		.delete(authRateLimits)
-		.where(
-			and(
-				sql`${authRateLimits.key} like ${`${RECOVERY_KEY_PREFIX}%`}`,
-				lt(authRateLimits.lastRequest, Date.now() - TARGET_WINDOW_MS),
-			),
-		)
-		.returning({ id: authRateLimits.id });
-	return deleted.length;
 }

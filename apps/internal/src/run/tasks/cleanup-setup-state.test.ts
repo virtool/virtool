@@ -4,6 +4,7 @@ import {
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
+import { authRateLimits } from "@virtool/data/db/schema/auth";
 import { setupSessions, setupTokens } from "@virtool/data/db/schema/setup";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
@@ -38,6 +39,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(authRateLimits);
 	await db.delete(setupSessions);
 	await db.delete(setupTokens);
 	await db.delete(users);
@@ -106,5 +108,32 @@ describe("cleanupSetupStateTask", () => {
 		expect(outcome).toEqual({ status: "completed" });
 		expect(row).toMatchObject({ complete: true, error: null, progress: 100 });
 		expect(await db.select().from(setupTokens)).toHaveLength(1);
+	});
+
+	it("deletes every rate-limit row older than the longest window", async () => {
+		await db.insert(authRateLimits).values([
+			{
+				key: "virtool:login:ip:203.0.113.1",
+				count: 1,
+				lastRequest: minutesFromNow(-61).getTime(),
+			},
+			{
+				key: "203.0.113.1|/passkey/verify-authentication",
+				count: 1,
+				lastRequest: minutesFromNow(-61).getTime(),
+			},
+			{
+				key: "virtool:recovery:target:abc",
+				count: 1,
+				lastRequest: minutesFromNow(-59).getTime(),
+			},
+		]);
+
+		const { outcome } = await run();
+
+		expect(outcome).toEqual({ status: "completed" });
+		expect(
+			await db.select({ key: authRateLimits.key }).from(authRateLimits),
+		).toEqual([{ key: "virtool:recovery:target:abc" }]);
 	});
 });
