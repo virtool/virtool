@@ -1,6 +1,6 @@
 import { formatIsolateName } from "@app/utils";
 import { DialogFooter } from "@base/Dialog";
-import Field, { FieldLabel } from "@base/Field";
+import Field, { FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,8 @@ type IsolateFormValues = {
 };
 
 type IsolateFormProps = {
+	/** Error message to be displayed */
+	error?: string;
 	sourceName?: string;
 	sourceType?: string;
 	/** Indicates whether the source types are restricted */
@@ -27,6 +29,7 @@ type IsolateFormProps = {
  * Form for creating an OTU isolate
  */
 export default function IsolateForm({
+	error,
 	sourceName,
 	sourceType,
 	restrictSourceTypes,
@@ -56,6 +59,7 @@ export default function IsolateForm({
 						{...register("sourceName")}
 						disabled={watch("sourceType").toLowerCase() === "unknown"}
 					/>
+					<FieldError>{error}</FieldError>
 				</Field>
 			</div>
 
