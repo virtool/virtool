@@ -40,6 +40,7 @@ import {
 	AUTH_IP_ADDRESS_OPTIONS,
 	normalizeBrowserSessionMetadata,
 } from "./sessionMetadata";
+import { trustDeviceGuardPlugin } from "./trustDevice";
 
 /**
  * The Better Auth endpoints the browser and Virtool's own server code call over
@@ -348,6 +349,7 @@ export function createAuth({
 		},
 		plugins: [
 			virtoolSessionPlugin(db),
+			trustDeviceGuardPlugin(),
 			recentAuthenticationPlugin({
 				db,
 				origin: publicOrigin,

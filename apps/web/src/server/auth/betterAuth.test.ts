@@ -466,6 +466,19 @@ describe("the mounted handler", () => {
 		expect(await db.select().from(authSessions)).toHaveLength(0);
 	});
 
+	it("refuses a request to trust the device", async () => {
+		const handler = createAuthRequestHandler(db, auth);
+
+		const response = await handler(
+			post("/two-factor/verify-totp", { code: "000000", trustDevice: true }),
+		);
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({
+			code: "TRUST_DEVICE_UNSUPPORTED",
+		});
+	});
+
 	it("answers 404 on an unknown path rather than falling through", async () => {
 		const response = await auth.handler(
 			new Request(`${ORIGIN}${AUTH_BASE_PATH}/not-a-real-endpoint`, {
