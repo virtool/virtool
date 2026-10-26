@@ -208,6 +208,13 @@ enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
 and API keys; server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
+The CSRF middleware checks every server function and every mutating raw-route
+request that has no `Authorization` header. It requires `Sec-Fetch-Site:
+same-origin`, or a same-origin `Origin` when the browser sends no Fetch
+Metadata. API-key requests are not checked, because a browser cannot attach
+them to a forged request. `/api/auth/*` is exempt, because Better Auth does its
+own origin check.
+
 Better Auth is mounted at `/api/auth/$` and composed in
 `@server/auth/betterAuth`. It authenticates interactive users; Virtool still
 owns account state, API keys, and authorization. Its raw handler is outside the
