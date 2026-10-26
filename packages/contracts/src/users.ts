@@ -71,6 +71,23 @@ export const PATHOSCOPE_COLUMNS = [
 /** A column of a Pathoscope export. */
 export type PathoscopeColumn = (typeof PATHOSCOPE_COLUMNS)[number];
 
+/**
+ * The FASTA headers a reference export can write: the accession alone, or the
+ * accession followed by the OTU and isolate names.
+ */
+export const REFERENCE_EXPORT_FASTA_HEADERS = ["accession", "full"] as const;
+
+/** A FASTA header style for a reference export. */
+export type ReferenceExportFastaHeader =
+	(typeof REFERENCE_EXPORT_FASTA_HEADERS)[number];
+
+/** The file formats a downloaded reference export table can take. */
+export const REFERENCE_EXPORT_TABLE_FORMATS = ["csv", "tsv"] as const;
+
+/** A file format for a downloaded reference export table. */
+export type ReferenceExportTableFormat =
+	(typeof REFERENCE_EXPORT_TABLE_FORMATS)[number];
+
 /** The sources an avatar can come from, in the order the UI lists them. */
 export const AVATAR_SOURCES = ["initials", "gravatar"] as const;
 
@@ -88,6 +105,10 @@ export type AccountSettings = {
 	pathoscopeColumns: PathoscopeColumn[];
 	/** Whether pathoscope exports name an OTU by its acronym, when it has one */
 	preferAcronym: boolean;
+	/** The FASTA header an OTU or isolate export uses unless changed in its menu */
+	referenceExportFastaHeader: ReferenceExportFastaHeader;
+	/** The format an OTU or isolate table downloads as unless changed in its menu */
+	referenceExportTableFormat: ReferenceExportTableFormat;
 	quickAnalyzeWorkflow: QuickAnalyzeWorkflow;
 	showIds: boolean;
 	showVersions: boolean;

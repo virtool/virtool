@@ -165,6 +165,8 @@ describe("getAccount", () => {
 			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: false,
 			quickAnalyzeWorkflow: "nuvs",
+			referenceExportFastaHeader: "full",
+			referenceExportTableFormat: "csv",
 			showIds: false,
 			showVersions: true,
 			skipQuickAnalyzeDialog: false,
@@ -187,6 +189,8 @@ describe("getAccount", () => {
 			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: false,
 			quickAnalyzeWorkflow: "pathoscope",
+			referenceExportFastaHeader: "full",
+			referenceExportTableFormat: "csv",
 			showIds: false,
 			showVersions: true,
 			skipQuickAnalyzeDialog: true,
@@ -270,6 +274,8 @@ describe("updateAccountSettings", () => {
 			pathoscopeColumns: ["name", "weight", "depth", "coverage"],
 			preferAcronym: true,
 			quickAnalyzeWorkflow: "nuvs",
+			referenceExportFastaHeader: "full",
+			referenceExportTableFormat: "csv",
 			showIds: false,
 			showVersions: true,
 			skipQuickAnalyzeDialog: false,
@@ -279,6 +285,20 @@ describe("updateAccountSettings", () => {
 		expect(row?.settings).toEqual({
 			...storedSettings,
 			prefer_abbreviation: true,
+		});
+	});
+
+	it("reads back the reference export defaults it writes", async () => {
+		const userId = await seedUser(db, { handle: "carol" });
+
+		await updateAccountSettings(db, userId, {
+			referenceExportFastaHeader: "accession",
+			referenceExportTableFormat: "tsv",
+		});
+
+		expect((await getAccount(db, userId)).settings).toMatchObject({
+			referenceExportFastaHeader: "accession",
+			referenceExportTableFormat: "tsv",
 		});
 	});
 
@@ -955,6 +975,8 @@ describe("createUser", () => {
 			show_ids: true,
 			show_versions: true,
 			quick_analyze_workflow: "pathoscope",
+			reference_export_fasta_header: "full",
+			reference_export_table_format: "csv",
 		});
 		// The password is hashed, not stored verbatim.
 		expect(

@@ -111,6 +111,8 @@ describe("account invitations", () => {
 			show_ids: true,
 			show_versions: true,
 			quick_analyze_workflow: "pathoscope",
+			reference_export_fasta_header: "full",
+			reference_export_table_format: "csv",
 		});
 	});
 

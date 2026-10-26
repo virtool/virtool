@@ -1,3 +1,5 @@
+pre-start = "pnpm install"
+
 pre-remove = "{{ primary_worktree_path }}/dev/bin/vtd remove --worktree {{ worktree_path }}"
 
 [list]

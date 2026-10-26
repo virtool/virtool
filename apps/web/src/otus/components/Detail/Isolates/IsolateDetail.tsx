@@ -3,7 +3,6 @@ import Alert from "@base/Alert";
 import { IconButton } from "@base/Icon";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
 import { useSetIsolateAsDefault } from "@otus/queries";
-import { DownloadLink } from "@references/components/Detail/DownloadLink";
 import {
 	useCheckReferenceRight,
 	useReferenceIsArchived,
@@ -107,11 +106,6 @@ export default function IsolateDetail() {
 							/>
 						</>
 					)}
-					<DownloadLink
-						href={`/otus/${otuId}/isolates/${activeIsolate.id}/fasta`}
-					>
-						FASTA
-					</DownloadLink>
 					<CreateSequenceButton
 						onCreate={() => setOpenCreateSequence(true)}
 						referenceId={reference.id}

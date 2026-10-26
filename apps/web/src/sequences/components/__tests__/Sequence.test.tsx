@@ -15,17 +15,18 @@ describe("<Sequence />", () => {
 		accession: "NC_010314",
 		definition: "Test definition",
 		host: "Test host",
-		id: "test_sequence",
 		onEdit: vi.fn(),
 		onDelete: vi.fn(),
+		onSelect: vi.fn(),
 		segment: null,
+		selected: false,
 		sequence: "ATGC",
 	};
 
 	it("exposes the collapsed row as an accessible, collapsed button", () => {
 		renderWithProviders(<Sequence {...props} />);
 
-		const row = screen.getByRole("button", { name: /NC_010314/ });
+		const row = screen.getByRole("button", { name: /^NC_010314/ });
 
 		expect(row).toHaveAttribute("aria-expanded", "false");
 		expect(screen.queryByText("Sequence controls")).not.toBeInTheDocument();
@@ -36,7 +37,8 @@ describe("<Sequence />", () => {
 		renderWithProviders(<Sequence {...props} />);
 
 		await userEvent.tab();
-		const row = screen.getByRole("button", { name: /NC_010314/ });
+		await userEvent.tab();
+		const row = screen.getByRole("button", { name: /^NC_010314/ });
 		expect(row).toHaveFocus();
 
 		await userEvent.keyboard("{Enter}");
@@ -50,6 +52,7 @@ describe("<Sequence />", () => {
 		renderWithProviders(<Sequence {...props} />);
 
 		await userEvent.tab();
+		await userEvent.tab();
 		await userEvent.keyboard("[Space]");
 
 		expect(screen.getByText("Sequence controls")).toBeInTheDocument();
@@ -58,8 +61,21 @@ describe("<Sequence />", () => {
 	it("still expands on click", async () => {
 		renderWithProviders(<Sequence {...props} />);
 
-		await userEvent.click(screen.getByRole("button", { name: /NC_010314/ }));
+		await userEvent.click(screen.getByRole("button", { name: /^NC_010314/ }));
 
 		expect(screen.getByText("Test host")).toBeInTheDocument();
+	});
+
+	it("calls onSelect from its checkbox without expanding", async () => {
+		const onSelect = vi.fn();
+
+		renderWithProviders(<Sequence {...props} onSelect={onSelect} />);
+
+		await userEvent.click(
+			screen.getByRole("checkbox", { name: "Select NC_010314" }),
+		);
+
+		expect(onSelect).toHaveBeenCalledOnce();
+		expect(screen.queryByText("Test host")).not.toBeInTheDocument();
 	});
 });

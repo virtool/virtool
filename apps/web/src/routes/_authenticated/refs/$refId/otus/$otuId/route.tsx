@@ -5,7 +5,6 @@ import { NavTab, NavTabs } from "@base/Nav";
 import { ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "@base/View";
 import { OtuHeaderIcons } from "@otus/components/Detail/OtuHeaderIcons";
 import { useFetchOtu } from "@otus/queries";
-import { DownloadLink } from "@references/components/Detail/DownloadLink";
 import { useReferenceIsArchived } from "@references/hooks";
 import { useFetchReference } from "@references/queries";
 import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
@@ -63,7 +62,6 @@ function OtuDetailLayout() {
 						</Badge>
 					)}
 					<ViewHeaderIcons>
-						<DownloadLink href={`/otus/${id}/fasta`}>FASTA</DownloadLink>
 						{!archived && (
 							<OtuHeaderIcons
 								id={id}

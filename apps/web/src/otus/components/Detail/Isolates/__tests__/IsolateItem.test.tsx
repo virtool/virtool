@@ -17,6 +17,8 @@ describe("<IsolateItem />", () => {
 				otuId="otu-1"
 				canDelete
 				onDelete={vi.fn()}
+				onSelect={vi.fn()}
+				selected={false}
 			/>,
 		);
 
@@ -33,6 +35,8 @@ describe("<IsolateItem />", () => {
 				otuId="otu-1"
 				canDelete
 				onDelete={vi.fn()}
+				onSelect={vi.fn()}
+				selected={false}
 			/>,
 		);
 
@@ -51,6 +55,8 @@ describe("<IsolateItem />", () => {
 				otuId="otu-1"
 				canDelete
 				onDelete={vi.fn()}
+				onSelect={vi.fn()}
+				selected={false}
 			/>,
 		);
 
@@ -67,6 +73,8 @@ describe("<IsolateItem />", () => {
 				otuId="otu-1"
 				canDelete
 				onDelete={vi.fn()}
+				onSelect={vi.fn()}
+				selected={false}
 			/>,
 		);
 
@@ -84,6 +92,8 @@ describe("<IsolateItem />", () => {
 				otuId="otu-1"
 				canDelete
 				onDelete={onDelete}
+				onSelect={vi.fn()}
+				selected={false}
 			/>,
 		);
 
@@ -104,9 +114,36 @@ describe("<IsolateItem />", () => {
 				otuId="otu-1"
 				canDelete={false}
 				onDelete={vi.fn()}
+				onSelect={vi.fn()}
+				selected={false}
 			/>,
 		);
 
 		expect(screen.queryByRole("button")).toBeNull();
+	});
+
+	it("should call onSelect when the checkbox is clicked", async () => {
+		const isolate = createFakeOtuIsolate();
+		const onSelect = vi.fn();
+
+		await renderWithRouter(
+			<IsolateItem
+				isolate={isolate}
+				refId="ref-1"
+				otuId="otu-1"
+				canDelete
+				onDelete={vi.fn()}
+				onSelect={onSelect}
+				selected={false}
+			/>,
+		);
+
+		await userEvent.click(
+			screen.getByRole("checkbox", {
+				name: `Select ${formatIsolateName(isolate)}`,
+			}),
+		);
+
+		expect(onSelect).toHaveBeenCalledOnce();
 	});
 });

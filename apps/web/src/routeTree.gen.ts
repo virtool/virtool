@@ -68,7 +68,6 @@ import { Route as AuthenticatedSubtractionsFilesRouteImport } from './routes/_au
 import { Route as AnalysesDocumentsDocumentRouteImport } from './routes/analyses.documents.$document'
 import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
 import { Route as ApiV1UploadsRouteImport } from './routes/api.v1.uploads'
-import { Route as OtusOtuIdFastaRouteImport } from './routes/otus.$otuId.fasta'
 import { Route as AuthenticatedAdministrationUsersIndexRouteImport } from './routes/_authenticated/administration/users/index'
 import { Route as AuthenticatedAdministrationUsersUserIdRouteImport } from './routes/_authenticated/administration/users/$userId'
 import { Route as AuthenticatedRefsRefIdIndexRouteImport } from './routes/_authenticated/refs/$refId/index'
@@ -91,14 +90,12 @@ import { Route as AuthenticatedRefsRefIdOtusOtuIdRouteRouteImport } from './rout
 import { Route as AuthenticatedSamplesSampleIdAnalysesIndexRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/index'
 import { Route as AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/$analysisId'
 import { Route as ApiV1UploadsUploadIdFinalizeRouteImport } from './routes/api.v1.uploads_.$uploadId.finalize'
-import { Route as OtusOtuIdIsolatesIsolateIdFastaRouteImport } from './routes/otus.$otuId.isolates.$isolateId.fasta'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/index'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdHistoryRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/history'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/route'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/segments'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/index'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId'
-import { Route as OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport } from './routes/otus.$otuId.isolates.$isolateId.sequences.$sequenceId.fasta'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -422,11 +419,6 @@ const ApiV1UploadsRoute = ApiV1UploadsRouteImport.update({
   path: '/api/v1/uploads',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OtusOtuIdFastaRoute = OtusOtuIdFastaRouteImport.update({
-  id: '/otus/$otuId/fasta',
-  path: '/otus/$otuId/fasta',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedAdministrationUsersIndexRoute =
   AuthenticatedAdministrationUsersIndexRouteImport.update({
     id: '/users/',
@@ -558,12 +550,6 @@ const ApiV1UploadsUploadIdFinalizeRoute =
     path: '/finalize',
     getParentRoute: () => ApiV1UploadsUploadIdRoute,
   } as any)
-const OtusOtuIdIsolatesIsolateIdFastaRoute =
-  OtusOtuIdIsolatesIsolateIdFastaRouteImport.update({
-    id: '/otus/$otuId/isolates/$isolateId/fasta',
-    path: '/otus/$otuId/isolates/$isolateId/fasta',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AuthenticatedRefsRefIdOtusOtuIdIndexRoute =
   AuthenticatedRefsRefIdOtusOtuIdIndexRouteImport.update({
     id: '/',
@@ -599,12 +585,6 @@ const AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute =
     id: '/$isolateId',
     path: '/$isolateId',
     getParentRoute: () => AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRoute,
-  } as any)
-const OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute =
-  OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport.update({
-    id: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta',
-    path: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta',
-    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -659,7 +639,6 @@ export interface FileRoutesByFullPath {
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/uploads': typeof ApiV1UploadsRoute
-  '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/hmms/': typeof AuthenticatedHmmsIndexRoute
@@ -686,7 +665,6 @@ export interface FileRoutesByFullPath {
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/api/v1/uploads/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
-  '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
   '/refs/$refId/indexes/': typeof AuthenticatedRefsRefIdIndexesIndexRoute
   '/refs/$refId/otus/': typeof AuthenticatedRefsRefIdOtusIndexRoute
   '/samples/$sampleId/analyses/': typeof AuthenticatedSamplesSampleIdAnalysesIndexRoute
@@ -695,7 +673,6 @@ export interface FileRoutesByFullPath {
   '/refs/$refId/otus/$otuId/segments': typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute
   '/refs/$refId/otus/$otuId/': typeof AuthenticatedRefsRefIdOtusOtuIdIndexRoute
   '/refs/$refId/otus/$otuId/isolates/$isolateId': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute
-  '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
   '/refs/$refId/otus/$otuId/isolates/': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -741,7 +718,6 @@ export interface FileRoutesByTo {
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/uploads': typeof ApiV1UploadsRoute
-  '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/administration': typeof AuthenticatedAdministrationIndexRoute
   '/hmms': typeof AuthenticatedHmmsIndexRoute
@@ -766,7 +742,6 @@ export interface FileRoutesByTo {
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/api/v1/uploads/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
-  '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
   '/refs/$refId/indexes': typeof AuthenticatedRefsRefIdIndexesIndexRoute
   '/refs/$refId/otus': typeof AuthenticatedRefsRefIdOtusIndexRoute
   '/samples/$sampleId/analyses': typeof AuthenticatedSamplesSampleIdAnalysesIndexRoute
@@ -774,7 +749,6 @@ export interface FileRoutesByTo {
   '/refs/$refId/otus/$otuId/segments': typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute
   '/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdIndexRoute
   '/refs/$refId/otus/$otuId/isolates/$isolateId': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute
-  '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
   '/refs/$refId/otus/$otuId/isolates': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRoutesById {
@@ -831,7 +805,6 @@ export interface FileRoutesById {
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/uploads': typeof ApiV1UploadsRoute
-  '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_authenticated/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/_authenticated/hmms/': typeof AuthenticatedHmmsIndexRoute
@@ -858,7 +831,6 @@ export interface FileRoutesById {
   '/_authenticated/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/_authenticated/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/api/v1/uploads_/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
-  '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
   '/_authenticated/refs/$refId/indexes/': typeof AuthenticatedRefsRefIdIndexesIndexRoute
   '/_authenticated/refs/$refId/otus/': typeof AuthenticatedRefsRefIdOtusIndexRoute
   '/_authenticated/samples/$sampleId/analyses/': typeof AuthenticatedSamplesSampleIdAnalysesIndexRoute
@@ -867,7 +839,6 @@ export interface FileRoutesById {
   '/_authenticated/refs/$refId/otus/$otuId/segments': typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute
   '/_authenticated/refs/$refId/otus/$otuId/': typeof AuthenticatedRefsRefIdOtusOtuIdIndexRoute
   '/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute
-  '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
   '/_authenticated/refs/$refId/otus/$otuId/isolates/': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRouteTypes {
@@ -924,7 +895,6 @@ export interface FileRouteTypes {
     | '/analyses/documents/$document'
     | '/api/auth/$'
     | '/api/v1/uploads'
-    | '/otus/$otuId/fasta'
     | '/account/'
     | '/administration/'
     | '/hmms/'
@@ -951,7 +921,6 @@ export interface FileRouteTypes {
     | '/refs/$refId/indexes/$indexId'
     | '/samples/$sampleId/analyses/$analysisId'
     | '/api/v1/uploads/$uploadId/finalize'
-    | '/otus/$otuId/isolates/$isolateId/fasta'
     | '/refs/$refId/indexes/'
     | '/refs/$refId/otus/'
     | '/samples/$sampleId/analyses/'
@@ -960,7 +929,6 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId/segments'
     | '/refs/$refId/otus/$otuId/'
     | '/refs/$refId/otus/$otuId/isolates/$isolateId'
-    | '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
     | '/refs/$refId/otus/$otuId/isolates/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1006,7 +974,6 @@ export interface FileRouteTypes {
     | '/analyses/documents/$document'
     | '/api/auth/$'
     | '/api/v1/uploads'
-    | '/otus/$otuId/fasta'
     | '/account'
     | '/administration'
     | '/hmms'
@@ -1031,7 +998,6 @@ export interface FileRouteTypes {
     | '/refs/$refId/indexes/$indexId'
     | '/samples/$sampleId/analyses/$analysisId'
     | '/api/v1/uploads/$uploadId/finalize'
-    | '/otus/$otuId/isolates/$isolateId/fasta'
     | '/refs/$refId/indexes'
     | '/refs/$refId/otus'
     | '/samples/$sampleId/analyses'
@@ -1039,7 +1005,6 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId/segments'
     | '/refs/$refId/otus/$otuId'
     | '/refs/$refId/otus/$otuId/isolates/$isolateId'
-    | '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
     | '/refs/$refId/otus/$otuId/isolates'
   id:
     | '__root__'
@@ -1095,7 +1060,6 @@ export interface FileRouteTypes {
     | '/analyses/documents/$document'
     | '/api/auth/$'
     | '/api/v1/uploads'
-    | '/otus/$otuId/fasta'
     | '/_authenticated/account/'
     | '/_authenticated/administration/'
     | '/_authenticated/hmms/'
@@ -1122,7 +1086,6 @@ export interface FileRouteTypes {
     | '/_authenticated/refs/$refId/indexes/$indexId'
     | '/_authenticated/samples/$sampleId/analyses/$analysisId'
     | '/api/v1/uploads_/$uploadId/finalize'
-    | '/otus/$otuId/isolates/$isolateId/fasta'
     | '/_authenticated/refs/$refId/indexes/'
     | '/_authenticated/refs/$refId/otus/'
     | '/_authenticated/samples/$sampleId/analyses/'
@@ -1131,7 +1094,6 @@ export interface FileRouteTypes {
     | '/_authenticated/refs/$refId/otus/$otuId/segments'
     | '/_authenticated/refs/$refId/otus/$otuId/'
     | '/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId'
-    | '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
     | '/_authenticated/refs/$refId/otus/$otuId/isolates/'
   fileRoutesById: FileRoutesById
 }
@@ -1155,13 +1117,10 @@ export interface RootRouteChildren {
   AnalysesDocumentsDocumentRoute: typeof AnalysesDocumentsDocumentRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1UploadsRoute: typeof ApiV1UploadsRoute
-  OtusOtuIdFastaRoute: typeof OtusOtuIdFastaRoute
   ApiV1UploadsUploadIdRoute: typeof ApiV1UploadsUploadIdRouteWithChildren
   IndexesIndexIdFilesFilenameRoute: typeof IndexesIndexIdFilesFilenameRoute
   SamplesSampleIdReadsFilenameRoute: typeof SamplesSampleIdReadsFilenameRoute
   SubtractionsSubtractionIdFilesFilenameRoute: typeof SubtractionsSubtractionIdFilesFilenameRoute
-  OtusOtuIdIsolatesIsolateIdFastaRoute: typeof OtusOtuIdIsolatesIsolateIdFastaRoute
-  OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute: typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1579,13 +1538,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1UploadsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/otus/$otuId/fasta': {
-      id: '/otus/$otuId/fasta'
-      path: '/otus/$otuId/fasta'
-      fullPath: '/otus/$otuId/fasta'
-      preLoaderRoute: typeof OtusOtuIdFastaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/administration/users/': {
       id: '/_authenticated/administration/users/'
       path: '/users'
@@ -1740,13 +1692,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1UploadsUploadIdFinalizeRouteImport
       parentRoute: typeof ApiV1UploadsUploadIdRoute
     }
-    '/otus/$otuId/isolates/$isolateId/fasta': {
-      id: '/otus/$otuId/isolates/$isolateId/fasta'
-      path: '/otus/$otuId/isolates/$isolateId/fasta'
-      fullPath: '/otus/$otuId/isolates/$isolateId/fasta'
-      preLoaderRoute: typeof OtusOtuIdIsolatesIsolateIdFastaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/refs/$refId/otus/$otuId/': {
       id: '/_authenticated/refs/$refId/otus/$otuId/'
       path: '/'
@@ -1788,13 +1733,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/refs/$refId/otus/$otuId/isolates/$isolateId'
       preLoaderRoute: typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRoute
-    }
-    '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': {
-      id: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
-      path: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
-      fullPath: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
-      preLoaderRoute: typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport
-      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -2129,15 +2067,11 @@ const rootRouteChildren: RootRouteChildren = {
   AnalysesDocumentsDocumentRoute: AnalysesDocumentsDocumentRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1UploadsRoute: ApiV1UploadsRoute,
-  OtusOtuIdFastaRoute: OtusOtuIdFastaRoute,
   ApiV1UploadsUploadIdRoute: ApiV1UploadsUploadIdRouteWithChildren,
   IndexesIndexIdFilesFilenameRoute: IndexesIndexIdFilesFilenameRoute,
   SamplesSampleIdReadsFilenameRoute: SamplesSampleIdReadsFilenameRoute,
   SubtractionsSubtractionIdFilesFilenameRoute:
     SubtractionsSubtractionIdFilesFilenameRoute,
-  OtusOtuIdIsolatesIsolateIdFastaRoute: OtusOtuIdIsolatesIsolateIdFastaRoute,
-  OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute:
-    OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
