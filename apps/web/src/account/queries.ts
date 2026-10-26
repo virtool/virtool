@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { recentAuthenticationQueryOptions } from "@account/recentAuthentication";
 import {
 	confirmTotp,
 	disableTotp,
@@ -7,7 +8,11 @@ import {
 	type TotpEnrollment,
 } from "@account/twoFactor";
 import { addPasskey, useSingleCeremony } from "@app/passkeys";
-import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
+import {
+	isSessionNotFresh,
+	useRecentAuthenticationChallenge,
+	useRecentlyAuthenticatedMutation,
+} from "@app/recentAuthentication";
 import { resetClient } from "@app/utils";
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
@@ -287,22 +292,67 @@ export function passkeysQueryOptions() {
 	});
 }
 
+// Better Auth checks freshness again when the ceremony is verified, and the
+// registration challenge it issues lives for 5 minutes. With this much left,
+// the session cannot go stale while the authenticator creates the passkey.
+const PASSKEY_REGISTRATION_FRESHNESS_MS = 5 * 60 * 1000;
+
+/** The result of one request to add a passkey. */
+type PasskeyRegistration = "added" | "confirmed";
+
 /**
  * Initializes a mutator that registers a passkey for the current user.
  *
- * The variable is the name for the new passkey. A stale session gets the
- * recent-authentication challenge, and then the whole ceremony runs again.
+ * The variable is the name for the new passkey. A session that is stale, or
+ * that could become stale during the ceremony, gets the recent-authentication
+ * challenge before the ceremony starts. The mutation then resolves to
+ * `"confirmed"` and does not start the ceremony: the user must start it again
+ * with a new click. An automatic retry can lose the browser's user activation,
+ * and a retry after a rejected verification leaves an orphaned passkey on the
+ * authenticator.
  */
 export function useRegisterPasskey() {
 	const queryClient = useQueryClient();
-	const ceremony = useSingleCeremony(
-		useRecentlyAuthenticatedMutation(addPasskey),
-	);
+	const requestChallenge = useRecentAuthenticationChallenge();
+	const ceremony = useSingleCeremony(addPasskey);
 
-	return useMutation<void, Error, string>({
-		mutationFn: ceremony,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: accountQueryKeys.passkeys() });
+	// The next click reads the cached deadline, so it must already be the one
+	// that the challenge set.
+	async function confirm(): Promise<PasskeyRegistration> {
+		await requestChallenge();
+		await queryClient.fetchQuery({
+			...recentAuthenticationQueryOptions(),
+			staleTime: 0,
+		});
+		return "confirmed";
+	}
+
+	async function register(name: string): Promise<PasskeyRegistration> {
+		const { freshUntil } = await queryClient.ensureQueryData(
+			recentAuthenticationQueryOptions(),
+		);
+		if (freshUntil - Date.now() < PASSKEY_REGISTRATION_FRESHNESS_MS) {
+			return confirm();
+		}
+		try {
+			await ceremony(name);
+		} catch (error) {
+			if (!isSessionNotFresh(error)) {
+				throw error;
+			}
+			return confirm();
+		}
+		return "added";
+	}
+
+	return useMutation<PasskeyRegistration, Error, string>({
+		mutationFn: register,
+		onSuccess: (result) => {
+			if (result === "added") {
+				queryClient.invalidateQueries({
+					queryKey: accountQueryKeys.passkeys(),
+				});
+			}
 		},
 	});
 }

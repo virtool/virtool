@@ -609,7 +609,14 @@ The browser runs both ceremonies through the plugin's client in
 [`@app/authClient`](src/app/authClient.ts). The requests go to the mounted
 handler, so its forced-reset and MFA-enrollment restrictions apply to them.
 Better Auth checks recent authentication for registration with the same
-15-minute freshness window. The plugin's list, rename, and delete endpoints
+15-minute freshness window, when it issues the options and again when it
+verifies the response. Registration does not use the automatic retry. Before the
+ceremony starts, the client reads the cached freshness deadline. If less than
+five minutes remain, the client opens the challenge first, because the session
+must stay fresh until verification. After a challenge, the user starts the
+ceremony again with a new click. An automatic retry can lose the browser's user
+activation, and a retry after a rejected verification leaves an orphaned
+passkey on the authenticator. The plugin's list, rename, and delete endpoints
 answer 404 over HTTP, because the list returns public keys and counters and the
 mutations skip recent authentication. Server functions call these three through
 `auth.api` and apply Virtool's policies.

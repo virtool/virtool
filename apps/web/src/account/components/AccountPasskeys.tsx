@@ -1,3 +1,4 @@
+import { recentAuthenticationQueryOptions } from "@account/recentAuthentication";
 import { usePasskeySupport } from "@app/passkeySupport";
 import { getPasskeyNotice } from "@app/passkeys";
 import Alert from "@base/Alert";
@@ -50,9 +51,20 @@ export default function AccountPasskeys({ handle }: AccountPasskeysProps) {
 	const support = usePasskeySupport();
 	const registerMutation = useRegisterPasskey();
 
+	// Registration reads the deadline before the ceremony, so it must already be
+	// cached when the user clicks: a request on that path can cost the browser's
+	// user activation.
+	useQuery(recentAuthenticationQueryOptions());
+
 	const registerNotice = registerMutation.isError
 		? getPasskeyNotice(registerMutation.error)
-		: null;
+		: registerMutation.data === "confirmed"
+			? {
+					message:
+						"Your identity is confirmed. Select Add again to add the passkey.",
+					tone: "neutral" as const,
+				}
+			: null;
 	const isRegisterError = registerNotice?.tone === "error";
 
 	return (
