@@ -3,6 +3,9 @@ import Checkbox from "@base/Checkbox";
 import type { ReactNode } from "react";
 
 type SelectionHeaderProps = {
+	/** Actions that apply to the list, aligned against its right edge */
+	actions?: ReactNode;
+
 	/** Names the select-all checkbox */
 	ariaLabel: string;
 
@@ -21,9 +24,10 @@ type SelectionHeaderProps = {
 
 /**
  * The first row of a selectable list: a select-all checkbox and a count of the
- * rows, and of the selection once there is one.
+ * rows, and of the selection once there is one, then any list actions.
  */
 export default function SelectionHeader({
+	actions,
 	ariaLabel,
 	checked,
 	children,
@@ -35,6 +39,9 @@ export default function SelectionHeader({
 			<Checkbox ariaLabel={ariaLabel} checked={checked} onClick={onSelectAll} />
 			<span className="shrink-0">{summary}</span>
 			{children}
+			{actions ? (
+				<div className="ml-auto flex items-center gap-2">{actions}</div>
+			) : null}
 		</BoxGroupSection>
 	);
 }

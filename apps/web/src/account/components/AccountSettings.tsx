@@ -3,6 +3,8 @@ import Field, {
 	FieldContent,
 	FieldDescription,
 	FieldLabel,
+	FieldLegend,
+	FieldSet,
 	FieldTitle,
 } from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -20,6 +22,46 @@ import {
 import { useFetchAccount } from "../account";
 import { useUpdateAccountSettings } from "../queries";
 import PathoscopeColumns from "./PathoscopeColumns";
+
+const FASTA_HEADER_EXAMPLES: Record<ReferenceExportFastaHeader, string> = {
+	accession: ">NC_001367",
+	full: ">NC_001367|Tobacco mosaic virus|Isolate OM",
+};
+
+// The TSV example uses spaces, so the columns line up as a spreadsheet would
+// show them.
+const TABLE_FORMAT_EXAMPLES: Record<ReferenceExportTableFormat, string> = {
+	csv: "OTU,Isolate,Accession\nTobacco mosaic virus,Isolate OM,NC_001367",
+	tsv: "OTU                   Isolate     Accession\nTobacco mosaic virus  Isolate OM  NC_001367",
+};
+
+type ExportOptionProps = {
+	/** A sample of the output this option gives */
+	example: string;
+
+	/** The name of the option */
+	title: string;
+
+	/** The radio value the option selects */
+	value: string;
+};
+
+/** A card radio for an export default, with a sample of its output. */
+function ExportOption({ example, title, value }: ExportOptionProps) {
+	return (
+		<FieldLabel variant="card">
+			<Field orientation="horizontal" className="items-start">
+				<RadioGroupItem className="mt-0.5" value={value} />
+				<FieldContent className="min-w-0">
+					<FieldTitle>{title}</FieldTitle>
+					<pre className="mt-1 overflow-x-auto font-mono text-xs text-gray-600">
+						{example}
+					</pre>
+				</FieldContent>
+			</Field>
+		</FieldLabel>
+	);
+}
 
 /**
  * Preferences that change how Virtool behaves for the signed-in user
@@ -88,6 +130,7 @@ export default function AccountSettings() {
 			</section>
 			<section
 				aria-labelledby="reference-exports-heading"
+				className="mt-12"
 				id="reference-exports"
 			>
 				<SectionHeader level={3}>
@@ -97,62 +140,48 @@ export default function AccountSettings() {
 						the export menu for one export.
 					</p>
 				</SectionHeader>
-				<BoxGroup>
-					<BoxGroupSection>
-						<p
-							className="mb-3 font-semibold"
-							id="referenceExportFastaHeader-label"
-						>
-							FASTA header
-						</p>
-						<RadioGroup
-							aria-labelledby="referenceExportFastaHeader-label"
-							onValueChange={(value) =>
-								mutation.mutate({
-									referenceExportFastaHeader:
-										value as ReferenceExportFastaHeader,
-								})
-							}
-							value={data.settings.referenceExportFastaHeader}
-						>
-							{REFERENCE_EXPORT_FASTA_HEADERS.map((value) => (
-								<FieldLabel key={value}>
-									<Field orientation="horizontal">
-										<RadioGroupItem value={value} />
-										<FieldTitle>{FASTA_HEADER_LABELS[value]}</FieldTitle>
-									</Field>
-								</FieldLabel>
-							))}
-						</RadioGroup>
-					</BoxGroupSection>
-					<BoxGroupSection>
-						<p
-							className="mb-3 font-semibold"
-							id="referenceExportTableFormat-label"
-						>
-							Table download format
-						</p>
-						<RadioGroup
-							aria-labelledby="referenceExportTableFormat-label"
-							onValueChange={(value) =>
-								mutation.mutate({
-									referenceExportTableFormat:
-										value as ReferenceExportTableFormat,
-								})
-							}
-							value={data.settings.referenceExportTableFormat}
-						>
-							{REFERENCE_EXPORT_TABLE_FORMATS.map((value) => (
-								<FieldLabel key={value}>
-									<Field orientation="horizontal">
-										<RadioGroupItem value={value} />
-										<FieldTitle>{TABLE_FORMAT_LABELS[value]}</FieldTitle>
-									</Field>
-								</FieldLabel>
-							))}
-						</RadioGroup>
-					</BoxGroupSection>
-				</BoxGroup>
+				<FieldSet>
+					<FieldLegend variant="label">FASTA header</FieldLegend>
+					<RadioGroup
+						className="grid-cols-2"
+						onValueChange={(value) =>
+							mutation.mutate({
+								referenceExportFastaHeader: value as ReferenceExportFastaHeader,
+							})
+						}
+						value={data.settings.referenceExportFastaHeader}
+					>
+						{REFERENCE_EXPORT_FASTA_HEADERS.map((value) => (
+							<ExportOption
+								example={FASTA_HEADER_EXAMPLES[value]}
+								key={value}
+								title={FASTA_HEADER_LABELS[value]}
+								value={value}
+							/>
+						))}
+					</RadioGroup>
+				</FieldSet>
+				<FieldSet>
+					<FieldLegend variant="label">Table download format</FieldLegend>
+					<RadioGroup
+						className="grid-cols-2"
+						onValueChange={(value) =>
+							mutation.mutate({
+								referenceExportTableFormat: value as ReferenceExportTableFormat,
+							})
+						}
+						value={data.settings.referenceExportTableFormat}
+					>
+						{REFERENCE_EXPORT_TABLE_FORMATS.map((value) => (
+							<ExportOption
+								example={TABLE_FORMAT_EXAMPLES[value]}
+								key={value}
+								title={TABLE_FORMAT_LABELS[value]}
+								value={value}
+							/>
+						))}
+					</RadioGroup>
+				</FieldSet>
 			</section>
 		</section>
 	);

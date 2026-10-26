@@ -2,6 +2,7 @@ import { useFetchAccount } from "@account/account";
 import { writeToClipboard } from "@app/clipboard";
 import { downloadText } from "@app/download";
 import { useIsSecureContext, useTimedReset } from "@app/hooks";
+import type { ButtonProps } from "@base/Button";
 import Dropdown, {
 	DropdownButton,
 	DropdownMenuContent,
@@ -81,6 +82,9 @@ type OtuExportProps = {
 
 	/** The OTU the isolates belong to */
 	otu: { name: string; schema: OtuSegment[] };
+
+	/** The size of the menu's button */
+	size?: ButtonProps["size"];
 };
 
 /**
@@ -96,6 +100,7 @@ export default function OtuExport({
 	includeIsolateTable,
 	isolates,
 	otu,
+	size,
 }: OtuExportProps) {
 	const isSecureContext = useIsSecureContext();
 	const { data: account } = useFetchAccount();
@@ -176,11 +181,11 @@ export default function OtuExport({
 
 	return (
 		<Dropdown>
-			<DropdownButton aria-label={copied ? "Copied" : "Export"}>
+			<DropdownButton aria-label={copied ? "Copied" : "Export"} size={size}>
 				<Icon icon={copied ? Check : Download} /> {copied ? "Copied" : "Export"}
 			</DropdownButton>
 			<DropdownMenuContent align="end">
-				<p className="px-2 py-1.5 text-xs text-gray-500">{description}</p>
+				<p className="mb-0 px-2 py-1.5 text-xs text-gray-500">{description}</p>
 				<DropdownMenuSeparator />
 				{/* The clipboard API is unavailable outside a secure context. */}
 				{isSecureContext && (

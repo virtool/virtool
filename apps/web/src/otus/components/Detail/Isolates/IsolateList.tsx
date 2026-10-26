@@ -112,18 +112,6 @@ export default function IsolateList() {
 						value={term}
 						onChange={(e) => setTerm(e.target.value)}
 					/>
-					<OtuExport
-						description={describeExportRows(
-							selectedIsolates.length,
-							results.length,
-							isolates.length,
-							"isolate",
-						)}
-						filenameParts={[otu.name]}
-						includeIsolateTable
-						isolates={exportIsolates}
-						otu={otu}
-					/>
 					{canModifyIsolates && (
 						<Button color="blue" onClick={() => setOpenCreate(true)}>
 							Create
@@ -136,6 +124,21 @@ export default function IsolateList() {
 				<>
 					<div className="border border-b-0 border-gray-300 rounded-t">
 						<SelectionHeader
+							actions={
+								<OtuExport
+									description={describeExportRows(
+										selectedIsolates.length,
+										results.length,
+										isolates.length,
+										"isolate",
+									)}
+									filenameParts={[otu.name]}
+									includeIsolateTable
+									isolates={exportIsolates}
+									otu={otu}
+									size="small"
+								/>
+							}
 							ariaLabel="Select all isolates"
 							checked={selection.getVisibleState(results)}
 							onSelectAll={() => selection.toggleVisible(results)}
