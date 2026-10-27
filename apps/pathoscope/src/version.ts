@@ -9,10 +9,10 @@ import pkg from "../package.json" with { type: "json" };
  * say so. A JSON import is a real module value the bundler inlines and `vitest`
  * resolves.
  *
- * CI's `release-ghcr` job sets it from the release tag with
- * `pnpm -C apps/pathoscope version` before the Docker build. `workflow_version`
- * is part of every cache key, so a cached `reference_mapping_index` or
+ * `changeset version` writes each release's version into the manifest, and
+ * CI's `release-ghcr` job builds from that release's tag. `workflow_version` is
+ * part of every cache key, so a cached `reference_mapping_index` or
  * `subtraction_mapping_index` blob is reused only by a runner of the same
- * release. Unreleased builds carry `0.0.0`.
+ * release. Builds between releases carry the last released version.
  */
 export const APP_VERSION: string = pkg.version;

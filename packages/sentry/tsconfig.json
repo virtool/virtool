@@ -3,7 +3,7 @@
 	// component imports, and it is checked separately by `tsconfig.browser.json`
 	// with no Node types, so a Node global cannot reach the client bundle
 	// unremarked. Add a module here as you add its subpath export.
-	"extends": "../tsconfig.base.json",
+	"extends": "../tsconfig/base.json",
 	"compilerOptions": {
 		"types": ["node"]
 	},

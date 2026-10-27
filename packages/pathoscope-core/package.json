@@ -1,0 +1,8 @@
+{
+	"name": "@virtool/pathoscope-core",
+	"version": "0.0.0",
+	"private": true,
+	"files": [
+		"package.json"
+	]
+}

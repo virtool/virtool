@@ -178,3 +178,52 @@ it("clears environment errors when the scheduler tick fails", async () => {
 	expect(workflows.getState().lastError).toBe("Docker is unavailable");
 	expect(workflows.getState().errors).toEqual({});
 });
+
+it("builds the workflow image from the environment worktree before launch", async () => {
+	const run = vi.fn<CommandRunner>(async (_command, args) => {
+		if (isCountRead(args, "healthy")) {
+			return { stderr: "", stdout: '{"pending":{"nuvs":1}}\n' };
+		}
+		return { stderr: "", stdout: "" };
+	});
+	const workflows = createCoordinator(run);
+
+	await workflows.tick([createEnvironment("healthy")]);
+
+	expect(run).toHaveBeenCalledWith(
+		"pnpm",
+		["--filter", "@virtool/nuvs", "build"],
+		{ cwd: "/repo/healthy" },
+	);
+	expect(run).toHaveBeenCalledWith(
+		"pnpm",
+		[
+			"--filter",
+			"@virtool/nuvs",
+			"--prod",
+			"deploy",
+			".docker-build/nuvs",
+			"--force",
+		],
+		{ cwd: "/repo/healthy" },
+	);
+	expect(run).toHaveBeenCalledWith(
+		"docker",
+		[
+			"buildx",
+			"bake",
+			"--file",
+			"packages/image-build/docker-bake.hcl",
+			"nuvs",
+			"--load",
+			"--set",
+			"nuvs.tags=virtool-dev-healthy/nuvs",
+		],
+		{ cwd: "/repo/healthy" },
+	);
+	const launch = run.mock.calls.findIndex(([, args]) =>
+		isLaunch(args, "healthy"),
+	);
+	const bake = run.mock.calls.findIndex(([, args]) => args.includes("bake"));
+	expect(bake).toBeLessThan(launch);
+});

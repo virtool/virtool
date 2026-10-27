@@ -1,0 +1,30 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "virtool/virtool"
+    }
+  ],
+  "commit": false,
+  "fixed": [
+    [
+      "@virtool/web",
+      "@virtool/internal"
+    ]
+  ],
+  "linked": [],
+  "access": "restricted",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "privatePackages": {
+    "version": true,
+    "tag": true
+  },
+  "ignore": [
+    "@virtool/dev",
+    "@virtool/dev-tools",
+    "@virtool/site",
+    "@virtool/tsconfig"
+  ]
+}

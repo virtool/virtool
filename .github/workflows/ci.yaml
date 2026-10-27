@@ -22,153 +22,31 @@ jobs:
     # -------------------------------------------------------------------------
     # Change detection
     # -------------------------------------------------------------------------
-    # Filtering is reserved for expensive jobs — libclang and cargo, SPAdes,
-    # bowtie2, HMMER, samtools — that would otherwise run on every PR, even ones
-    # confined to apps/web. NuVs / Test is the one cheap exception, filtered
-    # only for parity with pathoscope-test and quality-test. Everything else
-    # stays unfiltered; gating it would cost more review attention than it saves.
-    #
-    # The filter step is skipped on `push`, so this job needs no checkout and no
-    # base-ref handling for that event: dorny/paths-filter reads the changed
-    # files from the pull request API, which only exists on a PR. A skipped step
-    # sets no output, and the consumers' `if` reads `push` first.
+    # Image inputs are pnpm workspace dependencies. The leading ellipsis selects
+    # every dependent of a workspace changed since the PR base, so shared
+    # package changes automatically select the images that consume them.
     changes:
         name: Changes
         runs-on: ubuntu-24.04
         timeout-minutes: 5
-        permissions:
-            pull-requests: read
         outputs:
-            nuvs-app: ${{ steps.filter.outputs.nuvs-app }}
-            nuvs-image: ${{ steps.filter.outputs.nuvs-image }}
-            pathoscope-crate: ${{ steps.filter.outputs.pathoscope-crate }}
-            pathoscope-image: ${{ steps.filter.outputs.pathoscope-image }}
-            quality-crate: ${{ steps.filter.outputs.quality-crate }}
+            packages: ${{ steps.affected.outputs.packages }}
         steps:
-            - name: Filter
-              id: filter
+            - name: Checkout
               if: github.event_name == 'pull_request'
-              uses: dorny/paths-filter@v4
+              uses: actions/checkout@v7
               with:
-                  # A filter per job, because they do not share inputs:
-                  # pathoscope-test runs cargo over the crate and touches no
-                  # TypeScript, while the two image builds bundle their app on
-                  # the shared root Dockerfile and so take every workspace
-                  # package their build stage copies. One shared filter would
-                  # run the libclang-and-cargo job on any packages/workflow
-                  # change.
-                  #
-                  # **Every path a build stage COPYs must appear under that
-                  # image's filter.** A missing one skips the build on the PR
-                  # that breaks it and fails on the subsequent push to main,
-                  # where nothing gates it. Both image filters therefore carry
-                  # everything the shared `base` stage copies — including
-                  # packages neither app imports today, because `base` copies
-                  # them regardless of which target is requested. The two are
-                  # still written out separately rather than folded into one:
-                  # pathoscope copies packages/pathoscope-core and nuvs does
-                  # not, and one shared filter would rebuild each image for the
-                  # other's inputs.
-                  #
-                  # This file is in every filter so that a change to the jobs
-                  # themselves is still gated by them. The image and crate
-                  # filters build via Docker and do not use
-                  # ./.github/actions/setup, so that action is not in them;
-                  # nuvs-app runs it and so carries it and .nvmrc.
-                  #
-                  # `.dockerignore` is in the image filter: build-pathoscope
-                  # builds with `context: .`, so a rule there decides what the
-                  # Dockerfile's `COPY packages/pathoscope-core .` can see. It
-                  # already carries `**/target` for that crate specifically, and
-                  # a rule that excluded the crate would fail the build on main
-                  # with nothing having caught it on the PR.
-                  filters: |
-                      # Gates NuVs / Test. Narrower than nuvs-image: no
-                      # Dockerfile or .dockerignore, and only the packages nuvs
-                      # imports — so no data, ncbi or service.
-                      nuvs-app:
-                        - '.github/workflows/ci.yaml'
-                        - '.github/actions/setup/**'
-                        - '.nvmrc'
-                        - 'apps/nuvs/**'
-                        - 'packages/archive/**'
-                        - 'packages/bio/**'
-                        - 'packages/contracts/**'
-                        - 'packages/logger/**'
-                        - 'packages/sentry/**'
-                        - 'packages/sqlite/**'
-                        - 'packages/storage/**'
-                        - 'packages/workflow/**'
-                        - 'packages/tsconfig.base.json'
-                        - 'apps/tsconfig.node.json'
-                        - 'apps/*/package.json'
-                        - 'packages/*/package.json'
-                        - 'package.json'
-                        - 'pnpm-workspace.yaml'
-                        - 'pnpm-lock.yaml'
-                      nuvs-image:
-                        - '.github/workflows/ci.yaml'
-                        - 'apps/nuvs/**'
-                        - 'packages/archive/**'
-                        - 'packages/bio/**'
-                        - 'packages/contracts/**'
-                        - 'packages/data/**'
-                        - 'packages/logger/**'
-                        - 'packages/ncbi/**'
-                        - 'packages/sentry/**'
-                        - 'packages/service/**'
-                        - 'packages/sqlite/**'
-                        - 'packages/storage/**'
-                        - 'packages/workflow/**'
-                        - 'packages/tsconfig.base.json'
-                        - 'apps/tsconfig.node.json'
-                        - 'apps/*/package.json'
-                        - 'packages/*/package.json'
-                        - 'biome.json'
-                        - 'package.json'
-                        - 'pnpm-workspace.yaml'
-                        - 'pnpm-lock.yaml'
-                        - 'Dockerfile'
-                        - '.dockerignore'
-                      # `Dockerfile` because pathoscope-test builds bowtie2 out
-                      # of it to run the golden vectors against.
-                      pathoscope-crate:
-                        - 'packages/pathoscope-core/**'
-                        - '.github/workflows/ci.yaml'
-                        - 'Dockerfile'
-                      pathoscope-image:
-                        - '.github/workflows/ci.yaml'
-                        - 'apps/pathoscope/**'
-                        - 'packages/archive/**'
-                        - 'packages/bio/**'
-                        - 'packages/contracts/**'
-                        - 'packages/data/**'
-                        - 'packages/logger/**'
-                        - 'packages/ncbi/**'
-                        - 'packages/pathoscope-core/**'
-                        - 'packages/sentry/**'
-                        - 'packages/service/**'
-                        - 'packages/sqlite/**'
-                        - 'packages/storage/**'
-                        - 'packages/workflow/**'
-                        - 'packages/tsconfig.base.json'
-                        - 'apps/tsconfig.node.json'
-                        - 'apps/*/package.json'
-                        - 'packages/*/package.json'
-                        - 'biome.json'
-                        - 'package.json'
-                        - 'pnpm-workspace.yaml'
-                        - 'pnpm-lock.yaml'
-                        - 'Dockerfile'
-                        - '.dockerignore'
-                      # No `Dockerfile` here, unlike pathoscope-crate. That job
-                      # builds bowtie2 out of it to run its goldens against;
-                      # this one builds nothing at all — quality-core's
-                      # goldens are checked in and frozen, and nothing in that
-                      # file is involved in producing them.
-                      quality-crate:
-                        - 'packages/quality-core/**'
-                        - '.github/workflows/ci.yaml'
+                  fetch-depth: 0
+            - name: Setup
+              if: github.event_name == 'pull_request'
+              uses: ./.github/actions/setup
+            - name: Find affected workspaces
+              id: affected
+              if: github.event_name == 'pull_request'
+              run: |
+                  git fetch --no-tags origin main
+                  packages=$(pnpm --filter '...[origin/main]' list --depth -1 --json | jq -c '[.[].name]')
+                  echo "packages=$packages" >> "$GITHUB_OUTPUT"
 
     # -------------------------------------------------------------------------
     # Checks (repo-wide)
@@ -234,69 +112,94 @@ jobs:
         name: ${{ matrix.area }} / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 20
+        needs: [changes]
         strategy:
             fail-fast: false
-            # Adding an app needs a Dockerfile stage and an entry here;
+            # Adding an app needs an app Dockerfile, a Bake target, and an entry here;
             # everything else about a new app is generic. Keep this list and the
             # one in release-ghcr in step.
             matrix:
                 include:
                     - image: web
                       target: dist
+                      package: "@virtool/web"
                       workspace: apps/web
                       area: Web
                     - image: internal
                       target: internal
+                      package: "@virtool/internal"
                       workspace: apps/internal
                       area: Internal
                     - image: create-sample
                       target: create-sample
+                      package: "@virtool/create-sample"
                       workspace: apps/create-sample
                       area: Create Sample
                     - image: create-subtraction
                       target: create-subtraction
+                      package: "@virtool/create-subtraction"
                       workspace: apps/create-subtraction
                       area: Create Subtraction
         steps:
             - name: Checkout
+              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: actions/checkout@v7
+            - name: Setup
+              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              uses: ./.github/actions/setup
+            - name: Prepare image context
+              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              run: |
+                  pnpm --filter ${{ matrix.package }} build
+                  pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
             # The default `docker` driver cannot export a build cache, so the
             # gha cache below needs a docker-container builder.
             - name: Setup Buildx
+              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/setup-buildx-action@v4
+            # Inline Bake commands get no cache service credentials, so the gha
+            # cache needs this step to expose them.
+            - name: Expose Actions runtime
+              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              uses: crazy-max/ghaction-github-runtime@v4
             - name: Build
-              uses: docker/build-push-action@v7
-              with:
-                  target: ${{ matrix.target }}
-                  # Scoped per image. The images share the `base` stage but
-                  # diverge after it, and an unscoped `mode=max` export would
-                  # have each matrix leg overwrite the last one's cache.
-                  cache-from: type=gha,scope=${{ matrix.image }}
-                  cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              run: |
+                  docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} \
+                      --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
+                      --set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}'
     # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
     build-pathoscope:
         name: Pathoscope / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 45
         needs: [changes]
-        # Unconditional on `push`, deliberately. `release-tag` lists this job in
+        # Unconditional on `push`, deliberately. `release` lists this job in
         # `needs`, and running it on every push to main keeps that gate complete
         # without the skipped-dependency handling
         # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
         # dependency would otherwise force onto it. PRs get the savings.
-        if: github.event_name == 'push' || needs.changes.outputs.pathoscope-image == 'true'
+        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Prepare image context
+              run: |
+                  pnpm --filter @virtool/pathoscope build
+                  pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
+            # Inline Bake commands get no cache service credentials, so the gha
+            # cache needs this step to expose them.
+            - name: Expose Actions runtime
+              uses: crazy-max/ghaction-github-runtime@v4
             - name: Build
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  target: pathoscope
-                  cache-from: type=gha,scope=pathoscope
-                  cache-to: type=gha,mode=max,scope=pathoscope
+              run: |
+                  docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope \
+                      --set 'pathoscope.cache-from=type=gha,scope=pathoscope' \
+                      --set 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope'
 
     # -------------------------------------------------------------------------
     # Web (apps/web)
@@ -402,36 +305,39 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 60
         needs: [changes]
-        # Unconditional on `push`, deliberately. `release-tag` lists this job in
+        # Unconditional on `push`, deliberately. `release` lists this job in
         # `needs`, and running it on every push to main keeps that gate complete
         # without the skipped-dependency handling
         # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
         # dependency would otherwise force onto it. PRs get the savings.
-        if: github.event_name == 'push' || needs.changes.outputs.nuvs-image == 'true'
+        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Prepare image context
+              run: |
+                  pnpm --filter @virtool/nuvs build
+                  pnpm --filter @virtool/nuvs --prod deploy .docker-build/nuvs --force
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
+            # Inline Bake commands get no cache service credentials, so the gha
+            # cache needs this step to expose them.
+            - name: Expose Actions runtime
+              uses: crazy-max/ghaction-github-runtime@v4
             - name: Build
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  target: nuvs
-                  cache-from: type=gha,scope=nuvs
-                  cache-to: type=gha,mode=max,scope=nuvs
+              run: |
+                  docker buildx bake -f packages/image-build/docker-bake.hcl nuvs \
+                      --set 'nuvs.cache-from=type=gha,scope=nuvs' \
+                      --set 'nuvs.cache-to=type=gha,mode=max,scope=nuvs'
 
-    # Split out of Packages / Test for a per-app job and path filtering, like
-    # pathoscope-test and quality-test. Mocked vitest, no real tools, so just
-    # the setup action.
     nuvs-test:
         name: NuVs / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 10
         needs: [changes]
-        # See the note on build-pathoscope: filtered on pull requests,
-        # unconditional on push so the release-tag gate stays complete.
-        if: github.event_name == 'push' || needs.changes.outputs.nuvs-app == 'true'
+        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -451,86 +357,42 @@ jobs:
         timeout-minutes: 45
         needs: [changes]
         # See the note on `build-pathoscope`: filtered on pull requests,
-        # unconditional on `push` so the `release-tag` gate stays complete.
-        if: github.event_name == 'push' || needs.changes.outputs.pathoscope-crate == 'true'
+        # unconditional on `push` so the `release` gate stays complete.
+        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope-core') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/workflow-tools')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
-            # hts-sys runs bindgen against htslib's headers and does not fall
-            # back to pre-generated bindings, so libclang is required here just
-            # as it is in the image build. Unlike the accessibility job's
-            # Playwright libraries it cannot simply be dropped, so apt is
-            # bounded instead. The runner's mirrorlist puts
-            # azure.archive.ubuntu.com first; when that host goes unreachable
-            # apt retries it for every index against a two-minute default
-            # timeout before falling back to archive.ubuntu.com, which reads as
-            # a hang. Rewriting the mirrorlist skips the dead host outright and
-            # the acquire options cap what a merely slow one can cost, for the
-            # package downloads as well as the index fetch. The step timeout is
-            # the backstop for both.
-            - name: Install libclang
-              timeout-minutes: 5
-              run: |
-                  if [ -f /etc/apt/apt-mirrors.txt ]; then
-                      sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/apt-mirrors.txt
-                  fi
-                  printf 'Acquire::Retries "2";\nAcquire::http::Timeout "15";\nAcquire::https::Timeout "15";\n' \
-                      | sudo tee /etc/apt/apt.conf.d/99-ci-timeouts > /dev/null
-                  sudo apt-get update
-                  sudo apt-get install -y --no-install-recommends libclang-dev
-            # The `candidates` golden vectors shell out to bowtie2. Without it
-            # the harness skips them; VT_REQUIRE_BOWTIE2 below turns that skip
-            # into a failure so CI can never quietly stop checking them. It is
-            # built from the root Dockerfile's own target rather than apt, so
-            # this job and the workflow images always run the same bowtie2
-            # build.
+            # Format and test run inside the workflow-tools Dockerfile, against
+            # the same Rust toolchain, libclang, and bowtie2 build the image
+            # ships. That stage sets VT_REQUIRE_BOWTIE2, so the `candidates`
+            # golden vectors can never be skipped silently.
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
-            - name: Build bowtie2
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  target: bowtie2
-                  outputs: type=local,dest=/tmp/bowtie2
-                  cache-from: type=gha,scope=bowtie2
-                  cache-to: type=gha,mode=max,scope=bowtie2
-            - name: Install bowtie2
-              run: |
-                  sudo cp /tmp/bowtie2/tools/bowtie2/2.5.4/* /usr/local/bin/
-                  bowtie2 --version | head -1
-            - name: Cache cargo
-              uses: actions/cache@v6
-              with:
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                      packages/pathoscope-core/target
-                  key: cargo-${{ runner.os }}-${{ hashFiles('packages/pathoscope-core/Cargo.lock') }}
-                  restore-keys: cargo-${{ runner.os }}-
-            - name: Format
-              run: cargo fmt --check
-              working-directory: packages/pathoscope-core
+            # Inline Bake commands get no cache service credentials, so the gha
+            # cache needs this step to expose them.
+            - name: Expose Actions runtime
+              uses: crazy-max/ghaction-github-runtime@v4
             - name: Test
-              run: cargo test
-              working-directory: packages/pathoscope-core
-              env:
-                  VT_REQUIRE_BOWTIE2: "1"
+              run: |
+                  docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope-core-test \
+                      --progress=plain \
+                      --set 'pathoscope-core-test.cache-from=type=gha,scope=pathoscope-core-test' \
+                      --set 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test'
 
     # -------------------------------------------------------------------------
     # Quality (packages/quality-core)
     # -------------------------------------------------------------------------
-    # Much cheaper than pathoscope-test, and deliberately so: this crate links
-    # nothing native, so there is no libclang install, and its goldens are
-    # FastQC output checked in rather than something a tool has to be built to
-    # produce. Just cargo.
+    # Plain cargo on the runner, unlike pathoscope-test: this crate links
+    # nothing native, and its goldens are FastQC output checked in rather than
+    # something a tool has to be built to produce.
     quality-test:
         name: Quality / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         needs: [changes]
         # See the note on `build-pathoscope`: filtered on pull requests,
-        # unconditional on `push` so the `release-tag` gate stays complete.
-        if: github.event_name == 'push' || needs.changes.outputs.quality-crate == 'true'
+        # unconditional on `push` so the `release` gate stays complete.
+        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/quality-core')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -583,12 +445,11 @@ jobs:
             - name: Setup
               uses: ./.github/actions/setup
             # Exclusions rather than an inclusion list, so a new workspace that
-            # declares `test` is covered without editing this job. The six
+            # declares `test` is covered without editing this job. The five
             # excluded here run in dedicated jobs: web, internal and dev-tools,
-            # nuvs, and the two persistence packages that share Data & Storage /
-            # Test.
+            # and the two persistence packages that share Data & Storage / Test.
             - name: Test
-              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" --filter "!@virtool/dev-tools" --filter "!@virtool/nuvs" test
+              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" --filter "!@virtool/dev-tools" test
 
     # -------------------------------------------------------------------------
     # Data and Storage (packages/data, packages/storage)
@@ -615,10 +476,45 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
+    # Changeset (pull requests)
+    # -------------------------------------------------------------------------
+    # Fails a pull request that changes a versioned workspace without adding a
+    # changeset. `changeset status --since` exits 1 when a changed package has
+    # no changeset and passes cleanly when nothing versioned changed, so a
+    # docs- or CI-only pull request is unaffected. A change that intentionally
+    # ships nothing to users records that with an empty changeset
+    # (`pnpm changeset --empty`).
+    changeset-check:
+        name: Changeset
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+        # The version PR consumes the changesets it releases, so it would fail.
+        if: github.event_name == 'pull_request' && github.head_ref != 'changeset-release/main'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+            - name: Setup
+              uses: ./.github/actions/setup
+            # `--since` resolves the base branch as a local ref; the pull-request
+            # checkout only brings the head, so fetch main first.
+            - name: Status
+              run: |
+                  git fetch --no-tags origin main
+                  pnpm changeset status --since=origin/main
+
+    # -------------------------------------------------------------------------
     # Release
     # -------------------------------------------------------------------------
-    release-tag:
-        name: Release / Tag
+    # On push to main, `changesets/action` maintains a "Version Packages" pull
+    # request while unreleased changesets exist; merging that pull request lands
+    # the version bumps with no changesets left, and the next push runs the
+    # `publish` script, which tags each bumped workspace (`@virtool/web@1.2.3`).
+    # `release-ghcr-matrix` reads the tagged packages and `release-ghcr`
+    # publishes only the deployable apps among them.
+    release:
+        name: Release
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         needs:
@@ -641,24 +537,78 @@ jobs:
             ]
         if: github.event_name == 'push'
         outputs:
-            git-tag: ${{ steps.semantic.outputs.git-tag }}
+            published: ${{ steps.changesets.outputs.published }}
+            published-packages: ${{ steps.changesets.outputs.published-packages }}
         permissions:
             contents: write
+            pull-requests: write
         steps:
             - name: Checkout
               uses: actions/checkout@v7
               with:
-                  # semantic-release resolves the last release from the tags
-                  # reachable from the branch; the default shallow checkout has
-                  # none, and it would publish 1.0.0 over the live series.
+                  # `changeset tag` skips a package whose tag already exists, so
+                  # publishing needs the full tag history, not the default
+                  # shallow checkout.
                   fetch-depth: 0
             - name: Setup
               uses: ./.github/actions/setup
-            - name: Run semantic-release
-              id: semantic
+            - name: Changesets
+              id: changesets
+              # The version PR is opened with `GITHUB_TOKEN`, so its CI runs wait
+              # for a maintainer to approve them. `changeset tag` writes tag events
+              # to the action's output file, which it reads to push the tags,
+              # create a GitHub Release per tag, and set `published-packages`.
+              uses: changesets/action@v2.1.2
+              with:
+                  version-script: pnpm changeset version
+                  publish-script: pnpm changeset tag
+                  pr-title: "chore: version packages"
+                  commit-message: "chore: version packages"
+    release-ghcr-matrix:
+        name: Release / Matrix
+        runs-on: ubuntu-24.04
+        timeout-minutes: 5
+        needs: [release]
+        if: needs.release.outputs.published == 'true'
+        outputs:
+            include: ${{ steps.matrix.outputs.include }}
+            any: ${{ steps.matrix.outputs.any }}
+        steps:
+            # Map the tagged packages to image builds, dropping any that are not
+            # a deployable app (a shared `packages/*` bump tags a package but
+            # ships no image). Keep this map in step with the `build` and
+            # `release-ghcr` matrices.
+            - name: Build matrix
+              id: matrix
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: pnpm exec semantic-release
+                  PUBLISHED: ${{ needs.release.outputs.published-packages }}
+              run: |
+                  include=$(jq -c '
+                    {
+                      "@virtool/web":                {image:"web",                target:"dist"},
+                      "@virtool/internal":           {image:"internal",           target:"internal"},
+                      "@virtool/create-sample":      {image:"create-sample",      target:"create-sample"},
+                      "@virtool/create-subtraction": {image:"create-subtraction", target:"create-subtraction"},
+                      "@virtool/pathoscope":         {image:"pathoscope",         target:"pathoscope"},
+                      "@virtool/nuvs":               {image:"nuvs",               target:"nuvs"}
+                    } as $apps
+                    | [ .[]
+                        | . as $p
+                        | $apps[$p.name] as $m
+                        | select($m != null)
+                        | $m + {
+                            package: $p.name,
+                            version: $p.version,
+                            tag: ($p.name + "@" + $p.version),
+                            images: ("ghcr.io/virtool/" + $m.image)
+                          }
+                      ]' <<< "$PUBLISHED")
+                  echo "include=$include" >> "$GITHUB_OUTPUT"
+                  if [ "$(jq 'length' <<< "$include")" -gt 0 ]; then
+                      echo "any=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "any=false" >> "$GITHUB_OUTPUT"
+                  fi
     release-ghcr:
         # No `${{ matrix.image }}` in the name: this job's `if` is false on
         # every PR (it only runs post-merge, on push to main), and GitHub
@@ -668,83 +618,54 @@ jobs:
         name: Release / GHCR
         runs-on: ubuntu-24.04
         timeout-minutes: 20
-        if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release-tag.outputs.git-tag != ''
-        needs: [release-tag]
+        needs: [release, release-ghcr-matrix]
+        if: github.repository_owner == 'Virtool' && needs.release-ghcr-matrix.outputs.any == 'true'
         permissions:
             contents: read
             packages: write
         strategy:
             fail-fast: false
-            # Every image shares the repo version and is published every
-            # release. Keep in step with the matrix in the build job.
+            # Only the deployable apps whose version bumped this release, built
+            # from `release-ghcr-matrix`. The pathoscope and nuvs legs read the
+            # gha cache under the same scope build-pathoscope and build-nuvs
+            # write it to, so the release reuses what those 45/60-minute jobs
+            # already produced
+            # rather than rebuilding the Rust crate, the bioinformatics tools
+            # and SPAdes from scratch inside this job's shared 20-minute timeout.
             matrix:
-                include:
-                    # Matrix values are evaluated before the job's `env`
-                    # context exists, so these are literal `ghcr.io`, not
-                    # `${{ env.REGISTRY }}`.
-                    - image: web
-                      target: dist
-                      workspace: apps/web
-                      images: ghcr.io/virtool/web
-                    - image: internal
-                      target: internal
-                      workspace: apps/internal
-                      images: ghcr.io/virtool/internal
-                    - image: create-sample
-                      target: create-sample
-                      workspace: apps/create-sample
-                      images: ghcr.io/virtool/create-sample
-                    - image: create-subtraction
-                      target: create-subtraction
-                      workspace: apps/create-subtraction
-                      images: ghcr.io/virtool/create-subtraction
-                    # These two read their gha cache under the same scope
-                    # build-pathoscope and build-nuvs write it to (matching
-                    # pathoscope-test's bowtie2 scope too), so the release
-                    # reuses what those 45/60-minute jobs already produced
-                    # rather than rebuilding the Rust crate, the
-                    # bioinformatics tools and SPAdes from scratch inside this
-                    # job's shared 20-minute timeout.
-                    - image: pathoscope
-                      target: pathoscope
-                      workspace: apps/pathoscope
-                      images: ghcr.io/virtool/pathoscope
-                    - image: nuvs
-                      target: nuvs
-                      workspace: apps/nuvs
-                      images: ghcr.io/virtool/nuvs
+                include: ${{ fromJSON(needs.release-ghcr-matrix.outputs.include) }}
         steps:
             - name: Checkout
               uses: actions/checkout@v7
               with:
-                  ref: ${{ needs.release-tag.outputs.git-tag }}
+                  ref: ${{ matrix.tag }}
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Prepare image context
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+              run: |
+                  pnpm --filter ${{ matrix.package }} build
+                  pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Set app version from release tag
-              run: pnpm -C ${{ matrix.workspace }} version "${{ needs.release-tag.outputs.git-tag }}" --no-git-tag-version
+            # Inline Bake commands get no cache service credentials, so the gha
+            # cache needs this step to expose them.
+            - name: Expose Actions runtime
+              uses: crazy-max/ghaction-github-runtime@v4
             - name: Login
               uses: docker/login-action@v4
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
-            - name: Extract Metadata
-              id: meta
-              uses: docker/metadata-action@v6
-              with:
-                  context: git
-                  images: ${{ matrix.images }}
             - name: Build & Push
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  push: true
-                  tags: ${{ steps.meta.outputs.tags }}
-                  target: ${{ matrix.target }}
-                  labels: ${{ steps.meta.outputs.labels }}
-                  cache-from: type=gha,scope=${{ matrix.image }}
-                  cache-to: type=gha,mode=max,scope=${{ matrix.image }}
-                  secrets: |
-                      sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+              run: |
+                  docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} --push \
+                      --set '${{ matrix.image }}.tags=${{ matrix.images }}:${{ matrix.version }}' \
+                      --set '${{ matrix.image }}.tags+=${{ matrix.images }}:latest' \
+                      --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
+                      --set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}' \
+                      --set '${{ matrix.image }}.secret=id=sentry_auth_token,env=SENTRY_AUTH_TOKEN'
