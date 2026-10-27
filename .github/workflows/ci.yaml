@@ -398,7 +398,7 @@ jobs:
               uses: crazy-max/ghaction-github-runtime@v4
             - name: Build bowtie2
               run: |
-                  docker buildx bake -f packages/image-build/docker-bake.hcl bowtie2 \
+                  docker buildx bake --allow=fs.write=/tmp/bowtie2 -f packages/image-build/docker-bake.hcl bowtie2 \
                       --set 'bowtie2.output=type=local,dest=/tmp/bowtie2' \
                       --set 'bowtie2.cache-from=type=gha,scope=bowtie2' \
                       --set 'bowtie2.cache-to=type=gha,mode=max,scope=bowtie2'
