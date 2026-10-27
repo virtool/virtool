@@ -319,10 +319,7 @@ identity labels.
 
 Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
 compatible with existing foreign keys. `auth_sessions` is the only browser
-session store. No flow reads or writes the legacy `sessions` table. A request
-that carries the legacy `session_id` or `session_token` cookie has them expired
-with their original path and attributes, and the user signs in again.
-Purpose-bound setup sessions remain separate.
+session store. Purpose-bound setup sessions remain separate.
 
 Normal Better Auth sessions use the library's seven-day rolling lifetime and
 one-day refresh age, with no absolute cap. The authenticated shell calls

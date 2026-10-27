@@ -6,7 +6,6 @@ import {
 } from "@virtool/contracts";
 import {
 	seedApiKey,
-	seedLegacySession,
 	seedSession,
 	seedSetupSession,
 	seedUser,
@@ -218,25 +217,6 @@ describe("browser boundary", () => {
 		},
 	);
 
-	it.each(["authenticated", "reset"] as const)(
-		"rejects a live legacy %s session",
-		async (sessionType) => {
-			const userId = await seedUser(db, {
-				forceReset: sessionType === "reset",
-			});
-			const legacy = await seedLegacySession(db, userId, sessionType);
-			getRequest.mockReturnValue(
-				requestFor(
-					`session_id=${legacy.sessionId}; session_token=${legacy.token}`,
-				),
-			);
-
-			await expect(
-				serverHandler()({ next: vi.fn(), serverFnMeta: { id: "ordinary" } }),
-			).rejects.toBeInstanceOf(UnauthorizedError);
-		},
-	);
-
 	it("resolves one Better Auth browser principal", async () => {
 		const userId = await seedUser(db);
 		const session = await seedSession(db, userId);
@@ -261,30 +241,6 @@ describe("browser boundary", () => {
 		expect(setContext).toHaveBeenCalledWith("credential", {
 			kind: "browser",
 			id: session.sessionId,
-		});
-	});
-
-	it("resolves Better Auth beside a stale legacy cookie pair", async () => {
-		const userId = await seedUser(db);
-		const betterAuth = await seedSession(db, userId);
-		const legacy = await seedLegacySession(db, userId);
-		getRequest.mockReturnValue(
-			requestFor(
-				`${sessionCookie(betterAuth)}; session_id=${legacy.sessionId}; session_token=${legacy.token}`,
-			),
-		);
-		const next = vi.fn().mockResolvedValue("result");
-
-		await serverHandler()({ next, serverFnMeta: { id: "ordinary" } });
-
-		expect(next).toHaveBeenCalledWith({
-			context: {
-				principal: expect.objectContaining({
-					kind: "browser",
-					sessionId: betterAuth.sessionId,
-					userId,
-				}),
-			},
 		});
 	});
 
@@ -390,17 +346,6 @@ describe("setup boundary", () => {
 });
 
 describe("raw request boundary", () => {
-	it("rejects a live legacy session", async () => {
-		const userId = await seedUser(db);
-		const legacy = await seedLegacySession(db, userId);
-		const cookie = `session_id=${legacy.sessionId}; session_token=${legacy.token}`;
-
-		const response = await requireAuthenticatedRequest(requestFor(cookie));
-
-		expect(response).toBeInstanceOf(Response);
-		expect((response as Response).status).toBe(401);
-	});
-
 	it("accepts browser sessions and API keys as distinct principals", async () => {
 		const userId = await seedUser(db);
 		const expiresAt = new Date(Date.now() + 30 * 60_000);

@@ -216,9 +216,9 @@ Two rules hold this together:
   `id` on insert and treat it as a number. That setting is instance-wide in 1.6,
   so every `auth_*` table takes an identity primary key too. Composition lives
   in `apps/web`; see `@server/auth/betterAuth`.
-- **`auth_sessions` is the only application session store.** No flow reads or
-  writes the legacy `sessions` table. Virtool re-reads account state for each
-  session and performs authorization after authentication.
+- **`auth_sessions` is the only application session store.** Migration
+  `0044_drop_legacy_sessions` drops the legacy `sessions` table. Virtool
+  re-reads account state for each session and performs authorization after authentication.
   Better Auth owns the rolling `expires_at` value; application authentication
   only reads it. Session resolution and cleanup compare expiry with PostgreSQL's
   UTC clock. Migration `0034_better_auth_rolling_sessions` removes obsolete
@@ -244,9 +244,7 @@ spelling while their columns stay snake_case.
 
 Migration `0030_sparkling_silverclaw` revokes every pre-cutover Better Auth
 session so a token minted before a legacy password change cannot become valid
-again. The `sessions` table and its schema mirror stay until a later migration
-drops them. Rollback to a release from before the cutover stays possible until
-then.
+again. Rollback to a release from before the cutover isn't supported.
 
 `users.email` is deliberately not globally unique, though Better Auth declares
 it so. Legacy rows share an empty email. The identity audit reports malformed

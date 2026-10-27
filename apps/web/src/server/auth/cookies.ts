@@ -2,15 +2,8 @@ import { createServerOnlyFn } from "@tanstack/react-start";
 import {
 	deleteCookie,
 	getCookie,
-	getCookies,
 	setCookie,
 } from "@tanstack/react-start/server";
-
-/**
- * Cookies of the retired legacy session system. No release after the cutover
- * reads them, so a browser that still holds them has them expired.
- */
-const LEGACY_SESSION_COOKIES = ["session_id", "session_token"] as const;
 
 /**
  * The opaque identifier of a restricted setup session. Names the row and
@@ -81,24 +74,6 @@ export const setLoginDevices = createServerOnlyFn(
 		);
 	},
 );
-
-/**
- * Expire any legacy session cookie the request carries. The attributes match
- * the ones the legacy cookies were set with, so the browser replaces them.
- */
-export const expireLegacySessionCookies = createServerOnlyFn((): void => {
-	const cookies = getCookies();
-	for (const name of LEGACY_SESSION_COOKIES) {
-		if (name in cookies) {
-			deleteCookie(name, {
-				httpOnly: true,
-				secure: isSecure(),
-				sameSite: "lax",
-				path: "/",
-			});
-		}
-	}
-});
 
 /** Read/write/clear access to the restricted setup cookies. */
 export type CookieAdapter = {

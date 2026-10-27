@@ -309,6 +309,13 @@
       "when": 1790710545604,
       "tag": "0043_enforce_passkey_credential_uniqueness",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793125449682,
+      "tag": "0044_drop_legacy_sessions",
+      "breakpoints": true
     }
   ]
 }
