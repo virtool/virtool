@@ -21,6 +21,7 @@ import {
 	EmailVerificationRateLimitedError,
 	inspectEmailVerificationLink,
 } from "./emailVerification";
+import { isBcryptHash } from "./migration";
 import { hashPassword, verifyPassword } from "./password";
 import {
 	completePasswordRecovery,
@@ -320,6 +321,72 @@ describe("password recovery", () => {
 				getRecoveryUrl: () => "unused",
 			}),
 		).rejects.toBeInstanceOf(RecoveryNotEligibleError);
+	});
+
+	it("recovers an unmigrated account through an administrator link only", async () => {
+		const userId = await seedUser(db, {
+			email: "",
+			password: await hashPassword("current-password-123"),
+		});
+		await seedSession(db, userId);
+		await expect(
+			issueRecoveryLink(db, {
+				userId,
+				purpose: "password_recovery",
+				deliveryAvailable: true,
+				getRecoveryUrl: () => "unused",
+			}),
+		).rejects.toBeInstanceOf(RecoveryNotEligibleError);
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "administrator_recovery",
+			deliveryAvailable: true,
+			getRecoveryUrl: () => "unused",
+		});
+		expect(issued.delivery).toBe("copy_only");
+		expect(
+			await inspectRecoveryLink(db, issued.token, "administrator_recovery"),
+		).toBe("usable");
+		await expect(
+			completePasswordRecovery(
+				db,
+				issued.token,
+				"administrator_recovery",
+				"current-password-123",
+			),
+		).rejects.toBeInstanceOf(RecoveryPasswordReuseError);
+
+		await completePasswordRecovery(
+			db,
+			issued.token,
+			"administrator_recovery",
+			"replacement-password-123",
+		);
+
+		const [user] = await db.select().from(users).where(eq(users.id, userId));
+		expect(user?.authMigratedAt).toBeNull();
+		expect(isBcryptHash(user?.password ?? null)).toBe(true);
+		expect(
+			await verifyPassword(
+				"replacement-password-123",
+				user?.password as Buffer,
+			),
+		).toBe(true);
+		expect(
+			await db
+				.select()
+				.from(authAccounts)
+				.where(eq(authAccounts.userId, userId)),
+		).toHaveLength(0);
+		expect(
+			await db
+				.select()
+				.from(authSessions)
+				.where(eq(authSessions.userId, userId)),
+		).toHaveLength(0);
+		expect(
+			await inspectRecoveryLink(db, issued.token, "administrator_recovery"),
+		).toBe("unusable");
 	});
 
 	it("refuses password reuse without consuming the link", async () => {

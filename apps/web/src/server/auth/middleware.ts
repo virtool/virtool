@@ -26,7 +26,7 @@ import {
 import {
 	parseBasicAuthHeader,
 	verifyApiKey,
-	verifyBrowserRequest,
+	verifyBrowserPrincipal,
 } from "./verify";
 
 /** Thrown by the auth middleware when a request has no valid session. */
@@ -87,8 +87,7 @@ export const requireAdminRole = createServerOnlyFn(
  * session that has already been resolved.
  *
  * A restricted setup credential resolves to nothing here because it is not an
- * application session. Better Auth is preferred, with retained legacy sessions
- * accepted during the remediation compatibility window. A forced-reset session
+ * application session. Only Better Auth sessions resolve. A forced-reset session
  * resolves to its distinct principal and is rejected here so ordinary policies
  * cannot accidentally authorize it.
  */
@@ -97,7 +96,7 @@ export const requireAdminRole = createServerOnlyFn(
 // @tanstack/react-start/server in the client graph via start.ts.
 export const requireBrowserPrincipal = createServerOnlyFn(
 	async (): Promise<BrowserPrincipal> => {
-		const principal = await verifyBrowserRequest(db, getRequest());
+		const principal = await verifyBrowserPrincipal(db, getRequest());
 		if (!principal) {
 			throw new UnauthorizedError();
 		}
@@ -114,7 +113,7 @@ export const requireBrowserPrincipal = createServerOnlyFn(
 // The global middleware also checks restricted setup credentials before it can
 // answer 401, so it needs a non-throwing browser-session lookup.
 const resolveBrowserOrNull = createServerOnlyFn(async () =>
-	verifyBrowserRequest(db, getRequest()),
+	verifyBrowserPrincipal(db, getRequest()),
 );
 
 /** Attribute a resolved credential without exposing its bearer secret. */
@@ -137,7 +136,7 @@ function clearPrincipalAttribution(): void {
  * `Response` on failure so the caller can `return` it directly.
  *
  * Either credential works: an HTTP Basic `Authorization` header carrying a user
- * handle and API key, or the session cookie pair. Raw routes are the only
+ * handle and API key, or a Better Auth session cookie. Raw routes are the only
  * endpoints a script can reach without the generated RPC client, so they are
  * where key authentication has to live; server functions stay cookie-only.
  *
@@ -163,7 +162,7 @@ export const requireAuthenticatedRequest = createServerOnlyFn(
 				? await verifyApiKey(db, credentials.handle, credentials.key)
 				: null;
 		} else {
-			const browser = await verifyBrowserRequest(db, request);
+			const browser = await verifyBrowserPrincipal(db, request);
 			principal = browser?.kind === "browser" ? browser : null;
 		}
 

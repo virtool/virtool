@@ -1,22 +1,15 @@
-import { timingSafeEqual } from "node:crypto";
-
 import {
 	type ApiKeyPrincipal,
 	type BrowserSessionPrincipal,
 	emptyPermissions,
 } from "@virtool/contracts";
-import {
-	mfaEnrollmentRequired,
-	resolveBrowserSession,
-} from "@virtool/data/auth/session";
+import { resolveBrowserSession } from "@virtool/data/auth/session";
 import { hashToken } from "@virtool/data/auth/tokens";
 
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import { and, eq, sql } from "drizzle-orm";
-import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
 import { assertDatabaseReachable } from "./probe";
 
 async function getBetterAuthSession(headers: Headers) {
@@ -71,7 +64,6 @@ export async function verifyBrowserPrincipal(
 		userId,
 		sessionId,
 		createdAt: row.createdAt,
-		sessionStore: "better_auth" as const,
 	};
 	if (row.forceReset) {
 		return { kind: "password_reset", ...identity };
@@ -80,89 +72,6 @@ export async function verifyBrowserPrincipal(
 		return { kind: "mfa_enrollment", ...identity };
 	}
 	return { kind: "browser", ...identity };
-}
-
-/** Resolve a retained legacy browser or forced-reset session. */
-export async function verifyLegacyBrowserPrincipal(
-	db: Db,
-	request: Request,
-): Promise<BrowserSessionPrincipal | null> {
-	const cookies = parseCookieHeader(request.headers.get("cookie"));
-	const sessionId = cookies[SESSION_ID_COOKIE];
-	if (!sessionId) {
-		return null;
-	}
-
-	const [row] = await db
-		.select({
-			id: sessions.id,
-			userId: sessions.userId,
-			createdAt: sessions.createdAt,
-			sessionType: sessions.sessionType,
-			tokenHash: sessions.tokenHash,
-			expiresAt: sessions.expiresAt,
-			active: users.active,
-			lifecycleState: users.lifecycleState,
-			forceReset: users.forceReset,
-			mfaEnrollmentRequired,
-		})
-		.from(sessions)
-		.innerJoin(users, eq(users.id, sessions.userId))
-		.where(
-			and(
-				eq(sessions.sessionId, sessionId),
-				sql`${sessions.expiresAt} > timezone('utc', clock_timestamp())`,
-			),
-		)
-		.limit(1);
-
-	if (!row?.active || row.userId === null || row.lifecycleState !== "normal") {
-		return null;
-	}
-
-	const token = cookies[SESSION_TOKEN_COOKIE];
-	if (
-		(row.sessionType !== "authenticated" && row.sessionType !== "reset") ||
-		!row.tokenHash ||
-		!token
-	) {
-		return null;
-	}
-
-	const expected = Buffer.from(row.tokenHash, "utf8");
-	const provided = Buffer.from(hashToken(token), "utf8");
-	if (
-		expected.length !== provided.length ||
-		!timingSafeEqual(expected, provided)
-	) {
-		return null;
-	}
-
-	if (row.sessionType === "reset") {
-		return row.forceReset
-			? {
-					kind: "password_reset",
-					sessionId: row.id,
-					createdAt: row.createdAt,
-					sessionStore: "legacy",
-					userId: row.userId,
-				}
-			: null;
-	}
-
-	// Enrollment runs only through Better Auth, which cannot read a legacy
-	// session, so the user must sign in again to get one that can enroll.
-	if (row.mfaEnrollmentRequired) {
-		return null;
-	}
-
-	return {
-		kind: "browser",
-		sessionId: row.id,
-		createdAt: row.createdAt,
-		sessionStore: "legacy",
-		userId: row.userId,
-	};
 }
 
 /**
@@ -292,15 +201,4 @@ export async function verifyApiKey(
 		userId: row.userId,
 		permissions: { ...emptyPermissions(), ...row.permissions },
 	};
-}
-
-/** Resolve Better Auth first, then the retained legacy compatibility session. */
-export async function verifyBrowserRequest(
-	db: Db,
-	request: Request,
-): Promise<BrowserSessionPrincipal | null> {
-	return (
-		(await verifyBrowserPrincipal(db, request)) ??
-		(await verifyLegacyBrowserPrincipal(db, request))
-	);
 }

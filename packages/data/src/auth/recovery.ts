@@ -2,7 +2,6 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 
 import type { Db } from "../db/pg";
 import { authAccounts, authSessions } from "../db/schema/auth";
-import { sessions } from "../db/schema/sessions";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
@@ -79,7 +78,7 @@ export async function inspectRecoveryLink(
 		)
 		.limit(1);
 	return row?.active &&
-		row.authMigratedAt &&
+		(row.authMigratedAt || purpose === "administrator_recovery") &&
 		row.lifecycleState === "normal" &&
 		(purpose !== "password_recovery" || row.emailVerified)
 		? "usable"
@@ -117,11 +116,15 @@ export async function issueRecoveryLink(
 				),
 			)
 			.limit(1);
+		// An unmigrated account has no email to recover through, so only an
+		// administrator's link reaches it. The link replaces the legacy password,
+		// and the next sign-in opens email remediation.
 		if (
 			!user?.active ||
-			!user.authMigratedAt ||
 			user.lifecycleState !== "normal" ||
-			!credential
+			(user.authMigratedAt
+				? !credential
+				: input.purpose !== "administrator_recovery")
 		) {
 			throw new RecoveryNotEligibleError();
 		}
@@ -278,29 +281,32 @@ export async function completePasswordRecovery(
 				),
 			)
 			.limit(1);
+		const migrated = user?.authMigratedAt !== null;
+		const current = migrated
+			? credential?.password && Buffer.from(credential.password, "utf8")
+			: user?.password;
 		if (
 			!user?.active ||
-			!user.authMigratedAt ||
 			user.lifecycleState !== "normal" ||
 			(purpose === "password_recovery" && !user.emailVerified) ||
-			!credential?.password
+			(migrated ? !current : purpose !== "administrator_recovery")
 		) {
 			throw new SetupCredentialError();
 		}
-		if (
-			await verifyPassword(password, Buffer.from(credential.password, "utf8"))
-		) {
+		if (current && (await verifyPassword(password, current))) {
 			throw new RecoveryPasswordReuseError();
 		}
-		await tx
-			.update(authAccounts)
-			.set({ password: hashed.toString("utf8"), updatedAt: new Date() })
-			.where(
-				and(
-					eq(authAccounts.userId, consumed.userId),
-					eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
-				),
-			);
+		if (migrated) {
+			await tx
+				.update(authAccounts)
+				.set({ password: hashed.toString("utf8"), updatedAt: new Date() })
+				.where(
+					and(
+						eq(authAccounts.userId, consumed.userId),
+						eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
+					),
+				);
+		}
 		await tx
 			.update(users)
 			.set({
@@ -312,7 +318,6 @@ export async function completePasswordRecovery(
 		await tx
 			.delete(authSessions)
 			.where(eq(authSessions.userId, consumed.userId));
-		await tx.delete(sessions).where(eq(sessions.userId, consumed.userId));
 		await tx
 			.delete(setupSessions)
 			.where(eq(setupSessions.userId, consumed.userId));

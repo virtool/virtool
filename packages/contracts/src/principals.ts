@@ -9,7 +9,6 @@ export type BrowserPrincipal = {
 	sessionId: number;
 	/** Immutable time at which this browser session was created. */
 	createdAt: Date;
-	sessionStore: "better_auth" | "legacy";
 };
 
 /** A signed-in human restricted to replacing a forced-reset password. */
@@ -20,7 +19,6 @@ export type PasswordResetPrincipal = {
 	sessionId: number;
 	/** Immutable time at which this browser session was created. */
 	createdAt: Date;
-	sessionStore: "better_auth" | "legacy";
 };
 
 /**
@@ -34,7 +32,6 @@ export type MfaEnrollmentPrincipal = {
 	sessionId: number;
 	/** Immutable time at which this browser session was created. */
 	createdAt: Date;
-	sessionStore: "better_auth";
 };
 
 /** A machine caller authenticated by a Virtool API key. */
@@ -54,7 +51,7 @@ export type SetupPrincipal = RestrictedSetup & {
 /** A principal accepted by ordinary Virtool authorization policies. */
 export type AuthenticatedPrincipal = BrowserPrincipal | ApiKeyPrincipal;
 
-/** A principal backed by a Better Auth or retained legacy browser session. */
+/** A principal backed by a Better Auth browser session. */
 export type BrowserSessionPrincipal =
 	| BrowserPrincipal
 	| PasswordResetPrincipal

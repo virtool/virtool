@@ -15,7 +15,6 @@ import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
-import { sessions } from "../db/schema/sessions";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { nowUtc } from "../db/time";
@@ -307,10 +306,9 @@ export async function completeAccountSetup(
 					),
 				);
 			await invalidateUserSetupSessions(tx, consumed.userId);
-			await Promise.all([
-				tx.delete(authSessions).where(eq(authSessions.userId, consumed.userId)),
-				tx.delete(sessions).where(eq(sessions.userId, consumed.userId)),
-			]);
+			await tx
+				.delete(authSessions)
+				.where(eq(authSessions.userId, consumed.userId));
 
 			let emailVerificationRequired = false;
 			if (!verified && deliveryAvailable) {
@@ -769,7 +767,6 @@ export async function completeEmailRemediation(
 		);
 
 		await supersedeSetupTokens(tx, consumed.userId, "email_remediation");
-		await tx.delete(sessions).where(eq(sessions.userId, consumed.userId));
 		await tx
 			.delete(authSessions)
 			.where(eq(authSessions.userId, consumed.userId));
@@ -948,7 +945,6 @@ export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 				.set({ twoFactorEnabled: false })
 				.where(eq(users.id, userId)),
 			tx.delete(authSessions).where(eq(authSessions.userId, userId)),
-			tx.delete(sessions).where(eq(sessions.userId, userId)),
 		]);
 	});
 

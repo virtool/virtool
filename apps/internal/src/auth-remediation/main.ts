@@ -8,7 +8,7 @@ const AuthRemediationEnv = z.object({
 	VT_POSTGRES_URL: z.string().url(),
 });
 
-/** Write the live legacy-email cutover report to stdout as JSON. */
+/** Write the live email remediation report to stdout as JSON. */
 export async function startAuthRemediation(argv: readonly string[]) {
 	const [command] = argv;
 	if (command !== "report") {
@@ -28,9 +28,6 @@ export async function startAuthRemediation(argv: readonly string[]) {
 	try {
 		const report = await getEmailRemediationReport(db);
 		process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-		if (!report.readyForCutover) {
-			process.exitCode = 1;
-		}
 	} catch (err) {
 		createLogger({ name: "auth-remediation" }).fatal(
 			{ err },

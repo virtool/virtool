@@ -4,13 +4,6 @@ import { isBcryptHash } from "@virtool/data/auth/migration";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import { queuePasswordChangedEmail } from "@virtool/data/auth/securityEmail";
 import {
-	consumeResetSession,
-	createAuthenticatedSession,
-	createResetSession,
-	invalidateSession,
-	invalidateUserSessions,
-} from "@virtool/data/auth/session";
-import {
 	createSetupSession,
 	invalidateSetupSession,
 } from "@virtool/data/auth/setup";
@@ -53,7 +46,7 @@ export class FirstUserExistsError extends Error {
 	}
 }
 
-/** Inputs for the temporary legacy-login compatibility path. */
+/** Inputs for the unmigrated-identity password check. */
 export type LegacyLoginInput = {
 	handle: string;
 	password: string;
@@ -61,20 +54,23 @@ export type LegacyLoginInput = {
 };
 
 /**
- * Authenticate an unmigrated identity with the retained legacy session system.
+ * Check the password of an unmigrated identity against its legacy bcrypt hash
+ * and open a restricted email-remediation setup session. It never opens an
+ * application session. A forced reset waits until remediation completes, when
+ * the identity has a Better Auth session.
+ *
  * Returns `null` for a migrated identity so the caller can continue through
- * Better Auth. This bridge is removed only after email remediation is usable.
+ * Better Auth.
  */
 export async function loginLegacyIdentity(
 	db: Db,
 	cookies: CookieAdapter,
 	input: LegacyLoginInput,
-): Promise<{ remediation: true; reset: false } | { reset: true } | null> {
+): Promise<{ remediation: true; reset: false } | null> {
 	const [user] = await db
 		.select({
 			active: users.active,
 			authMigratedAt: users.authMigratedAt,
-			forceReset: users.forceReset,
 			id: users.id,
 			lifecycleState: users.lifecycleState,
 			password: users.password,
@@ -102,21 +98,11 @@ export async function loginLegacyIdentity(
 		throw new InvalidCredentialsError();
 	}
 
-	if (user.forceReset) {
-		const reset = await createResetSession(db, {
-			userId: user.id,
-			ip: input.ip,
-		});
-		cookies.setLegacyResetSession(reset.sessionId, reset.token);
-		return { reset: true };
-	}
-
 	const session = await createSetupSession(db, {
 		userId: user.id,
 		purpose: "email_remediation",
 		ip: input.ip,
 	});
-	cookies.clearLegacySession();
 	cookies.setSetupSession(session.sessionId, session.token);
 	return { remediation: true, reset: false };
 }
@@ -152,8 +138,7 @@ export async function createFirstUser(
 }
 
 /**
- * Delete retained legacy and restricted setup sessions named by their cookies,
- * then clear both cookie pairs.
+ * Delete the restricted setup session named by its cookies, then clear them.
  *
  * Safe to call with no session, or with a stale one: the cookies are cleared
  * either way, which is why `logoutFn` is exempt from authentication.
@@ -165,17 +150,11 @@ export async function createFirstUser(
  * than one per kind.
  */
 export async function logout(db: Db, cookies: CookieAdapter): Promise<void> {
-	const sessionId = cookies.getSessionId();
-	if (sessionId) {
-		await invalidateSession(db, sessionId);
-	}
-
 	const setupSessionId = cookies.getSetupSessionId();
 	if (setupSessionId) {
 		await invalidateSetupSession(db, setupSessionId);
 	}
 
-	cookies.clearLegacySession();
 	cookies.clearSetup();
 }
 
@@ -183,22 +162,20 @@ export async function logout(db: Db, cookies: CookieAdapter): Promise<void> {
 export type ResetPasswordInput = {
 	userId: number;
 	password: string;
-	legacySessionId?: string;
 };
 
 /**
- * Complete a forced reset for a Better Auth or retained legacy session. The
- * password must differ from the current one. The transaction updates every
- * applicable credential copy, clears `force_reset`, and revokes both session
- * families; the caller then mints one replacement through the same family.
+ * Complete a forced reset for a Better Auth session. The password must differ
+ * from the current one. The transaction updates both credential copies, clears
+ * `force_reset`, and revokes every session; the caller then mints one
+ * replacement.
  */
 export async function resetPassword(
 	db: Db,
 	input: ResetPasswordInput,
-): Promise<{ migrated: boolean }> {
+): Promise<void> {
 	const [row] = await db
 		.select({
-			authMigratedAt: users.authMigratedAt,
 			forceReset: users.forceReset,
 			password: users.password,
 		})
@@ -240,47 +217,8 @@ export async function resetPassword(
 			throw new PasswordReuseError();
 		}
 
-		if (row.authMigratedAt !== null) {
-			await updateAuthPassword(tx, input.userId, newHash);
-		}
-		if (
-			row.authMigratedAt === null &&
-			(!input.legacySessionId ||
-				!(await consumeResetSession(tx, input.legacySessionId)))
-		) {
-			throw new PasswordReuseError();
-		}
+		await updateAuthPassword(tx, input.userId, newHash);
 		await tx.delete(authSessions).where(eq(authSessions.userId, input.userId));
-		await invalidateUserSessions(tx, input.userId);
 		await queuePasswordChangedEmail(tx, input.userId);
 	});
-
-	return { migrated: row.authMigratedAt !== null };
-}
-
-/** Mint a replacement legacy application session after a credential change. */
-export async function establishLegacySession(
-	db: Db,
-	cookies: CookieAdapter,
-	userId: number,
-	ip: string,
-): Promise<void> {
-	const session = await createAuthenticatedSession(db, { userId, ip });
-	cookies.setLegacySession(session.sessionId, session.token);
-}
-
-/** Mint a restricted email-remediation session after a legacy password reset. */
-export async function establishEmailRemediationSession(
-	db: Db,
-	cookies: CookieAdapter,
-	userId: number,
-	ip: string,
-): Promise<void> {
-	const session = await createSetupSession(db, {
-		userId,
-		purpose: "email_remediation",
-		ip,
-	});
-	cookies.clearLegacySession();
-	cookies.setSetupSession(session.sessionId, session.token);
 }

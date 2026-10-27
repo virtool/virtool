@@ -14,10 +14,10 @@ import {
 
 import { users } from "./users";
 
-/** A legacy browser-session row kind retained during the compatibility window. */
+/** A row kind of the retired legacy session store. */
 export type LegacySessionType = "anonymous" | "authenticated" | "reset";
 
-/** The retained legacy session table pending a later schema contraction. */
+/** The retired legacy session table. No flow reads or writes it; a later migration drops it. */
 export const sessions = pgTable(
 	"sessions",
 	{

@@ -47,11 +47,8 @@ import {
 } from "@virtool/data/users/invitations";
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
-import { realCookies } from "../auth/cookies";
-import { establishLegacySession } from "../auth/core";
 import { PROTECTED_OPERATIONS } from "../auth/freshness";
 import { checkHandle, checkReservedHandle } from "../auth/handle";
-import { getClientIp } from "../auth/ip";
 import { requireAdminRole } from "../auth/middleware";
 import {
 	adminRole,
@@ -459,7 +456,7 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const { account, migrated } = await changePassword(db, {
+			const account = await changePassword(db, {
 				userId: context.principal.userId,
 				oldPassword: data.oldPassword,
 				password: data.password,
@@ -467,16 +464,7 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 
 			// Not a fresh sign-in: that would send a TOTP-enrolled user to the
 			// second-factor challenge with no session.
-			if (migrated) {
-				await createReplacementSession(context.principal.userId);
-			} else {
-				await establishLegacySession(
-					db,
-					realCookies,
-					context.principal.userId,
-					getClientIp(),
-				);
-			}
+			await createReplacementSession(context.principal.userId);
 
 			return account;
 		} catch (err) {

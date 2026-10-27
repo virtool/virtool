@@ -1,6 +1,6 @@
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
-import { createAuthenticatedSession } from "@virtool/data/auth/session";
 import {
+	seedLegacySession,
 	seedSession,
 	seedSetupSession,
 	seedUser,
@@ -175,16 +175,14 @@ it("rolls an eligible session only through the intentional refresh function", as
 	);
 });
 
-it("validates retained legacy sessions without ending or extending them", async () => {
+it("rejects a live legacy session", async () => {
 	const userId = await seedUser(db);
-	const session = await createAuthenticatedSession(db, {
-		userId,
-		ip: "127.0.0.1",
-	});
-	cookies.set("session_id", session.sessionId);
-	cookies.set("session_token", session.token);
-	expect(await callServerFn(handlers, "refreshBrowserSessionFn")).toBeNull();
-	expect(await db.select().from(authSessions)).toHaveLength(0);
+	const legacy = await seedLegacySession(db, userId);
+	cookies.set("session_id", legacy.sessionId);
+	cookies.set("session_token", legacy.token);
+	await expect(
+		callServerFn(handlers, "refreshBrowserSessionFn"),
+	).rejects.toThrow("Unauthorized");
 });
 
 it("rejects an expired session without reviving it", async () => {
@@ -471,11 +469,10 @@ it("keeps a TOTP user signed in after a forced reset", async () => {
 					userId,
 					sessionId: reset.id,
 					createdAt: reset.createdAt,
-					sessionStore: "better_auth",
 				},
 			},
 		),
-	).toEqual({ login: false, remediation: false, reset: false });
+	).toEqual({ login: false, reset: false });
 
 	const sessions = await db.select().from(authSessions);
 	expect(sessions).toHaveLength(1);

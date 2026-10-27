@@ -3,6 +3,7 @@ import {
 	sentryGlobalFunctionMiddleware,
 	sentryGlobalRequestMiddleware,
 } from "@sentry/tanstackstart-react";
+import { expireLegacySessionCookies } from "@server/auth/cookies";
 import { createAuthenticationMiddleware } from "@server/auth/middleware";
 import { buildContentSecurityPolicy, getRequestNonce } from "@server/csp";
 import { isCsrfCandidate } from "@server/csrf";
@@ -122,6 +123,15 @@ const documentHeadersMiddleware = createMiddleware().server(
 	},
 );
 
+// Every request, so a browser still holding a retired legacy session loses it on
+// its first visit and signs in again through Better Auth.
+const legacySessionCookiesMiddleware = createMiddleware().server(
+	async ({ next }) => {
+		expireLegacySessionCookies();
+		return next();
+	},
+);
+
 // Page loads and API-key requests are left unchecked: neither carries a
 // cookie-authenticated mutation that a forged cross-origin request can trigger.
 const csrfMiddleware = createCsrfMiddleware({
@@ -145,6 +155,7 @@ export const startInstance = createStart(() => ({
 		sentryGlobalRequestMiddleware,
 		metricsMiddleware,
 		databaseUnavailableMiddleware,
+		legacySessionCookiesMiddleware,
 		csrfMiddleware,
 		documentHeadersMiddleware,
 	],

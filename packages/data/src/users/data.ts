@@ -51,7 +51,6 @@ import {
 } from "../auth/identity";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { queuePasswordChangedEmail } from "../auth/securityEmail";
-import { invalidateUserSessions } from "../auth/session";
 import {
 	invalidateUserSetupSessions,
 	invalidateUserSetupTokens,
@@ -214,12 +213,6 @@ export type ChangePasswordValues = {
 	userId: number;
 	oldPassword: string;
 	password: string;
-};
-
-/** A completed password change. */
-export type ChangePasswordResult = {
-	account: Account;
-	migrated: boolean;
 };
 
 /** Thrown when a requested user does not exist. */
@@ -758,7 +751,7 @@ export async function updateAccountSettings(
 export async function changePassword(
 	db: Db,
 	{ userId, oldPassword, password }: ChangePasswordValues,
-): Promise<ChangePasswordResult> {
+): Promise<Account> {
 	const [existing] = await db
 		.select({
 			authMigratedAt: usersTable.authMigratedAt,
@@ -829,7 +822,6 @@ export async function changePassword(
 		}
 
 		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
-		await invalidateUserSessions(tx, userId);
 		await supersedeSetupTokens(tx, userId, "password_recovery");
 		await supersedeSetupTokens(tx, userId, "administrator_recovery");
 		await queuePasswordChangedEmail(tx, userId);
@@ -840,10 +832,7 @@ export async function changePassword(
 	// updateUser publishes its own.
 	await emit("users", userId, "update");
 
-	return {
-		account: await getAccount(db, userId),
-		migrated: existing.authMigratedAt !== null,
-	};
+	return getAccount(db, userId);
 }
 
 /** Read a user's administrator role without assembling the full user. */
@@ -1174,7 +1163,6 @@ export async function updateUser(
 
 		if (revokeSessions) {
 			await tx.delete(authSessions).where(eq(authSessions.userId, userId));
-			await invalidateUserSessions(tx, userId);
 		}
 		if (values.password !== undefined || values.forceReset === true) {
 			await supersedeSetupTokens(tx, userId, "password_recovery");
