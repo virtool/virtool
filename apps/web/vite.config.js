@@ -66,7 +66,10 @@ export default defineConfig(({ command, mode }) => ({
 				// stage untouched. That in turn is why `bcrypt` is a dependency of this
 				// app: Nitro resolves the external from the app root, and pnpm does not
 				// hoist a package reached only through `@virtool/data`.
-				external: ["bcrypt"],
+				//
+				// `@node-rs/argon2` resolves its platform binary package at runtime, so
+				// it stays external for the same reason.
+				external: ["@node-rs/argon2", "bcrypt"],
 			},
 		},
 	},

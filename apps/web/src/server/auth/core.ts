@@ -1,7 +1,11 @@
 import { isValidHandle, type User } from "@virtool/contracts";
 import { updateAuthPassword } from "@virtool/data/auth/identity";
-import { isBcryptHash } from "@virtool/data/auth/migration";
-import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
+import {
+	hashPassword,
+	isPasswordHash,
+	TIMING_DUMMY_HASH,
+	verifyPassword,
+} from "@virtool/data/auth/password";
 import { queuePasswordChangedEmail } from "@virtool/data/auth/securityEmail";
 import {
 	createSetupSession,
@@ -16,11 +20,6 @@ import {
 } from "@virtool/data/users/data";
 import { and, eq, sql } from "drizzle-orm";
 import type { CookieAdapter } from "./cookies";
-
-const TIMING_DUMMY_HASH = Buffer.from(
-	"$2b$12$0000000000000000000000000000000000000000000000000000O",
-	"utf8",
-);
 
 /** Submitted credentials do not identify an eligible account. */
 export class InvalidCredentialsError extends Error {
@@ -54,7 +53,7 @@ export type LegacyLoginInput = {
 };
 
 /**
- * Check the password of an unmigrated identity against its legacy bcrypt hash
+ * Check the password of an unmigrated identity against its legacy hash
  * and open a restricted email-remediation setup session. It never opens an
  * application session. A forced reset waits until remediation completes, when
  * the identity has a Better Auth session.
@@ -88,7 +87,7 @@ export async function loginLegacyIdentity(
 		user.lifecycleState !== "normal" ||
 		!isValidHandle(input.handle) ||
 		user.password === null ||
-		!isBcryptHash(user.password)
+		!isPasswordHash(user.password)
 	) {
 		await verifyPassword(input.password, TIMING_DUMMY_HASH);
 		throw new InvalidCredentialsError();

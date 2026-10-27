@@ -15,7 +15,7 @@
 				"src/tests/postgresGuard.ts"
 			],
 			"project": ["src/**/*.{ts,tsx,css}"],
-			"ignoreDependencies": ["bcrypt"]
+			"ignoreDependencies": ["@node-rs/argon2", "bcrypt"]
 		},
 		"packages/bio": {
 			"entry": ["src/**/*.test.ts"]

@@ -146,6 +146,60 @@ it("signs in with a persistent seven-day rolling session", async () => {
 	).toBeGreaterThan(Date.now() + 6 * 24 * 60 * 60_000);
 });
 
+it("replaces a bcrypt hash with Argon2id after a successful sign-in", async () => {
+	const userId = await seedUser(db, {
+		password: Buffer.from(hash),
+		email: "alice@virtool.test",
+	});
+	await db
+		.update(users)
+		.set({
+			username: "alice",
+			displayUsername: "Alice",
+			authMigratedAt: new Date(),
+		})
+		.where(eq(users.id, userId));
+	await db.insert(authAccounts).values({
+		accountId: String(userId),
+		providerId: "credential",
+		userId,
+		password: hash,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	});
+
+	await expect(
+		callServerFn(handlers, "loginFn", { handle: "alice", password: "wrong" }),
+	).rejects.toThrow();
+	const [unchanged] = await db.select().from(authAccounts);
+	expect(unchanged?.password).toBe(hash);
+
+	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	const [[user], [account]] = await Promise.all([
+		db.select().from(users).where(eq(users.id, userId)),
+		db.select().from(authAccounts),
+	]);
+	expect(account?.password?.startsWith("$argon2id$")).toBe(true);
+	expect(user?.password?.toString("utf8")).toBe(account?.password);
+
+	cookies.clear();
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ reset: false });
+});
+
+it("replaces an unmigrated user's bcrypt hash at the remediation sign-in", async () => {
+	const userId = await seedUser(db, { password: Buffer.from(hash) });
+
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+
+	const [user] = await db.select().from(users).where(eq(users.id, userId));
+	expect(user?.password?.toString("utf8").startsWith("$argon2id$")).toBe(true);
+	expect(await verifyPassword(password, user?.password as Buffer)).toBe(true);
+});
+
 it("rolls an eligible session only through the intentional refresh function", async () => {
 	const userId = await seedUser(db);
 	const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60_000);
