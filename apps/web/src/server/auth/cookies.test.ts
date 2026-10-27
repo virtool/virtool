@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const deleteCookie = vi.fn();
 const getCookie = vi.fn();
+const getCookies = vi.fn();
 const setCookie = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie,
 	getCookie,
+	getCookies,
 	setCookie,
 }));
 
@@ -111,9 +113,10 @@ describe("realCookies", () => {
 describe("expireLegacySessionCookies", () => {
 	it("expires each legacy cookie the request carries with its attributes", () => {
 		vi.stubEnv("NODE_ENV", "production");
-		getCookie.mockImplementation((name: string) =>
-			name === "session_id" || name === "session_token" ? "legacy" : undefined,
-		);
+		getCookies.mockReturnValue({
+			session_id: "legacy",
+			session_token: "legacy",
+		});
 
 		expireLegacySessionCookies();
 
@@ -129,9 +132,7 @@ describe("expireLegacySessionCookies", () => {
 	});
 
 	it("expires only the legacy cookie that is present", () => {
-		getCookie.mockImplementation((name: string) =>
-			name === "session_token" ? "legacy" : undefined,
-		);
+		getCookies.mockReturnValue({ session_token: "legacy" });
 
 		expireLegacySessionCookies();
 
@@ -143,7 +144,7 @@ describe("expireLegacySessionCookies", () => {
 	});
 
 	it("leaves a request without legacy cookies alone", () => {
-		getCookie.mockReturnValue(undefined);
+		getCookies.mockReturnValue({});
 
 		expireLegacySessionCookies();
 

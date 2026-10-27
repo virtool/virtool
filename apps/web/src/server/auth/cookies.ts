@@ -2,6 +2,7 @@ import { createServerOnlyFn } from "@tanstack/react-start";
 import {
 	deleteCookie,
 	getCookie,
+	getCookies,
 	setCookie,
 } from "@tanstack/react-start/server";
 
@@ -86,8 +87,9 @@ export const setLoginDevices = createServerOnlyFn(
  * the ones the legacy cookies were set with, so the browser replaces them.
  */
 export const expireLegacySessionCookies = createServerOnlyFn((): void => {
+	const cookies = getCookies();
 	for (const name of LEGACY_SESSION_COOKIES) {
-		if (getCookie(name) !== undefined) {
+		if (name in cookies) {
 			deleteCookie(name, {
 				httpOnly: true,
 				secure: isSecure(),
