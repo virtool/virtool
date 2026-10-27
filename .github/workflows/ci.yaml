@@ -151,7 +151,11 @@ jobs:
               if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               run: |
                   pnpm --filter ${{ matrix.package }} build
-                  pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
+                  # The web image runs its self-contained `.output` bundle from
+                  # the app directory, so it needs no deployed dependencies.
+                  if [ "${{ matrix.image }}" != web ]; then
+                      pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
+                  fi
             # The default `docker` driver cannot export a build cache, so the
             # gha cache below needs a docker-container builder.
             - name: Setup Buildx
@@ -642,7 +646,11 @@ jobs:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
               run: |
                   pnpm --filter ${{ matrix.package }} build
-                  pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
+                  # The web image runs its self-contained `.output` bundle from
+                  # the app directory, so it needs no deployed dependencies.
+                  if [ "${{ matrix.image }}" != web ]; then
+                      pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
+                  fi
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
             # Inline Bake commands get no cache service credentials, so the gha
@@ -656,12 +664,9 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
             - name: Build & Push
-              env:
-                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
               run: |
                   docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} --push \
                       --set '${{ matrix.image }}.tags=${{ matrix.images }}:${{ matrix.version }}' \
                       --set '${{ matrix.image }}.tags+=${{ matrix.images }}:latest' \
                       --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
-                      --set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}' \
-                      --set '${{ matrix.image }}.secret=id=sentry_auth_token,env=SENTRY_AUTH_TOKEN'
+                      --set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}'

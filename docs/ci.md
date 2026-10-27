@@ -35,6 +35,9 @@ for selected workspaces on pull requests and remain unconditional on pushes to
 
 CI first runs the app's build and then `pnpm --prod deploy`, making the Docker
 context exactly the production closure recorded in the workspace graph. The
+web image is the exception: its `.output` bundle carries its own dependencies,
+so it builds from the app directory, and a `.dockerignore` limits the context
+to `.output` and `package.json`. The
 Rust crates and shared native-tool recipe are private pnpm workspaces, listed
 as dependencies of the apps that consume their build products. Each one sets
 `"files": ["package.json"]`, so the deployed context gets only an empty

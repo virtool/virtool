@@ -3,7 +3,7 @@ variable "CONTEXT_ROOT" {
 }
 
 target "web" {
-  context = "${CONTEXT_ROOT}/web"
+  context = "apps/web"
   dockerfile = "Dockerfile"
   target = "dist"
 }

@@ -1,0 +1,5 @@
+# The image runs the self-contained server bundle, so the context holds only
+# that bundle and the manifest that names its start script.
+*
+!.output
+!package.json

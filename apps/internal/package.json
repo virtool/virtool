@@ -5,10 +5,7 @@
 	"type": "module",
 	"files": [
 		"dist",
-		"Dockerfile",
-		"src",
-		"tsconfig.json",
-		"tsdown.config.ts"
+		"Dockerfile"
 	],
 	"scripts": {
 		"build": "tsdown",

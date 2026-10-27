@@ -9,5 +9,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 COPY --from=tools /usr/local/bin/ /usr/local/bin/
-COPY . ./
+COPY package.json ./
+COPY node_modules ./node_modules
+COPY dist ./dist
 CMD ["node", "dist/index.mjs"]

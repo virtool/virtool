@@ -40,3 +40,6 @@ pnpm --filter @virtool/pathoscope build
 pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
 docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```
+
+The web image needs no pruned context. Build the app and then name the `web`
+Bake target.

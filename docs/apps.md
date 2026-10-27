@@ -84,9 +84,11 @@ The checked-in lockfile is generated with the pnpm version pinned in the
 root `package.json`. Keep that version aligned anywhere the lockfile is
 regenerated so injected dependency snapshots remain deterministic.
 
-Each deployed tsdown app sets `"files": ["dist"]` so `pnpm deploy` packs the
-bundle alongside the manifest and `node_modules`. Without it the deployed tree
-has the dependencies and none of the code.
+Each deployed tsdown app sets `"files": ["dist", "Dockerfile"]` so `pnpm
+deploy` packs the bundle and the Dockerfile alongside the manifest and
+`node_modules`. Without it the deployed tree has the dependencies and none of
+the code. The Dockerfile copies `package.json`, `node_modules`, and `dist` by
+name, so nothing else in the deployed tree reaches the image.
 
 If a deployed app's externals list is ever empty, the deploy step can be
 skipped for that image. Every deployed tsdown app has one today.
@@ -96,7 +98,8 @@ skipped for that image. Every deployed tsdown app has one today.
 ```
 apps/<name>/
   README.md         # what the app is, its port and image, its commands
-  package.json      # @virtool/<name>, private, type: module, files: ["dist"]
+  package.json      # @virtool/<name>, private, type: module,
+                    # files: ["dist", "Dockerfile"]
                     # scripts: build (tsdown), start, typecheck
   tsconfig.json     # extends ../../packages/tsconfig/node.json
   tsdown.config.ts  # entry, externals

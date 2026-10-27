@@ -12,5 +12,7 @@ COPY --from=tools /usr/local/bin/ /usr/local/bin/
 COPY --from=tools /opt/hmmer /opt/hmmer
 COPY --from=tools /opt/spades /opt/spades
 ENV PATH="/opt/hmmer/bin:/opt/spades/bin:${PATH}"
-COPY . ./
+COPY package.json ./
+COPY node_modules ./node_modules
+COPY dist ./dist
 CMD ["node", "dist/index.mjs"]
