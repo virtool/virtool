@@ -36,18 +36,13 @@ function PasskeyList() {
 	));
 }
 
-type AccountPasskeysProps = {
-	/** The handle that names new passkeys in the authenticator. */
-	handle: string;
-};
-
 /**
  * Lists the account's passkeys and adds new ones.
  *
  * A passkey is an optional way to sign in beside the password, never a
  * replacement for it.
  */
-export default function AccountPasskeys({ handle }: AccountPasskeysProps) {
+export default function AccountPasskeys() {
 	const support = usePasskeySupport();
 	const registerMutation = useRegisterPasskey();
 
@@ -84,7 +79,7 @@ export default function AccountPasskeys({ handle }: AccountPasskeysProps) {
 							color="blue"
 							size="medium"
 							disabled={support !== "available" || registerMutation.isPending}
-							onClick={() => registerMutation.mutate(handle)}
+							onClick={() => registerMutation.mutate()}
 						>
 							{registerMutation.isPending ? "Adding…" : "Add"}
 						</Button>

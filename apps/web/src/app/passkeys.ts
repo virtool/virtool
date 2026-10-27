@@ -344,12 +344,12 @@ export function cancelPasskeyCeremony() {
 /**
  * Register a passkey for the signed-in user through Better Auth.
  *
- * `name` is the account label that the authenticator shows in its picker, and
- * the stored name of the new passkey.
+ * The server sets the account label that the authenticator shows, and the
+ * stored name of the new passkey.
  */
-export async function addPasskey(name: string): Promise<void> {
+export async function addPasskey(): Promise<void> {
 	const authClient = await loadAuthClient();
-	const { error } = await authClient.passkey.addPasskey({ name });
+	const { error } = await authClient.passkey.addPasskey();
 	if (error) {
 		throw toRegistrationError(error);
 	}

@@ -303,18 +303,17 @@ type PasskeyRegistration = "added" | "confirmed";
 /**
  * Initializes a mutator that registers a passkey for the current user.
  *
- * The variable is the name for the new passkey. A session that is stale, or
- * that could become stale during the ceremony, gets the recent-authentication
- * challenge before the ceremony starts. The mutation then resolves to
- * `"confirmed"` and does not start the ceremony: the user must start it again
- * with a new click. An automatic retry can lose the browser's user activation,
+ * A session that is stale, or that could become stale during the ceremony,
+ * gets the recent-authentication challenge before the ceremony starts. The
+ * mutation then resolves to `"confirmed"` and does not start the ceremony: the
+ * user must start it again with a new click. An automatic retry can lose the browser's user activation,
  * and a retry after a rejected verification leaves an orphaned passkey on the
  * authenticator.
  */
 export function useRegisterPasskey() {
 	const queryClient = useQueryClient();
 	const requestChallenge = useRecentAuthenticationChallenge();
-	const ceremony = useSingleCeremony(addPasskey);
+	const ceremony = useSingleCeremony<void, void>(addPasskey);
 
 	// The next click reads the cached deadline, so it must already be the one
 	// that the challenge set.
@@ -327,7 +326,7 @@ export function useRegisterPasskey() {
 		return "confirmed";
 	}
 
-	async function register(name: string): Promise<PasskeyRegistration> {
+	async function register(): Promise<PasskeyRegistration> {
 		const { freshUntil } = await queryClient.ensureQueryData(
 			recentAuthenticationQueryOptions(),
 		);
@@ -335,7 +334,7 @@ export function useRegisterPasskey() {
 			return confirm();
 		}
 		try {
-			await ceremony(name);
+			await ceremony();
 		} catch (error) {
 			if (!isSessionNotFresh(error)) {
 				throw error;
@@ -345,7 +344,7 @@ export function useRegisterPasskey() {
 		return "added";
 	}
 
-	return useMutation<PasskeyRegistration, Error, string>({
+	return useMutation<PasskeyRegistration, Error, void>({
 		mutationFn: register,
 		onSuccess: (result) => {
 			if (result === "added") {

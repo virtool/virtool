@@ -28,6 +28,8 @@ import { createSoftwareAuthenticator } from "./test/webauthn";
 const ORIGIN = "https://virtool.test";
 const RP_ID = "virtool.test";
 const CLIENT_IP = "203.0.113.7";
+const USER_AGENT =
+	"Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0";
 
 let database: TestDatabase;
 let db: Db;
@@ -92,6 +94,7 @@ function createBrowser(initialCookie?: string) {
 					headers: {
 						"content-type": "application/json",
 						origin: ORIGIN,
+						"user-agent": USER_AGENT,
 						"x-forwarded-for": CLIENT_IP,
 						cookie: [...cookies].map(([k, v]) => `${k}=${v}`).join("; "),
 					},
@@ -120,18 +123,19 @@ async function signedInBrowser(userId: number, createdAt = new Date()) {
 	return createBrowser(`__Secure-${sessionCookie(session)}`);
 }
 
-function authenticator(credentialId?: Uint8Array) {
+function authenticator(credentialId?: Uint8Array, aaguid?: string) {
 	return createSoftwareAuthenticator({
 		origin: ORIGIN,
 		rpId: RP_ID,
 		credentialId,
+		aaguid,
 	});
 }
 
-async function registrationOptions(browser: Browser, name = "Alice") {
+async function registrationOptions(browser: Browser, query = "") {
 	const response = await browser.send(
 		"GET",
-		`/passkey/generate-register-options?name=${name}`,
+		`/passkey/generate-register-options${query}`,
 	);
 	expect(response.status).toBe(200);
 	return response.json();
@@ -146,7 +150,6 @@ async function register(
 	const options = await registrationOptions(browser);
 	return browser.send("POST", "/passkey/verify-registration", {
 		response: key.register(options, ceremony),
-		name: "Alice",
 	});
 }
 
@@ -182,9 +185,15 @@ async function passkeyRows() {
 }
 
 describe("registration", () => {
-	it("asks for a verified, discoverable credential labelled with the given name", async () => {
-		const userId = await seedUser(db, { email: "alice@example.com" });
-		const options = await registrationOptions(await signedInBrowser(userId));
+	it("asks for a verified, discoverable credential labelled with the handle", async () => {
+		const userId = await seedUser(db, {
+			email: "alice@example.com",
+			handle: "Alice",
+		});
+		const options = await registrationOptions(
+			await signedInBrowser(userId),
+			"?name=Mallory",
+		);
 
 		expect(options.rp).toEqual({ id: RP_ID, name: "Virtool" });
 		expect(options.user.name).toBe("Alice");
@@ -194,7 +203,7 @@ describe("registration", () => {
 		});
 	});
 
-	it("stores the public credential against the integer user with the given name", async () => {
+	it("stores the public credential against the integer user, named after the browser", async () => {
 		const userId = await seedUser(db);
 		const key = authenticator();
 
@@ -205,11 +214,46 @@ describe("registration", () => {
 			{
 				userId,
 				credentialID: key.credentialId,
-				name: "Alice",
+				name: "Firefox on Linux",
 				deviceType: "multiDevice",
 				backedUp: true,
 			},
 		]);
+	});
+
+	it("names a passkey from a known provider after the provider", async () => {
+		const userId = await seedUser(db);
+
+		const response = await register(
+			userId,
+			authenticator(undefined, "ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4"),
+		);
+
+		expect(response.status).toBe(200);
+		expect(await passkeyRows()).toMatchObject([
+			{ name: "Google Password Manager" },
+		]);
+	});
+
+	it("refuses a registration that names the passkey", async () => {
+		const userId = await seedUser(db);
+		const browser = await signedInBrowser(userId);
+		const options = await registrationOptions(browser);
+
+		const response = await browser.send(
+			"POST",
+			"/passkey/verify-registration",
+			{
+				response: authenticator().register(options),
+				name: "x".repeat(10_000),
+			},
+		);
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({
+			code: "PASSKEY_NAME_NOT_ACCEPTED",
+		});
+		expect(await passkeyRows()).toEqual([]);
 	});
 
 	it("refuses a credential the authenticator did not verify the user for", async () => {
