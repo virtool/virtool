@@ -760,6 +760,9 @@ importers:
       '@virtool/archive':
         specifier: workspace:*
         version: link:../archive
+      '@virtool/bio':
+        specifier: workspace:*
+        version: link:../bio
       '@virtool/contracts':
         specifier: workspace:*
         version: link:../contracts

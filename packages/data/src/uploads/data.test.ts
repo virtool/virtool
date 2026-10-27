@@ -997,3 +997,45 @@ describe("reapUploads (stale)", () => {
 		expect(readyRow?.removed).toBe(false);
 	});
 });
+
+describe("header read side check", () => {
+	it("rejects a read side without a parsed header", async () => {
+		const userId = await seedUser(db);
+
+		await expect(
+			seedUpload(userId, { headerReadSide: 1 }),
+		).rejects.toMatchObject({
+			cause: { constraint_name: "ck_uploads_header_read_side" },
+		});
+	});
+
+	it("rejects a read side outside 1 and 2", async () => {
+		const userId = await seedUser(db);
+
+		await expect(
+			seedUpload(userId, {
+				headerFlowcell: "HVXXXBGXX",
+				headerInstrument: "M00001",
+				headerLane: 1,
+				headerReadSide: 3,
+				headerRunNumber: 12,
+			}),
+		).rejects.toMatchObject({
+			cause: { constraint_name: "ck_uploads_header_read_side" },
+		});
+	});
+
+	it("accepts a read side beside a complete header", async () => {
+		const userId = await seedUser(db);
+
+		const row = await seedUpload(userId, {
+			headerFlowcell: "HVXXXBGXX",
+			headerInstrument: "M00001",
+			headerLane: 1,
+			headerReadSide: 2,
+			headerRunNumber: 12,
+		});
+
+		expect(row.headerReadSide).toBe(2);
+	});
+});

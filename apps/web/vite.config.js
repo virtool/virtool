@@ -94,6 +94,7 @@ export default defineConfig(({ command, mode }) => ({
 			"@otus": path.resolve("src/otus"),
 			"@quality": path.resolve("src/quality"),
 			"@references": path.resolve("src/references"),
+			"@runs": path.resolve("src/runs"),
 			"@samples": path.resolve("src/samples"),
 			"@sequences": path.resolve("src/sequences"),
 			"@server": path.resolve("src/server"),
