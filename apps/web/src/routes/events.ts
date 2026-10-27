@@ -1,5 +1,5 @@
 import { requireAuthenticatedRequest } from "@server/auth/middleware";
-import { eventToSseMessage } from "@server/events/broadcast";
+import { eventToSseMessage, isEventForUser } from "@server/events/broadcast";
 import { listenForClientEvents } from "@server/events/listen";
 import { watchForRevocation } from "@server/events/revocation";
 import { logger } from "@server/logger";
@@ -95,6 +95,10 @@ async function handleEvents({
 				for await (const event of stream.events) {
 					if (aborted) {
 						break;
+					}
+
+					if (!isEventForUser(event, gate.userId)) {
+						continue;
 					}
 
 					try {
