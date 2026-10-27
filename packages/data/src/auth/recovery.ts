@@ -281,12 +281,15 @@ export async function completePasswordRecovery(
 				),
 			)
 			.limit(1);
-		const migrated = user?.authMigratedAt !== null;
+		if (!user) {
+			throw new SetupCredentialError();
+		}
+		const migrated = user.authMigratedAt !== null;
 		const current = migrated
 			? credential?.password && Buffer.from(credential.password, "utf8")
-			: user?.password;
+			: user.password;
 		if (
-			!user?.active ||
+			!user.active ||
 			user.lifecycleState !== "normal" ||
 			(purpose === "password_recovery" && !user.emailVerified) ||
 			(migrated ? !current : purpose !== "administrator_recovery")

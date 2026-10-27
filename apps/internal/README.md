@@ -46,24 +46,6 @@ Unmigrated users do not block the cutover, because they can still complete
 email remediation after it. The command exits non-zero only when it can't read
 the database.
 
-### Cutover operator note
-
-**Deploy order.** Deploy the cutover release to every web and internal replica.
-Drop the legacy `sessions` table in a later release.
-
-**Rollback point.** Rollback to a release from before the cutover is possible
-until the later release drops the `sessions` table. After a rollback, the
-earlier release accepts the legacy session rows that still exist and have not
-expired.
-
-**Smoke test.** The cutover is complete when both of these succeed on the
-deployed release:
-
-1. An unmigrated user signs in with handle and password, adds an email, and
-   reaches the application with a Better Auth session.
-2. An administrator issues a recovery link for an unmigrated user. The user
-   sets a new password through it, signs in, and completes email remediation.
-
 ## `serve`: the jobs API
 
 The process workflow runners use to claim, update, and finish jobs. Binds
