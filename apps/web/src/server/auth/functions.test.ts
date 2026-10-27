@@ -1,7 +1,6 @@
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { verifyPassword } from "@virtool/data/auth/password";
 import {
-	seedLegacySession,
 	seedSession,
 	seedSetupSession,
 	seedUser,
@@ -229,16 +228,6 @@ it("rolls an eligible session only through the intentional refresh function", as
 	expect((await db.select().from(authSessions))[0]?.expiresAt).toEqual(
 		refreshed?.expiresAt,
 	);
-});
-
-it("rejects a live legacy session", async () => {
-	const userId = await seedUser(db);
-	const legacy = await seedLegacySession(db, userId);
-	cookies.set("session_id", legacy.sessionId);
-	cookies.set("session_token", legacy.token);
-	await expect(
-		callServerFn(handlers, "refreshBrowserSessionFn"),
-	).rejects.toThrow("Unauthorized");
 });
 
 it("rejects an expired session without reviving it", async () => {

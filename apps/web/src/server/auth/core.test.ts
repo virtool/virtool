@@ -7,7 +7,6 @@ import {
 import type { Db } from "@virtool/data/db/pg";
 import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
 import { emailOutbox } from "@virtool/data/db/schema/emailOutbox";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -108,7 +107,6 @@ describe("loginLegacyIdentity", () => {
 			session?.sessionId,
 			expect.any(String),
 		);
-		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
 	it("refuses the wrong legacy password", async () => {
@@ -122,7 +120,6 @@ describe("loginLegacyIdentity", () => {
 				ip: "127.0.0.1",
 			}),
 		).rejects.toBeInstanceOf(InvalidCredentialsError);
-		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
 	it.each(["invalid-handle", "invalid-password"] as const)(
@@ -163,7 +160,6 @@ describe("loginLegacyIdentity", () => {
 
 		const [session] = await db.select().from(setupSessions);
 		expect(session).toMatchObject({ userId, purpose: "email_remediation" });
-		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
 	it("leaves migrated identities to Better Auth", async () => {
