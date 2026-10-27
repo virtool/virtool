@@ -9,6 +9,7 @@ import {
 	normalizeEmail,
 	PasswordTooShortError,
 } from "@virtool/contracts";
+import { upgradePasswordHash } from "@virtool/data/auth/credential";
 import {
 	AccountSetupHandleInUseError,
 	cancelEmailRemediation,
@@ -40,6 +41,7 @@ import {
 	isEmailDeliveryAvailable,
 } from "../email/delivery";
 import { ClientError } from "../errors";
+import { logger } from "../logger";
 import { getLoginDevices, realCookies, setLoginDevices } from "./cookies";
 import {
 	createFirstUser,
@@ -181,12 +183,18 @@ export const loginFn = createServerFn({ method: "POST" })
 				ip,
 			});
 			if (legacy) {
-				await settleLoginBudget(attempt, budget);
+				await Promise.all([
+					settleLoginBudget(attempt, budget),
+					upgradeLoginPasswordHash(data.handle, data.password),
+				]);
 				return legacy;
 			}
 
 			const result = await signInUsername(data.handle, data.password);
-			await settleLoginBudget(attempt, budget);
+			await Promise.all([
+				settleLoginBudget(attempt, budget),
+				upgradeLoginPasswordHash(data.handle, data.password),
+			]);
 
 			if ("twoFactorRedirect" in result) {
 				return { twoFactorRedirect: true as const };
@@ -197,6 +205,16 @@ export const loginFn = createServerFn({ method: "POST" })
 			rethrowAsHttp(err);
 		}
 	});
+
+// A hash that stays outdated still verifies, so a failed upgrade must not fail
+// the sign-in that the password has already passed.
+async function upgradeLoginPasswordHash(handle: string, password: string) {
+	try {
+		await upgradePasswordHash(db, { handle, password });
+	} catch (err) {
+		logger.warn({ err }, "password hash upgrade failed");
+	}
+}
 
 async function settleLoginBudget(attempt: LoginAttempt, budget: LoginBudget) {
 	const [, devices] = await Promise.all([

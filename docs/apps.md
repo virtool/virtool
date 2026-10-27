@@ -56,8 +56,8 @@ deps: {
   would carry an `import "@virtool/data/db/pg"` that resolves to a `.ts`
   file `node` can't load.
 - **`neverBundle`**: native addons and anything with a worker-thread or
-  dynamic-path runtime. `bcrypt` is a native addon and can't be bundled
-  at all. `pino` resolves transport worker files by path at runtime.
+  dynamic-path runtime. `bcrypt` and `@node-rs/argon2` are native addons
+  and can't be bundled at all. `pino` resolves transport worker files by path at runtime.
   `postgres`, `@aws-sdk/*` and `@azure/*` are heavyweight and gain
   nothing from inlining.
 
