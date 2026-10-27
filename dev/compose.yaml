@@ -18,7 +18,7 @@ x-environment: &environment
 
 x-build: &build
   context: ${VT_DEV_WORKTREE}
-  dockerfile: Dockerfile
+  dockerfile: dev/Dockerfile
   target: dev
 
 x-volumes: &volumes
@@ -36,6 +36,8 @@ x-volumes: &volumes
   - ${VT_DEV_WORKTREE}/packages/storage/src:/repo/packages/storage/src:ro
   - ${VT_DEV_WORKTREE}/packages/data/drizzle:/repo/packages/data/drizzle:ro
 
+# The daemon builds workflow images with Bake before it runs them, because each
+# one needs a pruned `pnpm deploy` context. See `apps/dev/src/server/workflows.ts`.
 x-workflow-environment: &workflow-environment
   # The workflow targets are the shipped images, which set production.
   NODE_ENV: development
@@ -169,9 +171,8 @@ services:
 
   workflow-create-sample:
     profiles: [workflow]
-    build:
-      context: ${VT_DEV_WORKTREE}
-      target: create-sample
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/create-sample
+    pull_policy: never
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/create-sample
@@ -189,9 +190,8 @@ services:
 
   workflow-create-subtraction:
     profiles: [workflow]
-    build:
-      context: ${VT_DEV_WORKTREE}
-      target: create-subtraction
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/create-subtraction
+    pull_policy: never
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/create-subtraction
@@ -209,9 +209,8 @@ services:
 
   workflow-pathoscope:
     profiles: [workflow]
-    build:
-      context: ${VT_DEV_WORKTREE}
-      target: pathoscope
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/pathoscope
+    pull_policy: never
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/pathoscope
@@ -229,9 +228,8 @@ services:
 
   workflow-nuvs:
     profiles: [workflow]
-    build:
-      context: ${VT_DEV_WORKTREE}
-      target: nuvs
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/nuvs
+    pull_policy: never
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/nuvs

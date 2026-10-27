@@ -10,10 +10,8 @@ import pkg from "../package.json" with { type: "json" };
  * value: the bundler inlines it, `vitest` resolves it, and the version is then
  * passed explicitly into `createMetrics` rather than read from ambient scope.
  *
- * It is only *correct* in a released image because CI's `release-ghcr` job runs
- * `pnpm -C ${{ matrix.workspace }} version` before the Docker build. That step
- * is driven by the release matrix, so this app is covered by its matrix entry —
- * remove the entry and the image still builds while this silently reverts to
- * `0.0.0`.
+ * `changeset version` writes each release's version into the manifest, and
+ * CI's `release-ghcr` job builds from that release's tag. Builds between
+ * releases carry the last released version.
  */
 export const APP_VERSION: string = pkg.version;

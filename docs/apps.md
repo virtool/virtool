@@ -103,7 +103,7 @@ apps/<name>/
   src/index.ts      # the bundler entry
 ```
 
-`apps/tsconfig.node.json` is the shared base: Node-only, `types:
+`packages/tsconfig/node.json` is the shared base: Node-only, `types:
 ["node"]`, no DOM lib, and no JSX. It deliberately doesn't extend
 `apps/web/tsconfig.json`, which carries the browser path aliases and a
 DOM lib.
@@ -115,9 +115,9 @@ an exports map to a `.ts` file.
 
 Adding a Node app directory in that shape is enough to be covered by
 `pnpm build`, `pnpm check`, `pnpm typecheck`, `pnpm test`, and `pnpm knip`, with no
-edits to root scripts, `knip.json`, `biome.json`, the Dockerfile install
-layer, or `pnpm-workspace.yaml`. Adding a new *image* still needs a
-Dockerfile stage and a CI matrix entry. This is the one deliberate exception.
+edits to root scripts, `knip.json`, `biome.json`, or `pnpm-workspace.yaml`.
+Adding a new *image* still needs an app-owned Dockerfile, an image-build Bake
+target, and a CI matrix entry. This is the one deliberate exception.
 
 ## Repo-wide gates
 

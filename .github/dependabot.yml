@@ -64,15 +64,16 @@ updates:
               patterns:
                   - "*"
     # Only the Node base image reaches published images; the other stages
-    # compile tools. The fix prefix makes each merged digest bump a patch
-    # release, so Node and Debian security fixes ship without waiting for an
-    # unrelated feat or fix.
+    # compile tools. The Dependabot Changeset workflow adds a patch changeset to
+    # each bump, so Node and Debian security fixes ship without waiting for an
+    # unrelated change.
     - package-ecosystem: "docker"
-      directory: "/"
+      directories:
+          - "/apps/*"
       schedule:
           interval: "daily"
       commit-message:
-          prefix: "fix(deps)"
+          prefix: "chore(deps)"
       allow:
           - dependency-name: "node"
       ignore:

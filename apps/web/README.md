@@ -1,7 +1,7 @@
 # @virtool/web
 
-The Virtool web app. The root Dockerfile's `dist`
-target is published as `ghcr.io/virtool/web`; see [Images](../../README.md#images).
+The Virtool web app. The app Dockerfile's `dist` target is published as
+`ghcr.io/virtool/web`; see [Images](../../README.md#images).
 
 Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
 [the development guide](../../dev/README.md) to run the app with `vtd`.
@@ -733,6 +733,10 @@ SSE stream. Events are published as `{ domain, resource_id, operation }` on the
 Postgres `client_events` channel; the route converts each event to the id-only
 `{ domain, operation, id }` wire shape. The client then refetches through the
 normal API so authorization remains at the request boundary.
+
+Every stream receives every event, except `account` events. An `account` event
+goes only to the streams of the user it names, so a change to one user's
+account refreshes only that user's other sessions.
 
 Adding a domain requires both `SseMessageSchema` and the `domains` record in
 `@app/invalidate`. A frame that fails validation—an

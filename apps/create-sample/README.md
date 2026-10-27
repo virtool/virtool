@@ -12,11 +12,13 @@ repo rather than a third-party tool.
 
 ## Building the image
 
-The root Dockerfile uses cargo-chef to build `quality-core`, then copies its
-single binary into the runtime stage, which installs `pigz` from apt:
+The shared workflow-tools Dockerfile uses cargo-chef to build `quality-core`,
+then the app Dockerfile copies it into a runtime that installs `pigz` from apt:
 
 ```console
-docker build --target create-sample .
+pnpm --filter @virtool/create-sample build
+pnpm --filter @virtool/create-sample --prod deploy .docker-build/create-sample --force
+docker buildx bake -f packages/image-build/docker-bake.hcl create-sample
 ```
 
 ## Configuration

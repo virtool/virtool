@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eventToSseMessage } from "./broadcast";
+import { eventToSseMessage, isEventForUser } from "./broadcast";
 
 describe("eventToSseMessage", () => {
 	it("maps create to insert with the resource id", () => {
@@ -56,5 +56,34 @@ describe("eventToSseMessage", () => {
 			operation: "insert",
 			id: "full",
 		});
+	});
+});
+
+describe("isEventForUser", () => {
+	it("passes an account event to the user it names", () => {
+		expect(
+			isEventForUser(
+				{ domain: "account", resource_id: 3, operation: "update" },
+				3,
+			),
+		).toBe(true);
+	});
+
+	it("withholds an account event from every other user", () => {
+		expect(
+			isEventForUser(
+				{ domain: "account", resource_id: 3, operation: "update" },
+				4,
+			),
+		).toBe(false);
+	});
+
+	it("passes events in other domains to every user", () => {
+		expect(
+			isEventForUser(
+				{ domain: "users", resource_id: 3, operation: "update" },
+				4,
+			),
+		).toBe(true);
 	});
 });

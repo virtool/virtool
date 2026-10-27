@@ -751,6 +751,8 @@ export async function updateAccountSettings(
 		throw new UserNotFoundError();
 	}
 
+	await emit("account", userId, "update");
+
 	return fromStoredAccountSettings(row.settings);
 }
 

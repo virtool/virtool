@@ -56,6 +56,7 @@ Minikube
 [Zz]od
 [Zz]ustand
 [Bb]indgen
+[Cc]hangesets?
 [Cc]lippy
 [Ee]sbuild
 [Ee]xceljs
@@ -67,6 +68,7 @@ Minikube
 Lucide
 [Mm]kcert
 [Pp]ino
+npm
 [Pp]npm
 [Ss]amtools
 Starlark

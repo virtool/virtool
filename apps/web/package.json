@@ -1,6 +1,6 @@
 {
 	"name": "@virtool/web",
-	"version": "0.0.0",
+	"version": "42.60.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -31,6 +31,7 @@
 		"@tanstack/react-virtual": "^3.14.22",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
+		"@virtool/image-build": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/ncbi": "workspace:*",
 		"@virtool/sentry": "workspace:*",
