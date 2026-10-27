@@ -1,4 +1,5 @@
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
+import { verifyPassword } from "@virtool/data/auth/password";
 import {
 	seedLegacySession,
 	seedSession,
@@ -25,6 +26,7 @@ import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+import { verifyBrowserPrincipal } from "./verify";
 
 const cookies = new Map<string, string>();
 let clientIp: string | undefined;
@@ -237,6 +239,60 @@ it("completes offline remediation with an unverified email and one session", asy
 			(await auth.api.getSession({ headers: getRequest().headers }))?.user.id,
 		),
 	).toBe(userId);
+});
+
+it("forces a reset on the session that email remediation establishes", async () => {
+	const userId = await seedUser(db, {
+		email: "",
+		forceReset: true,
+		handle: "Alice",
+		password: Buffer.from(hash),
+	});
+
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ remediation: true, reset: false });
+	expect(
+		await callServerFn(handlers, "submitEmailRemediationFn", {
+			email: "alice@example.com",
+		}),
+	).toEqual({ complete: true });
+
+	const [established] = await db.select().from(authSessions);
+	if (!established) {
+		throw new Error("remediation did not create a session");
+	}
+	const principal = await verifyBrowserPrincipal(db, getRequest());
+	expect(principal).toMatchObject({
+		kind: "password_reset",
+		userId,
+		sessionId: established.id,
+	});
+
+	const newPassword = "new-correct-horse-battery-staple";
+	expect(
+		await callServerFn(
+			handlers,
+			"resetPasswordFn",
+			{ password: newPassword },
+			{ principal },
+		),
+	).toEqual({ login: false, reset: false });
+
+	expect(await verifyBrowserPrincipal(db, getRequest())).toMatchObject({
+		kind: "browser",
+		userId,
+	});
+	const [user] = await db.select().from(users);
+	const [account] = await db.select().from(authAccounts);
+	if (!user?.password || !account?.password) {
+		throw new Error("expected both password copies");
+	}
+	expect(user.forceReset).toBe(false);
+	expect(await verifyPassword(newPassword, user.password)).toBe(true);
+	expect(
+		await verifyPassword(newPassword, Buffer.from(account.password, "utf8")),
+	).toBe(true);
 });
 
 it("requires the emailed token before marking a remediated email verified", async () => {
