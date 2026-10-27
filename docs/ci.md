@@ -33,6 +33,9 @@ expensive image and native-tool jobs, plus the per-app Nuvs test job, run only
 for selected workspaces on pull requests and remain unconditional on pushes to
 `main`.
 
+Root files have no dependents in the graph. Thus a change to a shared root
+input, such as the lockfile or the CI workflow, selects every workspace.
+
 CI first runs the app's build and then `pnpm --prod deploy`, making the Docker
 context exactly the production closure recorded in the workspace graph. The
 web image is the exception: its `.output` bundle carries its own dependencies,
