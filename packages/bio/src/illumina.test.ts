@@ -116,6 +116,7 @@ describe("parseIlluminaFilename", () => {
 			sampleNumber: 1,
 			lane: 1,
 			readSide: 1,
+			chunk: 1,
 		});
 	});
 
@@ -125,6 +126,7 @@ describe("parseIlluminaFilename", () => {
 			sampleNumber: 12,
 			lane: null,
 			readSide: 2,
+			chunk: 1,
 		});
 	});
 
@@ -134,6 +136,17 @@ describe("parseIlluminaFilename", () => {
 			sampleNumber: 0,
 			lane: 4,
 			readSide: 1,
+			chunk: 1,
+		});
+	});
+
+	it("parses a later chunk of bcl2fastq output", () => {
+		expect(parseIlluminaFilename("S1_S1_L001_R1_002.fastq.gz")).toEqual({
+			sampleId: "S1",
+			sampleNumber: 1,
+			lane: 1,
+			readSide: 1,
+			chunk: 2,
 		});
 	});
 
@@ -143,6 +156,8 @@ describe("parseIlluminaFilename", () => {
 		"S1_S1_L001_I1_001.fastq.gz",
 		"S1_S1_L001_R3_001.fastq.gz",
 		"S1_S1_L1_R1_001.fastq.gz",
+		"S1_S1_L001_R1_1.fastq.gz",
+		"S1_S1_L001_R1_0001.fastq.gz",
 		"_S1_R1_001.fastq.gz",
 		"S1_S1_R1_001.fastq.gz.bak",
 	])("returns null for %s", (name) => {
@@ -252,6 +267,61 @@ describe("parseSampleSheet", () => {
 		]);
 	});
 
+	it("reads missing columns, empty cells, and short rows as null", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\n[Data]\nSample_ID,Sample_Name,index,index2\nS1,,ACGT\nS2,Leaf,TTTT,GGGG",
+		);
+
+		expect(sheet.entries).toEqual([
+			{
+				sampleId: "S1",
+				sampleName: null,
+				sampleProject: null,
+				index: "ACGT",
+				index2: null,
+				lane: null,
+			},
+			{
+				sampleId: "S2",
+				sampleName: "Leaf",
+				sampleProject: null,
+				index: "TTTT",
+				index2: "GGGG",
+				lane: null,
+			},
+		]);
+	});
+
+	it("accepts the same Sample_ID in different lanes", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\n[Data]\nLane,Sample_ID\n1,S1\n2,S1",
+		);
+
+		expect(sheet.entries.map((entry) => entry.lane)).toEqual([1, 2]);
+	});
+
+	it.each([
+		[
+			"a Sample_ID repeated in one lane",
+			"[Header]\n[Data]\nLane,Sample_ID\n1,S1\n1,S1",
+			/row 2 repeats Sample_ID S1 in lane 1/,
+		],
+		[
+			"a Sample_ID repeated in lanes 1 and 01",
+			"[Header]\n[Data]\nLane,Sample_ID\n1,S1\n01,S1",
+			/row 2 repeats Sample_ID S1 in lane 1/,
+		],
+		[
+			"a Sample_ID repeated without lanes",
+			"[Header]\n[Data]\nSample_ID,index\nS1,ACGT\nS2,TTTT\nS1,GGGG",
+			/row 3 repeats Sample_ID S1$/,
+		],
+		["lane 0", "[Header]\n[Data]\nLane,Sample_ID\n0,S1", /row 1 has lane 0/],
+		["lane 00", "[Header]\n[Data]\nLane,Sample_ID\n00,S1", /row 1 has lane 0/],
+	])("throws on %s", (_, text, message) => {
+		expect(() => parseSampleSheet(text)).toThrow(message);
+	});
+
 	it("treats a zero Read2Cycles as single-end", () => {
 		const sheet = parseSampleSheet(
 			"[Header]\nFileFormatVersion,2\n[Reads]\nRead1Cycles,101\nRead2Cycles,0\n[BCLConvert_Data]\nSample_ID\nS1",
@@ -260,8 +330,108 @@ describe("parseSampleSheet", () => {
 		expect(sheet.reads).toEqual([101]);
 	});
 
+	it("detects v2 from a FileFormatVersion key in any case", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\nfileformatversion,2\n[Reads]\nRead1Cycles,101\n[BCLConvert_Data]\nSample_ID\nS1",
+		);
+
+		expect(sheet.version).toBe(2);
+		expect(sheet.header).toEqual({ fileformatversion: "2" });
+		expect(sheet.reads).toEqual([101]);
+	});
+
+	it("detects v2 from a [BCLConvert_Data] section without a version", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\nRunName,Run7\n[Reads]\nRead1Cycles,101\n[BCLConvert_Data]\nSample_ID\nS1",
+		);
+
+		expect(sheet.version).toBe(2);
+		expect(sheet.reads).toEqual([101]);
+		expect(sheet.entries.map((entry) => entry.sampleId)).toEqual(["S1"]);
+	});
+
+	it("treats a zero-padded Read2Cycles as single-end", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\nFileFormatVersion,2\n[Reads]\nRead1Cycles,101\nRead2Cycles,00\n[BCLConvert_Data]\nSample_ID\nS1",
+		);
+
+		expect(sheet.reads).toEqual([101]);
+	});
+
+	it("treats a zero second v1 read as single-end", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\nIEMFileVersion,4\n[Reads]\n151\n0\n[Data]\nSample_ID\nS1",
+		);
+
+		expect(sheet.version).toBe(1);
+		expect(sheet.reads).toEqual([151]);
+	});
+
+	it.each([
+		["LF", "\n"],
+		["CRLF", "\r\n"],
+		["CR", "\r"],
+	])("parses a sheet with %s line endings", (_, ending) => {
+		const sheet = parseSampleSheet(
+			[
+				"[Header]",
+				"IEMFileVersion,4",
+				"[Reads]",
+				"75",
+				"[Data]",
+				"Sample_ID,index",
+				"S1,ACGT",
+			].join(ending),
+		);
+
+		expect(sheet.header).toEqual({ IEMFileVersion: "4" });
+		expect(sheet.reads).toEqual([75]);
+		expect(sheet.entries.map((entry) => [entry.sampleId, entry.index])).toEqual(
+			[["S1", "ACGT"]],
+		);
+	});
+
+	it("strips a leading byte order mark", () => {
+		const sheet = parseSampleSheet(
+			"﻿[Header]\nIEMFileVersion,4\n[Data]\nSample_ID\nS1",
+		);
+
+		expect(sheet.header).toEqual({ IEMFileVersion: "4" });
+		expect(sheet.entries.map((entry) => entry.sampleId)).toEqual(["S1"]);
+	});
+
+	it("keeps line breaks, commas, and doubled quotes inside a quoted field", () => {
+		const sheet = parseSampleSheet(
+			'[Header]\r\nDescription,"Line one\r\nLine two"\r\n[Data]\r\nSample_ID,Sample_Name\r\nS1,"Leaf ""A"", top\nshelf"\r\nS2,Leaf B',
+		);
+
+		expect(sheet.header.Description).toBe("Line one\r\nLine two");
+		expect(sheet.entries.map((entry) => entry.sampleName)).toEqual([
+			'Leaf "A", top\nshelf',
+			"Leaf B",
+		]);
+	});
+
+	it("round-trips header keys that are named like prototype members", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\n__proto__,x\nconstructor,y\n[Data]\nSample_ID\nS1",
+		);
+
+		expect(Object.entries(sheet.header)).toEqual([
+			["__proto__", "x"],
+			["constructor", "y"],
+		]);
+		expect(sheet.header.constructor).toBe("y");
+		expect(sheet.header.toString).toBeUndefined();
+	});
+
 	it.each([
 		["a missing [Header]", "[Data]\nSample_ID\nS1", /missing \[Header\]/],
+		[
+			"a v2 sheet with a lower-case version key and no [BCLConvert_Data]",
+			"[Header]\nfileformatversion,2\n[Data]\nSample_ID\nS1",
+			/missing \[BCLConvert_Data\]/,
+		],
 		["a missing [Data]", "[Header]\nIEMFileVersion,4", /missing \[Data\]/],
 		[
 			"a v2 sheet without [BCLConvert_Data]",
@@ -306,9 +476,24 @@ describe("parseSampleSheet", () => {
 			/cycle count for Read1Cycles/,
 		],
 		[
-			"a zero v2 read",
+			"a zero Read1Cycles",
 			"[Header]\nFileFormatVersion,2\n[Reads]\nRead1Cycles,0\n[BCLConvert_Data]\nSample_ID",
-			/cycle count for Read1Cycles/,
+			/Read1Cycles is 0/,
+		],
+		[
+			"a zero-padded Read1Cycles",
+			"[Header]\nFileFormatVersion,2\n[Reads]\nRead1Cycles,00\nRead2Cycles,151\n[BCLConvert_Data]\nSample_ID",
+			/Read1Cycles is 0/,
+		],
+		[
+			"a zero first v1 read",
+			"[Header]\n[Reads]\n0\n151\n[Data]\nSample_ID",
+			/read 1 is 0/,
+		],
+		[
+			"a negative v1 read",
+			"[Header]\n[Reads]\n-1\n[Data]\nSample_ID",
+			/cycle count for read 1/,
 		],
 		[
 			"an unterminated quote",

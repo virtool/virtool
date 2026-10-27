@@ -23,6 +23,9 @@ export type IlluminaFilename = {
 	/** The lane, or `null` when BCL Convert merged the lanes */
 	lane: number | null;
 	readSide: ReadSide;
+
+	/** The file chunk: always `1` from BCL Convert; `1`, `2`, ... from bcl2fastq with `--fastq-cluster-count` */
+	chunk: number;
 };
 
 /** One `[Data]` or `[BCLConvert_Data]` row of a sample sheet. */
@@ -140,11 +143,11 @@ export function inferInstrumentModel(serial: string): string | null {
 }
 
 const FILENAME_PATTERN =
-	/^(.+)_S(\d+)(?:_L(\d{3}))?_R([12])_001\.fastq(?:\.gz)?$/;
+	/^(.+)_S(\d+)(?:_L(\d{3}))?_R([12])_(\d{3})\.fastq(?:\.gz)?$/;
 
 /**
- * Parse a BCL Convert FASTQ filename:
- * `<Sample_ID>_S<n>[_L<lane>]_R<1|2>_001.fastq.gz`.
+ * Parse a BCL Convert or bcl2fastq FASTQ filename:
+ * `<Sample_ID>_S<n>[_L<lane>]_R<1|2>_<chunk>.fastq.gz`.
  *
  * Returns `null` for names that don't follow the pattern.
  *
@@ -157,22 +160,24 @@ export function parseIlluminaFilename(name: string): IlluminaFilename | null {
 		return null;
 	}
 
-	const [, sampleId = "", sampleNumber, lane, readSide] = match;
+	const [, sampleId = "", sampleNumber, lane, readSide, chunk] = match;
 
 	return {
 		sampleId,
 		sampleNumber: Number(sampleNumber),
 		lane: lane === undefined ? null : Number(lane),
 		readSide: Number(readSide) as ReadSide,
+		chunk: Number(chunk),
 	};
 }
 
 /**
  * Parse a v1 (Illumina Experiment Manager) or v2 (BCL Convert) sample sheet.
  *
- * A v2 sheet declares `FileFormatVersion,2` in its `[Header]`; any other sheet
- * with a `[Data]` section is read as v1. Index-read cycles are left out of
- * `reads` because a v1 sheet doesn't record them.
+ * A sheet is read as v2 when its `[Header]` declares `FileFormatVersion,2`,
+ * matched case-insensitively, or when it has a `[BCLConvert_Data]` section;
+ * any other sheet is read as v1 and needs a `[Data]` section. Index-read
+ * cycles are left out of `reads` because a v1 sheet doesn't record them.
  *
  * Throws on a malformed sheet. Unlike a header or filename, a sample sheet is
  * supplied on purpose, so the user needs to know why it was rejected.
@@ -189,10 +194,13 @@ export function parseSampleSheet(text: string): SampleSheet {
 	}
 
 	const header = parseKeyValues(headerRows);
-	const version = header.FileFormatVersion === "2" ? 2 : 1;
+	const version =
+		getHeaderValue(header, "FileFormatVersion") === "2" ||
+		sections.has("bclconvert_data")
+			? 2
+			: 1;
 
-	const dataName = version === 2 ? "bclconvert_data" : "data";
-	const dataRows = sections.get(dataName);
+	const dataRows = sections.get(version === 2 ? "bclconvert_data" : "data");
 
 	if (dataRows === undefined) {
 		throw new Error(
@@ -218,9 +226,7 @@ function splitSections(text: string): Map<string, string[][]> {
 	const sections = new Map<string, string[][]>();
 	let current: string[][] | null = null;
 
-	for (const line of text.replace(/^﻿/, "").split(/\r?\n/)) {
-		const row = splitCsvLine(line);
-
+	for (const row of parseCsv(text.replace(/^﻿/, ""))) {
 		if (row.every((cell) => cell === "")) {
 			continue;
 		}
@@ -253,16 +259,22 @@ function splitSections(text: string): Map<string, string[][]> {
 	return sections;
 }
 
-function splitCsvLine(line: string): string[] {
-	const cells: string[] = [];
+/**
+ * Split CSV text into rows of trimmed cells. A quoted cell can hold commas,
+ * doubled quotes, and line breaks, so quote state carries across lines and
+ * `\r\n`, `\r`, and `\n` end a row only outside quotes.
+ */
+function parseCsv(text: string): string[][] {
+	const rows: string[][] = [];
+	let cells: string[] = [];
 	let cell = "";
 	let quoted = false;
 
-	for (let i = 0; i < line.length; i++) {
-		const char = line[i];
+	for (let i = 0; i < text.length; i++) {
+		const char = text[i];
 
 		if (quoted) {
-			if (char === '"' && line[i + 1] === '"') {
+			if (char === '"' && text[i + 1] === '"') {
 				cell += '"';
 				i++;
 			} else if (char === '"') {
@@ -275,6 +287,15 @@ function splitCsvLine(line: string): string[] {
 		} else if (char === ",") {
 			cells.push(cell.trim());
 			cell = "";
+		} else if (char === "\n" || char === "\r") {
+			if (char === "\r" && text[i + 1] === "\n") {
+				i++;
+			}
+
+			cells.push(cell.trim());
+			rows.push(cells);
+			cells = [];
+			cell = "";
 		} else {
 			cell += char;
 		}
@@ -285,12 +306,17 @@ function splitCsvLine(line: string): string[] {
 	}
 
 	cells.push(cell.trim());
+	rows.push(cells);
 
-	return cells;
+	return rows;
 }
 
+/**
+ * The record has no prototype, so a key such as `__proto__` or `constructor`
+ * is stored and read back like any other.
+ */
 function parseKeyValues(rows: string[][]): Record<string, string> {
-	const values: Record<string, string> = {};
+	const values: Record<string, string> = Object.create(null);
 
 	for (const [key = "", value = ""] of rows) {
 		values[key] = value;
@@ -299,19 +325,64 @@ function parseKeyValues(rows: string[][]): Record<string, string> {
 	return values;
 }
 
+/** Look up a `[Header]` value by key, ignoring the key's case. */
+function getHeaderValue(
+	header: Record<string, string>,
+	name: string,
+): string | undefined {
+	const lowered = name.toLowerCase();
+
+	for (const [key, value] of Object.entries(header)) {
+		if (key.toLowerCase() === lowered) {
+			return value;
+		}
+	}
+
+	return undefined;
+}
+
 function parseCycles(raw: string | undefined, name: string): number {
-	if (raw === undefined || !INTEGER_PATTERN.test(raw) || Number(raw) === 0) {
+	if (raw === undefined || !INTEGER_PATTERN.test(raw)) {
 		throw new Error(
-			`Malformed sample sheet: expected a positive cycle count for ${name}, got ${raw}`,
+			`Malformed sample sheet: expected a cycle count for ${name}, got ${raw}`,
 		);
 	}
 
 	return Number(raw);
 }
 
+/**
+ * Parse the named cycle counts in order. A count of zero marks a read the run
+ * doesn't have, so it is dropped; the first read can't be dropped because a run
+ * needs at least one.
+ */
+function parseReads(counts: [string, string | undefined][]): number[] {
+	const reads: number[] = [];
+
+	for (const [name, raw] of counts) {
+		const cycles = parseCycles(raw, name);
+
+		if (cycles === 0) {
+			if (reads.length === 0) {
+				throw new Error(
+					`Malformed sample sheet: ${name} is 0, but a run needs at least one sequencing read`,
+				);
+			}
+
+			continue;
+		}
+
+		reads.push(cycles);
+	}
+
+	return reads;
+}
+
 /** A v1 `[Reads]` section lists one cycle count per sequencing read. */
 function parseV1Reads(rows: string[][]): number[] {
-	return rows.map(([cycles]) => parseCycles(cycles, "read"));
+	return parseReads(
+		rows.map(([cycles], index) => [`read ${index + 1}`, cycles]),
+	);
 }
 
 /**
@@ -320,13 +391,15 @@ function parseV1Reads(rows: string[][]): number[] {
  */
 function parseV2Reads(rows: string[][]): number[] {
 	const values = parseKeyValues(rows);
-	const reads = [parseCycles(values.Read1Cycles, "Read1Cycles")];
+	const counts: [string, string | undefined][] = [
+		["Read1Cycles", values.Read1Cycles],
+	];
 
-	if (values.Read2Cycles !== undefined && values.Read2Cycles !== "0") {
-		reads.push(parseCycles(values.Read2Cycles, "Read2Cycles"));
+	if (values.Read2Cycles !== undefined) {
+		counts.push(["Read2Cycles", values.Read2Cycles]);
 	}
 
-	return reads;
+	return parseReads(counts);
 }
 
 function parseEntries(rows: string[][]): SampleSheetEntry[] {
@@ -337,12 +410,21 @@ function parseEntries(rows: string[][]): SampleSheetEntry[] {
 	}
 
 	const lowered = columns.map((column) => column.toLowerCase());
+	const sampleIdIndex = lowered.indexOf("sample_id");
 
-	if (!lowered.includes("sample_id")) {
+	if (sampleIdIndex === -1) {
 		throw new Error(
 			"Malformed sample sheet: data section has no Sample_ID column",
 		);
 	}
+
+	const sampleNameIndex = lowered.indexOf("sample_name");
+	const sampleProjectIndex = lowered.indexOf("sample_project");
+	const indexIndex = lowered.indexOf("index");
+	const index2Index = lowered.indexOf("index2");
+	const laneIndex = lowered.indexOf("lane");
+
+	const seen = new Set<string>();
 
 	return records.map((record, row) => {
 		if (
@@ -354,12 +436,7 @@ function parseEntries(rows: string[][]): SampleSheetEntry[] {
 			);
 		}
 
-		function get(column: string): string | null {
-			const value = record[lowered.indexOf(column)];
-			return value ? value : null;
-		}
-
-		const sampleId = get("sample_id");
+		const sampleId = getCell(record, sampleIdIndex);
 
 		if (sampleId === null) {
 			throw new Error(
@@ -367,21 +444,49 @@ function parseEntries(rows: string[][]): SampleSheetEntry[] {
 			);
 		}
 
-		const lane = get("lane");
+		const rawLane = getCell(record, laneIndex);
 
-		if (lane !== null && !INTEGER_PATTERN.test(lane)) {
+		if (rawLane !== null && !INTEGER_PATTERN.test(rawLane)) {
 			throw new Error(
-				`Malformed sample sheet: data row ${row + 1} has a non-numeric lane, ${lane}`,
+				`Malformed sample sheet: data row ${row + 1} has a non-numeric lane, ${rawLane}`,
 			);
 		}
 
+		const lane = rawLane === null ? null : Number(rawLane);
+
+		if (lane === 0) {
+			throw new Error(
+				`Malformed sample sheet: data row ${row + 1} has lane 0; lanes start at 1`,
+			);
+		}
+
+		// A newline can't appear in a cell, so it can't collide with a Sample_ID.
+		const key = lane === null ? sampleId : `${sampleId}\n${lane}`;
+
+		if (seen.has(key)) {
+			throw new Error(
+				`Malformed sample sheet: data row ${row + 1} repeats Sample_ID ${sampleId}${lane === null ? "" : ` in lane ${lane}`}`,
+			);
+		}
+
+		seen.add(key);
+
 		return {
 			sampleId,
-			sampleName: get("sample_name"),
-			sampleProject: get("sample_project"),
-			index: get("index"),
-			index2: get("index2"),
-			lane: lane === null ? null : Number(lane),
+			sampleName: getCell(record, sampleNameIndex),
+			sampleProject: getCell(record, sampleProjectIndex),
+			index: getCell(record, indexIndex),
+			index2: getCell(record, index2Index),
+			lane,
 		};
 	});
+}
+
+/** Read one cell; a missing column or an empty cell reads as `null`. */
+function getCell(record: string[], index: number): string | null {
+	if (index === -1) {
+		return null;
+	}
+
+	return record[index] || null;
 }
