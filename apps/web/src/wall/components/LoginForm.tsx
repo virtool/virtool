@@ -1,11 +1,12 @@
 import { cn } from "@app/cn";
 import { usePasskeySupport } from "@app/passkeySupport";
 import { getPasskeyNotice, type PasskeyNotice } from "@app/passkeys";
+import Alert from "@base/Alert";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
 import Input from "@base/Input";
 import { Link } from "@tanstack/react-router";
-import { CircleAlert, Info, KeyRound } from "lucide-react";
+import { CircleAlert, Info, KeyRound, TriangleAlert } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { getWallErrorMessage } from "../errors";
@@ -48,6 +49,7 @@ export default function LoginForm({
 	const [twoFactor, setTwoFactor] = useState(false);
 	const [continuing, setContinuing] = useState(false);
 	const [continueError, setContinueError] = useState<string | null>(null);
+	const [restartNotice, setRestartNotice] = useState<string | null>(null);
 	const follow = useFollowAuthNextStep();
 	const isSigningIn =
 		loginMutation.isPending || passkeyMutation.isPending || continuing;
@@ -94,6 +96,7 @@ export default function LoginForm({
 		passkeyMutation.reset();
 		setAutofillNotice(null);
 		setContinueError(null);
+		setRestartNotice(null);
 		loginMutation.mutate({ handle, password }, { onSuccess: onSignedIn });
 	}
 
@@ -104,6 +107,7 @@ export default function LoginForm({
 		loginMutation.reset();
 		setAutofillNotice(null);
 		setContinueError(null);
+		setRestartNotice(null);
 		passkeyMutation.mutate(stopAutofill, {
 			onSuccess: () => void continueSignIn(),
 		});
@@ -123,7 +127,8 @@ export default function LoginForm({
 		return (
 			<TwoFactorForm
 				onVerified={() => void continueSignIn()}
-				restart={() => {
+				restart={(notice) => {
+					setRestartNotice(notice ?? null);
 					setTwoFactor(false);
 					loginMutation.reset();
 					passkeyMutation.reset();
@@ -139,6 +144,11 @@ export default function LoginForm({
 				subtitle="Sign in with your Virtool account."
 			/>
 			{notice}
+			{restartNotice && (
+				<Alert color="orange" icon={TriangleAlert} level>
+					{restartNotice}
+				</Alert>
+			)}
 
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<Field>

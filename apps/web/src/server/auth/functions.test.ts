@@ -625,7 +625,7 @@ it("keeps invalid codes unauthenticated and permits recovery-code continuation",
 		}),
 	).rejects.toMatchObject({
 		name: CLIENT_ERROR_NAME,
-		message: expect.stringContaining("Invalid or expired verification code"),
+		message: "The code is not correct. Enter the code your app shows now.",
 		status: 400,
 	});
 	expect(await db.select().from(authSessions)).toEqual([]);
@@ -648,7 +648,52 @@ it("rejects verification without a pending challenge", async () => {
 			code: "123456",
 			recovery: false,
 		}),
-	).rejects.toThrow("Invalid or expired verification code");
+	).rejects.toMatchObject({
+		name: CLIENT_ERROR_NAME,
+		message: "Your sign-in expired. Sign in again.",
+		status: 410,
+	});
+	expect(await db.select().from(authSessions)).toEqual([]);
+});
+
+it("refuses an incorrect recovery code with its own message", async () => {
+	await enroll(false);
+	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+
+	await expect(
+		callServerFn(handlers, "verifyTwoFactorFn", {
+			code: "not-a-code",
+			recovery: true,
+		}),
+	).rejects.toMatchObject({
+		name: CLIENT_ERROR_NAME,
+		message: "The recovery code is not correct.",
+		status: 400,
+	});
+});
+
+it("expires the challenge after five incorrect codes", async () => {
+	const { totpURI } = await enroll(false);
+	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	for (let attempt = 0; attempt < 5; attempt++) {
+		await expect(
+			callServerFn(handlers, "verifyTwoFactorFn", {
+				code: "000000",
+				recovery: false,
+			}),
+		).rejects.toMatchObject({ status: 400 });
+	}
+
+	await expect(
+		callServerFn(handlers, "verifyTwoFactorFn", {
+			code: totp(totpURI),
+			recovery: false,
+		}),
+	).rejects.toMatchObject({
+		name: CLIENT_ERROR_NAME,
+		message: "Your sign-in expired. Sign in again.",
+		status: 410,
+	});
 	expect(await db.select().from(authSessions)).toEqual([]);
 });
 

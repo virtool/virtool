@@ -251,15 +251,35 @@ export const verifyTwoFactorFn = createServerFn({ method: "POST" })
 			const result = await verifyTwoFactor(data.code, data.recovery);
 			return await completeLogin(Number(result.user.id));
 		} catch (err) {
-			if (err instanceof APIError && err.statusCode < 500) {
-				throw new ClientError(
-					"Invalid or expired verification code. Try again or restart login.",
-					400,
-				);
-			}
-			throw err;
+			rethrowTwoFactorError(err);
 		}
 	});
+
+// A 410 or 429 ends the challenge, so the client returns to the sign-in form.
+function rethrowTwoFactorError(err: unknown): never {
+	if (!(err instanceof APIError) || err.statusCode >= 500) {
+		throw err;
+	}
+	switch (err.body?.code) {
+		case "INVALID_CODE":
+			throw new ClientError(
+				"The code is not correct. Enter the code your app shows now.",
+				400,
+			);
+		case "INVALID_BACKUP_CODE":
+			throw new ClientError("The recovery code is not correct.", 400);
+		case "ACCOUNT_TEMPORARILY_LOCKED":
+			throw new ClientError(
+				"Too many incorrect codes. Wait a few minutes, then sign in again.",
+				429,
+			);
+		case "INVALID_TWO_FACTOR_COOKIE":
+		case "TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE":
+			throw new ClientError("Your sign-in expired. Sign in again.", 410);
+		default:
+			throw new ClientError("The code could not be checked. Try again.", 400);
+	}
+}
 
 /**
  * First-user setup server function. Unauthenticated by necessity — it runs

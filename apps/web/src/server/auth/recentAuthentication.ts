@@ -15,22 +15,54 @@ import {
 	RECENT_AUTHENTICATION_PATH,
 	recentAuthenticationChallengeSchema,
 } from "./recentAuthenticationChallenge";
+import {
+	MfaEnrollmentRequiredError,
+	PasswordResetRequiredError,
+} from "./restricted";
+
+// Each message names only the method that the user chose, so it tells them
+// nothing that the choice did not.
+const CHALLENGE_MESSAGES = new Map([
+	["INVALID_PASSWORD", "The password is not correct."],
+	[
+		"INVALID_CODE",
+		"The code is not correct. Enter the code your app shows now.",
+	],
+]);
 
 async function checkChallengeResponse(response: Response): Promise<void> {
 	if (response.ok) {
 		return;
 	}
-	if (response.status === 401) {
-		const body = await response.json();
-		if (body.code === "UNAUTHORIZED") {
-			throw new UnauthorizedError();
-		}
-	}
 	if (response.status >= 500) {
 		throw new Error("Authentication challenge provider failed.");
 	}
-	const status = response.status === 429 ? 429 : 400;
-	throw new ClientError("Authentication challenge failed.", status);
+	if (response.status === 429) {
+		throw new ClientError("Too many attempts. Wait and try again.", 429);
+	}
+	const code = await readErrorCode(response);
+	if (response.status === 401 && code === "UNAUTHORIZED") {
+		throw new UnauthorizedError();
+	}
+	if (response.status === 403 && code === "PASSWORD_RESET_REQUIRED") {
+		throw new PasswordResetRequiredError();
+	}
+	if (response.status === 403 && code === "MFA_ENROLLMENT_REQUIRED") {
+		throw new MfaEnrollmentRequiredError();
+	}
+	throw new ClientError(
+		(code && CHALLENGE_MESSAGES.get(code)) ??
+			"Authentication challenge failed.",
+		400,
+	);
+}
+
+async function readErrorCode(response: Response): Promise<string | undefined> {
+	const body: unknown = await response.json().catch(() => null);
+	if (body && typeof body === "object" && "code" in body) {
+		return typeof body.code === "string" ? body.code : undefined;
+	}
+	return undefined;
 }
 
 function rethrowReplacementError(err: unknown): never {

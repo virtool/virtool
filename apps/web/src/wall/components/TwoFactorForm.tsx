@@ -1,3 +1,4 @@
+import { getErrorStatus } from "@app/queryErrors";
 import Button, { LinkButton } from "@base/Button";
 import Field, { FieldError } from "@base/Field";
 import Input, { InputOTP } from "@base/Input";
@@ -11,9 +12,15 @@ import { WallTitle } from "./WallTitle";
 type TwoFactorFormProps = {
 	/** Continues sign-in after the server accepts the code. */
 	onVerified: () => void;
-	/** Returns to the sign-in form. */
-	restart: () => void;
+	/** Returns to the sign-in form, with a notice that says why, if any. */
+	restart: (notice?: string) => void;
 };
+
+// The server ends the challenge when it expires or the account locks.
+function isChallengeEnded(error: unknown): boolean {
+	const status = getErrorStatus(error);
+	return status === 410 || status === 429;
+}
 
 type FormValues = {
 	authenticatorCode?: string;
@@ -31,6 +38,7 @@ export default function TwoFactorForm({
 		formState: { errors },
 		register,
 		handleSubmit,
+		resetField,
 	} = useForm<FormValues>({
 		shouldUnregister: true,
 	});
@@ -45,7 +53,21 @@ export default function TwoFactorForm({
 				code: recovery ? (recoveryCode ?? "") : (authenticatorCode ?? ""),
 				recovery,
 			},
-			{ onSuccess: onVerified },
+			{
+				onSuccess: onVerified,
+				onError: (error) => {
+					if (isChallengeEnded(error)) {
+						restart(
+							getWallErrorMessage(
+								error,
+								"Your sign-in expired. Sign in again.",
+							),
+						);
+						return;
+					}
+					resetField(recovery ? "recoveryCode" : "authenticatorCode");
+				},
+			},
 		);
 	}
 
@@ -126,7 +148,7 @@ export default function TwoFactorForm({
 						<LinkButton disabled={mutation.isPending} onClick={toggleRecovery}>
 							{recovery ? "Use authenticator code" : "Use recovery code"}
 						</LinkButton>
-						<LinkButton disabled={mutation.isPending} onClick={restart}>
+						<LinkButton disabled={mutation.isPending} onClick={() => restart()}>
 							Back to sign in
 						</LinkButton>
 					</div>

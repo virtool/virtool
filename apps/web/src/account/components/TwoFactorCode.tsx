@@ -68,6 +68,7 @@ export default function TwoFactorCode({
 						render={({ field }) => (
 							<InputOTP
 								autoComplete="one-time-code"
+								autoFocus
 								aria-required
 								inputMode="numeric"
 								length={6}
