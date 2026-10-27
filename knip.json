@@ -30,7 +30,7 @@
 				"src/tests/postgresGuard.ts"
 			],
 			"project": ["src/**/*.{ts,tsx,css}"],
-			"ignoreDependencies": ["@virtool/image-build", "bcrypt"]
+			"ignoreDependencies": ["@node-rs/argon2", "@virtool/image-build", "bcrypt"]
 		},
 		"packages/bio": {
 			"entry": ["src/**/*.test.ts"]

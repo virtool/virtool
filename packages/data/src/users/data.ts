@@ -575,6 +575,20 @@ export async function getUser(
 	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
 }
 
+/** Get the handle of the user with `userId`, or `null` when they have none. */
+export async function getUserHandle(
+	db: Db,
+	userId: number,
+): Promise<string | null> {
+	const [row] = await db
+		.select({ handle: usersTable.handle })
+		.from(usersTable)
+		.where(eq(usersTable.id, userId))
+		.limit(1);
+
+	return row?.handle || null;
+}
+
 /**
  * Get the email whose Gravatar represents the user with `handle`, or `null`
  * when the user has none to show.

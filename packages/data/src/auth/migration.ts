@@ -15,6 +15,7 @@ import {
 	syncCredentialPassword,
 } from "./credential";
 import { claimEmail, EmailInUseError } from "./email";
+import { isPasswordHash } from "./password";
 
 /** The expected Better Auth schema is not present. */
 export class AuthSchemaError extends AppError {}
@@ -29,14 +30,6 @@ export const IDENTITY_REPORT_VERSION = 2;
 
 /** How many users one batch reads and reconciles. */
 const DEFAULT_BATCH_SIZE = 500;
-
-/**
- * A bcrypt hash as the `users.password` bytes decode.
- *
- * Anything else is not something Better Auth's password verifier can use, so a
- * user carrying it cannot be migrated even when their identity is complete.
- */
-const BCRYPT_PATTERN = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
 
 /**
  * What the audit decides about one legacy user.
@@ -168,11 +161,6 @@ type CredentialRecord = {
 	password: string | null;
 };
 
-/** Report whether the bytes in `users.password` decode to a bcrypt hash. */
-export function isBcryptHash(password: Buffer | null): boolean {
-	return password !== null && BCRYPT_PATTERN.test(password.toString("utf8"));
-}
-
 /**
  * Decide what one user is.
  *
@@ -229,7 +217,7 @@ export function classifyIdentity(
 		return "invalidHandle";
 	}
 
-	if (!isBcryptHash(user.password)) {
+	if (!isPasswordHash(user.password)) {
 		return "invalidPassword";
 	}
 
@@ -507,7 +495,7 @@ async function reconcileStale(
 			return "skipped";
 		}
 
-		if (current.password === null || !isBcryptHash(current.password)) {
+		if (current.password === null || !isPasswordHash(current.password)) {
 			return "skipped";
 		}
 

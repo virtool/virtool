@@ -40,49 +40,39 @@ function formatVersion(version: string): string {
 function matchDisplay(
 	userAgent: string,
 	patterns: ReadonlyArray<readonly [RegExp, string]>,
-	fallback: string,
-): string {
+	withVersion: boolean,
+): string | null {
 	for (const [pattern, name] of patterns) {
 		const match = pattern.exec(userAgent);
 		if (match) {
 			const version = match[1];
-			return version ? `${name} ${formatVersion(version)}` : name;
+			return withVersion && version
+				? `${name} ${formatVersion(version)}`
+				: name;
 		}
 	}
-	return fallback;
+	return null;
 }
 
-function getBrowser(userAgent: string): string {
-	return matchDisplay(
-		userAgent,
-		[
-			[/Edg(?:A|iOS)?\/([\d.]+)/, "Edge"],
-			[/OPR\/([\d.]+)/, "Opera"],
-			[/Firefox\/([\d.]+)/, "Firefox"],
-			[/FxiOS\/([\d.]+)/, "Firefox"],
-			[/CriOS\/([\d.]+)/, "Chrome"],
-			[/Chrome\/([\d.]+)/, "Chrome"],
-			[/Version\/([\d.]+).*Safari\//, "Safari"],
-		],
-		UNKNOWN_BROWSER,
-	);
-}
+const BROWSER_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
+	[/Edg(?:A|iOS)?\/([\d.]+)/, "Edge"],
+	[/OPR\/([\d.]+)/, "Opera"],
+	[/Firefox\/([\d.]+)/, "Firefox"],
+	[/FxiOS\/([\d.]+)/, "Firefox"],
+	[/CriOS\/([\d.]+)/, "Chrome"],
+	[/Chrome\/([\d.]+)/, "Chrome"],
+	[/Version\/([\d.]+).*Safari\//, "Safari"],
+];
 
-function getOperatingSystem(userAgent: string): string {
-	return matchDisplay(
-		userAgent,
-		[
-			[/Windows NT (?:10\.0|6\.[1-3])/, "Windows"],
-			[/Android ([\d.]+)/, "Android"],
-			[/iPhone OS ([\d_]+)/, "iOS"],
-			[/iPad; CPU OS ([\d_]+)/, "iPadOS"],
-			[/Mac OS X ([\d_]+)/, "macOS"],
-			[/CrOS [^ ]+ ([\d.]+)/, "ChromeOS"],
-			[/Linux/, "Linux"],
-		],
-		UNKNOWN_OPERATING_SYSTEM,
-	);
-}
+const OPERATING_SYSTEM_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
+	[/Windows NT (?:10\.0|6\.[1-3])/, "Windows"],
+	[/Android ([\d.]+)/, "Android"],
+	[/iPhone OS ([\d_]+)/, "iOS"],
+	[/iPad; CPU OS ([\d_]+)/, "iPadOS"],
+	[/Mac OS X ([\d_]+)/, "macOS"],
+	[/CrOS [^ ]+ ([\d.]+)/, "ChromeOS"],
+	[/Linux/, "Linux"],
+];
 
 /** Resolve the same proxy headers used by Virtool's other session issuers. */
 export function getClientIpFromHeaders(headers: Headers): string | null {
@@ -102,11 +92,30 @@ export function getBrowserSessionDisplay(
 	userAgent: string | null,
 ): BrowserSessionDisplay {
 	return {
-		browser: userAgent ? getBrowser(userAgent) : UNKNOWN_BROWSER,
-		operatingSystem: userAgent
-			? getOperatingSystem(userAgent)
-			: UNKNOWN_OPERATING_SYSTEM,
+		browser:
+			(userAgent && matchDisplay(userAgent, BROWSER_PATTERNS, true)) ||
+			UNKNOWN_BROWSER,
+		operatingSystem:
+			(userAgent && matchDisplay(userAgent, OPERATING_SYSTEM_PATTERNS, true)) ||
+			UNKNOWN_OPERATING_SYSTEM,
 	};
+}
+
+/**
+ * Name the browser and operating system in a user agent without versions, or
+ * return `null` when either is unknown.
+ */
+export function getUserAgentLabel(userAgent: string | null): string | null {
+	if (!userAgent) {
+		return null;
+	}
+	const browser = matchDisplay(userAgent, BROWSER_PATTERNS, false);
+	const operatingSystem = matchDisplay(
+		userAgent,
+		OPERATING_SYSTEM_PATTERNS,
+		false,
+	);
+	return browser && operatingSystem ? `${browser} on ${operatingSystem}` : null;
 }
 
 /** Normalize untrusted request metadata into bounded session storage fields. */

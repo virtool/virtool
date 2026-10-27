@@ -65,7 +65,7 @@ describe("<AccountPasskeys />", () => {
 	it("shows an empty state", async () => {
 		mockFindPasskeys([]);
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 
 		expect(
 			await screen.findByText("You have not added any passkeys."),
@@ -83,26 +83,26 @@ describe("<AccountPasskeys />", () => {
 			}),
 		]);
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 
 		expect(await screen.findByText("Work laptop")).toBeInTheDocument();
 		expect(screen.getAllByText("Synced")).toHaveLength(1);
 		expect(screen.getByText("Date added unknown")).toBeInTheDocument();
 	});
 
-	it("adds a passkey named after the handle and refreshes the list", async () => {
+	it("adds a passkey without naming it and refreshes the list", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([]);
 		addPasskey.mockResolvedValue({ data: {}, error: null });
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 		await screen.findByText("You have not added any passkeys.");
-		mockFindPasskeys([passkey({ name: "Alice" })]);
+		mockFindPasskeys([passkey({ name: "Firefox on Linux" })]);
 
 		await user.click(screen.getByRole("button", { name: "Add" }));
 
-		expect(await screen.findByText("Alice")).toBeInTheDocument();
-		expect(addPasskey).toHaveBeenCalledWith({ name: "Alice" });
+		expect(await screen.findByText("Firefox on Linux")).toBeInTheDocument();
+		expect(addPasskey).toHaveBeenCalledWith();
 	});
 
 	it("says the passkey was not added in a neutral notice when the browser does not allow it", async () => {
@@ -112,7 +112,7 @@ describe("<AccountPasskeys />", () => {
 			failure(400, "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY"),
 		);
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 		await screen.findByText("You have not added any passkeys.");
 		await user.click(screen.getByRole("button", { name: "Add" }));
 
@@ -133,7 +133,7 @@ describe("<AccountPasskeys />", () => {
 			mockFindPasskeys([]);
 			addPasskey.mockResolvedValue(failure(400, code));
 
-			renderWithProviders(<AccountPasskeys handle="Alice" />);
+			renderWithProviders(<AccountPasskeys />);
 			await screen.findByText("You have not added any passkeys.");
 			await user.click(screen.getByRole("button", { name: "Add" }));
 
@@ -173,7 +173,7 @@ describe("<AccountPasskeys />", () => {
 			.mockResolvedValue(15 * 60 * 1000);
 		addPasskey.mockResolvedValue({ data: {}, error: null });
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 		await screen.findByText("You have not added any passkeys.");
 		await user.click(screen.getByRole("button", { name: "Add" }));
 		await passChallenge(user);
@@ -198,7 +198,7 @@ describe("<AccountPasskeys />", () => {
 		mockChallenge();
 		addPasskey.mockResolvedValue(failure(403, "SESSION_NOT_FRESH"));
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 		await screen.findByText("You have not added any passkeys.");
 		await user.click(screen.getByRole("button", { name: "Add" }));
 		await passChallenge(user);
@@ -214,7 +214,7 @@ describe("<AccountPasskeys />", () => {
 		stubPasskeySupport(false);
 		mockFindPasskeys([passkey()]);
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 
 		expect(
 			await screen.findByText(/This browser cannot use passkeys here/),
@@ -230,7 +230,7 @@ describe("<AccountPasskeys />", () => {
 			passkey({ name: "Phone" }),
 		);
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 		await user.click(
 			await screen.findByRole("button", { name: "Rename Work laptop" }),
 		);
@@ -262,7 +262,7 @@ describe("<AccountPasskeys />", () => {
 		refusal.name = "ClientError";
 		accountServerFnMocks.removePasskeyFn.mockRejectedValue(refusal);
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 		await user.click(
 			await screen.findByRole("button", { name: "Remove Work laptop" }),
 		);
@@ -288,7 +288,7 @@ describe("<AccountPasskeys />", () => {
 			{ password: true, totp: false },
 		);
 
-		renderWithProviders(<AccountPasskeys handle="Alice" />);
+		renderWithProviders(<AccountPasskeys />);
 		await user.click(
 			await screen.findByRole("button", { name: "Remove Work laptop" }),
 		);

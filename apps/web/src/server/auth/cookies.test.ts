@@ -2,22 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const deleteCookie = vi.fn();
 const getCookie = vi.fn();
-const getCookies = vi.fn();
 const setCookie = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie,
 	getCookie,
-	getCookies,
 	setCookie,
 }));
 
-const {
-	expireLegacySessionCookies,
-	realCookies,
-	SETUP_SESSION_ID_COOKIE,
-	SETUP_SESSION_TOKEN_COOKIE,
-} = await import("./cookies");
+const { realCookies, SETUP_SESSION_ID_COOKIE, SETUP_SESSION_TOKEN_COOKIE } =
+	await import("./cookies");
 
 // The setup pair's, deliberately much shorter: a setup credential is finished
 // with the moment its flow is.
@@ -107,48 +101,5 @@ describe("realCookies", () => {
 		expect(deleteCookie).toHaveBeenCalledWith(SETUP_SESSION_TOKEN_COOKIE, {
 			path: "/",
 		});
-	});
-});
-
-describe("expireLegacySessionCookies", () => {
-	it("expires each legacy cookie the request carries with its attributes", () => {
-		vi.stubEnv("NODE_ENV", "production");
-		getCookies.mockReturnValue({
-			session_id: "legacy",
-			session_token: "legacy",
-		});
-
-		expireLegacySessionCookies();
-
-		const attributes = {
-			httpOnly: true,
-			path: "/",
-			sameSite: "lax",
-			secure: true,
-		};
-		expect(deleteCookie).toHaveBeenCalledTimes(2);
-		expect(deleteCookie).toHaveBeenCalledWith("session_id", attributes);
-		expect(deleteCookie).toHaveBeenCalledWith("session_token", attributes);
-	});
-
-	it("expires only the legacy cookie that is present", () => {
-		getCookies.mockReturnValue({ session_token: "legacy" });
-
-		expireLegacySessionCookies();
-
-		expect(deleteCookie).toHaveBeenCalledOnce();
-		expect(deleteCookie).toHaveBeenCalledWith(
-			"session_token",
-			expect.objectContaining({ path: "/" }),
-		);
-	});
-
-	it("leaves a request without legacy cookies alone", () => {
-		getCookies.mockReturnValue({});
-
-		expireLegacySessionCookies();
-
-		expect(deleteCookie).not.toHaveBeenCalled();
-		expect(setCookie).not.toHaveBeenCalled();
 	});
 });

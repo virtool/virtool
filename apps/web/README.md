@@ -319,10 +319,7 @@ identity labels.
 
 Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
 compatible with existing foreign keys. `auth_sessions` is the only browser
-session store. No flow reads or writes the legacy `sessions` table. A request
-that carries the legacy `session_id` or `session_token` cookie has them expired
-with their original path and attributes, and the user signs in again.
-Purpose-bound setup sessions remain separate.
+session store. Purpose-bound setup sessions remain separate.
 
 Normal Better Auth sessions use the library's seven-day rolling lifetime and
 one-day refresh age, with no absolute cap. The authenticated shell calls
@@ -440,6 +437,19 @@ the limit to authenticated users for client validation.
 The setting and declared sizes are capped at the application ceiling of
 120,000,000,000 bytes (120 GB), independent of the storage backend.
 
+### Password hashing
+
+New passwords are hashed with Argon2id at the OWASP baseline: 19 MiB of
+memory, two passes, and one lane. Better Auth uses the same hashing as the
+rest of the server. Legacy bcrypt hashes continue to verify. The hash prefix
+selects the algorithm.
+
+After a successful password sign-in, an outdated hash is replaced with a new
+Argon2id hash in `users.password` and in the Better Auth credential account.
+An outdated hash is a bcrypt hash or an Argon2id hash with other parameters.
+No user has to reset a password. If the replacement fails, the failure is
+logged and the sign-in continues.
+
 ### The setup boundary
 
 Some accounts are neither anonymous nor fully authenticated: an
@@ -450,7 +460,7 @@ else. A user under the `required` MFA policy is restricted differently; see
 [Two-factor authentication](#two-factor-authentication).
 
 Login checks an unmigrated legacy identity before Better Auth. A matching
-legacy bcrypt password mints only a purpose-bound `email_remediation` setup
+legacy password mints only a purpose-bound `email_remediation` setup
 session, never an application session. A forced reset waits until remediation
 completes and then runs on the Better Auth session. An unmigrated user who
 forgets the password needs an administrator-issued recovery link, because
@@ -675,10 +685,15 @@ WebAuthn rules:
   a credential that is already registered with `PASSKEY_ALREADY_REGISTERED`. A
   concurrent registration of the same credential can fail with a server error.
 
-Registration sends the user's handle as the passkey name. The authenticator
-shows it as the account label, and it is the stored name. The user can rename
-the passkey. Names are whitespace-normalized, 1 to 64 characters, and contain
-no control characters.
+The server sets the user's handle as the account label that the authenticator
+shows, whatever the options request asks for. The server also names the stored
+passkey. It uses the provider name of a known AAGUID, or else the browser and
+operating system of the registration request, such as Firefox on Linux. If it
+has neither, it uses "Passkey" as the name. Registration refuses a request
+that names the passkey with `PASSKEY_NAME_NOT_ACCEPTED`, because the plugin
+applies no limits to that name.
+The user can rename the passkey. Names are whitespace-normalized, 1 to 64
+characters, and contain no control characters.
 
 `findPasskeysFn` returns `PasskeySummary` values, oldest first: a management
 id, the name, the creation time, and whether the credential is synced and

@@ -1,4 +1,3 @@
-import { hashPassword } from "@virtool/data/auth/password";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import {
 	getDataMigration,
@@ -20,12 +19,15 @@ import { executeDataMigration } from "./run";
 
 let database: TestDatabase;
 let db: Db;
-let password: Buffer;
+// The legacy_identities body accepts only bcrypt hashes.
+const password = Buffer.from(
+	"$2b$04$kPtBmOaneedB2BF3Cb.K1.UE9NXs7YH1VPE4aZKaUXEpuj7ze8.JK",
+	"utf8",
+);
 
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
-	password = await hashPassword("legacy-password");
 }, 60_000);
 
 afterAll(async () => {
@@ -58,7 +60,7 @@ it("migrates eligible users while incomplete users remain a passing report", asy
 	const eligible = await seedUser(db, {
 		handle: "Ada",
 		email: " Ada@Example.com ",
-		password: await hashPassword("legacy-password"),
+		password,
 	});
 	const incomplete = await seedUser(db, {
 		handle: "incomplete",
@@ -98,7 +100,7 @@ it("keeps unsafe identities actionable", async () => {
 	const userId = await seedUser(db, {
 		handle: "not valid",
 		email: "invalid-handle@example.com",
-		password: await hashPassword("legacy-password"),
+		password,
 	});
 
 	const finished = await runLegacyIdentities();

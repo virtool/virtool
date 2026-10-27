@@ -30,6 +30,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
+import { getNewPasskeyName, passkeyNamePlugin } from "./passkeyName";
 import { assertDatabaseReachable } from "./probe";
 import { createRateLimitStorage } from "./rateLimitStorage";
 import {
@@ -289,10 +290,10 @@ export function createAuth({
 			// account, or the first-run bootstrap creates the first one. Both stay
 			// Virtool workflows.
 			disableSignUp: true,
-			// The `$2b$12$` hashes already in `users.password` have to keep
-			// verifying, so bcrypt at the same cost is the algorithm on both sides
-			// rather than Better Auth's default scrypt. `@virtool/data/auth/password`
-			// is the one place the cost is stated.
+			// Legacy bcrypt hashes have to keep verifying until a sign-in replaces
+			// them, so Better Auth uses Virtool's hashing rather than its default
+			// scrypt. `@virtool/data/auth/password` is the one place the algorithms
+			// and their parameters are stated.
 			password: {
 				hash: async (password) =>
 					(await hashPassword(password)).toString("utf8"),
@@ -386,6 +387,7 @@ export function createAuth({
 				// row sits beside the TOTP secret it would otherwise stand in for.
 				backupCodeOptions: { storeBackupCodes: "encrypted" },
 			}),
+			passkeyNamePlugin(db),
 			passkey({
 				rpID: webauthnRpId,
 				rpName: "Virtool",
@@ -402,7 +404,7 @@ export function createAuth({
 				// false` whatever the options above ask the browser for, so the flag
 				// is checked again here, after the signature has been verified.
 				registration: {
-					async afterVerification({ verification }) {
+					async afterVerification({ ctx, verification }) {
 						const info = verification.registrationInfo;
 						if (!info?.userVerified) {
 							rejectUnverifiedUser();
@@ -410,6 +412,12 @@ export function createAuth({
 						if (await isPasskeyCredentialRegistered(db, info.credential.id)) {
 							rejectRegisteredPasskey();
 						}
+						return {
+							name: getNewPasskeyName(
+								info.aaguid,
+								ctx.headers?.get("user-agent") ?? null,
+							),
+						};
 					},
 				},
 				authentication: {

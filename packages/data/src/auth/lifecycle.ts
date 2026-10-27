@@ -167,9 +167,9 @@ export type CompletedAccountSetup = {
  * `login()` in the web app still reads, and `auth_accounts.password` is what
  * Better Auth reads; both boundaries are live during the migration, and an
  * account completed against only one of them cannot sign in at all under the
- * other. Both hold the same bcrypt hash at the same cost, because
- * `@virtool/data/auth/password` is the one place that cost is stated and
- * Better Auth is configured to use it.
+ * other. Both hold the same hash, because `@virtool/data/auth/password` is
+ * the one place the algorithm is stated and Better Auth is configured to use
+ * it.
  *
  * No session is minted here. Which session a completed holder gets is the
  * calling flow's decision, and the web app owns cookies.

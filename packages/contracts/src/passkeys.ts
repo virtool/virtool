@@ -3,7 +3,7 @@ import { z } from "zod";
 /** Longest passkey name, in characters, after whitespace is normalized. */
 export const PASSKEY_NAME_MAX_LENGTH = 64;
 
-/** The name a passkey gets when the authenticator reports no known provider. */
+/** The name of a passkey whose provider, browser, and operating system are unknown. */
 export const DEFAULT_PASSKEY_NAME = "Passkey";
 
 // C0 and C1 control characters. Whitespace ones never reach this check,
