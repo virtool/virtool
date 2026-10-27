@@ -1,3 +1,4 @@
+import { accountSettingsMutationKey } from "@account/keys";
 import { invalidateChange, isCachedDomain } from "@app/invalidate";
 import { createJobRefreshQueue } from "@jobs/refresh";
 import type { QueryClient } from "@tanstack/react-query";
@@ -17,6 +18,15 @@ export function reactQueryHandler(queryClient: QueryClient) {
 		// running record per progress step, and every one on screen holds its own
 		// detail query. Invalidating each one fans out to a request per row, so
 		// these frames go through a queue that batches the reads instead.
+		// A refetch would replace queued optimistic settings with the server state
+		// from an earlier save. The last save to settle refetches the account.
+		if (
+			message.domain === "account" &&
+			queryClient.isMutating({ mutationKey: accountSettingsMutationKey }) > 0
+		) {
+			return;
+		}
+
 		if (message.domain === "jobs" && message.operation === "update") {
 			queueJobRefresh(message.id);
 			return;

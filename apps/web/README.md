@@ -734,6 +734,10 @@ Postgres `client_events` channel; the route converts each event to the id-only
 `{ domain, operation, id }` wire shape. The client then refetches through the
 normal API so authorization remains at the request boundary.
 
+Every stream receives every event, except `account` events. An `account` event
+goes only to the streams of the user it names, so a change to one user's
+account refreshes only that user's other sessions.
+
 Adding a domain requires both `SseMessageSchema` and the `domains` record in
 `@app/invalidate`. A frame that fails validation—an
 unknown domain, a bad operation, a wrong id type—is contract drift and is

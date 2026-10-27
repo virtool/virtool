@@ -1,17 +1,28 @@
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 
 import { hashPassword, verifyPassword } from "../auth/password";
 import { issueSetupTokenInTransaction } from "../auth/setup";
 import { seedSession, seedUser } from "../auth/test/fixtures";
-import type { Db } from "../db/pg";
+import type { Db, PgClient } from "../db/pg";
 import { authSessions } from "../db/schema/auth";
 import { groups, userGroups } from "../db/schema/groups";
 import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { createEmitter } from "../events/emit";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import { seedSettings } from "../settings/test/fixtures";
+import { testLogger } from "../test/logger";
 import {
 	changePassword,
 	createUser,
@@ -337,6 +348,47 @@ describe("updateAccountSettings", () => {
 		await expect(
 			updateAccountSettings(db, 404, { preferAcronym: true }),
 		).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+
+	describe("publishing", () => {
+		let notify: ReturnType<typeof vi.fn>;
+
+		beforeEach(() => {
+			// The fixture's emitter really NOTIFYs, so a published frame would be
+			// invisible.
+			notify = vi.fn().mockResolvedValue(undefined);
+			createEmitter({
+				client: { notify } as unknown as PgClient,
+				logger: testLogger,
+			});
+		});
+
+		afterEach(() => {
+			createEmitter({ client: database.client, logger: testLogger });
+		});
+
+		it("publishes an account update for the user", async () => {
+			const userId = await seedUser(db, { handle: "dave" });
+
+			await updateAccountSettings(db, userId, { showIds: true });
+
+			expect(notify).toHaveBeenCalledWith(
+				"client_events",
+				JSON.stringify({
+					domain: "account",
+					resource_id: userId,
+					operation: "update",
+				}),
+			);
+		});
+
+		it("publishes nothing when the user does not exist", async () => {
+			await expect(
+				updateAccountSettings(db, 404, { showIds: true }),
+			).rejects.toBeInstanceOf(UserNotFoundError);
+
+			expect(notify).not.toHaveBeenCalled();
+		});
 	});
 });
 
