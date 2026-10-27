@@ -1,7 +1,7 @@
 ## Apps bundle, packages stay source
 
 The workspace packages under `packages/` are **unbuilt TypeScript**.
-They have no `build` script, no `dist`, and `packages/tsconfig.base.json`
+They have no `build` script, no `dist`, and the shared `@virtool/tsconfig` base
 sets `noEmit: true`; their `exports` maps point straight at
 `./src/*.ts`. Nothing resolves them through a compiled artifact, which is
 what lets a change to `@virtool/data` be visible to every consumer with
@@ -98,7 +98,7 @@ apps/<name>/
   README.md         # what the app is, its port and image, its commands
   package.json      # @virtool/<name>, private, type: module, files: ["dist"]
                     # scripts: build (tsdown), start, typecheck
-  tsconfig.json     # extends ../tsconfig.node.json
+  tsconfig.json     # extends ../../packages/tsconfig/node.json
   tsdown.config.ts  # entry, externals
   src/index.ts      # the bundler entry
 ```

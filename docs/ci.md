@@ -15,7 +15,7 @@ image.
 `dist` retains its name because tooling outside this repository targets it.
 
 Adding an image requires an app Dockerfile, a Bake target, and a release-matrix entry. For
-the five targets in `build`, keep its matrix entry in step with
+the four targets in `build`, keep its matrix entry in step with
 `release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
 above. Their `matrix.image` values must match the cache scopes those jobs
 write, so the release reuses the caches they populated rather than rebuilding
