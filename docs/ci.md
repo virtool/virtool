@@ -35,8 +35,10 @@ for selected workspaces on pull requests and remain unconditional on pushes to
 
 CI first runs the app's build and then `pnpm --prod deploy`, making the Docker
 context exactly the production closure recorded in the workspace graph. The
-Rust crates and shared native-tool recipe are private pnpm workspaces used as
-development dependencies by the apps that consume their build products. This
+Rust crates and shared native-tool recipe are private pnpm workspaces, listed
+as dependencies of the apps that consume their build products. Each one sets
+`"files": ["package.json"]`, so the deployed context gets only an empty
+package. This
 lets the same graph select Pathoscope for a Pathoscope crate change, Create
 Sample for a quality crate change, and both native workflows for a shared-tool
 recipe change without hand-maintained path lists.
@@ -50,13 +52,10 @@ The `web` and `internal` images are a `fixed` group: they share one unified
 version and bump together, so a change to either publishes both at the same
 version. Create Sample, Create Subtraction, Pathoscope, and Nuvs are versioned
 independently and publish only when they change. Shared `packages/*` are
-versioned on their own and cascade a `patch` into the apps that depend on them. `apps/site` is in `ignore`: it deploys
-elsewhere and ships no image. The Rust crates, `workflow-tools`, and
-`image-build` and `tsconfig` build-input workspaces are also ignored: they exist in pnpm only
-to express image build edges. Because Changesets does not propagate version
-bumps through `devDependencies`, a changeset for one of these build inputs names
-the affected consuming apps directly; see
-[CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for the mapping.
+versioned on their own and cascade a `patch` into the apps that depend on them. Image build inputs, which are the Rust crates,
+`workflow-tools`, and `image-build`, cascade the same way. `apps/site` is in
+`ignore`: it deploys elsewhere and ships no image. The development apps and
+`tsconfig` are also ignored.
 
 The `release` job runs `changesets/action` on every push to `main`, after the
 same build and test jobs that gate a pull request:

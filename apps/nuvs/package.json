@@ -25,9 +25,11 @@
 		"@sentry/node": "^11.8.0",
 		"@virtool/bio": "workspace:*",
 		"@virtool/contracts": "workspace:*",
+		"@virtool/image-build": "workspace:*",
 		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"@virtool/workflow": "workspace:*",
+		"@virtool/workflow-tools": "workspace:*",
 		"execa": "^10.2.0",
 		"pino": "^10.1.0",
 		"tar-stream": "^3.2.2",
@@ -35,9 +37,7 @@
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
-		"@virtool/image-build": "workspace:*",
 		"@virtool/tsconfig": "workspace:*",
-		"@virtool/workflow-tools": "workspace:*",
 		"@types/node": "^26.4.1",
 		"tsdown": "^0.23.0",
 		"vitest": "^5.0.5"

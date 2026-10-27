@@ -30,6 +30,7 @@
 		"@tanstack/react-virtual": "^3.14.22",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
+		"@virtool/image-build": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/ncbi": "workspace:*",
 		"@virtool/sentry": "workspace:*",
@@ -61,7 +62,6 @@
 		"zustand": "^5.0.14"
 	},
 	"devDependencies": {
-		"@virtool/image-build": "workspace:*",
 		"@babel/core": "^8.0.1",
 		"@faker-js/faker": "^10.6.0",
 		"@rolldown/plugin-babel": "^0.2.4",

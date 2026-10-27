@@ -24,11 +24,7 @@
   "ignore": [
     "@virtool/dev",
     "@virtool/dev-tools",
-    "@virtool/image-build",
-    "@virtool/pathoscope-core",
-    "@virtool/quality-core",
     "@virtool/site",
-    "@virtool/tsconfig",
-    "@virtool/workflow-tools"
+    "@virtool/tsconfig"
   ]
 }
