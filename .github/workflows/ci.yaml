@@ -62,22 +62,23 @@ jobs:
                   else
                       base=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yaml \
                           --branch main --event push --status success --limit 1 \
-                          --json headSha --jq '.[0].headSha // empty')
+                          --json headSha --jq '.[0].headSha // empty' || true)
                       if [ -z "$base" ] || ! git merge-base --is-ancestor "$base" HEAD; then
                           base=
                       fi
                   fi
                   echo "base=$base" >> "$GITHUB_OUTPUT"
             # Packages / Test covers every selected workspace with a `test`
-            # script except the root and the five that run in dedicated jobs:
-            # web, internal and dev-tools, and the two persistence packages
-            # that share Data & Storage / Test.
+            # script except the root and the six that run in dedicated jobs:
+            # web, internal, dev-tools and nuvs, and the two persistence
+            # packages that share Data & Storage / Test.
             - name: Find affected workspaces
               id: affected
               env:
                   BASE: ${{ steps.base.outputs.base }}
               run: |
                   if [ -z "$BASE" ] || git diff --name-only "$BASE"...HEAD -- \
+                      .dockerignore \
                       .github/workflows/ci.yaml \
                       .github/actions \
                       .nvmrc \
@@ -94,7 +95,7 @@ jobs:
                   packages=$(jq -c '[.[].name]' "$affected")
                   package_tests=$(jq -r --arg root "$PWD" '.[]
                       | select(.path != $root)
-                      | select(.name | IN("@virtool/web", "@virtool/data", "@virtool/storage", "@virtool/internal", "@virtool/dev-tools") | not)
+                      | select(.name | IN("@virtool/web", "@virtool/data", "@virtool/storage", "@virtool/internal", "@virtool/dev-tools", "@virtool/nuvs") | not)
                       | .path + "/package.json"' "$affected" \
                       | xargs -r jq -s -c '[.[] | select(.scripts.test) | .name]')
                   echo "packages=$packages" >> "$GITHUB_OUTPUT"

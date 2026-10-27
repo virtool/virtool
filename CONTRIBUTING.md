@@ -43,7 +43,9 @@ Image build inputs cascade the same way. A changeset for
 add a changeset for that app.
 
 For a change that ships nothing to users, such as a refactor, a test, or a CI
-tweak, record an empty changeset with `pnpm changeset --empty`.
+tweak, record an empty changeset with `pnpm changeset --empty`. An empty
+changeset covers the pull request only when every changeset in it is empty;
+beside one that releases something, it excuses nothing.
 
 Merging to `main` opens an automated **Version Packages** pull request that
 applies the pending bumps and updates each `CHANGELOG.md`; merging that pull

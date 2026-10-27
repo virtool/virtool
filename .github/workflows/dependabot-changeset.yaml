@@ -3,7 +3,9 @@ name: Dependabot Changeset
 # Dependabot writes no changesets, so its npm and Node base-image bumps would
 # fail the `Changeset` check and never release. This adds one patch changeset
 # for every versioned workspace whose `package.json` or Dockerfile the pull
-# request changes, with the pull request title as its summary.
+# request changes, with the pull request title as its summary. A bump that
+# changes only the lockfile, such as a transitive security update, names no
+# workspace, so it releases every app that ships an image instead.
 #
 # `pull_request_target` gives the token write access to Dependabot's branch.
 # The job never installs or runs code from that branch: it reads the diff and
@@ -56,8 +58,17 @@ jobs:
                           while read -r dir; do jq -r .name "$dir/package.json"; done |
                           grep -vxF -f <(jq -r '.ignore[]' .changeset/config.json) || true
                   )
-                  if [[ -z "$packages" ]]; then
+                  if [[ -z "$packages" ]] &&
+                      git diff --quiet "$BASE_SHA"...HEAD -- pnpm-lock.yaml; then
                       exit 0
+                  fi
+                  if [[ -z "$packages" ]]; then
+                      packages=$(
+                          for dir in apps/*/; do
+                              [[ -f "$dir/Dockerfile" ]] && jq -r .name "$dir/package.json"
+                          done |
+                              grep -vxF -f <(jq -r '.ignore[]' .changeset/config.json) || true
+                      )
                   fi
                   {
                       echo "---"

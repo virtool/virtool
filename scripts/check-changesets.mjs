@@ -3,7 +3,9 @@
 // alone fails only when no changeset was added at all.
 //
 // An empty changeset declares that the change ships nothing, so it covers
-// every changed workspace.
+// every changed workspace. It does so only when every changeset added since
+// the base ref is empty: beside a changeset that releases something, an empty
+// one can't excuse the workspaces that changeset left out.
 
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -28,8 +30,11 @@ function readReleasePlan() {
 		);
 		return JSON.parse(readFileSync(output, "utf8"));
 	} catch (error) {
-		// `changeset status` already printed why it failed.
-		process.exit(error.status ?? 1);
+		// A failed `changeset status` already printed why.
+		if (error.status === undefined) {
+			process.stderr.write(`${error.message}\n`);
+		}
+		return undefined;
 	} finally {
 		rmSync(dir, { force: true, recursive: true });
 	}
@@ -82,28 +87,38 @@ function getChangedWorkspaces(root) {
 	return changed;
 }
 
-const root = git("rev-parse", "--show-toplevel");
-const plan = readReleasePlan();
+function main() {
+	const root = git("rev-parse", "--show-toplevel");
+	const plan = readReleasePlan();
 
-if (plan.changesets.some((changeset) => changeset.releases.length === 0)) {
-	process.exit(0);
+	if (plan === undefined) {
+		return 1;
+	}
+
+	if (plan.changesets.every((changeset) => changeset.releases.length === 0)) {
+		return 0;
+	}
+
+	const covered = new Set(plan.releases.map((release) => release.name));
+	const uncovered = [...getChangedWorkspaces(root)]
+		.filter((name) => !covered.has(name))
+		.toSorted();
+
+	if (uncovered.length > 0) {
+		process.stderr.write(
+			[
+				"These workspaces changed, but no changeset releases them:",
+				...uncovered.map((name) => `  - ${name}`),
+				"",
+				"Add them to a changeset with `pnpm changeset`. If the change ships",
+				"nothing to users, add one with `pnpm changeset --empty`.",
+				"",
+			].join("\n"),
+		);
+		return 1;
+	}
+
+	return 0;
 }
 
-const covered = new Set(plan.releases.map((release) => release.name));
-const uncovered = [...getChangedWorkspaces(root)]
-	.filter((name) => !covered.has(name))
-	.toSorted();
-
-if (uncovered.length > 0) {
-	process.stderr.write(
-		[
-			"These workspaces changed, but no changeset releases them:",
-			...uncovered.map((name) => `  - ${name}`),
-			"",
-			"Add them to a changeset with `pnpm changeset`. If the change ships",
-			"nothing to users, add one with `pnpm changeset --empty`.",
-			"",
-		].join("\n"),
-	);
-	process.exit(1);
-}
+process.exitCode = main();

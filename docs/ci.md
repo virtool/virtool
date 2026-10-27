@@ -102,6 +102,8 @@ that none of its changesets release, directly or by cascade. See
 
 Dependabot writes no changesets. The **Dependabot Changeset** workflow adds a
 patch changeset to each Dependabot npm or Docker pull request for every
-versioned workspace that the bump changes. It pushes the changeset with
+versioned workspace that the bump changes. A bump that changes only the
+lockfile names no workspace, so the changeset releases every app that ships an
+image. It pushes the changeset with
 `GITHUB_TOKEN`, so CI runs on that commit wait until a maintainer selects
 **Approve workflows to run**.
