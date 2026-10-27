@@ -33,8 +33,7 @@ export function PathoscopeItem({
 	hit,
 	onSelect,
 }: PathoscopeItemProps) {
-	const { abbreviation, coverage, depth, maxDepth, name, pi, id, segments } =
-		hit;
+	const { acronym, coverage, depth, maxDepth, name, pi, id, segments } = hit;
 	const { search } = useAnalysisSearch();
 	const showReads = search.reads;
 
@@ -60,7 +59,7 @@ export function PathoscopeItem({
 				</div>
 				<div className="flex-1 min-w-0">
 					<div className="flex flex-col gap-4 px-4 py-2.5">
-						{/* Only the name is the trigger. The abbreviation is a column of
+						{/* Only the name is the trigger. The acronym is a column of
 						    its own rather than a second line under the name, so it reads
 						    across with the figures beside it; an OTU without one leaves the
 						    column out entirely, and the figures stay put because the row is
@@ -76,13 +75,13 @@ export function PathoscopeItem({
 								</span>
 							</AccordionTrigger>
 							<div className="flex gap-4 shrink-0">
-								{abbreviation && (
+								{acronym && (
 									<AnalysisValue
 										className="w-32"
 										color="gray"
 										hideLabel
-										label="Abbreviation"
-										value={abbreviation}
+										label="Acronym"
+										value={acronym}
 									/>
 								)}
 								<AnalysisValue

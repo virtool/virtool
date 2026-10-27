@@ -1,12 +1,10 @@
 /**
  * Reading one named member out of a zip archive held in memory.
  *
- * The tar side of this package streams, because the archives it moves are
- * caches and reference builds that run to gigabytes. Zip cannot: its index is a
- * central directory written at the *end* of the file, so nothing can name a
- * member until the whole archive has arrived. That is acceptable only because
- * the one thing here that reads a zip — an NCBI BLAST result — is a handful of
- * kilobytes. Do not reach for this to unpack anything a user uploaded.
+ * The tar side of this package streams archives that can run to gigabytes.
+ * This reader uses `unzipSync` and needs the complete archive in memory. Its
+ * current input, an NCBI BLAST result zip, is only a few kilobytes. Do not use
+ * it to unpack large uploads.
  */
 
 import { unzipSync } from "fflate";

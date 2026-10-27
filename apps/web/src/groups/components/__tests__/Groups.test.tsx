@@ -1,8 +1,12 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeGroup } from "@tests/fake/groups";
 import { createFakePermissions } from "@tests/fake/permissions";
-import { mockGetGroup, mockListGroups } from "@tests/server-fn/groups";
+import {
+	groupServerFnMocks,
+	mockGetGroup,
+	mockListGroups,
+} from "@tests/server-fn/groups";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 import Groups from "../Groups";
@@ -11,7 +15,7 @@ describe("Groups", () => {
 	it("should render correctly when loading = true", async () => {
 		await renderWithRouter(<Groups />);
 
-		expect(screen.queryByText("No Groups Exist")).not.toBeInTheDocument();
+		expect(screen.queryByText("No groups found")).not.toBeInTheDocument();
 		expect(screen.queryByText("cancel_job")).not.toBeInTheDocument();
 		expect(screen.queryByText("No Group Members")).not.toBeInTheDocument();
 		expect(
@@ -23,7 +27,16 @@ describe("Groups", () => {
 		mockListGroups([]);
 		await renderWithRouter(<Groups />);
 
-		expect(await screen.findByText("No Groups Exist")).toBeInTheDocument();
+		expect(
+			await screen.findByRole("heading", { name: "Groups" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Manage group memberships and permissions."),
+		).toBeInTheDocument();
+		expect(await screen.findByText("No groups found")).toBeInTheDocument();
+		expect(
+			screen.getByText("No groups have been created yet."),
+		).toBeInTheDocument();
 		expect(
 			screen.queryByRole("button", { name: "Delete" }),
 		).not.toBeInTheDocument();
@@ -117,5 +130,30 @@ describe("Groups", () => {
 		expect(await screen.findByText("Group 1")).toBeInTheDocument();
 		expect(screen.getByText("Group 2")).toBeInTheDocument();
 		expect(screen.getByText("bob")).toBeInTheDocument();
+	});
+
+	it("asks for confirmation before deleting a group", async () => {
+		const group = createFakeGroup({ name: "Technicians" });
+		mockListGroups([group]);
+		mockGetGroup(group);
+		groupServerFnMocks.deleteGroupFn.mockResolvedValue(null);
+		await renderWithRouter(<Groups />);
+
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Delete" }),
+		);
+
+		expect(groupServerFnMocks.deleteGroupFn).not.toHaveBeenCalled();
+		expect(
+			screen.getByText(/its samples will have no group/i),
+		).toBeInTheDocument();
+
+		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+		await waitFor(() =>
+			expect(groupServerFnMocks.deleteGroupFn).toHaveBeenCalledWith({
+				data: { groupId: group.id },
+			}),
+		);
 	});
 });

@@ -28,7 +28,7 @@ function NuvsDetailContainer({ children }: { children: ReactNode }) {
 	);
 }
 
-type NuVsDetailProps = {
+type NuvsDetailProps = {
 	analysisId: number;
 	filterORFs: boolean;
 	/** A list of sorted and filtered Nuvs hits */
@@ -45,7 +45,7 @@ export default function NuvsDetail({
 	filterORFs,
 	matches,
 	maxSequenceLength,
-}: NuVsDetailProps) {
+}: NuvsDetailProps) {
 	const hit = useActiveHit(matches);
 
 	if (!hit) {

@@ -1,5 +1,6 @@
-import { BoxGroup, BoxGroupHeader } from "@base/Box";
+import { BoxGroup } from "@base/Box";
 import Checkbox from "@base/Checkbox";
+import SectionHeader from "@base/SectionHeader";
 import type { Group } from "@virtool/contracts";
 import { useUpdateGroup } from "../queries";
 
@@ -25,11 +26,13 @@ export function GroupPermissions({ selectedGroup }: { selectedGroup: Group }) {
 	);
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2>Permissions</h2>
-			</BoxGroupHeader>
-			<div className="columns-2 p-3">{permissionComponents}</div>
-		</BoxGroup>
+			</SectionHeader>
+			<BoxGroup>
+				<div className="columns-2 p-3">{permissionComponents}</div>
+			</BoxGroup>
+		</section>
 	);
 }

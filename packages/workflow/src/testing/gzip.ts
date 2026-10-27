@@ -8,11 +8,10 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
-import { gunzip, gzip } from "node:zlib";
+import { gzip } from "node:zlib";
 import type { RunSubprocessOptions } from "../subprocess/types";
 import type { FakeSubprocessRunner } from "./subprocess";
 
-const gunzipAsync = promisify(gunzip);
 const gzipAsync = promisify(gzip);
 
 /** Teach `runner` to answer `pigz` by actually compressing the file. */
@@ -30,12 +29,5 @@ async function runFakePigz({
 		throw new Error(`Fake pigz cannot run \`${command.join(" ")}\``);
 	}
 
-	const contents = await readFile(source);
-
-	await writeFile(
-		stdoutFile,
-		command.includes("-d")
-			? await gunzipAsync(contents)
-			: await gzipAsync(contents),
-	);
+	await writeFile(stdoutFile, await gzipAsync(await readFile(source)));
 }

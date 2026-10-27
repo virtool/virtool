@@ -1,13 +1,24 @@
 import { asc, eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { Db } from "../db/pg";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+import type { Db, PgClient } from "../db/pg";
 import { legacyHistory, legacyHistoryDiff } from "../db/schema/history";
 import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { legacyReferences } from "../db/schema/references";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { createEmitter } from "../events/emit";
 import { listByOtu, patchOtusToVersions } from "../history/data";
 import { ReferenceNotFoundError } from "../references/data";
+import { testLogger } from "../test/logger";
 import {
 	createIsolate,
 	createOtu,
@@ -73,8 +84,8 @@ beforeEach(async () => {
 	referenceId = reference?.id as number;
 });
 
-async function seedOtu(name = "Squash browning spot virus", abbreviation = "") {
-	return createOtu(db, referenceId, { name, abbreviation, schema: [] }, userId);
+async function seedOtu(name = "Squash browning spot virus", acronym = "") {
+	return createOtu(db, referenceId, { name, acronym, schema: [] }, userId);
 }
 
 async function readHistory(otuId: string) {
@@ -103,7 +114,7 @@ describe("createOtu", () => {
 		const otu = await seedOtu("Squash browning spot virus", "SBSV");
 
 		expect(otu).toMatchObject({
-			abbreviation: "SBSV",
+			acronym: "SBSV",
 			name: "Squash browning spot virus",
 			version: 0,
 			verified: false,
@@ -167,7 +178,7 @@ describe("createOtu", () => {
 		await seedOtu("Duplicate", "DUP");
 
 		await expect(seedOtu("Duplicate", "DUP")).rejects.toThrow(
-			"Name and abbreviation already exist",
+			"Name and acronym already exist",
 		);
 	});
 });
@@ -187,7 +198,7 @@ describe("updateOtu", () => {
 		expect(history[1]).toMatchObject({
 			methodName: "edit",
 			otuVersion: "1",
-			// Only what changed is described. The abbreviation and schema were sent
+			// Only what changed is described. The acronym and schema were sent
 			// unchanged and go unmentioned.
 			description: "Changed name to Renamed",
 		});
@@ -196,22 +207,22 @@ describe("updateOtu", () => {
 		expect(Array.isArray(history[1]?.diff)).toBe(true);
 	});
 
-	it("describes an added, changed, and removed abbreviation differently", async () => {
+	it("describes an added, changed, and removed acronym differently", async () => {
 		const added = await seedOtu("Added");
 
-		await updateOtu(db, added.id, { abbreviation: "NEW" }, userId);
+		await updateOtu(db, added.id, { acronym: "NEW" }, userId);
 		expect((await readHistory(added.id)).at(-1)?.description).toBe(
-			"Added abbreviation NEW",
+			"Added acronym NEW",
 		);
 
-		await updateOtu(db, added.id, { abbreviation: "OTHER" }, userId);
+		await updateOtu(db, added.id, { acronym: "OTHER" }, userId);
 		expect((await readHistory(added.id)).at(-1)?.description).toBe(
-			"Changed abbreviation to OTHER",
+			"Changed acronym to OTHER",
 		);
 
-		await updateOtu(db, added.id, { abbreviation: "" }, userId);
+		await updateOtu(db, added.id, { acronym: "" }, userId);
 		expect((await readHistory(added.id)).at(-1)?.description).toBe(
-			"Removed abbreviation OTHER",
+			"Removed acronym OTHER",
 		);
 	});
 
@@ -224,7 +235,7 @@ describe("updateOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Segmented", abbreviation: "", schema },
+			{ name: "Segmented", acronym: "", schema },
 			userId,
 		);
 
@@ -244,7 +255,7 @@ describe("updateOtu", () => {
 		const otu = await createOtu(
 			db,
 			referenceId,
-			{ name: "Segmented", abbreviation: "", schema: [first, second] },
+			{ name: "Segmented", acronym: "", schema: [first, second] },
 			userId,
 		);
 
@@ -281,14 +292,14 @@ describe("updateOtu", () => {
 			otu.id,
 			{
 				name: "Renamed",
-				abbreviation: "NEW",
+				acronym: "NEW",
 				schema: [{ molecule: null, name: "DNA A", required: true }],
 			},
 			userId,
 		);
 
 		expect((await readHistory(otu.id)).at(-1)?.description).toBe(
-			"Changed name to Renamed and changed abbreviation to NEW and modified schema",
+			"Changed name to Renamed and changed acronym to NEW and modified schema",
 		);
 	});
 
@@ -298,7 +309,7 @@ describe("updateOtu", () => {
 		const updated = await updateOtu(
 			db,
 			otu.id,
-			{ name: "Original", abbreviation: "ORI" },
+			{ name: "Original", acronym: "ORI" },
 			userId,
 		);
 
@@ -312,11 +323,11 @@ describe("updateOtu", () => {
 		const updated = await updateOtu(
 			db,
 			otu.id,
-			{ name: "Original", abbreviation: "NEW" },
+			{ name: "Original", acronym: "NEW" },
 			userId,
 		);
 
-		expect(updated.abbreviation).toBe("NEW");
+		expect(updated.acronym).toBe("NEW");
 	});
 
 	it("unsets the segment on sequences whose segment the schema drops", async () => {
@@ -325,7 +336,7 @@ describe("updateOtu", () => {
 			referenceId,
 			{
 				name: "Segmented",
-				abbreviation: "",
+				acronym: "",
 				schema: [{ molecule: null, name: "DNA A", required: true }],
 			},
 			userId,
@@ -788,6 +799,57 @@ describe("deleteOtu", () => {
 	});
 });
 
+describe("client events", () => {
+	let notify: ReturnType<typeof vi.fn>;
+
+	beforeEach(() => {
+		// The fixture's emitter really NOTIFYs, so a published frame would be
+		// invisible. Restored in `afterEach` for the rest of the file.
+		notify = vi.fn().mockResolvedValue(undefined);
+		createEmitter({
+			client: { notify } as unknown as PgClient,
+			logger: testLogger,
+		});
+	});
+
+	afterEach(() => {
+		createEmitter({ client: database.client, logger: testLogger });
+	});
+
+	function published() {
+		return notify.mock.calls.map(([, payload]) => JSON.parse(payload));
+	}
+
+	it("publishes an OTU's creation, edits, and removal", async () => {
+		const otu = await seedOtu("Tobacco mosaic virus", "TMV");
+		await updateOtu(db, otu.id, { name: "Tomato mosaic virus" }, userId);
+		const isolate = await createIsolate(
+			db,
+			otu.id,
+			{ sourceType: "isolate", sourceName: "A", default: false },
+			userId,
+		);
+		await deleteIsolate(db, otu.id, isolate.id, userId);
+		await deleteOtu(db, otu.id, userId);
+
+		expect(published()).toEqual([
+			{ domain: "otus", resource_id: otu.id, operation: "create" },
+			{ domain: "otus", resource_id: otu.id, operation: "update" },
+			{ domain: "otus", resource_id: otu.id, operation: "update" },
+			{ domain: "otus", resource_id: otu.id, operation: "update" },
+			{ domain: "otus", resource_id: otu.id, operation: "delete" },
+		]);
+	});
+
+	it("publishes nothing when the change is refused", async () => {
+		await expect(deleteOtu(db, "missing", userId)).rejects.toThrow(
+			OtuNotFoundError,
+		);
+
+		expect(notify).not.toHaveBeenCalled();
+	});
+});
+
 describe("listByOtu", () => {
 	it("lists changes newest first with the user and reference joined in", async () => {
 		const otu = await seedOtu("Historic");
@@ -878,7 +940,7 @@ describe("findOtus", () => {
 		expect(page.modifiedCount).toBe(2);
 	});
 
-	it("searches name and abbreviation, leaving totalCount unfiltered", async () => {
+	it("searches name and acronym, leaving totalCount unfiltered", async () => {
 		await seedOtu("Alpha", "ALP");
 		await seedOtu("Beta", "BET");
 

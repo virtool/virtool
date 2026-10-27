@@ -47,7 +47,9 @@ function ok(body: string): Response {
 }
 
 /** Record every request a client makes, answering each from `handler`. */
-function createFetch(handler: (url: URL, init: RequestInit) => Response) {
+function createFetch(
+	handler: (url: URL, init: RequestInit) => Response | Promise<Response>,
+) {
 	const calls: { url: URL; init: RequestInit }[] = [];
 
 	const fetchMock = vi.fn(async (input: unknown, init: RequestInit = {}) => {
@@ -540,6 +542,49 @@ describe("failure handling", () => {
 		expect(calls).toHaveLength(3);
 	});
 
+	it("releases the body of every refusal it retries", async () => {
+		const cancel = vi.fn();
+
+		const { fetchMock } = createFetch(
+			() => new Response(new ReadableStream({ cancel }), { status: 503 }),
+		);
+
+		await expect(
+			createNcbiClient({ logger, fetch: fetchMock }).fetchGenbankRecords([
+				"AB000048.1",
+			]),
+		).rejects.toThrow(NcbiUnreachableError);
+
+		expect(cancel).toHaveBeenCalledTimes(3);
+	});
+
+	it("lets an abort during the last refusal's release escape untranslated", async () => {
+		const controller = new AbortController();
+
+		const { calls, fetchMock } = createFetch(
+			() =>
+				new Response(
+					new ReadableStream({
+						cancel() {
+							if (calls.length === 3) {
+								controller.abort();
+							}
+						},
+					}),
+					{ status: 503 },
+				),
+		);
+
+		await expect(
+			createNcbiClient({ logger, fetch: fetchMock }).fetchGenbankRecords(
+				["AB000048.1"],
+				controller.signal,
+			),
+		).rejects.not.toThrow(NcbiUnreachableError);
+
+		expect(calls).toHaveLength(3);
+	});
+
 	it("does not retry a 400, which no later attempt settles", async () => {
 		const { calls, fetchMock } = createFetch(
 			() => new Response("bad accession", { status: 400 }),
@@ -600,7 +645,7 @@ describe("failure handling", () => {
 });
 
 describe("rate limiting", () => {
-	it("spaces anonymous requests at NCBI's three-per-second limit", async () => {
+	it("shares anonymous pacing across clients", async () => {
 		const at: number[] = [];
 
 		const { fetchMock } = createFetch(() => {
@@ -609,12 +654,16 @@ describe("rate limiting", () => {
 			return ok(esearchBody([]));
 		});
 
-		const client = createNcbiClient({ logger, fetch: fetchMock });
+		const clients = [
+			createNcbiClient({ logger, fetch: fetchMock }),
+			createNcbiClient({ logger, fetch: fetchMock }),
+			createNcbiClient({ logger, fetch: fetchMock }),
+		];
 
 		await Promise.all([
-			client.fetchDescendantTaxids(1),
-			client.fetchDescendantTaxids(2),
-			client.fetchDescendantTaxids(3),
+			clients[0].fetchDescendantTaxids(1),
+			clients[1].fetchDescendantTaxids(2),
+			clients[2].fetchDescendantTaxids(3),
 		]);
 
 		expect(at).toHaveLength(3);
@@ -648,6 +697,77 @@ describe("rate limiting", () => {
 
 		expect(elapsed).toBeGreaterThanOrEqual(200);
 		expect(elapsed).toBeLessThan(600);
+	});
+
+	it("does not let a pre-aborted request consume a pacing slot", async () => {
+		let resolveFirstResponse: (response: Response) => void = () => undefined;
+		const firstResponse = new Promise<Response>((resolve) => {
+			resolveFirstResponse = resolve;
+		});
+		let requestCount = 0;
+
+		const { fetchMock } = createFetch(() => {
+			requestCount++;
+
+			return requestCount === 1 ? firstResponse : ok(esearchBody([]));
+		});
+
+		const client = createNcbiClient({ logger, fetch: fetchMock });
+		const first = client.fetchDescendantTaxids(1);
+
+		await vi.waitFor(() => expect(requestCount).toBe(1));
+
+		const controller = new AbortController();
+		const cancelled = client.fetchDescendantTaxids(2, controller.signal);
+
+		controller.abort();
+
+		const following = client.fetchDescendantTaxids(3);
+		resolveFirstResponse(ok(esearchBody([])));
+
+		await expect(first).resolves.toEqual([]);
+		await expect(cancelled).rejects.toThrow();
+		await expect(following).resolves.toEqual([]);
+
+		expect(requestCount).toBe(2);
+	});
+
+	it("starts a request's timeout only once it leaves the queue", async () => {
+		const timeout = vi.spyOn(AbortSignal, "timeout");
+
+		let resolveFirstResponse: (response: Response) => void = () => undefined;
+		const firstResponse = new Promise<Response>((resolve) => {
+			resolveFirstResponse = resolve;
+		});
+		let requestCount = 0;
+
+		const { fetchMock } = createFetch(() => {
+			requestCount++;
+
+			return requestCount === 1 ? firstResponse : ok(esearchBody([]));
+		});
+
+		try {
+			const client = createNcbiClient({ logger, fetch: fetchMock });
+			const first = client.fetchDescendantTaxids(1);
+
+			await vi.waitFor(() => expect(requestCount).toBe(1));
+
+			const queued = client.fetchDescendantTaxids(2);
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+
+			expect(timeout).toHaveBeenCalledTimes(1);
+
+			resolveFirstResponse(ok(esearchBody([])));
+
+			await expect(first).resolves.toEqual([]);
+			await expect(queued).resolves.toEqual([]);
+
+			expect(timeout).toHaveBeenCalledTimes(2);
+		} finally {
+			timeout.mockRestore();
+		}
 	});
 
 	it("keeps serving later requests after one fails", async () => {

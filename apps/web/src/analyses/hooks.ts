@@ -1,6 +1,7 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { DEFAULT_SORT_KEY } from "@analyses/search";
 import { createFuse } from "@app/fuse";
+import { normalizeSearchTerm } from "@app/search";
 import { useListReadyIndexes } from "@indexes/queries";
 import { useFetchSample } from "@samples/queries";
 import { useFetchSubtractionsShortlist } from "@subtraction/queries";
@@ -41,7 +42,7 @@ function pathoscopeSortValue(
 }
 
 /**
- * The value a NuVs sort key ranks a contig by.
+ * The value a Nuvs sort key ranks a contig by.
  *
  * "Length" is the length of the contig's own sequence. A `NuvsHit` carries no
  * `length` field — reading the key off the hit gave `undefined` for every one of
@@ -73,10 +74,11 @@ export function useSortAndFilterPathoscopeHits(
 		search: { dir, find, minCoverage, showLowOtus, sort },
 	} = useAnalysisSearch();
 
-	const fuse = createFuse(hits, ["name", "abbreviation"]);
+	const fuse = createFuse(hits, ["name", "acronym"]);
+	const normalizedFind = normalizeSearchTerm(find);
 
-	if (find) {
-		hits = fuse.search(find).map((result) => result.item);
+	if (normalizedFind) {
+		hits = fuse.search(normalizedFind).map((result) => result.item);
 	}
 
 	// Measured breadth, not a read budget: reads piled onto one conserved locus
@@ -99,7 +101,7 @@ export function useSortAndFilterPathoscopeHits(
 }
 
 /** Sort and filter a list of Nuvs hits  */
-export function useSortAndFilterNuVsHits(detail: FormattedNuvsAnalysis) {
+export function useSortAndFilterNuvsHits(detail: FormattedNuvsAnalysis) {
 	let hits = detail.results.hits;
 
 	const {
@@ -107,9 +109,10 @@ export function useSortAndFilterNuVsHits(detail: FormattedNuvsAnalysis) {
 	} = useAnalysisSearch();
 
 	const fuse = createFuse(hits, ["names", "families"]);
+	const normalizedFind = normalizeSearchTerm(find);
 
-	if (find) {
-		hits = fuse.search(find).map((result) => result.item);
+	if (normalizedFind) {
+		hits = fuse.search(normalizedFind).map((result) => result.item);
 	}
 
 	if (!showUnhitSequences) {
@@ -148,7 +151,7 @@ type UseCompatibleIndexesResult = {
 	isError: boolean;
 };
 
-export function useCompatibleIndexes(): UseCompatibleIndexesResult {
+function useCompatibleIndexes(): UseCompatibleIndexesResult {
 	const { data, isPending, isError } = useListReadyIndexes(false);
 
 	const indexes = Object.values(
@@ -157,7 +160,7 @@ export function useCompatibleIndexes(): UseCompatibleIndexesResult {
 		.map((group) => maxBy(group, (item) => Number(item.version)))
 		.filter((index): index is IndexMinimal => index !== undefined);
 
-	return { indexes, isPending, isError };
+	return { indexes, isPending, isError: isError && data === undefined };
 }
 
 type UseSubtractionOptionsResult = {
@@ -178,7 +181,7 @@ type UseSubtractionOptionsResult = {
  *
  * @param sampleIds
  */
-export function useSubtractionOptions(
+function useSubtractionOptions(
 	sampleIds: number[],
 ): UseSubtractionOptionsResult {
 	const {
@@ -195,7 +198,10 @@ export function useSubtractionOptions(
 		isError: isErrorSample,
 	} = useFetchSample(sampleId);
 
-	if (isErrorSample || isErrorSubtractionShortlist) {
+	if (
+		(isErrorSample && !sample) ||
+		(isErrorSubtractionShortlist && !subtractionShortlist)
+	) {
 		return {
 			defaultSubtractions: [],
 			subtractions: [],
@@ -241,5 +247,41 @@ export function useSubtractionOptions(
 		subtractions,
 		isPending: false,
 		isError: false,
+	};
+}
+
+type UseCreateAnalysisOptionsResult = {
+	defaultSubtractions: SubtractionOption[];
+	indexes: IndexMinimal[];
+	subtractions: SubtractionOption[];
+	isError: boolean;
+	isPending: boolean;
+};
+
+/**
+ * Load indexes and subtractions together so the form can appear all at once.
+ */
+export function useCreateAnalysisOptions(
+	sampleIds: number[],
+): UseCreateAnalysisOptionsResult {
+	const {
+		indexes,
+		isPending: isPendingIndexes,
+		isError: isErrorIndexes,
+	} = useCompatibleIndexes();
+
+	const {
+		defaultSubtractions,
+		subtractions,
+		isPending: isPendingSubtractions,
+		isError: isErrorSubtractions,
+	} = useSubtractionOptions(sampleIds);
+
+	return {
+		defaultSubtractions,
+		indexes,
+		subtractions,
+		isError: isErrorIndexes || isErrorSubtractions,
+		isPending: isPendingIndexes || isPendingSubtractions,
 	};
 }

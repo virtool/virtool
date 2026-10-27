@@ -233,6 +233,42 @@ describe("runWorkflow", () => {
 		expect(harness.context.state.visited).toEqual([]);
 	});
 
+	it("does not run the step when cancellation occurs while onStepStart resolves", async () => {
+		const signals = createRunSignals();
+		const reporting = deferred();
+		const harness = setup(signals, [visitStep("first")], async () => {
+			await reporting.promise;
+		});
+
+		const running = harness.run();
+
+		expect(harness.started).toEqual(["first"]);
+
+		signals.cancel();
+		reporting.resolve();
+
+		expect(await running).toEqual({ state: "cancelled" });
+		expect(harness.context.state.visited).toEqual([]);
+	});
+
+	it("preserves cancellation when onStepStart rejects after abort", async () => {
+		const signals = createRunSignals();
+		const reporting = deferred();
+		const harness = setup(signals, [visitStep("first")], async () => {
+			await reporting.promise;
+		});
+
+		const running = harness.run();
+
+		expect(harness.started).toEqual(["first"]);
+
+		signals.cancel();
+		reporting.reject(new Error("This operation was aborted"));
+
+		expect(await running).toEqual({ state: "cancelled" });
+		expect(harness.context.state.visited).toEqual([]);
+	});
+
 	it("reports a step that throws as a failure without rethrowing", async () => {
 		const failure = new Error("bowtie2 exited 1");
 		const harness = setup(createRunSignals(), [

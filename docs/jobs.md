@@ -11,7 +11,7 @@ claim, update, and finish a job.
 `runWorkflow` knows nothing about the network, process signals, or process
 exit. It runs an explicit ordered list of steps and returns a `RunOutcome`.
 
-`runWorkflowApp`, the entrypoint called by each workflow app's `main.ts`, owns
+`runWorkflowApp`, the entrypoint called by each workflow app's `src/index.ts`, owns
 the lifecycle around that run:
 
 - installing the `SIGTERM` handler;
@@ -19,7 +19,7 @@ the lifecycle around that run:
 - constructing the jobs API client and run context;
 - starting and stopping the ping loop;
 - reporting step starts and successful completion;
-- flushing Sentry; and
+- reporting failures to Sentry and flushing it; and
 - selecting the pod's exit code.
 
 The lifecycle implementation is split among `createJobsApiClient`, `claimJob`,
@@ -46,7 +46,7 @@ The normal sequence is:
    job from `running` to `succeeded`.
 
 A pod learns its job id and credential from the claim response and nowhere
-else. An aborted claim returns `null`; both the overall claim timeout and a
+else. An aborted claim returns `null`; both the total claim timeout and a
 `SIGTERM` arrive through that result.
 
 ## Cancellation
@@ -57,6 +57,10 @@ there is deliberately no `cancelled` flag.
 When a job enters any terminal state, its credential stops authenticating. The
 next ping receives `401`, and the ping loop calls `signals.cancel()`. The run
 then cooperatively abandons its active step and returns `cancelled`.
+
+A ping updates only a job that isn't terminal. If the job reaches a terminal
+state after the credential check but before the ping write, the ping also
+receives `401` with the terminal-state message, and doesn't record the ping.
 
 This design covers more than user cancellation. A job may already be
 `cancelled`, `failed` by the stalled-job sweep, or `succeeded`. In every case,
@@ -71,7 +75,7 @@ distinction for operators without changing the runner's response.
 
 ## Workflow failure
 
-There is deliberately no endpoint for a runner to report failure. If a step or
+By design, no endpoint lets a runner report failure. If a step or
 workflow finalization fails, `runWorkflow` returns `failed`, the pod stops
 pinging, and `runWorkflowApp` exits `0`. The stalled-job sweep eventually moves
 the job from `running` to `failed` after its last ping becomes more than five
@@ -87,20 +91,31 @@ work; the job is left for the same stalled-job sweep.
 
 ## Pings and retries
 
-Ordinary jobs API requests retry transport failures five times with a flat
-five-second delay. They never retry an HTTP response chosen by the jobs API.
+Ordinary jobs API requests retry transport failures and `503` responses with a
+flat five-second delay until four minutes have passed since the first attempt.
+The window is wall-clock time, so attempts that hang until a socket timeout
+use it up faster than fast `503` responses. The jobs API answers `503` while
+its database is unreachable, for example during an Azure Postgres maintenance
+restart. The requests never retry any other HTTP response.
 
-Ping requests disable that client retry policy because the ping loop owns its
+Ping requests turn off that client retry policy because the ping loop owns its
 failure budget:
 
 - `401` is neither retried nor counted; it cancels the run immediately.
-- Other failures are counted consecutively and a success resets the count.
-- After five consecutive failures, roughly 20 seconds, the loop logs a warning
-  and stops pinging but lets the workflow continue.
+- Other failures don't stop the loop until four minutes have passed since the
+  last successful ping. A ping in flight at that deadline is aborted.
+- At the deadline, the loop logs a warning and stops pinging but lets the
+  workflow continue.
 
-That give-up window must remain well inside the five-minute stalled-job
-timeout. If connectivity returns after the sweep has failed the job, another
-lifecycle request is refused because the credential is no longer valid.
+That give-up window must remain inside the five-minute stalled-job timeout.
+It's as long as it is so that a running job outlasts a database restart; an
+outage longer than four minutes fails the job. If connectivity returns
+after the sweep has failed the job, another lifecycle request is refused
+because the credential is no longer valid.
+
+`claimJob` polls again after a `503` rather than exiting. It waits for the
+response's `Retry-After` delay and logs one warning for each outage, not one
+for each poll.
 
 ## Outcomes and exit codes
 
@@ -109,7 +124,7 @@ lifecycle request is refused because the credential is no longer valid.
 | Workflow succeeds and `finish` succeeds | `running` to `succeeded` | `0` |
 | Workflow fails | `running` to `failed` later, by the stalled-job sweep | `0` |
 | User cancels the job | active state to `cancelled`; the next ping cancels the run | `0` |
-| Finish cannot be reported | `running` to `failed` later, by the stalled-job sweep | `0` |
+| Finish can't be reported | `running` to `failed` later, by the stalled-job sweep | `0` |
 | Claim times out before a job is acquired | none | `0` |
 | Pod infrastructure or preparation fails | no runner-driven terminal transition | `1` |
 | Pod receives `SIGTERM` | no runner-driven terminal transition | `124` |
@@ -129,12 +144,12 @@ two forms over one `JobsApiState` object:
   `node:http` server on an ephemeral port.
 
 Both forms route through `handleJobsApiRequest`. Responses are serialized and
-parsed with the same contract schemas as production, so the fake client cannot
+parsed with the same contract schemas as production, so the fake client can't
 silently accept a wire shape that the real client would reject. The shared state
 records claims, step starts, finish and finalize calls, cache registrations,
 resource metadata, credentials, and the injected clock.
 
-The embedded server preserves the lifecycle behavior described above:
+The embedded server preserves the lifecycle behavior described in this document:
 
 - claims are unauthenticated and filtered by workflow;
 - every later request uses HTTP Basic credentials and verifies route job IDs;

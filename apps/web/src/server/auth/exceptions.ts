@@ -1,11 +1,22 @@
 import { getRootFn } from "../root/functions";
 import { getPasswordPolicyFn } from "../settings/functions";
 import {
+	acceptAccountSetupFn,
+	completeEmailRemediationFn,
 	createFirstUserFn,
+	inspectAccountSetupFn,
 	loginFn,
 	logoutFn,
 	resetPasswordFn,
+	verifyTwoFactorFn,
 } from "./functions";
+import {
+	completePasswordRecoveryFn,
+	inspectEmailVerificationFn,
+	inspectPasswordRecoveryFn,
+	requestPasswordRecoveryFn,
+	verifyCurrentEmailFn,
+} from "./recoveryFunctions";
 
 /**
  * Server functions exempt from global authentication.
@@ -14,8 +25,8 @@ import {
  *
  * createFirstUserFn runs before any user or session exists.
  *
- * getPasswordPolicyFn serves the first-user and forced-reset forms, which set a
- * password before there is a session to authenticate.
+ * getPasswordPolicyFn serves the first-user form before a session exists and
+ * the forced-reset form while ordinary application access is restricted.
  *
  * getRootFn reports whether first-user setup is needed, read by the
  * `_authenticated` guard before a session exists.
@@ -27,10 +38,23 @@ import {
  * silently becoming publicly callable.
  */
 export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
+	acceptAccountSetupFn,
 	createFirstUserFn,
+	completeEmailRemediationFn,
 	getPasswordPolicyFn,
 	getRootFn,
 	loginFn,
 	logoutFn,
+	verifyTwoFactorFn,
+	requestPasswordRecoveryFn,
+	completePasswordRecoveryFn,
+	verifyCurrentEmailFn,
+	inspectEmailVerificationFn,
+	inspectPasswordRecoveryFn,
+	inspectAccountSetupFn,
+];
+
+/** Server functions reachable by a forced-password-reset principal. */
+export const passwordResetEndpoints: ReadonlyArray<{ url: string }> = [
 	resetPasswordFn,
 ];

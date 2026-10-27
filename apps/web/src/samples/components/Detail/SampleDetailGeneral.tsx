@@ -1,6 +1,7 @@
 import { toGcContent } from "@app/format";
-import { BoxGroup, BoxGroupHeader, BoxGroupTable } from "@base/Box";
+import { BoxGroup, BoxGroupTable } from "@base/Box";
 import { ContainerNarrow, ContainerSide } from "@base/Container";
+import SectionHeader from "@base/SectionHeader";
 import JobItem from "@jobs/components/JobItem";
 import { useFetchJob } from "@jobs/queries";
 import { useSuspenseSample } from "@samples/queries";
@@ -51,76 +52,82 @@ export default function SampleDetailGeneral({
 					</BoxGroup>
 				)}
 				<SampleFileSizeWarning sampleId={sampleId} reads={data.reads} />
-				<BoxGroup>
-					<BoxGroupHeader>
+				<section>
+					<SectionHeader>
 						<h2>Metadata</h2>
 						<p>User-defined information about the sample.</p>
-					</BoxGroupHeader>
-					<BoxGroupTable>
-						<caption className="sr-only">Sample metadata</caption>
-						<tbody>
-							<tr>
-								<th scope="row">Host</th>
-								<td>{data.host}</td>
-							</tr>
-							<tr>
-								<th scope="row">Isolate</th>
-								<td>{data.isolate}</td>
-							</tr>
-							<tr>
-								<th scope="row">Locale</th>
-								<td>{data.locale}</td>
-							</tr>
-						</tbody>
-					</BoxGroupTable>
-				</BoxGroup>
-
-				{data.ready && quality && (
+					</SectionHeader>
 					<BoxGroup>
-						<BoxGroupHeader>
-							<h2>Library</h2>
-							<p>Information about the sequencing reads in this sample.</p>
-						</BoxGroupHeader>
 						<BoxGroupTable>
-							<caption className="sr-only">Sample library</caption>
+							<caption className="sr-only">Sample metadata</caption>
 							<tbody>
 								<tr>
-									<th scope="row">Encoding</th>
-									<td>{quality.encoding}</td>
+									<th scope="row">Host</th>
+									<td>{data.host}</td>
 								</tr>
 								<tr>
-									<th scope="row">Read Count</th>
-									<td>{readCountFormatter.format(quality.count)}</td>
+									<th scope="row">Isolate</th>
+									<td>{data.isolate}</td>
 								</tr>
 								<tr>
-									<th scope="row">Library Type</th>
-									<td>{getLibraryTypeDisplayName(data.libraryType)}</td>
-								</tr>
-								<tr>
-									<th scope="row">Length Range</th>
-									<td>{quality.length.join(" - ")}</td>
-								</tr>
-								<tr>
-									<th scope="row">GC Content</th>
-									<td>{toGcContent(quality.gc / 100)}</td>
-								</tr>
-								<tr>
-									<th scope="row">Paired</th>
-									<td>{data.paired ? "Yes" : "No"}</td>
+									<th scope="row">Locale</th>
+									<td>{data.locale}</td>
 								</tr>
 							</tbody>
 						</BoxGroupTable>
 					</BoxGroup>
+				</section>
+
+				{data.ready && quality && (
+					<section>
+						<SectionHeader>
+							<h2>Library</h2>
+							<p>Information about the sequencing reads in this sample.</p>
+						</SectionHeader>
+						<BoxGroup>
+							<BoxGroupTable>
+								<caption className="sr-only">Sample library</caption>
+								<tbody>
+									<tr>
+										<th scope="row">Encoding</th>
+										<td>{quality.encoding}</td>
+									</tr>
+									<tr>
+										<th scope="row">Read Count</th>
+										<td>{readCountFormatter.format(quality.count)}</td>
+									</tr>
+									<tr>
+										<th scope="row">Library Type</th>
+										<td>{getLibraryTypeDisplayName(data.libraryType)}</td>
+									</tr>
+									<tr>
+										<th scope="row">Length Range</th>
+										<td>{quality.length.join(" - ")}</td>
+									</tr>
+									<tr>
+										<th scope="row">GC Content</th>
+										<td>{toGcContent(quality.gc / 100)}</td>
+									</tr>
+									<tr>
+										<th scope="row">Paired</th>
+										<td>{data.paired ? "Yes" : "No"}</td>
+									</tr>
+								</tbody>
+							</BoxGroupTable>
+						</BoxGroup>
+					</section>
 				)}
 
 				{data.ready && (
-					<BoxGroup>
-						<BoxGroupHeader>
+					<section>
+						<SectionHeader>
 							<h2>Notes</h2>
 							<p>Additional notes about the sample.</p>
-						</BoxGroupHeader>
-						<SampleNotes notes={data.notes} />
-					</BoxGroup>
+						</SectionHeader>
+						<BoxGroup>
+							<SampleNotes notes={data.notes} />
+						</BoxGroup>
+					</section>
 				)}
 			</ContainerNarrow>
 

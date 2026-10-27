@@ -1,9 +1,9 @@
-import { cn } from "@app/cn";
 import Box, { BoxGroup } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import ExternalLink from "@base/ExternalLink";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
+import SectionHeader from "@base/SectionHeader";
 import { KeyRound } from "lucide-react";
 import { useFetchApiKeys } from "../queries";
 import ApiKeyCreate from "./ApiKeyCreate";
@@ -28,26 +28,22 @@ export default function ApiKeys() {
 	));
 
 	return (
-		<div>
-			<header
-				className={cn(
-					"flex",
-					"font-medium",
-					"items-center",
-					"justify-between",
-					"mb-4",
-					"text-lg",
-				)}
-			>
-				<h3>
-					Manage API keys for accessing the{" "}
-					<ExternalLink href="https://www.virtool.ca/docs/developer/api_account/">
-						Virtool API
-					</ExternalLink>
-					.
-				</h3>
-				<ApiKeyCreate />
-			</header>
+		<section>
+			<SectionHeader>
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h2>API Keys</h2>
+						<p>
+							Manage API keys for accessing the{" "}
+							<ExternalLink href="https://www.virtool.ca/docs/developer/api_account/">
+								Virtool API
+							</ExternalLink>
+							.
+						</p>
+					</div>
+					<ApiKeyCreate />
+				</div>
+			</SectionHeader>
 
 			{keyComponents.length ? (
 				<BoxGroup>{keyComponents}</BoxGroup>
@@ -64,6 +60,6 @@ export default function ApiKeys() {
 					</Empty>
 				</Box>
 			)}
-		</div>
+		</section>
 	);
 }

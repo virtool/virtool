@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	IsolateCreateRequest,
 	IsolateUpdateRequest,
@@ -33,6 +32,7 @@ import {
 } from "@virtool/data/otus/data";
 import {
 	checkReferenceRight,
+	checkReferenceVisibility,
 	ReferenceArchivedError,
 	ReferenceNotFoundError,
 	resolveReferenceActor,
@@ -42,7 +42,16 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	assertOtuVisible,
+	assertReferenceVisible,
+} from "../references/visibility";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 // An OTU, isolate, or sequence id is the 8-character string Mongo's `_id` held,
 // not a Postgres serial, so `rowIdSchema` does not apply.
@@ -60,7 +69,7 @@ const findOtusSchema = z.object({
 	referenceId: rowIdSchema,
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
+	term: searchTermSchema,
 });
 
 const createOtuSchema = z
@@ -81,25 +90,18 @@ const updateSequenceSchema = sequenceIdSchema.extend(
 	SequenceUpdateRequest.shape,
 );
 
-// Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
-// ./data imports they reference — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (
 		err instanceof OtuNotFoundError ||
 		err instanceof IsolateNotFoundError ||
 		err instanceof SequenceNotFoundError
 	) {
-		setResponseStatus(404);
 		throw new ClientError(err.message, 404);
 	}
 	if (err instanceof ReferenceNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Reference not found.", 404);
 	}
 	if (err instanceof ReferenceArchivedError) {
-		setResponseStatus(409);
 		throw new ClientError("Reference is archived.", 409);
 	}
 	if (
@@ -107,14 +109,12 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		err instanceof SourceTypeNotAllowedError ||
 		err instanceof SegmentNotDefinedError
 	) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
-});
+}
 
 const notFound = createServerOnlyFn((message: string): never => {
-	setResponseStatus(404);
 	throw new ClientError(message, 404);
 });
 
@@ -125,7 +125,9 @@ const notFound = createServerOnlyFn((message: string): never => {
  * Naming an isolate scopes the lookup to it, so an isolate the OTU does not
  * carry surfaces as a 404 rather than passing the rights check and failing
  * later. A missing OTU is a 404 for everyone, administrators included — there is
- * no reference to hold a right on.
+ * no reference to hold a right on. An OTU on a reference the caller cannot see
+ * is the same 404, so only a caller who can see the reference learns from a 403
+ * that they lack the right.
  *
  * An archived reference accepts no writes at all, so it is refused even from a
  * member who still holds the right. The check follows the rights check so that
@@ -151,8 +153,15 @@ const authorizeOtu = createServerOnlyFn(
 
 		const actor = await resolveReferenceActor(db, userId);
 
+		if (!(await checkReferenceVisibility(db, reference.id, actor))) {
+			return notFound(
+				isolateId === undefined
+					? "OTU not found."
+					: "OTU or isolate not found.",
+			);
+		}
+
 		if (!(await checkReferenceRight(db, reference.id, "modifyOtu", actor))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 
@@ -164,11 +173,13 @@ const authorizeOtu = createServerOnlyFn(
 	},
 );
 
-export const findOtusFn = createServerFn({ method: "GET" })
+export const findOtusFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findOtusSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
+			await assertReferenceVisible(data.referenceId, context.principal.userId);
+
 			return await findOtus(db, data.referenceId, {
 				page: data.page,
 				perPage: data.perPage,
@@ -182,8 +193,10 @@ export const findOtusFn = createServerFn({ method: "GET" })
 export const getOtuFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(otuIdSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
+			await assertOtuVisible(data.otuId, context.principal.userId);
+
 			return await getOtu(db, data.otuId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -193,8 +206,10 @@ export const getOtuFn = createServerFn({ method: "GET" })
 export const listOtuHistoryFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(otuIdSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
+			await assertOtuVisible(data.otuId, context.principal.userId);
+
 			return await listByOtu(db, data.otuId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -210,10 +225,13 @@ export const createOtuFn = createServerFn({ method: "POST" })
 		try {
 			// The reference comes from the request rather than from an OTU that does
 			// not exist yet, so the right is checked against it directly.
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+
+			if (!(await checkReferenceVisibility(db, referenceId, actor))) {
+				throw new ReferenceNotFoundError();
+			}
 
 			if (!(await checkReferenceRight(db, referenceId, "modifyOtu", actor))) {
-				setResponseStatus(403);
 				throw new ForbiddenError();
 			}
 
@@ -221,10 +239,8 @@ export const createOtuFn = createServerFn({ method: "POST" })
 				db,
 				referenceId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
-
-			setResponseStatus(201);
 
 			return otu;
 		} catch (err) {
@@ -239,9 +255,9 @@ export const updateOtuFn = createServerFn({ method: "POST" })
 		const { otuId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId);
+			await authorizeOtu(otuId, context.principal.userId);
 
-			return await updateOtu(db, otuId, values, context.session.userId);
+			return await updateOtu(db, otuId, values, context.principal.userId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -252,9 +268,9 @@ export const deleteOtuFn = createServerFn({ method: "POST" })
 	.validator(otuIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeOtu(data.otuId, context.session.userId);
+			await authorizeOtu(data.otuId, context.principal.userId);
 
-			await deleteOtu(db, data.otuId, context.session.userId);
+			await deleteOtu(db, data.otuId, context.principal.userId);
 
 			return null;
 		} catch (err) {
@@ -269,16 +285,14 @@ export const createIsolateFn = createServerFn({ method: "POST" })
 		const { otuId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId);
+			await authorizeOtu(otuId, context.principal.userId);
 
 			const isolate = await createIsolate(
 				db,
 				otuId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
-
-			setResponseStatus(201);
 
 			return isolate;
 		} catch (err) {
@@ -293,14 +307,14 @@ export const updateIsolateFn = createServerFn({ method: "POST" })
 		const { otuId, isolateId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId, isolateId);
+			await authorizeOtu(otuId, context.principal.userId, isolateId);
 
 			return await updateIsolate(
 				db,
 				otuId,
 				isolateId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -312,13 +326,13 @@ export const setIsolateAsDefaultFn = createServerFn({ method: "POST" })
 	.validator(isolateIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
+			await authorizeOtu(data.otuId, context.principal.userId, data.isolateId);
 
 			return await setIsolateAsDefault(
 				db,
 				data.otuId,
 				data.isolateId,
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -330,13 +344,13 @@ export const deleteIsolateFn = createServerFn({ method: "POST" })
 	.validator(isolateIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
+			await authorizeOtu(data.otuId, context.principal.userId, data.isolateId);
 
 			await deleteIsolate(
 				db,
 				data.otuId,
 				data.isolateId,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			return null;
@@ -352,17 +366,15 @@ export const createSequenceFn = createServerFn({ method: "POST" })
 		const { otuId, isolateId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId, isolateId);
+			await authorizeOtu(otuId, context.principal.userId, isolateId);
 
 			const sequence = await createSequence(
 				db,
 				otuId,
 				isolateId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
-
-			setResponseStatus(201);
 
 			return sequence;
 		} catch (err) {
@@ -384,7 +396,7 @@ export const updateSequenceFn = createServerFn({ method: "POST" })
 				return notFound("Sequence not found.");
 			}
 
-			await authorizeOtu(otuId, context.session.userId, isolateId);
+			await authorizeOtu(otuId, context.principal.userId, isolateId);
 
 			return await updateSequence(
 				db,
@@ -392,7 +404,7 @@ export const updateSequenceFn = createServerFn({ method: "POST" })
 				isolateId,
 				sequenceId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -410,14 +422,14 @@ export const deleteSequenceFn = createServerFn({ method: "POST" })
 				return notFound("Sequence not found.");
 			}
 
-			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
+			await authorizeOtu(data.otuId, context.principal.userId, data.isolateId);
 
 			await deleteSequence(
 				db,
 				data.otuId,
 				data.isolateId,
 				data.sequenceId,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			return null;

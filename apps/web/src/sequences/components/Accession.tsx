@@ -1,13 +1,11 @@
 import { getErrorStatus } from "@app/queryErrors";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputIconButton,
-	InputLabel,
-	InputLoading,
-	InputSimple,
-} from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import InputGroup, {
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from "@base/InputGroup";
+import Loader from "@base/Loader";
 import { useGetGenbank } from "@otus/queries";
 import { WandSparkles } from "lucide-react";
 import { useFormContext } from "react-hook-form";
@@ -46,16 +44,11 @@ export default function Accession() {
 	}
 
 	return (
-		<InputGroup>
-			<InputLabel htmlFor="accession">Accession (ID)</InputLabel>
-			<InputContainer align="right">
-				<InputSimple
-					id="accession"
+		<Field>
+			<FieldLabel>Accession (ID)</FieldLabel>
+			<InputGroup>
+				<InputGroupInput
 					aria-required
-					aria-invalid={notFound || Boolean(errors.accession) || undefined}
-					aria-describedby={
-						notFound || errors.accession ? "accession-error" : undefined
-					}
 					{...register("accession", {
 						required: "Required Field",
 						onChange: () => {
@@ -65,19 +58,21 @@ export default function Accession() {
 						},
 					})}
 				/>
-				{isPending ? (
-					<InputLoading />
-				) : (
-					<InputIconButton
-						IconComponent={WandSparkles}
-						tip="Auto Fill"
-						onClick={handleAutoFill}
-					/>
-				)}
-			</InputContainer>
-			<InputError id="accession-error">
+				<InputGroupAddon align="inline-end">
+					{isPending ? (
+						<Loader className="size-4" />
+					) : (
+						<InputGroupButton
+							IconComponent={WandSparkles}
+							tip="Auto Fill"
+							onClick={handleAutoFill}
+						/>
+					)}
+				</InputGroupAddon>
+			</InputGroup>
+			<FieldError>
 				{notFound ? "Accession not found" : errors.accession?.message}
-			</InputError>
-		</InputGroup>
+			</FieldError>
+		</Field>
 	);
 }

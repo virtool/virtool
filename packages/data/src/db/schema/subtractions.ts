@@ -99,7 +99,7 @@ export const subtractionFiles = pgTable(
 			foreignColumns: [subtractions.id],
 			name: "subtraction_files_subtraction_id_fkey",
 		}),
-		unique("uq_subtraction_files_storage_key").on(table.storage_key),
+		unique("subtraction_files_storage_key_key").on(table.storage_key),
 		unique("subtraction_files_subtraction_id_name_key").on(
 			table.subtraction_id,
 			table.name,

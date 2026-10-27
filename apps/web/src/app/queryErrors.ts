@@ -2,6 +2,10 @@ import { endSession } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	FORBIDDEN_ERROR_NAME,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 
@@ -14,7 +18,9 @@ export type QueryError = Error & {
 	status?: number;
 };
 
-const NON_RETRYABLE_STATUSES = new Set([401, 403, 404]);
+// A 503 is an outage that outlasts any retry here. Failing fast hands it to the
+// unavailable state, which keeps retrying while telling the user why.
+const NON_RETRYABLE_STATUSES = new Set([401, 403, 404, 503]);
 
 /**
  * The HTTP status behind a failed query.
@@ -30,6 +36,14 @@ export function getErrorStatus(error: unknown): number | undefined {
 		return undefined;
 	}
 	return (error as QueryError).status;
+}
+
+/**
+ * Whether the server answered 503 because a backing store is down, usually a
+ * Postgres maintenance restart. The outage says nothing about the session.
+ */
+export function isServiceUnavailable(error: unknown): boolean {
+	return getErrorStatus(error) === 503;
 }
 
 /**
@@ -72,7 +86,10 @@ function reportContractDrift(error: Error): void {
 // ShallowErrorPlugin, so a 401 is matched by name here.
 //
 // A 403 is deliberately not handled: the session is valid, the user just lacks
-// the role, so bouncing them to the login wall would be wrong.
+// the role, so bouncing them to the login wall would be wrong. Nor is a
+// `SetupRequiredError`, for a stronger version of the same reason — the caller
+// holds a live setup credential, and ending their session would take it with
+// it and strand them part-way through a flow.
 export function handleQueryError(error: Error): void {
 	if (error.name === UNAUTHORIZED_ERROR_NAME) {
 		endSession();
@@ -93,8 +110,8 @@ export function shouldRetryQuery(
 		return false;
 	}
 	// TanStack Start server-function errors cross the boundary with only
-	// `message` preserved by default; the status set via `setResponseStatus` is
-	// not attached, and Router's ShallowErrorPlugin drops `name`.
+	// `message` preserved by default, and Router's ShallowErrorPlugin drops
+	// `name`.
 	// `serverErrorSerializationAdapter` (registered in start.ts) keeps the auth
 	// errors' `name`, so matching by name here makes a 401/403 (e.g. after
 	// logout, or an unauthenticated first visit) reject immediately instead of
@@ -102,7 +119,11 @@ export function shouldRetryQuery(
 	// /login.
 	if (
 		error.name === UNAUTHORIZED_ERROR_NAME ||
-		error.name === FORBIDDEN_ERROR_NAME
+		error.name === FORBIDDEN_ERROR_NAME ||
+		error.name === PASSWORD_RESET_REQUIRED_ERROR_NAME ||
+		error.name === MFA_ENROLLMENT_REQUIRED_ERROR_NAME ||
+		error.name === SESSION_NOT_FRESH_ERROR_NAME ||
+		error.name === SETUP_REQUIRED_ERROR_NAME
 	) {
 		return false;
 	}

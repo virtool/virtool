@@ -1,5 +1,6 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Link from "@base/Link";
+import SectionHeader from "@base/SectionHeader";
 import type { ReactNode } from "react";
 import AnalysisPeek from "./AnalysisPeek";
 import SamplePeek from "./SamplePeek";
@@ -134,14 +135,16 @@ export default function JobArgs({ workflow, args }: JobArgsProps) {
 	}
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2>Arguments</h2>
 				<p>Run arguments that make this job unique.</p>
-			</BoxGroupHeader>
-			{/* The API returns args as an untyped record; JobArgsRows narrows
-			    them per workflow. */}
-			<JobArgsRows {...({ workflow, args } as JobArgsRowsProps)} />
-		</BoxGroup>
+			</SectionHeader>
+			<BoxGroup>
+				{/* The API returns args as an untyped record; JobArgsRows narrows
+				    them per workflow. */}
+				<JobArgsRows {...({ workflow, args } as JobArgsRowsProps)} />
+			</BoxGroup>
+		</section>
 	);
 }

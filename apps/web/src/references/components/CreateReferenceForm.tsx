@@ -1,11 +1,13 @@
+import { byteSize } from "@app/format";
 import { DialogFooter } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import ProgressBarAffixed from "@base/ProgressBarAffixed";
 import SaveButton from "@base/SaveButton";
 import TextArea from "@base/TextArea";
 import { useNavigate } from "@tanstack/react-router";
 import { UploadBar } from "@uploads/components/UploadBar";
-import { useId } from "react";
+import { useUploadPolicy } from "@uploads/queries";
 import { Controller, useForm } from "react-hook-form";
 import {
 	useCreateReference,
@@ -37,10 +39,7 @@ export function CreateReferenceForm({
 	const createMutation = useCreateReference();
 	const importMutation = useImportReference();
 	const { uploadMutation, fileName, uploadId, progress } = useUploadReference();
-
-	const nameId = useId();
-	const organismId = useId();
-	const descriptionId = useId();
+	const { data: policy } = useUploadPolicy();
 
 	const {
 		control,
@@ -57,13 +56,22 @@ export function CreateReferenceForm({
 		},
 	});
 
-	function handleDrop(acceptedFiles: File[]) {
+	// Upload initialization enforces the limit even while the policy is loading.
+	function handleDrop(acceptedFiles: File[]): boolean {
 		const file = acceptedFiles[0];
 		if (file === undefined) {
-			return;
+			return false;
+		}
+
+		if (policy && file.size > policy.maxUploadSize) {
+			setError("upload", {
+				message: `The file exceeds the ${byteSize(policy.maxUploadSize, true)} maximum upload size`,
+			});
+			return false;
 		}
 
 		uploadMutation.mutate(file);
+		return true;
 	}
 
 	function onSubmit(values: FormValues) {
@@ -123,44 +131,40 @@ export function CreateReferenceForm({
 							<UploadBar
 								message={uploadBarMessage}
 								onDrop={(acceptedFiles) => {
-									handleDrop(acceptedFiles);
 									const file = acceptedFiles[0];
-									if (file) {
+									if (handleDrop(acceptedFiles) && file) {
 										onChange(file.name);
 									}
 								}}
 								multiple={false}
 							/>
 
-							<InputError>{errors.upload?.message}</InputError>
+							<FieldError errors={[errors.upload]} />
 						</div>
 					)}
 				/>
 			)}
 
-			<InputGroup className="pb-0">
-				<InputLabel htmlFor={nameId}>Name</InputLabel>
-				<InputSimple
-					id={nameId}
+			<Field className="pb-0">
+				<FieldLabel>Name</FieldLabel>
+				<Input
 					aria-required
-					aria-invalid={Boolean(errors.name) || undefined}
-					aria-describedby={errors.name ? `${nameId}-error` : undefined}
 					{...register("name", { required: "Required Field" })}
 				/>
-				<InputError id={`${nameId}-error`}>{errors.name?.message}</InputError>
-			</InputGroup>
+				<FieldError errors={[errors.name]} />
+			</Field>
 
 			{mode === "empty" && (
-				<InputGroup>
-					<InputLabel htmlFor={organismId}>Organism</InputLabel>
-					<InputSimple id={organismId} {...register("organism")} />
-				</InputGroup>
+				<Field>
+					<FieldLabel>Organism</FieldLabel>
+					<Input {...register("organism")} />
+				</Field>
 			)}
 
-			<InputGroup>
-				<InputLabel htmlFor={descriptionId}>Description</InputLabel>
-				<TextArea id={descriptionId} {...register("description")} />
-			</InputGroup>
+			<Field>
+				<FieldLabel>Description</FieldLabel>
+				<TextArea {...register("description")} />
+			</Field>
 
 			<DialogFooter>
 				<SaveButton

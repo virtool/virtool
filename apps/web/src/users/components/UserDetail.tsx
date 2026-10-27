@@ -1,11 +1,22 @@
+import { useFetchAccount } from "@account/account";
 import { useCheckAdminRole } from "@administration/hooks";
 import Alert from "@base/Alert";
-import { InitialIcon } from "@base/Icon";
+import { InitialIcon, UserAvatar } from "@base/Icon";
 import Label from "@base/Label";
-import { useSuspenseUser, useUpdateUser } from "@users/queries";
-import { CircleAlert, ShieldUserIcon } from "lucide-react";
+import SectionHeader from "@base/SectionHeader";
+import { useQuery } from "@tanstack/react-query";
+import {
+	invitationQueryOptions,
+	useSuspenseUser,
+	useUpdateUser,
+} from "@users/queries";
+import { hasSufficientAdminRole } from "@virtool/contracts";
+import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
+import { DeletePendingUser } from "./DeletePendingUser";
 import Handle from "./Handle";
+import { InvitationControls } from "./InvitationControls";
 import Password from "./Password";
+import { ResetUserTotp } from "./ResetUserTotp";
 import { UserActivationBanner } from "./UserActivationBanner";
 import UserAdministratorRole from "./UserAdministratorRole";
 import UserGroups from "./UserGroups";
@@ -21,11 +32,24 @@ type UserDetailProps = {
  */
 export default function UserDetail({ userId }: UserDetailProps) {
 	const { data } = useSuspenseUser(userId);
+	const { data: account } = useFetchAccount();
 	const { hasPermission: canEdit } = useCheckAdminRole(
 		data.administratorRole === null ? "users" : "full",
 	);
 
+	const isInvited = data.lifecycleState === "pending";
+	const { data: invitation } = useQuery({
+		...invitationQueryOptions(userId),
+		enabled: isInvited && Boolean(canEdit),
+	});
+
 	const mutation = useUpdateUser();
+
+	const canResetTotp =
+		data.twoFactorEnabled &&
+		account !== undefined &&
+		account.id !== userId &&
+		hasSufficientAdminRole("full", account.administratorRole);
 
 	if (!canEdit) {
 		return (
@@ -52,29 +76,49 @@ export default function UserDetail({ userId }: UserDetailProps) {
 
 	return (
 		<div>
-			<header className="flex items-center justify-between mb-5">
-				<h2 className="flex items-center text-2xl gap-3">
-					<InitialIcon size="xl" handle={handle} />
-					<span>{handle}</span>
-				</h2>
-				{administratorRole && (
-					<Label>
-						<ShieldUserIcon aria-label="Administrator" size={18} />
-						Administrator
-					</Label>
-				)}
-			</header>
+			<SectionHeader>
+				<div className="flex items-center justify-between gap-4">
+					<h2 className="flex min-w-0 items-center gap-3">
+						{isInvited ? (
+							<>
+								<InitialIcon size="xl" icon={MailClock} label="Invited user" />
+								<span className="truncate">
+									{invitation?.email ?? "Invited user"}
+								</span>
+							</>
+						) : (
+							<>
+								<UserAvatar size="xl" handle={handle} />
+								<span>{handle}</span>
+							</>
+						)}
+					</h2>
+					{administratorRole && (
+						<Label>
+							<ShieldUserIcon aria-label="Administrator" size={18} />
+							Administrator
+						</Label>
+					)}
+				</div>
+			</SectionHeader>
 
-			<UserAdministratorRole id={id} role={administratorRole} />
-
-			<Handle key={`handle-${id}`} id={id} handle={handle} />
-
-			<Password
-				key={id}
-				id={id}
-				lastPasswordChange={lastPasswordChange}
-				forceReset={forceReset}
-			/>
+			{isInvited ? (
+				<>
+					<InvitationControls userId={id} />
+					<UserAdministratorRole id={id} role={administratorRole} />
+				</>
+			) : (
+				<>
+					<UserAdministratorRole id={id} role={administratorRole} />
+					<Handle key={`handle-${id}`} id={id} handle={handle} />
+					<Password
+						key={id}
+						id={id}
+						lastPasswordChange={lastPasswordChange}
+						forceReset={forceReset}
+					/>
+				</>
+			)}
 
 			<div className="mb-4 md:grid md:grid-cols-2 md:gap-x-4">
 				<div>
@@ -87,15 +131,27 @@ export default function UserDetail({ userId }: UserDetailProps) {
 				<UserPermissions permissions={permissions} />
 			</div>
 
-			<UserActivationBanner
-				onClick={() =>
-					mutation.mutate({
-						userId: id,
-						update: { active: !data.active },
-					})
-				}
-				verb={data.active ? "deactivate" : "activate"}
-			/>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Danger Zone</h3>
+				</SectionHeader>
+				{isInvited ? (
+					<DeletePendingUser userId={id} email={invitation?.email} />
+				) : (
+					<>
+						{canResetTotp && <ResetUserTotp userId={id} handle={handle} />}
+						<UserActivationBanner
+							onClick={() =>
+								mutation.mutate({
+									userId: id,
+									update: { active: !data.active },
+								})
+							}
+							verb={data.active ? "deactivate" : "activate"}
+						/>
+					</>
+				)}
+			</section>
 		</div>
 	);
 }

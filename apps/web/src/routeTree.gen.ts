@@ -10,29 +10,45 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AccountSetupRouteImport } from './routes/account-setup'
+import { Route as EmailRemediationRouteImport } from './routes/email-remediation'
+import { Route as EmailRemediationVerifyRouteImport } from './routes/email-remediation-verify'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MetricsRouteImport } from './routes/metrics'
+import { Route as MfaEnrollmentRouteImport } from './routes/mfa-enrollment'
 import { Route as MonitoringRouteImport } from './routes/monitoring'
+import { Route as RecoverRouteImport } from './routes/recover'
 import { Route as SetupRouteImport } from './routes/setup'
-import { Route as UploadsRouteImport } from './routes/uploads'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdministrationRouteRouteImport } from './routes/_authenticated/administration/route'
 import { Route as AuthenticatedHmmsRouteImport } from './routes/_authenticated/hmms'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
 import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
 import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
+import { Route as AvatarsHandleRouteImport } from './routes/avatars.$handle'
 import { Route as HealthLiveRouteImport } from './routes/health/live'
 import { Route as HealthReadyRouteImport } from './routes/health/ready'
 import { Route as UploadsUploadIdRouteImport } from './routes/uploads_.$uploadId'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
 import { Route as AuthenticatedAccountApiRouteImport } from './routes/_authenticated/account/api'
+import { Route as AuthenticatedAccountGroupsRouteImport } from './routes/_authenticated/account/groups'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
+import { Route as AuthenticatedAccountSecurityRouteImport } from './routes/_authenticated/account/security'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account/settings'
 import { Route as AuthenticatedAdministrationIndexRouteImport } from './routes/_authenticated/administration/index'
+import { Route as AuthenticatedAdministrationBannersRouteImport } from './routes/_authenticated/administration/banners'
+import { Route as AuthenticatedAdministrationCachingRouteImport } from './routes/_authenticated/administration/caching'
+import { Route as AuthenticatedAdministrationEmailRouteImport } from './routes/_authenticated/administration/email'
 import { Route as AuthenticatedAdministrationGroupsRouteImport } from './routes/_authenticated/administration/groups'
+import { Route as AuthenticatedAdministrationNcbiRouteImport } from './routes/_authenticated/administration/ncbi'
+import { Route as AuthenticatedAdministrationSecurityRouteImport } from './routes/_authenticated/administration/security'
 import { Route as AuthenticatedAdministrationSettingsRouteImport } from './routes/_authenticated/administration/settings'
+import { Route as AuthenticatedAdministrationUploadsRouteImport } from './routes/_authenticated/administration/uploads'
 import { Route as AuthenticatedHmmsIndexRouteImport } from './routes/_authenticated/hmms/index'
 import { Route as AuthenticatedHmmsHmmIdRouteImport } from './routes/_authenticated/hmms/$hmmId'
 import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs/index'
@@ -50,7 +66,8 @@ import { Route as AuthenticatedSubtractionsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedSubtractionsSubtractionIdRouteImport } from './routes/_authenticated/subtractions/$subtractionId'
 import { Route as AuthenticatedSubtractionsFilesRouteImport } from './routes/_authenticated/subtractions/files'
 import { Route as AnalysesDocumentsDocumentRouteImport } from './routes/analyses.documents.$document'
-import { Route as OtusOtuIdFastaRouteImport } from './routes/otus.$otuId.fasta'
+import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
+import { Route as ApiV1UploadsRouteImport } from './routes/api.v1.uploads'
 import { Route as AuthenticatedAdministrationUsersIndexRouteImport } from './routes/_authenticated/administration/users/index'
 import { Route as AuthenticatedAdministrationUsersUserIdRouteImport } from './routes/_authenticated/administration/users/$userId'
 import { Route as AuthenticatedRefsRefIdIndexRouteImport } from './routes/_authenticated/refs/$refId/index'
@@ -62,6 +79,7 @@ import { Route as AuthenticatedSamplesSampleIdFilesRouteImport } from './routes/
 import { Route as AuthenticatedSamplesSampleIdGeneralRouteImport } from './routes/_authenticated/samples/$sampleId/general'
 import { Route as AuthenticatedSamplesSampleIdQualityRouteImport } from './routes/_authenticated/samples/$sampleId/quality'
 import { Route as AuthenticatedSamplesSampleIdRightsRouteImport } from './routes/_authenticated/samples/$sampleId/rights'
+import { Route as ApiV1UploadsUploadIdRouteImport } from './routes/api.v1.uploads_.$uploadId'
 import { Route as IndexesIndexIdFilesFilenameRouteImport } from './routes/indexes.$indexId.files.$filename'
 import { Route as SamplesSampleIdReadsFilenameRouteImport } from './routes/samples.$sampleId.reads.$filename'
 import { Route as SubtractionsSubtractionIdFilesFilenameRouteImport } from './routes/subtractions.$subtractionId.files.$filename'
@@ -71,17 +89,31 @@ import { Route as AuthenticatedRefsRefIdOtusIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedRefsRefIdOtusOtuIdRouteRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/route'
 import { Route as AuthenticatedSamplesSampleIdAnalysesIndexRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/index'
 import { Route as AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/$analysisId'
-import { Route as OtusOtuIdIsolatesIsolateIdFastaRouteImport } from './routes/otus.$otuId.isolates.$isolateId.fasta'
+import { Route as ApiV1UploadsUploadIdFinalizeRouteImport } from './routes/api.v1.uploads_.$uploadId.finalize'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/index'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdHistoryRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/history'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/route'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/segments'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/index'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId'
-import { Route as OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport } from './routes/otus.$otuId.isolates.$isolateId.sequences.$sequenceId.fasta'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSetupRoute = AccountSetupRouteImport.update({
+  id: '/account-setup',
+  path: '/account-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailRemediationRoute = EmailRemediationRouteImport.update({
+  id: '/email-remediation',
+  path: '/email-remediation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailRemediationVerifyRoute = EmailRemediationVerifyRouteImport.update({
+  id: '/email-remediation-verify',
+  path: '/email-remediation-verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -99,9 +131,19 @@ const MetricsRoute = MetricsRouteImport.update({
   path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MfaEnrollmentRoute = MfaEnrollmentRouteImport.update({
+  id: '/mfa-enrollment',
+  path: '/mfa-enrollment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MonitoringRoute = MonitoringRouteImport.update({
   id: '/monitoring',
   path: '/monitoring',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecoverRoute = RecoverRouteImport.update({
+  id: '/recover',
+  path: '/recover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupRoute = SetupRouteImport.update({
@@ -109,9 +151,9 @@ const SetupRoute = SetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UploadsRoute = UploadsRouteImport.update({
-  id: '/uploads',
-  path: '/uploads',
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -135,6 +177,11 @@ const AuthenticatedHmmsRoute = AuthenticatedHmmsRouteImport.update({
   path: '/hmms',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
@@ -156,6 +203,11 @@ const AuthenticatedSubtractionsRoute =
     path: '/subtractions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AvatarsHandleRoute = AvatarsHandleRouteImport.update({
+  id: '/avatars/$handle',
+  path: '/avatars/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthLiveRoute = HealthLiveRouteImport.update({
   id: '/health/live',
   path: '/health/live',
@@ -182,10 +234,28 @@ const AuthenticatedAccountApiRoute = AuthenticatedAccountApiRouteImport.update({
   path: '/api',
   getParentRoute: () => AuthenticatedAccountRoute,
 } as any)
+const AuthenticatedAccountGroupsRoute =
+  AuthenticatedAccountGroupsRouteImport.update({
+    id: '/groups',
+    path: '/groups',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 const AuthenticatedAccountProfileRoute =
   AuthenticatedAccountProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSecurityRoute =
+  AuthenticatedAccountSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
 const AuthenticatedAdministrationIndexRoute =
@@ -194,16 +264,52 @@ const AuthenticatedAdministrationIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
+const AuthenticatedAdministrationBannersRoute =
+  AuthenticatedAdministrationBannersRouteImport.update({
+    id: '/banners',
+    path: '/banners',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationCachingRoute =
+  AuthenticatedAdministrationCachingRouteImport.update({
+    id: '/caching',
+    path: '/caching',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationEmailRoute =
+  AuthenticatedAdministrationEmailRouteImport.update({
+    id: '/email',
+    path: '/email',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
 const AuthenticatedAdministrationGroupsRoute =
   AuthenticatedAdministrationGroupsRouteImport.update({
     id: '/groups',
     path: '/groups',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
+const AuthenticatedAdministrationNcbiRoute =
+  AuthenticatedAdministrationNcbiRouteImport.update({
+    id: '/ncbi',
+    path: '/ncbi',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationSecurityRoute =
+  AuthenticatedAdministrationSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
 const AuthenticatedAdministrationSettingsRoute =
   AuthenticatedAdministrationSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationUploadsRoute =
+  AuthenticatedAdministrationUploadsRouteImport.update({
+    id: '/uploads',
+    path: '/uploads',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
 const AuthenticatedHmmsIndexRoute = AuthenticatedHmmsIndexRouteImport.update({
@@ -303,9 +409,14 @@ const AnalysesDocumentsDocumentRoute =
     path: '/analyses/documents/$document',
     getParentRoute: () => rootRouteImport,
   } as any)
-const OtusOtuIdFastaRoute = OtusOtuIdFastaRouteImport.update({
-  id: '/otus/$otuId/fasta',
-  path: '/otus/$otuId/fasta',
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1UploadsRoute = ApiV1UploadsRouteImport.update({
+  id: '/api/v1/uploads',
+  path: '/api/v1/uploads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdministrationUsersIndexRoute =
@@ -374,6 +485,11 @@ const AuthenticatedSamplesSampleIdRightsRoute =
     path: '/rights',
     getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
   } as any)
+const ApiV1UploadsUploadIdRoute = ApiV1UploadsUploadIdRouteImport.update({
+  id: '/api/v1/uploads_/$uploadId',
+  path: '/api/v1/uploads/$uploadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexesIndexIdFilesFilenameRoute =
   IndexesIndexIdFilesFilenameRouteImport.update({
     id: '/indexes/$indexId/files/$filename',
@@ -428,11 +544,11 @@ const AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute =
     path: '/$analysisId',
     getParentRoute: () => AuthenticatedSamplesSampleIdAnalysesRoute,
   } as any)
-const OtusOtuIdIsolatesIsolateIdFastaRoute =
-  OtusOtuIdIsolatesIsolateIdFastaRouteImport.update({
-    id: '/otus/$otuId/isolates/$isolateId/fasta',
-    path: '/otus/$otuId/isolates/$isolateId/fasta',
-    getParentRoute: () => rootRouteImport,
+const ApiV1UploadsUploadIdFinalizeRoute =
+  ApiV1UploadsUploadIdFinalizeRouteImport.update({
+    id: '/finalize',
+    path: '/finalize',
+    getParentRoute: () => ApiV1UploadsUploadIdRoute,
   } as any)
 const AuthenticatedRefsRefIdOtusOtuIdIndexRoute =
   AuthenticatedRefsRefIdOtusOtuIdIndexRouteImport.update({
@@ -470,36 +586,46 @@ const AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute =
     path: '/$isolateId',
     getParentRoute: () => AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRoute,
   } as any)
-const OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute =
-  OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport.update({
-    id: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta',
-    path: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/account-setup': typeof AccountSetupRoute
+  '/email-remediation': typeof EmailRemediationRoute
+  '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
+  '/mfa-enrollment': typeof MfaEnrollmentRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
-  '/uploads': typeof UploadsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/hmms': typeof AuthenticatedHmmsRouteWithChildren
+  '/home': typeof AuthenticatedHomeRoute
   '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/account/api': typeof AuthenticatedAccountApiRoute
+  '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
+  '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
+  '/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
+  '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
+  '/administration/security': typeof AuthenticatedAdministrationSecurityRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
+  '/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/refs/settings': typeof AuthenticatedRefsSettingsRoute
@@ -511,7 +637,8 @@ export interface FileRoutesByFullPath {
   '/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
-  '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/uploads': typeof ApiV1UploadsRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/hmms/': typeof AuthenticatedHmmsIndexRoute
@@ -527,6 +654,7 @@ export interface FileRoutesByFullPath {
   '/samples/$sampleId/general': typeof AuthenticatedSamplesSampleIdGeneralRoute
   '/samples/$sampleId/quality': typeof AuthenticatedSamplesSampleIdQualityRoute
   '/samples/$sampleId/rights': typeof AuthenticatedSamplesSampleIdRightsRoute
+  '/api/v1/uploads/$uploadId': typeof ApiV1UploadsUploadIdRouteWithChildren
   '/indexes/$indexId/files/$filename': typeof IndexesIndexIdFilesFilenameRoute
   '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
@@ -536,7 +664,7 @@ export interface FileRoutesByFullPath {
   '/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdRouteRouteWithChildren
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
-  '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
+  '/api/v1/uploads/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
   '/refs/$refId/indexes/': typeof AuthenticatedRefsRefIdIndexesIndexRoute
   '/refs/$refId/otus/': typeof AuthenticatedRefsRefIdOtusIndexRoute
   '/samples/$sampleId/analyses/': typeof AuthenticatedSamplesSampleIdAnalysesIndexRoute
@@ -545,24 +673,39 @@ export interface FileRoutesByFullPath {
   '/refs/$refId/otus/$otuId/segments': typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute
   '/refs/$refId/otus/$otuId/': typeof AuthenticatedRefsRefIdOtusOtuIdIndexRoute
   '/refs/$refId/otus/$otuId/isolates/$isolateId': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute
-  '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
   '/refs/$refId/otus/$otuId/isolates/': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/account-setup': typeof AccountSetupRoute
+  '/email-remediation': typeof EmailRemediationRoute
+  '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
+  '/mfa-enrollment': typeof MfaEnrollmentRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
-  '/uploads': typeof UploadsRoute
+  '/verify-email': typeof VerifyEmailRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/api': typeof AuthenticatedAccountApiRoute
+  '/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
+  '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
+  '/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
+  '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
+  '/administration/security': typeof AuthenticatedAdministrationSecurityRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
+  '/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/refs/settings': typeof AuthenticatedRefsSettingsRoute
@@ -573,7 +716,8 @@ export interface FileRoutesByTo {
   '/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
-  '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/uploads': typeof ApiV1UploadsRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/administration': typeof AuthenticatedAdministrationIndexRoute
   '/hmms': typeof AuthenticatedHmmsIndexRoute
@@ -588,6 +732,7 @@ export interface FileRoutesByTo {
   '/samples/$sampleId/general': typeof AuthenticatedSamplesSampleIdGeneralRoute
   '/samples/$sampleId/quality': typeof AuthenticatedSamplesSampleIdQualityRoute
   '/samples/$sampleId/rights': typeof AuthenticatedSamplesSampleIdRightsRoute
+  '/api/v1/uploads/$uploadId': typeof ApiV1UploadsUploadIdRouteWithChildren
   '/indexes/$indexId/files/$filename': typeof IndexesIndexIdFilesFilenameRoute
   '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
@@ -596,7 +741,7 @@ export interface FileRoutesByTo {
   '/samples/$sampleId': typeof AuthenticatedSamplesSampleIdIndexRoute
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
-  '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
+  '/api/v1/uploads/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
   '/refs/$refId/indexes': typeof AuthenticatedRefsRefIdIndexesIndexRoute
   '/refs/$refId/otus': typeof AuthenticatedRefsRefIdOtusIndexRoute
   '/samples/$sampleId/analyses': typeof AuthenticatedSamplesSampleIdAnalysesIndexRoute
@@ -604,34 +749,49 @@ export interface FileRoutesByTo {
   '/refs/$refId/otus/$otuId/segments': typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute
   '/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdIndexRoute
   '/refs/$refId/otus/$otuId/isolates/$isolateId': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute
-  '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
   '/refs/$refId/otus/$otuId/isolates': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/account-setup': typeof AccountSetupRoute
+  '/email-remediation': typeof EmailRemediationRoute
+  '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
+  '/mfa-enrollment': typeof MfaEnrollmentRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
-  '/uploads': typeof UploadsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/_authenticated/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/_authenticated/hmms': typeof AuthenticatedHmmsRouteWithChildren
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/_authenticated/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
+  '/avatars/$handle': typeof AvatarsHandleRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads_/$uploadId': typeof UploadsUploadIdRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/_authenticated/account/api': typeof AuthenticatedAccountApiRoute
+  '/_authenticated/account/groups': typeof AuthenticatedAccountGroupsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/_authenticated/administration/banners': typeof AuthenticatedAdministrationBannersRoute
+  '/_authenticated/administration/caching': typeof AuthenticatedAdministrationCachingRoute
+  '/_authenticated/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/_authenticated/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
+  '/_authenticated/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
+  '/_authenticated/administration/security': typeof AuthenticatedAdministrationSecurityRoute
   '/_authenticated/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
+  '/_authenticated/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/_authenticated/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/refs/settings': typeof AuthenticatedRefsSettingsRoute
@@ -643,7 +803,8 @@ export interface FileRoutesById {
   '/_authenticated/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/_authenticated/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
-  '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/v1/uploads': typeof ApiV1UploadsRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_authenticated/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/_authenticated/hmms/': typeof AuthenticatedHmmsIndexRoute
@@ -659,6 +820,7 @@ export interface FileRoutesById {
   '/_authenticated/samples/$sampleId/general': typeof AuthenticatedSamplesSampleIdGeneralRoute
   '/_authenticated/samples/$sampleId/quality': typeof AuthenticatedSamplesSampleIdQualityRoute
   '/_authenticated/samples/$sampleId/rights': typeof AuthenticatedSamplesSampleIdRightsRoute
+  '/api/v1/uploads_/$uploadId': typeof ApiV1UploadsUploadIdRouteWithChildren
   '/indexes/$indexId/files/$filename': typeof IndexesIndexIdFilesFilenameRoute
   '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
@@ -668,7 +830,7 @@ export interface FileRoutesById {
   '/_authenticated/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdRouteRouteWithChildren
   '/_authenticated/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/_authenticated/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
-  '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
+  '/api/v1/uploads_/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
   '/_authenticated/refs/$refId/indexes/': typeof AuthenticatedRefsRefIdIndexesIndexRoute
   '/_authenticated/refs/$refId/otus/': typeof AuthenticatedRefsRefIdOtusIndexRoute
   '/_authenticated/samples/$sampleId/analyses/': typeof AuthenticatedSamplesSampleIdAnalysesIndexRoute
@@ -677,34 +839,49 @@ export interface FileRoutesById {
   '/_authenticated/refs/$refId/otus/$otuId/segments': typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute
   '/_authenticated/refs/$refId/otus/$otuId/': typeof AuthenticatedRefsRefIdOtusOtuIdIndexRoute
   '/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRoute
-  '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
   '/_authenticated/refs/$refId/otus/$otuId/isolates/': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account-setup'
+    | '/email-remediation'
+    | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
+    | '/mfa-enrollment'
     | '/monitoring'
+    | '/recover'
     | '/setup'
-    | '/uploads'
+    | '/verify-email'
     | '/administration'
     | '/refs'
     | '/account'
     | '/hmms'
+    | '/home'
     | '/jobs'
     | '/samples'
     | '/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
     | '/refs/$refId'
     | '/account/api'
+    | '/account/groups'
     | '/account/profile'
+    | '/account/security'
+    | '/account/settings'
+    | '/administration/banners'
+    | '/administration/caching'
+    | '/administration/email'
     | '/administration/groups'
+    | '/administration/ncbi'
+    | '/administration/security'
     | '/administration/settings'
+    | '/administration/uploads'
     | '/hmms/$hmmId'
     | '/jobs/$jobId'
     | '/refs/settings'
@@ -716,7 +893,8 @@ export interface FileRouteTypes {
     | '/subtractions/$subtractionId'
     | '/subtractions/files'
     | '/analyses/documents/$document'
-    | '/otus/$otuId/fasta'
+    | '/api/auth/$'
+    | '/api/v1/uploads'
     | '/account/'
     | '/administration/'
     | '/hmms/'
@@ -732,6 +910,7 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/general'
     | '/samples/$sampleId/quality'
     | '/samples/$sampleId/rights'
+    | '/api/v1/uploads/$uploadId'
     | '/indexes/$indexId/files/$filename'
     | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
@@ -741,7 +920,7 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId'
     | '/refs/$refId/indexes/$indexId'
     | '/samples/$sampleId/analyses/$analysisId'
-    | '/otus/$otuId/isolates/$isolateId/fasta'
+    | '/api/v1/uploads/$uploadId/finalize'
     | '/refs/$refId/indexes/'
     | '/refs/$refId/otus/'
     | '/samples/$sampleId/analyses/'
@@ -750,24 +929,39 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId/segments'
     | '/refs/$refId/otus/$otuId/'
     | '/refs/$refId/otus/$otuId/isolates/$isolateId'
-    | '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
     | '/refs/$refId/otus/$otuId/isolates/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/account-setup'
+    | '/email-remediation'
+    | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
+    | '/mfa-enrollment'
     | '/monitoring'
+    | '/recover'
     | '/setup'
-    | '/uploads'
+    | '/verify-email'
+    | '/home'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
     | '/'
     | '/account/api'
+    | '/account/groups'
     | '/account/profile'
+    | '/account/security'
+    | '/account/settings'
+    | '/administration/banners'
+    | '/administration/caching'
+    | '/administration/email'
     | '/administration/groups'
+    | '/administration/ncbi'
+    | '/administration/security'
     | '/administration/settings'
+    | '/administration/uploads'
     | '/hmms/$hmmId'
     | '/jobs/$jobId'
     | '/refs/settings'
@@ -778,7 +972,8 @@ export interface FileRouteTypes {
     | '/subtractions/$subtractionId'
     | '/subtractions/files'
     | '/analyses/documents/$document'
-    | '/otus/$otuId/fasta'
+    | '/api/auth/$'
+    | '/api/v1/uploads'
     | '/account'
     | '/administration'
     | '/hmms'
@@ -793,6 +988,7 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/general'
     | '/samples/$sampleId/quality'
     | '/samples/$sampleId/rights'
+    | '/api/v1/uploads/$uploadId'
     | '/indexes/$indexId/files/$filename'
     | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
@@ -801,7 +997,7 @@ export interface FileRouteTypes {
     | '/samples/$sampleId'
     | '/refs/$refId/indexes/$indexId'
     | '/samples/$sampleId/analyses/$analysisId'
-    | '/otus/$otuId/isolates/$isolateId/fasta'
+    | '/api/v1/uploads/$uploadId/finalize'
     | '/refs/$refId/indexes'
     | '/refs/$refId/otus'
     | '/samples/$sampleId/analyses'
@@ -809,33 +1005,48 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId/segments'
     | '/refs/$refId/otus/$otuId'
     | '/refs/$refId/otus/$otuId/isolates/$isolateId'
-    | '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
     | '/refs/$refId/otus/$otuId/isolates'
   id:
     | '__root__'
     | '/_authenticated'
+    | '/account-setup'
+    | '/email-remediation'
+    | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
+    | '/mfa-enrollment'
     | '/monitoring'
+    | '/recover'
     | '/setup'
-    | '/uploads'
+    | '/verify-email'
     | '/_authenticated/administration'
     | '/_authenticated/refs'
     | '/_authenticated/account'
     | '/_authenticated/hmms'
+    | '/_authenticated/home'
     | '/_authenticated/jobs'
     | '/_authenticated/samples'
     | '/_authenticated/subtractions'
+    | '/avatars/$handle'
     | '/health/live'
     | '/health/ready'
     | '/uploads_/$uploadId'
     | '/_authenticated/'
     | '/_authenticated/refs/$refId'
     | '/_authenticated/account/api'
+    | '/_authenticated/account/groups'
     | '/_authenticated/account/profile'
+    | '/_authenticated/account/security'
+    | '/_authenticated/account/settings'
+    | '/_authenticated/administration/banners'
+    | '/_authenticated/administration/caching'
+    | '/_authenticated/administration/email'
     | '/_authenticated/administration/groups'
+    | '/_authenticated/administration/ncbi'
+    | '/_authenticated/administration/security'
     | '/_authenticated/administration/settings'
+    | '/_authenticated/administration/uploads'
     | '/_authenticated/hmms/$hmmId'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/refs/settings'
@@ -847,7 +1058,8 @@ export interface FileRouteTypes {
     | '/_authenticated/subtractions/$subtractionId'
     | '/_authenticated/subtractions/files'
     | '/analyses/documents/$document'
-    | '/otus/$otuId/fasta'
+    | '/api/auth/$'
+    | '/api/v1/uploads'
     | '/_authenticated/account/'
     | '/_authenticated/administration/'
     | '/_authenticated/hmms/'
@@ -863,6 +1075,7 @@ export interface FileRouteTypes {
     | '/_authenticated/samples/$sampleId/general'
     | '/_authenticated/samples/$sampleId/quality'
     | '/_authenticated/samples/$sampleId/rights'
+    | '/api/v1/uploads_/$uploadId'
     | '/indexes/$indexId/files/$filename'
     | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
@@ -872,7 +1085,7 @@ export interface FileRouteTypes {
     | '/_authenticated/refs/$refId/otus/$otuId'
     | '/_authenticated/refs/$refId/indexes/$indexId'
     | '/_authenticated/samples/$sampleId/analyses/$analysisId'
-    | '/otus/$otuId/isolates/$isolateId/fasta'
+    | '/api/v1/uploads_/$uploadId/finalize'
     | '/_authenticated/refs/$refId/indexes/'
     | '/_authenticated/refs/$refId/otus/'
     | '/_authenticated/samples/$sampleId/analyses/'
@@ -881,28 +1094,33 @@ export interface FileRouteTypes {
     | '/_authenticated/refs/$refId/otus/$otuId/segments'
     | '/_authenticated/refs/$refId/otus/$otuId/'
     | '/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId'
-    | '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
     | '/_authenticated/refs/$refId/otus/$otuId/isolates/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AccountSetupRoute: typeof AccountSetupRoute
+  EmailRemediationRoute: typeof EmailRemediationRoute
+  EmailRemediationVerifyRoute: typeof EmailRemediationVerifyRoute
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   MetricsRoute: typeof MetricsRoute
+  MfaEnrollmentRoute: typeof MfaEnrollmentRoute
   MonitoringRoute: typeof MonitoringRoute
+  RecoverRoute: typeof RecoverRoute
   SetupRoute: typeof SetupRoute
-  UploadsRoute: typeof UploadsRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
+  AvatarsHandleRoute: typeof AvatarsHandleRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
   AnalysesDocumentsDocumentRoute: typeof AnalysesDocumentsDocumentRoute
-  OtusOtuIdFastaRoute: typeof OtusOtuIdFastaRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiV1UploadsRoute: typeof ApiV1UploadsRoute
+  ApiV1UploadsUploadIdRoute: typeof ApiV1UploadsUploadIdRouteWithChildren
   IndexesIndexIdFilesFilenameRoute: typeof IndexesIndexIdFilesFilenameRoute
   SamplesSampleIdReadsFilenameRoute: typeof SamplesSampleIdReadsFilenameRoute
   SubtractionsSubtractionIdFilesFilenameRoute: typeof SubtractionsSubtractionIdFilesFilenameRoute
-  OtusOtuIdIsolatesIsolateIdFastaRoute: typeof OtusOtuIdIsolatesIsolateIdFastaRoute
-  OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute: typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -912,6 +1130,27 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account-setup': {
+      id: '/account-setup'
+      path: '/account-setup'
+      fullPath: '/account-setup'
+      preLoaderRoute: typeof AccountSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email-remediation': {
+      id: '/email-remediation'
+      path: '/email-remediation'
+      fullPath: '/email-remediation'
+      preLoaderRoute: typeof EmailRemediationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email-remediation-verify': {
+      id: '/email-remediation-verify'
+      path: '/email-remediation-verify'
+      fullPath: '/email-remediation-verify'
+      preLoaderRoute: typeof EmailRemediationVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -935,11 +1174,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mfa-enrollment': {
+      id: '/mfa-enrollment'
+      path: '/mfa-enrollment'
+      fullPath: '/mfa-enrollment'
+      preLoaderRoute: typeof MfaEnrollmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/monitoring': {
       id: '/monitoring'
       path: '/monitoring'
       fullPath: '/monitoring'
       preLoaderRoute: typeof MonitoringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recover': {
+      id: '/recover'
+      path: '/recover'
+      fullPath: '/recover'
+      preLoaderRoute: typeof RecoverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup': {
@@ -949,11 +1202,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/uploads': {
-      id: '/uploads'
-      path: '/uploads'
-      fullPath: '/uploads'
-      preLoaderRoute: typeof UploadsRouteImport
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -984,6 +1237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHmmsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/jobs': {
       id: '/_authenticated/jobs'
       path: '/jobs'
@@ -1011,6 +1271,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/subtractions'
       preLoaderRoute: typeof AuthenticatedSubtractionsRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/avatars/$handle': {
+      id: '/avatars/$handle'
+      path: '/avatars/$handle'
+      fullPath: '/avatars/$handle'
+      preLoaderRoute: typeof AvatarsHandleRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/health/live': {
       id: '/health/live'
@@ -1047,11 +1314,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountApiRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/groups': {
+      id: '/_authenticated/account/groups'
+      path: '/groups'
+      fullPath: '/account/groups'
+      preLoaderRoute: typeof AuthenticatedAccountGroupsRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
     '/_authenticated/account/profile': {
       id: '/_authenticated/account/profile'
       path: '/profile'
       fullPath: '/account/profile'
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/security': {
+      id: '/_authenticated/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AuthenticatedAccountSecurityRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
     '/_authenticated/administration/': {
@@ -1061,6 +1349,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministrationIndexRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
+    '/_authenticated/administration/banners': {
+      id: '/_authenticated/administration/banners'
+      path: '/banners'
+      fullPath: '/administration/banners'
+      preLoaderRoute: typeof AuthenticatedAdministrationBannersRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/caching': {
+      id: '/_authenticated/administration/caching'
+      path: '/caching'
+      fullPath: '/administration/caching'
+      preLoaderRoute: typeof AuthenticatedAdministrationCachingRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/email': {
+      id: '/_authenticated/administration/email'
+      path: '/email'
+      fullPath: '/administration/email'
+      preLoaderRoute: typeof AuthenticatedAdministrationEmailRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
     '/_authenticated/administration/groups': {
       id: '/_authenticated/administration/groups'
       path: '/groups'
@@ -1068,11 +1377,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministrationGroupsRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
+    '/_authenticated/administration/ncbi': {
+      id: '/_authenticated/administration/ncbi'
+      path: '/ncbi'
+      fullPath: '/administration/ncbi'
+      preLoaderRoute: typeof AuthenticatedAdministrationNcbiRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/security': {
+      id: '/_authenticated/administration/security'
+      path: '/security'
+      fullPath: '/administration/security'
+      preLoaderRoute: typeof AuthenticatedAdministrationSecurityRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
     '/_authenticated/administration/settings': {
       id: '/_authenticated/administration/settings'
       path: '/settings'
       fullPath: '/administration/settings'
       preLoaderRoute: typeof AuthenticatedAdministrationSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/uploads': {
+      id: '/_authenticated/administration/uploads'
+      path: '/uploads'
+      fullPath: '/administration/uploads'
+      preLoaderRoute: typeof AuthenticatedAdministrationUploadsRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
     '/_authenticated/hmms/': {
@@ -1194,11 +1524,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalysesDocumentsDocumentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/otus/$otuId/fasta': {
-      id: '/otus/$otuId/fasta'
-      path: '/otus/$otuId/fasta'
-      fullPath: '/otus/$otuId/fasta'
-      preLoaderRoute: typeof OtusOtuIdFastaRouteImport
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/uploads': {
+      id: '/api/v1/uploads'
+      path: '/api/v1/uploads'
+      fullPath: '/api/v1/uploads'
+      preLoaderRoute: typeof ApiV1UploadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/administration/users/': {
@@ -1278,6 +1615,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSamplesSampleIdRightsRouteImport
       parentRoute: typeof AuthenticatedSamplesSampleIdRoute
     }
+    '/api/v1/uploads_/$uploadId': {
+      id: '/api/v1/uploads_/$uploadId'
+      path: '/api/v1/uploads/$uploadId'
+      fullPath: '/api/v1/uploads/$uploadId'
+      preLoaderRoute: typeof ApiV1UploadsUploadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/indexes/$indexId/files/$filename': {
       id: '/indexes/$indexId/files/$filename'
       path: '/indexes/$indexId/files/$filename'
@@ -1341,12 +1685,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport
       parentRoute: typeof AuthenticatedSamplesSampleIdAnalysesRoute
     }
-    '/otus/$otuId/isolates/$isolateId/fasta': {
-      id: '/otus/$otuId/isolates/$isolateId/fasta'
-      path: '/otus/$otuId/isolates/$isolateId/fasta'
-      fullPath: '/otus/$otuId/isolates/$isolateId/fasta'
-      preLoaderRoute: typeof OtusOtuIdIsolatesIsolateIdFastaRouteImport
-      parentRoute: typeof rootRouteImport
+    '/api/v1/uploads_/$uploadId/finalize': {
+      id: '/api/v1/uploads_/$uploadId/finalize'
+      path: '/finalize'
+      fullPath: '/api/v1/uploads/$uploadId/finalize'
+      preLoaderRoute: typeof ApiV1UploadsUploadIdFinalizeRouteImport
+      parentRoute: typeof ApiV1UploadsUploadIdRoute
     }
     '/_authenticated/refs/$refId/otus/$otuId/': {
       id: '/_authenticated/refs/$refId/otus/$otuId/'
@@ -1390,19 +1734,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRoute
     }
-    '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta': {
-      id: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
-      path: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
-      fullPath: '/otus/$otuId/isolates/$isolateId/sequences/$sequenceId/fasta'
-      preLoaderRoute: typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 interface AuthenticatedAdministrationRouteRouteChildren {
+  AuthenticatedAdministrationBannersRoute: typeof AuthenticatedAdministrationBannersRoute
+  AuthenticatedAdministrationCachingRoute: typeof AuthenticatedAdministrationCachingRoute
+  AuthenticatedAdministrationEmailRoute: typeof AuthenticatedAdministrationEmailRoute
   AuthenticatedAdministrationGroupsRoute: typeof AuthenticatedAdministrationGroupsRoute
+  AuthenticatedAdministrationNcbiRoute: typeof AuthenticatedAdministrationNcbiRoute
+  AuthenticatedAdministrationSecurityRoute: typeof AuthenticatedAdministrationSecurityRoute
   AuthenticatedAdministrationSettingsRoute: typeof AuthenticatedAdministrationSettingsRoute
+  AuthenticatedAdministrationUploadsRoute: typeof AuthenticatedAdministrationUploadsRoute
   AuthenticatedAdministrationIndexRoute: typeof AuthenticatedAdministrationIndexRoute
   AuthenticatedAdministrationUsersUserIdRoute: typeof AuthenticatedAdministrationUsersUserIdRoute
   AuthenticatedAdministrationUsersIndexRoute: typeof AuthenticatedAdministrationUsersIndexRoute
@@ -1410,10 +1753,21 @@ interface AuthenticatedAdministrationRouteRouteChildren {
 
 const AuthenticatedAdministrationRouteRouteChildren: AuthenticatedAdministrationRouteRouteChildren =
   {
+    AuthenticatedAdministrationBannersRoute:
+      AuthenticatedAdministrationBannersRoute,
+    AuthenticatedAdministrationCachingRoute:
+      AuthenticatedAdministrationCachingRoute,
+    AuthenticatedAdministrationEmailRoute:
+      AuthenticatedAdministrationEmailRoute,
     AuthenticatedAdministrationGroupsRoute:
       AuthenticatedAdministrationGroupsRoute,
+    AuthenticatedAdministrationNcbiRoute: AuthenticatedAdministrationNcbiRoute,
+    AuthenticatedAdministrationSecurityRoute:
+      AuthenticatedAdministrationSecurityRoute,
     AuthenticatedAdministrationSettingsRoute:
       AuthenticatedAdministrationSettingsRoute,
+    AuthenticatedAdministrationUploadsRoute:
+      AuthenticatedAdministrationUploadsRoute,
     AuthenticatedAdministrationIndexRoute:
       AuthenticatedAdministrationIndexRoute,
     AuthenticatedAdministrationUsersUserIdRoute:
@@ -1519,13 +1873,19 @@ const AuthenticatedRefsRouteRouteWithChildren =
 
 interface AuthenticatedAccountRouteChildren {
   AuthenticatedAccountApiRoute: typeof AuthenticatedAccountApiRoute
+  AuthenticatedAccountGroupsRoute: typeof AuthenticatedAccountGroupsRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountSecurityRoute: typeof AuthenticatedAccountSecurityRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
   AuthenticatedAccountApiRoute: AuthenticatedAccountApiRoute,
+  AuthenticatedAccountGroupsRoute: AuthenticatedAccountGroupsRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountSecurityRoute: AuthenticatedAccountSecurityRoute,
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
 }
 
@@ -1652,6 +2012,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRefsRouteRoute: typeof AuthenticatedRefsRouteRouteWithChildren
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRouteWithChildren
   AuthenticatedHmmsRoute: typeof AuthenticatedHmmsRouteWithChildren
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRouteWithChildren
   AuthenticatedSamplesRoute: typeof AuthenticatedSamplesRouteWithChildren
   AuthenticatedSubtractionsRoute: typeof AuthenticatedSubtractionsRouteWithChildren
@@ -1664,6 +2025,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRefsRouteRoute: AuthenticatedRefsRouteRouteWithChildren,
   AuthenticatedAccountRoute: AuthenticatedAccountRouteWithChildren,
   AuthenticatedHmmsRoute: AuthenticatedHmmsRouteWithChildren,
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRouteWithChildren,
   AuthenticatedSamplesRoute: AuthenticatedSamplesRouteWithChildren,
   AuthenticatedSubtractionsRoute: AuthenticatedSubtractionsRouteWithChildren,
@@ -1674,26 +2036,42 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface ApiV1UploadsUploadIdRouteChildren {
+  ApiV1UploadsUploadIdFinalizeRoute: typeof ApiV1UploadsUploadIdFinalizeRoute
+}
+
+const ApiV1UploadsUploadIdRouteChildren: ApiV1UploadsUploadIdRouteChildren = {
+  ApiV1UploadsUploadIdFinalizeRoute: ApiV1UploadsUploadIdFinalizeRoute,
+}
+
+const ApiV1UploadsUploadIdRouteWithChildren =
+  ApiV1UploadsUploadIdRoute._addFileChildren(ApiV1UploadsUploadIdRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AccountSetupRoute: AccountSetupRoute,
+  EmailRemediationRoute: EmailRemediationRoute,
+  EmailRemediationVerifyRoute: EmailRemediationVerifyRoute,
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   MetricsRoute: MetricsRoute,
+  MfaEnrollmentRoute: MfaEnrollmentRoute,
   MonitoringRoute: MonitoringRoute,
+  RecoverRoute: RecoverRoute,
   SetupRoute: SetupRoute,
-  UploadsRoute: UploadsRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
+  AvatarsHandleRoute: AvatarsHandleRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
   UploadsUploadIdRoute: UploadsUploadIdRoute,
   AnalysesDocumentsDocumentRoute: AnalysesDocumentsDocumentRoute,
-  OtusOtuIdFastaRoute: OtusOtuIdFastaRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiV1UploadsRoute: ApiV1UploadsRoute,
+  ApiV1UploadsUploadIdRoute: ApiV1UploadsUploadIdRouteWithChildren,
   IndexesIndexIdFilesFilenameRoute: IndexesIndexIdFilesFilenameRoute,
   SamplesSampleIdReadsFilenameRoute: SamplesSampleIdReadsFilenameRoute,
   SubtractionsSubtractionIdFilesFilenameRoute:
     SubtractionsSubtractionIdFilesFilenameRoute,
-  OtusOtuIdIsolatesIsolateIdFastaRoute: OtusOtuIdIsolatesIsolateIdFastaRoute,
-  OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute:
-    OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

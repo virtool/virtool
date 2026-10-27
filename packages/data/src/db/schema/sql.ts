@@ -14,3 +14,11 @@ import type { AnyPgColumn } from "drizzle-orm/pg-core";
 export function lower(column: AnyPgColumn): SQL {
 	return sql`lower(${column})`;
 }
+
+/**
+ * A column trimmed and folded to lower case for normalized-email indexes.
+ * Must match `normalizeEmail` in `@virtool/contracts`.
+ */
+export function lowerTrim(column: AnyPgColumn): SQL {
+	return sql`lower(btrim(${column}))`;
+}

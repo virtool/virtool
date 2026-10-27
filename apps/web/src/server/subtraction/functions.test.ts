@@ -1,7 +1,7 @@
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { jobs } from "@virtool/data/db/schema/jobs";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { subtractions } from "@virtool/data/db/schema/subtractions";
 import { uploads } from "@virtool/data/db/schema/uploads";
 import { users } from "@virtool/data/db/schema/users";
@@ -21,19 +21,18 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -65,7 +64,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(subtractions);
 	await db.delete(jobs);
 	await db.delete(uploads);
@@ -133,7 +132,6 @@ describe("createSubtraction", () => {
 
 		expect(subtraction.name).toBe("Arabidopsis");
 		expect(subtraction.nickname).toBe("plant");
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 	});
 
 	it("maps a missing upload to a 400", async () => {
@@ -145,8 +143,11 @@ describe("createSubtraction", () => {
 				nickname: "",
 				uploadId: 999_999,
 			}),
-		).rejects.toThrow("Upload does not exist.");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Upload does not exist.",
+			status: 400,
+		});
 	});
 });
 
@@ -156,8 +157,11 @@ describe("getSubtraction", () => {
 
 		await expect(
 			call("getSubtractionFn", { subtractionId: 999_999 }),
-		).rejects.toThrow("Subtraction not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Subtraction not found.",
+			status: 404,
+		});
 	});
 });
 

@@ -1,4 +1,5 @@
 import type { Db } from "@virtool/data/db/pg";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import {
 	HMM_STATUS_ID,
@@ -6,7 +7,6 @@ import {
 	hmms,
 	legacyHmmStatus,
 } from "@virtool/data/db/schema/hmms";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -27,19 +27,18 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -73,7 +72,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(userGroups);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 	await db.delete(groups);
 	await db.delete(legacyHmmStatus);
@@ -140,7 +139,6 @@ describe("installHmm", () => {
 			ready: false,
 			user: { id: userId },
 		});
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 
 		const [task] = await db.select().from(tasks);
 		expect(task).toMatchObject({
@@ -176,7 +174,6 @@ describe("installHmm", () => {
 		};
 
 		expect(installed).toMatchObject({ user: { id: userId } });
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 	});
 
 	it("refuses when an install is already in progress", async () => {
@@ -184,8 +181,11 @@ describe("installHmm", () => {
 		await seedStatus({ updates: [{ ready: false } as HmmUpdate] });
 		const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-		await expect(call("installHmmFn")).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		await expect(call("installHmmFn")).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Install already in progress.",
+			status: 409,
+		});
 		expect(fetchSpy).not.toHaveBeenCalled();
 		expect(await db.select().from(tasks)).toHaveLength(0);
 	});
@@ -195,8 +195,9 @@ describe("installHmm", () => {
 		await seedStatus();
 		mockManifest([]);
 
-		await expect(call("installHmmFn")).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(502);
+		await expect(call("installHmmFn")).rejects.toThrow(
+			"Target release does not exist",
+		);
 		expect(await db.select().from(tasks)).toHaveLength(0);
 	});
 });
@@ -205,7 +206,10 @@ describe("getHmm", () => {
 	it("responds 404 when the HMM is absent", async () => {
 		await signIn(db, getRequest, { administratorRole: "base" });
 
-		await expect(call("getHmmFn", { hmmId: 5000 })).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("getHmmFn", { hmmId: 5000 })).rejects.toMatchObject({
+			name: "ClientError",
+			message: "HMM not found.",
+			status: 404,
+		});
 	});
 });

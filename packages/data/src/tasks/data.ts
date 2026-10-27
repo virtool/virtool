@@ -1,9 +1,9 @@
 import { hostname } from "node:os";
-import type {
-	JsonObject,
-	OnDemandTaskName,
+import {
+	type JsonObject,
+	type OnDemandTaskName,
 	PeriodicTaskName,
-	Task,
+	type Task,
 } from "@virtool/contracts";
 import {
 	and,
@@ -14,6 +14,8 @@ import {
 	isNotNull,
 	isNull,
 	lt,
+	lte,
+	notInArray,
 	or,
 	type SQL,
 	sql,
@@ -123,8 +125,8 @@ function isActive(): SQL | undefined {
 export type PeriodicSpawnOutcome = "spawned" | "skipped_locked" | "not_due";
 
 /**
- * How long an outstanding row suppresses new spawns of its type before the gate
- * treats it as wedged and lets a spawn through.
+ * How long an outstanding row suppresses new spawns before it is retired as
+ * wedged.
  *
  * Twelve times {@link TASK_LEASE_SECONDS}, and well above any periodic task's
  * real runtime, so a healthy run never trips it and a stuck type frees itself
@@ -132,11 +134,13 @@ export type PeriodicSpawnOutcome = "spawned" | "skipped_locked" | "not_due";
  */
 export const TASK_WEDGE_SECONDS = 3600;
 
+const PERIODIC_TASK_WEDGED_ERROR = `periodic task exceeded the ${TASK_WEDGE_SECONDS}-second wedge ceiling`;
+
 /** What {@link createPeriodicTask} did, and the row if it inserted one. */
 export type PeriodicSpawnResult =
-	| { outcome: "spawned"; task: Task }
-	| { outcome: "skipped_locked"; task: null }
-	| { outcome: "not_due"; task: null };
+	| { outcome: "spawned"; retiredTaskIds: number[]; task: Task }
+	| { outcome: "skipped_locked"; retiredTaskIds: number[]; task: null }
+	| { outcome: "not_due"; retiredTaskIds: number[]; task: null };
 
 /**
  * Spawn a periodic task if one is due, excluding any other spawner with a
@@ -187,13 +191,16 @@ export type PeriodicSpawnResult =
  *
  * The age ceiling backstops a row nothing ever finishes — a runner wedged with
  * a live heartbeat, or one that re-wedges on every reclaim — which would
- * otherwise block the type for good. Past {@link TASK_WEDGE_SECONDS} the gate
- * lets a spawn through, bounding the cost to one duplicate per ceiling window.
+ * otherwise block the type for good. At {@link TASK_WEDGE_SECONDS}, the row is
+ * failed before the gate is checked. Marking it complete fences a current
+ * holder through the same guards used by lease, progress and terminal writes,
+ * while retiring an old unclaimed row keeps FIFO claiming from crash-looping
+ * on it ahead of the replacement.
  *
- * The lock, the check and the insert are one transaction; the event is emitted
- * after it commits, so a rolled-back insert cannot announce a row that does not
- * exist. `Db` rather than `DbOrTx` for that reason — this function has to own
- * the transaction it releases the lock with.
+ * The lock, retirements, check and insert are one transaction; events are
+ * emitted after it commits, so a rolled-back mutation cannot be announced.
+ * `Db` rather than `DbOrTx` for that reason — this function has to own the
+ * transaction it releases the lock with.
  *
  * `intervalSeconds` must be positive. It is validated where the schedule is
  * registered, at startup, rather than on every tick; zero here would leave the
@@ -212,8 +219,22 @@ export async function createPeriodicTask(
 			);
 
 			if (!lock[0]?.locked) {
-				return { outcome: "skipped_locked", task: null };
+				return { outcome: "skipped_locked", retiredTaskIds: [], task: null };
 			}
+
+			const retired = await tx
+				.update(tasksTable)
+				.set({ complete: true, error: PERIODIC_TASK_WEDGED_ERROR })
+				.where(
+					and(
+						eq(tasksTable.type, type),
+						isActive(),
+						lte(tasksTable.created_at, secondsAgo(TASK_WEDGE_SECONDS)),
+					),
+				)
+				.returning({ id: tasksTable.id });
+
+			const retiredTaskIds = retired.map(({ id }) => id);
 
 			const [blocking] = await tx
 				.select({ id: tasksTable.id })
@@ -222,10 +243,7 @@ export async function createPeriodicTask(
 					and(
 						eq(tasksTable.type, type),
 						or(
-							and(
-								isActive(),
-								gt(tasksTable.created_at, secondsAgo(TASK_WEDGE_SECONDS)),
-							),
+							isActive(),
 							gt(tasksTable.created_at, secondsAgo(intervalSeconds)),
 						),
 					),
@@ -233,16 +251,23 @@ export async function createPeriodicTask(
 				.limit(1);
 
 			if (blocking !== undefined) {
-				return { outcome: "not_due", task: null };
+				return { outcome: "not_due", retiredTaskIds, task: null };
 			}
 
-			return { outcome: "spawned", task: await insertTask(tx, type, {}) };
+			return {
+				outcome: "spawned",
+				retiredTaskIds,
+				task: await insertTask(tx, type, {}),
+			};
 		},
 	);
 
-	if (result.outcome === "spawned") {
-		await emit("tasks", result.task.id, "create");
-	}
+	await Promise.all([
+		...result.retiredTaskIds.map((taskId) => emit("tasks", taskId, "update")),
+		...(result.outcome === "spawned"
+			? [emit("tasks", result.task.id, "create")]
+			: []),
+	]);
 
 	return result;
 }
@@ -364,6 +389,11 @@ export function buildRunnerId(): string {
  * re-running partially-finished work, but a row worth reclaiming has almost
  * always reported progress, so it would exclude exactly the rows the reclaim
  * exists for.
+ *
+ * Periodic rows at the wedge ceiling are deliberately excluded. The spawner
+ * retires them, but a restarted runner can race its first tick; excluding them
+ * here prevents that runner from reclaiming the poison row and crashing before
+ * the retirement commits. On-demand tasks have no age ceiling.
  */
 function isClaimable(
 	allowedTypes: readonly string[],
@@ -373,6 +403,10 @@ function isClaimable(
 		eq(tasksTable.complete, false),
 		isNull(tasksTable.error),
 		inArray(tasksTable.type, [...allowedTypes]),
+		or(
+			notInArray(tasksTable.type, [...PeriodicTaskName.options]),
+			gt(tasksTable.created_at, secondsAgo(TASK_WEDGE_SECONDS)),
+		),
 		or(
 			isNull(tasksTable.acquired_at),
 			lt(tasksTable.acquired_at, secondsAgo(leaseSeconds)),

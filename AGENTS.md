@@ -1,18 +1,20 @@
 # Virtool
 
-`CLAUDE.md` is a symlink to this file. Edit `AGENTS.md` — never write to
+`CLAUDE.md` is a symlink to this file. Edit `AGENTS.md`. Never write to
 `CLAUDE.md` directly.
 
-This is a pnpm monorepo. Use `pnpm` for all install, run, and exec commands —
+This is a pnpm monorepo. Use `pnpm` for all install, run, and exec commands.
 never `npm` or `bun`.
 
 ## Apps
 
 | App | Purpose |
 | --- | --- |
-| [`@virtool/web`](apps/web/README.md) | The Virtool SPA and its TanStack Start server. |
+| [`@virtool/web`](apps/web/README.md) | The Virtool web app. |
 | [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
-| [`@virtool/internal`](apps/internal/README.md) | One image, three subcommands: `serve` (jobs API), `run` (task spawner and runner), `migrate` (Drizzle migrations). |
+| [`@virtool/dev`](apps/dev/README.md) | Local worktree environments and workflow scheduling. |
+| [`@virtool/dev-tools`](apps/dev-tools/README.md) | Development commands that act on one environment's data. |
+| [`@virtool/internal`](apps/internal/README.md) | One image for the jobs API, task runner, migrations, data migrations, and authentication remediation. |
 | [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
 | [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA. |
 | [`@virtool/pathoscope`](apps/pathoscope/README.md) | Quantifies known viruses in a sample. |
@@ -46,8 +48,8 @@ Apps bundle; packages stay source.
 ## Rules
 
 - No app may import another app's source.
-- Don't use the dev server. Use Tilt and Minikube via the root `Tiltfile`; see
-  [dev/README.md](dev/README.md).
+- Run development servers through `vtd`, not directly on the
+  host. See [dev/README.md](dev/README.md).
 
 ## Tooling
 
@@ -73,12 +75,13 @@ workspace dependency. Shared native tools live in
 `packages/workflow-tools/Dockerfile` and are linked to app builds by
 `packages/image-build/docker-bake.hcl`.
 
-Keep runtime stages on `node:24-bookworm-slim`; workflow tools are glibc-linked,
-so do not add an Alpine stage. Give each bioinformatics tool its own independent
-build stage so a target builds only the tools it uses. When adding a tool,
-inspect the pinned entry point and install every runtime interpreter and shared
-library it needs; a missing interpreter does not fail the image build and
-surfaces only when the workflow runs.
+Keep runtime stages on `node:24-bookworm-slim`, pinned by digest, and set
+`NODE_ENV="production"` in each one. Workflow tools are glibc-linked, so don't
+add an Alpine stage. Give each bioinformatics tool its own independent build
+stage so a target builds only the tools it uses. When adding a tool, inspect
+the pinned entry point and install every runtime interpreter and shared library
+it needs; a missing interpreter doesn't fail the image build and surfaces only
+when the workflow runs.
 
 ### When to run checks
 
@@ -95,7 +98,7 @@ surfaces only when the workflow runs.
 ## Client
 
 Client code is server-rendered and compiled with React Compiler. Keep render
-pure: do not read browser globals, clocks, randomness, locale, or mutable
+pure: don't read browser globals, clocks, randomness, locale, or mutable
 module state during render. Use `useSyncExternalStore` with a cached server
 snapshot for ambient browser state and `ClientOnly` for measured subtrees.
 
@@ -131,9 +134,15 @@ repository-wide rules in view:
   `/metrics` endpoint. Keep labels bounded and use the shared constant-time
   bearer-token helper. See [the web metrics guide](apps/web/README.md#metrics)
   and [the internal metrics guide](apps/internal/README.md#metrics).
+- Schema changes that depend on the data being in a particular state pair with
+  a data migration: an audit or resumable backfill recorded in
+  `data_migrations`. Register its exact SQL migration tag and start that SQL
+  file with the matching key/version assertion. Bump both versions when the
+  body changes what it accepts or writes. Bodies use historical SQL, not the
+  moving schema mirror. See [the data migrations guide](apps/internal/README.md#paired-data-migrations).
 - `apps/internal`'s `run` subcommand carries both the periodic spawner and the
   task runner. Its lease, fencing, shutdown, progress, metrics, and task-body
-  contracts are maintained in [its README](apps/internal/README.md); do not
+  contracts are maintained in [its README](apps/internal/README.md); don't
   duplicate them here.
 
 ## Data
@@ -162,7 +171,7 @@ behavior, and testing.
 Third-party requests identify themselves with `USER_AGENT` from
 `@virtool/contracts/userAgent`; see [packages/data/README.md](packages/data/README.md).
 
-NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It is the
+NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It's the
 only E-utilities client; see [packages/ncbi/README.md](packages/ncbi/README.md).
 NCBI BLAST is a different API and stays in `@virtool/data`.
 
@@ -176,7 +185,7 @@ for claim, ping, cancellation, failure, and exit behaviour.
 
 Workflow files always stream, and storage keys are recorded or minted rather
 than derived. See [the internal app README](apps/internal/README.md) for
-finalize manifests and key validation, [references](docs/references.md) for the SQLite
+finalization manifests and key validation, [references](docs/references.md) for the SQLite
 reference artifact, and [workflow testing](packages/workflow/TESTING.md) for
 the shared test harness.
 
@@ -184,23 +193,51 @@ the shared test harness.
 
 See [docs/code-style.md](docs/code-style.md) for rationale and examples.
 
-- **Functions:** Use function declarations, not arrow functions.
-- **Refs:** Treat `ref` as an ordinary prop; do not use `forwardRef`.
-- **Imports:** Biome organises imports automatically. Don't manually organise
-  or clean up unused imports.
-- **Conditionals:** Always use curly braces with `if`/`else`.
-- **Prefer `const`** over `let`.
-- **Types:** Use `type`, not `interface`.
-- **JSDoc:** Give every exported `type` a one-line `/** ... */` that begins
-  with what the type is.
-- **Naming:** `is`/`has`/`get` for pure reads; `check`/`validate`/
-  `assert` for operations that may throw. Suffix `createServerFn` exports with
-  `Fn`; keep wrapped domain-function names unsuffixed.
-- **Comments:** Default to none. Comment only to explain non-obvious reasons;
-  do not restate code, narrate history, reference the current task, or name a
-  caller.
-- **Concurrency:** Put independent awaits in `Promise.all`; use
-  `Promise.allSettled` when every outcome is required.
+### Functions
+
+Use function declarations, not arrow functions.
+
+### Refs
+
+Treat `ref` as an ordinary prop; don't use `forwardRef`.
+
+### Imports
+
+Biome organises imports automatically. Don't manually organise or clean up
+unused imports.
+
+### Conditionals
+
+Always use curly braces with `if`/`else`.
+
+### Prefer `const`
+
+Use `const` over `let`.
+
+### Types
+
+Use `type`, not `interface`.
+
+### JSDoc
+
+Give every exported `type` a one-line `/** ... */` that begins with what the
+type is.
+
+### Naming
+
+`is`/`has`/`get` for pure reads; `check`/`validate`/`assert` for operations that
+may throw. Suffix `createServerFn` exports with `Fn`; keep wrapped domain-function
+names unsuffixed.
+
+### Comments
+
+Default to none. Comment only to explain non-obvious reasons; don't restate
+code, narrate history, reference the current task, or name a caller.
+
+### Concurrency
+
+Put independent awaits in `Promise.all`; use `Promise.allSettled` when every
+outcome is required.
 
 ## Testing
 
@@ -218,6 +255,10 @@ App and package READMEs document their test harnesses and commands.
 Keep repository-wide rules in `AGENTS.md`, detailed rationale in `docs/`, and
 app- or package-specific documentation in that directory's `README.md`. Update
 documentation in the same change as the code it describes.
+
+Don't point to source code from Markdown: no links to source files and no
+source file paths. Describe the behavior or convention, and keep
+implementation detail in code comments.
 
 Check the affected documentation when a change:
 
@@ -239,7 +280,7 @@ type(scope): description
 ```
 
 - Title: lowercase, no period, under 72 characters.
-- Scope is optional. Allowed scope: `deps` (dependency changes). Do not scope
+- Scope is optional. Allowed scope: `deps` (dependency changes). Don't scope
   by domain.
 - Releases are automated with Changesets. A pull request that changes a
   versioned workspace must add a changeset (`pnpm changeset`), or CI fails; a
@@ -260,13 +301,13 @@ type(scope): description
 
 #### Issue conventions
 
-- Capitalize issue titles.
+- Write issue titles in sentence case.
 - Place issues in **Todo** by default; use **Backlog** only when explicitly
   asked. If an issue seems like it should be Backlog, say so and ask.
 - Never assign issues to anyone.
 - **Never change an issue's status.** Status is managed automatically from
   branch and PR activity. Move an issue by hand only when explicitly told to.
-  The Todo-by-default rule above governs issues you create, not ones already
+  The Todo-by-default rule applies only to issues you create, not ones already
   in flight.
 - Label bugs as **Bug** in addition to any other labels.
 - Never create new Linear labels.

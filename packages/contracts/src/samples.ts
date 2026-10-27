@@ -22,7 +22,7 @@ export type WorkflowState = "complete" | "pending" | "none" | "incompatible";
 
 /** The state of each workflow tracked for a sample. */
 export type SampleWorkflows = {
-	/** The state of the NuVs workflow */
+	/** The state of the Nuvs workflow */
 	nuvs: WorkflowState;
 
 	/** The state of the Pathoscope workflow */
@@ -190,3 +190,16 @@ export const SampleUpdateRequest = z.object({
 });
 
 export type SampleUpdateRequest = z.infer<typeof SampleUpdateRequest>;
+
+/**
+ * Derive a user-friendly filename for a sample's read file from the sample
+ * name and the stored read name
+ * (e.g. "Sample 1" and "reads_2.fq.gz" -> "Sample_1_2.fq.gz").
+ */
+export function getReadDownloadName(
+	sampleName: string,
+	readName: string,
+): string {
+	const side = readName.match(/reads_(\d+)/)?.[1] ?? "1";
+	return `${sampleName.replace(/[/\\:*?"<>|\s]/g, "_")}_${Number(side)}.fq.gz`;
+}

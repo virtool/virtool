@@ -33,13 +33,14 @@ proxy in the path trips and no bytes pass through the server.
   download SAS (`cw` permissions). `uploadUrl` rehosts the URL on a configured
   public origin, such as a Front Door route to a private storage account. It
   falls back to `downloadUrl` and then the blob endpoint.
-- **S3** and **`MemoryStorage`** leave the method undefined — chunked direct
-  upload is an Azure capability — and a caller falls back to the proxied upload
-  route.
+- **S3** and **`MemoryStorage`** leave the method undefined. Chunked direct
+  upload is an Azure capability. The web app returns `503` when it cannot
+  issue an upload URL.
 
 ## Testing
 
-The `unit` Vitest project covers behavior testable with `MemoryStorage`. The
+The `unit` Vitest project covers `MemoryStorage` and Azure URL signing without
+network requests. The
 `integration` project exercises the S3 and Azure backends against real Garage
 and Azurite containers and runs in the shared `Data & Storage / Test` CI job.
 Place tests beside their source as `*.test.ts`.

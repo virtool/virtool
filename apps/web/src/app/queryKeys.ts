@@ -31,6 +31,8 @@ export type QueryKeys = {
  * invalidating the shorter key always invalidates the longer ones beneath it.
  * Features that cache something outside these seven shapes spread the result
  * and derive the extra member from a base key, keeping it inside the hierarchy.
+ * Give custom variants their own segment; an empty filter list aliases the
+ * invalidation prefix instead of distinguishing a cache entry.
  *
  * @param domain - The namespace the keys are rooted at, usually the plural resource name
  * @returns The query keys for the domain

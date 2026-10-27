@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import { getDocumentTitle } from "@app/development";
 import type { ReactNode } from "react";
 
 type ViewHeaderProps = {
@@ -14,7 +15,7 @@ export default function ViewHeader({
 }: ViewHeaderProps) {
 	return (
 		<header className={cn("mt-2.5 mb-5", className)}>
-			<title>{title}</title>
+			<title>{getDocumentTitle(title)}</title>
 			{children}
 		</header>
 	);

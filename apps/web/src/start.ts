@@ -3,9 +3,14 @@ import {
 	sentryGlobalFunctionMiddleware,
 	sentryGlobalRequestMiddleware,
 } from "@sentry/tanstackstart-react";
+import { expireLegacySessionCookies } from "@server/auth/cookies";
 import { createAuthenticationMiddleware } from "@server/auth/middleware";
 import { buildContentSecurityPolicy, getRequestNonce } from "@server/csp";
-import { errorLoggingMiddleware } from "@server/error-logging";
+import { isCsrfCandidate } from "@server/csrf";
+import {
+	databaseUnavailableMiddleware,
+	errorLoggingMiddleware,
+} from "@server/error-logging";
 import { metricsMiddleware } from "@server/metrics/middleware";
 import {
 	createCsrfMiddleware,
@@ -118,11 +123,19 @@ const documentHeadersMiddleware = createMiddleware().server(
 	},
 );
 
-// Server functions are same-origin RPC endpoints callable from any site.
-// Scoping CSRF checks to serverFn requests avoids blocking regular page
-// loads and API proxy routes that don't share the same threat model.
+// Every request, so a browser still holding a retired legacy session loses it on
+// its first visit and signs in again through Better Auth.
+const legacySessionCookiesMiddleware = createMiddleware().server(
+	async ({ next }) => {
+		expireLegacySessionCookies();
+		return next();
+	},
+);
+
+// Page loads and API-key requests are left unchecked: neither carries a
+// cookie-authenticated mutation that a forged cross-origin request can trigger.
 const csrfMiddleware = createCsrfMiddleware({
-	filter: (ctx) => ctx.handlerType === "serverFn",
+	filter: isCsrfCandidate,
 });
 
 // Sentry middleware go first in each list so the request span wraps the
@@ -136,10 +149,13 @@ export const startInstance = createStart(() => ({
 	serializationAdapters: [serverErrorSerializationAdapter],
 	// The metrics middleware sits directly inside Sentry's so its timing covers
 	// everything the request actually pays for, including the CSRF check and the
-	// document-header rewrite below it.
+	// document-header rewrite below it. The database-outage middleware sits
+	// inside both, so its 503 is counted but never reaches Sentry.
 	requestMiddleware: [
 		sentryGlobalRequestMiddleware,
 		metricsMiddleware,
+		databaseUnavailableMiddleware,
+		legacySessionCookiesMiddleware,
 		csrfMiddleware,
 		documentHeadersMiddleware,
 	],

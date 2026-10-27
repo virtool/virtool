@@ -1,0 +1,157 @@
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+import { AUTH_BASE_PATH } from "@virtool/contracts";
+import { hasPasskey } from "@virtool/data/auth/passkeys";
+import { resolveBrowserSession } from "@virtool/data/auth/session";
+import { authAccounts, authTwoFactors } from "@virtool/data/db/schema/auth";
+import { APIError } from "better-auth/api";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { getSessionFreshRemainingMs } from "./freshness";
+import { attributePrincipal, UnauthorizedError } from "./middleware";
+import { authenticated } from "./policy";
+import {
+	RECENT_AUTHENTICATION_PATH,
+	recentAuthenticationChallengeSchema,
+} from "./recentAuthenticationChallenge";
+
+async function checkChallengeResponse(response: Response): Promise<void> {
+	if (response.ok) {
+		return;
+	}
+	if (response.status === 401) {
+		const body = await response.json();
+		if (body.code === "UNAUTHORIZED") {
+			throw new UnauthorizedError();
+		}
+	}
+	if (response.status >= 500) {
+		throw new Error("Authentication challenge provider failed.");
+	}
+	const status = response.status === 429 ? 429 : 400;
+	throw new ClientError("Authentication challenge failed.", status);
+}
+
+function rethrowReplacementError(err: unknown): never {
+	if (
+		err instanceof APIError &&
+		err.statusCode === 401 &&
+		err.body?.code === "STEP_UP_SESSION_ENDED"
+	) {
+		throw new ClientError("Authentication challenge expired.", 409);
+	}
+	if (err instanceof APIError && err.statusCode === 401) {
+		throw new UnauthorizedError();
+	}
+	throw err;
+}
+
+/** Return how many milliseconds the current browser session remains fresh. */
+export const getRecentAuthenticationRemainingFn = createServerFn({
+	method: "GET",
+})
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		const session = await resolveBrowserSession(
+			db,
+			context.principal.sessionId,
+			context.principal.userId,
+		);
+		if (!session) {
+			throw new UnauthorizedError();
+		}
+		return getSessionFreshRemainingMs(session.createdAt);
+	});
+
+/** Return the non-secret step-up methods enrolled for the current account. */
+export const getRecentAuthenticationMethodsFn = createServerFn({
+	method: "GET",
+})
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		const [passwordAccount, twoFactor, passkey] = await Promise.all([
+			db
+				.select({ id: authAccounts.id })
+				.from(authAccounts)
+				.where(
+					and(
+						eq(authAccounts.userId, context.principal.userId),
+						eq(authAccounts.providerId, "credential"),
+						isNotNull(authAccounts.password),
+					),
+				)
+				.limit(1),
+			db
+				.select({ id: authTwoFactors.id })
+				.from(authTwoFactors)
+				.where(
+					and(
+						eq(authTwoFactors.userId, context.principal.userId),
+						eq(authTwoFactors.verified, true),
+					),
+				)
+				.limit(1),
+			hasPasskey(db, context.principal.userId),
+		]);
+
+		return {
+			passkey,
+			password: passwordAccount.length === 1,
+			totp: twoFactor.length === 1,
+		};
+	});
+
+/** Verify one native Better Auth challenge and rotate the browser session. */
+export const challengeRecentAuthenticationFn = createServerFn({
+	method: "POST",
+})
+	.middleware([authenticated()])
+	.validator(recentAuthenticationChallengeSchema)
+	.handler(async ({ context, data }) => {
+		const [{ auth, handleAuthRequest }, request] = await Promise.all([
+			import("./instance"),
+			Promise.resolve(getRequest()),
+		]);
+
+		const headers = new Headers(request.headers);
+		headers.set("content-type", "application/json");
+		headers.delete("content-length");
+		await checkChallengeResponse(
+			await handleAuthRequest(
+				new Request(
+					new URL(
+						`${AUTH_BASE_PATH}${RECENT_AUTHENTICATION_PATH}`,
+						request.url,
+					),
+					{ method: "POST", headers, body: JSON.stringify(data) },
+				),
+			),
+		);
+
+		try {
+			const replacement = await auth.api.createStepUpSession({
+				headers: request.headers,
+			});
+			const sessionId = Number(replacement.sessionId);
+			if (!Number.isSafeInteger(sessionId)) {
+				throw new Error(
+					"Better Auth returned an invalid replacement session id",
+				);
+			}
+
+			attributePrincipal({
+				kind: "browser",
+				userId: context.principal.userId,
+				sessionId,
+				createdAt: replacement.createdAt,
+			});
+
+			return {
+				createdAt: replacement.createdAt,
+				sessionId,
+			};
+		} catch (err) {
+			return rethrowReplacementError(err);
+		}
+	});

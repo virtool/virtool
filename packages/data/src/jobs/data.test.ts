@@ -23,6 +23,7 @@ import { seedIndex, seedReference } from "../indexes/test/fixtures";
 import { collectFrames } from "../test/frames";
 import {
 	claimJob,
+	findJobs,
 	finishJob,
 	getJob,
 	getJobs,
@@ -117,6 +118,35 @@ describe("getJobs", () => {
 
 	it("returns nothing for an empty id list without touching the database", async () => {
 		await expect(getJobs(db, [])).resolves.toEqual([]);
+	});
+});
+
+describe("findJobs", () => {
+	// Jobs created in one transaction share a timestamp, so without an id
+	// tiebreaker the pages could overlap or skip a job.
+	it("pages jobs with the same creation time without overlap", async () => {
+		const createdAt = new Date();
+		const inserted = await db
+			.insert(jobs)
+			.values(
+				Array.from({ length: 5 }, () => ({
+					created_at: createdAt,
+					state: "pending" as const,
+					steps: [],
+					user_id: userId,
+					workflow: "pathoscope",
+				})),
+			)
+			.returning({ id: jobs.id });
+
+		const pages = await Promise.all(
+			[1, 2, 3].map((page) => findJobs(db, { page, perPage: 2, states: [] })),
+		);
+
+		expect(pages.flatMap((result) => result.items.map(({ id }) => id))).toEqual(
+			inserted.map(({ id }) => id).toSorted((a, b) => b - a),
+		);
+		expect(pages[0]?.pageCount).toBe(3);
 	});
 });
 
@@ -318,6 +348,32 @@ describe("the lifecycle transitions", () => {
 			await expect(finishJob(db, claimed.id)).rejects.toBeInstanceOf(
 				JobNotRunningError,
 			);
+		},
+	);
+
+	it.each<JobState>(["cancelled", "failed", "succeeded"])(
+		"refuses a ping against a job that is %s",
+		async (state) => {
+			const claimed = await claimFresh();
+
+			const pingedAt = new Date("2020-01-01T00:00:00Z");
+
+			await db
+				.update(jobs)
+				.set({ pinged_at: pingedAt, state })
+				.where(eq(jobs.id, claimed.id));
+
+			await expect(pingJob(db, claimed.id)).rejects.toMatchObject({
+				constructor: JobTerminalStateError,
+				state,
+			});
+
+			const [row] = await db
+				.select({ pinged_at: jobs.pinged_at })
+				.from(jobs)
+				.where(eq(jobs.id, claimed.id));
+
+			expect(row?.pinged_at).toEqual(pingedAt);
 		},
 	);
 

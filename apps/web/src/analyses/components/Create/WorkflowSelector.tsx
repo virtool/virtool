@@ -1,4 +1,12 @@
-import { SelectBox, SelectBoxItem } from "@base/Select";
+import Field, {
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldTitle,
+} from "@base/Field";
+import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
 import type { AnalysisWorkflow } from "@virtool/contracts";
 import type { workflow } from "./workflows";
 
@@ -22,22 +30,27 @@ export default function WorkflowSelector({
 	onChange,
 }: WorkflowSelectorProps) {
 	return (
-		<div className="mb-6">
-			<SelectBox
+		<FieldSet className="mb-6">
+			<FieldLegend variant="label">Workflow</FieldLegend>
+			<RadioGroup
 				className="grid-cols-2"
-				label="Workflow"
 				// Radix reports the value of the item that was picked, and every
 				// item rendered below is one of the given workflows' ids.
 				onValueChange={(value) => onChange(value as AnalysisWorkflow)}
 				value={selected}
 			>
 				{workflows.map(({ description, id, name }) => (
-					<SelectBoxItem key={id} value={id}>
-						<div>{name}</div>
-						<span>{description}</span>
-					</SelectBoxItem>
+					<FieldLabel key={id} variant="card">
+						<Field orientation="horizontal" className="items-start">
+							<RadioGroupItem className="mt-0.5" value={id} />
+							<FieldContent>
+								<FieldTitle>{name}</FieldTitle>
+								<FieldDescription>{description}</FieldDescription>
+							</FieldContent>
+						</Field>
+					</FieldLabel>
 				))}
-			</SelectBox>
-		</div>
+			</RadioGroup>
+		</FieldSet>
 	);
 }

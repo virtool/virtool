@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
 import Button from "@base/Button";
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
@@ -6,6 +7,7 @@ import { type ReactNode, useState } from "react";
 
 /**
  * Pull a server-provided message off a rejected deletion, if there is one.
+ * A cancelled recent-authentication challenge has no message.
  *
  * Only a `ClientError` is shown. It is the deliberate refusal — a name
  * conflict, a missing row — written to be read by the user. Anything else is
@@ -13,8 +15,12 @@ import { type ReactNode, useState } from "react";
  * boundary verbatim, so rendering it would put a database or storage
  * diagnostic on screen.
  */
-function getDeleteErrorMessage(error: unknown): string {
+function getDeleteErrorMessage(error: unknown): string | null {
 	const fallback = "Something went wrong. Please try again.";
+
+	if (isRecentAuthenticationCancelled(error)) {
+		return null;
+	}
 
 	if (!(error instanceof Error) || error.name !== CLIENT_ERROR_NAME) {
 		return fallback;
@@ -28,11 +34,16 @@ type DeleteDialogProps = {
 	name: string;
 	/** The type of item being deleted (e.g. "Sample"); titles the dialog "Delete {noun}" */
 	noun: string;
+	/** Overrides the "Delete {noun}" title */
+	title?: string;
+	/** Overrides the "Confirm" button text */
+	confirmLabel?: string;
 	/** Overrides the default confirmation prompt */
 	message?: ReactNode;
 	/**
 	 * Performs the deletion. Its result is awaited: a rejection renders inline
-	 * and keeps the dialog open, while success closes it.
+	 * and keeps the dialog open, while success closes it. A cancelled
+	 * recent-authentication challenge keeps the dialog open without an error.
 	 */
 	onConfirm: () => unknown;
 	/** A trigger that opens the dialog (e.g. a delete IconButton). Omit when controlling `open`. */
@@ -51,6 +62,8 @@ type DeleteDialogProps = {
 export default function DeleteDialog({
 	name,
 	noun,
+	title,
+	confirmLabel = "Confirm",
 	message,
 	onConfirm,
 	trigger,
@@ -123,7 +136,7 @@ export default function DeleteDialog({
 					)}
 				>
 					<AlertDialogPrimitive.Title className="font-medium pb-4 text-2xl">
-						{`Delete ${noun}`}
+						{title ?? `Delete ${noun}`}
 					</AlertDialogPrimitive.Title>
 					<AlertDialogPrimitive.Description>
 						{message ?? (
@@ -142,7 +155,7 @@ export default function DeleteDialog({
 							<Button color="gray">Cancel</Button>
 						</AlertDialogPrimitive.Cancel>
 						<Button color="red" onClick={handleConfirm}>
-							Confirm
+							{confirmLabel}
 						</Button>
 					</div>
 				</AlertDialogPrimitive.Content>

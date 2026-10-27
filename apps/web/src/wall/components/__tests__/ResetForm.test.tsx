@@ -1,11 +1,17 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
+import { createClientError } from "@tests/server-fn/auth";
 import {
 	mockGetPasswordPolicy,
 	settingsServerFnMocks,
 } from "@tests/server-fn/settings";
+import {
+	mockGetAccount,
+	mockGetAccountMfaEnrollmentRequired,
+} from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { navigateMock, resetPasswordMock } = vi.hoisted(() => ({
 	navigateMock: vi.fn(),
@@ -30,37 +36,39 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
 import ResetForm from "../ResetForm";
 
 describe("<ResetForm />", () => {
+	beforeEach(() => {
+		mockGetAccount(createFakeAccount());
+	});
+
 	afterEach(() => {
 		navigateMock.mockReset();
 		resetPasswordMock.mockReset();
 	});
 
 	it("calls the reset mutation with the form values", async () => {
-		const resetCode = "test_reset_code";
 		const password = "P@ssword123";
 
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode={resetCode} />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), password);
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
 
 		await waitFor(() => expect(resetPasswordMock).toHaveBeenCalledTimes(1));
 		expect(resetPasswordMock).toHaveBeenCalledWith(
-			{ password, resetCode },
+			{ password },
 			expect.anything(),
 		);
 	});
 
 	it("displays the thrown error message on reset failure", async () => {
-		const resetCode = "test_reset_code";
 		const password = "P@ssword123";
 		const errorMessage = "Cannot reuse current password";
 
-		resetPasswordMock.mockRejectedValue(new Error(errorMessage));
+		resetPasswordMock.mockRejectedValue(createClientError(errorMessage));
 
-		renderWithProviders(<ResetForm resetCode={resetCode} />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), password);
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -69,7 +77,7 @@ describe("<ResetForm />", () => {
 	});
 
 	it("rejects a password shorter than eight characters without submitting", async () => {
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "short12");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -85,7 +93,7 @@ describe("<ResetForm />", () => {
 	it("rejects a password shorter than the configured minimum without submitting", async () => {
 		mockGetPasswordPolicy(12);
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		// Eleven characters: long enough for the default minimum, so this only
 		// fails if the form is reading the configured one.
@@ -104,7 +112,7 @@ describe("<ResetForm />", () => {
 		mockGetPasswordPolicy(4);
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "abcd");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -120,7 +128,7 @@ describe("<ResetForm />", () => {
 		);
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "abcd");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -132,7 +140,7 @@ describe("<ResetForm />", () => {
 		mockGetPasswordPolicy(12);
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "twelvechars!");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -143,26 +151,47 @@ describe("<ResetForm />", () => {
 	it("navigates to the redirect on a successful reset", async () => {
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(
-			<ResetForm redirect="/samples" resetCode="test_reset_code" />,
-		);
+		renderWithProviders(<ResetForm redirect="/samples" />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
 
 		await waitFor(() =>
-			expect(navigateMock).toHaveBeenCalledWith({ to: "/samples" }),
+			expect(navigateMock).toHaveBeenCalledWith({
+				to: "/samples",
+				replace: true,
+			}),
 		);
 	});
 
 	it("navigates to the root when no redirect is provided", async () => {
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
 
-		await waitFor(() => expect(navigateMock).toHaveBeenCalledWith({ to: "/" }));
+		await waitFor(() =>
+			expect(navigateMock).toHaveBeenCalledWith({ to: "/", replace: true }),
+		);
+	});
+
+	it("follows the server into two-factor enrollment after a reset", async () => {
+		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
+		mockGetAccountMfaEnrollmentRequired();
+
+		renderWithProviders(<ResetForm />);
+
+		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
+		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+		await waitFor(() =>
+			expect(navigateMock).toHaveBeenCalledWith({
+				to: "/mfa-enrollment",
+				search: { redirect: undefined },
+				replace: true,
+			}),
+		);
 	});
 });

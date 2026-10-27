@@ -3,9 +3,9 @@ import {
 	canonicalizeCacheParams,
 	deriveCacheKey,
 	float,
-	type RunSubprocess,
 } from "@virtool/workflow";
-import { describe, expect, it, vi } from "vitest";
+import { createFakeSubprocessRunner } from "@virtool/workflow/testing";
+import { describe, expect, it } from "vitest";
 import {
 	buildTrimmedReadsCacheParams,
 	REFERENCE_INDEX_EXTRA_PARAMS,
@@ -36,26 +36,6 @@ const PINNED_KEYS = {
 
 const BOWTIE2_BUILD_VERSION = "2.5.4";
 const WORKFLOW_VERSION = "5.2.1";
-
-function subprocessWriting(
-	lines: readonly string[],
-	{ stream = "stdout" }: { stream?: "stdout" | "stderr" } = {},
-): RunSubprocess {
-	return vi.fn(async (options) => {
-		for (const line of lines) {
-			await options[stream]?.(line);
-		}
-
-		return {
-			command: options.command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
-	});
-}
 
 // The params themselves are the runtime's — every workflow that builds a bowtie2
 // index derives them the same way. What is pinned here is that *this* workflow's
@@ -217,31 +197,32 @@ describe("getSkewerVersion", () => {
 	// pattern every other tool matches does not, and the parser falls through to
 	// a bare-number pattern for exactly this reason.
 	it("parses a version printed after a colon", async () => {
-		const runSubprocess = subprocessWriting([
-			"skewer version: 0.2.2",
-			"Author: Hongshan Jiang",
-		]);
+		const runSubprocess = createFakeSubprocessRunner({
+			stdout: ["skewer version: 0.2.2", "Author: Hongshan Jiang"],
+		});
 
 		await expect(getSkewerVersion(runSubprocess)).resolves.toBe("0.2.2");
 	});
 
 	it("prefers a labelled version where the output carries one", async () => {
-		const runSubprocess = subprocessWriting(["skewer version 0.2.2"]);
+		const runSubprocess = createFakeSubprocessRunner({
+			stdout: ["skewer version 0.2.2"],
+		});
 
 		await expect(getSkewerVersion(runSubprocess)).resolves.toBe("0.2.2");
 	});
 
 	it("reads the banner from stderr as well as stdout", async () => {
-		const runSubprocess = subprocessWriting(["skewer version: 0.2.2"], {
-			stream: "stderr",
+		const runSubprocess = createFakeSubprocessRunner({
+			stderr: ["skewer version: 0.2.2"],
 		});
 
 		await expect(getSkewerVersion(runSubprocess)).resolves.toBe("0.2.2");
 	});
 
 	it("throws when the output carries no version", async () => {
-		await expect(getSkewerVersion(subprocessWriting([]))).rejects.toThrow(
-			"Could not parse skewer version",
-		);
+		await expect(
+			getSkewerVersion(createFakeSubprocessRunner()),
+		).rejects.toThrow("Could not parse skewer version");
 	});
 });

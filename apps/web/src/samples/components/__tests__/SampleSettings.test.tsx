@@ -34,12 +34,31 @@ describe("<SampleSettings />", () => {
 			screen.getByRole("radio", { name: /Force choice/ }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("radio", { name: /User's primary group/ }),
+			screen.getByRole("radio", { name: /User’s primary group/ }),
 		).toBeInTheDocument();
 		expect(screen.getByText("Group Rights")).toBeInTheDocument();
 		expect(screen.getByLabelText("Group Rights")).toBeInTheDocument();
 		expect(screen.getByText("All Users' Rights")).toBeInTheDocument();
 		expect(screen.getByLabelText("All Users' Rights")).toBeInTheDocument();
+	});
+
+	it("should describe each sample group policy", async () => {
+		renderWithProviders(<SampleSettings />);
+
+		await waitFor(() =>
+			expect(screen.getByText("Sample Settings")).toBeInTheDocument(),
+		);
+
+		expect(
+			screen.getByRole("radio", { name: /Force choice/ }),
+		).toHaveAccessibleDescription(
+			"Samples are assigned by the user in the creation form.",
+		);
+		expect(
+			screen.getByRole("radio", { name: /User’s primary group/ }),
+		).toHaveAccessibleDescription(
+			"Samples are automatically assigned the creating user’s primary group.",
+		);
 	});
 
 	it("should update settings when force choice is selected", async () => {
@@ -68,7 +87,7 @@ describe("<SampleSettings />", () => {
 			expect(screen.getByText("Sample Settings")).toBeInTheDocument(),
 		);
 		await userEvent.click(
-			screen.getByRole("radio", { name: /User's primary group/ }),
+			screen.getByRole("radio", { name: /User’s primary group/ }),
 		);
 
 		expect(updateSettings).toHaveBeenCalledWith({

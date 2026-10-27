@@ -70,9 +70,10 @@ function toJobCounts(snapshot: JobQueueSnapshot): JobCountsByState {
  *
  * A failed read is **not** caught. Answering zeros on a database blip would
  * read as a drained queue and scale the fleet to nothing; letting it reach
- * `app.onError` answers 500, and a scaler that cannot fetch its metric holds
- * its last decision instead. The read carries its own timeout, so the failure
- * arrives inside a couple of seconds rather than hanging the poll.
+ * `app.onError` answers 503 or 500, and a scaler that cannot fetch its metric
+ * holds its last decision instead. The read carries its own timeout, so the
+ * failure arrives inside a couple of seconds rather than hanging the poll. A
+ * timed-out read answers 503, the same as an unreachable database.
  */
 export async function handleReadJobCounts(
 	readJobQueue: JobQueueReader,

@@ -63,7 +63,22 @@ describe("resolveFileBacked", () => {
 			resolveFileBacked(["VT_TOKEN"], {
 				VT_TOKEN_FILE: "/nonexistent/secret",
 			}),
-		).toThrow(/VT_TOKEN_FILE points at \/nonexistent\/secret/);
+		).toThrow(/VT_TOKEN_FILE names a file that could not be read \(ENOENT\)/);
+	});
+
+	// An operator can set the `_FILE` variable to the secret itself rather than
+	// to the file holding it, so the value must not reach the message that the
+	// startup logger writes.
+	it("keeps the configured path out of the error", () => {
+		try {
+			resolveFileBacked(["VT_TOKEN"], {
+				VT_TOKEN_FILE: "/nonexistent/secret-sentinel",
+			});
+			expect.unreachable();
+		} catch (error) {
+			expect(String(error)).not.toContain("secret-sentinel");
+			expect((error as Error).cause).toBeUndefined();
+		}
 	});
 
 	// The caller names the keys, so a key left off the list keeps its plain value

@@ -1,5 +1,4 @@
-import { setTimeout as delay } from "node:timers/promises";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -9,24 +8,21 @@ import {
 	it,
 	onTestFinished,
 } from "vitest";
-
 import type { Db } from "../db/pg";
-import { sessions } from "../db/schema/sessions";
+import { authSessions } from "../db/schema/auth";
+import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedSettings } from "../settings/test/fixtures";
 import {
-	createAuthenticatedSession,
-	createResetSession,
+	deleteActiveBrowserSession,
 	deleteExpiredSessions,
-	invalidateSession,
-	invalidateUserSessions,
+	deleteOtherBrowserSessions,
+	findActiveBrowserSessions,
+	resolveBrowserSession,
+	resolveBrowserSessionForUpdate,
 } from "./session";
 import { seedSession, seedUser } from "./test/fixtures";
-import { hashToken } from "./tokens";
-
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const SIXTY_MINUTES_MS = 60 * 60 * 1000;
-const TEN_MINUTES_MS = 10 * 60 * 1000;
 
 let database: TestDatabase;
 let db: Db;
@@ -41,387 +37,383 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await db.delete(sessions);
+	await db.delete(settings);
+	await db.delete(authSessions);
 	await db.delete(users);
 });
 
-// `createdAt` and `expiresAt` are both derived from a single `now`, so the gap
-// between them is the lifetime exactly — no clock stubbing required.
-function lifetimeOf(row: { createdAt: Date; expiresAt: Date }): number {
-	return row.expiresAt.getTime() - row.createdAt.getTime();
+function minutesFromNow(minutes: number): Date {
+	return new Date(Date.now() + minutes * 60 * 1000);
 }
 
-describe("createAuthenticatedSession", () => {
-	it("gives a remembered session a thirty day lifetime", async () => {
+describe("resolveBrowserSession", () => {
+	it("reads a live session without changing its expiry", async () => {
 		const userId = await seedUser(db);
-
-		const { row } = await createAuthenticatedSession(db, {
-			userId,
-			ip: "127.0.0.1",
-			remember: true,
-		});
-
-		expect(lifetimeOf(row)).toBe(THIRTY_DAYS_MS);
+		const expiresAt = minutesFromNow(30);
+		const session = await seedSession(db, userId, { expiresAt });
+		expect(
+			await resolveBrowserSession(db, session.sessionId, userId),
+		).toMatchObject({ userId });
+		expect((await db.select().from(authSessions))[0]?.expiresAt).toEqual(
+			expiresAt,
+		);
 	});
 
-	it("gives an unremembered session a sixty minute lifetime", async () => {
+	it("rejects expired sessions and deactivated users", async () => {
 		const userId = await seedUser(db);
-
-		const { row } = await createAuthenticatedSession(db, {
-			userId,
-			ip: "127.0.0.1",
-			remember: false,
+		const expired = await seedSession(db, userId, {
+			expiresAt: minutesFromNow(-1),
 		});
-
-		expect(lifetimeOf(row)).toBe(SIXTY_MINUTES_MS);
+		expect(
+			await resolveBrowserSession(db, expired.sessionId, userId),
+		).toBeNull();
+		const live = await seedSession(db, userId);
+		await db.update(users).set({ active: false }).where(eq(users.id, userId));
+		expect(await resolveBrowserSession(db, live.sessionId, userId)).toBeNull();
 	});
 
-	it("writes an authenticated row for the user and ip", async () => {
+	it("restricts an unenrolled user only under the required MFA policy", async () => {
 		const userId = await seedUser(db);
+		const session = await seedSession(db, userId);
 
-		const { row } = await createAuthenticatedSession(db, {
-			userId,
-			ip: "10.0.0.4",
-			remember: false,
-		});
+		async function isRestricted() {
+			return (await resolveBrowserSession(db, session.sessionId, userId))
+				?.mfaEnrollmentRequired;
+		}
 
-		expect(row.sessionType).toBe("authenticated");
-		expect(row.userId).toBe(userId);
-		expect(row.ip).toBe("10.0.0.4");
-		expect(row.resetCode).toBeNull();
-	});
+		expect(await isRestricted()).toBe(false);
 
-	it("stores only the hash of the token, never the plaintext", async () => {
-		const userId = await seedUser(db);
+		await seedSettings(db, { mfaPolicy: "required" });
+		expect(await isRestricted()).toBe(true);
 
-		const { token, row } = await createAuthenticatedSession(db, {
-			userId,
-			ip: "127.0.0.1",
-			remember: false,
-		});
-
-		expect(row.tokenHash).toBe(hashToken(token));
-		expect(row.tokenHash).not.toBe(token);
-	});
-
-	it("mints a distinct session id and token each time", async () => {
-		const userId = await seedUser(db);
-		const input = { userId, ip: "127.0.0.1", remember: false };
-
-		const first = await createAuthenticatedSession(db, input);
-		const second = await createAuthenticatedSession(db, input);
-
-		expect(first.sessionId).not.toBe(second.sessionId);
-		expect(first.token).not.toBe(second.token);
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		expect(await isRestricted()).toBe(false);
 	});
 });
 
-describe("createResetSession", () => {
-	it("gives a reset session a ten minute lifetime", async () => {
-		const userId = await seedUser(db);
-
-		const { row } = await createResetSession(db, {
-			userId,
-			ip: "127.0.0.1",
-			remember: false,
-		});
-
-		expect(lifetimeOf(row)).toBe(TEN_MINUTES_MS);
-	});
-
-	it("writes a reset row with a reset code and no token hash", async () => {
-		const userId = await seedUser(db);
-
-		const { resetCode, row } = await createResetSession(db, {
-			userId,
-			ip: "127.0.0.1",
-			remember: false,
-		});
-
-		expect(row.sessionType).toBe("reset");
-		expect(row.userId).toBe(userId);
-		expect(row.tokenHash).toBeNull();
-		expect(row.resetCode).toBe(resetCode);
-		expect(resetCode).toMatch(/^[0-9a-f]{64}$/);
-	});
-
-	// `resetPassword` reads `resetRemember` back to carry the flag into the
-	// authenticated session it mints. If it were not persisted, a user who ticked
-	// "remember me" would silently get a sixty minute session after a reset.
-	it.each([true, false])(
-		"persists remember=%s across the reset",
-		async (remember) => {
-			const userId = await seedUser(db);
-
-			const { row } = await createResetSession(db, {
-				userId,
-				ip: "127.0.0.1",
-				remember,
-			});
-
-			expect(row.resetRemember).toBe(remember);
-		},
+async function getBackendPid(db: Db): Promise<number> {
+	const [row] = await db.execute<{ pid: number }>(
+		sql`select pg_backend_pid() as pid`,
 	);
-});
+	return Number(row?.pid);
+}
 
-describe("invalidateSession", () => {
-	it("deletes only the named session", async () => {
-		const userId = await seedUser(db);
-		const doomed = await seedSession(db, userId);
-		const kept = await seedSession(db, userId);
+/** Resolve once another backend waits on a lock, or stop polling on abort. */
+async function waitForLockWait(
+	pid: number,
+	signal: AbortSignal,
+): Promise<void> {
+	while (!signal.aborted) {
+		const [row] = await db.execute<{ waiting: boolean }>(
+			sql`select wait_event_type = 'Lock' as waiting
+				from pg_stat_activity where pid = ${pid}`,
+		);
+		if (row?.waiting) {
+			return;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 10));
+	}
+}
 
-		await invalidateSession(db, doomed.sessionId);
-
-		const remaining = await db
-			.select({ sessionId: sessions.sessionId })
-			.from(sessions);
-
-		expect(remaining).toEqual([{ sessionId: kept.sessionId }]);
+function createLatch(): { promise: Promise<void>; release: () => void } {
+	const latch = { release: () => {} };
+	const promise = new Promise<void>((resolve) => {
+		latch.release = resolve;
 	});
+	return { promise, release: () => latch.release() };
+}
 
-	it("is a no-op for an unknown session id", async () => {
+describe("resolveBrowserSessionForUpdate", () => {
+	it("cannot deadlock with a credential change that deletes every session", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
+		const current = await seedSession(db, userId);
+		const credential = database.connect();
+		const revocation = database.connect();
+		const polling = new AbortController();
+		onTestFinished(async () => {
+			polling.abort();
+			await Promise.all([credential.close(), revocation.close()]);
+		});
+		const [credentialPid, revocationPid] = await Promise.all([
+			getBackendPid(credential.db),
+			getBackendPid(revocation.db),
+		]);
+		const userLocked = createLatch();
+		const revocationLocked = createLatch();
+		const sessionsDeleting = createLatch();
 
-		await invalidateSession(db, "session_unknown");
+		// Password changes and TOTP resets lock the user row, then delete every
+		// session. Each step waits until the other transaction holds or waits for
+		// its lock, which reproduces the interleaving that used to deadlock.
+		const credentialTx = credential.db.transaction(async (tx) => {
+			await tx
+				.update(users)
+				.set({ forceReset: true })
+				.where(eq(users.id, userId));
+			userLocked.release();
+			const revocationWaited = await Promise.race([
+				revocationLocked.promise.then(() => false),
+				waitForLockWait(revocationPid, polling.signal).then(() => true),
+			]);
 
-		expect(await db.select().from(sessions)).toHaveLength(1);
-	});
-});
+			const deleted = tx
+				.delete(authSessions)
+				.where(eq(authSessions.userId, userId))
+				.returning({ id: authSessions.id })
+				.execute();
+			await Promise.race([
+				deleted,
+				waitForLockWait(credentialPid, polling.signal),
+			]);
+			sessionsDeleting.release();
 
-describe("invalidateUserSessions", () => {
-	it("deletes every session of one user and leaves other users alone", async () => {
-		const alice = await seedUser(db);
-		const bob = await seedUser(db, { handle: "bob" });
+			return { revocationWaited, deleted: (await deleted).length };
+		});
+		await userLocked.promise;
 
-		await seedSession(db, alice);
-		await seedSession(db, alice);
-		const bobSession = await seedSession(db, bob);
+		const revocationTx = revocation.db.transaction(async (tx) => {
+			const resolved = await resolveBrowserSessionForUpdate(
+				tx,
+				current.sessionId,
+				userId,
+			);
+			revocationLocked.release();
+			await sessionsDeleting.promise;
+			return resolved
+				? deleteOtherBrowserSessions(tx, userId, current.sessionId)
+				: null;
+		});
 
-		await invalidateUserSessions(db, alice);
-
-		const remaining = await db
-			.select({ sessionId: sessions.sessionId, userId: sessions.userId })
-			.from(sessions);
-
-		expect(remaining).toEqual([
-			{ sessionId: bobSession.sessionId, userId: bob },
+		expect(await Promise.all([credentialTx, revocationTx])).toEqual([
+			{ revocationWaited: true, deleted: 2 },
+			null,
 		]);
 	});
+});
 
-	it("leaves the user row itself in place", async () => {
+describe("active browser sessions", () => {
+	it("lists only the user's live sessions with current first and stable ordering", async () => {
 		const userId = await seedUser(db);
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		const current = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-20),
+		});
+		const olderId = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-10),
+		});
+		const newerId = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-5),
+		});
+		await seedSession(db, userId, { expiresAt: minutesFromNow(-1) });
+		await seedSession(db, otherUserId);
+
+		const sessions = await findActiveBrowserSessions(
+			db,
+			userId,
+			current.sessionId,
+		);
+
+		expect(sessions.map(({ id }) => id)).toEqual([
+			current.sessionId,
+			newerId.sessionId,
+			olderId.sessionId,
+		]);
+		expect(sessions[0]).toMatchObject({
+			ipAddress: "127.0.0.1",
+			userAgent: "Test Browser/1.0",
+		});
+		expect(sessions[0]).not.toHaveProperty("token");
+	});
+
+	it("revokes only a live session owned by the user", async () => {
+		const userId = await seedUser(db);
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		const owned = await seedSession(db, userId);
+		const expired = await seedSession(db, userId, {
+			expiresAt: minutesFromNow(-1),
+		});
+		const foreign = await seedSession(db, otherUserId);
+
+		expect(await deleteActiveBrowserSession(db, userId, owned.sessionId)).toBe(
+			true,
+		);
+		expect(await deleteActiveBrowserSession(db, userId, owned.sessionId)).toBe(
+			false,
+		);
+		expect(
+			await deleteActiveBrowserSession(db, userId, expired.sessionId),
+		).toBe(false);
+		expect(
+			await deleteActiveBrowserSession(db, userId, foreign.sessionId),
+		).toBe(false);
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			expect.arrayContaining([
+				{ id: expired.sessionId },
+				{ id: foreign.sessionId },
+			]),
+		);
+	});
+
+	it("revokes every other session and preserves exactly the current one", async () => {
+		const userId = await seedUser(db);
+		const current = await seedSession(db, userId);
+		await seedSession(db, userId);
 		await seedSession(db, userId);
 
-		await invalidateUserSessions(db, userId);
+		expect(
+			await deleteOtherBrowserSessions(db, userId, current.sessionId),
+		).toBe(2);
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			[{ id: current.sessionId }],
+		);
+	});
+
+	it("spares a replacement being issued for the current session", async () => {
+		const userId = await seedUser(db);
+		const current = await seedSession(db, userId);
+		const replacement = await seedSession(db, userId);
+		await db
+			.update(authSessions)
+			.set({ replacementForSessionId: current.sessionId })
+			.where(eq(authSessions.id, replacement.sessionId));
+		await seedSession(db, userId);
 
 		expect(
-			await db.select({ id: users.id }).from(users).where(eq(users.id, userId)),
-		).toEqual([{ id: userId }]);
+			await deleteOtherBrowserSessions(db, userId, current.sessionId),
+		).toBe(1);
+		expect(
+			(await db.select({ id: authSessions.id }).from(authSessions)).map(
+				({ id }) => id,
+			),
+		).toEqual([current.sessionId, replacement.sessionId]);
+	});
+
+	it("converges when two callers revoke the same session", async () => {
+		const userId = await seedUser(db);
+		const target = await seedSession(db, userId);
+		const first = database.connect();
+		const second = database.connect();
+
+		try {
+			const results = await Promise.all([
+				deleteActiveBrowserSession(first.db, userId, target.sessionId),
+				deleteActiveBrowserSession(second.db, userId, target.sessionId),
+			]);
+			expect(results.sort()).toEqual([false, true]);
+		} finally {
+			await Promise.all([first.close(), second.close()]);
+		}
 	});
 });
 
 describe("deleteExpiredSessions", () => {
-	const FIVE_MINUTES_MS = 5 * 60 * 1000;
-
-	function minutesFromNow(minutes: number): Date {
-		return new Date(Date.now() + minutes * 60 * 1000);
-	}
-
-	async function remainingSessionIds(): Promise<string[]> {
-		const rows = await db
-			.select({ sessionId: sessions.sessionId })
-			.from(sessions)
-			.orderBy(sessions.id);
-
-		return rows.map((row) => row.sessionId);
-	}
-
-	it("deletes an expired session and leaves a live one", async () => {
+	it("deletes expired sessions and keeps live sessions", async () => {
 		const userId = await seedUser(db);
-
 		await seedSession(db, userId, { expiresAt: minutesFromNow(-30) });
 		const live = await seedSession(db, userId, {
 			expiresAt: minutesFromNow(30),
 		});
 
 		expect(await deleteExpiredSessions(db)).toBe(1);
-		expect(await remainingSessionIds()).toEqual([live.sessionId]);
-	});
-
-	// `expires_at` is `timestamp without time zone` holding naive UTC. A cutoff
-	// bound as a `Date` casts through the session `TimeZone`, which is unset here,
-	// so a wrong cutoff is out by whole hours rather than by seconds. Five minutes
-	// either side of now catches that in both directions: an hour early would keep
-	// the expired row, an hour late would take the live one.
-	it("puts the cutoff at now, not an hour either side of it", async () => {
-		const userId = await seedUser(db);
-
-		await seedSession(db, userId, {
-			expiresAt: new Date(Date.now() - FIVE_MINUTES_MS),
-		});
-		const live = await seedSession(db, userId, {
-			expiresAt: new Date(Date.now() + FIVE_MINUTES_MS),
-		});
-
-		expect(await deleteExpiredSessions(db)).toBe(1);
-		expect(await remainingSessionIds()).toEqual([live.sessionId]);
-	});
-
-	it("deletes every session type", async () => {
-		const userId = await seedUser(db);
-
-		for (const sessionType of [
-			"anonymous",
-			"authenticated",
-			"reset",
-		] as const) {
-			await seedSession(db, userId, {
-				expiresAt: minutesFromNow(-30),
-				sessionType,
-			});
-		}
-
-		expect(await deleteExpiredSessions(db)).toBe(3);
-		expect(await remainingSessionIds()).toEqual([]);
-	});
-
-	it("loops past the batch size until nothing expired is left", async () => {
-		const userId = await seedUser(db);
-
-		for (let index = 0; index < 7; index++) {
-			await seedSession(db, userId, { expiresAt: minutesFromNow(-30) });
-		}
-
-		const live = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(30),
-		});
-
-		expect(await deleteExpiredSessions(db, { batchSize: 2 })).toBe(7);
-		expect(await remainingSessionIds()).toEqual([live.sessionId]);
-	});
-
-	it("returns zero when nothing has expired", async () => {
-		const userId = await seedUser(db);
-		await seedSession(db, userId, { expiresAt: minutesFromNow(30) });
-
-		expect(await deleteExpiredSessions(db)).toBe(0);
-		expect(await remainingSessionIds()).toHaveLength(1);
-	});
-
-	// Deleting a live session logs a user out early, which is the only harm this
-	// can do — so the surviving row is compared whole rather than counted.
-	it("leaves a live session's row untouched", async () => {
-		const userId = await seedUser(db);
-
-		const live = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(30),
-		});
-
-		const before = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.sessionId, live.sessionId));
-
-		await seedSession(db, userId, { expiresAt: minutesFromNow(-30) });
-
-		await deleteExpiredSessions(db);
-
-		expect(
-			await db
-				.select()
-				.from(sessions)
-				.where(eq(sessions.sessionId, live.sessionId)),
-		).toEqual(before);
-	});
-
-	/**
-	 * The refresh race the outer `where`'s repeated expiry test exists for.
-	 *
-	 * A second session extends the row and holds its lock, so the delete's
-	 * subquery still sees it expired and the delete itself parks on the lock.
-	 * Once that commits, Postgres re-checks the outer predicate alone — a
-	 * predicate naming only the id would pass, and the refreshed session would
-	 * go.
-	 */
-	it("spares a session refreshed between the select and the delete", async () => {
-		const refresher = database.connect();
-		const observer = database.connect();
-
-		onTestFinished(async () => {
-			await Promise.all([refresher.close(), observer.close()]);
-		});
-
-		const userId = await seedUser(db);
-		const refreshed = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(-30),
-		});
-
-		let commit: () => void = () => undefined;
-		const committed = new Promise<void>((resolve) => {
-			commit = resolve;
-		});
-
-		let extended: () => void = () => undefined;
-		const holds = new Promise<void>((resolve) => {
-			extended = resolve;
-		});
-
-		const holding = refresher.client.begin(async (tx) => {
-			await tx`
-				update sessions
-				set expires_at = timezone('utc', clock_timestamp()) + interval '30 minutes'
-				where session_id = ${refreshed.sessionId}
-			`;
-
-			extended();
-
-			await committed;
-		});
-
-		await holds;
-
-		const deleting = deleteExpiredSessions(db);
-
-		for (let attempt = 0; attempt < 100; attempt++) {
-			const rows = await observer.client.unsafe(
-				`select 1 from pg_stat_activity
-				 where datname = current_database() and wait_event_type = 'Lock'`,
-			);
-
-			if (rows.length > 0) {
-				break;
-			}
-
-			await delay(25);
-		}
-
-		commit();
-		await holding;
-
-		expect(await deleting).toBe(0);
-		expect(await remainingSessionIds()).toEqual([refreshed.sessionId]);
-	}, 15_000);
-
-	it("rejects a batch size that would never advance the loop", async () => {
-		await expect(deleteExpiredSessions(db, { batchSize: 0 })).rejects.toThrow(
-			RangeError,
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			[{ id: live.sessionId }],
 		);
 	});
 
-	// The signal is checked between batches, so a run on a table that has never
-	// been cleared cannot outlive the drain. Whatever earlier batches committed
-	// stands: each is its own transaction.
-	it("throws and deletes nothing when the signal is already aborted", async () => {
+	it("sweeps in more than one batch", async () => {
 		const userId = await seedUser(db);
-		const expired = await seedSession(db, userId, {
-			expiresAt: minutesFromNow(-30),
+		await seedSession(db, userId, { expiresAt: minutesFromNow(-30) });
+		await seedSession(db, userId, { expiresAt: minutesFromNow(-1) });
+
+		expect(await deleteExpiredSessions(db, { batchSize: 1 })).toBe(2);
+	});
+
+	it("treats the effective expiry boundary as inclusive", async () => {
+		const userId = await seedUser(db);
+		const session = await seedSession(db, userId, {
+			expiresAt: minutesFromNow(30),
+		});
+		await db
+			.update(authSessions)
+			.set({
+				expiresAt: sql`timezone('utc', clock_timestamp())`,
+			})
+			.where(eq(authSessions.id, session.sessionId));
+
+		expect(await deleteExpiredSessions(db)).toBe(1);
+	});
+
+	it("spares a candidate refreshed while cleanup waits on its lock", async () => {
+		const userId = await seedUser(db);
+		const session = await seedSession(db, userId, {
+			expiresAt: minutesFromNow(-1),
+		});
+		const holder = database.connect();
+		const observer = database.connect();
+		const refreshedExpiry = minutesFromNow(30).toISOString();
+		let releaseLock = () => {};
+		const release = new Promise<void>((resolve) => {
+			releaseLock = resolve;
+		});
+		let reportLocked = () => {};
+		const locked = new Promise<void>((resolve) => {
+			reportLocked = resolve;
 		});
 
-		await expect(
-			deleteExpiredSessions(db, { signal: AbortSignal.abort() }),
-		).rejects.toThrow();
+		try {
+			const transaction = holder.client.begin(async (tx) => {
+				await tx`select id from auth_sessions where id = ${session.sessionId} for update`;
+				reportLocked();
+				await release;
+				await tx`update auth_sessions set expires_at = ${refreshedExpiry}::timestamp where id = ${session.sessionId}`;
+			});
+			await locked;
 
-		expect(await remainingSessionIds()).toEqual([expired.sessionId]);
+			const cleanup = deleteExpiredSessions(db);
+			let isWaiting = false;
+			for (let attempt = 0; attempt < 100; attempt += 1) {
+				const rows = await observer.client<
+					{ wait_event_type: string | null }[]
+				>`
+					select wait_event_type
+					from pg_stat_activity
+					where datname = current_database()
+						and query like 'delete from "auth_sessions"%'
+						and wait_event_type = 'Lock'
+				`;
+				if (rows.length > 0) {
+					isWaiting = true;
+					break;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+			expect(isWaiting).toBe(true);
+
+			releaseLock();
+			await transaction;
+			expect(await cleanup).toBe(0);
+		} finally {
+			releaseLock();
+			await Promise.all([holder.close(), observer.close()]);
+		}
+	});
+
+	it("rejects a batch size that is not a positive integer", async () => {
+		await expect(
+			deleteExpiredSessions(db, { batchSize: 0 }),
+		).rejects.toBeInstanceOf(RangeError);
+	});
+
+	it("honors cancellation between batches", async () => {
+		const controller = new AbortController();
+		controller.abort();
+
+		await expect(
+			deleteExpiredSessions(db, { signal: controller.signal }),
+		).rejects.toEqual(controller.signal.reason);
 	});
 });

@@ -1,6 +1,6 @@
 import {
 	checkSampleRight,
-	getSampleReadsFileKey,
+	getSampleReadDownload,
 	resolveSampleActor,
 } from "@virtool/data/samples/data";
 import { requireAuthenticatedRequest } from "../auth/middleware";
@@ -44,16 +44,16 @@ export async function handleSampleReads(
 		return textResponse("Forbidden", 403);
 	}
 
-	const key = await getSampleReadsFileKey(db, id, filename);
+	const file = await getSampleReadDownload(db, id, filename);
 
-	if (key === null) {
+	if (file === null) {
 		return textResponse("Not found", 404);
 	}
 
 	return streamStorageObject(
 		storage,
-		key,
-		filename,
+		file.storageKey,
+		file.filename,
 		"application/gzip",
 		downloadMode,
 	);

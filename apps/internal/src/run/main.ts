@@ -20,7 +20,12 @@ export async function startRun(): Promise<void> {
 	try {
 		const context = await bootstrap({ version: APP_VERSION });
 
-		const ctx: TaskContext = { db: context.db, storage: context.storage };
+		const ctx: TaskContext = {
+			db: context.db,
+			storage: context.storage,
+			keyring: context.keyring,
+			metrics: context.metrics,
+		};
 
 		const drainTimeoutMs = context.config.drainTimeout * 1_000;
 

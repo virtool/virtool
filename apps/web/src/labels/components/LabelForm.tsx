@@ -2,7 +2,8 @@ import Box from "@base/Box";
 import Button from "@base/Button";
 import Color from "@base/Color";
 import { DialogFooter } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SampleLabel from "@samples/components/Label/SampleLabel";
 import { DEFAULT_LABEL_COLOR } from "@virtool/contracts";
 import { useState } from "react";
@@ -45,33 +46,24 @@ export function LabelForm({
 				onSubmit({ ...values, color: newColor || DEFAULT_LABEL_COLOR }),
 			)}
 		>
-			<InputGroup>
-				<InputLabel htmlFor="name">Name</InputLabel>
-				<InputSimple
-					id="name"
+			<Field>
+				<FieldLabel>Name</FieldLabel>
+				<Input
 					aria-required
-					aria-invalid={Boolean(errors.name) || Boolean(error) || undefined}
-					aria-describedby={errors.name || error ? "name-error" : undefined}
 					{...register("name", { required: "Name is required." })}
 				/>
-				<InputError id="name-error">{errors.name?.message || error}</InputError>
-			</InputGroup>
-			<InputGroup>
-				<InputLabel htmlFor="description">Description</InputLabel>
-				<InputSimple
-					id="description"
-					aria-invalid={Boolean(errors.description) || undefined}
-					{...register("description")}
+				<FieldError
+					errors={[errors.name, error ? { message: error } : undefined]}
 				/>
-			</InputGroup>
-			<InputGroup>
-				<InputLabel htmlFor="color">Color</InputLabel>
-				<Color
-					id="color"
-					value={newColor}
-					onChange={(color) => setColor(color)}
-				/>
-			</InputGroup>
+			</Field>
+			<Field>
+				<FieldLabel>Description</FieldLabel>
+				<Input {...register("description")} />
+			</Field>
+			<Field>
+				<FieldLabel>Color</FieldLabel>
+				<Color value={newColor} onChange={(color) => setColor(color)} />
+			</Field>
 			<p className="font-medium">Preview</p>
 			<Box className="p-2.5">
 				<SampleLabel

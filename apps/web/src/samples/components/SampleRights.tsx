@@ -1,7 +1,15 @@
 import { useUpdateSettings } from "@administration/queries";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
-import { InputGroup, InputLabel } from "@base/Input";
-import { SelectBox, SelectBoxItem } from "@base/Select";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
+import Field, {
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldTitle,
+} from "@base/Field";
+import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
+import SectionHeader from "@base/SectionHeader";
 import type { Settings } from "@virtool/contracts";
 import RightsSelect from "./RightsSelect";
 
@@ -28,69 +36,91 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 	const all = (sampleAllRead ? "r" : "") + (sampleAllWrite ? "w" : "");
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2>Default Sample Rights</h2>
 				<p>
 					Set the method used to assign groups to new samples and the default
 					rights.
 				</p>
-			</BoxGroupHeader>
-			<BoxGroupSection>
-				<SelectBox
-					className="grid-cols-3"
-					label="Sample Group"
-					onValueChange={(value) => mutation.mutate({ sampleGroup: value })}
-					value={sampleGroup}
-				>
-					<SelectBoxItem value="none">
-						<strong>None</strong>
-						<p>
-							Samples are assigned no group and only
-							<em> all {"users'"}</em> rights apply
-						</p>
-					</SelectBoxItem>
-					<SelectBoxItem value="force_choice">
-						<strong>Force choice</strong>
-						<p>
-							Samples are automatically assigned the creating
-							{"user's"} primary group
-						</p>
-					</SelectBoxItem>
-					<SelectBoxItem value="users_primary_group">
-						<strong>{"User's"} primary group</strong>
-						<p>Samples are assigned by the user in the creation form</p>
-					</SelectBoxItem>
-				</SelectBox>
+			</SectionHeader>
+			<BoxGroup>
+				<BoxGroupSection>
+					<FieldSet>
+						<FieldLegend variant="label">Sample Group</FieldLegend>
+						<RadioGroup
+							className="grid-cols-3"
+							onValueChange={(value) => mutation.mutate({ sampleGroup: value })}
+							value={sampleGroup}
+						>
+							<FieldLabel variant="card">
+								<Field orientation="horizontal" className="items-start">
+									<RadioGroupItem className="mt-0.5" value="none" />
+									<FieldContent>
+										<FieldTitle>None</FieldTitle>
+										<FieldDescription>
+											Samples are assigned no group and only <em>all users’</em>{" "}
+											rights apply.
+										</FieldDescription>
+									</FieldContent>
+								</Field>
+							</FieldLabel>
+							<FieldLabel variant="card">
+								<Field orientation="horizontal" className="items-start">
+									<RadioGroupItem className="mt-0.5" value="force_choice" />
+									<FieldContent>
+										<FieldTitle>Force choice</FieldTitle>
+										<FieldDescription>
+											Samples are assigned by the user in the creation form.
+										</FieldDescription>
+									</FieldContent>
+								</Field>
+							</FieldLabel>
+							<FieldLabel variant="card">
+								<Field orientation="horizontal" className="items-start">
+									<RadioGroupItem
+										className="mt-0.5"
+										value="users_primary_group"
+									/>
+									<FieldContent>
+										<FieldTitle>User’s primary group</FieldTitle>
+										<FieldDescription>
+											Samples are automatically assigned the creating user’s
+											primary group.
+										</FieldDescription>
+									</FieldContent>
+								</Field>
+							</FieldLabel>
+						</RadioGroup>
+					</FieldSet>
 
-				<InputGroup>
-					<InputLabel htmlFor="group">Group Rights</InputLabel>
-					<RightsSelect
-						id="group"
-						value={group}
-						onChange={(value) =>
-							mutation.mutate({
-								sampleGroupRead: value.includes("r"),
-								sampleGroupWrite: value.includes("w"),
-							})
-						}
-					/>
-				</InputGroup>
+					<Field>
+						<FieldLabel>Group Rights</FieldLabel>
+						<RightsSelect
+							value={group}
+							onChange={(value) =>
+								mutation.mutate({
+									sampleGroupRead: value.includes("r"),
+									sampleGroupWrite: value.includes("w"),
+								})
+							}
+						/>
+					</Field>
 
-				<InputGroup>
-					<InputLabel htmlFor="all">All {"Users'"} Rights</InputLabel>
-					<RightsSelect
-						id="all"
-						value={all}
-						onChange={(value) =>
-							mutation.mutate({
-								sampleAllRead: value.includes("r"),
-								sampleAllWrite: value.includes("w"),
-							})
-						}
-					/>
-				</InputGroup>
-			</BoxGroupSection>
-		</BoxGroup>
+					<Field>
+						<FieldLabel>All {"Users'"} Rights</FieldLabel>
+						<RightsSelect
+							value={all}
+							onChange={(value) =>
+								mutation.mutate({
+									sampleAllRead: value.includes("r"),
+									sampleAllWrite: value.includes("w"),
+								})
+							}
+						/>
+					</Field>
+				</BoxGroupSection>
+			</BoxGroup>
+		</section>
 	);
 }

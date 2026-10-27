@@ -1,5 +1,4 @@
 {
-  "note": "Captured from the PyO3 build of workflow-pathoscope before the crate moved to packages/pathoscope-core. Behaviour is pinned bug-for-bug, including the open question recorded in the coverage.rs TODO.",
   "vectors": [
     {
       "args": {

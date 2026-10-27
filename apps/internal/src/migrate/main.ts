@@ -1,12 +1,26 @@
 import { fileURLToPath } from "node:url";
 import { resolveFileBacked } from "@virtool/contracts/env";
-import { createDb } from "@virtool/data/db/pg";
-import { createLogger } from "@virtool/logger";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
+import {
+	acquireDataMigrationsLock,
+	getDataMigration,
+	releaseDataMigrationsLock,
+} from "@virtool/data/data-migrations/data";
+import type { Logger } from "@virtool/logger";
 import { z } from "zod";
 
+import { runCommand } from "../command";
+
+import { DATA_MIGRATIONS } from "../data-migrations/registry";
+import {
+	captureDataMigrationFindings,
+	getDataMigrationReport,
+} from "../data-migrations/report";
+import { applyGatedMigrations } from "./apply";
+import { createMigrationDb } from "./connection";
+
 /**
- * The name this entrypoint reports under, in logs and in `application_name`.
+ * The name this entrypoint reports under, in logs, in Sentry, and in
+ * `application_name`.
  *
  * Deliberately not `tasks`: this process shares the image but not the job, and
  * telling the two apart in `pg_stat_activity` is how a migration holding a lock
@@ -40,64 +54,107 @@ const MigrateEnv = z.object({
 		(value) => (typeof value === "string" ? value.trim() || undefined : value),
 		z.string().optional(),
 	),
+	VT_SENTRY_DSN: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
+	),
 });
+
+type MigrateEnvValues = z.infer<typeof MigrateEnv>;
 
 /** Every environment key this entrypoint reads. */
 const MIGRATE_ENV_KEYS: string[] = Object.keys(MigrateEnv.shape);
 
-async function doMigrate(): Promise<void> {
-	const env = MigrateEnv.parse(
-		resolveFileBacked(MIGRATE_ENV_KEYS, process.env),
-	);
-
-	const logger = createLogger({ name: SERVICE });
-
+async function doMigrate(env: MigrateEnvValues, logger: Logger): Promise<void> {
 	const migrationsFolder = env.VT_MIGRATIONS_PATH ?? DEFAULT_MIGRATIONS_PATH;
 
-	// One connection: migrations are serial by construction, and a pool would
-	// leave idle backends open for the length of a DDL statement that may hold
-	// locks the rest of the fleet is waiting on.
-	const { client, db } = createDb(
-		{ postgresUrl: env.VT_POSTGRES_URL, postgresPoolMax: 1 },
-		SERVICE,
-	);
+	const controller = new AbortController();
+	const { client, db } = createMigrationDb(env.VT_POSTGRES_URL, controller);
+	function abort(): void {
+		logger.warn("stopping migrations at the next boundary");
+		controller.abort();
+	}
+	process.once("SIGTERM", abort);
+	process.once("SIGINT", abort);
 
 	try {
-		logger.info({ migrationsFolder }, "applying migrations");
+		if (!(await acquireDataMigrationsLock(client))) {
+			logger.error(
+				"another migration run holds the lock; not applying migrations",
+			);
+			process.exitCode = 1;
+			return;
+		}
 
-		/*
-		 The table and schema are pinned to the same values `drizzle.config.ts`
-		 sets, and to the ones production's baseline row was stamped into by hand.
-		 They are drizzle-orm's defaults today; naming them here means a default
-		 moving on either side cannot orphan that stamp and re-run `0000` against a
-		 database that already has every table in it.
-		*/
-		await migrate(db, {
-			migrationsFolder,
-			migrationsSchema: "drizzle",
-			migrationsTable: "__drizzle_migrations",
-		});
+		try {
+			logger.info({ migrationsFolder }, "applying migrations");
 
-		logger.info("migrations applied");
+			/*
+			 The table and schema are pinned to the same values `drizzle.config.ts`
+			 sets, and to the ones production's baseline row was stamped into by
+			 hand. They are drizzle-orm's defaults today; naming them here means a
+			 default moving on either side cannot orphan that stamp and re-run
+			 `0000` against a database that already has every table in it.
+			*/
+			const result = await applyGatedMigrations({
+				db,
+				client,
+				signal: controller.signal,
+				logger,
+				migrationsFolder,
+				migrationsSchema: "drizzle",
+				migrationsTable: "__drizzle_migrations",
+				registry: DATA_MIGRATIONS,
+			});
+
+			if (result.blockedAt === undefined) {
+				logger.info(
+					{ applied_through: result.appliedThrough },
+					"migrations applied",
+				);
+				return;
+			}
+
+			logger.error(
+				{
+					blocked_at: result.blockedAt,
+					applied_through: result.appliedThrough,
+					...result.outcome,
+				},
+				"data migration did not pass; inspect its findings, remediate, and rerun migrate",
+			);
+
+			// An errored attempt was already captured as an exception.
+			if (result.outcome?.status === "failed") {
+				const row = await getDataMigration(
+					db,
+					result.outcome.key,
+					result.outcome.version,
+				);
+
+				if (row) {
+					captureDataMigrationFindings(await getDataMigrationReport(db, row));
+				}
+			}
+
+			process.exitCode = 1;
+		} finally {
+			await releaseDataMigrationsLock(client);
+		}
 	} finally {
+		process.off("SIGTERM", abort);
+		process.off("SIGINT", abort);
 		await client.end();
 	}
 }
 
-/**
- * Apply pending Drizzle migrations — the `migrate` subcommand.
- *
- * A function rather than module-scope side effects so the merged binary's
- * dispatcher decides when it runs, and so importing this module costs nothing.
- */
+/** Apply pending SQL and paired data migrations, stopping at the first failed attempt. */
 export async function startMigrate(): Promise<void> {
-	try {
-		await doMigrate();
-	} catch (err) {
-		createLogger({ name: SERVICE }).fatal(
-			{ err },
-			"failed to apply migrations",
-		);
-		process.exitCode = 1;
-	}
+	await runCommand({
+		service: SERVICE,
+		failure: "failed to apply migrations",
+		parseEnv: () =>
+			MigrateEnv.parse(resolveFileBacked(MIGRATE_ENV_KEYS, process.env)),
+		run: doMigrate,
+	});
 }

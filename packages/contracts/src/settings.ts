@@ -16,12 +16,43 @@ export const sampleGroups = [
 export type SampleGroup = (typeof sampleGroups)[number];
 
 /**
+ * The instance MFA policies.
+ *
+ * `settings.mfa_policy` is a `text` column closed by the
+ * `ck_settings_mfa_policy` CHECK constraint; this is the one declaration of
+ * what that constraint admits.
+ *
+ * Under `required`, a signed-in user without TOTP can only enroll or sign out.
+ */
+export const mfaPolicies = ["optional", "required"] as const;
+
+/** The instance MFA policy. */
+export type MfaPolicy = (typeof mfaPolicies)[number];
+
+/**
+ * Whether the stored NCBI API key can be used.
+ *
+ * `configuration_error` means a key is stored but the encryption key this
+ * instance runs with cannot decrypt it. GenBank lookups fall back to the
+ * anonymous rate limit, so the state is reported rather than thrown.
+ */
+export type NcbiAvailability = "unconfigured" | "ready" | "configuration_error";
+
+/** Aggregate workflow-cache usage recorded at one hourly sampling point. */
+export type CacheUsageSnapshot = {
+	cacheCount: number;
+	recordedAt: Date;
+	totalSize: number;
+};
+
+/**
  * The instance settings singleton, as an administration client reads it.
  *
  * Every stored setting except the NCBI API key, which is a credential:
- * `hasNcbiApiKey` reports only whether one is configured, and the key itself
- * never crosses the wire. A client writes a new key or clears it, and never
- * reads one back. `apps/web`'s settings server functions do that narrowing.
+ * `hasNcbiApiKey` reports only whether one is configured, `ncbiAvailability`
+ * whether it can be decrypted, and the key itself never crosses the wire in
+ * either form. A client writes a new key or clears it, and never reads one
+ * back. `apps/web`'s settings server functions do that narrowing.
  *
  * Distinct from {@link WorkflowSettings}, which is what the jobs API serves to
  * a workflow and carries no NCBI field at all.
@@ -35,7 +66,11 @@ export type Settings = {
 	defaultSourceTypes: string[];
 	enableSentry: boolean;
 	hasNcbiApiKey: boolean;
+	/** The maximum accepted upload size, in bytes. */
+	maxUploadSize: number;
 	minimumPasswordLength: number;
+	mfaPolicy: MfaPolicy;
+	ncbiAvailability: NcbiAvailability;
 	sampleAllRead: boolean;
 	sampleAllWrite: boolean;
 	sampleGroup: SampleGroup;

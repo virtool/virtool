@@ -1,17 +1,30 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
+	type CacheUsageSnapshot,
+	MAX_UPLOAD_SIZE,
+	mfaPolicies,
 	type SampleGroup,
 	type Settings,
 	sampleGroups,
 } from "@virtool/contracts";
+import { listCacheUsage } from "@virtool/data/caches/usage";
 import {
 	getSettings,
 	type Settings as StoredSettings,
 	updateSettings,
 } from "@virtool/data/settings/data";
+import {
+	clearNcbiApiKey,
+	NcbiConfigurationError,
+	resolveNcbiApiKey,
+	setNcbiApiKey,
+} from "@virtool/data/settings/ncbi";
+import { getUser } from "@virtool/data/users/data";
 import { z } from "zod";
-import { adminRole, open } from "../auth/policy";
-import { db } from "../composition";
+import { PROTECTED_OPERATIONS } from "../auth/freshness";
+import { adminRole, open, recentlyAuthenticated } from "../auth/policy";
+import { db, keyring } from "../composition";
+import { ClientError } from "../errors";
 
 /** The password rules a client needs to validate a new password before submitting it. */
 export type PasswordPolicy = {
@@ -22,12 +35,36 @@ export type PasswordPolicy = {
  * Reduce the stored settings to what may cross the wire.
  *
  * Both settings functions answer any administrator holding the `settings` role,
- * so returning the row as stored would put the NCBI API key in a browser
- * payload. Narrowing here rather than in the data layer keeps the redaction on
- * the transport boundary, where the row is published.
+ * so returning the row as stored would put the NCBI API-key envelope in a
+ * browser payload. Narrowing here rather than in the data layer keeps the
+ * redaction on the transport boundary, where the row is published.
+ *
+ * The email columns are stripped as well: they belong to the full-administrator
+ * email functions, and the API-key envelope must never reach a `settings`-role
+ * client even encrypted.
  */
-function toSettings({ ncbiApiKey, ...rest }: StoredSettings): Settings {
-	return { ...rest, hasNcbiApiKey: ncbiApiKey !== "" };
+function toSettings({
+	emailApiKey: _emailApiKey,
+	emailEnabled: _emailEnabled,
+	emailReplyToAddress: _emailReplyToAddress,
+	emailSenderAddress: _emailSenderAddress,
+	emailSenderName: _emailSenderName,
+	ncbiApiKey,
+	...rest
+}: StoredSettings): Settings {
+	return {
+		...rest,
+		hasNcbiApiKey: ncbiApiKey !== null,
+		ncbiAvailability: resolveNcbiApiKey(ncbiApiKey, keyring).availability,
+	};
+}
+
+function rethrowAsHttp(err: unknown): never {
+	if (err instanceof NcbiConfigurationError) {
+		throw new ClientError(err.message, 400);
+	}
+
+	throw err;
 }
 
 /**
@@ -60,11 +97,8 @@ const updateSettingsSchema = z
 		cacheStorageBudget: z.number().int().positive().optional(),
 		defaultSourceTypes: z.array(z.string()).optional(),
 		enableSentry: z.boolean().optional(),
+		maxUploadSize: z.number().int().positive().max(MAX_UPLOAD_SIZE).optional(),
 		minimumPasswordLength: z.number().int().min(1).optional(),
-		// Trimmed, so a pasted key carrying whitespace is stored as the key
-		// itself. Empty is how a key is cleared, and is what the request layer
-		// reads as unset.
-		ncbiApiKey: z.string().trim().max(MAX_NCBI_API_KEY_LENGTH).optional(),
 		sampleAllRead: z.boolean().optional(),
 		sampleAllWrite: z.boolean().optional(),
 		sampleGroup: z
@@ -86,6 +120,10 @@ export const getSettingsFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
 	.handler(async (): Promise<Settings> => toSettings(await getSettings(db)));
 
+export const getCacheUsageFn = createServerFn({ method: "GET" })
+	.middleware([adminRole("settings")])
+	.handler(async (): Promise<CacheUsageSnapshot[]> => listCacheUsage(db));
+
 export const updateSettingsFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(updateSettingsSchema)
@@ -93,3 +131,64 @@ export const updateSettingsFn = createServerFn({ method: "POST" })
 		async ({ data }): Promise<Settings> =>
 			toSettings(await updateSettings(db, data)),
 	);
+
+/**
+ * Store a new NCBI API key, replacing whatever is stored.
+ *
+ * A credential, so it has its own function rather than a field on
+ * {@link updateSettingsFn}: the write goes through the keyring, and a plain
+ * settings patch has no encryption key to hand.
+ */
+export const setNcbiApiKeyFn = createServerFn({ method: "POST" })
+	.middleware([adminRole("settings")])
+	.validator(
+		z.object({
+			// Trimmed, so a pasted key carrying whitespace is stored as the key
+			// itself.
+			apiKey: z.string().trim().min(1).max(MAX_NCBI_API_KEY_LENGTH),
+		}),
+	)
+	.handler(async ({ data }): Promise<Settings> => {
+		try {
+			return toSettings(await setNcbiApiKey(db, keyring, data.apiKey));
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const clearNcbiApiKeyFn = createServerFn({ method: "POST" })
+	.middleware([adminRole("settings")])
+	.handler(
+		async (): Promise<Settings> => toSettings(await clearNcbiApiKey(db)),
+	);
+
+/**
+ * Set the instance MFA policy.
+ *
+ * A full-administrator function rather than a field on
+ * {@link updateSettingsFn}: `required` restricts every unenrolled user's
+ * session, which is more than the `settings` role may decide.
+ *
+ * `required` is refused until the caller has enrolled, because the policy
+ * would otherwise restrict the administrator who set it.
+ */
+export const setMfaPolicyFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("full"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.mfaPolicySet),
+	])
+	.validator(z.object({ mfaPolicy: z.enum(mfaPolicies) }))
+	.handler(async ({ context, data }): Promise<Settings> => {
+		if (data.mfaPolicy === "required") {
+			const caller = await getUser(db, context.principal.userId);
+
+			if (!caller.twoFactorEnabled) {
+				throw new ClientError(
+					"Set up two-factor authentication before requiring it.",
+					409,
+				);
+			}
+		}
+
+		return toSettings(await updateSettings(db, { mfaPolicy: data.mfaPolicy }));
+	});

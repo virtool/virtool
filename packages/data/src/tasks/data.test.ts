@@ -1,5 +1,5 @@
 import { hostname } from "node:os";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -30,6 +30,7 @@ import {
 	renewLeases,
 	TASK_HEARTBEAT_SECONDS,
 	TASK_LEASE_SECONDS,
+	TASK_WEDGE_SECONDS,
 	TaskNotFoundError,
 	updateTaskProgress,
 } from "./data";
@@ -198,6 +199,55 @@ describe("acquireTask", () => {
 
 		expect(claimed?.id).toBe(newer);
 		expect(claimed?.id).not.toBe(older);
+	});
+
+	it("never reclaims a periodic task that reached the wedge ceiling", async () => {
+		const [wedged] = await db
+			.insert(tasks)
+			.values({
+				complete: false,
+				context: {},
+				count: 0,
+				created_at: sql`timezone('utc', clock_timestamp()) - make_interval(secs => ${TASK_WEDGE_SECONDS + 60}::double precision)`,
+				progress: 0,
+				step: "sweep_blast",
+				type: "sweep_blast",
+			})
+			.returning({ id: tasks.id });
+		const [replacement] = await db
+			.insert(tasks)
+			.values({
+				complete: false,
+				context: {},
+				count: 0,
+				created_at: sql`timezone('utc', clock_timestamp())`,
+				progress: 0,
+				step: "sweep_blast",
+				type: "sweep_blast",
+			})
+			.returning({ id: tasks.id });
+
+		if (wedged === undefined || replacement === undefined) {
+			throw new Error("failed to seed periodic tasks");
+		}
+
+		const claimed = await acquireTask(db, {
+			runnerId: RUNNER_A,
+			allowedTypes: ["sweep_blast"],
+		});
+
+		expect(claimed?.id).toBe(replacement.id);
+		await expect(
+			acquireTask(db, {
+				runnerId: RUNNER_B,
+				allowedTypes: ["sweep_blast"],
+			}),
+		).resolves.toBeNull();
+		expect(await readRow(wedged.id)).toMatchObject({
+			acquired_at: null,
+			complete: false,
+			error: null,
+		});
 	});
 
 	it("claims only the allowed types", async () => {

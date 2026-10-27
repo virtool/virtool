@@ -25,8 +25,10 @@ const FILE_SUFFIX = "_FILE";
  * and erroring on the overlap would crashloop the very rollout that fixes it.
  *
  * An unreadable path throws, so a misconfigured mount fails at startup rather
- * than silently falling back. An empty file is an unset value: the trimmed
- * empty string is what the caller's schema then sees.
+ * than silently falling back. The error names the key and the errno but not the
+ * path, which an operator can set to the secret itself by mistake. An empty
+ * file is an unset value: the trimmed empty string is what the caller's schema
+ * then sees.
  */
 export function resolveFileBacked(
 	keys: Iterable<string>,
@@ -44,12 +46,22 @@ export function resolveFileBacked(
 		try {
 			resolved[key] = readFileSync(path, "utf8").trim();
 		} catch (error) {
+			// The key and the errno, never the path or the underlying error. A
+			// `_FILE` variable set to the secret itself instead of the file holding
+			// it is a live misconfiguration, and this message reaches the logs.
 			throw new Error(
-				`${key}${FILE_SUFFIX} points at ${path}, which could not be read`,
-				{ cause: error },
+				`${key}${FILE_SUFFIX} names a file that could not be read (${readErrorCode(error)})`,
 			);
 		}
 	}
 
 	return resolved;
+}
+
+function readErrorCode(error: unknown): string {
+	if (error instanceof Error && "code" in error) {
+		return String(error.code);
+	}
+
+	return "unknown";
 }

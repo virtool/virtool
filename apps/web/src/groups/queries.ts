@@ -1,3 +1,4 @@
+import { invalidateChange } from "@app/invalidate";
 import { groupQueryKeys } from "@groups/keys";
 import {
 	createGroupFn,
@@ -94,9 +95,12 @@ export function useUpdateGroup() {
 			updateGroupFn({
 				data: { groupId: Number(id), name, permissions },
 			}) as Promise<Group>,
-		onSuccess: (data) => {
-			queryClient.invalidateQueries({ queryKey: groupQueryKeys.lists() });
-			queryClient.setQueryData(groupQueryKeys.detail(data.id), data);
+		onSuccess: (group) => {
+			invalidateChange(queryClient, {
+				domain: "groups",
+				operation: "update",
+				id: group.id,
+			});
 		},
 	});
 }
@@ -111,8 +115,12 @@ export function useDeleteGroup() {
 	return useMutation<null, Error, { id: string | number }>({
 		mutationFn: ({ id }) =>
 			deleteGroupFn({ data: { groupId: Number(id) } }) as Promise<null>,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: groupQueryKeys.all() });
+		onSuccess: (_data, { id }) => {
+			invalidateChange(queryClient, {
+				domain: "groups",
+				operation: "delete",
+				id: Number(id),
+			});
 		},
 	});
 }
@@ -127,8 +135,12 @@ export function useCreateGroup() {
 	return useMutation<Group, Error, { name: string }>({
 		mutationFn: ({ name }) =>
 			createGroupFn({ data: { name } }) as Promise<Group>,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: groupQueryKeys.lists() });
+		onSuccess: (group) => {
+			invalidateChange(queryClient, {
+				domain: "groups",
+				operation: "insert",
+				id: group.id,
+			});
 		},
 	});
 }

@@ -1,5 +1,6 @@
 import {
 	computeJobProgress,
+	getSubtractionFastaName,
 	type JobWorkflow,
 	type NucleotideComposition,
 	type Subtraction,
@@ -16,6 +17,7 @@ import type { StorageBackend } from "@virtool/storage";
 import { deleteKeys } from "@virtool/storage";
 import { and, asc, count, eq, ilike, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { jobs } from "../db/schema/jobs";
@@ -23,6 +25,7 @@ import { legacySampleSubtractions } from "../db/schema/samples";
 import { subtractionFiles, subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -89,12 +92,6 @@ export class SubtractionNotOwnedError extends AppError {}
 
 /** Thrown when the upload a subtraction is created from does not exist. */
 export class SubtractionUploadNotFoundError extends AppError {}
-
-// LIKE wildcards in the search term are escaped so a user's `%` or `_` matches
-// literally rather than acting as a pattern.
-function escapeLike(term: string): string {
-	return term.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
 
 const jobUser = alias(users, "job_user");
 
@@ -191,8 +188,8 @@ export async function findSubtractions(
 
 	const findFilter = term
 		? or(
-				ilike(subtractions.name, `%${escapeLike(term)}%`),
-				ilike(subtractions.nickname, `%${escapeLike(term)}%`),
+				ilike(subtractions.name, toSearchPattern(term)),
+				ilike(subtractions.nickname, toSearchPattern(term)),
 			)
 		: undefined;
 
@@ -221,7 +218,7 @@ export async function findSubtractions(
 			selectSubtractionsWithResources(db)
 				.where(foundFilter)
 				.orderBy(asc(subtractions.name), asc(subtractions.id))
-				.offset((page - 1) * perPage)
+				.offset(getPageOffset(page, perPage))
 				.limit(perPage),
 		]);
 
@@ -235,7 +232,7 @@ export async function findSubtractions(
 		totalCount,
 		readyCount: takeFirstOrThrow(readyCountRows).value,
 		page,
-		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		items: rows.map(toMinimal),
 	};
@@ -321,8 +318,7 @@ async function checkSubtractionExists(
  *
  * This is the source genome `create_subtraction` reads, and the only file a
  * subtraction has before it is finalized. It is not folded into
- * {@link getSubtraction}: that shape is served to the SPA as well, and an
- * upload's `storage_key` has no business crossing that wire.
+ * {@link getSubtraction}: an upload's `storage_key` must not be returned.
  *
  * Returns null when the subtraction does not exist, names no upload, or names a
  * removed one. Every column here is nullable, so the fields are handed back as
@@ -354,43 +350,64 @@ export async function getSubtractionUpload(
 	return row ?? null;
 }
 
+/** A subtraction file's storage key and the filename it downloads as. */
+export type SubtractionFileDownload = {
+	filename: string;
+	storageKey: string;
+};
+
 /**
- * Resolve the storage key of a subtraction file by the name it is registered
- * under.
+ * Resolve the storage key and download filename of a subtraction file by the
+ * name it is registered under.
  *
  * Returns null when the subtraction, or a file of that name on it, does not
  * exist, or when the file predates keys being recorded. The key is read off the
  * matched row rather than composed, so a filename taken from a URL names no
  * object.
  *
+ * The FASTA downloads under the name derived from the subtraction, which is the
+ * name the client shows in its link. Other files keep their registered name.
+ *
  * The row's `size` is deliberately not returned. It is nullable, and it records
  * what the create job wrote rather than what the bucket currently holds — a
  * caller that needs a byte count asks storage.
  */
-export async function getSubtractionFileKey(
+export async function getSubtractionFileDownload(
 	db: DbOrTx,
 	subtractionId: number,
 	filename: string,
-): Promise<string | null> {
-	const [exists, [file]] = await Promise.all([
-		checkSubtractionExists(db, subtractionId),
-		db
-			.select({ storageKey: subtractionFiles.storage_key })
-			.from(subtractionFiles)
-			.where(
-				and(
-					eq(subtractionFiles.subtraction_id, subtractionId),
-					eq(subtractionFiles.name, filename),
-				),
-			)
-			.limit(1),
-	]);
+): Promise<SubtractionFileDownload | null> {
+	const [file] = await db
+		.select({
+			storageKey: subtractionFiles.storage_key,
+			subtractionName: subtractions.name,
+			type: subtractionFiles.type,
+		})
+		.from(subtractionFiles)
+		.innerJoin(
+			subtractions,
+			eq(subtractions.id, subtractionFiles.subtraction_id),
+		)
+		.where(
+			and(
+				eq(subtractions.id, subtractionId),
+				eq(subtractions.deleted, false),
+				eq(subtractionFiles.name, filename),
+			),
+		)
+		.limit(1);
 
-	if (!exists) {
+	if (!file?.storageKey) {
 		return null;
 	}
 
-	return file?.storageKey ?? null;
+	return {
+		filename:
+			file.type === "fasta"
+				? getSubtractionFastaName(file.subtractionName)
+				: filename,
+		storageKey: file.storageKey,
+	};
 }
 
 export async function createSubtraction(
@@ -538,6 +555,8 @@ export async function updateSubtraction(
 					eq(subtractions.deleted, false),
 				),
 			);
+
+		await emit("subtractions", subtractionId, "update");
 	}
 
 	return getSubtraction(db, subtractionId);
@@ -578,6 +597,8 @@ export async function deleteSubtraction(
 	if (storageKeys === null) {
 		throw new SubtractionNotFoundError();
 	}
+
+	await emit("subtractions", subtractionId, "delete");
 
 	// The database write has committed, so a storage failure only orphans bytes
 	// rather than failing the delete. Log the orphans so they stay observable.

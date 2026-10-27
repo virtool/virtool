@@ -66,6 +66,43 @@ jobs:
               run: pnpm knip
             - name: Typescript
               run: pnpm typecheck
+            - name: Drizzle schema
+              run: |
+                  pnpm --filter @virtool/data db:generate
+                  if [[ -n "$(git status --porcelain --untracked-files=all -- packages/data/drizzle)" ]]; then
+                      git status --short --untracked-files=all -- packages/data/drizzle
+                      exit 1
+                  fi
+
+    # -------------------------------------------------------------------------
+    # Docs prose (*.md, *.mdx)
+    # -------------------------------------------------------------------------
+    # Vale lints Markdown and MDX against the Google and write-good styles named
+    # in `.vale.ini`. `MinAlertLevel = warning` prints warnings but only
+    # error-level alerts set a non-zero exit, so this gate fails on errors and
+    # leaves warnings advisory. No checkout of the styles: they are gitignored
+    # and `vale sync` fetches them from pinned package release URLs. No `Setup`
+    # action either — this job runs no pnpm, and skipping node_modules keeps `vale .`
+    # off the dependency tree it would otherwise walk.
+    docs-lint:
+        name: Docs / Lint
+        runs-on: ubuntu-24.04
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            # Pinned to the version the vocabulary and style overrides were
+            # cleared against; a floating install could add rules that fail a
+            # branch nothing changed.
+            - name: Install Vale
+              run: |
+                  curl -sfL https://github.com/errata-ai/vale/releases/download/v3.18.0/vale_3.18.0_Linux_64-bit.tar.gz \
+                      | sudo tar -xz -C /usr/local/bin vale
+                  vale --version
+            - name: Sync styles
+              run: vale sync
+            - name: Lint
+              run: vale --glob='*.{md,mdx}' .
 
     # -------------------------------------------------------------------------
     # Docker images (apps/web, apps/internal, apps/create-subtraction,
@@ -119,7 +156,7 @@ jobs:
             # gha cache below needs a docker-container builder.
             - name: Setup Buildx
               if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
             - name: Build
               if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               run: |
@@ -148,7 +185,7 @@ jobs:
                   pnpm --filter @virtool/pathoscope build
                   pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
             - name: Setup Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
             - name: Build
               run: |
                   docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope \
@@ -205,7 +242,7 @@ jobs:
               id: playwright
               run: echo "version=$(pnpm --filter @virtool/web exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
             - name: Cache Playwright browsers
-              uses: actions/cache@v4
+              uses: actions/cache@v6
               with:
                   path: ~/.cache/ms-playwright
                   key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -225,7 +262,7 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
-    # Internal (apps/internal)
+    # Internal (apps/internal, apps/dev-tools)
     # -------------------------------------------------------------------------
     internal-test:
         name: Internal / Test
@@ -241,12 +278,12 @@ jobs:
             # against a real Postgres testcontainer, and pulling that image does
             # not belong in the fast package loop.
             - name: Test
-              run: pnpm --filter @virtool/internal test
+              run: pnpm --filter @virtool/internal --filter @virtool/dev-tools test
               env:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
-    # NuVs (apps/nuvs)
+    # Nuvs (apps/nuvs)
     # -------------------------------------------------------------------------
     # Also published by `release-ghcr` as `ghcr.io/virtool/nuvs`.
     #
@@ -255,7 +292,7 @@ jobs:
     # workflow build does. It is the first stage in the Dockerfile and depends on
     # nothing else, so a warm layer cache skips it entirely.
     build-nuvs:
-        name: NuVs / Build
+        name: Nuvs / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 60
         needs: [changes]
@@ -275,7 +312,7 @@ jobs:
                   pnpm --filter @virtool/nuvs build
                   pnpm --filter @virtool/nuvs --prod deploy .docker-build/nuvs --force
             - name: Setup Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
             - name: Build
               run: |
                   docker buildx bake -f packages/image-build/docker-bake.hcl nuvs \
@@ -338,10 +375,10 @@ jobs:
             # the harness skips them; VT_REQUIRE_BOWTIE2 below turns that skip
             # into a failure so CI can never quietly stop checking them. It is
             # built from the shared workflow-tools Dockerfile rather than apt, so
-            # this job and the workflow images can only ever run the build the
-            # goldens were generated against.
+            # this job and the workflow images always run the same bowtie2
+            # build.
             - name: Setup Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
             - name: Build bowtie2
               run: |
                   docker buildx bake -f packages/image-build/docker-bake.hcl bowtie2 \
@@ -353,7 +390,7 @@ jobs:
                   sudo cp /tmp/bowtie2/tools/bowtie2/2.5.4/* /usr/local/bin/
                   bowtie2 --version | head -1
             - name: Cache cargo
-              uses: actions/cache@v4
+              uses: actions/cache@v6
               with:
                   path: |
                       ~/.cargo/registry
@@ -389,7 +426,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v7
             - name: Cache cargo
-              uses: actions/cache@v4
+              uses: actions/cache@v6
               with:
                   path: |
                       ~/.cargo/registry
@@ -437,11 +474,11 @@ jobs:
             - name: Setup
               uses: ./.github/actions/setup
             # Exclusions rather than an inclusion list, so a new workspace that
-            # declares `test` is covered without editing this job. The four
-            # excluded here run in dedicated jobs: web, internal, and the two
-            # persistence packages that share Data & Storage / Test.
+            # declares `test` is covered without editing this job. The five
+            # excluded here run in dedicated jobs: web, internal and dev-tools,
+            # and the two persistence packages that share Data & Storage / Test.
             - name: Test
-              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" test
+              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" --filter "!@virtool/dev-tools" test
 
     # -------------------------------------------------------------------------
     # Data and Storage (packages/data, packages/storage)
@@ -515,6 +552,7 @@ jobs:
                 build-pathoscope,
                 checks,
                 data-storage-test,
+                docs-lint,
                 internal-test,
                 nuvs-test,
                 packages-test,
@@ -636,7 +674,7 @@ jobs:
                   pnpm --filter ${{ matrix.package }} build
                   pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
             - name: Setup Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
             - name: Login
               uses: docker/login-action@v4
               with:

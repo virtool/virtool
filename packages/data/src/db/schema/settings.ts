@@ -5,7 +5,11 @@
 // is why `DEFAULT_SETTINGS` in `../../settings/data.ts` carries them rather
 // than this file.
 
-import type { SampleGroup } from "@virtool/contracts";
+import {
+	MAX_UPLOAD_SIZE,
+	type MfaPolicy,
+	type SampleGroup,
+} from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	bigint,
@@ -16,6 +20,7 @@ import {
 	pgTable,
 	text,
 } from "drizzle-orm/pg-core";
+import type { EncryptedValue } from "../../crypto/keyring";
 
 export const settings = pgTable(
 	"settings",
@@ -30,13 +35,21 @@ export const settings = pgTable(
 		defaultSourceTypes: jsonb("default_source_types")
 			.$type<string[]>()
 			.notNull(),
+		// Encrypted under the environment-owned process encryption key.
+		emailApiKey: jsonb("email_api_key").$type<EncryptedValue>(),
+		emailEnabled: boolean("email_enabled").notNull(),
+		emailReplyToAddress: text("email_reply_to_address").notNull(),
+		emailSenderAddress: text("email_sender_address").notNull(),
+		emailSenderName: text("email_sender_name").notNull(),
 		enableSentry: boolean("enable_sentry").notNull(),
+		// The upload limit in bytes fits within JavaScript's safe integer range.
+		maxUploadSize: bigint("max_upload_size", { mode: "number" }).notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
-		// A credential, unlike every other column here. It is never published to
-		// a client: `apps/web/src/server/settings/functions.ts` reduces it to a
-		// boolean at the transport boundary. Empty means unset, and the GenBank
-		// request layer omits `api_key` rather than sending a blank one.
-		ncbiApiKey: text("ncbi_api_key").notNull(),
+		mfaPolicy: text("mfa_policy").$type<MfaPolicy>().notNull(),
+		// Encrypted under the environment-owned process encryption key. Null
+		// means unset, and the GenBank request layer omits `api_key` rather than
+		// sending a blank one.
+		ncbiApiKey: jsonb("ncbi_api_key").$type<EncryptedValue>(),
 		sampleAllRead: boolean("sample_all_read").notNull(),
 		sampleAllWrite: boolean("sample_all_write").notNull(),
 		sampleGroup: text("sample_group").$type<SampleGroup>().notNull(),
@@ -50,8 +63,16 @@ export const settings = pgTable(
 			sql`${table.cacheStorageBudget} > 0`,
 		),
 		check(
+			"ck_settings_max_upload_size",
+			sql`${table.maxUploadSize} > 0 AND ${table.maxUploadSize} <= ${sql.raw(String(MAX_UPLOAD_SIZE))}`,
+		),
+		check(
 			"ck_settings_sample_group",
 			sql`${table.sampleGroup} in ('none', 'force_choice', 'users_primary_group')`,
+		),
+		check(
+			"ck_settings_mfa_policy",
+			sql`${table.mfaPolicy} in ('optional', 'required')`,
 		),
 	],
 );

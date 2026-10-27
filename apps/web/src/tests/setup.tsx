@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { RecentAuthenticationProvider } from "@app/recentAuthentication";
 import { faker } from "@faker-js/faker";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -24,12 +25,15 @@ import { createFakeAccount } from "./fake/account";
 import { accountServerFnMocks } from "./server-fn/account";
 import { analysisServerFnMocks } from "./server-fn/analyses";
 import { authServerFnMocks } from "./server-fn/auth";
+import { emailServerFnMocks } from "./server-fn/email";
 import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
 import { indexServerFnMocks } from "./server-fn/indexes";
 import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
 import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
+import { recentAuthenticationServerFnMocks } from "./server-fn/recentAuthentication";
+import { recoveryServerFnMocks } from "./server-fn/recovery";
 import { referenceServerFnMocks } from "./server-fn/references";
 import { rootServerFnMocks } from "./server-fn/root";
 import { sampleServerFnMocks } from "./server-fn/samples";
@@ -56,6 +60,16 @@ vi.mock("@server/auth/functions", async () => {
 	const { authServerFnMocks } = await import("./server-fn/auth");
 	return authServerFnMocks;
 });
+vi.mock("@server/auth/recoveryFunctions", async () => {
+	const { recoveryServerFnMocks } = await import("./server-fn/recovery");
+	return recoveryServerFnMocks;
+});
+vi.mock("@server/auth/recentAuthentication", async () => {
+	const { recentAuthenticationServerFnMocks } = await import(
+		"./server-fn/recentAuthentication"
+	);
+	return recentAuthenticationServerFnMocks;
+});
 // Resolve the mock lazily via dynamic import. A direct reference to the
 // imported `userServerFnMocks` binding races route modules (pulled in by
 // `routeTree`) that import the mocked module before this binding initializes.
@@ -78,6 +92,10 @@ vi.mock("@server/jobs/functions", async () => {
 vi.mock("@server/tasks/functions", async () => {
 	const { taskServerFnMocks } = await import("./server-fn/tasks");
 	return taskServerFnMocks;
+});
+vi.mock("@server/email/functions", async () => {
+	const { emailServerFnMocks } = await import("./server-fn/email");
+	return emailServerFnMocks;
 });
 vi.mock("@server/settings/functions", async () => {
 	const { settingsServerFnMocks } = await import("./server-fn/settings");
@@ -132,6 +150,8 @@ beforeEach(() => {
 		...Object.values(taskServerFnMocks),
 		...Object.values(hmmServerFnMocks),
 		...Object.values(authServerFnMocks),
+		...Object.values(recoveryServerFnMocks),
+		...Object.values(recentAuthenticationServerFnMocks),
 		...Object.values(labelServerFnMocks),
 		...Object.values(rootServerFnMocks),
 		uploadServerFnMocks.findUploadsFn,
@@ -149,7 +169,10 @@ beforeEach(() => {
 		analysisServerFnMocks.findRecentlyViewedAnalysesFn,
 		analysisServerFnMocks.getAnalysisFn,
 		analysisServerFnMocks.getAnalysisResultsFn,
+		analysisServerFnMocks.listAnalysisUsersFn,
 		settingsServerFnMocks.getSettingsFn,
+		settingsServerFnMocks.getCacheUsageFn,
+		emailServerFnMocks.getEmailSettingsFn,
 		...Object.values(indexServerFnMocks),
 		otuServerFnMocks.findOtusFn,
 		otuServerFnMocks.getOtuFn,
@@ -187,6 +210,12 @@ beforeEach(() => {
 		analysisServerFnMocks.recordAnalysisViewFn,
 		analysisServerFnMocks.blastNuvsFn,
 		settingsServerFnMocks.updateSettingsFn,
+		settingsServerFnMocks.clearNcbiApiKeyFn,
+		settingsServerFnMocks.setNcbiApiKeyFn,
+		emailServerFnMocks.clearEmailApiKeyFn,
+		emailServerFnMocks.sendTestEmailFn,
+		emailServerFnMocks.setEmailApiKeyFn,
+		emailServerFnMocks.updateEmailSettingsFn,
 		otuServerFnMocks.createOtuFn,
 		otuServerFnMocks.updateOtuFn,
 		otuServerFnMocks.deleteOtuFn,
@@ -208,11 +237,25 @@ beforeEach(() => {
 	settingsServerFnMocks.getPasswordPolicyFn.mockReset();
 	mockGetPasswordPolicy();
 
+	// Resolving fresh lets route tests render the administration views rather
+	// than the authentication gate in front of them.
+	recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
+		15 * 60 * 1000,
+	);
+
+	// The security view lists passkeys, so any test rendering it needs a list.
+	accountServerFnMocks.findPasskeysFn.mockResolvedValue([]);
+
 	// Every upload begins by asking the server which transport to take. Default
 	// to the proxied path so a test that just exercises uploading does not have
 	// to stub it; tests for the chunked path override this.
 	uploadServerFnMocks.initUploadFn.mockReset();
-	uploadServerFnMocks.initUploadFn.mockResolvedValue({ mode: "proxied" });
+	uploadServerFnMocks.initUploadFn.mockResolvedValue({
+		uploadId: 1,
+		url: "https://storage.test/blob?sig=test",
+		blockSize: 16 * 1024 * 1024,
+		concurrency: 1,
+	});
 });
 
 process.env.TZ = "UTC";
@@ -247,7 +290,11 @@ export function at<T>(items: readonly T[], index: number): T {
 export function wrapWithProviders(ui: ReactNode) {
 	const queryClient = createTestQueryClient();
 
-	return <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>;
+	return (
+		<QueryClientProvider client={queryClient}>
+			<RecentAuthenticationProvider>{ui}</RecentAuthenticationProvider>
+		</QueryClientProvider>
+	);
 }
 
 export function renderWithProviders(ui: ReactNode) {
@@ -257,7 +304,9 @@ export function renderWithProviders(ui: ReactNode) {
 
 	function wrap(node: ReactNode) {
 		return (
-			<QueryClientProvider client={queryClient}>{node}</QueryClientProvider>
+			<QueryClientProvider client={queryClient}>
+				<RecentAuthenticationProvider>{node}</RecentAuthenticationProvider>
+			</QueryClientProvider>
 		);
 	}
 
@@ -432,6 +481,7 @@ window.HTMLElement.prototype.scrollIntoView = vi.fn();
 window.HTMLElement.prototype.releasePointerCapture = vi.fn();
 window.HTMLElement.prototype.hasPointerCapture = vi.fn();
 window.scrollTo = vi.fn();
+document.elementFromPoint = vi.fn(() => null);
 
 class ResizeObserver {
 	observe() {}

@@ -1,13 +1,9 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputSimple,
-} from "@base/Input";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
+import Field, { FieldError } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
+import SectionHeader from "@base/SectionHeader";
 import { useUpdateUser } from "@users/queries";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 type HandleProps = {
@@ -30,59 +26,49 @@ export default function Handle({ id, handle }: HandleProps) {
 		formState: { errors },
 		handleSubmit,
 		register,
-		reset,
-	} = useForm<FormValues>({ defaultValues: { handle } });
-
-	// Keep the input in sync when the handle prop changes after a successful
-	// update and refetch.
-	useEffect(() => {
-		reset({ handle });
-	}, [handle, reset]);
+	} = useForm<FormValues>({ values: { handle } });
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
-				<h2>Change Handle</h2>
+		<section>
+			<SectionHeader level={3}>
+				<h3>Change Handle</h3>
 				<p>The username this person signs in with.</p>
-			</BoxGroupHeader>
-			<BoxGroupSection>
-				<form
-					onSubmit={handleSubmit((values) =>
-						mutation.mutate({
-							userId: id,
-							update: { handle: values.handle },
-						}),
-					)}
-				>
-					<InputGroup>
-						<InputContainer>
-							<InputSimple
+			</SectionHeader>
+			<BoxGroup>
+				<BoxGroupSection>
+					<form
+						onSubmit={handleSubmit((values) =>
+							mutation.mutate({
+								userId: id,
+								update: { handle: values.handle },
+							}),
+						)}
+					>
+						<Field>
+							<Input
 								aria-label="handle"
-								id="handle"
 								autoComplete="off"
 								aria-required
-								aria-invalid={
-									Boolean(errors.handle) || mutation.isError || undefined
-								}
-								aria-describedby={
-									errors.handle || mutation.isError ? "handle-error" : undefined
-								}
 								{...register("handle", {
 									required: "Please specify a username",
 								})}
 							/>
-							<InputError id="handle-error">
-								{errors.handle?.message ||
-									(mutation.isError ? mutation.error.message : "")}
-							</InputError>
-						</InputContainer>
-					</InputGroup>
+							<FieldError
+								errors={[
+									errors.handle,
+									mutation.isError
+										? { message: mutation.error.message }
+										: undefined,
+								]}
+							/>
+						</Field>
 
-					<div className="flex items-center justify-end">
-						<SaveButton />
-					</div>
-				</form>
-			</BoxGroupSection>
-		</BoxGroup>
+						<div className="flex items-center justify-end">
+							<SaveButton />
+						</div>
+					</form>
+				</BoxGroupSection>
+			</BoxGroup>
+		</section>
 	);
 }

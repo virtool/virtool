@@ -1,4 +1,4 @@
-/** Base classes shared by Input, InputSimple, and TextArea */
+/** Base classes shared by Input and TextArea */
 export const inputBaseClasses =
 	"bg-white border rounded min-w-0 block outline-none py-2 px-2.5 relative transition-[color,box-shadow] w-full placeholder:text-gray-500 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
 

@@ -32,6 +32,23 @@ describe("<SearchToolbar />", () => {
 		expect(input).toHaveValue("Foo");
 	});
 
+	it("should keep a trailing space so the user can continue typing", async () => {
+		const onChange = vi.fn();
+
+		renderWithProviders(
+			<SearchToolbar aria-label="Search things" onChange={onChange} value="" />,
+		);
+
+		const input = screen.getByRole("textbox");
+		await userEvent.type(input, "Foo ");
+		await waitFor(() => expect(onChange).toHaveBeenCalledWith("Foo "));
+
+		await userEvent.type(input, "Bar");
+
+		expect(input).toHaveValue("Foo Bar");
+		await waitFor(() => expect(onChange).toHaveBeenLastCalledWith("Foo Bar"));
+	});
+
 	it("should resync the input when the term changes externally", () => {
 		const { rerender } = renderWithProviders(
 			<SearchToolbar

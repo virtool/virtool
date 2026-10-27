@@ -11,7 +11,7 @@ describe("<OtuItem />", () => {
 		await renderWithRouter(<OtuItem {...otu} refId="ref-1" />);
 
 		expect(screen.getByText(otu.name)).toBeInTheDocument();
-		expect(screen.getByText(otu.abbreviation)).toBeInTheDocument();
+		expect(screen.getByText(otu.acronym)).toBeInTheDocument();
 		expect(screen.queryByText("Unverified")).toBeNull();
 	});
 

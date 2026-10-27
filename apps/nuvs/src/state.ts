@@ -38,7 +38,7 @@ export type NuvsRawOrfHit = {
  *
  * `nuc` is dropped on the way in — it is the ORF's nucleotide slice, which is
  * recoverable from the contig's `sequence` and `pos`, and keeping it doubles the
- * size of a blob that is already the largest thing a NuVs analysis stores.
+ * size of a blob that is already the largest thing a Nuvs analysis stores.
  */
 export type NuvsRawOrf = {
 	frame: number;

@@ -22,7 +22,7 @@ describe("<UserGroups />", () => {
 		userId = createFakeUser().id;
 	});
 
-	it("renders members as radios with remove buttons", async () => {
+	it("renders members with primary toggles and remove buttons", async () => {
 		mockListGroups(allGroups);
 
 		renderWithProviders(
@@ -34,13 +34,12 @@ describe("<UserGroups />", () => {
 		);
 
 		expect(await screen.findByText("Groups")).toBeInTheDocument();
-		expect(screen.getByRole("radio", { name: "foo" })).toBeChecked();
+		expect(
+			screen.getByRole("button", { name: "Primary group: foo" }),
+		).toHaveAttribute("aria-pressed", "true");
 		expect(
 			screen.getByRole("button", { name: "Remove foo" }),
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole("radio", { name: "No primary group" }),
-		).not.toBeChecked();
 	});
 
 	it("shows an empty message when the user has no groups", async () => {
@@ -72,7 +71,9 @@ describe("<UserGroups />", () => {
 		expect(
 			screen.queryByRole("combobox", { name: "Add group" }),
 		).not.toBeInTheDocument();
-		expect(screen.getByRole("radio", { name: "foo" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Primary group: foo" }),
+		).toBeInTheDocument();
 	});
 
 	it("points to group creation when no groups exist", async () => {
@@ -190,7 +191,7 @@ describe("<UserGroups />", () => {
 		expect(screen.getByRole("option", { name: "baz" })).toBeInTheDocument();
 	});
 
-	it("selects 'No primary group' by default when there is no primary group", async () => {
+	it("presses no primary toggle when there is no primary group", async () => {
 		mockListGroups(allGroups);
 
 		renderWithProviders(
@@ -202,34 +203,14 @@ describe("<UserGroups />", () => {
 		);
 
 		expect(
-			await screen.findByRole("radio", { name: "No primary group" }),
-		).toBeChecked();
-		expect(screen.getByRole("radio", { name: "foo" })).not.toBeChecked();
-		expect(screen.getByRole("radio", { name: "bar" })).not.toBeChecked();
+			await screen.findByRole("button", { name: "Primary group: foo" }),
+		).toHaveAttribute("aria-pressed", "false");
+		expect(
+			screen.getByRole("button", { name: "Primary group: bar" }),
+		).toHaveAttribute("aria-pressed", "false");
 	});
 
-	it("sets the primary group when a radio is selected", async () => {
-		mockListGroups(allGroups);
-		mockUpdateUser(userId, 200, {});
-
-		renderWithProviders(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member, other]}
-				primaryGroup={member}
-			/>,
-		);
-
-		await userEvent.click(await screen.findByRole("radio", { name: "bar" }));
-
-		await waitFor(() =>
-			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, primaryGroup: 2 },
-			}),
-		);
-	});
-
-	it("clears the primary group when 'No primary group' is selected", async () => {
+	it("sets the primary group when a toggle is pressed", async () => {
 		mockListGroups(allGroups);
 		mockUpdateUser(userId, 200, {});
 
@@ -242,7 +223,30 @@ describe("<UserGroups />", () => {
 		);
 
 		await userEvent.click(
-			await screen.findByRole("radio", { name: "No primary group" }),
+			await screen.findByRole("button", { name: "Primary group: bar" }),
+		);
+
+		await waitFor(() =>
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
+				data: { userId, primaryGroup: 2 },
+			}),
+		);
+	});
+
+	it("clears the primary group when its toggle is pressed again", async () => {
+		mockListGroups(allGroups);
+		mockUpdateUser(userId, 200, {});
+
+		renderWithProviders(
+			<UserGroups
+				userId={userId}
+				memberGroups={[member, other]}
+				primaryGroup={member}
+			/>,
+		);
+
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Primary group: foo" }),
 		);
 
 		await waitFor(() =>

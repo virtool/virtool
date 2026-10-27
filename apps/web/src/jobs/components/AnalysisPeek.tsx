@@ -15,7 +15,7 @@ type AnalysisPeekProps = {
 };
 
 /**
- * The analysis a Pathoscope or NuVs job produces, shown on the job detail view.
+ * The analysis a Pathoscope or Nuvs job produces, shown on the job detail view.
  *
  * Apart from `AnalysisItem`, which it is otherwise shaped like, it shows no job
  * state and no delete button — the job's own state, steps and controls are on

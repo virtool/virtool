@@ -23,7 +23,7 @@ describe("<OtuCreate />", () => {
 
 		expect(screen.getByText("Create OTU")).toBeInTheDocument();
 		expect(screen.getByLabelText("Name")).toBeInTheDocument();
-		expect(screen.getByLabelText("Abbreviation")).toBeInTheDocument();
+		expect(screen.getByLabelText("Acronym")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
 	});
 
@@ -36,9 +36,9 @@ describe("<OtuCreate />", () => {
 		expect(await screen.findByText("Name required")).toBeInTheDocument();
 	});
 
-	it("should create OTU without abbreviation", async () => {
+	it("should create OTU without acronym", async () => {
 		const createOtu = mockCreateOtu(
-			createFakeOtu({ name: "TestName", abbreviation: "" }),
+			createFakeOtu({ name: "TestName", acronym: "" }),
 		);
 
 		renderWithProviders(
@@ -53,16 +53,16 @@ describe("<OtuCreate />", () => {
 				data: {
 					referenceId: reference.id,
 					name: "TestName",
-					abbreviation: "",
+					acronym: "",
 					schema: [],
 				},
 			}),
 		);
 	});
 
-	it("should create OTU with abbreviation", async () => {
+	it("should create OTU with acronym", async () => {
 		const createOtu = mockCreateOtu(
-			createFakeOtu({ name: "TestName", abbreviation: "TestAbbreviation" }),
+			createFakeOtu({ name: "TestName", acronym: "TestAcronym" }),
 		);
 
 		renderWithProviders(
@@ -70,10 +70,7 @@ describe("<OtuCreate />", () => {
 		);
 
 		await userEvent.type(screen.getByLabelText("Name"), "TestName");
-		await userEvent.type(
-			screen.getByLabelText("Abbreviation"),
-			"TestAbbreviation",
-		);
+		await userEvent.type(screen.getByLabelText("Acronym"), "TestAcronym");
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
 		await waitFor(() =>
@@ -81,7 +78,7 @@ describe("<OtuCreate />", () => {
 				data: {
 					referenceId: reference.id,
 					name: "TestName",
-					abbreviation: "TestAbbreviation",
+					acronym: "TestAcronym",
 					schema: [],
 				},
 			}),

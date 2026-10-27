@@ -8,8 +8,8 @@ type WallTitleProps = {
 export function WallTitle({ subtitle, title }: WallTitleProps) {
 	return (
 		<>
-			<header className="flex items-center justify-center mb-16">
-				<Logo className="m-0" color="black" height={60} />
+			<header className="flex items-center gap-2 mb-10">
+				<Logo className="m-0" color="black" height={49} />
 				<h1 className="font-bold m-0">Virtool</h1>
 			</header>
 			<header className="mb-6">

@@ -1,28 +1,31 @@
-import { useFetchSettings, useUpdateSettings } from "@administration/queries";
+import {
+	useSuspenseCacheUsage,
+	useSuspenseSettings,
+	useUpdateSettings,
+} from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
-import LoadingPlaceholder from "@base/LoadingPlaceholder";
-import QueryError from "@base/QueryError";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
+import CacheUsageChart from "./CacheUsageChart";
 
-/** The budget field is entered and shown in gibibytes; the setting is stored in bytes. */
-const BYTES_PER_GIBIBYTE = 1024 ** 3;
+const BYTES_PER_GIGABYTE = 1000 ** 3;
 
 type CacheStorageBudgetFormValues = {
-	budgetGibibytes: number;
+	budgetGigabytes: number;
 };
 
 /**
  * Set how much object storage the cache store may occupy.
  *
- * The eviction task evicts least-recently-used caches until the store is back
- * under this budget. The setting is stored in bytes; the field is in gibibytes,
- * which is the unit the budget is reasoned about in.
+ * Eviction removes least recently used caches to meet this budget.
+ * The field uses decimal gigabytes; the setting stores bytes.
  */
 export default function CacheStorageBudget() {
-	const { data, isPending, isError } = useFetchSettings();
+	const { data } = useSuspenseSettings();
+	const { data: cacheUsage } = useSuspenseCacheUsage();
 	const mutation = useUpdateSettings();
 
 	const {
@@ -31,64 +34,69 @@ export default function CacheStorageBudget() {
 		register,
 	} = useForm<CacheStorageBudgetFormValues>({
 		values: {
-			budgetGibibytes: data ? data.cacheStorageBudget / BYTES_PER_GIBIBYTE : 0,
+			budgetGigabytes: data.cacheStorageBudget / BYTES_PER_GIGABYTE,
 		},
 	});
 
-	if (isError && !data) {
-		return <QueryError noun="settings" />;
-	}
-
-	if (isPending) {
-		return <LoadingPlaceholder />;
-	}
-
-	function save({ budgetGibibytes }: CacheStorageBudgetFormValues) {
+	function save({ budgetGigabytes }: CacheStorageBudgetFormValues) {
 		mutation.mutate({
-			cacheStorageBudget: Math.round(budgetGibibytes * BYTES_PER_GIBIBYTE),
+			cacheStorageBudget: Math.round(budgetGigabytes * BYTES_PER_GIGABYTE),
 		});
 	}
 
 	return (
-		<section>
-			<SectionHeader>
-				<h2>Cache Storage Budget</h2>
-				<p>
-					The eviction task removes least-recently-used caches until the cache
-					store is back under this budget.
-				</p>
+		<section className="flex flex-col gap-4">
+			<SectionHeader className="mb-0">
+				<h2>Caching</h2>
 			</SectionHeader>
-			<BoxGroup>
-				<BoxGroupSection>
-					<form onSubmit={handleSubmit(save)}>
-						<InputGroup>
-							<InputLabel htmlFor="cacheStorageBudget">Budget (GiB)</InputLabel>
-							<Input
-								id="cacheStorageBudget"
-								aria-describedby="cacheStorageBudget-error"
-								aria-invalid={Boolean(errors.budgetGibibytes) || undefined}
-								min={1}
-								step={1}
-								type="number"
-								{...register("budgetGibibytes", {
-									valueAsNumber: true,
-									required: "A budget is required.",
-									min: {
-										value: 1,
-										message: "The budget must be at least 1 GiB.",
-									},
-								})}
-							/>
-							<InputError id="cacheStorageBudget-error">
-								{errors.budgetGibibytes?.message}
-							</InputError>
-						</InputGroup>
-						<div className="flex justify-end">
-							<SaveButton />
-						</div>
-					</form>
-				</BoxGroupSection>
-			</BoxGroup>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Usage</h3>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						<CacheUsageChart
+							budget={data.cacheStorageBudget}
+							snapshots={cacheUsage}
+						/>
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Storage Budget</h3>
+					<p>
+						Least recently used caches are removed to keep cache storage usage
+						below this limit.
+					</p>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						<form onSubmit={handleSubmit(save)}>
+							<Field>
+								<FieldLabel>Budget (GB)</FieldLabel>
+								<Input
+									min={1}
+									step="any"
+									type="number"
+									{...register("budgetGigabytes", {
+										valueAsNumber: true,
+										required: "A budget is required.",
+										min: {
+											value: 1,
+											message: "The budget must be at least 1 GB.",
+										},
+									})}
+								/>
+								<FieldError errors={[errors.budgetGigabytes]} />
+							</Field>
+							<div className="flex justify-end">
+								<SaveButton />
+							</div>
+						</form>
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
 		</section>
 	);
 }

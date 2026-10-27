@@ -1,3 +1,4 @@
+import { invalidateChange, invalidateChanges } from "@app/invalidate";
 import { samplesQueryKeys } from "@samples/keys";
 import {
 	createSampleFn,
@@ -18,7 +19,6 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import { fileQueryKeys } from "@uploads/keys";
 import type {
 	GroupMinimal,
 	LabelNested,
@@ -266,13 +266,83 @@ export function useCreateSample() {
 					group,
 				},
 			}) as Promise<Sample>,
-		onSuccess: () => {
-			// The created sample reserves its read files, so the server stops
-			// returning them. Only the reads selector shows them — an infinite
-			// list — so refetch just that, not every upload type and page.
-			queryClient.invalidateQueries({
-				queryKey: [...fileQueryKeys.infiniteLists(), "reads"],
+		onSuccess: (sample) => {
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "insert",
+				id: sample.id,
 			});
+		},
+	});
+}
+
+/** The outcome of creating a batch of samples. */
+export type CreateSamplesResult = {
+	/** The samples that were created. */
+	created: Sample[];
+
+	/** The requests that failed, each with the error that rejected it. */
+	failed: { error: Error; request: CreateSampleRequest }[];
+};
+
+/**
+ * Initializes a mutator for creating several samples at once.
+ *
+ * Every request is attempted, so one rejection doesn't strand the rest. The
+ * mutation resolves with both outcomes rather than rejecting, letting the
+ * caller keep the failed requests on screen while the created ones leave.
+ */
+export function useCreateSamples() {
+	const queryClient = useQueryClient();
+
+	return useMutation<CreateSamplesResult, Error, CreateSampleRequest[]>({
+		mutationFn: async (requests) => {
+			const results = await Promise.allSettled(
+				requests.map(
+					(request) =>
+						createSampleFn({
+							data: {
+								...request,
+								libraryType: request.libraryType as LibraryType,
+							},
+						}) as Promise<Sample>,
+				),
+			);
+
+			const created: Sample[] = [];
+			const failed: CreateSamplesResult["failed"] = [];
+
+			results.forEach((result, index) => {
+				const request = requests[index];
+
+				if (request === undefined) {
+					return;
+				}
+
+				if (result.status === "fulfilled") {
+					created.push(result.value);
+				} else {
+					failed.push({
+						error:
+							result.reason instanceof Error
+								? result.reason
+								: new Error(String(result.reason)),
+						request,
+					});
+				}
+			});
+
+			return { created, failed };
+		},
+		onSuccess: ({ created }) => {
+			invalidateChanges(
+				queryClient,
+				created.map((sample) => ({
+					domain: "samples",
+					operation: "insert",
+					id: sample.id,
+				})),
+			);
 		},
 	});
 }
@@ -291,8 +361,10 @@ export function useUpdateSample(sampleId: number) {
 				data: { sampleId, ...update },
 			}) as Promise<Sample>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: samplesQueryKeys.detail(sampleId),
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "update",
+				id: sampleId,
 			});
 		},
 	});
@@ -304,9 +376,18 @@ export function useUpdateSample(sampleId: number) {
  * @returns A mutator for deleting a sample
  */
 export function useDeleteSample() {
+	const queryClient = useQueryClient();
+
 	return useMutation<null, Error, { sampleId: number }>({
 		mutationFn: ({ sampleId }) =>
 			deleteSampleFn({ data: { sampleId } }) as Promise<null>,
+		onSuccess: (_data, { sampleId }) => {
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "delete",
+				id: sampleId,
+			});
+		},
 	});
 }
 
@@ -316,11 +397,20 @@ export function useDeleteSample() {
  * @returns A mutator for updating a samples rights
  */
 export function useUpdateSampleRights(sampleId: number) {
+	const queryClient = useQueryClient();
+
 	return useMutation<Sample, Error, { update: SampleRightsUpdate }>({
 		mutationFn: ({ update }) =>
 			updateSampleRightsFn({
 				data: { sampleId, ...update },
 			}) as Promise<Sample>,
+		onSuccess: () => {
+			invalidateChange(queryClient, {
+				domain: "samples",
+				operation: "update",
+				id: sampleId,
+			});
+		},
 	});
 }
 
@@ -328,8 +418,9 @@ export function useUpdateSampleRights(sampleId: number) {
  * Initialize a mutator that adds or removes a label across the selected samples
  *
  * The label is removed when every selected sample already carries it, and added
- * otherwise. The samples are patched concurrently and the list is invalidated
- * once, after they all settle. The mutation resolves with the updated samples.
+ * otherwise. The samples are patched concurrently and their shared queries are
+ * invalidated once, after they all settle. The mutation resolves with the
+ * updated samples.
  *
  * @param selectedLabels - The labels carried by the selected samples
  * @param selectedSamples - The selected samples
@@ -361,10 +452,15 @@ export function useUpdateLabel(
 				}),
 			);
 		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: samplesQueryKeys.lists(),
-			});
+		onSuccess: (samples) => {
+			invalidateChanges(
+				queryClient,
+				samples.map((sample) => ({
+					domain: "samples",
+					operation: "update",
+					id: sample.id,
+				})),
+			);
 		},
 	});
 }

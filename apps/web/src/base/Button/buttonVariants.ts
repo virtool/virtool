@@ -43,6 +43,7 @@ export const buttonVariants = cva(
 			},
 			size: {
 				large: "min-h-10 text-lg",
+				medium: "min-h-10 text-base",
 				small: "min-h-8 text-sm",
 			},
 		},

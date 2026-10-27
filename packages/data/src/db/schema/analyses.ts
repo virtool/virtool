@@ -125,7 +125,7 @@ export const analysisFiles = pgTable(
 			name: "analysis_files_analysis_id_fkey",
 		}).onDelete("cascade"),
 		unique("analysis_files_name_on_disk_key").on(table.name_on_disk),
-		unique("uq_analysis_files_storage_key").on(table.storage_key),
+		unique("analysis_files_storage_key_key").on(table.storage_key),
 		check(
 			"ck_analysis_files_format",
 			sql`${table.format} in ('sam', 'bam', 'fasta', 'fastq', 'csv', 'tsv', 'json')`,
@@ -133,7 +133,7 @@ export const analysisFiles = pgTable(
 	],
 );
 
-// A BLAST request against one NuVs contig. Unique on
+// A BLAST request against one Nuvs contig. Unique on
 // (`analysis_id`, `sequence_index`): requesting a BLAST for a sequence that
 // already has one replaces the previous row.
 export const nuvsBlast = pgTable(

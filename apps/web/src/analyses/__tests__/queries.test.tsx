@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useCreateAnalysis } from "../queries";
 
 describe("useCreateAnalysis()", () => {
-	it("narrows the analyses invalidation to the analysed sample", async () => {
+	it("refreshes the analyses lists and the analysed sample", async () => {
 		const queryClient = new QueryClient();
 		const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
@@ -45,20 +45,13 @@ describe("useCreateAnalysis()", () => {
 			},
 		});
 
+		// The new row belongs in the sample's analyses list, and the sample's
+		// workflow tags change in both its list row and its detail.
 		expect(invalidateQueries).toHaveBeenCalledWith({
-			queryKey: [...analysesQueryKeys.lists(), 1],
-		});
-		expect(invalidateQueries).not.toHaveBeenCalledWith({
 			queryKey: analysesQueryKeys.lists(),
 		});
-		// The samples-list row renders the sample's workflow tags from its own
-		// list entry, so the lists are refreshed. The detail cache is left to the
-		// SSE frame, so creating an analysis does not refetch it.
 		expect(invalidateQueries).toHaveBeenCalledWith({
-			queryKey: samplesQueryKeys.lists(),
-		});
-		expect(invalidateQueries).not.toHaveBeenCalledWith({
-			queryKey: samplesQueryKeys.detail(1),
+			queryKey: samplesQueryKeys.all(),
 		});
 	});
 });

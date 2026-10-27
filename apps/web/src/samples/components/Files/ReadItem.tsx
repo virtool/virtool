@@ -1,18 +1,12 @@
 import { byteSize } from "@app/format";
 import { BoxGroupSection } from "@base/Box";
-
-/**
- * Sanitize a string for use as a filename by replacing invalid characters
- * with underscores.
- */
-function sanitizeFileName(name: string): string {
-	return name.replace(/[/\\:*?"<>|\s]/g, "_");
-}
+import { getReadDownloadName } from "@virtool/contracts";
 
 type ReadItemProps = {
 	downloadUrl: string;
+	/** The stored name of the read file */
+	name: string;
 	sampleName: string;
-	side: number;
 	/** The size of the read file in bytes */
 	size: number;
 };
@@ -22,19 +16,15 @@ type ReadItemProps = {
  */
 export default function ReadItem({
 	downloadUrl,
+	name,
 	sampleName,
-	side,
 	size,
 }: ReadItemProps) {
-	const downloadName = `${sanitizeFileName(sampleName)}_${side}.fq.gz`;
-
 	return (
 		<BoxGroupSection className="flex items-start font-medium justify-between">
 			<div className="flex items-center">
 				<div>
-					<a href={downloadUrl} download={downloadName}>
-						{downloadName}
-					</a>
+					<a href={downloadUrl}>{getReadDownloadName(sampleName, name)}</a>
 				</div>
 			</div>
 			{byteSize(size, true)}

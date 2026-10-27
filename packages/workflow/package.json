@@ -14,19 +14,20 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@sentry/node": "^10.70.0",
+		"@sentry/node": "^11.8.0",
 		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",
+		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
-		"execa": "^10.0.1",
-		"undici": "^7.29.0",
-		"zod": "^4.3.6"
+		"execa": "^10.2.0",
+		"undici": "^8.12.3",
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@virtool/tsconfig": "workspace:*",
-		"@types/node": "^26.4.0",
-		"vitest": "^4.1.11"
+		"@types/node": "^26.4.1",
+		"vitest": "^5.0.5"
 	}
 }

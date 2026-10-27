@@ -3,7 +3,7 @@ import NuvsToolbar from "@analyses/components/Nuvs/NuvsToolbar";
 import type { FormattedNuvsAnalysis } from "@analyses/types";
 import type { Sample } from "@virtool/contracts";
 
-type NuVsViewerProps = {
+type NuvsViewerProps = {
 	/** Complete Nuvs analysis details */
 	detail: FormattedNuvsAnalysis;
 	/** The sample that was analysed */
@@ -13,7 +13,7 @@ type NuVsViewerProps = {
 /**
  * Detailed breakdown of the results of a Nuvs analysis
  */
-export default function NuvsViewer({ detail, sample }: NuVsViewerProps) {
+export default function NuvsViewer({ detail, sample }: NuvsViewerProps) {
 	return (
 		<div>
 			<NuvsToolbar

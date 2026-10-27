@@ -1,14 +1,18 @@
 import { randomBytes } from "node:crypto";
 
 import {
+	type AccountLifecycleState,
 	type AdministratorRoleName,
 	emptyPermissions,
 	type Permissions,
+	type SetupPurpose,
 } from "@virtool/contracts";
 
 import type { Db } from "../../db/pg";
 import { apiKeys } from "../../db/schema/apiKeys";
+import { authSessions } from "../../db/schema/auth";
 import { sessions } from "../../db/schema/sessions";
+import { setupSessions, setupTokens } from "../../db/schema/setup";
 import { users } from "../../db/schema/users";
 import { hashToken, newSessionId, newSessionToken } from "../tokens";
 
@@ -16,16 +20,18 @@ import { hashToken, newSessionId, newSessionToken } from "../tokens";
 export type SeedUserOptions = {
 	active?: boolean;
 	administratorRole?: AdministratorRoleName | null;
+	authMigratedAt?: Date | null;
 	email?: string;
 	forceReset?: boolean;
 	handle?: string;
-	password?: Buffer;
+	lifecycleState?: AccountLifecycleState;
+	password?: Buffer | null;
 	settings?: Record<string, unknown>;
 };
 
 /** A seeded session and the plaintext token that authenticates it. */
 export type SeededSession = {
-	sessionId: string;
+	sessionId: number;
 	token: string;
 	userId: number;
 };
@@ -40,15 +46,21 @@ export type SeededSession = {
  * `password` defaults to a placeholder that is not a real bcrypt hash. A test
  * that exercises a code path which verifies the stored password must pass a
  * hash from `hashPassword`.
+ *
+ * `lifecycleState: "pending"` forces `password` to null, because the
+ * `pending_has_no_password` constraint refuses the pair — a pending account is
+ * one that has no credential at all.
  */
 export async function seedUser(
 	db: Db,
 	{
 		active = true,
 		administratorRole = null,
+		authMigratedAt = null,
 		email = "",
 		forceReset = false,
 		handle = "alice",
+		lifecycleState = "normal",
 		password = Buffer.from("not-a-real-hash"),
 		settings = {},
 	}: SeedUserOptions = {},
@@ -58,11 +70,13 @@ export async function seedUser(
 		.values({
 			active,
 			administratorRole,
+			authMigratedAt,
 			email,
 			forceReset,
 			handle,
 			lastPasswordChange: new Date(),
-			password,
+			lifecycleState,
+			password: lifecycleState === "pending" ? null : password,
 			settings,
 		})
 		.returning({ id: users.id });
@@ -83,29 +97,71 @@ export async function seedSession(
 	db: Db,
 	userId: number,
 	{
+		createdAt = new Date(),
 		expiresAt = new Date(Date.now() + 60_000),
-		sessionType = "authenticated" as const,
-		withToken = true,
+		ipAddress = "127.0.0.1",
+		updatedAt = new Date(),
+		userAgent = "Test Browser/1.0",
 	}: {
+		createdAt?: Date;
 		expiresAt?: Date;
-		sessionType?: "anonymous" | "authenticated" | "reset";
-		withToken?: boolean;
+		ipAddress?: string | null;
+		updatedAt?: Date;
+		userAgent?: string | null;
 	} = {},
 ): Promise<SeededSession> {
-	const sessionId = newSessionId();
 	const token = newSessionToken();
 
+	const [session] = await db
+		.insert(authSessions)
+		.values({
+			createdAt,
+			expiresAt,
+			ipAddress,
+			token,
+			updatedAt,
+			userAgent,
+			userId,
+		})
+		.returning({ id: authSessions.id });
+
+	if (!session) {
+		throw new Error("failed to seed session");
+	}
+
+	return { sessionId: session.id, token, userId };
+}
+
+/** A live row of the retired legacy session store and its cookie values. */
+export type SeededLegacySession = {
+	sessionId: string;
+	token: string;
+};
+
+/**
+ * Insert a live row into the retired legacy `sessions` store, as a release from
+ * before the cutover would have left it, so a test can prove nothing accepts it.
+ */
+export async function seedLegacySession(
+	db: Db,
+	userId: number,
+	sessionType: "authenticated" | "reset" = "authenticated",
+): Promise<SeededLegacySession> {
+	const sessionId = newSessionId();
+	const token = newSessionToken();
+	const now = new Date();
+
 	await db.insert(sessions).values({
-		createdAt: new Date(),
-		expiresAt,
-		ip: "127.0.0.1",
 		sessionId,
-		sessionType,
-		tokenHash: withToken ? hashToken(token) : null,
 		userId,
+		ip: "127.0.0.1",
+		createdAt: now,
+		expiresAt: new Date(now.getTime() + 60 * 60_000),
+		tokenHash: hashToken(token),
+		sessionType,
 	});
 
-	return { sessionId, token, userId };
+	return { sessionId, token };
 }
 
 /**
@@ -132,4 +188,79 @@ export async function seedApiKey(
 	});
 
 	return key;
+}
+
+/** A seeded setup token and the plaintext that spends it. */
+export type SeededSetupToken = {
+	token: string;
+	userId: number;
+};
+
+/**
+ * Insert a setup token for `userId`. Only its digest is stored, so the
+ * plaintext is returned — it is the only way a caller can spend it afterwards.
+ */
+export async function seedSetupToken(
+	db: Db,
+	userId: number,
+	purpose: SetupPurpose,
+	{
+		candidateEmail,
+		expiresAt = new Date(Date.now() + 60_000),
+		consumedAt = null,
+		supersededAt = null,
+	}: {
+		candidateEmail?: string;
+		expiresAt?: Date;
+		consumedAt?: Date | null;
+		supersededAt?: Date | null;
+	} = {},
+): Promise<SeededSetupToken> {
+	const token = randomBytes(32).toString("hex");
+
+	await db.insert(setupTokens).values({
+		candidateEmail,
+		consumedAt,
+		expiresAt,
+		purpose,
+		issuerUserId: purpose === "account_completion" ? userId : undefined,
+		delivery: purpose === "account_completion" ? "queued" : undefined,
+		supersededAt,
+		tokenHash: hashToken(token),
+		userId,
+	});
+
+	return { token, userId };
+}
+
+/** A seeded restricted setup session and the secret that proves it. */
+export type SeededSetupSession = {
+	sessionId: string;
+	token: string;
+	userId: number;
+};
+
+/**
+ * Insert a restricted setup session for `userId`. Only the secret's digest is
+ * stored, so the plaintext is returned.
+ */
+export async function seedSetupSession(
+	db: Db,
+	userId: number,
+	purpose: SetupPurpose,
+	{ expiresAt = new Date(Date.now() + 60_000) }: { expiresAt?: Date } = {},
+): Promise<SeededSetupSession> {
+	const sessionId = `setup_${randomBytes(24).toString("hex")}`;
+	const token = randomBytes(32).toString("hex");
+
+	await db.insert(setupSessions).values({
+		expiresAt,
+		ip: "127.0.0.1",
+		purpose,
+		sessionId,
+		tokenHash: hashToken(token),
+		userId,
+	});
+
+	return { sessionId, token, userId };
 }

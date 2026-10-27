@@ -1,150 +1,88 @@
-# Dev cluster
+# Development service
 
-The local Kubernetes development environment, run with Tilt on Minikube. Every
-service and workflow it deploys builds from this repository, which is why the
-tooling lives here rather than in a repository of its own.
+`@virtool/dev` is the Linux-only local development coordinator. One daemon runs
+per Git repository and manages a distinct Docker Compose environment for each
+worktree.
 
-The `Tiltfile` is at the **repo root**, where `tilt up` looks for it; this
-directory holds everything it reads. Run every command below from the repo
-root.
+Node 24, pnpm, Docker Engine with Compose, Git, and Worktrunk are prerequisites.
+Install the pnpm workspace before the first command. Mise adds `dev/bin` to
+`PATH`.
 
-## Requirements
-
-Docker Engine, Helm, `kubectl`, `mkcert`, Minikube and Tilt.
-
-## Stack
-
-- **Tilt** — orchestrates the cluster; the root `Tiltfile` is the entry point
-- **Minikube** — the cluster itself
-- **KEDA** — scales workflow pods off a `metrics-api` trigger pointing at
-  `jobs-api`'s `/jobs/counts`
-- **PostgreSQL** — persisted across `tilt up` / `tilt down` by a PVC
-- **Azurite** — Azure Blob Storage emulator, on the well-known dev account
-  `devstoreaccount1`, persisting blobs at `/data` by a PVC
-
-## Layout
-
-```
-Tiltfile                  at the repo root: resources, buttons, live-edit flags
-dev/
-  manifests/              Kustomize manifests for every cluster resource
-    config.yaml           the Postgres and Azurite env every service shares
-    data/                 PostgreSQL, Azurite
-    ingress.yaml
-    migration.yaml
-    web/
-    virtool/              jobs-api, tasks
-    workflows/            a ScaledJob per workflow
-  scripts/
-    ensure-minikube.sh    Start the cluster if it is not already running
-    init.sh               Create or reset the cluster
-    wipe.sh               Delete the StatefulSets and their PVCs
+```shell
+vtd up
+vtd stop
+vtd remove
+vtd list
+vtd ui
+vtd daemon stop
 ```
 
-## Getting started
+The first command installs and starts a systemd user service for the
+repository. Commands return immediately; the UI at <https://dev.localhost:9443>
+shows progress, failures, and logs. The daemon restarts itself when
+`apps/dev` changes.
 
-1. Create the cluster:
+Each environment is served at `https://<environment>.localhost:9443`. Its
+hostname and data stay the same when you rename the branch or move the
+worktree. Removing a worktree with Worktrunk also removes its environment.
 
-   ```shell
-   bash dev/scripts/init.sh
-   ```
+## State
 
-   This deletes any existing cluster, creates one with preset resource limits,
-   enables the `ingress` and `metrics-server` addons, issues an mkcert
-   certificate for `virtool.local` and installs it as the ingress controller's
-   default, and writes the cluster IP to `/etc/hosts` — which needs `sudo`.
+The daemon keeps its state, secrets, and logs in `<git-common-dir>/virtool-dev/`.
+Caddy's development CA root is at `<git-common-dir>/virtool-dev/root.crt`; trust
+it manually if you need to. The daemon never changes the host trust store.
 
-   Run `mkcert -install` once beforehand so the certificate is trusted.
+Use `systemctl --user status virtool-dev-<repository-id>.service` to see the
+service state.
 
-2. Start Tilt:
+## Data safety
 
-   ```shell
-   tilt up
-   ```
+Stopping keeps all data. Removing deletes only that environment's database,
+blob container, secrets, and Docker resources. Shared Postgres, Azurite, and
+Caddy storage is never removed by environment cleanup.
 
-   Virtool is then at <https://virtool.local>.
+If shared storage disappears after initialization, the daemon shows an error
+instead of recreating it. Use the shared reset control in the UI only when you
+intend to destroy all local development state.
 
-`tilt down` brings the resources back down; run it before `minikube stop` or
-the cluster does not stop cleanly. The `Tiltfile` calls
-`dev/scripts/ensure-minikube.sh` as it loads, so `tilt up` starts a stopped cluster
-on its own.
+## Default administrator
 
-## Local image builds
+Set a default handle, email, and password on the **Shared** page of the UI.
+After migrations, each environment that starts creates a full administrator
+with these values if its database has no users. The daemon never changes
+existing users.
 
-Each enabled target builds its app, prepares a pruned `pnpm deploy` context,
-and invokes the matching `docker buildx bake` target. Pass a flag to turn one
-on:
+The daemon keeps the values in its state. The UI and `vtd list` never show the
+password. When you save the setting without a password, the daemon keeps the
+saved password.
 
-| Flag | Image | Bake target |
-| --- | --- | --- |
-| `--web` | `ghcr.io/virtool/web` | `web` |
-| `--internal` | `ghcr.io/virtool/internal` | `internal` |
-| `--create-sample` | `ghcr.io/virtool/create-sample` | `create-sample` |
-| `--create-subtraction` | `ghcr.io/virtool/create-subtraction` | `create-subtraction` |
-| `--nuvs` | `ghcr.io/virtool/nuvs` | `nuvs` |
-| `--pathoscope` | `ghcr.io/virtool/pathoscope` | `pathoscope` |
+The daemon stores the password as plain text and gives it to each environment
+as plain text. Do not use a real or sensitive password.
 
-Flags combine: `tilt up -- --web --internal`.
+When you save the setting, the daemon checks the values against the rules of
+the first-user setup page and rejects values that are not valid. It checks the
+password against the default minimum length. Environments that already have
+users skip the check and make no change.
 
-Enabled apps rebuild their image when their app, a shared package, the lockfile,
-or the Bake definition changes. The `jobs-api`, `tasks` and every workflow are
-on manual trigger — update them from the Tilt UI when you want the build.
-`--internal` builds the one image the
-`jobs-api` and `tasks` workloads and the migration Job all share, so a rebuild
-updates all three. A workflow's pods are one-shot and
-only start when something claims work, so nothing waits on a rebuild and an
-automatic one would rebuild a large image on every edit.
+The daemon runs `create administrator` from
+[`@virtool/dev-tools`](../apps/dev-tools/README.md). Worktrees on branches that
+do not have the `dev-tools` Compose service skip this step.
 
-There is no separate migration target. The migration Job runs the `internal`
-image's `migrate` subcommand.
+To create an environment without the default administrator, open the menu
+next to **Create** on the worktree and clear **Create default administrator**.
+The daemon keeps this choice with the environment and skips the step on each
+later start. You cannot change the choice after you create the environment.
+To change it, delete the environment data and create the environment again.
+The environment detail page shows the choice. **Create**, **Start**, and
+`vtd up` use the default, which creates the administrator.
 
-## Images
+## Workflows
 
-Every image this repository publishes is pinned to `latest`, so a pod picks up
-the newest release each time it starts and no tag is ever committed. The
-migration Job runs `ghcr.io/virtool/internal`'s `migrate` subcommand and follows
-the same tag or local Tilt build as the `jobs-api` and `tasks` Deployments,
-which run the same image.
+Workflow images build on demand, the same way CI builds them. The daemon builds
+the app in the environment's worktree, prepares its `pnpm deploy` context, and
+runs the app's `docker buildx bake` target. The core services build from
+`dev/Dockerfile`.
 
-## Labels
-
-Every object carries the recommended Kubernetes set and nothing else:
-
-| Label | Value |
-| --- | --- |
-| `app.kubernetes.io/name` | the deployable — `web`, `jobs-api`, `tasks`, `postgres`, `nuvs`, … |
-| `app.kubernetes.io/component` | its role — `web`, `api`, `worker`, `database`, `storage`, `workflow`, `ingress`, `config`, `migration` |
-| `app.kubernetes.io/part-of` | always `virtool` |
-
-Selectors match on `name` + `part-of`. The workflows keep two extra namespaced
-labels, `app.virtool.ca/workflow-name` and `app.virtool.ca/workflow-size`,
-because size has no slot in the standard set.
-
-Each manifest declares its own labels rather than having kustomize synthesize
-them, so every file is valid on its own under `kubectl apply -f`. A selector is
-immutable, so changing one of these means Tilt deletes and recreates the
-workload; PVCs are retained, so the Postgres and Azurite data survive it.
-
-## Resource sizing
-
-`init.sh` creates an 8 CPU / 16000 MB node, and the manifests are sized to fit
-it: the always-on services reserve about 1.9 CPU and 3.6 GiB between them,
-which leaves room for any one workflow — or both small ones — to schedule.
-Requests are dev-sized reservations and limits carry the headroom, so a
-workflow's `VT_PROC` and `VT_MEM` track its **limits**; raising either without
-the other is an OOMKill rather than a faster run.
-
-## Wiping data
-
-`dev/scripts/wipe.sh` deletes the `postgres` and `azurite` StatefulSets and their
-PVCs; Tilt recreates them on the next trigger. It refuses to run unless
-`kubectl`'s current context is `minikube`. Run it directly or click **Wipe** in
-the Tilt UI.
-
-## Why none of this is linted or bundled
-
-It is YAML, Bash and Starlark and no TypeScript, so nothing here is a pnpm
-workspace and nothing here is built. `biome.json`'s `files.includes` carves
-`dev/` out the way it carves out `apps/site`, and `.dockerignore` excludes both
-`dev` and `Tiltfile` — without that, editing a manifest would land in the build
-context and rebuild every live-edited image.
+The daemon runs queued workflow jobs from all
+ready environments, one at a time by default. Set the concurrency in the UI.
+Stopped and failed environments receive no new workflow jobs.

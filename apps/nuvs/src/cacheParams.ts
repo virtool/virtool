@@ -42,7 +42,7 @@ export const WORKFLOW_NAME = "nuvs";
  * What this workflow's reference mapping index adds, describing the FASTA it was
  * built from.
  *
- * NuVs maps against the artifact's **default isolates**, straight out of the
+ * Nuvs maps against the artifact's **default isolates**, straight out of the
  * SQLite index. Pathoscope's index over the same reference is built from a
  * cd-hit-collapsed FASTA and says so with `source: "collapsed_reference"` and a
  * `collapse_identity`, which is what keeps the two out of each other's
@@ -56,9 +56,8 @@ export const REFERENCE_INDEX_EXTRA_PARAMS = {
 /**
  * What this workflow's subtraction mapping index adds.
  *
- * The same `subtraction.fa.gz` either workflow starts from, so this matches
- * pathoscope's — the two differ only in the `workflow` field, which is enough to
- * separate them.
+ * Pathoscope sends no extra params for its subtraction index. The two keys are
+ * already separate because each carries its own `workflow` field.
  */
 export const SUBTRACTION_INDEX_EXTRA_PARAMS = { source: "subtraction_fasta" };
 

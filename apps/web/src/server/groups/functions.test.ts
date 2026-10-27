@@ -1,13 +1,14 @@
 import type { Permissions } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups } from "@virtool/data/db/schema/groups";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import * as groupData from "@virtool/data/groups/data";
 import {
 	NO_PERMISSIONS,
 	seedGroup as seedGroupImpl,
@@ -15,6 +16,7 @@ import {
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
+	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -25,19 +27,18 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 // The handlers read the `db` singleton at module scope. A getter defers the
@@ -77,12 +78,16 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 	await db.delete(groups);
 	getRequest.mockReturnValue(
 		new Request("https://virtool.test/_serverFn/test"),
 	);
+});
+
+afterEach(() => {
+	vi.restoreAllMocks();
 });
 
 /** Authenticate the next call as a user with the given administrator role. */
@@ -95,6 +100,45 @@ function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
 }
 
+describe("error mapping", () => {
+	it("carries a missing group's status on the client error", async () => {
+		await signIn(db, getRequest, { administratorRole: null });
+
+		await expect(
+			call("getGroupFn", { groupId: 999_999 }),
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Group not found.",
+			status: 404,
+		});
+	});
+
+	it("carries a duplicate group's conflict status on the client error", async () => {
+		await signIn(db, getRequest, { administratorRole: "base" });
+		await call("createGroupFn", { name: "technicians" });
+
+		await expect(
+			call("createGroupFn", { name: "technicians" }),
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Group name already exists.",
+			status: 409,
+		});
+	});
+
+	it.each([
+		new Error("query failed", { cause: new Error("connection lost") }),
+		"failure",
+	])("rethrows an unmapped failure unchanged: %s", async (failure) => {
+		await signIn(db, getRequest, { administratorRole: null });
+		vi.spyOn(groupData, "getGroup").mockRejectedValueOnce(failure);
+
+		await expect(call("getGroupFn", { groupId: 999_999 })).rejects.toBe(
+			failure,
+		);
+	});
+});
+
 describe("createGroup", () => {
 	it("refuses a user with no administrator role", async () => {
 		await signIn(db, getRequest, { administratorRole: null });
@@ -102,7 +146,6 @@ describe("createGroup", () => {
 		await expect(
 			call("createGroupFn", { name: "hackers" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(await db.select().from(groups)).toHaveLength(0);
 	});
 
@@ -110,7 +153,6 @@ describe("createGroup", () => {
 		await expect(
 			call("createGroupFn", { name: "hackers" }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
-		expect(setResponseStatus).toHaveBeenCalledWith(401);
 	});
 
 	it("allows an administrator", async () => {
@@ -132,7 +174,6 @@ describe("updateGroup", () => {
 		await expect(
 			call("updateGroupFn", { groupId, name: "renamed" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	// The exploit itself: a group's permissions are unioned into every member's,
@@ -176,7 +217,6 @@ describe("deleteGroup", () => {
 		await expect(call("deleteGroupFn", { groupId })).rejects.toBeInstanceOf(
 			ForbiddenError,
 		);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(await db.select().from(groups)).toHaveLength(1);
 	});
 

@@ -1,7 +1,7 @@
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import {
 	subtractionFiles,
 	subtractions,
@@ -28,12 +28,12 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest: vi.fn(),
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -73,7 +73,7 @@ beforeEach(async () => {
 	await db.delete(subtractionFiles);
 	await db.delete(subtractions);
 	await db.delete(apiKeys);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 
 	userId = await seedUser(db);
@@ -103,14 +103,19 @@ async function seedFile(
 	{
 		name = "subtraction.fa.gz",
 		storageKey = mintStorageKey("subtractions", subtractionId),
-	}: { name?: string; storageKey?: string } = {},
+		type = "fasta",
+	}: {
+		name?: string;
+		storageKey?: string;
+		type?: "bowtie2" | "fasta";
+	} = {},
 ): Promise<string> {
 	await db.insert(subtractionFiles).values({
 		name,
 		subtraction_id: subtractionId,
 		size: 5,
 		storage_key: storageKey,
-		type: "fasta",
+		type,
 	});
 
 	return storageKey;
@@ -152,13 +157,35 @@ describe("handleSubtractionFile", () => {
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get("content-disposition")).toBe(
-			'attachment; filename="subtraction.fa.gz"',
+			'attachment; filename="arabidopsis.fa.gz"',
 		);
 		expect(response.headers.get("content-length")).toBe("5");
 		expect(response.headers.get("content-type")).toBe(
 			"application/octet-stream",
 		);
 		expect(await response.text()).toBe("hello");
+	});
+
+	it("names a Bowtie2 file for its registered name", async () => {
+		const subtractionId = await seedSubtraction();
+		await write(
+			await seedFile(subtractionId, {
+				name: "subtraction.1.bt2",
+				type: "bowtie2",
+			}),
+			"hello",
+		);
+
+		const response = await handleSubtractionFile(
+			await request(userId),
+			String(subtractionId),
+			"subtraction.1.bt2",
+		);
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get("content-disposition")).toBe(
+			'attachment; filename="subtraction.1.bt2"',
+		);
 	});
 
 	// A migrated subtraction's files keep the legacy key they were backfilled

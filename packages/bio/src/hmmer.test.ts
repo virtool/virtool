@@ -88,6 +88,71 @@ describe("parseHmmerTblout", () => {
 		);
 	});
 
+	it.each([
+		["a suffixed cluster", "vFam_5x", "sequence_1.2", /target name/],
+		["a missing cluster", "vFam_", "sequence_1.2", /target name/],
+		["a suffixed contig", "vFam_5", "sequence_1x.2", /query name/],
+		["a suffixed ORF", "vFam_5", "sequence_1.2x", /query name/],
+		["a negative contig", "vFam_5", "sequence_-1.2", /query name/],
+		["an extra query part", "vFam_5", "sequence_1.2.3", /query name/],
+	])("throws on %s", (_, target, query, message) => {
+		expect(() =>
+			parse(`${target} - ${query} - 1e-10 10.0 0.1 2e-10 9.0 0.2 1.0`),
+		).toThrow(message);
+	});
+
+	it("throws on an index beyond the safe integer range", () => {
+		expect(() =>
+			parse(
+				"vFam_5 - sequence_99999999999999999999.2 - 1e-10 10.0 0.1 2e-10 9.0 0.2 1.0",
+			),
+		).toThrow(/index out of range/);
+	});
+
+	it.each([
+		[
+			"a non-numeric score",
+			"1e-10 abc 0.1 2e-10 9.0 0.2",
+			/full-sequence score/,
+		],
+		["a suffixed bias", "1e-10 10.0 0.1x 2e-10 9.0 0.2", /full-sequence bias/],
+		[
+			"an infinite score",
+			"1e-10 10.0 0.1 2e-10 Infinity 0.2",
+			/best-domain score/,
+		],
+		[
+			"an overflowing score",
+			"1e-10 10.0 0.1 2e-10 9.0 1e999",
+			/best-domain bias/,
+		],
+		["a negative E-value", "-1e-10 10.0 0.1 2e-10 9.0 0.2", /non-negative/],
+		[
+			"an underflowing negative E-value",
+			"1e-10 10.0 0.1 -1e-999 9.0 0.2",
+			/non-negative/,
+		],
+		["a negative zero E-value", "-0 10.0 0.1 2e-10 9.0 0.2", /non-negative/],
+		[
+			"a non-numeric E-value",
+			"1e-10 10.0 0.1 nan 9.0 0.2",
+			/best-domain E-value/,
+		],
+	])("throws on %s", (_, values, message) => {
+		expect(() => parse(`vFam_5 - sequence_1.2 - ${values} 1.0`)).toThrow(
+			message,
+		);
+	});
+
+	it("accepts negative scores", () => {
+		const [hit] = parse(
+			"vFam_5 - sequence_1.2 - 1e-10 -3.5 0.1 2e-10 -4.0 0.2 1.0",
+		);
+
+		expect(hit.full_score).toBe(-3.5);
+		expect(hit.best_bias).toBe(-4);
+	});
+
 	it("returns an empty array for a table with no vFam rows", () => {
 		expect(parse("# comment only\n//")).toEqual([]);
 	});

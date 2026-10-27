@@ -1,7 +1,7 @@
 # Environment configuration
 
 Virtool services own their configuration schemas, but follow one environment
-loading convention. There is no shared configuration package: the shared piece
+loading convention. No shared configuration package exists: the shared piece
 is `resolveFileBacked` from `@virtool/contracts/env`.
 
 ## Variable names
@@ -29,7 +29,8 @@ the keys listed by the caller:
 2. Otherwise, the referenced file is read as UTF-8 and trimmed.
 3. The file value replaces `<KEY>`, even when the plain variable is also set.
 4. An unreadable file throws during startup; there is no fallback to a possibly
-   stale plain variable.
+   stale plain variable. The error names the key and the errno but not the
+   configured path, which an operator can set to the secret itself by mistake.
 5. A file containing only whitespace resolves to an empty string, which the
    service's schema handles as unset or invalid.
 
@@ -37,7 +38,7 @@ The file deliberately wins when both forms exist. During a rollout, an
 environment variable synchronized from a Kubernetes `Secret` may be stale while
 the CSI-mounted file is current.
 
-The resolver does not mutate the supplied environment object.
+The resolver doesn't mutate the supplied environment object.
 
 ## Service integration
 
@@ -61,13 +62,87 @@ to downstream code. Avoid direct `process.env` reads elsewhere: they bypass
 validation and `_FILE` resolution. This is especially important for early
 instrumentation such as Sentry initialization.
 
+Parse before the process starts serving. A misconfigured service must exit
+non-zero at boot rather than start and fail each request, which reads as a
+healthy-but-dead instance. The `apps/internal` subcommands parse inside
+`main()`; `apps/web` parses in a Nitro startup plugin, because its server entry
+is loaded on the first request. Report every invalid key in one message, and
+report key names and reasons only. Never report a configured value.
+
 Current integrations are:
 
-- `apps/web/src/server/config.ts`
+- `apps/web/src/server/configSchema.ts`
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`
+- `apps/dev-tools/src/administrator.ts`
+- `apps/internal/src/data-migrations/main.ts`
+- `apps/internal/src/auth-remediation/main.ts`
 - `packages/workflow/src/config.ts`
 
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`
 and `packages/contracts/src/env.test.ts`.
+
+## Authentication
+
+Interactive authentication is Better Auth's, and it needs two values that have
+no safe default:
+
+| Variable | Value |
+| --- | --- |
+| `VT_PUBLIC_ORIGIN` | The one public origin the instance is served on, including its scheme, host, and optional port, such as `https://virtool.example`. |
+| `VT_AUTH_SECRET` | At least 32 characters. Generate with `openssl rand -base64 32`. |
+
+Both accept `_FILE` variants. Configure them for `apps/web`.
+
+`VT_PUBLIC_ORIGIN` is deliberately not inferred from the request `Host` or
+forwarded headers. WebAuthn binds a passkey to the configured origin and Relying
+Party ID, whose hostname is derived from that origin. Moving an instance to a
+new domain invalidates passkeys registered under the old one. Users must then
+sign in with their password and register new passkeys.
+
+Plain `http` is rejected except on `localhost`. The loopback addresses are
+secure contexts as well, but an RP ID must be a domain and no browser accepts an
+IP literal as one, so an origin such as `http://127.0.0.1:5173` could never
+register a passkey. Use `http://localhost` in development.
+
+Changing `VT_AUTH_SECRET` invalidates every Better Auth session and makes stored
+recovery codes undecryptable, so rotate it deliberately.
+
+## Encryption key
+
+Secrets managed by Virtool are stored in Postgres in purpose-bound AES-256-GCM
+envelopes. The Resend API key and the NCBI API key are the consumers today. The
+process-wide encryption key is supplied through the environment:
+
+| Variable | Value |
+| --- | --- |
+| `VT_ENCRYPTION_KEY` | 32 random bytes, standard base64 (44 characters). |
+| `VT_ENCRYPTION_KEY_PREVIOUS` | The prior encryption key, set only during rotation. |
+
+Both accept `_FILE` variants. Configure them identically for `apps/web` and the
+`apps/internal` `run` subcommand. Generate a key with:
+
+```sh
+openssl rand -base64 32
+```
+
+An invalid or mismatched key makes encrypted secrets unavailable without
+preventing either service from starting. Stored values aren't changed on
+decryption failure.
+
+### Rotation
+
+1. Set `VT_ENCRYPTION_KEY` to the new key and
+   `VT_ENCRYPTION_KEY_PREVIOUS` to the old key, then roll out both services.
+2. Confirm email is available and the NCBI API key doesn't report a
+   configuration error.
+3. Keep both keys configured.
+
+Nothing re-encrypts stored secrets on its own yet, so they stay readable only
+through `VT_ENCRYPTION_KEY_PREVIOUS`. Unsetting it stops email delivery and
+drops GenBank lookups to the rate limit NCBI applies without a key. Saving a
+replacement API key rewrites that one secret under the active key;
+`reencryptNcbiApiKey` does the same without the plaintext, and is idempotent.
+Doing it for every secret in the background is tracked in
+[VIR-3114](https://linear.app/virtool/issue/VIR-3114/handle-encryption-key-rotation-automatically).

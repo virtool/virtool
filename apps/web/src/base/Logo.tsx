@@ -56,15 +56,13 @@ export default function Logo({ className, height = 30, color }: LogoProps) {
 				className,
 			)}
 		>
-			{/* The gear spans x 15.4–433.7 and y 45.2–462.4, so it does not sit in
-			    the middle of a 0 0 512 512 box — it reads about 6% left of centre.
-			    The origin is shifted by the difference rather than the box tightened
-			    to the art, which would change how large the logo renders. */}
+			{/* The box is cropped to the gear so that it aligns with neighbouring
+			    content without offsets. */}
 			<svg
 				id="svg2"
 				role="img"
 				aria-label="Virtool"
-				viewBox="-31.457 -2.17 512 512"
+				viewBox="15.4 45.2 418.3 417.3"
 				height={height}
 			>
 				<title>Virtool</title>

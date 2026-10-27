@@ -13,10 +13,11 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { createLogger } from "@virtool/logger";
 import { MemoryStorage, mintStorageKey } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { seedJob } from "../auth/test/fixtures";
+import { jobAuthorization, seedJob } from "../auth/test/fixtures";
 import {
 	type AnalysisHandlerDeps,
 	handleFinalizeAnalysis,
@@ -27,7 +28,7 @@ let database: TestDatabase;
 let db: Db;
 let storage: MemoryStorage;
 let deps: AnalysisHandlerDeps;
-let credential: string;
+let authorization: string;
 let jobId: number;
 let userId: number;
 let referenceId: number;
@@ -60,7 +61,7 @@ beforeEach(async () => {
 	const job = await seedJob(db, userId, { workflow: "pathoscope" });
 
 	jobId = job.id;
-	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
+	authorization = jobAuthorization(job);
 	storage = new MemoryStorage();
 	deps = { db, storage, logger };
 
@@ -85,10 +86,6 @@ beforeEach(async () => {
 
 	indexId = index?.id as number;
 });
-
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
-}
 
 function claim(workflowVersion: string): StoredJobClaim {
 	return {
@@ -149,7 +146,7 @@ function patch(
 		method: "PATCH",
 		headers: {
 			"content-type": "application/json",
-			...(authenticated ? { authorization: `Basic ${credential}` } : {}),
+			...(authenticated ? { authorization } : {}),
 		},
 		body: JSON.stringify(payload),
 	});
@@ -164,7 +161,7 @@ async function written(
 ): Promise<AnalysisFileManifest> {
 	const storageKey = mintStorageKey("analyses", analysisId);
 
-	await storage.write(storageKey, body(contents));
+	await storage.write(storageKey, streamOf(contents));
 
 	return {
 		kind: "analysisFile",
@@ -521,7 +518,7 @@ describe("handleFinalizeAnalysis", () => {
 			{
 				method: "PATCH",
 				headers: {
-					authorization: `Basic ${credential}`,
+					authorization,
 					"content-type": "application/json",
 				},
 				body: "{",
@@ -540,7 +537,7 @@ describe("handleFinalizeAnalysis", () => {
 
 function get(analysisId: number | string, authenticated = true): Request {
 	return new Request(`https://jobs.virtool.test/analyses/${analysisId}`, {
-		headers: authenticated ? { authorization: `Basic ${credential}` } : {},
+		headers: authenticated ? { authorization } : {},
 	});
 }
 

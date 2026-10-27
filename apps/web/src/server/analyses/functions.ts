@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ANALYSIS_SORT_FIELDS,
 	AnalysisWorkflow,
@@ -21,6 +20,7 @@ import {
 	getAnalysis,
 	getAnalysisResults,
 	getAnalysisSampleRights,
+	listAnalysisUsers,
 	recordAnalysisView,
 } from "@virtool/data/analyses/data";
 import {
@@ -36,6 +36,7 @@ import { authenticated } from "../auth/policy";
 import { db, storage } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
+import { isReferenceVisible } from "../references/visibility";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const analysisIdSchema = z.object({
@@ -44,14 +45,19 @@ const analysisIdSchema = z.object({
 
 const findAnalysesSchema = z.object({
 	sampleId: rowIdSchema.optional(),
-	userIds: z.array(rowIdSchema).default([]),
-	workflows: z.array(AnalysisWorkflow).default([]),
+	userIds: z.array(rowIdSchema).max(100).default([]),
+	workflows: z.array(AnalysisWorkflow).max(100).default([]),
 	page: pageSchema,
 	perPage: perPageSchema,
 	// A direction without a column has nothing to order by, so the pair is
 	// applied only once a column is named.
 	sort: z.enum(ANALYSIS_SORT_FIELDS).optional(),
 	direction: z.enum(SORT_DIRECTIONS).default("descending"),
+});
+
+const listAnalysisUsersSchema = z.object({
+	sampleId: rowIdSchema,
+	workflows: z.array(AnalysisWorkflow).max(100).default([]),
 });
 
 const createAnalysisSchema = z.object({
@@ -65,22 +71,17 @@ const blastSchema = analysisIdSchema.extend({
 	sequenceIndex: z.number().int().nonnegative(),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ./data imports it references — from the client bundle.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof AnalysisNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Analysis not found.", 404);
 	}
 	if (err instanceof AnalysisSequenceNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Sequence not found.", 404);
 	}
 	if (
 		err instanceof AnalysisRunningError ||
 		err instanceof AnalysisNotNuvsError
 	) {
-		setResponseStatus(409);
 		throw new ClientError(err.message, 409);
 	}
 	if (
@@ -88,14 +89,13 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		err instanceof AnalysisReferenceArchivedError ||
 		err instanceof AnalysisNoReadyIndexError
 	) {
-		setResponseStatus(409);
 		throw new ClientError(err.message, 409);
 	}
 	// Anything else — an unresolvable index, a corrupt results blob, a missing
 	// HMM annotation — is a data-integrity failure rather than a client mistake,
 	// and surfaces as a 500 that reaches Sentry.
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; an analysis's own
 // visibility is entirely its parent sample's, so this resolves that sample's
@@ -120,17 +120,16 @@ const authorizeAnalysis = createServerOnlyFn(
 		// world-writable without being world-readable — so deleting, which demands
 		// both, cannot be reduced to the write check alone.
 		if (rights.some((right) => !hasSampleRight(row, actor, right))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
 );
 
-export const findAnalysesFn = createServerFn({ method: "GET" })
+export const findAnalysesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findAnalysesSchema)
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findAnalyses(
 			db,
@@ -148,15 +147,28 @@ export const findAnalysesFn = createServerFn({ method: "GET" })
 		);
 	});
 
+export const listAnalysisUsersFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(listAnalysisUsersSchema)
+	.handler(async ({ context, data }) => {
+		const actor = await resolveSampleActor(db, context.principal.userId);
+
+		return listAnalysisUsers(
+			db,
+			{ sampleId: data.sampleId, workflows: data.workflows },
+			actor,
+		);
+	});
+
 export const findRecentlyViewedAnalysesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(z.object({ perPage: perPageSchema }))
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findRecentlyViewedAnalyses(
 			db,
-			context.session.userId,
+			context.principal.userId,
 			data.perPage,
 			actor,
 		);
@@ -169,10 +181,10 @@ export const recordAnalysisViewFn = createServerFn({ method: "POST" })
 		try {
 			// A view is only recorded for an analysis the caller may read, so a
 			// probe of an id they cannot see leaves no trace.
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 			]);
-			await recordAnalysisView(db, context.session.userId, data.analysisId);
+			await recordAnalysisView(db, context.principal.userId, data.analysisId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -184,7 +196,7 @@ export const getAnalysisFn = createServerFn({ method: "GET" })
 	.validator(analysisIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 			]);
 			return await getAnalysis(db, data.analysisId);
@@ -198,7 +210,7 @@ export const getAnalysisResultsFn = createServerFn({ method: "GET" })
 	.validator(analysisIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 			]);
 			return await getAnalysisResults(db, data.analysisId);
@@ -215,16 +227,19 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 			// A missing sample is a 404, not a 403 — the owner lookup distinguishes
 			// the two, where the rights check alone could not.
 			if ((await getSampleOwnerId(db, data.sampleId)) === null) {
-				setResponseStatus(404);
 				throw new ClientError("Sample not found.", 404);
 			}
 
 			// Starting an analysis writes to the sample, so it takes the write right.
-			const actor = await resolveSampleActor(db, context.session.userId);
+			const actor = await resolveSampleActor(db, context.principal.userId);
 
 			if (!(await checkSampleRight(db, data.sampleId, actor, "write"))) {
-				setResponseStatus(403);
 				throw new ForbiddenError();
+			}
+
+			// A reference the caller cannot see is refused as if it did not exist.
+			if (!(await isReferenceVisible(data.refId, context.principal.userId))) {
+				throw new AnalysisRelationNotFoundError("Reference does not exist");
 			}
 
 			const analysis = await createAnalysis(db, {
@@ -232,10 +247,8 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 				referenceId: data.refId,
 				subtractionIds: data.subtractionIds,
 				workflow: data.workflow,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 			});
-
-			setResponseStatus(201);
 
 			return analysis;
 		} catch (err) {
@@ -248,7 +261,7 @@ export const deleteAnalysisFn = createServerFn({ method: "POST" })
 	.validator(analysisIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 				"write",
 			]);
@@ -264,13 +277,11 @@ export const blastNuvsFn = createServerFn({ method: "POST" })
 	.validator(blastSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"write",
 			]);
 
 			const blast = await blastNuvs(db, data.analysisId, data.sequenceIndex);
-
-			setResponseStatus(201);
 
 			return blast;
 		} catch (err) {

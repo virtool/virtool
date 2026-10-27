@@ -1,5 +1,5 @@
 /**
- * The create_sample workflow: two steps and one external tool.
+ * The create_sample workflow: two steps.
  *
  * A user uploads one or two FASTQ files; this turns them into a sample an
  * analysis can run against. It measures their quality with `quality-core`,

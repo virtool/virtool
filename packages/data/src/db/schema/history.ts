@@ -91,12 +91,8 @@ export const legacyHistoryDiff = pgTable(
 			foreignColumns: [legacyHistory.id],
 			name: "legacy_history_diff_history_id_fkey",
 		}),
-		/* `history_diffs_*` rather than `legacy_history_diff_*`: the constraint
-		   predates the table's rename and production never renamed it. The primary
-		   key is named for the same reason — an inferred one would be
-		   `legacy_history_diff_pkey`, which production does not have. */
-		primaryKey({ name: "history_diffs_pkey", columns: [table.id] }),
-		unique("history_diffs_change_id_key").on(table.change_id),
+		primaryKey({ name: "legacy_history_diff_pkey", columns: [table.id] }),
+		unique("legacy_history_diff_change_id_key").on(table.change_id),
 		unique("legacy_history_diff_history_id_key").on(table.history_id),
 	],
 );

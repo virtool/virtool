@@ -1,20 +1,13 @@
 import { useFetchAccount } from "@account/account";
 import Button from "@base/Button";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@base/Collapsible";
 import { ContainerNarrow } from "@base/Container";
 import CreatedCount from "@base/CreatedCount";
-import {
-	InputContainer,
-	InputError,
-	InputGroup,
-	InputIconButton,
-	InputLabel,
-	InputSimple,
-} from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import InputGroup, {
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from "@base/InputGroup";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
@@ -29,34 +22,20 @@ import type { Label } from "@virtool/contracts";
 import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import DefaultSubtractionSelector from "./DefaultSubtractionSelector";
-import LabelSelector from "./LabelSelector";
-import LibraryTypeSelector from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
-import SampleUserGroup from "./SampleUserGroup";
+import SampleSettingsFields from "./SampleSettingsFields";
+import { type SampleSettingsValues, sampleSettingsDefaults } from "./settings";
 
 type FormValues = {
+	settings: SampleSettingsValues;
 	name: string;
-	isolate: string;
-	host: string;
-	locale: string;
-	libraryType: string;
 	readFiles: number[];
-	group: string;
-	labels: number[];
-	subtractionIds: number[];
 };
 
 const emptyValues: FormValues = {
+	settings: sampleSettingsDefaults,
 	name: "",
-	isolate: "",
-	host: "",
-	locale: "",
-	libraryType: "normal",
 	readFiles: [],
-	group: "",
-	labels: [],
-	subtractionIds: [],
 };
 
 type CreateSampleProps = {
@@ -99,12 +78,11 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	});
 	const mutation = useCreateSample();
 
-	const [showMetadata, setShowMetadata] = useState(false);
 	const [createMore, setCreateMore] = useState(false);
 	const [createdCount, setCreatedCount] = useState(0);
 
 	useEffect(() => {
-		setValue("group", String(account?.primaryGroup?.id ?? ""));
+		setValue("settings.group", String(account?.primaryGroup?.id ?? ""));
 	}, [account, setValue]);
 
 	const reads = readsResponse?.pages.flatMap((page) => page.items) ?? [];
@@ -137,7 +115,10 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	function clearForm() {
 		reset({
 			...emptyValues,
-			group: String(account?.primaryGroup?.id ?? ""),
+			settings: {
+				...sampleSettingsDefaults,
+				group: String(account?.primaryGroup?.id ?? ""),
+			},
 		});
 	}
 
@@ -147,18 +128,24 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	}
 
 	function onSubmit(values: FormValues) {
-		mutation.mutate(getCreateSampleRequest(values, values.readFiles), {
-			onSuccess: () => {
-				clearForm();
+		mutation.mutate(
+			getCreateSampleRequest(
+				{ ...values.settings, name: values.name },
+				values.readFiles,
+			),
+			{
+				onSuccess: () => {
+					clearForm();
 
-				if (createMore) {
-					setCreatedCount((count) => count + 1);
-					return;
-				}
+					if (createMore) {
+						setCreatedCount((count) => count + 1);
+						return;
+					}
 
-				navigate({ to: "/samples" });
+					navigate({ to: "/samples" });
+				},
 			},
-		});
+		);
 	}
 
 	return (
@@ -166,9 +153,9 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<ViewHeader title="Create Sample">
 					<ViewHeaderTitle>Create Sample</ViewHeaderTitle>
-					<InputError className="text-left">
+					<FieldError className="text-left">
 						{mutation.isError && mutation.error.message}
-					</InputError>
+					</FieldError>
 				</ViewHeader>
 
 				{isError ? (
@@ -177,95 +164,40 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 					<LoadingPlaceholder className="mt-9" />
 				) : (
 					<>
-						<InputGroup>
-							<InputLabel htmlFor="name">Name</InputLabel>
-							<InputContainer align="right" className="flex">
-								<InputSimple
-									id="name"
+						<Field>
+							<FieldLabel>Name</FieldLabel>
+							<InputGroup>
+								<InputGroupInput
 									aria-required
-									aria-invalid={Boolean(errors.name) || undefined}
-									aria-describedby={errors.name ? "name-error" : undefined}
 									{...register("name", {
 										required: "Required Field",
 									})}
 								/>
 								{Boolean(watch("readFiles").length) && (
-									<InputIconButton
-										IconComponent={WandSparkles}
-										aria-label="Auto Fill"
-										tip="Auto Fill"
-										onClick={() => autofill(watch("readFiles"))}
-									/>
+									<InputGroupAddon align="inline-end">
+										<InputGroupButton
+											IconComponent={WandSparkles}
+											tip="Auto Fill"
+											onClick={() => autofill(watch("readFiles"))}
+										/>
+									</InputGroupAddon>
 								)}
-							</InputContainer>
-							<InputError id="name-error">{errors.name?.message}</InputError>
-						</InputGroup>
+							</InputGroup>
+							<FieldError errors={[errors.name]} />
+						</Field>
 
 						<Controller
 							control={control}
-							render={({ field: { onChange, value } }) => (
-								<SampleUserGroup
-									selected={value}
+							name="settings"
+							render={({ field }) => (
+								<SampleSettingsFields
 									groups={groups}
-									onChange={onChange}
-								/>
-							)}
-							name="group"
-						/>
-
-						<Collapsible
-							className="mb-4"
-							open={showMetadata}
-							onOpenChange={setShowMetadata}
-						>
-							<CollapsibleTrigger>Show Metadata Fields</CollapsibleTrigger>
-							<CollapsibleContent className="grid grid-cols-2 gap-x-4 pt-4">
-								<InputGroup>
-									<InputLabel htmlFor="locale">Locale</InputLabel>
-									<InputSimple id="locale" {...register("locale")} />
-								</InputGroup>
-
-								<InputGroup>
-									<InputLabel htmlFor="isolate">Isolate</InputLabel>
-									<InputSimple id="isolate" {...register("isolate")} />
-								</InputGroup>
-
-								<InputGroup>
-									<InputLabel htmlFor="host">Host</InputLabel>
-									<InputSimple id="host" {...register("host")} />
-								</InputGroup>
-							</CollapsibleContent>
-						</Collapsible>
-
-						<Controller
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<LibraryTypeSelector libraryType={value} onSelect={onChange} />
-							)}
-							name="libraryType"
-						/>
-
-						<Controller
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<LabelSelector
 									labels={labels}
-									selected={value}
-									onChange={onChange}
+									value={field.value}
+									onChange={field.onChange}
+									metadataColumns={2}
 								/>
 							)}
-							name="labels"
-						/>
-
-						<Controller
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<DefaultSubtractionSelector
-									selected={value}
-									onChange={onChange}
-								/>
-							)}
-							name="subtractionIds"
 						/>
 
 						<Controller
@@ -295,19 +227,15 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 						    passes under the bar instead of butting up against it. */}
 						<div className="sticky bottom-0 z-10 mt-4 bg-linear-to-b from-white/0 to-white to-40% pt-10 pb-4">
 							<div className="flex items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3 shadow-lg">
-								<div className="flex items-center gap-2">
+								<Field className="gap-2" orientation="horizontal">
 									<Switch
-										id="create-more"
 										checked={createMore}
 										onCheckedChange={setCreateMore}
 									/>
-									<label
-										className="cursor-pointer text-gray-700 text-sm"
-										htmlFor="create-more"
-									>
+									<FieldLabel className="cursor-pointer font-normal text-gray-700 text-sm">
 										Create more
-									</label>
-								</div>
+									</FieldLabel>
+								</Field>
 
 								<div className="flex items-center gap-4">
 									<CreatedCount

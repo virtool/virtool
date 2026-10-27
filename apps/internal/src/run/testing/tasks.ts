@@ -1,7 +1,11 @@
+import { createKeyring, type Keyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { type TaskRow, tasks } from "@virtool/data/db/schema/tasks";
 import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
+import { MemoryStorage, type StorageBackend } from "@virtool/storage";
 import { eq } from "drizzle-orm";
+import { createMetrics, type Metrics } from "../metrics/registry";
+import type { TaskContext } from "../tasks/registry";
 
 /** The runner id a task test claims under. */
 export const TEST_RUNNER_ID = "runner-a-1";
@@ -81,4 +85,24 @@ export async function readTaskRow(db: Db, taskId: number): Promise<TaskRow> {
 	}
 
 	return row;
+}
+
+/** Build a complete task context with isolated test infrastructure. */
+export function createTaskTestContext({
+	db,
+	keyring = createKeyring(undefined, undefined),
+	metrics = {},
+	storage = new MemoryStorage(),
+}: {
+	db: Db;
+	keyring?: Keyring;
+	metrics?: Partial<Metrics>;
+	storage?: StorageBackend;
+}): TaskContext {
+	return {
+		db,
+		keyring,
+		metrics: Object.assign(createMetrics("test", 1), metrics),
+		storage,
+	};
 }

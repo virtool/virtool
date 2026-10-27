@@ -1,5 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
+import { createServerFn } from "@tanstack/react-start";
 import { bannerColors } from "@virtool/contracts";
 import {
 	BannerNotFoundError,
@@ -35,15 +34,12 @@ const updateBannerSchema = idSchema
 		message: "At least one of `message` or `color` must be provided.",
 	});
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// BannerNotFoundError import it references — from the client bundle.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof BannerNotFoundError) {
-		setResponseStatus(404);
-		throw new ClientError("Banner not found.");
+		throw new ClientError("Banner not found.", 404);
 	}
 	throw err;
-});
+}
 
 export const findBannerFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
@@ -61,9 +57,8 @@ export const createBannerFn = createServerFn({ method: "POST" })
 			db,
 			data.message,
 			data.color,
-			context.session.userId,
+			context.principal.userId,
 		);
-		setResponseStatus(201);
 		return banner;
 	});
 
@@ -76,7 +71,7 @@ export const updateBannerFn = createServerFn({ method: "POST" })
 				db,
 				data.id,
 				{ message: data.message, color: data.color },
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			rethrowAsHttp(err);

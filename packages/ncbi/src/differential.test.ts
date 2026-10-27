@@ -1,5 +1,5 @@
 /**
- * Differential tests against ref-builder's Python client.
+ * Differential tests against ref-builder's validated models.
  *
  * `fixtures/expected/*.json` are ref-builder's own validated models, copied
  * from `tests/fixtures/ncbi/otus/`. `fixtures/genbank/*.xml` and
@@ -7,7 +7,7 @@
  * and taxids, recorded by `scripts/refresh-fixtures.ts`.
  *
  * ref-builder records no raw XML of its own — everything it keeps is already
- * past `Entrez.read()` — so recording the responses here is what puts the
+ * parsed — so recording the responses here is what puts the
  * XML-to-model step under test rather than only the model step.
  */
 

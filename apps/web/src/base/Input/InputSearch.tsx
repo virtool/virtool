@@ -1,7 +1,10 @@
+import InputGroup, {
+	InputGroupAddon,
+	InputGroupInput,
+	InputGroupText,
+} from "@base/InputGroup";
 import { Search } from "lucide-react";
-import Input, { type InputProps } from "./Input";
-import InputContainer from "./InputContainer";
-import InputIcon from "./InputIcon";
+import type { InputProps } from "./Input";
 
 /** Props for the search input. Requires an `aria-label` so screen readers announce an accessible name. */
 export type InputSearchProps = InputProps & {
@@ -11,9 +14,13 @@ export type InputSearchProps = InputProps & {
 
 export default function InputSearch(props: InputSearchProps) {
 	return (
-		<InputContainer align="left" className="flex-grow">
-			<Input {...props} />
-			<InputIcon icon={Search} />
-		</InputContainer>
+		<InputGroup className="flex-grow">
+			<InputGroupInput {...props} />
+			<InputGroupAddon>
+				<InputGroupText>
+					<Search aria-hidden />
+				</InputGroupText>
+			</InputGroupAddon>
+		</InputGroup>
 	);
 }

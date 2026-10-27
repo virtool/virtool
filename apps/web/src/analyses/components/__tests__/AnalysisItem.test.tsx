@@ -97,4 +97,17 @@ describe("<AnalysisItem />", () => {
 
 		await expectNoRemoveButton();
 	});
+
+	it("labels the version of an unready analysis as pending", async () => {
+		renderItem({ ready: false, workflowVersion: null });
+
+		expect(await screen.findByText("Pending")).toBeInTheDocument();
+		expect(screen.queryByText("not recorded")).not.toBeInTheDocument();
+	});
+
+	it("labels a ready analysis with no version as not recorded", async () => {
+		renderItem({ ready: true, workflowVersion: null });
+
+		expect(await screen.findByText("not recorded")).toBeInTheDocument();
+	});
 });

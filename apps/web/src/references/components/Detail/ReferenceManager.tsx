@@ -1,7 +1,8 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupTable } from "@base/Box";
+import { BoxGroup, BoxGroupTable } from "@base/Box";
 import { ContainerNarrow } from "@base/Container";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
+import SectionHeader from "@base/SectionHeader";
 import Contributors from "@indexes/components/Contributors";
 import { useFetchReference } from "@references/queries";
 /**
@@ -34,33 +35,37 @@ export default function ReferenceManager() {
 
 	return (
 		<ContainerNarrow>
-			<BoxGroup>
-				<BoxGroupHeader>
+			<section>
+				<SectionHeader>
 					<h2>General</h2>
-				</BoxGroupHeader>
-				<BoxGroupTable className="[&_th]:w-45 [&_tr:not(:first-of-type)_td]:capitalize">
-					<caption className="sr-only">Reference general information</caption>
-					<tbody>
-						<tr>
-							<th scope="row">Description</th>
-							<td>{description}</td>
-						</tr>
-						<tr>
-							<th scope="row">Organism</th>
-							<td>{organism}</td>
-						</tr>
-					</tbody>
-				</BoxGroupTable>
-			</BoxGroup>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupTable className="[&_th]:w-45 [&_tr:not(:first-of-type)_td]:capitalize">
+						<caption className="sr-only">Reference general information</caption>
+						<tbody>
+							<tr>
+								<th scope="row">Description</th>
+								<td>{description}</td>
+							</tr>
+							<tr>
+								<th scope="row">Organism</th>
+								<td>{organism}</td>
+							</tr>
+						</tbody>
+					</BoxGroupTable>
+				</BoxGroup>
+			</section>
 
 			{clonedFrom && <Clone source={clonedFrom} />}
 
-			<BoxGroup>
-				<BoxGroupHeader>
+			<section>
+				<SectionHeader>
 					<h2>Latest Index Build</h2>
-				</BoxGroupHeader>
-				<LatestBuild id={refId} latestBuild={latestBuild} />
-			</BoxGroup>
+				</SectionHeader>
+				<BoxGroup>
+					<LatestBuild id={refId} latestBuild={latestBuild} />
+				</BoxGroup>
+			</section>
 
 			<Contributors contributors={contributors} />
 		</ContainerNarrow>

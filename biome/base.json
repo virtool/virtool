@@ -1,0 +1,41 @@
+{
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": [
+			"**",
+			"!packages/pathoscope-core",
+			"!packages/quality-core/tests/fixtures/*.json",
+			"!apps/site",
+			"!dev",
+			"!packages/sqlite/src/fixtures",
+			"!packages/data/drizzle",
+			"!**/routeTree.gen.ts",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/dist-types",
+			"!**/.output",
+			"!**/.nitro",
+			"!**/.tanstack"
+		]
+	},
+	"css": {
+		"parser": {
+			"cssModules": true,
+			"tailwindDirectives": true
+		}
+	},
+	"formatter": {
+		"enabled": true
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	}
+}

@@ -7,51 +7,54 @@ description: "Understand and revert reference history."
 
 History refers to the tracked changes made to OTUs. When any aspect of an OTU is changed, a history _change_ record is created.
 
-Changes can be considered in several different contexts. One is at the OTU-level, where the changes describe the entire life of that OTU record. Changes can also be considered as a descriptor of indexes. An index can be thought of as a collection of changes to a selection of OTUs.
+Virtool records the history of each OTU. A reference index captures a set of
+changes across its OTUs.
 
 Here is an example of a change being recorded when an isolate is removed from an OTU:
 
 <video src="./demo.mp4" alt="Demo of history flow" autoplay />
 
-## View OTU Changes
+## View OTU changes
+
+The example below uses Abaca Bunchy Top Virus (ABTV).
 
 1. Navigate to the detail view for an OTU
 
    ![Detail view for ABTV](./abtv_detail.png?url)
 
-2. Click on the **History** tab
+2. Click the **History** tab
 
    This shows all changes ever made to the OTU.
 
    ![Partial History for Abaca bunchy top virus](./abtv_history.png?url)
 
-## View Index Changes
+## View index changes
 
 1. Navigate to the detail view for a reference
 
    ![Reference Detail](./ref.png?url)
 
-2. Click on the **Indexes** tab to list the indexes for the reference
+2. Click the **Indexes** tab to list the indexes for the reference
 
    ![Reference Indexes List](./index_list.png?url)
 
-3. Click on an index
+3. Click an index
 
-   We clicked on index **Version 20**. The index detail page provide an overview of the changes included in the index.
+   Index **Version 20** was selected. The index detail page provides an overview of the changes included in the index.
 
    ![Index Detail](./index_detail.png?url)
 
-4. Click on the **Changes** tab
+4. Click the **Changes** tab
 
-   This view shows an exhaustive list of all changes made on each OTU in the index.
+   This view shows all changes made to each OTU in the index.
 
    ![Detailed Index Change List](./index_changes.png?url)
 
-## Revert Changes
+## Revert changes
 
 You can revert any **unbuilt** changes made to an OTU.
 
-Changes included in a complete index build cannot be reverted, therefore it is a good idea to be certain of any changes before starting an index build.
+Changes included in a complete index build can't be reverted, so it's a good idea to be certain of any changes before starting an index build.
 
 1. Navigate to the detail page for an OTU
 
@@ -59,20 +62,20 @@ Changes included in a complete index build cannot be reverted, therefore it is a
 
    ![OTU Detail Page](./abtv_detail_old.png?url)
 
-2. Click on the **History** tab to view the history for the OTU
+2. Click the **History** tab to view the history for the OTU
 
-   The history for this OTU shows that it was cloned from another reference, then one of its isolates was removed (_Q1108_) and the other was renamed from _Q767_ to _Q768_.
+   The history shows this OTU came from another reference, then one of its isolates was removed (_Q1108_) and the other was renamed from _Q767_ to _Q768_.
 
    ![OTU History Page](./abtv_history_before.png?url)
 
 3. Click the <Icon name="history" color="blue" /> icon to revert a change
 
-   Any succeeding changes will also be removed.
+   Any succeeding changes are also removed.
 
    <video src="./revert.mp4" alt="Revert a change" autoplay />
 
 4. Navigate back to the **OTU** tab
 
-   The reversions will be reflected in the OTU data. In this example, the previously removed isolate (_Q1108_) is restored and the other isolate (_Q767_) has its previous name back.
+   The reversions are reflected in the OTU data. In this example, the previously removed isolate (_Q1108_) is restored and the other isolate (_Q767_) has its previous name back.
 
    ![OTU with Reverted Changes](./abtv_detail.png?url)

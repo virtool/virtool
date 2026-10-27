@@ -22,6 +22,7 @@ config.json
 *.log*
 .cache
 .DS_store
+.worktrees
 env
 tags
 .vscode
@@ -29,3 +30,8 @@ tags
 # Sentry Config File
 .env.sentry-build-plugin
 .docker-build
+
+# Vale package styles are fetched with `vale sync`; Virtool rules are checked in.
+.vale/styles/*
+!.vale/styles/config
+!.vale/styles/Virtool

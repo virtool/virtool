@@ -47,7 +47,7 @@ describe("nuvsWorkflow", () => {
 		}
 	});
 
-	// Pathoscope's whole output is `results`; NuVs writes three files, and the
+	// Pathoscope's whole output is `results`; Nuvs writes three files, and the
 	// manifest declaring them rides on the same finalize call. That call is made
 	// by `vfam` rather than derived from state, so the definition declares no
 	// `result`.

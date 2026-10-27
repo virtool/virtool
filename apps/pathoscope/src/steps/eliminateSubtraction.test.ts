@@ -1,12 +1,13 @@
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { RunSubprocess, RunSubprocessOptions } from "@virtool/workflow";
+import type { AnalysisSubtraction } from "@virtool/workflow";
 import {
 	createFakeContext,
+	createFakeSubprocessRunner,
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
-import type { PathoscopeData, PathoscopeSubtraction } from "../context";
+import type { PathoscopeData } from "../context";
 import { workPaths } from "../paths";
 import type { PathoscopeState } from "../state";
 import { eliminateSubtractionStep } from "./eliminateSubtraction";
@@ -90,13 +91,14 @@ function createFakeTools(eliminationsPerPass: readonly (readonly string[])[]) {
 		);
 	}
 
-	const runSubprocess: RunSubprocess = async (
-		options: RunSubprocessOptions,
-	) => {
-		const { command } = options;
-		const script = command[2] ?? "";
+	const runSubprocess = createFakeSubprocessRunner({
+		effect: ({ command }) => runCore(command),
+	});
 
-		if (command[0] === "bash") {
+	runSubprocess.register("bash", {
+		async effect({ command }) {
+			const script = command[2] ?? "";
+
 			scripts.push(script);
 
 			bowtie2Inputs.push(
@@ -104,24 +106,13 @@ function createFakeTools(eliminationsPerPass: readonly (readonly string[])[]) {
 			);
 
 			await writeFile(shellFlagValue(script, "-o"), "");
-		} else {
-			await runCore(command);
-		}
-
-		return {
-			command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
-	};
+		},
+	});
 
 	return { bowtie2Inputs, runSubprocess, scripts };
 }
 
-function createSubtraction(id: number): PathoscopeSubtraction {
+function createSubtraction(id: number): AnalysisSubtraction {
 	return {
 		id,
 		name: `subtraction ${id}`,
@@ -214,6 +205,17 @@ describe("eliminateSubtractionStep", () => {
 		await expect(readFile(paths.isolateFastq, "utf8")).rejects.toThrow(
 			/ENOENT/,
 		);
+	});
+
+	// A filter flag here would drop subtraction alignments, so reads that map
+	// better to the host would survive and be counted as viral.
+	it("converts to bam without filtering alignments", async () => {
+		const { paths, scripts } = await runStep([["r1"]], 1);
+		const script = scripts[0] ?? "";
+
+		expect(
+			script.endsWith(`| samtools view -bS - -o '${paths.toSubtractionBam}'`),
+		).toBe(true);
 	});
 
 	it("quotes every path it interpolates into the pipeline", async () => {

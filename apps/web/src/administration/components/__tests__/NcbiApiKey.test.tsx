@@ -1,10 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeSettings } from "@tests/fake/administrator";
-import {
-	mockSettingsStore,
-	settingsServerFnMocks,
-} from "@tests/server-fn/settings";
+import { mockSettingsStore } from "@tests/server-fn/settings";
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
@@ -35,31 +32,8 @@ describe("<NcbiApiKey>", () => {
 		);
 	});
 
-	it("shows a loader while the settings are pending", () => {
-		settingsServerFnMocks.getSettingsFn.mockReturnValue(
-			new Promise(() => undefined),
-		);
-
-		renderWithProviders(<NcbiApiKey />);
-
-		expect(screen.getByRole("status", { name: "loading" })).toBeInTheDocument();
-		expect(screen.queryByLabelText("API Key")).not.toBeInTheDocument();
-	});
-
-	// A `settings` role is what `getSettingsFn` demands, but the route itself only
-	// gates on `users`, so a lesser administrator reaching it is refused here.
-	it("shows an error when the settings cannot be read", async () => {
-		settingsServerFnMocks.getSettingsFn.mockRejectedValue(
-			new Error("Forbidden"),
-		);
-
-		renderWithProviders(<NcbiApiKey />);
-
-		expect(await screen.findByText(/couldn't load settings/i)).toBeVisible();
-	});
-
 	it("saves a typed key and clears the field", async () => {
-		const { updateSettings } = mockSettingsStore(
+		const { setNcbiApiKey } = mockSettingsStore(
 			createFakeSettings({ hasNcbiApiKey: false }),
 		);
 
@@ -70,8 +44,8 @@ describe("<NcbiApiKey>", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
 		await waitFor(() => {
-			expect(updateSettings).toHaveBeenCalledWith({
-				data: { ncbiApiKey: "secret-key" },
+			expect(setNcbiApiKey).toHaveBeenCalledWith({
+				data: { apiKey: "secret-key" },
 			});
 		});
 
@@ -79,7 +53,7 @@ describe("<NcbiApiKey>", () => {
 	});
 
 	it("refuses to save an empty field", async () => {
-		const { updateSettings } = mockSettingsStore(
+		const { setNcbiApiKey } = mockSettingsStore(
 			createFakeSettings({ hasNcbiApiKey: false }),
 		);
 
@@ -88,11 +62,11 @@ describe("<NcbiApiKey>", () => {
 		await userEvent.click(await screen.findByRole("button", { name: "Save" }));
 
 		expect(await screen.findByText("An API key is required.")).toBeVisible();
-		expect(updateSettings).not.toHaveBeenCalled();
+		expect(setNcbiApiKey).not.toHaveBeenCalled();
 	});
 
 	it("offers to remove a configured key", async () => {
-		const { updateSettings } = mockSettingsStore(
+		const { clearNcbiApiKey } = mockSettingsStore(
 			createFakeSettings({ hasNcbiApiKey: true }),
 		);
 
@@ -102,9 +76,37 @@ describe("<NcbiApiKey>", () => {
 			await screen.findByRole("button", { name: "Remove" }),
 		);
 
-		await waitFor(() => {
-			expect(updateSettings).toHaveBeenCalledWith({ data: { ncbiApiKey: "" } });
-		});
+		await waitFor(() => expect(clearNcbiApiKey).toHaveBeenCalled());
+	});
+
+	// A key that will not decrypt is still a stored key, so the placeholder keeps
+	// saying one is configured and the notice says why it cannot be used.
+	it("explains a key that cannot be decrypted", async () => {
+		mockSettingsStore(
+			createFakeSettings({
+				hasNcbiApiKey: true,
+				ncbiAvailability: "configuration_error",
+			}),
+		);
+
+		renderWithProviders(<NcbiApiKey />);
+
+		expect(
+			await screen.findByRole("status", { name: "ncbi api key status" }),
+		).toHaveTextContent("Configuration Error");
+	});
+
+	it("shows no notice when the stored key is usable", async () => {
+		mockSettingsStore(
+			createFakeSettings({ hasNcbiApiKey: true, ncbiAvailability: "ready" }),
+		);
+
+		renderWithProviders(<NcbiApiKey />);
+
+		expect(await screen.findByLabelText("API Key")).toBeInTheDocument();
+		expect(
+			screen.queryByRole("status", { name: "ncbi api key status" }),
+		).not.toBeInTheDocument();
 	});
 
 	it("offers no removal when no key is configured", async () => {

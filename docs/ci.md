@@ -9,23 +9,10 @@ Pathoscope and Nuvs have separate, longer affected-only jobs. `release-ghcr`
 publishes only the targets whose app version bumped in a release (see
 [Releases](#releases)).
 
-| Target | Published image(s) | Build job |
-| --- | --- | --- |
-| `dist` | `ghcr.io/virtool/web` | `build` |
-| `internal` | `ghcr.io/virtool/internal` | `build` |
-| `create-sample` | `ghcr.io/virtool/create-sample` | `build` |
-| `create-subtraction` | `ghcr.io/virtool/create-subtraction` | `build` |
-| `pathoscope` | `ghcr.io/virtool/pathoscope` | `build-pathoscope` |
-| `nuvs` | `ghcr.io/virtool/nuvs` | `build-nuvs` |
+The [image table](../README.md#images) lists each target and its published
+image.
 
 `dist` retains its name because tooling outside this repository targets it.
-
-The four workflow images publish under their bare, unprefixed names. Those
-names previously came from separate legacy repositories shipping the Python
-workflow of the same name; this repository's release supersedes them. The
-`ts-` prefixed variants were a transitional second tag during the TypeScript
-port and are no longer published; their existing tags stay in the registry
-but never move again.
 
 Adding an image requires an app Dockerfile, a Bake target, and a release-matrix entry. For
 the five targets in `build`, keep its matrix entry in step with
@@ -35,21 +22,14 @@ write, so the release reuses the caches they populated rather than rebuilding
 the Rust crate, bioinformatics tools, or SPAdes inside the shared 20-minute
 release timeout.
 
-Build one image locally by building the app and preparing its pruned context,
-then naming its Bake target:
-
-```console
-pnpm --filter @virtool/pathoscope build
-pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
-docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
-```
+See [Images](../README.md#images) to build one image locally.
 
 ## Affected jobs
 
 The `changes` job asks pnpm for workspaces selected by
 `...\[origin/main\]`. The leading ellipsis includes dependents, so an app is
 selected when either its own files or any workspace dependency changes. The
-expensive image and native-tool jobs, plus the per-app NuVs test job, run only
+expensive image and native-tool jobs, plus the per-app Nuvs test job, run only
 for selected workspaces on pull requests and remain unconditional on pushes to
 `main`.
 
@@ -68,7 +48,7 @@ Every app and TypeScript package is `private`, so nothing publishes to npm; the 
 `privatePackages: { version: true, tag: true }` to version and tag them anyway.
 The `web` and `internal` images are a `fixed` group: they share one unified
 version and bump together, so a change to either publishes both at the same
-version. Create Sample, Create Subtraction, Pathoscope, and NuVs are versioned
+version. Create Sample, Create Subtraction, Pathoscope, and Nuvs are versioned
 independently and publish only when they change. Shared `packages/*` are
 versioned on their own and cascade a `patch` into the apps that depend on them. `apps/site` is in `ignore` — it deploys
 elsewhere and ships no image. The Rust crates, `workflow-tools`, and

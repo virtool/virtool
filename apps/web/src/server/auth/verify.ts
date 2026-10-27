@@ -1,86 +1,82 @@
-import { timingSafeEqual } from "node:crypto";
-
-import { emptyPermissions, type Permissions } from "@virtool/contracts";
+import {
+	type ApiKeyPrincipal,
+	type BrowserSessionPrincipal,
+	emptyPermissions,
+} from "@virtool/contracts";
+import { resolveBrowserSession } from "@virtool/data/auth/session";
 import { hashToken } from "@virtool/data/auth/tokens";
 
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import { and, eq, sql } from "drizzle-orm";
-import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
+import { assertDatabaseReachable } from "./probe";
 
-/** Authenticated identity resolved from a session cookie pair or an API key. */
-export type AuthenticatedSession = {
-	userId: number;
-	/**
-	 * Set only when the caller authenticated with an API key. The key's
-	 * permissions cap the user's own, so `hasPermission` must intersect the two.
-	 */
-	keyPermissions?: Permissions;
+async function getBetterAuthSession(headers: Headers) {
+	const { auth } = await import("./instance");
+	return auth.api.getSession({
+		headers,
+		query: { disableCookieCache: true, disableRefresh: true },
+	});
+}
+
+type BetterAuthSession = {
+	session: { id: unknown };
+	user: { id: unknown };
 };
 
 /**
- * Resolve an authenticated session from cookie values. Returns `null` for any
- * non-fatal failure (missing cookies, unknown session, wrong type, expired,
- * deactivated user, or token mismatch) so callers can respond with a single 401
- * without leaking which check failed.
+ * Resolve an authoritative Better Auth browser session and its Virtool state.
+ * Missing, invalid, expired, revoked, inactive, and unmapped credentials all
+ * return `null`; provider failures throw so callers do not mistake an outage
+ * for revocation.
  */
-export async function verifyAuthenticatedSession(
+export async function verifyBrowserPrincipal(
 	db: Db,
-	sessionId: string | undefined,
-	sessionToken: string | undefined,
-): Promise<AuthenticatedSession | null> {
-	if (!sessionId || !sessionToken) {
+	request: Request,
+	resolveSession: (
+		headers: Headers,
+	) => Promise<BetterAuthSession | null> = getBetterAuthSession,
+): Promise<BrowserSessionPrincipal | null> {
+	let resolved: BetterAuthSession | null;
+	try {
+		resolved = await resolveSession(request.headers);
+	} catch (err) {
+		await assertDatabaseReachable(db);
+		throw err;
+	}
+	if (!resolved) {
 		return null;
 	}
 
-	// Deactivating a user deletes their sessions, but sessions created before
-	// this release can outlive the deactivation, so `active` still has to be
-	// checked on every request rather than trusted at login — such a session must
-	// stop verifying the moment the user goes inactive. The inner join only drops
-	// anonymous sessions, which carry no user_id and are rejected anyway.
-	const [row] = await db
-		.select({
-			userId: sessions.userId,
-			sessionType: sessions.sessionType,
-			tokenHash: sessions.tokenHash,
-			expiresAt: sessions.expiresAt,
-			active: users.active,
-		})
-		.from(sessions)
-		.innerJoin(users, eq(users.id, sessions.userId))
-		.where(eq(sessions.sessionId, sessionId))
-		.limit(1);
-
-	if (
-		row?.sessionType !== "authenticated" ||
-		!row.tokenHash ||
-		row.userId === null ||
-		!row.active
-	) {
+	const userId = Number(resolved.user.id);
+	const sessionId = Number(resolved.session.id);
+	if (!Number.isSafeInteger(userId) || !Number.isSafeInteger(sessionId)) {
 		return null;
 	}
 
-	if (row.expiresAt.getTime() <= Date.now()) {
+	const row = await resolveBrowserSession(db, sessionId, userId);
+	if (!row) {
 		return null;
 	}
 
-	const expected = Buffer.from(row.tokenHash, "utf8");
-	const provided = Buffer.from(hashToken(sessionToken), "utf8");
-	if (
-		expected.length !== provided.length ||
-		!timingSafeEqual(expected, provided)
-	) {
-		return null;
+	const identity = {
+		userId,
+		sessionId,
+		createdAt: row.createdAt,
+	};
+	if (row.forceReset) {
+		return { kind: "password_reset", ...identity };
 	}
-
-	return { userId: row.userId };
+	if (row.mfaEnrollmentRequired) {
+		return { kind: "mfa_enrollment", ...identity };
+	}
+	return { kind: "browser", ...identity };
 }
 
 /**
  * Parse a `Cookie` header into a flat map. Lightweight; sufficient for reading
- * our two session cookies from a raw `Request` (where the `getCookie` helper
+ * session cookies from a raw `Request` (where the `getCookie` helper
  * tied to async-local request context isn't available).
  */
 export function parseCookieHeader(
@@ -146,8 +142,9 @@ export function parseBasicAuthHeader(header: string): BasicCredentials | null {
 
 /**
  * Resolve an identity from a user handle and a raw API key. Returns `null` for
- * any failure — unknown handle, deactivated user, or a key that is not that
- * user's — so callers answer a single 401 without saying which check failed.
+ * any failure — unknown handle, deactivated user, an account that has not
+ * completed setup, or a key that is not that user's — so callers answer a
+ * single 401 without saying which check failed.
  *
  * Handles are matched case-insensitively, as they are at login. Only the key's
  * SHA-256 is stored, so the lookup hashes the supplied secret and matches on
@@ -158,7 +155,7 @@ export async function verifyApiKey(
 	db: Db,
 	handle: string,
 	key: string,
-): Promise<AuthenticatedSession | null> {
+): Promise<ApiKeyPrincipal | null> {
 	// The lookup below matches the handle case-insensitively, so the prefix check
 	// has to as well — otherwise `JOB-1` would slip past a guard that `job-1`
 	// trips and then resolve to the very same row.
@@ -173,8 +170,10 @@ export async function verifyApiKey(
 
 	const [row] = await db
 		.select({
+			keyId: apiKeys.id,
 			userId: users.id,
 			active: users.active,
+			lifecycleState: users.lifecycleState,
 			permissions: apiKeys.permissions,
 		})
 		.from(users)
@@ -187,27 +186,19 @@ export async function verifyApiKey(
 		)
 		.limit(1);
 
-	if (!row?.active) {
+	// A pending account has no keys to find, so this is a floor rather than a
+	// live case: a restricted setup credential must never turn into a machine
+	// one, and the rule belongs where it can be read off the code.
+	if (!row?.active || row.lifecycleState !== "normal") {
 		return null;
 	}
 
 	// Keys written by an older release stored only the permissions that were
 	// granted, so expand against the full set before it becomes a cap.
 	return {
+		kind: "api_key",
+		keyId: row.keyId,
 		userId: row.userId,
-		keyPermissions: { ...emptyPermissions(), ...row.permissions },
+		permissions: { ...emptyPermissions(), ...row.permissions },
 	};
-}
-
-/** Resolve an authenticated session directly from a `Request`. */
-export async function verifyRequest(
-	db: Db,
-	request: Request,
-): Promise<AuthenticatedSession | null> {
-	const cookies = parseCookieHeader(request.headers.get("cookie"));
-	return verifyAuthenticatedSession(
-		db,
-		cookies[SESSION_ID_COOKIE],
-		cookies[SESSION_TOKEN_COOKIE],
-	);
 }

@@ -6,8 +6,8 @@
  * resolves them once (`const paths = workPaths(context.workPath)`) and reads
  * fields from there.
  *
- * The layout is a **contract, not a convention**: a mapping index restored from
- * a shared cache namespace unpacks to these directory names.
+ * The layout is a **contract, not a convention**: a cached artifact restored
+ * from an earlier run unpacks to these directory names.
  */
 
 import { join } from "node:path";
@@ -21,7 +21,7 @@ export type SubtractionPaths = {
 	/** The directory archived into the subtraction mapping-index cache */
 	dir: string;
 
-	/** The gzipped source genome, handed to `bowtie2-build` without decompressing */
+	/** The decompressed genome with its records renamed, handed to `bowtie2-build` */
 	fasta: string;
 
 	/** The bowtie2 index prefix — the shards sit beside it */
@@ -93,9 +93,6 @@ export type PathoscopePaths = {
 	/** Where each subcommand of `pathoscope-core` writes its JSON results */
 	coreResults: (name: string) => string;
 
-	/** Where cache archives are staged, on the volume the pod is sized for */
-	cacheStaging: string;
-
 	/** The run's work path, for the two places that need it whole */
 	root: string;
 };
@@ -132,7 +129,7 @@ export function workPaths(workPath: string): PathoscopePaths {
 					workPath,
 					"subtractions",
 					String(subtractionId),
-					"subtraction.fa.gz",
+					"subtraction.fa",
 				),
 				indexPrefix: join(dir, "subtraction"),
 			};
@@ -151,6 +148,5 @@ export function workPaths(workPath: string): PathoscopePaths {
 		subtractedBam: join(workPath, "subtracted.bam"),
 
 		coreResults: (name) => join(workPath, `${name}.json`),
-		cacheStaging: join(workPath, "caches"),
 	};
 }

@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
 import WorkflowSelector from "../WorkflowSelector";
 import { nuvsWorkflow, pathoscopeWorkflow } from "../workflows";
 
-const pathoscopeName = `${pathoscopeWorkflow.name} ${pathoscopeWorkflow.description}`;
-const nuvsName = `${nuvsWorkflow.name} ${nuvsWorkflow.description}`;
+const pathoscopeName = pathoscopeWorkflow.name;
+const nuvsName = nuvsWorkflow.name;
 
 function Harness() {
 	const [selected, setSelected] = useState(pathoscopeWorkflow.id);
@@ -25,7 +25,7 @@ describe("<WorkflowSelector>", () => {
 	it("renders each workflow as an accessible radio option", () => {
 		renderWithProviders(<Harness />);
 
-		expect(screen.getByRole("radiogroup", { name: "Workflow" })).toBeVisible();
+		expect(screen.getByRole("group", { name: "Workflow" })).toBeVisible();
 		expect(screen.getByRole("radio", { name: pathoscopeName })).toBeChecked();
 		expect(screen.getByRole("radio", { name: nuvsName })).not.toBeChecked();
 	});
@@ -33,8 +33,12 @@ describe("<WorkflowSelector>", () => {
 	it("describes what each workflow finds", () => {
 		renderWithProviders(<Harness />);
 
-		expect(screen.getByText("Find known viruses.")).toBeVisible();
-		expect(screen.getByText("Find novel viruses.")).toBeVisible();
+		expect(
+			screen.getByRole("radio", { name: pathoscopeName }),
+		).toHaveAccessibleDescription("Find known viruses.");
+		expect(
+			screen.getByRole("radio", { name: nuvsName }),
+		).toHaveAccessibleDescription("Find novel viruses.");
 	});
 
 	it("selects a workflow when its option is chosen", async () => {

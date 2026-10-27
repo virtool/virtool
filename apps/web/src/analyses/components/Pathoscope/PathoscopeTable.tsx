@@ -60,13 +60,13 @@ export default function PathoscopeTable({
 							{hit.name}
 						</span>
 						<div className="flex gap-4 shrink-0">
-							{hit.abbreviation && (
+							{hit.acronym && (
 								<AnalysisValue
 									className="w-32"
 									color="gray"
 									hideLabel
-									label="Abbreviation"
-									value={hit.abbreviation}
+									label="Acronym"
+									value={hit.acronym}
 								/>
 							)}
 							<AnalysisValue

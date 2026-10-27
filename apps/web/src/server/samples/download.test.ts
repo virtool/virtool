@@ -2,6 +2,7 @@ import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { analyses } from "@virtool/data/db/schema/analyses";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import {
 	legacySampleLabels,
@@ -10,7 +11,6 @@ import {
 	sampleReads,
 	sampleUploads,
 } from "@virtool/data/db/schema/samples";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -32,12 +32,12 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest: vi.fn(),
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -84,7 +84,7 @@ beforeEach(async () => {
 	await db.delete(sampleReads);
 	await db.delete(legacySamples);
 	await db.delete(apiKeys);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(userGroups);
 	await db.delete(groups);
 	await db.delete(users);
@@ -173,7 +173,7 @@ describe("handleSampleReads", () => {
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get("content-disposition")).toBe(
-			'attachment; filename="reads_1.fq.gz"',
+			'attachment; filename="Sample_1.fq.gz"',
 		);
 		expect(response.headers.get("content-length")).toBe("5");
 		expect(response.headers.get("content-type")).toBe("application/gzip");
@@ -215,9 +215,9 @@ describe("handleSampleReads", () => {
 
 		expect(response.status).toBe(200);
 		expect(await response.text()).toBe("hello");
-		// The download is still named for the public name, not the stored one.
+		// The download is named for the sample and the read side, not the stored name.
 		expect(response.headers.get("content-disposition")).toBe(
-			'attachment; filename="reads_1.fq.gz"',
+			'attachment; filename="Sample_1.fq.gz"',
 		);
 	});
 

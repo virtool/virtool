@@ -2,7 +2,7 @@
 name = "quality-core"
 version = "0.0.0"
 edition = "2021"
-description = "FastQC-equivalent read quality statistics, as a standalone CLI"
+description = "FastQC-equivalent read quality statistics, as a standalone command-line tool"
 license = "MIT"
 publish = false
 

@@ -1,3 +1,4 @@
+import { invalidateChange } from "@app/invalidate";
 import { labelQueryKeys } from "@labels/keys";
 import {
 	createLabelFn,
@@ -35,8 +36,12 @@ export function useCreateLabel() {
 	>({
 		mutationFn: ({ name, description, color }) =>
 			createLabelFn({ data: { color, description, name } }),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: labelQueryKeys.lists() });
+		onSuccess: (label) => {
+			invalidateChange(queryClient, {
+				domain: "labels",
+				operation: "insert",
+				id: label.id,
+			});
 		},
 	});
 }
@@ -56,8 +61,12 @@ export function useUpdateLabel() {
 	>({
 		mutationFn: ({ labelId, name, description, color }) =>
 			updateLabelFn({ data: { color, description, labelId, name } }),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: labelQueryKeys.lists() });
+		onSuccess: (label) => {
+			invalidateChange(queryClient, {
+				domain: "labels",
+				operation: "update",
+				id: label.id,
+			});
 		},
 	});
 }
@@ -72,8 +81,12 @@ export function useDeleteLabel() {
 
 	return useMutation<null, Error, { labelId: number }>({
 		mutationFn: ({ labelId }) => deleteLabelFn({ data: { labelId } }),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: labelQueryKeys.lists() });
+		onSuccess: (_data, { labelId }) => {
+			invalidateChange(queryClient, {
+				domain: "labels",
+				operation: "delete",
+				id: labelId,
+			});
 		},
 	});
 }

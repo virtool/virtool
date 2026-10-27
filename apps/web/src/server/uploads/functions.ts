@@ -1,45 +1,25 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
+import { createServerFn } from "@tanstack/react-start";
 import {
 	SORT_DIRECTIONS,
 	UPLOAD_SORT_FIELDS,
 	UPLOAD_TYPES,
+	type UploadPolicy,
 } from "@virtool/contracts";
-import {
-	cancelPendingUpload,
-	createPendingUpload,
-	deleteUpload,
-	finalizePendingUpload,
-	findUploads,
-	UploadIncompleteError,
-	UploadNotFoundError,
-	UploadReservedError,
-	UploadSizeMismatchError,
-} from "@virtool/data/uploads/data";
+import { getSettings } from "@virtool/data/settings/data";
+import { deleteUpload, findUploads } from "@virtool/data/uploads/data";
 import { z } from "zod";
 import { authenticated, permission } from "../auth/policy";
 import { db, storage } from "../composition";
-import { config } from "../config";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
-
-// A chunked upload can run for a long time across hundreds of block writes, so
-// the write SAS lives in hours where a download redirect lives in minutes.
-const UPLOAD_SAS_TTL_SECONDS = 6 * 60 * 60;
-
-const AZURE_MAX_BLOCK_COUNT = 50_000;
-const AZURE_MAX_BLOCK_SIZE = 4_000 * 1024 * 1024;
-const AZURE_MAX_BLOB_SIZE = AZURE_MAX_BLOCK_COUNT * AZURE_MAX_BLOCK_SIZE;
-
-// The smallest block a chunked upload cuts a file into. Larger blocks mean
-// fewer requests per file; the block only grows past this floor for a file too
-// large to fit in the block-count limit at this size (~781 GiB and up).
-const MIN_UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
-
-// The upload endpoint itself is not a server function — it streams a multi-GB
-// request body and is posted to with XMLHttpRequest so the client can report
-// progress. It lives in the `/uploads` route (`@server/uploads/upload`).
+import { getUploadErrorResponse } from "./errors";
+import {
+	cancelUpload,
+	finalizeUpload,
+	initializeUpload,
+	uploadInitSchema,
+} from "./service";
 
 const findUploadsSchema = z
 	.object({
@@ -58,29 +38,13 @@ const uploadIdSchema = z.object({
 	id: rowIdSchema,
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// UploadNotFoundError / UploadReservedError imports it references — from the
-// client bundle. A plain top-level helper would pin ./data and its postgres
-// transitive dependency in the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
-	if (err instanceof UploadNotFoundError) {
-		setResponseStatus(404);
-		throw new ClientError("Upload not found.");
-	}
-	if (err instanceof UploadReservedError) {
-		setResponseStatus(409);
-		throw new ClientError("Upload is reserved and in use.");
-	}
-	if (err instanceof UploadIncompleteError) {
-		setResponseStatus(409);
-		throw new ClientError("Upload is not complete.");
-	}
-	if (err instanceof UploadSizeMismatchError) {
-		setResponseStatus(409);
-		throw new ClientError("Upload size does not match the declared size.");
+function rethrowAsHttp(err: unknown): never {
+	const response = getUploadErrorResponse(err);
+	if (response) {
+		throw new ClientError(response.message, response.status);
 	}
 	throw err;
-});
+}
 
 export const findUploadsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
@@ -108,80 +72,24 @@ export const deleteUploadFn = createServerFn({ method: "POST" })
 		}
 	});
 
-const initUploadSchema = z.object({
-	name: z.string().min(1),
-	type: z.enum(UPLOAD_TYPES),
-	// The file's byte length, locked here so finalize can reject a commit that
-	// does not land exactly this many bytes.
-	size: z.number().int().nonnegative().max(AZURE_MAX_BLOB_SIZE),
-});
-
-function getUploadBlockSize(size: number): number {
-	const minimumBlockSize = Math.ceil(size / AZURE_MAX_BLOCK_COUNT);
-	return Math.max(
-		MIN_UPLOAD_BLOCK_SIZE,
-		Math.ceil(minimumBlockSize / MIN_UPLOAD_BLOCK_SIZE) * MIN_UPLOAD_BLOCK_SIZE,
-	);
-}
-
-/**
- * Begin an upload, deciding whether it goes direct-to-blob or through this
- * server.
- *
- * The server owns the choice so the client never carries the feature flag:
- * when chunked uploads are enabled and the backend can presign, this reserves
- * the upload and returns the write SAS the client PUTs its blocks to; otherwise
- * it returns `proxied` and the client falls back to the `POST /uploads` route.
- * A `proxied` result reserves nothing — that route creates its own row.
- *
- * `blockSize` is the block size the client cuts the file into and `concurrency`
- * is how many blocks it PUTs at once, the latter from configuration. After
- * committing the block list the client calls {@link finalizeChunkedUploadFn}.
- */
+/** Begin a direct upload for the browser client. */
 export const initUploadFn = createServerFn({ method: "POST" })
 	.middleware([permission("upload_file")])
-	.validator(initUploadSchema)
+	.validator(uploadInitSchema)
 	.handler(async ({ data, context }) => {
-		const presignUpload = storage.presignUpload;
-
-		if (!config.uploadsChunked || !presignUpload) {
-			return { mode: "proxied" as const };
-		}
-
-		const { upload, storageKey } = await createPendingUpload(db, {
-			name: data.name,
-			type: data.type,
-			userId: context.session.userId,
-			expectedSize: data.size,
-		});
-
-		// The reservation is written before the SAS is minted, so a presign failure
-		// would leave an unfinished row for the reaper to clear 30 days on. Drop it
-		// now; a failed cancel changes nothing the caller sees over the presign
-		// error already surfacing.
-		let url: string;
 		try {
-			url = await presignUpload(storageKey, {
-				expiresIn: UPLOAD_SAS_TTL_SECONDS,
-			});
+			return await initializeUpload(data, context.principal.userId);
 		} catch (err) {
-			await cancelPendingUpload(
-				db,
-				storage,
-				logger,
-				upload.id,
-				context.session.userId,
-			).catch(() => {});
-			throw err;
+			return rethrowAsHttp(err);
 		}
+	});
 
-		return {
-			mode: "chunked" as const,
-			uploadId: upload.id,
-			url,
-			blockSize: getUploadBlockSize(data.size),
-			concurrency: config.uploadsChunkedConcurrency,
-		};
+/** Expose the upload limit to authenticated users without exposing other settings. */
+export const getUploadPolicyFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async (): Promise<UploadPolicy> => {
+		const { maxUploadSize } = await getSettings(db);
+		return { maxUploadSize };
 	});
 
 /**
@@ -192,12 +100,7 @@ export const finalizeChunkedUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data, context }) => {
 		try {
-			return await finalizePendingUpload(
-				db,
-				storage,
-				data.id,
-				context.session.userId,
-			);
+			return await finalizeUpload(data.id, context.principal.userId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -211,13 +114,7 @@ export const cancelChunkedUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data, context }) => {
 		try {
-			await cancelPendingUpload(
-				db,
-				storage,
-				logger,
-				data.id,
-				context.session.userId,
-			);
+			await cancelUpload(data.id, context.principal.userId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

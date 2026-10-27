@@ -57,6 +57,7 @@ export type RequestSample = {
 export type Metrics = {
 	recordHttpRequest: (sample: RequestSample) => void;
 	setPostgresConnections: (counts: ConnectionCounts) => void;
+	clearPostgresConnections: () => void;
 	setJobQueue: (snapshot: JobQueueSnapshot) => void;
 	clearJobQueue: () => void;
 	contentType: string;
@@ -158,6 +159,10 @@ export function createMetrics(poolMax: number, version: string): Metrics {
 				counts.idleInTransaction,
 			);
 			postgresConnections.set({ state: "other" }, counts.other);
+		},
+
+		clearPostgresConnections() {
+			postgresConnections.reset();
 		},
 
 		setJobQueue(snapshot) {

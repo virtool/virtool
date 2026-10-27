@@ -1,5 +1,10 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import {
+	authAccounts,
+	authSessions,
+	authTwoFactors,
+} from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -19,19 +24,37 @@ import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
 const setCookie = vi.fn();
-const setResponseStatus = vi.fn();
+const createRemediationSession = vi.fn();
+let currentUserId: number | null = null;
+let currentSessionId: number | null = null;
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie,
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
+}));
+
+vi.mock("../auth/instance", () => ({
+	auth: {
+		api: {
+			getSession: vi.fn(async () =>
+				currentUserId === null || currentSessionId === null
+					? null
+					: {
+							session: { id: currentSessionId },
+							user: { id: currentUserId },
+						},
+			),
+			createRemediationSession,
+		},
+	},
 }));
 
 // `createTestDatabase` imports this module, so the factory runs during the
@@ -56,16 +79,12 @@ vi.mock("../composition", () => ({
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
 const { hashPassword, verifyPassword } = await import(
 	"@virtool/data/auth/password"
 );
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
-const { hashToken } = await import("@virtool/data/auth/tokens");
 
 let database: TestDatabase;
 
@@ -80,7 +99,9 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(sessions);
+	currentUserId = null;
+	currentSessionId = null;
+	await db.delete(authSessions);
 	await db.delete(users);
 	getRequest.mockReturnValue(
 		new Request("https://virtool.test/_serverFn/test"),
@@ -92,16 +113,24 @@ beforeEach(async () => {
  * return its id alongside the session that authenticates it.
  */
 async function signIn(password = "old_password_123") {
-	const userId = await seedUser(db, { password: await hashPassword(password) });
+	const hashed = await hashPassword(password);
+	const userId = await seedUser(db, { password: hashed });
+	const now = new Date();
+	await db
+		.update(users)
+		.set({ authMigratedAt: now })
+		.where(eq(users.id, userId));
+	await db.insert(authAccounts).values({
+		accountId: String(userId),
+		providerId: "credential",
+		userId,
+		password: hashed.toString("utf8"),
+		createdAt: now,
+		updatedAt: now,
+	});
 	const session = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`,
-			},
-		}),
-	);
+	currentUserId = userId;
+	currentSessionId = session.sessionId;
 
 	return { session, userId };
 }
@@ -115,41 +144,9 @@ async function readUser(userId: number) {
 	return row;
 }
 
-describe("updateAccountEmail", () => {
-	it("sets the signed-in user's address", async () => {
-		const { userId } = await signIn();
-
-		const account = (await call("updateAccountEmailFn", {
-			email: "alice@example.com",
-		})) as { email: string };
-
-		expect(account.email).toBe("alice@example.com");
-		expect((await readUser(userId))?.email).toBe("alice@example.com");
-	});
-
-	it("accepts an empty string as clearing the address", async () => {
-		const { userId } = await signIn();
-		await call("updateAccountEmailFn", { email: "alice@example.com" });
-
-		await call("updateAccountEmailFn", { email: "" });
-
-		expect((await readUser(userId))?.email).toBe("");
-	});
-
-	it("responds with 400 for a malformed address", async () => {
-		const { userId } = await signIn();
-
-		await expect(
-			call("updateAccountEmailFn", { email: "not-an-address" }),
-		).rejects.toThrow("The format of the email is invalid");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
-		expect((await readUser(userId))?.email).toBe("");
-	});
-});
-
 describe("changePassword", () => {
 	it("hands the browser the session that replaces the revoked one", async () => {
-		const { session, userId } = await signIn();
+		const { userId } = await signIn();
 
 		await call("changePasswordFn", {
 			oldPassword: "old_password_123",
@@ -158,23 +155,13 @@ describe("changePassword", () => {
 
 		const rows = await db
 			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
+			.from(authSessions)
+			.where(eq(authSessions.userId, userId));
 
-		// The request's own session went with the rest, so the cookies must carry
-		// the replacement or the user is signed out by their own password change.
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionId).not.toBe(session.sessionId);
-
-		const idCookie = setCookie.mock.calls.find(
-			(args) => args[0] === SESSION_ID_COOKIE,
+		expect(rows).toHaveLength(0);
+		expect(createRemediationSession).toHaveBeenCalledWith(
+			expect.objectContaining({ body: { userId } }),
 		);
-		const tokenCookie = setCookie.mock.calls.find(
-			(args) => args[0] === SESSION_TOKEN_COOKIE,
-		);
-
-		expect(idCookie?.[1]).toBe(rows[0]?.sessionId);
-		expect(hashToken(tokenCookie?.[1] as string)).toBe(rows[0]?.tokenHash);
 	});
 
 	// lastPasswordChange and forceReset are both on the administration user
@@ -198,9 +185,12 @@ describe("changePassword", () => {
 				oldPassword: "wrong_password_123",
 				password: "new_password_123",
 			}),
-		).rejects.toThrow("Invalid credentials");
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Invalid credentials",
+			status: 400,
+		});
 
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
 		expect(setCookie).not.toHaveBeenCalled();
 		expect(
 			await verifyPassword(
@@ -218,9 +208,12 @@ describe("changePassword", () => {
 				oldPassword: "old_password_123",
 				password: "short",
 			}),
-		).rejects.toThrow("Password does not meet minimum length requirement (8)");
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Password does not meet minimum length requirement (8)",
+			status: 400,
+		});
 
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
 		expect(setCookie).not.toHaveBeenCalled();
 		expect(
 			await verifyPassword(
@@ -228,5 +221,99 @@ describe("changePassword", () => {
 				(await readUser(userId))?.password as Buffer,
 			),
 		).toBe(true);
+	});
+});
+
+describe("resetUserTotpFn", () => {
+	async function signInAdministrator(role: "full" | "users" = "full") {
+		const { session, userId } = await signIn();
+		await db
+			.update(users)
+			.set({ administratorRole: role })
+			.where(eq(users.id, userId));
+		return { session, userId };
+	}
+
+	async function seedEnrolledUser() {
+		const userId = await seedUser(db, { handle: "bob" });
+		await db.insert(authTwoFactors).values({
+			backupCodes: "encrypted",
+			secret: "secret",
+			userId,
+		});
+		await db
+			.update(users)
+			.set({ twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		await seedSession(db, userId);
+		return userId;
+	}
+
+	it("removes the target's factor and sessions and keeps the caller's", async () => {
+		const { session } = await signInAdministrator();
+		const targetId = await seedEnrolledUser();
+
+		const user = await call("resetUserTotpFn", { userId: targetId });
+
+		expect(user).toMatchObject({ id: targetId, twoFactorEnabled: false });
+		expect(
+			await db
+				.select()
+				.from(authTwoFactors)
+				.where(eq(authTwoFactors.userId, targetId)),
+		).toHaveLength(0);
+		const remaining = await db.select().from(authSessions);
+		expect(remaining.map((row) => row.id)).toEqual([session.sessionId]);
+		expect(emit).toHaveBeenCalledWith("users", targetId, "update");
+	});
+
+	it("refuses the caller's own account", async () => {
+		const { userId } = await signInAdministrator();
+
+		await expect(call("resetUserTotpFn", { userId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Cannot reset own two-factor authentication",
+			status: 400,
+		});
+	});
+
+	it("refuses an administrator without the full role", async () => {
+		await signInAdministrator("users");
+		const targetId = await seedEnrolledUser();
+
+		await expect(call("resetUserTotpFn", { userId: targetId })).rejects.toThrow(
+			"Forbidden",
+		);
+		expect(
+			await db
+				.select()
+				.from(authTwoFactors)
+				.where(eq(authTwoFactors.userId, targetId)),
+		).toHaveLength(1);
+	});
+
+	it("responds with 404 for an unknown user", async () => {
+		await signInAdministrator();
+
+		await expect(
+			call("resetUserTotpFn", { userId: 999_999 }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "User not found.",
+			status: 404,
+		});
+	});
+
+	it("responds with 409 for a user with no factor", async () => {
+		await signInAdministrator();
+		const targetId = await seedUser(db, { handle: "bob" });
+
+		await expect(
+			call("resetUserTotpFn", { userId: targetId }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "User has no two-factor authentication.",
+			status: 409,
+		});
 	});
 });

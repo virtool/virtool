@@ -77,6 +77,8 @@ export default defineConfig({
 					env: {
 						VT_STORAGE_BACKEND: "s3",
 						VT_STORAGE_S3_BUCKET: "virtool-test",
+						VT_PUBLIC_ORIGIN: "http://localhost:5173",
+						VT_AUTH_SECRET: "test-auth-secret-test-auth-secret",
 					},
 					include: ["src/server/**/*.test.ts"],
 				},

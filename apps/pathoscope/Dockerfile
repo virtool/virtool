@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 FROM workflow-tools AS tools
-FROM node:24-bookworm-slim AS pathoscope
+FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS pathoscope
 WORKDIR /workflow
+ENV NODE_ENV="production"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libcurl4 libgomp1 libncursesw6 perl pigz python3 \

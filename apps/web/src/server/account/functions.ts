@@ -1,6 +1,12 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
-import { permissionsSchema } from "@virtool/contracts";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+import {
+	type AccountSecurity,
+	DEFAULT_PASSKEY_NAME,
+	type PasskeySummary,
+	passkeyNameSchema,
+	permissionsSchema,
+} from "@virtool/contracts";
 import {
 	ApiKeyNotFoundError,
 	createApiKey,
@@ -8,11 +14,30 @@ import {
 	findApiKeys,
 	updateApiKey,
 } from "@virtool/data/account/data";
+import { getAccountSecurity } from "@virtool/data/users/data";
+import { APIError } from "better-auth/api";
 import { z } from "zod";
-import { authenticated } from "../auth/policy";
+import {
+	PROTECTED_OPERATIONS,
+	type ProtectedOperation,
+} from "../auth/freshness";
+import { UnauthorizedError } from "../auth/middleware";
+import {
+	authenticated,
+	recentlyAuthenticated,
+	SessionNotFreshError,
+} from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
+import {
+	BrowserSessionEndedError,
+	BrowserSessionNotFreshError,
+	CurrentBrowserSessionError,
+	getActiveBrowserSessions,
+	revokeActiveBrowserSession,
+	revokeOtherActiveBrowserSessions,
+} from "./service";
 
 const createApiKeySchema = z.object({
 	name: z.string().trim().min(1),
@@ -27,42 +52,123 @@ const updateApiKeySchema = keyIdSchema.extend({
 	permissions: permissionsSchema.partial().default({}),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ApiKeyNotFoundError import it references — from the client bundle. A plain
-// top-level helper would pin ./data and its postgres transitive dependency in
-// the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+const managementIdSchema = z.object({
+	managementId: rowIdSchema,
+});
+
+const renamePasskeySchema = managementIdSchema.extend({
+	name: passkeyNameSchema,
+});
+
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof ApiKeyNotFoundError) {
-		setResponseStatus(404);
-		throw new ClientError("API key not found.");
+		throw new ClientError("API key not found.", 404);
 	}
 	throw err;
-});
+}
+
+function rethrowSessionManagementError(
+	err: unknown,
+	operation: ProtectedOperation,
+): never {
+	if (err instanceof BrowserSessionEndedError) {
+		throw new UnauthorizedError();
+	}
+	if (err instanceof BrowserSessionNotFreshError) {
+		throw new SessionNotFreshError(operation);
+	}
+	if (err instanceof CurrentBrowserSessionError) {
+		throw new ClientError("Sign out to end the current browser session.", 400);
+	}
+	throw err;
+}
+
+/** List the signed-in user's live Better Auth browser sessions. */
+export const findActiveBrowserSessionsFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		try {
+			return await getActiveBrowserSessions(
+				db,
+				context.principal.userId,
+				context.principal.sessionId,
+			);
+		} catch (err) {
+			return rethrowSessionManagementError(
+				err,
+				PROTECTED_OPERATIONS.sessionRevokeOther,
+			);
+		}
+	});
+
+/** Revoke one selected browser session other than the caller's current one. */
+export const revokeBrowserSessionFn = createServerFn({ method: "POST" })
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.sessionRevokeOther)])
+	.validator(managementIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			await revokeActiveBrowserSession(
+				db,
+				context.principal.userId,
+				context.principal.sessionId,
+				data.managementId,
+			);
+			return null;
+		} catch (err) {
+			return rethrowSessionManagementError(
+				err,
+				PROTECTED_OPERATIONS.sessionRevokeOther,
+			);
+		}
+	});
+
+/** Revoke every browser session belonging to the user except the current one. */
+export const revokeOtherBrowserSessionsFn = createServerFn({ method: "POST" })
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.sessionRevokeAllOther),
+	])
+	.handler(async ({ context }) => {
+		try {
+			return {
+				revoked: await revokeOtherActiveBrowserSessions(
+					db,
+					context.principal.userId,
+					context.principal.sessionId,
+				),
+			};
+		} catch (err) {
+			return rethrowSessionManagementError(
+				err,
+				PROTECTED_OPERATIONS.sessionRevokeAllOther,
+			);
+		}
+	});
 
 export const findApiKeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async ({ context }) => findApiKeys(db, context.session.userId));
+	.handler(async ({ context }) => findApiKeys(db, context.principal.userId));
 
 export const createApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.apiKeyCreate)])
 	.validator(createApiKeySchema)
 	.handler(async ({ context, data }) => {
-		const { key, apiKey } = await createApiKey(db, context.session.userId, {
+		const { key, apiKey } = await createApiKey(db, context.principal.userId, {
 			name: data.name,
 			permissions: data.permissions,
 		});
-		setResponseStatus(201);
 		return { ...apiKey, key };
 	});
 
 export const updateApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.apiKeyPermissionsUpdate),
+	])
 	.validator(updateApiKeySchema)
 	.handler(async ({ context, data }) => {
 		try {
 			return await updateApiKey(
 				db,
-				context.session.userId,
+				context.principal.userId,
 				data.keyId,
 				data.permissions,
 			);
@@ -72,13 +178,213 @@ export const updateApiKeyFn = createServerFn({ method: "POST" })
 	});
 
 export const deleteApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.apiKeyDelete)])
 	.validator(keyIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await deleteApiKey(db, context.session.userId, data.keyId);
+			await deleteApiKey(db, context.principal.userId, data.keyId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
+		}
+	});
+
+/** The fields of a Better Auth passkey row that its owner may see. */
+type PasskeyRow = {
+	id: string | number;
+	name?: string | null;
+	createdAt?: Date | null;
+	deviceType: string;
+	backedUp: boolean;
+};
+
+function toPasskeySummary(row: PasskeyRow): PasskeySummary {
+	return {
+		managementId: Number(row.id),
+		name: row.name || DEFAULT_PASSKEY_NAME,
+		createdAt: row.createdAt ?? null,
+		multiDevice: row.deviceType === "multiDevice",
+		backedUp: row.backedUp,
+	};
+}
+
+function compareCreatedAt(a: PasskeySummary, b: PasskeySummary): number {
+	return (
+		(a.createdAt?.getTime() ?? Number.NEGATIVE_INFINITY) -
+			(b.createdAt?.getTime() ?? Number.NEGATIVE_INFINITY) ||
+		a.managementId - b.managementId
+	);
+}
+
+/**
+ * Map a Better Auth refusal from a passkey management call.
+ *
+ * The plugin answers another user's passkey with a 401 that has no
+ * `UNAUTHORIZED` code, and a missing passkey with a 404. Both mean "not yours"
+ * to the caller. An ended session has the `UNAUTHORIZED` code.
+ */
+function rethrowPasskeyError(err: unknown): never {
+	if (err instanceof APIError) {
+		if (err.body?.code === "UNAUTHORIZED") {
+			throw new UnauthorizedError();
+		}
+		if (err.statusCode === 401 || err.statusCode === 404) {
+			throw new ClientError("Passkey not found.", 404);
+		}
+	}
+	throw err;
+}
+
+// Read the session without rolling its expiry, as every server function does.
+const READ_ONLY_SESSION = { disableRefresh: true } as const;
+
+async function loadAuth() {
+	const { auth } = await import("../auth/instance");
+	return { auth, headers: getRequest().headers };
+}
+
+/** List the signed-in user's passkeys without any credential material. */
+export const findPasskeysFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async () => {
+		const { auth, headers } = await loadAuth();
+		try {
+			const rows = await auth.api.listPasskeys({
+				headers,
+				query: READ_ONLY_SESSION,
+			});
+			return rows.map(toPasskeySummary).sort(compareCreatedAt);
+		} catch (err) {
+			return rethrowPasskeyError(err);
+		}
+	});
+
+/** Rename one of the signed-in user's passkeys. */
+export const renamePasskeyFn = createServerFn({ method: "POST" })
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.passkeySecurityUpdate),
+	])
+	.validator(renamePasskeySchema)
+	.handler(async ({ data }): Promise<PasskeySummary> => {
+		const { auth, headers } = await loadAuth();
+		try {
+			const { passkey } = await auth.api.updatePasskey({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { id: String(data.managementId), name: data.name },
+			});
+			return toPasskeySummary(passkey);
+		} catch (err) {
+			return rethrowPasskeyError(err);
+		}
+	});
+
+/**
+ * Remove one of the signed-in user's passkeys.
+ *
+ * The user's password, TOTP enrollment, recovery codes, API keys and sessions
+ * are untouched, including the session the passkey signed in.
+ */
+export const removePasskeyFn = createServerFn({ method: "POST" })
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.passkeyRemove)])
+	.validator(managementIdSchema)
+	.handler(async ({ data }) => {
+		const { auth, headers } = await loadAuth();
+		try {
+			await auth.api.deletePasskey({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { id: String(data.managementId) },
+			});
+			return null;
+		} catch (err) {
+			return rethrowPasskeyError(err);
+		}
+	});
+
+/**
+ * Read the signed-in user's email verification, TOTP, and recovery-code state.
+ *
+ * Only the number of recovery codes leaves the server, never the codes.
+ */
+export const getAccountSecurityFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async ({ context }): Promise<AccountSecurity> => {
+		const security = await getAccountSecurity(db, context.principal.userId);
+
+		if (!security.twoFactorEnabled) {
+			return { ...security, recoveryCodesRemaining: null };
+		}
+
+		const { auth } = await loadAuth();
+		const { backupCodes } = await auth.api.viewBackupCodes({
+			body: { userId: String(context.principal.userId) },
+		});
+
+		return { ...security, recoveryCodesRemaining: backupCodes.length };
+	});
+
+const totpPasswordSchema = z.object({
+	password: z.string().min(1),
+});
+
+function rethrowTotpError(err: unknown): never {
+	if (err instanceof APIError) {
+		if (err.body?.code === "UNAUTHORIZED") {
+			throw new UnauthorizedError();
+		}
+		if (err.body?.code === "INVALID_PASSWORD") {
+			throw new ClientError("The password is not correct.", 400);
+		}
+		if (err.body?.code === "TWO_FACTOR_NOT_ENABLED") {
+			throw new ClientError("Two-factor authentication is off.", 409);
+		}
+	}
+	throw err;
+}
+
+/**
+ * Replace every recovery code of the signed-in user. The old codes stop
+ * working.
+ */
+export const regenerateRecoveryCodesFn = createServerFn({ method: "POST" })
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.recoveryCodesRegenerate),
+	])
+	.validator(totpPasswordSchema)
+	.handler(async ({ data }): Promise<string[]> => {
+		const { auth, headers } = await loadAuth();
+		try {
+			const { backupCodes } = await auth.api.generateBackupCodes({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { password: data.password },
+			});
+			return backupCodes;
+		} catch (err) {
+			return rethrowTotpError(err);
+		}
+	});
+
+/**
+ * Turn TOTP off for the signed-in user and delete its secret and recovery
+ * codes.
+ *
+ * Better Auth replaces the current session.
+ */
+export const disableTotpFn = createServerFn({ method: "POST" })
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.totpDisable)])
+	.validator(totpPasswordSchema)
+	.handler(async ({ data }) => {
+		const { auth, headers } = await loadAuth();
+		try {
+			await auth.api.disableTwoFactor({
+				headers,
+				query: READ_ONLY_SESSION,
+				body: { password: data.password },
+			});
+			return null;
+		} catch (err) {
+			return rethrowTotpError(err);
 		}
 	});

@@ -39,9 +39,9 @@ Keys are `/`-delimited and have no leading slash. `write` creates or
 overwrites an object and returns the byte count; `delete` is idempotent.
 Missing objects cause `read` and `size` to throw `StorageKeyNotFoundError`.
 Other failures throw `StorageError`. Both errors come from
-`@virtool/storage/errors` and do not depend on the data layer's `AppError`.
+`@virtool/storage/errors` and don't depend on the data layer's `AppError`.
 
-`StorageObjectInfo` contains `key`, `size`, and `lastModified`. Do not compare
+`StorageObjectInfo` contains `key`, `size`, and `lastModified`. Don't compare
 `lastModified` across backends or depend on it for ordering because its source
 differs between real buckets and `MemoryStorage`.
 
@@ -49,7 +49,7 @@ differs between real buckets and `MemoryStorage`.
 
 A chunked upload reserves an `uploads` row with `createPendingUpload` before
 any bytes are staged. The row records the storage key and declared
-`expected_size`, and remains `ready: false` so it is excluded from upload lists
+`expected_size`, and remains `ready: false` so it's excluded from upload lists
 and downloads.
 
 After writing directly to storage, the client calls `finalizePendingUpload`.
@@ -67,7 +67,7 @@ returns `{ key, error }` pairs for failures; callers must log every returned
 failure so orphaned objects remain observable. Collect recorded keys before
 deleting their rows, including child keys removed by database cascades.
 
-There is no prefix-based cleanup. Objects that were written without a key
+No prefix-based cleanup exists. Objects that were written without a key
 being recorded remain for a future orphan sweep.
 
 `reapUploads` removes unfinished chunked uploads that clients never finalized
@@ -88,11 +88,11 @@ key stored in the corresponding row:
 | `indexes` | `otus_json_storage_key` | Yes |
 
 Nullable columns mirror nullable legacy sources rather than inventing keys
-for objects that cannot be retrieved. The index OTU JSON key is stored on the
-index because the on-demand artifact should not appear in its file listing.
+for objects that can't be retrieved. The index OTU JSON key is stored on the
+index because the on-demand artifact shouldn't appear in its file listing.
 
 Mint new keys with `@virtool/storage/keys`. UUID leaves are written in hex and
-therefore contain no hyphens, matching the keys already in the bucket.
+so contain no hyphens, matching the keys already in the bucket.
 
 | Minter | Shape |
 | --- | --- |
@@ -111,7 +111,7 @@ must be read from their rows.
 
 Workflow output keys cross the jobs API boundary because the workflow wrote
 the object and knows its location. Record the supplied key verbatim after
-validating that it is beneath `{domain}/{parentId}/`, has no leading slash,
+validating that it's beneath `{domain}/{parentId}/`, has no leading slash,
 and contains neither empty nor `..` segments. `POST /caches` is the exception:
 it accepts a bare UUID and constructs `cacheKey(uuid)` server-side.
 
@@ -151,8 +151,9 @@ the whole object could include storage credentials in the browser bundle.
 ### Backend behavior
 
 For custom S3 endpoints, the backend enables path-style addressing; AWS uses
-virtual-hosted addressing. Multipart parts use S3's 5 MiB minimum rather than
-the smaller streaming chunk size. Response checksum validation is disabled to
+virtual-hosted addressing. Multipart uploads use S3's 5 MiB minimum part size
+rather than the smaller streaming chunk size. Response checksum validation is
+turned off to
 support Garage's multipart checksum representation, while uploads continue to
 send checksums.
 
@@ -168,11 +169,11 @@ Use `MemoryStorage` for data and service unit tests. Streaming, draining, and
 listing fixtures are exported from `@virtool/storage/test/fixtures`.
 
 The storage package's integration Vitest project runs the shared backend suite
-against Garage and Azurite. Garage setup applies a single-node layout and
-credentials through its admin API and waits on a log line because the image is
-distroless. Containers are reused; tests isolate and purge their own
-`test/{worker}/{testName}/` prefixes. Run storage server tests in a Node
-environment so typed arrays come from the same JavaScript realm.
+against Garage and Azurite. Garage setup uses its administration API to
+configure a single-server layout and credentials, then waits on a log line
+because the image is distroless. Containers are reused; tests isolate and purge
+their own `test/{worker}/{testName}/` prefixes. Run storage server tests in a
+Node environment so typed arrays come from the same JavaScript realm.
 
 ## Schema ownership
 
@@ -180,24 +181,157 @@ This package owns the Postgres schema. `src/db/schema/` is the source of truth;
 migrations are generated from it with `db:generate` and applied with
 `db:migrate`.
 
+Create migrations generated-first: update the schema mirror, run
+`pnpm --filter @virtool/data db:generate --name <name>`, then make only the SQL
+edits that generation cannot express, such as a data-migration assertion. Commit
+the generated SQL, `meta/_journal.json`, and matching snapshot together. Never
+add a journal entry or SQL migration without its snapshot; the next generation
+would diff against an older schema state and emit duplicate DDL. Rerun
+`db:generate` before committing and expect it to report no schema changes.
+
 `drizzle/0000_baseline.sql` describes the schema as it stood when ownership
 moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
 
-Many tables keep legacy shapes — `legacy_` prefixes, dead columns held for
-snapshot fidelity, promoted-from-JSONB projections. Serve them as they are
-rather than renormalizing them; the schema files say per-table what is dead and
-what is load-bearing.
+Many tables keep legacy shapes, including `legacy_` prefixes, dead columns held for
+snapshot fidelity, promoted-from-JSONB projections. Preserve these shapes rather
+than renormalizing them; the schema files identify which fields are dead and
+which are load-bearing.
 
 Keep `drizzle-orm` and `drizzle-kit` on compatible versions. Check both release
 notes when updating either package because their schema-generation internals
 change together.
 
+### Better Auth tables
+
+`src/db/schema/auth.ts` mirrors the tables Better Auth owns: `auth_accounts`,
+`auth_sessions`, `auth_verifications`, `auth_two_factors` and `auth_passkeys`.
+`users` is shared. Better Auth uses it as its user model, and it carries the
+columns it needs alongside Virtool's own.
+
+Two rules hold this together:
+
+- **`users.id` stays a database-generated integer.** Better Auth is configured
+  with `advanced.database.generateId: "serial"`, which is what makes it omit
+  `id` on insert and treat it as a number. That setting is instance-wide in 1.6,
+  so every `auth_*` table takes an identity primary key too. Composition lives
+  in `apps/web`; see `@server/auth/betterAuth`.
+- **`auth_sessions` is the only application session store.** No flow reads or
+  writes the legacy `sessions` table. Virtool re-reads account state for each
+  session and performs authorization after authentication.
+  Better Auth owns the rolling `expires_at` value; application authentication
+  only reads it. Session resolution and cleanup compare expiry with PostgreSQL's
+  UTC clock. Migration `0034_better_auth_rolling_sessions` removes obsolete
+  activity and deadline columns without changing existing expiry values.
+
+  Session-management reads expose the integer primary key as a non-authenticating
+  management id; only the separate random `token` authenticates. Browser, OS,
+  IP, and raw user-agent metadata are normalized or bounded when the row is
+  created. `replacement_for_session_id` is an internal, self-clearing foreign
+  key used only to keep a concurrent recent-auth replacement out of an
+  all-other-session deletion.
+
+`auth_verifications` holds Better Auth's short-lived challenges, such as passkey
+and two-factor sign-in challenges. Better Auth deletes expired rows only when it
+reads a row with `findVerificationValue`, and passkey ceremonies don't call it.
+The internal runner's `cleanup_auth_verifications` periodic task deletes rows
+whose `expires_at` has passed. Better Auth rejects expired rows, so the task
+only limits how many rows the table keeps.
+
+A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
+looks fields up by property, so `userId` and `credentialID` keep their exact
+spelling while their columns stay snake_case.
+
+Migration `0030_sparkling_silverclaw` revokes every pre-cutover Better Auth
+session so a token minted before a legacy password change cannot become valid
+again. The `sessions` table and its schema mirror stay until a later migration
+drops them. Rollback to a release from before the cutover stays possible until
+then.
+
+`users.email` is deliberately not globally unique, though Better Auth declares
+it so. Legacy rows share an empty email. The identity audit reports malformed
+and colliding addresses, while `users_migrated_email_unique` enforces
+normalized uniqueness only after `auth_migrated_at` is set.
+
+### Account lifecycle and setup state
+
+`users.lifecycle_state` is the persisted half of the account lifecycle:
+`pending` for an account that exists but holds no credential, `normal` for one
+that can be used. It's **not** `users.active`. Activation remains the
+administrator's switch and stays authoritative. A deactivated account is
+unusable whatever its lifecycle state, and completing setup never activates
+anyone.
+
+A pending account keeps its email, administrator role and group memberships.
+Its handle is empty until the invitee accepts and chooses one; the partial
+handle uniqueness index permits multiple pending invitations. It has no credential: `users.password` is null,
+which the `pending_has_no_password` constraint holds. Its Better Auth credential
+identity already exists with a null password so invitation acceptance only has
+to fill the credential, never create a second identity.
+
+Every reader that assumes an account is usable checks the state, not just
+`active`: `listUsers`, `findUsers` (which defaults to `normal` and takes
+`lifecycleState: "any"` for the administration views), and the app's session
+and API-key resolution.
+
+`setup_tokens` and `setup_sessions` carry the two setup credentials, and
+`src/auth/setup.ts` owns both:
+
+- A **setup token** is the bearer secret in an invitation, bootstrap or
+  remediation link. Only its SHA-256 is stored; the plaintext is returned to
+  the issuing caller once and is never readable back. It's purpose-bound,
+  expiring, single-use. `consumeSetupToken` is one conditional `UPDATE ...
+  RETURNING`, so concurrent submissions of one token produce exactly one
+  winner. Replacements mark older rows superseded instead of deleting them so
+  a bearer holder can receive a bounded result without exposing account data.
+- A **restricted setup session** is what a holder gets in exchange: a
+  non-secret `session_id` for attribution plus a secret whose digest is
+  stored, bound to one purpose and expiring. `verifySetupSession` re-reads
+  `users.active` on every request, so deactivation revokes it at once. It is
+  never an application session, which is why it is a table of its own rather
+  than an application-session subtype.
+
+`src/auth/lifecycle.ts` holds one transactional completion primitive per
+purpose. Each spends the token and writes its credential and identity state in
+one transaction, so a failure rolls the whole transition back and a spent
+token never outlives the change it paid for. Most completions revoke setup
+credentials immediately. Email remediation retains its restricted session
+until the initiating browser claims promotion, allowing token-only
+verification in another browser without authenticating that browser. None of
+the primitives mints a session; which session a completed holder gets is the
+calling flow's decision, and cookies belong to `apps/web`.
+
+Credential state is written to both `users.password` and
+`auth_accounts.password`. The former remains part of Virtool's account and
+password-change transactions; Better Auth verifies the latter.
+
+Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
+Nothing waits on it. Both readers refuse an expired row on sight, so there
+are no request-path scans.
+
+Account-completion tokens are invitation generations. Each records its issuer,
+copy-only or queued delivery, and distinct consumed and superseded timestamps. `src/users/invitations.ts` creates
+the pending user, identity, role/groups, token, and optional outbox message in
+one transaction. Regeneration serializes on the user's setup advisory lock and
+invalidates older generations. Deleting a pending user takes the same lock and
+cascades to its tokens. A plaintext token is returned only for a
+copy-only creation or regeneration; emailed generations expose only metadata so
+acceptance proves control of the bound mailbox.
+
+Copied invitations leave the assigned normalized email unverified. A queued
+invitation proves control of that exact address when accepted. Acceptance uses
+the token-bound address, invalidates every prior session and setup credential,
+and cannot race regeneration or deletion. The 72-hour lifetime is shared in
+`@virtool/contracts`. `cleanup_setup_state` removes other expired setup state.
+It keeps the expired live invitation of a pending user, so the administration
+view can offer a reissue. A reissue supersedes it, and the next sweep removes
+it. Deleting the user also deletes it.
+
 ## Outbound requests
 
 Third-party requests use `USER_AGENT` from `@virtool/contracts/userAgent`,
 which is the product name `virtool` and has no version. NCBI limits or blocks
-requests that do not give a name. GitHub refuses requests that have no
+requests that don't give a name. GitHub refuses requests that have no
 `User-Agent` header.
 
 This repository has no shared HTTP client. Each caller sets its own timeout.
@@ -206,13 +340,80 @@ client at import time.
 
 ### NCBI
 
-This package speaks to two NCBI services, and they are not the same API.
+This package speaks to two NCBI services, and they're not the same API.
 
-`src/blast/ncbi.ts` is the BLAST URL API client. It is a separate CGI endpoint
+`src/blast/ncbi.ts` is the BLAST URL API client. It's a separate CGI endpoint
 that answers with HTML, plain text, and zip archives, so it stays here.
 
 Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
-E-utilities. Do not add a second E-utilities client to this package.
+E-utilities. Don't add a second E-utilities client to this package.
+
+The instance NCBI API key raises the rate limit E-utilities applies to the
+deployment. `src/settings/ncbi.ts` owns it, encrypted under the
+environment-owned encryption key documented in
+[docs/env.md](../../docs/env.md#encryption-key) with the purpose
+`ncbi_api_key`. Neither the plaintext key nor its envelope may cross a
+transport boundary or reach a log; a caller learns only whether a key is stored
+and whether it can be decrypted.
+
+Decrypt at client construction and nowhere else. A key that doesn't decrypt is
+a configuration error to report, not a value to replace: `resolveNcbiApiKey`
+writes nothing, so the stored key survives a bad encryption key, and lookups
+fall back to the anonymous rate limit rather than failing.
+
+## Outbound email
+
+`src/email/` owns transactional email configuration, the durable outbox,
+templates, retries, and the Resend integration. The periodic `deliver_email`
+task in `apps/internal` performs delivery.
+
+Off, unconfigured, or invalid email configuration doesn't prevent the
+services from running. Only a `ready` configuration permits delivery. Provider
+acceptance isn't proof of mailbox delivery.
+
+The `enabled` flag gates intake, not delivery. While sending is off,
+`enqueueEmail` writes no row and answers `{ status: "discarded" }`, and
+`deliver_email` drains whatever was queued before the switch.
+
+The Resend API key is encrypted under the environment-owned encryption key
+documented in [docs/env.md](../../docs/env.md#encryption-key). Neither the
+plaintext key nor its envelope may cross a transport boundary or reach a log.
+
+Features enqueue mail through `enqueueEmail(db, input)` in
+`src/email/outbox.ts` and nothing else:
+
+- Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
+- Use a transaction when domain state and its email must commit together.
+- Pass `setupTokenId` when the message carries a setup link. Deleting the
+  token deletes the message, and `claimDueEmails` deletes a queued message
+  whose token was consumed, superseded, or expired, so a dead link is never
+  sent.
+- Keep provider errors, retries, and the Resend SDK behind the email package.
+- Handle `{ status: "discarded" }`. It's an ordinary outcome, not an error:
+  a flow that depends on the email must offer the user another route rather
+  than fail.
+
+A password change, a forced reset, a password that an administrator sets, a
+completed recovery, and a completed email change each queue a notice in the
+same transaction. The notice
+goes to the verified address that the account held before the change. An
+unverified address gets no notice, because it can belong to someone else.
+
+A failing row is retried with jittered exponential backoff, or on the
+provider's `Retry-After` when it sends one. Retries stop at the delivery
+deadline in `src/email/retry.ts`, which stays inside the lifetime of the tokens
+in the auth-link templates; the attempt cap is only a backstop.
+
+Terminal rows are pruned after their configured retention periods. Template
+payloads remain stored until their rows are pruned; don't enqueue data that
+can't tolerate that retention.
+
+`sendEmailViaResend` in `src/email/send.ts` is the only module that talks to
+Resend, and its unit tests stub global `fetch` rather than the network. A failed
+send carries both the provider's own error identifier, which is drawn from a
+closed set and may be shown, and its free-text message, which is for logs only.
+`sendTestEmail` in `src/email/testDelivery.ts` maps the identifier onto the
+bounded `EmailTestFailureCode`, so no provider text reaches a browser.
 
 ## Task queue
 
@@ -227,13 +428,35 @@ producers and `apps/internal`'s `run` subcommand. Task names live in
 Create on-demand tasks through `createTask()`. When a domain row points at a
 task, create both and attach them in the same transaction so neither can be
 published without the other. The row itself is the enqueue signal; the runner
-polls Postgres, so producers send no additional notification.
+polls Postgres, so producers send no extra notification.
 
 The data layer also owns claiming, lease renewal, fencing, progress, completion,
 failure, release, and queue metrics reads. Every mutation that changes a task's
 visible state publishes the corresponding `tasks` event. The execution and
 shutdown contracts are documented in
 [`apps/internal/README.md`](../../apps/internal/README.md).
+
+## Data migrations
+
+`src/data-migrations/data.ts` owns persistence for paired data migrations:
+`data_migrations` records each `(key, version)` attempt outcome and checkpoint;
+`data_migration_findings` stores bounded finding details. Kinds are `audit` and
+`backfill`, and statuses are `running`, `passed`, `failed`, and `errored`.
+
+A retry increments the attempt count and clears the previous findings and
+outcome, retaining the last safe checkpoint. A pass clears that checkpoint.
+Only TypeScript writes these records. Paired SQL asserts that the exact key and
+version passed before making its schema changes.
+
+`0026_add_data_migrations` bootstraps the framework tables and precedes every
+paired migration. The schema mirror and migration snapshot describe these
+same tables. Body implementations use raw SQL pinned to their historical schema;
+they do not import the moving domain mirror.
+
+The internal app owns pairing, journal order, segmented application, and the
+operator commands. See [data migrations](../../apps/internal/README.md#paired-data-migrations)
+for authoring, SQL assertions, and retries. The direct `db:migrate` command
+cannot run TypeScript bodies; its SQL assertions stop at unsatisfied pairs.
 
 ## Testing
 
@@ -251,7 +474,7 @@ emitter on its connection. If a test mocks `@virtool/data/events/emit`, mock
 both `emit` and `createEmitter` so fixture setup can still install the emitter.
 
 The shared container uses `withReuse()` and deliberately has no teardown, so
-local suites reuse it. Remove it with `docker rm -f` when it is no longer
+local suites reuse it. Remove it with `docker rm -f` when it's no longer
 wanted; each CI job still starts its own containers.
 
 ## Commands

@@ -10,6 +10,6 @@ export default defineConfig({
 		// `withReuse()` hash, so a local run of every database-backed suite boots a
 		// single Postgres between them.
 		globalSetup: ["@virtool/data/db/test/globalSetup"],
-		include: ["src/**/*.test.ts"],
+		include: ["src/**/*.test.ts", "dev/**/*.test.ts"],
 	},
 });

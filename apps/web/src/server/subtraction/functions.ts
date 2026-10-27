@@ -1,5 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
+import { createServerFn } from "@tanstack/react-start";
 import {
 	createSubtraction,
 	deleteSubtraction,
@@ -13,13 +12,19 @@ import {
 import { z } from "zod";
 import { authenticated, permission } from "../auth/policy";
 import { db, storage } from "../composition";
+import { ClientError } from "../errors";
 import { logger } from "../logger";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 const findSubtractionsSchema = z.object({
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
+	term: searchTermSchema,
 });
 
 const subtractionIdSchema = z.object({
@@ -37,22 +42,17 @@ const updateSubtractionSchema = subtractionIdSchema.extend({
 	nickname: z.string().trim().optional(),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// error imports it references — from the client bundle. A plain top-level helper
-// would pin ./data and its postgres transitive dependency in the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof SubtractionNotFoundError) {
-		setResponseStatus(404);
-		throw new Error("Subtraction not found.");
+		throw new ClientError("Subtraction not found.", 404);
 	}
 	if (err instanceof SubtractionUploadNotFoundError) {
-		setResponseStatus(400);
-		throw new Error("Upload does not exist.");
+		throw new ClientError("Upload does not exist.", 400);
 	}
 	throw err;
-});
+}
 
-export const findSubtractionsFn = createServerFn({ method: "GET" })
+export const findSubtractionsFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findSubtractionsSchema)
 	.handler(async ({ data }) =>
@@ -88,9 +88,8 @@ export const createSubtractionFn = createServerFn({ method: "POST" })
 				name: data.name,
 				nickname: data.nickname,
 				uploadId: data.uploadId,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 			});
-			setResponseStatus(201);
 			return subtraction;
 		} catch (err) {
 			return rethrowAsHttp(err);

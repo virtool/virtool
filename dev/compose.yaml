@@ -1,0 +1,251 @@
+x-labels: &labels
+  ca.virtool.dev.repository: ${VT_DEV_REPOSITORY_ID}
+  ca.virtool.dev.environment: ${VT_DEV_ENVIRONMENT_ID}
+  ca.virtool.dev.generation: ${VT_DEV_GENERATION}
+
+x-environment: &environment
+  VT_POSTGRES_URL_FILE: /run/virtool-dev/postgres-url
+  VT_STORAGE_BACKEND: azure
+  VT_STORAGE_AZURE_ACCOUNT: devstoreaccount1
+  VT_STORAGE_AZURE_CONTAINER: ${VT_DEV_BLOB_CONTAINER}
+  VT_STORAGE_AZURE_ACCESS_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+  VT_STORAGE_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
+  VT_ENCRYPTION_KEY_FILE: /run/virtool-dev/encryption-key
+  VT_AUTH_SECRET_FILE: /run/virtool-dev/auth-secret
+  VT_PUBLIC_ORIGIN: ${VT_PUBLIC_ORIGIN}
+  VT_UPLOADS_CHUNKED: "true"
+  VT_STORAGE_AZURE_UPLOAD_URL: ${VT_PUBLIC_ORIGIN}
+
+x-build: &build
+  context: ${VT_DEV_WORKTREE}
+  dockerfile: dev/Dockerfile
+  target: dev
+
+x-volumes: &volumes
+  - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev
+  - ${VT_DEV_WORKTREE}/apps/internal/src:/repo/apps/internal/src:ro
+  - ${VT_DEV_WORKTREE}/packages/archive/src:/repo/packages/archive/src:ro
+  - ${VT_DEV_WORKTREE}/packages/bio/src:/repo/packages/bio/src:ro
+  - ${VT_DEV_WORKTREE}/packages/contracts/src:/repo/packages/contracts/src:ro
+  - ${VT_DEV_WORKTREE}/packages/data/src:/repo/packages/data/src:ro
+  - ${VT_DEV_WORKTREE}/packages/logger/src:/repo/packages/logger/src:ro
+  - ${VT_DEV_WORKTREE}/packages/ncbi/src:/repo/packages/ncbi/src:ro
+  - ${VT_DEV_WORKTREE}/packages/sentry/src:/repo/packages/sentry/src:ro
+  - ${VT_DEV_WORKTREE}/packages/service/src:/repo/packages/service/src:ro
+  - ${VT_DEV_WORKTREE}/packages/sqlite/src:/repo/packages/sqlite/src:ro
+  - ${VT_DEV_WORKTREE}/packages/storage/src:/repo/packages/storage/src:ro
+  - ${VT_DEV_WORKTREE}/packages/data/drizzle:/repo/packages/data/drizzle:ro
+
+# The daemon builds workflow images with Bake before it runs them, because each
+# one needs a pruned `pnpm deploy` context. See `apps/dev/src/server/workflows.ts`.
+x-workflow-environment: &workflow-environment
+  # The workflow targets are the shipped images, which set production.
+  NODE_ENV: development
+  VT_JOBS_API_URL: http://jobs-api-${VT_DEV_ENVIRONMENT_ID}:9950
+  VT_TIMEOUT: "120"
+  VT_WORK_PATH: /work
+  VT_STORAGE_BACKEND: azure
+  VT_STORAGE_AZURE_ACCOUNT: devstoreaccount1
+  VT_STORAGE_AZURE_CONTAINER: ${VT_DEV_BLOB_CONTAINER}
+  VT_STORAGE_AZURE_ACCESS_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+  VT_STORAGE_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
+
+services:
+  database-init:
+    image: postgres:18
+    environment:
+      PGPASSWORD: virtool
+      VT_DEV_DATABASE: ${VT_DEV_DATABASE}
+    entrypoint: [/bin/sh, /scripts/init-environment.sh]
+    labels: *labels
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev
+      - ${VT_DEV_WORKTREE}/dev/scripts:/scripts:ro
+
+  storage-init:
+    image: mcr.microsoft.com/azure-cli:2.89.1
+    environment:
+      AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - az storage container create --name "${VT_DEV_BLOB_CONTAINER}" --output none
+    labels: *labels
+
+  migration:
+    build: *build
+    working_dir: /repo/apps/internal
+    entrypoint: [/bin/sh, /repo/apps/internal/dev/entrypoint.sh]
+    command: [migrate]
+    environment:
+      <<: *environment
+      VT_MIGRATIONS_PATH: /repo/packages/data/drizzle
+    labels: *labels
+    volumes: *volumes
+
+  jobs-api:
+    build: *build
+    working_dir: /repo/apps/internal
+    entrypoint: [/bin/sh, /repo/apps/internal/dev/entrypoint.sh]
+    command: [serve]
+    environment:
+      <<: *environment
+      VT_JOBS_API_HOST: 0.0.0.0
+    labels: *labels
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:9950/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
+      timeout: 2s
+      retries: 3
+    networks:
+      default:
+        # All environments share one network, so the service name is not unique.
+        aliases: ["jobs-api-${VT_DEV_ENVIRONMENT_ID}"]
+    volumes: *volumes
+
+  tasks:
+    build: *build
+    working_dir: /repo/apps/internal
+    entrypoint: [/bin/sh, /repo/apps/internal/dev/entrypoint.sh]
+    command: [run]
+    environment: *environment
+    labels: *labels
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:9900/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
+      timeout: 2s
+      retries: 30
+    volumes: *volumes
+
+  web:
+    build: *build
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        dev_uid=$$(stat -c %u /repo/apps/web/src)
+        dev_gid=$$(stat -c %g /repo/apps/web/src)
+        mkdir -p /tmp/virtool-home /repo/apps/web/.tanstack
+        chown "$$dev_uid:$$dev_gid" /tmp/virtool-home /repo/apps/web/.tanstack /repo/apps/web/node_modules /repo/node_modules
+        exec setpriv --reuid="$$dev_uid" --regid="$$dev_gid" --clear-groups env HOME=/tmp/virtool-home pnpm --filter @virtool/web exec vite --host 0.0.0.0 --port 9900 --strictPort
+    environment:
+      <<: *environment
+      VT_DEV_SERVER_ALLOWED_HOST: ${VT_DEV_HOSTNAME}
+    labels: *labels
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:9900/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
+      timeout: 2s
+      retries: 30
+    networks:
+      default:
+        aliases: ["${VT_DEV_ENVIRONMENT_NAME}"]
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
+      - ${VT_DEV_WORKTREE}/apps/web/src:/repo/apps/web/src
+      - ${VT_DEV_WORKTREE}/apps/web/public:/repo/apps/web/public:ro
+      - ${VT_DEV_WORKTREE}/packages:/repo/packages:ro
+
+  # One-shot developer commands, run by the daemon with `compose run --rm`.
+  dev-tools:
+    build: *build
+    working_dir: /repo/apps/dev-tools
+    # Build output goes to stderr so stdout carries only command output.
+    entrypoint: [/bin/sh, -ec, 'pnpm build >&2 && exec node dist/index.mjs "$$@"', dev-tools]
+    environment:
+      VT_POSTGRES_URL_FILE: /run/virtool-dev/postgres-url
+    labels: *labels
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
+      - ${VT_DEV_WORKTREE}/apps/dev-tools/src:/repo/apps/dev-tools/src:ro
+      - ${VT_DEV_WORKTREE}/packages/archive/src:/repo/packages/archive/src:ro
+      - ${VT_DEV_WORKTREE}/packages/contracts/src:/repo/packages/contracts/src:ro
+      - ${VT_DEV_WORKTREE}/packages/data/src:/repo/packages/data/src:ro
+      - ${VT_DEV_WORKTREE}/packages/logger/src:/repo/packages/logger/src:ro
+      - ${VT_DEV_WORKTREE}/packages/sqlite/src:/repo/packages/sqlite/src:ro
+      - ${VT_DEV_WORKTREE}/packages/storage/src:/repo/packages/storage/src:ro
+
+  workflow-create-sample:
+    profiles: [workflow]
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/create-sample
+    pull_policy: never
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/create-sample
+      VT_MEM: "4"
+      VT_PROC: "2"
+      VT_WORKFLOW: create_sample
+    labels:
+      <<: *labels
+      ca.virtool.dev.role: executor
+      ca.virtool.dev.workflow: create_sample
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
+    cpus: 2.5
+    mem_limit: 5g
+
+  workflow-create-subtraction:
+    profiles: [workflow]
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/create-subtraction
+    pull_policy: never
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/create-subtraction
+      VT_MEM: "2"
+      VT_PROC: "2"
+      VT_WORKFLOW: create_subtraction
+    labels:
+      <<: *labels
+      ca.virtool.dev.role: executor
+      ca.virtool.dev.workflow: create_subtraction
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
+    cpus: 2
+    mem_limit: 3g
+
+  workflow-pathoscope:
+    profiles: [workflow]
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/pathoscope
+    pull_policy: never
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/pathoscope
+      VT_MEM: "6"
+      VT_PROC: "2"
+      VT_WORKFLOW: pathoscope
+    labels:
+      <<: *labels
+      ca.virtool.dev.role: executor
+      ca.virtool.dev.workflow: pathoscope
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
+    cpus: 3
+    mem_limit: 7g
+
+  workflow-nuvs:
+    profiles: [workflow]
+    image: virtool-dev-${VT_DEV_ENVIRONMENT_ID}/nuvs
+    pull_policy: never
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/nuvs
+      VT_MEM: "6"
+      VT_PROC: "2"
+      VT_WORKFLOW: nuvs
+    labels:
+      <<: *labels
+      ca.virtool.dev.role: executor
+      ca.virtool.dev.workflow: nuvs
+    volumes:
+      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
+    cpus: 3
+    mem_limit: 7g
+
+networks:
+  default:
+    external: true
+    name: ${VT_DEV_SHARED_NETWORK}

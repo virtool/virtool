@@ -5,7 +5,7 @@ import { z } from "zod";
  *
  * Used for payloads this side treats as opaque — a workflow's `results` blob, a
  * BLAST response — where the shape belongs to whoever wrote it. `unknown` would
- * be the honest type for "we do not interpret this", but a server function's
+ * be the honest type for "the application does not interpret this", but a server function's
  * return value is checked for serializability, and `unknown` fails that check
  * because it admits values that cannot cross the wire. This says the same thing
  * while staying provably serializable.
@@ -18,7 +18,7 @@ export type JsonValue =
 	| JsonValue[]
 	| { [key: string]: JsonValue };
 
-/** A JSON object whose keys carry values we do not interpret. */
+/** A JSON object whose keys carry values the application does not interpret. */
 export type JsonObject = { [key: string]: JsonValue };
 
 /**

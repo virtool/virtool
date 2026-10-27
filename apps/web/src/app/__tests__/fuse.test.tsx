@@ -57,6 +57,28 @@ describe("useFuse()", () => {
 		expect(result.current[0]).toBe(collection);
 	});
 
+	it("should filter with a normalized term while preserving the typed value", () => {
+		const { result } = renderHook(() => useFuse(collection, keys));
+
+		act(() => {
+			result.current[2]("  z  ");
+		});
+
+		expect(result.current[0]).toEqual([{ name: "zzzzz" }]);
+		expect(result.current[1]).toBe("  z  ");
+	});
+
+	it("should return everything for a whitespace-only term", () => {
+		const { result } = renderHook(() => useFuse(collection, keys));
+
+		act(() => {
+			result.current[2]("   ");
+		});
+
+		expect(result.current[0]).toBe(collection);
+		expect(result.current[1]).toBe("   ");
+	});
+
 	it("should reset term to empty string when collection changes", async () => {
 		const { rerender, result } = renderHook(({ c, k }) => useFuse(c, k), {
 			initialProps: {

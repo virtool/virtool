@@ -113,11 +113,10 @@ function collectDifferences(
 /**
  * Assert that a `buildContext` return value survives a JSON round trip.
  *
- * The data half of a run's context is constrained to plain, serializable data
- * because the end-to-end test bed expresses a whole run as a directory of files
- * plus a JSON blob and hands it straight in. A class instance, a `Date`, or a
- * closure in there is invisible until that bed exists, so this runs on every
- * real run and not only under test — it is one round trip over a small object.
+ * The data half of a run's context is restricted to plain JSON values. Live
+ * handles belong on the context itself, and mutable cross-step data belongs in
+ * `state`. This assertion runs during every context build so invalid data fails
+ * before a workflow starts.
  *
  * @throws {WorkflowError} when the value cannot be JSON-encoded, or comes back
  *   from the round trip changed.

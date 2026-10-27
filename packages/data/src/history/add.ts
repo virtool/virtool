@@ -47,13 +47,13 @@ export type HistoryValues = {
 export function composeHistoryDescription(
 	methodName: HistoryMethod,
 	name: string,
-	abbreviation: unknown,
+	acronym: unknown,
 ): string {
 	const suffix = methodName.endsWith("e") ? "d" : "ed";
 	const description = `${methodName.charAt(0).toUpperCase()}${methodName.slice(1)}${suffix} ${name}`;
 
-	if (typeof abbreviation === "string" && abbreviation) {
-		return `${description} (${abbreviation})`;
+	if (typeof acronym === "string" && acronym) {
+		return `${description} (${acronym})`;
 	}
 
 	return description;
@@ -78,8 +78,7 @@ export function composeRemoveDescription(document: OtuDocument): string {
 }
 
 /**
- * The description of a change that edited an OTU's name, abbreviation, or
- * schema.
+ * The description of a change that edited an OTU's name, acronym, or schema.
  *
  * Only what changed is described: pass `null` for a field the edit left alone,
  * and `schemaChanged` false when the schema is untouched. Edit entries
@@ -89,21 +88,21 @@ export function composeRemoveDescription(document: OtuDocument): string {
  */
 export function composeEditDescription(
 	name: string | null,
-	abbreviation: string | null,
-	oldAbbreviation: string,
+	acronym: string | null,
+	oldAcronym: string,
 	schemaChanged: boolean,
 ): string {
 	let description = name ? `Changed name to ${name}` : "";
 
-	if (abbreviation !== null) {
+	if (acronym !== null) {
 		let phrase: string;
 
-		if (abbreviation === "" && oldAbbreviation) {
-			phrase = `removed abbreviation ${oldAbbreviation}`;
-		} else if (abbreviation && !oldAbbreviation) {
-			phrase = `added abbreviation ${abbreviation}`;
+		if (acronym === "" && oldAcronym) {
+			phrase = `removed acronym ${oldAcronym}`;
+		} else if (acronym && !oldAcronym) {
+			phrase = `added acronym ${acronym}`;
 		} else {
-			phrase = `changed abbreviation to ${abbreviation}`;
+			phrase = `changed acronym to ${acronym}`;
 		}
 
 		description = description

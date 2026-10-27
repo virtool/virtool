@@ -14,25 +14,26 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@astrojs/mdx": "^7.0.7",
-    "@astrojs/prism": "^4.0.2",
-    "@astrojs/sitemap": "^3.7.3",
-    "@lucide/astro": "^1.33.0",
+    "@astrojs/markdown-satteri": "^0.4.5",
+    "@astrojs/mdx": "^8.1.1",
+    "@astrojs/prism": "^4.1.1",
+    "@astrojs/sitemap": "^3.7.4",
+    "@lucide/astro": "^1.42.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
-    "@types/node": "^26.4.0",
-    "astro": "^7.2.0",
+    "@types/node": "^26.4.1",
+    "astro": "^7.4.2",
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",
     "node-cache": "^5.1.2",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.9",
     "prismjs": "^1.30.0",
-    "rehype-rewrite": "^4.0.4",
-    "sharp": "^0.35.3",
+    "satteri": "^0.10.5",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "vitest": "^4.1.11",
-    "wrangler": "^4.119.0"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.152.0"
   }
 }

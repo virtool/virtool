@@ -55,7 +55,7 @@ export default function CreateSequence({
 				host,
 				isolateId,
 				segment,
-				sequence: sequence.toUpperCase(),
+				sequence,
 			},
 			{
 				onSuccess: () => {

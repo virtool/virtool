@@ -1,7 +1,7 @@
 /**
- * The NuVs BLAST sweep.
+ * The Nuvs BLAST sweep.
  *
- * A NuVs BLAST search is described entirely by its `nuvs_blast` row, and the
+ * A Nuvs BLAST search is described entirely by its `nuvs_blast` row, and the
  * sweep is the only thing that ever advances one. There is no queue and no
  * per-search timer: every thirty seconds a task reads the outstanding rows,
  * decides from the row itself what each one needs, and does one step of it.
@@ -76,18 +76,14 @@ const MAX_CONCURRENT_INITIALIZATIONS = 1;
 /**
  * What NCBI's `Status=FAILED` and `Status=UNKNOWN` are recorded as.
  *
- * Rendered by the SPA's BLAST panel beside a retry button — see
- * `checkBlastStatus`.
  */
 const SEARCH_FAILED_MESSAGE = "NCBI could not complete the search";
 
 /**
  * What a search that outlived {@link SEARCH_TIMEOUT_MS} is recorded as.
  *
- * Rendered by the SPA's BLAST panel beside a retry button, which is the whole
- * point of recording it rather than deleting the row: a contig whose row is
- * gone draws as one that was never BLASTed at all, so a user who waited half
- * an hour would be told nothing happened.
+ * The row is retained so a timed-out search is distinguishable from one that
+ * was never submitted.
  */
 const SEARCH_TIMEOUT_MESSAGE = `NCBI did not return a result within ${SEARCH_TIMEOUT_MINUTES} minutes`;
 
@@ -410,7 +406,7 @@ async function check(
 }
 
 /**
- * Advance every outstanding NuVs BLAST search by one step.
+ * Advance every outstanding Nuvs BLAST search by one step.
  *
  * One unbounded read: the rows this selects are the searches a user is sitting
  * in front of waiting for, so the set is bounded by how many people have

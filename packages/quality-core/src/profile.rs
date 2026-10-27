@@ -35,7 +35,7 @@ const QUALITY_SLOTS: usize = 150;
 /// The length of the per-read mean quality histogram in the stored blob.
 ///
 /// It is fixed at 50: a score at or above that is dropped rather than growing
-/// the array, and every chart in the SPA is drawn against 50 columns.
+/// the array, which is fixed at 50 columns.
 const SEQUENCE_SCORE_SLOTS: usize = 50;
 
 /// The read depth a cycle needs before FastQC will report percentiles for it.

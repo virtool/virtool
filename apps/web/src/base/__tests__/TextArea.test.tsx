@@ -1,6 +1,6 @@
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
-import { InputGroup } from "../Input";
+import Field, { FieldError, FieldLabel } from "../Field";
 import TextArea from "../TextArea";
 
 describe("<TextArea />", () => {
@@ -22,13 +22,18 @@ describe("<TextArea />", () => {
 		expect(textarea).toBeRequired();
 	});
 
-	it("should be marked invalid when a surrounding InputGroup has an error", () => {
+	it("should connect to a surrounding Field", () => {
 		const { getByRole } = renderWithProviders(
-			<InputGroup error="Notes are required">
-				<TextArea aria-label="Notes" />
-			</InputGroup>,
+			<Field>
+				<FieldLabel>Notes</FieldLabel>
+				<TextArea />
+				<FieldError>Notes are required</FieldError>
+			</Field>,
 		);
 
-		expect(getByRole("textbox")).toBeInvalid();
+		const textarea = getByRole("textbox", { name: "Notes" });
+
+		expect(textarea).toBeInvalid();
+		expect(textarea).toHaveAccessibleDescription("Notes are required");
 	});
 });

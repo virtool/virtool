@@ -2,44 +2,63 @@ import { createServerOnlyFn } from "@tanstack/react-start";
 import {
 	deleteCookie,
 	getCookie,
+	getCookies,
 	setCookie,
 } from "@tanstack/react-start/server";
 
 /**
- * The opaque identifier of a session. It is set on a
- * successful login and on a successful reset, and is present *alone* during
- * a forced-reset flow, where it names a session of type `reset`. A reset
- * session is not authenticated as far as the middleware is concerned: a
- * client holding only this cookie gets a 401 from any non-exception server
- * function.
+ * Cookies of the retired legacy session system. No release after the cutover
+ * reads them, so a browser that still holds them has them expired.
  */
-export const SESSION_ID_COOKIE = "session_id";
+const LEGACY_SESSION_COOKIES = ["session_id", "session_token"] as const;
 
 /**
- * Proves the paired `session_id` belongs to an authenticated session. It is
- * only set on the authenticated branch of login and after a successful
- * reset. Only its hash is stored, so the client is the only holder of the
- * value — treat it as equivalent to the user's password for as long as it is
- * valid.
+ * The opaque identifier of a restricted setup session. Names the row and
+ * nothing more: it is safe to log and to attribute an error to, and proves
+ * nothing on its own.
+ *
+ * Deliberately not `session_id`. A restricted setup credential is not an
+ * application session, and sharing the cookie name with one would make the two
+ * indistinguishable to every reader — including the ones whose whole job is to
+ * tell them apart.
  */
-export const SESSION_TOKEN_COOKIE = "session_token";
+export const SETUP_SESSION_ID_COOKIE = "setup_session_id";
 
 /**
- * The `max_age` set on both cookies, regardless of the row's actual
- * `expires_at`. The browser keeps the cookie alive for ~30 days; the DB
- * row's `expires_at` is the real authority.
+ * Proves the paired `setup_session_id` belongs to a live restricted setup
+ * session. Only its hash is stored, so the client is the only holder of the
+ * value. It authorizes exactly one setup purpose and reaches nothing else.
  */
-const MAX_AGE_SECONDS = 2_600_000;
+export const SETUP_SESSION_TOKEN_COOKIE = "setup_session_token";
+
+/**
+ * The `max_age` set on the setup cookies.
+ *
+ * Deliberately short, unlike the session pair's. A setup credential is
+ * finished with the moment its flow is, and a stale one left in the browser
+ * would be presented on every later request and refused — which is the state
+ * that looks to a user like being stuck. The row's `expires_at` is still the
+ * real authority; this only keeps the browser from holding the pair long after
+ * it can be of any use.
+ */
+const SETUP_MAX_AGE_SECONDS = 3_600;
+
+/**
+ * The accounts this browser signed in to with a correct password. Each entry
+ * gives the browser its own sign-in budget for that account. It is not a
+ * credential and authorizes nothing.
+ */
+const LOGIN_DEVICE_COOKIE = "login_device";
 
 type Bool = boolean;
 
-function cookieOptions(secure: Bool) {
+function cookieOptions(secure: Bool, maxAge: number) {
 	return {
 		httpOnly: true,
 		secure,
 		sameSite: "lax" as const,
 		path: "/",
-		maxAge: MAX_AGE_SECONDS,
+		maxAge,
 	};
 }
 
@@ -47,13 +66,50 @@ function isSecure(): boolean {
 	return process.env.NODE_ENV === "production";
 }
 
-/** Read/write/clear access to the pair of session cookies. */
+/** Read the browser's login devices. */
+export const getLoginDevices = createServerOnlyFn((): string | undefined =>
+	getCookie(LOGIN_DEVICE_COOKIE),
+);
+
+/** Store the browser's login devices for their full lifetime. */
+export const setLoginDevices = createServerOnlyFn(
+	(value: string, maxAgeSeconds: number): void => {
+		setCookie(
+			LOGIN_DEVICE_COOKIE,
+			value,
+			cookieOptions(isSecure(), maxAgeSeconds),
+		);
+	},
+);
+
+/**
+ * Expire any legacy session cookie the request carries. The attributes match
+ * the ones the legacy cookies were set with, so the browser replaces them.
+ */
+export const expireLegacySessionCookies = createServerOnlyFn((): void => {
+	const cookies = getCookies();
+	for (const name of LEGACY_SESSION_COOKIES) {
+		if (name in cookies) {
+			deleteCookie(name, {
+				httpOnly: true,
+				secure: isSecure(),
+				sameSite: "lax",
+				path: "/",
+			});
+		}
+	}
+});
+
+/** Read/write/clear access to the restricted setup cookies. */
 export type CookieAdapter = {
-	getSessionId(): string | undefined;
-	getSessionToken(): string | undefined;
-	setSessionId(sessionId: string): void;
-	setSessionToken(token: string): void;
-	clear(): void;
+	getSetupSessionId(): string | undefined;
+	getSetupSessionToken(): string | undefined;
+	setSetupSession(
+		sessionId: string,
+		token: string,
+		maxAgeSeconds?: number,
+	): void;
+	clearSetup(): void;
 };
 
 /* Each method is wrapped in createServerOnlyFn so the references to
@@ -61,16 +117,34 @@ export type CookieAdapter = {
    recognizes — otherwise the object literal at module scope would pin
    @tanstack/react-start/server in any client-reachable import chain. */
 export const realCookies: CookieAdapter = {
-	getSessionId: createServerOnlyFn(() => getCookie(SESSION_ID_COOKIE)),
-	getSessionToken: createServerOnlyFn(() => getCookie(SESSION_TOKEN_COOKIE)),
-	setSessionId: createServerOnlyFn((sessionId: string) => {
-		setCookie(SESSION_ID_COOKIE, sessionId, cookieOptions(isSecure()));
-	}),
-	setSessionToken: createServerOnlyFn((token: string) => {
-		setCookie(SESSION_TOKEN_COOKIE, token, cookieOptions(isSecure()));
-	}),
-	clear: createServerOnlyFn(() => {
-		deleteCookie(SESSION_ID_COOKIE, { path: "/" });
-		deleteCookie(SESSION_TOKEN_COOKIE, { path: "/" });
+	getSetupSessionId: createServerOnlyFn(() =>
+		getCookie(SETUP_SESSION_ID_COOKIE),
+	),
+	getSetupSessionToken: createServerOnlyFn(() =>
+		getCookie(SETUP_SESSION_TOKEN_COOKIE),
+	),
+	/* Both halves together, because a setup session is worthless without either
+	   and there is no flow that sets one alone. */
+	setSetupSession: createServerOnlyFn(
+		(
+			sessionId: string,
+			token: string,
+			maxAgeSeconds = SETUP_MAX_AGE_SECONDS,
+		) => {
+			setCookie(
+				SETUP_SESSION_ID_COOKIE,
+				sessionId,
+				cookieOptions(isSecure(), maxAgeSeconds),
+			);
+			setCookie(
+				SETUP_SESSION_TOKEN_COOKIE,
+				token,
+				cookieOptions(isSecure(), maxAgeSeconds),
+			);
+		},
+	),
+	clearSetup: createServerOnlyFn(() => {
+		deleteCookie(SETUP_SESSION_ID_COOKIE, { path: "/" });
+		deleteCookie(SETUP_SESSION_TOKEN_COOKIE, { path: "/" });
 	}),
 };

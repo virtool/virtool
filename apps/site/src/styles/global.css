@@ -1,2 +1,7 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+
+.prose code::before,
+.prose code::after {
+  content: none;
+}

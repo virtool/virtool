@@ -1,4 +1,5 @@
 import { MemoryStorage } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { describe, expect, it } from "vitest";
 import {
 	checkManifest,
@@ -6,10 +7,6 @@ import {
 	isStorageKeyUnder,
 	measureManifest,
 } from "./manifest";
-
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
-}
 
 const PREFIX = "subtractions/7/";
 const KEY = `${PREFIX}0f1e2d3c4b5a69788796a5b4c3d2e1f0`;
@@ -121,7 +118,7 @@ describe("checkManifest", () => {
 describe("measureManifest", () => {
 	it("pairs each entry with the size storage reports", async () => {
 		const storage = new MemoryStorage();
-		await storage.write(KEY, body("hello world!"));
+		await storage.write(KEY, streamOf("hello world!"));
 
 		const measured = await measureManifest(storage, [
 			{ name: "subtraction.fa.gz", storageKey: KEY },
@@ -134,7 +131,7 @@ describe("measureManifest", () => {
 
 	it("reports null when one entry names no object", async () => {
 		const storage = new MemoryStorage();
-		await storage.write(KEY, body("hello world!"));
+		await storage.write(KEY, streamOf("hello world!"));
 
 		const measured = await measureManifest(storage, [
 			{ name: "subtraction.fa.gz", storageKey: KEY },

@@ -75,8 +75,7 @@ export default function AnalysisDetail() {
 				</SubviewHeaderTitle>
 				<SubviewHeaderAttribution>
 					{analysis.user.handle} started <CreatedAt time={analysis.createdAt} />{" "}
-					· Workflow Version{" "}
-					<WorkflowVersion version={analysis.workflowVersion} />
+					· Workflow Version <WorkflowVersion analysis={analysis} />
 				</SubviewHeaderAttribution>
 			</SubviewHeader>
 
@@ -108,8 +107,8 @@ function CreatedAt({ time }: CreatedAtProps) {
 }
 
 type WorkflowVersionProps = {
-	/** The analysis's finalizing workflow version, or `null` if none was recorded. */
-	version: string | null;
+	/** A finished analysis. */
+	analysis: Analysis;
 };
 
 /**
@@ -118,8 +117,9 @@ type WorkflowVersionProps = {
  * Only a real version is worth copying, so the absences — an unrecorded `null`
  * and a captured `"UNKNOWN"` — stay plain text.
  */
-function WorkflowVersion({ version }: WorkflowVersionProps) {
-	const label = getWorkflowVersionLabel(version);
+function WorkflowVersion({ analysis }: WorkflowVersionProps) {
+	const version = analysis.workflowVersion;
+	const label = getWorkflowVersionLabel(analysis);
 
 	if (version === null || version === "UNKNOWN") {
 		return <>{label}</>;

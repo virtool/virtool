@@ -1,6 +1,8 @@
 import { useFetchAccount } from "@account/account";
+import { getDocumentTitle } from "@app/development";
 import { CONTENT_SCROLL_ID } from "@app/scroll";
 import { armSessionEnd } from "@app/session";
+import { useBrowserSessionRefresh } from "@app/sessionRefresh";
 import * as Sse from "@app/sse/SseConnection";
 import Banner from "@banner/components/Banner";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -17,6 +19,7 @@ import {
 	Outlet,
 	redirect,
 	useLocation,
+	useMatch,
 } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect } from "react";
 
@@ -33,9 +36,14 @@ export const Route = createFileRoute("/_authenticated")({
 	beforeLoad: async ({ context, location }) => {
 		const { queryClient } = context;
 
-		const [{ rootQueryOptions }, { accountQueryOptions }] = await Promise.all([
+		const [
+			{ rootQueryOptions },
+			{ accountQueryOptions },
+			{ getAuthNextStep, getAuthNextStepRoute },
+		] = await Promise.all([
 			import("@nav/queries"),
 			import("@account/account"),
+			import("@wall/nextStep"),
 		]);
 
 		const rootData = await queryClient.ensureQueryData(rootQueryOptions());
@@ -46,11 +54,12 @@ export const Route = createFileRoute("/_authenticated")({
 
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
-		} catch {
-			throw redirect({
-				to: "/login",
-				search: { redirect: location.href },
-			});
+		} catch (error) {
+			const step = getAuthNextStep(error);
+			if (step === null) {
+				throw error;
+			}
+			throw redirect(getAuthNextStepRoute(step, location.href));
 		}
 	},
 	component: AuthenticatedLayout,
@@ -60,16 +69,21 @@ function AuthenticatedLayout() {
 	const queryClient = useQueryClient();
 	const { data, isPending } = useFetchAccount();
 	const location = useLocation();
+	const administrationMatch = useMatch({
+		from: "/_authenticated/administration",
+		shouldThrow: false,
+	});
 
 	useEffect(() => {
 		if (data) {
-			// A 401 only means the session ended once we know there was one. Until
+			// A 401 only means the session ended once it is known there was one. Until
 			// this runs, the account fetches on the wall and in the route guard are
 			// allowed to 401 without ending anything.
 			armSessionEnd();
 			setupSse(queryClient);
 		}
 	}, [data, queryClient]);
+	useBrowserSessionRefresh(Boolean(data));
 
 	useEffect(() => {
 		if (data) {
@@ -87,9 +101,13 @@ function AuthenticatedLayout() {
 		);
 	}
 
+	if (administrationMatch?.context.recentAuthenticationFresh === false) {
+		return <Outlet />;
+	}
+
 	return (
 		<>
-			<title>Virtool</title>
+			<title>{getDocumentTitle("Virtool")}</title>
 			<meta charSet="utf-8" />
 
 			<SkipLink />
@@ -110,7 +128,7 @@ function AuthenticatedLayout() {
 					<div className="sticky top-0 self-start pt-18">
 						<Sidebar administratorRole={data.administratorRole} />
 					</div>
-					<main id="main-content" tabIndex={-1} className="flex-1 min-w-0 p-18">
+					<main id="main-content" className="flex-1 min-w-0 p-18 outline-none">
 						<Suspense fallback={<LoadingPlaceholder />}>
 							<Outlet />
 						</Suspense>

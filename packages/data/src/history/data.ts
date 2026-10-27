@@ -10,6 +10,7 @@ import type {
 	UnbuiltChangesSearchResult,
 } from "@virtool/contracts";
 import { and, count, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -233,7 +234,7 @@ export async function findUnbuiltByReference(
 				sql`${legacyHistory.otu_version}::integer desc nulls first`,
 				desc(legacyHistory.id),
 			)
-			.offset((page - 1) * perPage)
+			.offset(getPageOffset(page, perPage))
 			.limit(perPage),
 	]);
 
@@ -244,7 +245,7 @@ export async function findUnbuiltByReference(
 		foundCount,
 		totalCount,
 		page,
-		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		items: rows.map(mapOtuHistory),
 	};

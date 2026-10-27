@@ -1,10 +1,10 @@
-# Virtool.ca Website
+# Virtool.ca website
 
 The product [website](https://www.virtool.ca) for Virtool.
 
 ## Configuration
 
-The site has one optional build-time environment variable. It does not use the
+The site has one optional build-time environment variable. It doesn't use the
 Virtool service `_FILE` convention.
 
 | Variable | Type | Default | Use |
@@ -28,4 +28,4 @@ All commands are run from the monorepo root:
 | `pnpm --filter @virtool/site preview`         | Build, then preview locally with Wrangler      |
 | `pnpm --filter @virtool/site test`            | Run the Vitest suite                           |
 | `pnpm --filter @virtool/site deploy`          | Build and deploy to Cloudflare Workers         |
-| `pnpm --filter @virtool/site astro -- --help` | Run the Astro CLI                              |
+| `pnpm --filter @virtool/site astro -- --help` | Run the Astro command-line tool                |

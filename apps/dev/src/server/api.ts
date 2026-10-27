@@ -1,0 +1,229 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
+import type { Mutation, Snapshot } from "../shared/types.ts";
+import { MANAGEMENT_ORIGIN } from "./constants.ts";
+
+type EnvironmentLogReader = (
+	environmentId: string,
+	service?: string,
+) => Promise<string>;
+
+type DaemonLogReader = () => Promise<string>;
+
+type DefaultAdministratorSettings = {
+	clear: () => void;
+	set: (input: { email: string; handle: string; password: string }) => void;
+};
+
+export class SnapshotFeed {
+	private listeners = new Set<(snapshot: Snapshot) => void>();
+
+	constructor(
+		private snapshot: Snapshot,
+		private readonly onFirstSubscriber: () => void = () => undefined,
+	) {}
+
+	get(): Snapshot {
+		return this.snapshot;
+	}
+
+	set(snapshot: Snapshot): void {
+		this.snapshot = snapshot;
+		for (const listener of this.listeners) {
+			listener(snapshot);
+		}
+	}
+
+	hasSubscribers(): boolean {
+		return this.listeners.size > 0;
+	}
+
+	subscribe(listener: (snapshot: Snapshot) => void): () => void {
+		this.listeners.add(listener);
+		if (this.listeners.size === 1) {
+			this.onFirstSubscriber();
+		}
+		return () => this.listeners.delete(listener);
+	}
+}
+
+export function createApi(
+	feed: SnapshotFeed,
+	mutate: (mutation: Mutation) => void,
+	setConcurrency: (value: number) => void,
+	clientDirectory: string,
+	resetShared: () => Promise<void> = async () => undefined,
+	readDaemonLogs?: DaemonLogReader,
+	readEnvironmentLogs?: EnvironmentLogReader,
+	defaultAdministrator?: DefaultAdministratorSettings,
+) {
+	const app = new Hono();
+	app.use("/api/*", async (context, next) => {
+		const host = (
+			context.req.header("host") ?? new URL(context.req.url).hostname
+		).split(":")[0];
+		if (
+			host !== "127.0.0.1" &&
+			host !== "localhost" &&
+			host !== "dev.localhost"
+		) {
+			return context.json({ error: "host not allowed" }, 403);
+		}
+		if (context.req.method !== "GET") {
+			const origin = context.req.header("origin");
+			if (origin !== MANAGEMENT_ORIGIN) {
+				return context.json({ error: "origin not allowed" }, 403);
+			}
+		}
+		await next();
+	});
+	app.get("/api/state", (context) => context.json(feed.get()));
+	app.get("/api/logs", async (context) => {
+		const worktreeId = context.req.query("environment");
+		const service = context.req.query("service");
+		if (worktreeId) {
+			const environment = feed
+				.get()
+				.environments.find((candidate) => candidate.worktreeId === worktreeId);
+			if (!environment?.id) {
+				return context.json({ error: "environment not found" }, 404);
+			}
+			if (service && !Object.hasOwn(environment.services, service)) {
+				return context.json({ error: "service not found" }, 404);
+			}
+			if (!readEnvironmentLogs) {
+				return context.text("");
+			}
+			try {
+				return context.text(await readEnvironmentLogs(environment.id, service));
+			} catch {
+				return context.json({ error: "unable to load environment logs" }, 502);
+			}
+		}
+		if (service) {
+			return context.json({ error: "service requires an environment" }, 400);
+		}
+		if (!readDaemonLogs) {
+			return context.text("");
+		}
+		try {
+			return context.text(await readDaemonLogs());
+		} catch {
+			return context.text("");
+		}
+	});
+	app.get("/api/events", (context) =>
+		streamSSE(context, async (stream) => {
+			let pending: Snapshot | undefined = feed.get();
+			let wake: (() => void) | undefined;
+			function notify(): void {
+				const done = wake;
+				wake = undefined;
+				done?.();
+			}
+			const unsubscribe = feed.subscribe((snapshot) => {
+				pending = snapshot;
+				notify();
+			});
+			stream.onAbort(notify);
+			try {
+				while (!stream.aborted) {
+					if (pending) {
+						const snapshot = pending;
+						pending = undefined;
+						await stream.writeSSE({
+							data: JSON.stringify(snapshot),
+							event: "state",
+						});
+						continue;
+					}
+					await new Promise<void>((done) => {
+						wake = done;
+					});
+				}
+			} finally {
+				unsubscribe();
+			}
+		}),
+	);
+	app.post("/api/environments", async (context) => {
+		const mutation = (await context.req.json()) as Omit<
+			Mutation,
+			"createDefaultAdministrator"
+		> & { createDefaultAdministrator?: unknown };
+		const { createDefaultAdministrator } = mutation;
+		if (createDefaultAdministrator !== undefined) {
+			if (typeof createDefaultAdministrator !== "boolean") {
+				return context.text(
+					"createDefaultAdministrator must be a boolean",
+					422,
+				);
+			}
+			if (mutation.action !== "start") {
+				return context.text(
+					"Only the start action accepts createDefaultAdministrator",
+					422,
+				);
+			}
+		}
+		mutate({ ...mutation, createDefaultAdministrator });
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/scheduler", async (context) => {
+		const body = (await context.req.json()) as { concurrency: number };
+		setConcurrency(body.concurrency);
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/shared/reset", async (context) => {
+		const body = (await context.req.json()) as { confirmation?: string };
+		if (body.confirmation !== "reset") {
+			return context.json({ error: "confirmation required" }, 422);
+		}
+		await resetShared();
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/default-administrator", async (context) => {
+		const body = (await context.req.json()) as {
+			email?: unknown;
+			handle?: unknown;
+			password?: unknown;
+		};
+		if (
+			typeof body.handle !== "string" ||
+			typeof body.email !== "string" ||
+			typeof body.password !== "string"
+		) {
+			return context.text("Handle, email, and password must be strings", 422);
+		}
+		try {
+			defaultAdministrator?.set({
+				email: body.email,
+				handle: body.handle,
+				password: body.password,
+			});
+		} catch (error) {
+			return context.text(
+				error instanceof Error ? error.message : String(error),
+				422,
+			);
+		}
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/default-administrator/clear", (context) => {
+		defaultAdministrator?.clear();
+		return context.json({ accepted: true }, 202);
+	});
+	if (existsSync(clientDirectory)) {
+		app.use("/assets/*", serveStatic({ root: clientDirectory }));
+		app.get("/", serveStatic({ path: join(clientDirectory, "index.html") }));
+		app.get("/*", serveStatic({ path: join(clientDirectory, "index.html") }));
+	} else {
+		app.get("/", (context) =>
+			context.text("Build @virtool/dev to install the management UI", 503),
+		);
+	}
+	return app;
+}

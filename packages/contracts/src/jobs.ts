@@ -95,7 +95,7 @@ export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
 // # Naming, both halves
 //
 // **Every field crossing a wire is camelCase** — `runnerId`, `startedAt`,
-// `runtimeVersion`. Both ends are code we own and ship together, and it is the
+// `runtimeVersion`. Both ends are code maintained and shipped together, and it is the
 // convention the rest of this package already follows.
 //
 // **Row content is not the wire, and stays snake_case.** The elements of the
@@ -111,7 +111,7 @@ export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
 //
 // They live here rather than in `jobsApi.ts` because they are not one service's
 // contract: the jobs API serves them to a workflow runner and the web app
-// serves them to the SPA, both reading the same column through the same
+// serves them to the browser, both reading the same column through the same
 // mappers.
 
 /** A workflow step as a boundary publishes it. Persisted as {@link StoredJobStep}. */
@@ -273,17 +273,8 @@ export type JobMinimal = {
 };
 
 /**
- * A job as a boundary publishes it — the SPA's detail endpoint and the jobs
- * API's lifecycle routes alike.
- *
- * **One shape, not one per audience.** Don't narrow it into a runner-facing
- * half and an SPA-facing half: both would be built from the same record, a
- * field one audience does not read costs it nothing, and zod strips what a
- * schema does not name, so an added field cannot break an older runner.
- *
- * A schema rather than a plain type because the jobs API parses on the way out
- * and the workflow runtime parses on the way in. The SPA parses nothing and
- * imports the inferred type.
+ * The shared job shape used by the job API, web app, and workflow runtime.
+ * The API and runtime parse it; the web app uses its inferred type.
  */
 export const Job = z.object({
 	/**

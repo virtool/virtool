@@ -1,5 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import { legacyHistory } from "@virtool/data/db/schema/history";
 import { indexes, indexFiles } from "@virtool/data/db/schema/indexes";
@@ -9,7 +10,6 @@ import {
 	legacyReferences,
 	legacyReferenceUsers,
 } from "@virtool/data/db/schema/references";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -33,12 +33,12 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest: vi.fn(),
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -87,7 +87,7 @@ beforeEach(async () => {
 	await db.delete(legacyReferences);
 	await db.delete(tasks);
 	await db.delete(apiKeys);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(userGroups);
 	await db.delete(groups);
 	await db.delete(users);
@@ -224,7 +224,7 @@ describe("handleIndexFile", () => {
 
 	// An index is only as visible as the reference it was built from. Dropping
 	// this check would expose every reference's builds to any signed-in user.
-	it("rejects a user who cannot see the reference with a 403", async () => {
+	it("returns 404 to a user who cannot see the reference", async () => {
 		const { indexId } = await seedBuild();
 		const strangerId = await seedUser(db, { handle: "bob" });
 
@@ -234,7 +234,7 @@ describe("handleIndexFile", () => {
 			"reference.fa.gz",
 		);
 
-		expect(response.status).toBe(403);
+		expect(response.status).toBe(404);
 	});
 
 	it("serves a user holding a membership row on the reference", async () => {

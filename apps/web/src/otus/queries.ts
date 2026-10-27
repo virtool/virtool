@@ -1,3 +1,4 @@
+import { invalidateChange } from "@app/invalidate";
 import { getErrorStatus } from "@app/queryErrors";
 import { getGenbankFn } from "@server/genbank/functions";
 import {
@@ -141,13 +142,17 @@ export function useSuspenseOtuHistory(otuId: string) {
 export function useCreateOtu(refId: number) {
 	const queryClient = useQueryClient();
 
-	return useMutation<Otu, Error, { name: string; abbreviation: string }>({
-		mutationFn: ({ name, abbreviation }) =>
+	return useMutation<Otu, Error, { name: string; acronym: string }>({
+		mutationFn: ({ name, acronym }) =>
 			createOtuFn({
-				data: { referenceId: refId, name, abbreviation, schema: [] },
+				data: { referenceId: refId, name, acronym, schema: [] },
 			}) as Promise<Otu>,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: otuQueryKeys.lists() });
+		onSuccess: (otu) => {
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "insert",
+				id: otu.id,
+			});
 		},
 	});
 }
@@ -156,7 +161,7 @@ export function useCreateOtu(refId: number) {
 export type UpdateOtuProps = {
 	otuId: string;
 	name?: string;
-	abbreviation?: string;
+	acronym?: string;
 	schema?: OtuSegment[];
 };
 
@@ -169,11 +174,11 @@ export function useUpdateOtu(otuId: string) {
 	const queryClient = useQueryClient();
 
 	return useMutation<Otu, Error, UpdateOtuProps, { previousOtu?: Otu }>({
-		mutationFn: ({ otuId, name, abbreviation, schema }) =>
+		mutationFn: ({ otuId, name, acronym, schema }) =>
 			updateOtuFn({
-				data: { otuId, name, abbreviation, schema },
+				data: { otuId, name, acronym, schema },
 			}) as Promise<Otu>,
-		onMutate: async ({ name, abbreviation, schema }) => {
+		onMutate: async ({ name, acronym, schema }) => {
 			await queryClient.cancelQueries({
 				queryKey: otuQueryKeys.detail(otuId),
 			});
@@ -186,7 +191,7 @@ export function useUpdateOtu(otuId: string) {
 				queryClient.setQueryData<Otu>(otuQueryKeys.detail(otuId), {
 					...previousOtu,
 					...(name !== undefined && { name }),
-					...(abbreviation !== undefined && { abbreviation }),
+					...(acronym !== undefined && { acronym }),
 					...(schema !== undefined && { schema }),
 				});
 			}
@@ -202,8 +207,10 @@ export function useUpdateOtu(otuId: string) {
 			}
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});
@@ -215,9 +222,18 @@ export function useUpdateOtu(otuId: string) {
  * @returns A mutator for deleting an OTU isolate
  */
 export function useDeleteOtu() {
+	const queryClient = useQueryClient();
+
 	return useMutation<null, Error, { otuId: string }>({
 		mutationFn: ({ otuId }) =>
 			deleteOtuFn({ data: { otuId } }) as Promise<null>,
+		onSuccess: (_, { otuId }) => {
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "delete",
+				id: otuId,
+			});
+		},
 	});
 }
 
@@ -239,8 +255,10 @@ export function useCreateIsolate(otuId: string) {
 				data: { otuId, default: false, sourceType, sourceName },
 			}) as Promise<OtuIsolate>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});
@@ -260,8 +278,10 @@ export function useSetIsolateAsDefault() {
 				data: { otuId, isolateId },
 			}) as Promise<OtuIsolate>,
 		onSuccess: (_, { otuId }) => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});
@@ -290,8 +310,10 @@ export function useUpdateIsolate() {
 				data: { otuId, isolateId, sourceType, sourceName },
 			}) as Promise<OtuIsolate>,
 		onSuccess: (_, { otuId }) => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});
@@ -309,8 +331,10 @@ export function useDeleteIsolate() {
 		mutationFn: ({ otuId, isolateId }) =>
 			deleteIsolateFn({ data: { otuId, isolateId } }) as Promise<null>,
 		onSuccess: (_, { otuId }) => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});
@@ -356,8 +380,10 @@ export function useCreateSequence(otuId: string) {
 				},
 			}) as Promise<OtuSequence>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});
@@ -406,8 +432,10 @@ export function useEditSequence(otuId: string) {
 				},
 			}) as Promise<OtuSequence>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});
@@ -431,8 +459,10 @@ export function useDeleteSequence(otuId: string) {
 				data: { otuId, isolateId, sequenceId },
 			}) as Promise<null>,
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: otuQueryKeys.detail(otuId),
+			invalidateChange(queryClient, {
+				domain: "otus",
+				operation: "update",
+				id: otuId,
 			});
 		},
 	});

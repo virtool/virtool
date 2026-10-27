@@ -1,6 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { jobs } from "@virtool/data/db/schema/jobs";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -25,12 +25,12 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 // The handlers read the `db` singleton at module scope. A getter defers the
@@ -63,7 +63,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(jobs);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 });
 
@@ -72,9 +72,8 @@ function call(name: string, data?: unknown) {
 }
 
 // `jobs.workflow` is a plain `text` column, so a row naming a workflow this
-// build has never heard of is a row Postgres accepts. These pin what the SPA is
-// served when one shows up: never the unknown value, because the client renders
-// a workflow as a label and a link.
+// build has never heard of is a row Postgres accepts. These pin the response
+// for unknown workflows: omit the unknown value so the client does not render it.
 describe("workflow narrowing", () => {
 	it("serves a job whose workflow it knows", async () => {
 		const userId = await signIn(db, getRequest);

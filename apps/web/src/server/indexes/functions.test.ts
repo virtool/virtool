@@ -1,4 +1,6 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { legacyHistory } from "@virtool/data/db/schema/history";
 import { indexes, indexFiles } from "@virtool/data/db/schema/indexes";
 import { legacyOtus } from "@virtool/data/db/schema/otus";
@@ -6,7 +8,6 @@ import {
 	legacyReferences,
 	legacyReferenceUsers,
 } from "@virtool/data/db/schema/references";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -31,19 +32,18 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -81,7 +81,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(indexFiles);
 	await db.delete(legacyHistory);
 	await db.delete(legacyOtus);
@@ -162,14 +162,86 @@ describe("authorization", () => {
 	});
 });
 
+// A caller who cannot see a reference gets the same 404 as for a missing
+// reference or index, so the response does not reveal that it exists.
+describe("reference visibility", () => {
+	async function seedHiddenIndex(): Promise<{
+		indexId: number;
+		referenceId: number;
+	}> {
+		const ownerId = await signInAsNewUser();
+		const referenceId = await seedBuildableReference(ownerId);
+		const indexId = await seedIndex(db, {
+			referenceId,
+			userId: ownerId,
+			version: 0,
+		});
+
+		await signInAsNewUser();
+
+		return { indexId, referenceId };
+	}
+
+	it("answers 404 from findIndexesFn", async () => {
+		const { referenceId } = await seedHiddenIndex();
+
+		await expect(
+			call("findIndexesFn", { referenceId, page: 1, perPage: 25 }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
+	});
+
+	it("answers 404 from getIndexFn", async () => {
+		const { indexId } = await seedHiddenIndex();
+
+		await expect(call("getIndexFn", { indexId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Index not found.",
+			status: 404,
+		});
+	});
+
+	it("answers 404 from findUnbuiltChangesFn", async () => {
+		const { referenceId } = await seedHiddenIndex();
+
+		await expect(
+			call("findUnbuiltChangesFn", { referenceId, page: 1, perPage: 25 }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
+	});
+
+	it("answers 404 from createIndexFn", async () => {
+		const { referenceId } = await seedHiddenIndex();
+
+		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
+	});
+
+	it("omits the index from listReadyIndexesFn", async () => {
+		await seedHiddenIndex();
+
+		expect(await call("listReadyIndexesFn", {})).toEqual([]);
+	});
+});
+
 describe("getIndexFn", () => {
 	it("answers 404 for an index that does not exist", async () => {
 		await signInAsNewUser();
 
-		await expect(call("getIndexFn", { indexId: 404 })).rejects.toThrow(
-			"Index not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("getIndexFn", { indexId: 404 })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Index not found.",
+			status: 404,
+		});
 	});
 });
 
@@ -225,7 +297,6 @@ describe("createIndexFn", () => {
 
 		expect(index.version).toBe(0);
 		expect(index.ready).toBe(false);
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 		// The integer id, not a stringified one — the client's `SseMessageSchema`
 		// rejects a string here and would drop the invalidation (VIR-2794).
 		expect(emit).toHaveBeenCalledWith("indexes", index.id, "create");
@@ -237,10 +308,11 @@ describe("createIndexFn", () => {
 			archived: true,
 		});
 
-		await expect(call("createIndexFn", { referenceId })).rejects.toThrow(
-			"Reference is archived",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived",
+			status: 409,
+		});
 	});
 
 	it("answers 409 when a build is already in progress", async () => {
@@ -249,10 +321,11 @@ describe("createIndexFn", () => {
 
 		await seedIndex(db, { referenceId, userId, version: 0, ready: false });
 
-		await expect(call("createIndexFn", { referenceId })).rejects.toThrow(
-			"Index build already in progress",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Index build already in progress",
+			status: 409,
+		});
 	});
 
 	// Both "nothing to build" outcomes are 400s upstream rather than conflicts,
@@ -266,10 +339,11 @@ describe("createIndexFn", () => {
 			verified: false,
 		});
 
-		await expect(call("createIndexFn", { referenceId })).rejects.toThrow(
-			"There are unverified OTUs",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "There are unverified OTUs",
+			status: 400,
+		});
 	});
 
 	it("answers 400 when there is nothing to build", async () => {
@@ -278,9 +352,10 @@ describe("createIndexFn", () => {
 			member: { build: true },
 		});
 
-		await expect(call("createIndexFn", { referenceId })).rejects.toThrow(
-			"There are no unbuilt changes",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		await expect(call("createIndexFn", { referenceId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "There are no unbuilt changes",
+			status: 400,
+		});
 	});
 });

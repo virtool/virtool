@@ -1,14 +1,12 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { gzipSync } from "node:zlib";
 import { createIndexArtifact, type IndexOtu } from "@virtool/sqlite";
 import {
 	buildMappingIndexCacheParams,
 	type CacheParams,
 	createWorkflowCache,
 	deriveCacheKey,
-	type RunSubprocess,
-	type RunSubprocessOptions,
 } from "@virtool/workflow";
 import {
 	createFakeContext,
@@ -18,8 +16,12 @@ import {
 	createTestStorage,
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
-import { describe, expect, it, onTestFinished } from "vitest";
-import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import {
+	REFERENCE_INDEX_EXTRA_PARAMS,
+	SUBTRACTION_INDEX_EXTRA_PARAMS,
+	WORKFLOW_NAME,
+} from "../cacheParams";
 import type { PathoscopeData } from "../context";
 import { workPaths } from "../paths";
 import type { PathoscopeState } from "../state";
@@ -35,7 +37,10 @@ const INDEX_ID = 7;
 const SHARD_NAME = "reference.1.bt2";
 const SUBTRACTION_ID = 9;
 const SUBTRACTION_SHARD_NAME = "subtraction.1.bt2";
-const SUBTRACTION_GENOME = "genome bytes";
+// Both records are `Prunus` once bowtie2 truncates at the first space.
+const SUBTRACTION_GENOME =
+	">Prunus persica chr1\nACGTACGT\n>Prunus persica chr2\nTTTT\n";
+const SUBTRACTION_FASTA = ">1\nACGTACGT\n>2\nTTTT\n";
 
 const OTU: IndexOtu = {
 	abbreviation: "TMV",
@@ -93,6 +98,7 @@ function referenceIndexCacheParams(): CacheParams {
 
 function subtractionIndexCacheParams(): CacheParams {
 	return buildMappingIndexCacheParams({
+		extra: SUBTRACTION_INDEX_EXTRA_PARAMS,
 		indexKind: "subtraction_mapping_index",
 		parentId: SUBTRACTION_ID,
 		toolVersion: BOWTIE2_BUILD_VERSION,
@@ -118,29 +124,25 @@ async function createHarness() {
 	const testStorage = createTestStorage();
 	const { storage } = testStorage;
 
-	const runner = createFakeSubprocessRunner();
-
-	runner.register([BOWTIE2_BUILD, "--version"], {
-		stdout: [`${BOWTIE2_BUILD} version ${BOWTIE2_BUILD_VERSION}`],
-	});
-
 	const builtFastas: string[] = [];
 
-	const runSubprocess: RunSubprocess = async (
-		options: RunSubprocessOptions,
-	) => {
-		const [tool, flag, , fastaPath, indexPrefix] = options.command;
+	const runSubprocess = createFakeSubprocessRunner();
 
-		if (tool === BOWTIE2_BUILD && flag !== "--version") {
+	runSubprocess.register(BOWTIE2_BUILD, {
+		async effect({ command }) {
+			const [, , , fastaPath, indexPrefix] = command;
+
 			builtFastas.push(await readFile(fastaPath ?? "", "utf8"));
 
 			// The shards the real tool writes, which the cache then archives.
 			await mkdir(dirname(indexPrefix ?? ""), { recursive: true });
 			await writeFile(`${indexPrefix}.1.bt2`, "built shard");
-		}
+		},
+	});
 
-		return runner(options);
-	};
+	runSubprocess.register([BOWTIE2_BUILD, "--version"], {
+		stdout: [`${BOWTIE2_BUILD} version ${BOWTIE2_BUILD_VERSION}`],
+	});
 
 	const pathoscopeState: PathoscopeState = {
 		candidateSequenceIds: [],
@@ -169,8 +171,9 @@ async function createHarness() {
 			directoryName: string,
 			shardName: string,
 		) {
-			const source = await mkdtemp(join(tmpdir(), "pathoscope-cache-"));
-			onTestFinished(() => rm(source, { force: true, recursive: true }));
+			const { path: source, cleanup: cleanupSource } =
+				await createTestWorkPath();
+			onTestFinished(cleanupSource);
 
 			const directory = join(source, directoryName);
 
@@ -250,7 +253,7 @@ async function setupSubtraction() {
 	} = harness;
 
 	const [genome] = await testStorage.seedSubtractionFiles(SUBTRACTION_ID, [
-		{ name: "subtraction.fa.gz", contents: SUBTRACTION_GENOME },
+		{ name: "subtraction.fa.gz", contents: gzipSync(SUBTRACTION_GENOME) },
 	]);
 
 	const fastaPath = paths.subtraction(SUBTRACTION_ID).fasta;
@@ -277,6 +280,7 @@ async function setupSubtraction() {
 	return {
 		...harness,
 		fastaPath,
+		genomeKey: genome?.storageKey,
 
 		run() {
 			return createSubtractionIndexStep.run(
@@ -338,8 +342,8 @@ describe("createReferenceIndexStep", () => {
 		).resolves.toBe("cached shard");
 	});
 
-	// The namespace is shared, so a blob can have been archived from a directory
-	// named something else and unpacks beside the index rather than onto it.
+	// A blob can have been archived by an older run from a directory named
+	// something else and unpacks beside the index rather than onto it.
 	// Reported here rather than left for bowtie2 to hit as a missing index.
 	it("fails when a cached blob restores outside the index directory", async () => {
 		const { builtFastas, paths, run, seedCachedIndex, state, workPath } =
@@ -357,14 +361,14 @@ describe("createReferenceIndexStep", () => {
 });
 
 describe("createSubtractionIndexStep", () => {
-	it("downloads the genome and caches the index on a miss", async () => {
+	it("builds from the renamed genome and caches the index on a miss", async () => {
 		const { builtFastas, fastaPath, paths, run, state } =
 			await setupSubtraction();
 
 		await run();
 
-		await expect(readFile(fastaPath, "utf8")).resolves.toBe(SUBTRACTION_GENOME);
-		expect(builtFastas).toEqual([SUBTRACTION_GENOME]);
+		expect(builtFastas).toEqual([SUBTRACTION_FASTA]);
+		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 
 		expect(state.cacheRegistrations.map(({ key }) => key)).toEqual([
 			deriveCacheKey(subtractionIndexCacheParams()),
@@ -378,18 +382,29 @@ describe("createSubtractionIndexStep", () => {
 		).resolves.toBe("built shard");
 	});
 
-	// The genome is gigabytes for a host subtraction and the shared
-	// `subtraction_mapping_index` namespace makes a hit the steady state, so a run
+	// The genome is gigabytes for a host subtraction and reuse across analyses
+	// makes a hit the steady state, so a run
 	// that restores the index must not have pulled it out of storage at all.
 	it("downloads no genome on a cache hit", async () => {
-		const { builtFastas, fastaPath, paths, run, seedCachedIndex, state } =
-			await setupSubtraction();
+		const {
+			builtFastas,
+			genomeKey,
+			paths,
+			run,
+			seedCachedIndex,
+			state,
+			storage,
+		} = await setupSubtraction();
 
 		await seedCachedIndex();
 
+		// The step removes the genome whether or not it built, so only the
+		// storage reads show whether it was downloaded.
+		const read = vi.spyOn(storage, "read");
+
 		await run();
 
-		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
+		expect(read.mock.calls.map(([key]) => key)).not.toContain(genomeKey);
 		expect(builtFastas).toEqual([]);
 		expect(state.cacheRegistrations).toEqual([]);
 
@@ -399,5 +414,23 @@ describe("createSubtractionIndexStep", () => {
 				"utf8",
 			),
 		).resolves.toBe("cached shard");
+	});
+
+	it("removes the genome when the build fails", async () => {
+		const { builtFastas, fastaPath, run, runSubprocess, state } =
+			await setupSubtraction();
+
+		runSubprocess.register([BOWTIE2_BUILD, "--threads"], {
+			async effect({ command }) {
+				builtFastas.push(await readFile(command[3] ?? "", "utf8"));
+			},
+			exitCode: 1,
+		});
+
+		await expect(run()).rejects.toThrow();
+
+		expect(builtFastas).toEqual([SUBTRACTION_FASTA]);
+		expect(state.cacheRegistrations).toEqual([]);
+		await expect(readFile(fastaPath, "utf8")).rejects.toThrow(/ENOENT/);
 	});
 });

@@ -5,8 +5,9 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
+import Field, { FieldError, FieldLabel } from "@base/Field";
 import { IconButton } from "@base/Icon";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import { useUpdateSubtraction } from "@subtraction/queries";
 import type { Subtraction } from "@virtool/contracts";
@@ -54,23 +55,20 @@ export default function EditSubtraction({ subtraction }: EditSubtractionProps) {
 			<DialogContent>
 				<DialogTitle>Edit Subtraction</DialogTitle>
 				<form onSubmit={handleSubmit((values) => onSubmit({ ...values }))}>
-					<InputGroup>
-						<InputLabel htmlFor="name">Name</InputLabel>
-						<InputSimple
-							id="name"
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<Input
 							aria-required
-							aria-invalid={Boolean(errors.name) || undefined}
-							aria-describedby={errors.name ? "name-error" : undefined}
 							{...register("name", {
 								required: "A name must be provided",
 							})}
 						/>
-						<InputError id="name-error">{errors.name?.message}</InputError>
-					</InputGroup>
-					<InputGroup>
-						<InputLabel htmlFor="nickname">Nickname</InputLabel>
-						<InputSimple id="nickname" {...register("nickname")} />
-					</InputGroup>
+						<FieldError errors={[errors.name]} />
+					</Field>
+					<Field>
+						<FieldLabel>Nickname</FieldLabel>
+						<Input {...register("nickname")} />
+					</Field>
 
 					<DialogFooter>
 						<SaveButton />

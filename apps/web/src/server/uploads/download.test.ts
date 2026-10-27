@@ -1,7 +1,7 @@
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { uploads } from "@virtool/data/db/schema/uploads";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -24,12 +24,12 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest: vi.fn(),
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -68,7 +68,7 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(uploads);
 	await db.delete(apiKeys);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 
 	userId = await seedUser(db);
@@ -234,7 +234,7 @@ describe("handleUploadDownload", () => {
 		expect(response.status).toBe(404);
 	});
 
-	// A row predating recorded keys names no object we can locate.
+	// A row predating recorded keys names no object that can be located.
 	it("returns a 404 when the row has no storage_key", async () => {
 		const uploadId = await seedUpload({ storageKey: null });
 

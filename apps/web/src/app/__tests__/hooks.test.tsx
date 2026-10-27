@@ -42,6 +42,95 @@ describe("useDebounce()", () => {
 		expect(result.current[0]).toBe("Foo");
 	});
 
+	it("should preserve newer draft changes when an earlier commit is acknowledged", async () => {
+		const onChange = vi.fn();
+
+		const { result, rerender } = renderHook(
+			({ value }) => useDebounce(value, onChange, 10),
+			{ initialProps: { value: "" } },
+		);
+
+		act(() => result.current[1]("F"));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		expect(onChange).toHaveBeenCalledExactlyOnceWith("F");
+
+		act(() => result.current[1]("Foo"));
+		rerender({ value: "F" });
+
+		expect(result.current[0]).toBe("Foo");
+
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		expect(onChange).toHaveBeenNthCalledWith(2, "Foo");
+	});
+
+	it("should preserve the draft when an older echo follows a newer commit", async () => {
+		const onChange = vi.fn();
+		const { result, rerender } = renderHook(
+			({ value }) => useDebounce(value, onChange, 10),
+			{ initialProps: { value: "" } },
+		);
+
+		act(() => result.current[1]("F"));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+		act(() => result.current[1]("Fo"));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+		act(() => result.current[1]("Foo"));
+		rerender({ value: "F" });
+
+		expect(result.current[0]).toBe("Foo");
+		expect(onChange).toHaveBeenNthCalledWith(2, "Fo");
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+		expect(onChange).toHaveBeenCalledTimes(3);
+		rerender({ value: "Fo" });
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+		expect(result.current[0]).toBe("Foo");
+		expect(onChange).toHaveBeenCalledTimes(3);
+	});
+
+	it("should honor an explicit clear that equals an outstanding commit", async () => {
+		const onChange = vi.fn();
+		const initialProps: { value: string; reset?: { value: string } } = {
+			value: "foo",
+		};
+		const { result, rerender } = renderHook(
+			({ value, reset }: { value: string; reset?: { value: string } }) =>
+				useDebounce(value, onChange, 10, reset),
+			{ initialProps },
+		);
+
+		act(() => result.current[1](""));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+		act(() => result.current[1]("bar"));
+		rerender({ value: "foo", reset: { value: "" } });
+
+		expect(result.current[0]).toBe("");
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+		expect(onChange).toHaveBeenCalledExactlyOnceWith("");
+	});
+
+	it("should accept an external change while a commit is awaiting acknowledgement", async () => {
+		const onChange = vi.fn();
+
+		const { result, rerender } = renderHook(
+			({ value }) => useDebounce(value, onChange, 10),
+			{ initialProps: { value: "" } },
+		);
+
+		act(() => result.current[1]("Foo"));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		act(() => result.current[1]("Foobar"));
+		rerender({ value: "ferret" });
+
+		expect(result.current[0]).toBe("ferret");
+
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		expect(onChange).toHaveBeenCalledExactlyOnceWith("Foo");
+	});
+
 	it("should abandon a pending commit when the value changes externally", async () => {
 		const onChange = vi.fn();
 

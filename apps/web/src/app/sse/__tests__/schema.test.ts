@@ -1,5 +1,21 @@
-import { SseDomainSchema, SseMessageSchema } from "@virtool/contracts";
-import { describe, expect, it } from "vitest";
+import {
+	type SseDomain,
+	SseDomainSchema,
+	SseMessageSchema,
+} from "@virtool/contracts";
+import { describe, expect, expectTypeOf, it } from "vitest";
+
+describe("SseDomainSchema", () => {
+	it("preserves domain literals when parsing", () => {
+		const domain = SseDomainSchema.parse("samples");
+		expect(domain).toBe("samples");
+		expectTypeOf(domain).toEqualTypeOf<SseDomain>();
+	});
+
+	it("rejects unknown domains", () => {
+		expect(SseDomainSchema.safeParse("unknown").success).toBe(false);
+	});
+});
 
 describe("SseMessageSchema", () => {
 	it("accepts a frame for a number-id domain", () => {
@@ -27,7 +43,7 @@ describe("SseMessageSchema", () => {
 
 	it("accepts a frame for every domain in the enum", () => {
 		for (const domain of SseDomainSchema.options) {
-			const stringId = domain === "roles";
+			const stringId = domain === "roles" || domain === "otus";
 			const result = SseMessageSchema.safeParse({
 				domain,
 				operation: "update",

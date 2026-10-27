@@ -3,7 +3,7 @@ import { useUpdateOtu } from "@otus/queries";
 import type { OtuSegment } from "@virtool/contracts";
 
 type DeleteSegmentProps = {
-	abbreviation: string;
+	acronym: string;
 	name: string;
 	open?: boolean;
 	otuId: string;
@@ -16,7 +16,7 @@ type DeleteSegmentProps = {
  * Displays a dialog for deleting a segment
  */
 export default function DeleteSegment({
-	abbreviation,
+	acronym,
 	name,
 	open = false,
 	otuId,
@@ -34,7 +34,7 @@ export default function DeleteSegment({
 		return mutation.mutateAsync({
 			otuId,
 			name,
-			abbreviation,
+			acronym,
 			schema: schema.filter((s) => s.name !== segmentName),
 		});
 	}

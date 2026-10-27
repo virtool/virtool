@@ -18,12 +18,11 @@
 	},
 	"dependencies": {
 		"fflate": "^0.8.3",
-		"tar-stream": "^3.2.0"
+		"tar-stream": "^3.2.2"
 	},
 	"devDependencies": {
 		"@virtool/tsconfig": "workspace:*",
-		"@types/node": "^26.4.0",
-		"@types/tar-stream": "^3.1.4",
-		"vitest": "^4.1.11"
+		"@types/node": "^26.4.1",
+		"vitest": "^5.0.5"
 	}
 }

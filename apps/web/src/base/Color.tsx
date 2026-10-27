@@ -1,5 +1,7 @@
 import { cn } from "@app/cn";
+import { FieldLegend, FieldSet } from "@base/Field";
 import Input from "@base/Input";
+import { useId } from "react";
 
 type PresetColor = {
 	// The color in hex format, without a leading "#"
@@ -106,8 +108,8 @@ function ColorSwatch({
 }
 
 type ColorProps = {
-	// The id of the input
-	id: string;
+	// The id of the input. Defaults to the control id of a surrounding `Field`.
+	id?: string;
 	// The value of the input (color in hex format)
 	value: string;
 	// The callback to be called when the value changes
@@ -118,6 +120,8 @@ type ColorProps = {
  * A color text input with an accessible swatch picker below it
  */
 export default function Color({ id, value, onChange }: ColorProps) {
+	const swatchGroup = useId();
+
 	return (
 		<div>
 			<Input
@@ -127,10 +131,8 @@ export default function Color({ id, value, onChange }: ColorProps) {
 					onChange(e.target.value)
 				}
 			/>
-			<fieldset
-				aria-label="Preset colors"
-				className={cn("flex", "h-9", "mt-2.5", "border-0", "p-0")}
-			>
+			<FieldSet className={cn("flex", "h-9", "mt-2.5", "mb-0")}>
+				<FieldLegend className="sr-only">Preset colors</FieldLegend>
 				{presetColors.map(({ hex, name }) => {
 					const color = `#${hex}`;
 
@@ -138,14 +140,14 @@ export default function Color({ id, value, onChange }: ColorProps) {
 						<ColorSwatch
 							key={hex}
 							color={color}
-							group={`${id}-swatch`}
+							group={swatchGroup}
 							name={name}
 							checked={value.toLowerCase() === color.toLowerCase()}
 							onChange={onChange}
 						/>
 					);
 				})}
-			</fieldset>
+			</FieldSet>
 		</div>
 	);
 }

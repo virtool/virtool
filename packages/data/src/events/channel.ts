@@ -9,13 +9,14 @@ export type EventOperation = "create" | "update" | "delete";
 /**
  * Primary-key type for each domain that may appear on the channel.
  *
- * `roles` is the only one keyed by a string — an administrator role name. Every
- * other domain is keyed by a Postgres integer primary key, and must stay that
- * way: the client parses each frame against `SseMessageSchema`, so a domain
- * typed here as a string but published as a number has every one of its frames
- * rejected, silently dropping the cache invalidation it carried.
+ * `roles` is keyed by an administrator role name and `otus` by the OTU's
+ * legacy string id. Every other domain is keyed by a Postgres integer primary
+ * key, and must stay that way: the client parses each frame against
+ * `SseMessageSchema`, so a domain typed here as a string but published as a
+ * number has every one of its frames rejected, silently dropping the cache
+ * invalidation it carried.
  */
-export type ResourceId<D extends SseDomain> = D extends "roles"
+export type ResourceId<D extends SseDomain> = D extends "roles" | "otus"
 	? string
 	: number;
 

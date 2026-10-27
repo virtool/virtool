@@ -20,39 +20,21 @@ describe("SampleUserGroup", () => {
 		};
 	});
 
-	it("should render", () => {
-		renderWithProviders(<SampleUserGroup {...props} />);
+	it("should render and select groups", async () => {
+		const { rerender } = renderWithProviders(<SampleUserGroup {...props} />);
 
 		expect(screen.getByLabelText("User Group")).toBeInTheDocument();
 		expect(screen.getByRole("combobox")).toHaveTextContent("None");
-	});
-
-	it("should show the group options when opened", async () => {
-		renderWithProviders(<SampleUserGroup {...props} />);
 
 		await userEvent.click(screen.getByLabelText("User Group"));
-
 		expect(screen.getByRole("option", { name: "None" })).toBeInTheDocument();
 		expect(screen.getByRole("option", { name: "bar" })).toBeInTheDocument();
-	});
-
-	it("should call onChange when a group is selected", async () => {
-		renderWithProviders(<SampleUserGroup {...props} />);
-
-		await userEvent.click(screen.getByLabelText("User Group"));
 		await userEvent.click(screen.getByRole("option", { name: "bar" }));
-
 		expect(props.onChange).toHaveBeenCalledWith(String(group.id));
-	});
 
-	it("should call onChange with an empty value when None is selected", async () => {
-		renderWithProviders(
-			<SampleUserGroup {...props} selected={String(group.id)} />,
-		);
-
+		rerender(<SampleUserGroup {...props} selected={String(group.id)} />);
 		await userEvent.click(screen.getByLabelText("User Group"));
 		await userEvent.click(screen.getByRole("option", { name: "None" }));
-
 		expect(props.onChange).toHaveBeenCalledWith("");
 	});
 });

@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ReferenceCreateRequest,
 	type ReferenceRight,
@@ -32,7 +31,13 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated, permission } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
+import { assertReferenceVisible, isReferenceVisible } from "./visibility";
 
 const referenceIdSchema = z.object({
 	referenceId: rowIdSchema,
@@ -41,7 +46,7 @@ const referenceIdSchema = z.object({
 const findReferencesSchema = z.object({
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
+	term: searchTermSchema,
 	archived: z.boolean().optional(),
 });
 
@@ -75,42 +80,33 @@ const addReferenceGroupSchema = referenceGroupSchema.merge(rightsSchema);
 const updateReferenceUserSchema = referenceUserSchema.merge(rightsSchema);
 const updateReferenceGroupSchema = referenceGroupSchema.merge(rightsSchema);
 
-// Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
-// ./data imports they reference — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof ReferenceNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Reference not found.", 404);
 	}
 	if (err instanceof ReferenceArchivedError) {
-		setResponseStatus(409);
 		throw new ClientError("Reference is archived.", 409);
 	}
 	if (err instanceof ReferenceCloneSourceNotFoundError) {
-		setResponseStatus(400);
 		throw new ClientError("Source reference does not exist.", 400);
 	}
 	if (err instanceof ReferenceImportUploadNotFoundError) {
-		setResponseStatus(400);
 		throw new ClientError("Upload does not exist.", 400);
 	}
 	if (err instanceof ReferenceMemberNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Member not found.", 404);
 	}
 	if (err instanceof ReferenceMemberConflictError) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; this enforces the
 // per-reference right the operation needs on top of it. A full administrator
-// passes every check; a missing reference surfaces as a 404 for a
-// non-administrator via `checkReferenceRight`.
+// passes every check. A reference that is missing or that the caller cannot see
+// is a 404, so only a caller who can see it learns from a 403 that they lack the
+// right.
 const authorizeReference = createServerOnlyFn(
 	async (
 		referenceId: number,
@@ -119,18 +115,21 @@ const authorizeReference = createServerOnlyFn(
 	): Promise<void> => {
 		const actor = await resolveReferenceActor(db, userId);
 
+		if (!(await checkReferenceVisibility(db, referenceId, actor))) {
+			throw new ReferenceNotFoundError();
+		}
+
 		if (!(await checkReferenceRight(db, referenceId, right, actor))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
 );
 
-export const findReferencesFn = createServerFn({ method: "GET" })
+export const findReferencesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findReferencesSchema)
 	.handler(async ({ context, data }) => {
-		const actor = await resolveReferenceActor(db, context.session.userId);
+		const actor = await resolveReferenceActor(db, context.principal.userId);
 
 		return findReferences(
 			db,
@@ -152,10 +151,7 @@ export const getReferenceFn = createServerFn({ method: "GET" })
 			// Detail read enforces the same visibility rule as the list: a
 			// non-member, non-administrator caller cannot tell a hidden reference
 			// from a missing one — both surface as a 404.
-			const actor = await resolveReferenceActor(db, context.session.userId);
-			if (!(await checkReferenceVisibility(db, data.referenceId, actor))) {
-				throw new ReferenceNotFoundError();
-			}
+			await assertReferenceVisible(data.referenceId, context.principal.userId);
 			return await getReference(db, data.referenceId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -167,15 +163,22 @@ export const createReferenceFn = createServerFn({ method: "POST" })
 	.validator(createReferenceSchema)
 	.handler(async ({ context, data }) => {
 		try {
+			// A source the caller cannot see is refused as if it did not exist.
+			if (
+				data.cloneFrom !== undefined &&
+				!(await isReferenceVisible(data.cloneFrom, context.principal.userId))
+			) {
+				throw new ReferenceCloneSourceNotFoundError();
+			}
+
 			const reference = await createReference(db, {
 				name: data.name,
 				description: data.description,
 				organism: data.organism,
 				cloneFrom: data.cloneFrom,
 				importFrom: data.importFrom,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 			});
-			setResponseStatus(201);
 			return reference;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -188,7 +191,7 @@ export const updateReferenceFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, ...values } = data;
 		try {
-			await authorizeReference(referenceId, context.session.userId, "modify");
+			await authorizeReference(referenceId, context.principal.userId, "modify");
 			return await updateReference(db, referenceId, values);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -202,7 +205,7 @@ export const archiveReferenceFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReference(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			return await setReferenceArchived(db, data.referenceId, true);
@@ -218,7 +221,7 @@ export const unarchiveReferenceFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReference(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			return await setReferenceArchived(db, data.referenceId, false);
@@ -233,9 +236,8 @@ export const addReferenceUserFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, userId, ...rights } = data;
 		try {
-			await authorizeReference(referenceId, context.session.userId, "modify");
+			await authorizeReference(referenceId, context.principal.userId, "modify");
 			const member = await addReferenceUser(db, referenceId, userId, rights);
-			setResponseStatus(201);
 			return member;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -250,9 +252,8 @@ export const addReferenceGroupFn = createServerFn({ method: "POST" })
 		try {
 			// Adding a group member requires `modify` on the reference, the same as
 			// adding a user member.
-			await authorizeReference(referenceId, context.session.userId, "modify");
+			await authorizeReference(referenceId, context.principal.userId, "modify");
 			const member = await addReferenceGroup(db, referenceId, groupId, rights);
-			setResponseStatus(201);
 			return member;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -265,7 +266,7 @@ export const updateReferenceUserFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, userId, ...rights } = data;
 		try {
-			await authorizeReference(referenceId, context.session.userId, "modify");
+			await authorizeReference(referenceId, context.principal.userId, "modify");
 			return await updateReferenceUser(db, referenceId, userId, rights);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -278,7 +279,7 @@ export const updateReferenceGroupFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, groupId, ...rights } = data;
 		try {
-			await authorizeReference(referenceId, context.session.userId, "modify");
+			await authorizeReference(referenceId, context.principal.userId, "modify");
 			return await updateReferenceGroup(db, referenceId, groupId, rights);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -292,7 +293,7 @@ export const removeReferenceUserFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReference(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			await removeReferenceUser(db, data.referenceId, data.userId);
@@ -309,7 +310,7 @@ export const removeReferenceGroupFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReference(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			await removeReferenceGroup(db, data.referenceId, data.groupId);

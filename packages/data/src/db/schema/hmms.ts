@@ -1,7 +1,7 @@
 // Schema for the `hmms` and `legacy_hmm_status` tables.
 //
 // `hmms.legacy_id` holds the old Mongo `_id`. The HMM endpoints address rows by
-// their integer id and never need it, but a NuVs analysis stored before the
+// their integer id and never need it, but a Nuvs analysis stored before the
 // migration references its HMM annotations by that string, so the analysis
 // formatter resolves them through this column.
 

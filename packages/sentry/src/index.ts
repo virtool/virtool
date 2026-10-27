@@ -6,7 +6,7 @@ export function readDsn(): string | undefined {
 }
 
 /** Request paths whose traces are dropped outright. */
-const UNSAMPLED_PATHS = new Set(["/health/live", "/health/ready"]);
+const UNSAMPLED_PATHS = new Set(["/health/live", "/health/ready", "/metrics"]);
 
 /** Request paths sampled at `COUNTS_SAMPLE_RATE` rather than the usual one. */
 const COUNTS_PATHS = new Set(["/jobs/counts"]);

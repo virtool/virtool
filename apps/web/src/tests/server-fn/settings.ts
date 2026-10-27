@@ -1,4 +1,5 @@
 import {
+	type CacheUsageSnapshot,
 	DEFAULT_MINIMUM_PASSWORD_LENGTH,
 	type Settings,
 } from "@virtool/contracts";
@@ -10,8 +11,12 @@ import { type Mock, vi } from "vitest";
  * policy, including the unauthenticated ones.
  */
 export const settingsServerFnMocks = {
+	clearNcbiApiKeyFn: vi.fn(),
+	getCacheUsageFn: vi.fn(),
 	getPasswordPolicyFn: vi.fn(),
 	getSettingsFn: vi.fn(),
+	setMfaPolicyFn: vi.fn(),
+	setNcbiApiKeyFn: vi.fn(),
 	updateSettingsFn: vi.fn(),
 };
 
@@ -31,6 +36,12 @@ export function mockGetSettings(settings: Settings): Mock {
 	return settingsServerFnMocks.getSettingsFn;
 }
 
+/** Resolve the cache-usage query with the given retained snapshots. */
+export function mockGetCacheUsage(snapshots: CacheUsageSnapshot[]): Mock {
+	settingsServerFnMocks.getCacheUsageFn.mockResolvedValue(snapshots);
+	return settingsServerFnMocks.getCacheUsageFn;
+}
+
 /** Resolve the settings update, echoing the given settings back to the caller. */
 export function mockUpdateSettings(settings: Settings): Mock {
 	settingsServerFnMocks.updateSettingsFn.mockResolvedValue(settings);
@@ -38,17 +49,26 @@ export function mockUpdateSettings(settings: Settings): Mock {
 }
 
 /**
- * Wire `getSettings` and `updateSettings` against a shared, mutable settings
- * record so a read after a write reflects the change. An update merges its
- * `data` patch into the record and resolves with the merged result, and a later
+ * Wire the settings server functions against a shared, mutable settings record
+ * so a read after a write reflects the change. An update merges its `data`
+ * patch into the record and resolves with the merged result, and a later
  * `getSettings` returns that same record — matching how a component that
  * invalidates the settings cache refetches the patched values.
+ *
+ * The NCBI API key is write-only here as it is on the server: storing one only
+ * flips `hasNcbiApiKey` and reports the key as usable. A test that needs
+ * `configuration_error` passes it in, because availability is the server's to
+ * decide.
  */
 export function mockSettingsStore(initial: Settings): {
+	clearNcbiApiKey: Mock;
 	getSettings: Mock;
+	setMfaPolicy: Mock;
+	setNcbiApiKey: Mock;
 	updateSettings: Mock;
 } {
 	let current = initial;
+	settingsServerFnMocks.getCacheUsageFn.mockResolvedValue([]);
 
 	settingsServerFnMocks.getSettingsFn.mockImplementation(async () => current);
 	settingsServerFnMocks.updateSettingsFn.mockImplementation(
@@ -58,8 +78,32 @@ export function mockSettingsStore(initial: Settings): {
 		},
 	);
 
+	settingsServerFnMocks.setMfaPolicyFn.mockImplementation(
+		async ({ data }: { data: Pick<Settings, "mfaPolicy"> }) => {
+			current = { ...current, mfaPolicy: data.mfaPolicy };
+			return current;
+		},
+	);
+
+	settingsServerFnMocks.setNcbiApiKeyFn.mockImplementation(async () => {
+		current = { ...current, hasNcbiApiKey: true, ncbiAvailability: "ready" };
+		return current;
+	});
+
+	settingsServerFnMocks.clearNcbiApiKeyFn.mockImplementation(async () => {
+		current = {
+			...current,
+			hasNcbiApiKey: false,
+			ncbiAvailability: "unconfigured",
+		};
+		return current;
+	});
+
 	return {
+		clearNcbiApiKey: settingsServerFnMocks.clearNcbiApiKeyFn,
 		getSettings: settingsServerFnMocks.getSettingsFn,
+		setMfaPolicy: settingsServerFnMocks.setMfaPolicyFn,
+		setNcbiApiKey: settingsServerFnMocks.setNcbiApiKeyFn,
 		updateSettings: settingsServerFnMocks.updateSettingsFn,
 	};
 }

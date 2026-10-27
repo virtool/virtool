@@ -3,7 +3,7 @@ name = "pathoscope-core"
 version = "0.0.0"
 edition = "2021"
 authors = ["Markus Swoveland"]
-description = "Pathoscope's expectation-maximization core, as a standalone CLI"
+description = "Pathoscope's expectation-maximization core, as a standalone command-line tool"
 license = "MIT"
 publish = false
 

@@ -13,6 +13,7 @@ import {
 	parseWorkflowFilters,
 } from "@samples/utils";
 import UserFilterGroup from "@users/components/UserFilterGroup";
+import { useListUsers } from "@users/queries";
 import type { GroupMinimal, Label } from "@virtool/contracts";
 import { CalendarDays, Search, Tag, Users, Workflow } from "lucide-react";
 import { lazy, Suspense } from "react";
@@ -105,6 +106,11 @@ export default function FilterBar({
 }: FilterBarProps) {
 	const selected = labels.filter((label) => selectedLabels.includes(label.id));
 	const workflows = parseWorkflowFilters(selectedWorkflows);
+	const {
+		data: users,
+		isError: isUsersError,
+		isPending: isUsersPending,
+	} = useListUsers();
 
 	return (
 		<BaseFilterBar className="mb-3" label="Filters">
@@ -196,9 +202,12 @@ export default function FilterBar({
 				)}
 			</FilterGroup>
 			<UserFilterGroup
+				isError={isUsersError}
+				isPending={isUsersPending}
 				onClear={onClearUsers}
 				onToggle={onToggleUser}
 				selected={selectedUsers}
+				users={users}
 			/>
 			<FilterGroup
 				icon={<Users size={14} />}

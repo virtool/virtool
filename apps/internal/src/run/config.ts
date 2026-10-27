@@ -10,8 +10,7 @@ const DEFAULT_POSTGRES_POOL_MAX = 10;
  * unset.
  *
  * The value is arbitrary — this process serves no traffic and has no Service —
- * but it is hardcoded in the deployment manifests, so it is fixed here and
- * documented rather than left to drift.
+ * but it is fixed here and documented rather than left to drift.
  */
 const DEFAULT_PROBE_PORT = 9900;
 
@@ -19,10 +18,8 @@ const DEFAULT_PROBE_PORT = 9900;
  * Seconds the shutdown sequence may take before the backstop gives up, when
  * `VT_TASKS_SHUTDOWN_TIMEOUT` is unset.
  *
- * It must sit strictly under `terminationGracePeriodSeconds`, which covers
- * `preStop` and shutdown combined. The manifests use a 60 s grace period behind
- * a 10 s `preStop` sleep, leaving 50 s; 40 s is inside that, so an overrun is
- * reported by this process rather than cut short by SIGKILL.
+ * It must sit below the container's shutdown grace period, leaving enough time
+ * for the listener close, pool drain, and Sentry flush after the pre-stop hook.
  *
  * It has to cover {@link DEFAULT_DRAIN_TIMEOUT} and leave enough behind for the
  * listener close, the pool drain and the Sentry flush, which divide the
@@ -34,12 +31,10 @@ const DEFAULT_SHUTDOWN_TIMEOUT = 40;
  * Seconds in-flight tasks are given to finish on shutdown, when
  * `VT_TASKS_DRAIN_TIMEOUT` is unset.
  *
- * Draining to completion is not on offer at any grace period we can set — these
- * tasks run for minutes, and a cluster autoscaler force-removes a pod well
- * before an hour whatever the field says. So the drain is a window, and what
- * follows it is a release: a task handed back takes milliseconds to become
- * claimable again, where one abandoned mid-flight sits out the full
- * `TASK_LEASE_SECONDS` before any runner can touch it.
+ * Tasks can outlast any practical termination grace period, so this timeout
+ * bounds the wait rather than guaranteeing completion. The runner then releases
+ * the task, making it claimable again immediately instead of waiting for the
+ * full `TASK_LEASE_SECONDS`.
  */
 const DEFAULT_DRAIN_TIMEOUT = 25;
 
@@ -62,6 +57,10 @@ export type TasksConfig = {
 	metricsToken: string | undefined;
 	/** Unset disables Sentry entirely, which is what dev and CI want. */
 	sentryDsn: string | undefined;
+	/** Active key for encrypting secrets stored by Virtool. */
+	encryptionKey: string | undefined;
+	/** Previous encryption key accepted during rotation. */
+	encryptionKeyPrevious: string | undefined;
 	storage: StorageConfig;
 };
 
@@ -102,6 +101,8 @@ const TasksEnv = z.object({
 	// would miss a `VT_SENTRY_DSN_FILE` mount, so the DSN is resolved here and
 	// passed to `Sentry.init` explicitly instead.
 	VT_SENTRY_DSN: optional(),
+	VT_ENCRYPTION_KEY: optional(),
+	VT_ENCRYPTION_KEY_PREVIOUS: optional(),
 	VT_STORAGE_BACKEND: z.enum(["s3", "azure"]),
 	VT_STORAGE_S3_BUCKET: optional(),
 	VT_STORAGE_S3_REGION: optional(),
@@ -244,6 +245,8 @@ const TasksEnvSchema = TasksEnv.transform((raw, ctx) => {
 		drainTimeout,
 		metricsToken: raw.VT_METRICS_TOKEN,
 		sentryDsn: raw.VT_SENTRY_DSN,
+		encryptionKey: raw.VT_ENCRYPTION_KEY,
+		encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
 		storage: buildStorage(raw, ctx),
 	};
 });

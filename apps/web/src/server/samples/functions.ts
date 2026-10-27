@@ -1,5 +1,4 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	SAMPLE_SORT_FIELDS,
 	SampleCreateRequest,
@@ -43,6 +42,7 @@ import {
 	pageSchema,
 	perPageSchema,
 	rowIdSchema,
+	searchTermSchema,
 } from "../validation";
 
 const sampleIdSchema = z.object({
@@ -52,11 +52,11 @@ const sampleIdSchema = z.object({
 const findSamplesSchema = z.object({
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
-	labels: z.array(rowIdSchema).default([]),
-	workflows: z.array(z.string()).default([]),
-	users: z.array(rowIdSchema).default([]),
-	groups: z.array(rowIdSchema).default([]),
+	term: searchTermSchema,
+	labels: z.array(rowIdSchema).max(100).default([]),
+	workflows: z.array(z.string().max(100)).max(100).default([]),
+	users: z.array(rowIdSchema).max(100).default([]),
+	groups: z.array(rowIdSchema).max(100).default([]),
 	createdAfter: calendarDateSchema.optional(),
 	createdBefore: calendarDateSchema.optional(),
 	// A direction without a column falls back to the creation date below, so a
@@ -83,17 +83,11 @@ const updateRightsSchema = sampleIdSchema.extend({
 // creation job is finished and will not resume.
 const DELETABLE_JOB_STATES = new Set(["cancelled", "failed", "succeeded"]);
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ./data imports it references — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof SampleNotFoundError) {
-		setResponseStatus(404);
 		throw new ClientError("Sample not found.", 404);
 	}
 	if (err instanceof SampleNameConflictError) {
-		setResponseStatus(400);
 		throw new ClientError("Sample name is already in use.", 400);
 	}
 	if (
@@ -103,19 +97,16 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		err instanceof SampleGroupRequiredError ||
 		err instanceof SampleFileDuplicateError
 	) {
-		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
 	}
 	if (err instanceof UploadNotFoundError) {
-		setResponseStatus(400);
 		throw new ClientError("File does not exist.", 400);
 	}
 	if (err instanceof UploadReservedError) {
-		setResponseStatus(400);
 		throw new ClientError("File is already reserved.", 400);
 	}
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; this enforces the
 // per-sample right the operation needs on top of it. A lookup for a nonexistent
@@ -130,7 +121,6 @@ const authorizeSample = createServerOnlyFn(
 		const actor = await resolveSampleActor(db, userId);
 
 		if (!(await checkSampleRight(db, sampleId, actor, right))) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 	},
@@ -158,11 +148,11 @@ function coerceGroup(group: string | number | null | undefined): number | null {
 	return typeof group === "number" ? group : Number(group);
 }
 
-export const findSamplesFn = createServerFn({ method: "GET" })
+export const findSamplesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findSamplesSchema)
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findSamples(
 			db,
@@ -190,11 +180,11 @@ export const findRecentlyViewedSamplesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(z.object({ perPage: perPageSchema }))
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findRecentlyViewedSamples(
 			db,
-			context.session.userId,
+			context.principal.userId,
 			data.perPage,
 			actor,
 		);
@@ -207,8 +197,8 @@ export const recordSampleViewFn = createServerFn({ method: "POST" })
 		try {
 			// A view is only recorded for a sample the caller may read, so a probe
 			// of an id they cannot see leaves no trace.
-			await authorizeSample(data.sampleId, context.session.userId, "read");
-			await recordSampleView(db, context.session.userId, data.sampleId);
+			await authorizeSample(data.sampleId, context.principal.userId, "read");
+			await recordSampleView(db, context.principal.userId, data.sampleId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -218,7 +208,7 @@ export const recordSampleViewFn = createServerFn({ method: "POST" })
 export const listSampleGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 		return listSampleGroups(db, actor);
 	});
 
@@ -227,7 +217,7 @@ export const getSampleFn = createServerFn({ method: "GET" })
 	.validator(sampleIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeSample(data.sampleId, context.session.userId, "read");
+			await authorizeSample(data.sampleId, context.principal.userId, "read");
 			return await getSample(db, data.sampleId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -250,9 +240,8 @@ export const createSampleFn = createServerFn({ method: "POST" })
 				subtractions: data.subtractions,
 				labels: data.labels,
 				files: data.files,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 			});
-			setResponseStatus(201);
 			return sample;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -265,7 +254,7 @@ export const updateSampleFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { sampleId, ...values } = data;
 		try {
-			await authorizeSample(sampleId, context.session.userId, "write");
+			await authorizeSample(sampleId, context.principal.userId, "write");
 			return await updateSample(db, sampleId, values);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -277,21 +266,19 @@ export const deleteSampleFn = createServerFn({ method: "POST" })
 	.validator(sampleIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeSample(data.sampleId, context.session.userId, "write");
+			await authorizeSample(data.sampleId, context.principal.userId, "write");
 
 			const sample = await getSample(db, data.sampleId);
 
 			// A sample whose creation job is still running cannot be deleted.
 			if (!sample.ready) {
 				if (!sample.job) {
-					setResponseStatus(400);
 					throw new ClientError(
 						"Unfinalized samples without jobs cannot be deleted.",
 						400,
 					);
 				}
 				if (!DELETABLE_JOB_STATES.has(sample.job.state)) {
-					setResponseStatus(400);
 					throw new ClientError(
 						`Cannot delete sample with active job (current state: ${sample.job.state}).`,
 						400,
@@ -318,15 +305,13 @@ export const updateSampleRightsFn = createServerFn({ method: "POST" })
 		const ownerId = await getSampleOwnerId(db, sampleId);
 
 		if (ownerId === null) {
-			setResponseStatus(404);
 			throw new ClientError("Sample not found.", 404);
 		}
 
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		// Only the owner or a full administrator may change a sample's rights.
 		if (!actor.isAdmin && actor.userId !== ownerId) {
-			setResponseStatus(403);
 			throw new ForbiddenError();
 		}
 

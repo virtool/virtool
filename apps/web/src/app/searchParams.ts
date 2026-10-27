@@ -10,6 +10,9 @@
  * the number `2` and `?labels=[1,2]` as an array. Every helper takes `unknown`
  * and falls back rather than throwing — a malformed URL should render the page,
  * not an error boundary.
+ *
+ * Type validators' inputs as `Partial<Search> & SearchSchemaInput` and their
+ * results as `Search` so links can supply only the parameters they change.
  */
 
 import { isCalendarDate } from "@app/date";
@@ -20,6 +23,38 @@ export function str(value: unknown, fallback: string): string {
 
 export function strOptional(value: unknown): string | undefined {
 	return typeof value === "string" ? value : undefined;
+}
+
+// A redirect to one of these would return to the wall after sign-in.
+const WALL_PATHS = [
+	"/login",
+	"/setup",
+	"/account-setup",
+	"/recover",
+	"/verify-email",
+	"/email-remediation",
+	"/email-remediation-verify",
+	"/mfa-enrollment",
+];
+
+/** Return an internal post-authentication redirect, or discard it. */
+export function safeRedirect(value: unknown): string | undefined {
+	const target = strOptional(value);
+	// The email-change wall resumes a link that it holds in session storage.
+	if (target === "/verify-email") {
+		return target;
+	}
+	return target?.startsWith("/") &&
+		!target.startsWith("//") &&
+		!WALL_PATHS.some(
+			(path) =>
+				target === path ||
+				target.startsWith(`${path}/`) ||
+				target.startsWith(`${path}?`) ||
+				target.startsWith(`${path}#`),
+		)
+		? target
+		: undefined;
 }
 
 export function num(value: unknown, fallback: number): number {

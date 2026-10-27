@@ -2,6 +2,7 @@ import { serverErrorSerializationAdapter } from "@app/serverErrors";
 import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
@@ -17,7 +18,7 @@ function clientError(message: string, status: number): Error {
 }
 
 describe("serverErrorSerializationAdapter", () => {
-	it("matches our server errors by name", () => {
+	it("matches server errors by name", () => {
 		expect(
 			serverErrorSerializationAdapter.test(
 				namedError(UNAUTHORIZED_ERROR_NAME, "Unauthorized"),
@@ -26,6 +27,14 @@ describe("serverErrorSerializationAdapter", () => {
 		expect(
 			serverErrorSerializationAdapter.test(
 				namedError(FORBIDDEN_ERROR_NAME, "Forbidden"),
+			),
+		).toBe(true);
+		expect(
+			serverErrorSerializationAdapter.test(
+				namedError(
+					PASSWORD_RESET_REQUIRED_ERROR_NAME,
+					"Password reset required",
+				),
 			),
 		).toBe(true);
 		expect(

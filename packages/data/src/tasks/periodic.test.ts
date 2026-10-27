@@ -14,7 +14,7 @@ import type { Db, PgClient } from "../db/pg";
 import { tasks } from "../db/schema/tasks";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { collectFrames } from "../test/frames";
-import { createPeriodicTask, TASK_WEDGE_SECONDS } from "./data";
+import { createPeriodicTask, renewLeases, TASK_WEDGE_SECONDS } from "./data";
 
 let database: TestDatabase;
 let db: Db;
@@ -53,6 +53,7 @@ async function seedTask(
 		acquiredSecondsAgo?: number;
 		complete?: boolean;
 		error?: string;
+		runnerId?: string;
 	} = {},
 ): Promise<number> {
 	const [row] = await db
@@ -68,6 +69,10 @@ async function seedTask(
 			created_at: sql`timezone('utc', clock_timestamp()) - make_interval(secs => ${ageSeconds}::double precision)`,
 			error: values.error ?? null,
 			progress: 0,
+			runner_id:
+				values.acquiredSecondsAgo === undefined
+					? null
+					: (values.runnerId ?? "runner-a"),
 			step: type,
 			type,
 		})
@@ -87,6 +92,12 @@ async function countTasks(type: string): Promise<number> {
 		.where(eq(tasks.type, type));
 
 	return rows.length;
+}
+
+async function readTask(taskId: number) {
+	const [row] = await db.select().from(tasks).where(eq(tasks.id, taskId));
+
+	return row;
 }
 
 /** A transaction held open by a test, and the way to let it commit. */
@@ -197,7 +208,11 @@ describe("the recency window", () => {
 
 		const result = await createPeriodicTask(db, "sweep_blast", 30);
 
-		expect(result).toEqual({ outcome: "not_due", task: null });
+		expect(result).toEqual({
+			outcome: "not_due",
+			retiredTaskIds: [],
+			task: null,
+		});
 		expect(await countTasks("sweep_blast")).toBe(1);
 	});
 
@@ -226,6 +241,7 @@ describe("the recency window", () => {
 
 		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
 			outcome: "not_due",
+			retiredTaskIds: [],
 			task: null,
 		});
 	});
@@ -235,6 +251,7 @@ describe("the recency window", () => {
 
 		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
 			outcome: "not_due",
+			retiredTaskIds: [],
 			task: null,
 		});
 	});
@@ -259,6 +276,7 @@ describe("the recency window", () => {
 
 		expect(await createPeriodicTask(skewed.db, "sweep_blast", 30)).toEqual({
 			outcome: "not_due",
+			retiredTaskIds: [],
 			task: null,
 		});
 
@@ -275,7 +293,7 @@ describe("the recency window", () => {
  * The regression guard for the backlog. Gating on recency alone would insert a
  * fresh row every time the last one ages out of the window, however wedged or
  * absent the runner is, and the fleet would come back to a pile of identical
- * periodic tasks. Nothing here may depend on how *old* the outstanding row is.
+ * periodic tasks. These rows stay below the separate wedge ceiling.
  */
 describe("the outstanding-work gate", () => {
 	it("suppresses a spawn while a queued task of the type is outstanding", async () => {
@@ -283,6 +301,7 @@ describe("the outstanding-work gate", () => {
 
 		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
 			outcome: "not_due",
+			retiredTaskIds: [],
 			task: null,
 		});
 
@@ -360,14 +379,19 @@ describe("the wedge ceiling", () => {
 		);
 	});
 
-	it("spawns once an outstanding row passes the ceiling", async () => {
-		await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60);
+	it("fails a wedged row before spawning its replacement", async () => {
+		const wedgedId = await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60);
 
-		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
-			"spawned",
-		);
+		const result = await createPeriodicTask(db, "sweep_blast", 30);
+
+		expect(result.outcome).toBe("spawned");
+		expect(result.retiredTaskIds).toEqual([wedgedId]);
 
 		expect(await countTasks("sweep_blast")).toBe(2);
+		expect(await readTask(wedgedId)).toMatchObject({
+			complete: true,
+			error: `periodic task exceeded the ${TASK_WEDGE_SECONDS}-second wedge ceiling`,
+		});
 	});
 
 	/**
@@ -375,14 +399,74 @@ describe("the wedge ceiling", () => {
 	 * on a wedged runner cannot be trusted to say the work is progressing. The
 	 * age ceiling is what frees the type regardless.
 	 */
-	it("spawns past the ceiling even with a fresh lease", async () => {
-		await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60, {
+	it("retires a freshly leased row at the ceiling and spawns", async () => {
+		const wedgedId = await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60, {
 			acquiredSecondsAgo: 5,
 		});
 
 		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
 			"spawned",
 		);
+
+		await expect(renewLeases(db, [wedgedId], "runner-a")).resolves.toEqual([]);
+	});
+
+	it("retires an old row while a newer replacement suppresses another spawn", async () => {
+		const wedgedId = await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60);
+		await seedTask("sweep_blast", 10);
+
+		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
+			outcome: "not_due",
+			retiredTaskIds: [wedgedId],
+			task: null,
+		});
+
+		expect(await readTask(wedgedId)).toMatchObject({ complete: true });
+	});
+
+	it("retires an existing crash-loop backlog before inserting one replacement", async () => {
+		const first = await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 120);
+		const second = await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60);
+
+		const result = await createPeriodicTask(db, "sweep_blast", 30);
+
+		expect(result.outcome).toBe("spawned");
+		expect(result.retiredTaskIds).toEqual(
+			expect.arrayContaining([first, second]),
+		);
+		expect(result.retiredTaskIds).toHaveLength(2);
+
+		const rows = await db
+			.select({ complete: tasks.complete, error: tasks.error })
+			.from(tasks)
+			.where(eq(tasks.type, "sweep_blast"));
+
+		expect(
+			rows.filter(({ complete, error }) => !complete && error === null),
+		).toHaveLength(1);
+	});
+
+	it("publishes updates for retired rows and a create for the replacement", async () => {
+		const wedgedId = await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60);
+		let replacementId: number | undefined;
+
+		const frames = await collectFrames(database.client, async () => {
+			const result = await createPeriodicTask(db, "sweep_blast", 30);
+
+			replacementId = result.task?.id;
+		});
+
+		expect(frames).toEqual(
+			expect.arrayContaining([
+				{ domain: "tasks", operation: "update", resource_id: wedgedId },
+				{
+					domain: "tasks",
+					operation: "create",
+					resource_id: replacementId,
+				},
+			]),
+		);
+		expect(frames).toHaveLength(2);
 	});
 });
 
@@ -404,6 +488,7 @@ describe("mutual exclusion", () => {
 
 		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
 			outcome: "skipped_locked",
+			retiredTaskIds: [],
 			task: null,
 		});
 

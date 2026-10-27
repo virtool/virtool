@@ -18,28 +18,28 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1110.0",
-		"@aws-sdk/lib-storage": "^3.1094.0",
-		"@azure/identity": "^4.13.1",
+		"@aws-sdk/client-s3": "^3.1152.0",
+		"@aws-sdk/lib-storage": "^3.1156.0",
+		"@azure/identity": "^4.14.0",
 		"@azure/storage-blob": "^12.33.0",
-		"@sentry/node": "^10.70.0",
+		"@sentry/node": "^11.8.0",
 		"@virtool/archive": "workspace:*",
 		"@virtool/bio": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"@virtool/workflow": "workspace:*",
-		"execa": "^10.0.1",
+		"execa": "^10.2.0",
 		"pino": "^10.1.0",
-		"tar-stream": "^3.2.0",
-		"undici": "^7.29.0"
+		"tar-stream": "^3.2.2",
+		"undici": "^8.12.3"
 	},
 	"devDependencies": {
 		"@virtool/image-build": "workspace:*",
 		"@virtool/quality-core": "workspace:*",
 		"@virtool/tsconfig": "workspace:*",
 		"@virtool/workflow-tools": "workspace:*",
-		"@types/node": "^26.4.0",
-		"tsdown": "^0.22.14",
-		"vitest": "^4.1.11"
+		"@types/node": "^26.4.1",
+		"tsdown": "^0.23.0",
+		"vitest": "^5.0.5"
 	}
 }

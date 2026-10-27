@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
-import type { RunSubprocess } from "@virtool/workflow";
+import { createFakeSubprocessRunner } from "@virtool/workflow/testing";
 import { describe, expect, it } from "vitest";
 import { eliminateSubtractionStep } from "./eliminateSubtraction";
 import { fastq, flagValue, parseFastqIds, setupStep } from "./fixtures";
@@ -20,40 +20,27 @@ async function runStep(
 	await writeFile(setup.paths.unmappedOtus, fastq("r1", "r2", "r3"));
 
 	const inputs: string[] = [];
-	const commands: (readonly string[])[] = [];
 	let pass = 0;
 
-	const runSubprocess: RunSubprocess = async (options) => {
-		commands.push(options.command);
+	const runSubprocess = createFakeSubprocessRunner({
+		async effect({ command }) {
+			const contents = await readFile(flagValue(command, "-U") ?? "", "utf8");
 
-		const contents = await readFile(
-			flagValue(options.command, "-U") ?? "",
-			"utf8",
-		);
+			inputs.push(contents);
 
-		inputs.push(contents);
+			const eliminated = new Set(eliminationsPerPass[pass] ?? []);
+			pass += 1;
 
-		const eliminated = new Set(eliminationsPerPass[pass] ?? []);
-		pass += 1;
-
-		await writeFile(
-			flagValue(options.command, "--un") ?? "",
-			fastq(...parseFastqIds(contents).filter((id) => !eliminated.has(id))),
-		);
-
-		return {
-			command: options.command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
-	};
+			await writeFile(
+				flagValue(command, "--un") ?? "",
+				fastq(...parseFastqIds(contents).filter((id) => !eliminated.has(id))),
+			);
+		},
+	});
 
 	await eliminateSubtractionStep.run({ ...setup.context, runSubprocess });
 
-	return { ...setup, commands, inputs };
+	return { ...setup, commands: runSubprocess.commands(), inputs };
 }
 
 describe("eliminateSubtractionStep", () => {

@@ -1,29 +1,8 @@
 import { z } from "zod";
 
-/** Domains that may appear on the server-push SSE stream. */
-export const SseDomainSchema = z.enum([
-	"account",
-	"analyses",
-	"banners",
-	"groups",
-	"indexes",
-	"jobs",
-	"labels",
-	"references",
-	"roles",
-	"samples",
-	"subtractions",
-	"tasks",
-	"uploads",
-	"users",
-]);
-
-/** Domain literal as a TypeScript union. */
-export type SseDomain = z.infer<typeof SseDomainSchema>;
-
 const OperationSchema = z.enum(["insert", "update", "delete"]);
 
-function frame<D extends SseDomain, I extends z.ZodTypeAny>(domain: D, id: I) {
+function frame<D extends string, I extends z.ZodTypeAny>(domain: D, id: I) {
 	return z
 		.object({
 			domain: z.literal(domain),
@@ -44,6 +23,7 @@ export const SseMessageSchema = z.discriminatedUnion("domain", [
 	frame("indexes", NumberId),
 	frame("jobs", NumberId),
 	frame("labels", NumberId),
+	frame("otus", StringId),
 	frame("references", NumberId),
 	frame("roles", StringId),
 	frame("samples", NumberId),
@@ -55,3 +35,13 @@ export const SseMessageSchema = z.discriminatedUnion("domain", [
 
 /** A server-push frame, validated and discriminated by domain. */
 export type SseMessage = z.infer<typeof SseMessageSchema>;
+
+/** Domains that may appear on the server-push SSE stream. */
+export const SseDomainSchema = z.enum(
+	SseMessageSchema.options.map(function getDomain(schema) {
+		return schema.shape.domain.value;
+	}),
+);
+
+/** Domain literal as a TypeScript union. */
+export type SseDomain = SseMessage["domain"];

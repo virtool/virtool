@@ -5,3 +5,4 @@ export { default as IconButton } from "./IconButton";
 export { default as IconLink } from "./IconLink";
 export { default as InitialIcon } from "./InitialIcon";
 export { iconVariants } from "./iconVariants";
+export { default as UserAvatar } from "./UserAvatar";

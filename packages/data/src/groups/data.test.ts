@@ -3,9 +3,16 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
+import { takeFirstOrThrow } from "../db/rows";
 import { groups, userGroups } from "../db/schema/groups";
+import {
+	legacyReferenceGroups,
+	legacyReferences,
+} from "../db/schema/references";
+import { legacySamples } from "../db/schema/samples";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedReference } from "../indexes/test/fixtures";
 import {
 	createGroup,
 	deleteGroup,
@@ -31,6 +38,9 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(legacySamples);
+	await db.delete(legacyReferenceGroups);
+	await db.delete(legacyReferences);
 	await db.delete(users);
 	await db.delete(groups);
 });
@@ -78,6 +88,19 @@ describe("findGroups", () => {
 		expect(result.items.map((group) => group.name)).toEqual(["Technicians"]);
 		expect(result.foundCount).toBe(1);
 		expect(result.totalCount).toBe(2);
+	});
+
+	it("matches % and _ in the term literally", async () => {
+		await seedGroup(db, { name: "100% techs" });
+		await seedGroup(db, { name: "lab_admins" });
+		await seedGroup(db, { name: "100 techs" });
+		await seedGroup(db, { name: "lab-admins" });
+
+		const percent = await findGroups(db, "0%", 1, 25);
+		const underscore = await findGroups(db, "b_a", 1, 25);
+
+		expect(percent.items.map((group) => group.name)).toEqual(["100% techs"]);
+		expect(underscore.items.map((group) => group.name)).toEqual(["lab_admins"]);
 	});
 
 	it("paginates the matches", async () => {
@@ -182,6 +205,64 @@ describe("updateGroup", () => {
 		expect((await readGroup(groupId))?.permissions).toEqual(group.permissions);
 	});
 
+	it("keeps a permission toggle committed while another waits on the row", async () => {
+		const groupId = await seedGroup(db);
+		const holder = database.connect();
+		const observer = database.connect();
+		let releaseLock = () => {};
+		const release = new Promise<void>((resolve) => {
+			releaseLock = resolve;
+		});
+		let reportLocked = () => {};
+		const locked = new Promise<void>((resolve) => {
+			reportLocked = resolve;
+		});
+
+		try {
+			const transaction = holder.client.begin(async (tx) => {
+				await tx`update groups set permissions = permissions || '{"create_ref": true}'::jsonb where id = ${groupId}`;
+				reportLocked();
+				await release;
+			});
+			await locked;
+
+			const update = updateGroup(db, groupId, {
+				permissions: { upload_file: true },
+			});
+			let isWaiting = false;
+			for (let attempt = 0; attempt < 100; attempt += 1) {
+				const rows = await observer.client<
+					{ wait_event_type: string | null }[]
+				>`
+					select wait_event_type
+					from pg_stat_activity
+					where datname = current_database()
+						and query like 'update "groups"%'
+						and wait_event_type = 'Lock'
+				`;
+				if (rows.length > 0) {
+					isWaiting = true;
+					break;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+			expect(isWaiting).toBe(true);
+
+			releaseLock();
+			await transaction;
+			await update;
+		} finally {
+			releaseLock();
+			await Promise.all([holder.close(), observer.close()]);
+		}
+
+		expect((await readGroup(groupId))?.permissions).toEqual({
+			...NO_PERMISSIONS,
+			create_ref: true,
+			upload_file: true,
+		});
+	});
+
 	it("returns the current group unchanged when given nothing to change", async () => {
 		const groupId = await seedGroup(db, {
 			name: "technicians",
@@ -225,6 +306,58 @@ describe("deleteGroup", () => {
 		// The user itself survives; only the membership is gone.
 		expect(
 			await db.select().from(users).where(eq(users.id, userId)),
+		).toHaveLength(1);
+	});
+
+	it("deletes a group that owns samples and leaves them without a group", async () => {
+		const groupId = await seedGroup(db);
+		const userId = await seedUser(db);
+		const sampleId = takeFirstOrThrow(
+			await db
+				.insert(legacySamples)
+				.values({
+					name: "Sample",
+					library_type: "normal",
+					created_at: new Date(),
+					group_id: groupId,
+					user_id: userId,
+				})
+				.returning({ id: legacySamples.id }),
+		).id;
+
+		await deleteGroup(db, groupId);
+
+		expect(await readGroup(groupId)).toBeUndefined();
+		expect(
+			await db
+				.select({ groupId: legacySamples.group_id })
+				.from(legacySamples)
+				.where(eq(legacySamples.id, sampleId)),
+		).toEqual([{ groupId: null }]);
+	});
+
+	it("deletes a group with reference rights and removes the rights", async () => {
+		const groupId = await seedGroup(db);
+		const userId = await seedUser(db);
+		const referenceId = await seedReference(db, userId);
+		await db
+			.insert(legacyReferenceGroups)
+			.values({ reference_id: referenceId, group_id: groupId, build: true });
+
+		await deleteGroup(db, groupId);
+
+		expect(await readGroup(groupId)).toBeUndefined();
+		expect(
+			await db
+				.select()
+				.from(legacyReferenceGroups)
+				.where(eq(legacyReferenceGroups.reference_id, referenceId)),
+		).toHaveLength(0);
+		expect(
+			await db
+				.select()
+				.from(legacyReferences)
+				.where(eq(legacyReferences.id, referenceId)),
 		).toHaveLength(1);
 	});
 

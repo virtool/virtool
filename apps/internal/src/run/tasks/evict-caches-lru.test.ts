@@ -1,5 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import { caches } from "@virtool/data/db/schema/caches";
+import { cacheUsageSnapshots } from "@virtool/data/db/schema/cacheUsageSnapshots";
 import { settings } from "@virtool/data/db/schema/settings";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import {
@@ -10,14 +11,19 @@ import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { createLogger, type Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { cacheKey, MemoryStorage } from "@virtool/storage";
+import { streamOf } from "@virtool/storage/test/fixtures";
 import { asc } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import {
+	claimTask,
+	createTaskTestContext,
+	readTaskRow,
+} from "../testing/tasks";
 import { evictCachesLruTask } from "./evict-caches-lru";
 import type { TaskContext } from "./registry";
 
-const GIB = 1024 ** 3;
+const GB = 1000 ** 3;
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
@@ -36,6 +42,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(cacheUsageSnapshots);
 	await db.delete(caches);
 	await db.delete(tasks);
 	// Cleared so each test starts from the seeded default budget unless it sets
@@ -43,12 +50,8 @@ beforeEach(async () => {
 	await db.delete(settings);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage };
+	ctx = createTaskTestContext({ db, storage });
 });
-
-async function* body(text: string): AsyncIterable<Uint8Array> {
-	yield new TextEncoder().encode(text);
-}
 
 /**
  * Seed `count` cache entries of `size` declared bytes each, oldest first.
@@ -64,7 +67,7 @@ async function seedEntries(count: number, size: number): Promise<string[]> {
 		const storageKey = cacheKey(index.toString(16).padStart(32, "0"));
 		const key = `cache-${index}`;
 
-		await storage.write(storageKey, body(key));
+		await storage.write(storageKey, streamOf(key));
 
 		// Descending age, so index 0 is the least recently used and eviction order
 		// is the seeding order.
@@ -109,7 +112,7 @@ function refusingDeletes(): StorageBackend {
 
 describe("evictCachesLruTask", () => {
 	it("completes without evicting when the store is under budget", async () => {
-		const keys = await seedEntries(5, 10 * GIB);
+		const keys = await seedEntries(5, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -134,10 +137,10 @@ describe("evictCachesLruTask", () => {
 		expect(await remainingKeys()).toEqual(keys);
 	});
 
-	// 150 GiB stored against the default 100 GiB budget, so 50 GiB has to go and
+	// 150 GB stored against the default 100 GB budget, so 50 GB has to go and
 	// the five least recently used entries are what covers it.
 	it("evicts the least recently used entries once the store is over budget", async () => {
-		const keys = await seedEntries(15, 10 * GIB);
+		const keys = await seedEntries(15, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -152,18 +155,21 @@ describe("evictCachesLruTask", () => {
 
 		expect(outcome).toEqual({ status: "completed" });
 		expect(await remainingKeys()).toEqual(keys.slice(5));
+		expect(await db.select().from(cacheUsageSnapshots)).toMatchObject([
+			{ cache_count: 15, total_size: 150 * GB },
+		]);
 
 		await expect(
 			storage.size(cacheKey("0".padStart(32, "0"))),
 		).rejects.toThrow();
 	});
 
-	// 150 GiB stored against a 40 GiB budget seeded into settings, so 110 GiB has
+	// 150 GB stored against a 40 GB budget seeded into settings, so 110 GB has
 	// to go and the eleven least recently used entries cover it.
 	it("evicts against the budget configured in settings", async () => {
-		await seedSettings(db, { cacheStorageBudget: 40 * GIB });
+		await seedSettings(db, { cacheStorageBudget: 40 * GB });
 
-		const keys = await seedEntries(15, 10 * GIB);
+		const keys = await seedEntries(15, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -181,7 +187,7 @@ describe("evictCachesLruTask", () => {
 	});
 
 	it("fails the task and leaves every row when storage refuses a delete", async () => {
-		const keys = await seedEntries(15, 10 * GIB);
+		const keys = await seedEntries(15, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -189,7 +195,7 @@ describe("evictCachesLruTask", () => {
 			db,
 			def: evictCachesLruTask,
 			task,
-			ctx: { db, storage: refusingDeletes() },
+			ctx: createTaskTestContext({ db, storage: refusingDeletes() }),
 			logger,
 			signal: new AbortController().signal,
 		});
@@ -211,7 +217,7 @@ describe("evictCachesLruTask", () => {
 	// walk hundreds of objects would hold the drain open for as long as that
 	// takes, and could reach the row delete after the claim was released.
 	it("stops deleting and leaves every row when the run is aborted", async () => {
-		const keys = await seedEntries(20, 10 * GIB);
+		const keys = await seedEntries(20, 10 * GB);
 
 		const controller = new AbortController();
 
@@ -244,7 +250,7 @@ describe("evictCachesLruTask", () => {
 			db,
 			def: evictCachesLruTask,
 			task,
-			ctx: { db, storage: aborting },
+			ctx: createTaskTestContext({ db, storage: aborting }),
 			logger,
 			signal: controller.signal,
 		});

@@ -1,4 +1,3 @@
-import SectionHeader from "@base/SectionHeader";
 import { useSuspenseReference } from "@references/queries";
 /**
  * The reference settings view allowing users to manage the reference
@@ -25,10 +24,6 @@ export default function ReferenceSettings() {
 	return (
 		<>
 			{data.archived ? <ArchivedSourceTypes /> : <LocalSourceTypes />}
-			<SectionHeader>
-				<h2>Access</h2>
-				<p>Manage who can access this reference.</p>
-			</SectionHeader>
 			<ReferenceMembers
 				editId={editUserId}
 				noun="user"

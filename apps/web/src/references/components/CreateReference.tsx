@@ -1,5 +1,13 @@
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
-import { SelectBox, SelectBoxItem } from "@base/Select";
+import Field, {
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldTitle,
+} from "@base/Field";
+import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
 import { useState } from "react";
 import { CreateReferenceForm } from "./CreateReferenceForm";
 
@@ -30,26 +38,38 @@ export function CreateReference({ open, onOpenChange }: CreateReferenceProps) {
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent size="lg">
 				<DialogTitle>Create Reference</DialogTitle>
-				<div className="mb-4">
-					<SelectBox
+				<FieldSet>
+					<FieldLegend variant="label">Method</FieldLegend>
+					<RadioGroup
 						className="grid-cols-2"
-						label="Method"
 						onValueChange={(value) => setMode(value as "empty" | "import")}
 						value={mode}
 					>
-						<SelectBoxItem value="empty">
-							<div>Empty</div>
-							<span>Start from a blank reference.</span>
-						</SelectBoxItem>
-						<SelectBoxItem value="import">
-							<div>Import</div>
-							<span>
-								Create a reference from a file previously exported from another
-								Virtool reference.
-							</span>
-						</SelectBoxItem>
-					</SelectBox>
-				</div>
+						<FieldLabel variant="card">
+							<Field orientation="horizontal" className="items-start">
+								<RadioGroupItem className="mt-0.5" value="empty" />
+								<FieldContent>
+									<FieldTitle>Empty</FieldTitle>
+									<FieldDescription>
+										Start from a blank reference.
+									</FieldDescription>
+								</FieldContent>
+							</Field>
+						</FieldLabel>
+						<FieldLabel variant="card">
+							<Field orientation="horizontal" className="items-start">
+								<RadioGroupItem className="mt-0.5" value="import" />
+								<FieldContent>
+									<FieldTitle>Import</FieldTitle>
+									<FieldDescription>
+										Create a reference from a file previously exported from
+										another Virtool reference.
+									</FieldDescription>
+								</FieldContent>
+							</Field>
+						</FieldLabel>
+					</RadioGroup>
+				</FieldSet>
 				<CreateReferenceForm mode={mode} onSuccess={handleSuccess} />
 			</DialogContent>
 		</Dialog>

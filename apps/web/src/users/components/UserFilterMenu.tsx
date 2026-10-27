@@ -3,11 +3,16 @@ import { DropdownMenuSeparator } from "@base/Dropdown";
 import { FilterMenuCheckboxItem, FilterMenuContent } from "@base/Filter";
 import Input from "@base/Input";
 import QueryError from "@base/QueryError";
-import { useListUsers } from "@users/queries";
 import type { UserNested } from "@virtool/contracts";
 import { useState } from "react";
 
 type UserFilterMenuProps = {
+	/** Whether loading the available users failed. */
+	isError: boolean;
+
+	/** Whether the available users are loading. */
+	isPending: boolean;
+
 	/** Deselects every user. */
 	onClear: () => void;
 
@@ -16,17 +21,22 @@ type UserFilterMenuProps = {
 
 	/** The ids of the selected users. */
 	selected: number[];
+
+	/** The users available in the current list context. */
+	users?: UserNested[];
 };
 
 /**
  * A dropdown menu for selecting the users a list is filtered by
  */
 export default function UserFilterMenu({
+	isError,
+	isPending,
 	onClear,
 	onToggle,
 	selected,
+	users,
 }: UserFilterMenuProps) {
-	const { data: users, isError, isPending } = useListUsers();
 	const { data: account } = useFetchAccount();
 	const [term, setTerm] = useState("");
 

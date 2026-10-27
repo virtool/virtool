@@ -1,8 +1,10 @@
 import { z } from "zod";
 import type { AdministratorRoleName } from "./administrators";
+import { ADMINISTRATOR_ROLE_NAMES } from "./administrators";
 import type { GroupMinimal } from "./groups";
 import type { Permissions } from "./permissions";
 import type { SearchResult } from "./search";
+import type { AccountLifecycleState } from "./setup";
 
 /** A user reduced to the fields shown alongside another resource. */
 export const UserNested = z.object({
@@ -32,6 +34,16 @@ export type User = UserNested & {
 	/** When they last changed their password */
 	lastPasswordChange: Date;
 
+	/**
+	 * Whether the account is usable as an application account yet.
+	 *
+	 * Separate from {@link User.active}: a `pending` account has a role and
+	 * group memberships but no credential. Its handle is empty until acceptance.
+	 * A deactivated account
+	 * is unusable whatever this says.
+	 */
+	lifecycleState: AccountLifecycleState;
+
 	/** What they may do, their groups' grants folded in */
 	permissions: Permissions;
 
@@ -39,8 +51,48 @@ export type User = UserNested & {
 	primaryGroup: GroupMinimal | null;
 };
 
+/** A user as the administrator detail view reads them. */
+export type AdministeredUserDetail = User & {
+	/** Whether they have confirmed a TOTP enrollment */
+	twoFactorEnabled: boolean;
+};
+
 /** The workflow the quick-analyze dialog runs by default. */
 export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
+
+/** The columns a Pathoscope export can carry, in their default order. */
+export const PATHOSCOPE_COLUMNS = [
+	"name",
+	"weight",
+	"depth",
+	"coverage",
+] as const;
+
+/** A column of a Pathoscope export. */
+export type PathoscopeColumn = (typeof PATHOSCOPE_COLUMNS)[number];
+
+/**
+ * The FASTA headers a reference export can write: the accession alone, or the
+ * accession followed by the OTU and isolate names.
+ */
+export const REFERENCE_EXPORT_FASTA_HEADERS = ["accession", "full"] as const;
+
+/** A FASTA header style for a reference export. */
+export type ReferenceExportFastaHeader =
+	(typeof REFERENCE_EXPORT_FASTA_HEADERS)[number];
+
+/** The file formats a downloaded reference export table can take. */
+export const REFERENCE_EXPORT_TABLE_FORMATS = ["csv", "tsv"] as const;
+
+/** A file format for a downloaded reference export table. */
+export type ReferenceExportTableFormat =
+	(typeof REFERENCE_EXPORT_TABLE_FORMATS)[number];
+
+/** The sources an avatar can come from, in the order the UI lists them. */
+export const AVATAR_SOURCES = ["initials", "gravatar"] as const;
+
+/** A source for the image that represents a user. */
+export type AvatarSource = (typeof AVATAR_SOURCES)[number];
 
 /**
  * A signed-in user's client-side preferences.
@@ -49,10 +101,20 @@ export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
  * between the two spellings.
  */
 export type AccountSettings = {
+	/** The columns a Pathoscope export carries, in order; never empty */
+	pathoscopeColumns: PathoscopeColumn[];
+	/** Whether pathoscope exports name an OTU by its acronym, when it has one */
+	preferAcronym: boolean;
+	/** The FASTA header an OTU or isolate export uses unless changed in its menu */
+	referenceExportFastaHeader: ReferenceExportFastaHeader;
+	/** The format an OTU or isolate table downloads as unless changed in its menu */
+	referenceExportTableFormat: ReferenceExportTableFormat;
 	quickAnalyzeWorkflow: QuickAnalyzeWorkflow;
 	showIds: boolean;
 	showVersions: boolean;
 	skipQuickAnalyzeDialog: boolean;
+	/** Where the image that represents the user comes from */
+	avatarSource: AvatarSource;
 };
 
 /**
@@ -67,7 +129,54 @@ export type Account = User & {
 	settings: AccountSettings;
 };
 
+/** The signed-in user's email verification, TOTP, and recovery-code state. */
+export type AccountSecurity = {
+	/** Whether the current address is verified */
+	emailVerified: boolean;
+	/** Whether the instance requires every user to use TOTP */
+	mfaRequired: boolean;
+	/** An address waiting for verification; the current address stays active */
+	pendingEmail: string | null;
+	/** Unused recovery codes, or `null` without TOTP */
+	recoveryCodesRemaining: number | null;
+	/** Whether the user has confirmed a TOTP enrollment */
+	twoFactorEnabled: boolean;
+};
+
 /** A page of users. */
 export type UserSearchResult = SearchResult & {
 	items: User[];
+};
+
+/**
+ * The account states the user administration list can filter by.
+ *
+ * `invited` is an active account still waiting on its invitation. A
+ * deactivated account is `deactivated` whatever its lifecycle state.
+ */
+export const USER_STATUSES = ["active", "invited", "deactivated"] as const;
+
+/** An account state as the user administration list shows it. */
+export type UserStatus = (typeof USER_STATUSES)[number];
+
+/** The role filters of the user administration list: each role, or none. */
+export const USER_ROLE_FILTERS = [...ADMINISTRATOR_ROLE_NAMES, "none"] as const;
+
+/** A role filter of the user administration list. */
+export type UserRoleFilter = (typeof USER_ROLE_FILTERS)[number];
+
+/** The columns the user administration list can be sorted by. */
+export const USER_SORT_FIELDS = ["handle", "email", "role", "status"] as const;
+
+/** A column the user administration list can be sorted by. */
+export type UserSortField = (typeof USER_SORT_FIELDS)[number];
+
+/** A user as the user administration list reads them, with their email. */
+export type AdministeredUser = User & {
+	email: string;
+};
+
+/** A page of the user administration list. */
+export type AdministeredUserSearchResult = SearchResult & {
+	items: AdministeredUser[];
 };

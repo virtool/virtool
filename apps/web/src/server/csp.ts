@@ -20,7 +20,7 @@ const cspDirectives = [
 // Per-request CSP nonce. Deliberately uses the Web Crypto and `btoa` globals
 // rather than node:crypto/Buffer: this module is reached from `router.tsx`,
 // which is in the browser program, and must type-check without Node types.
-// Both globals exist in our Node runtime, so this is safe on the server.
+// Both globals exist in the Node runtime, so this is safe on the server.
 function generateNonce(): string {
 	return btoa(
 		String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))),

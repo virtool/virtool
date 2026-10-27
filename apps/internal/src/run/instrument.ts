@@ -15,16 +15,16 @@ export type SentryStatus = {
  *
  * **This runs after `postgres` and the rest of the module graph have already
  * been imported, and that is fine only because the process is started with
- * `node --import @sentry/node/preload`.** ESM evaluates every static import
+ * `node --import @sentry/node/import`.** ESM evaluates every static import
  * before any top-level statement, and the bundle makes that concrete — the
  * externals land at the top of `dist/index.mjs` while this call sits thousands
- * of lines below. Without the preload flag the SDK's module hooks would install
- * too late to patch anything, and the service would report errors while
- * silently recording no database spans.
+ * of lines below. Without the import flag the SDK's module hooks would install
+ * too late to inject diagnostics channels into `postgres`, and the service
+ * would report errors while silently recording no database spans.
  *
  * Init cannot simply move earlier: the DSN comes from `<KEY>_FILE`-backed
  * config, which has to be read first. That is exactly the case Sentry's "late
- * initialization" guidance covers, and the preload hook is its answer. If the
+ * initialization" guidance covers, and the import hook is its answer. If the
  * flag is ever dropped from the Dockerfile ENTRYPOINT, tracing goes
  * quiet with nothing in the logs to say so.
  *

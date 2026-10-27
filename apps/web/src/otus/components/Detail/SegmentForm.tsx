@@ -1,6 +1,7 @@
 import Checkbox from "@base/Checkbox";
 import { DialogFooter } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { Molecule, type OtuSegment } from "@virtool/contracts";
@@ -59,13 +60,10 @@ export default function SegmentForm({
 	return (
 		<form onSubmit={handleSubmit((values) => onSubmit({ ...values }))}>
 			<div className="grid gap-4" style={{ gridTemplateColumns: "3fr 1fr" }}>
-				<InputGroup>
-					<InputLabel htmlFor="name">Name</InputLabel>
-					<InputSimple
-						id="name"
+				<Field>
+					<FieldLabel>Name</FieldLabel>
+					<Input
 						aria-required
-						aria-invalid={Boolean(errors.segmentName) || undefined}
-						aria-describedby={errors.segmentName ? "name-error" : undefined}
 						{...register("segmentName", {
 							required: "Name required",
 							validate: (value) =>
@@ -75,11 +73,11 @@ export default function SegmentForm({
 								"Segment names must be unique. This name is currently in use.",
 						})}
 					/>
-					<InputError id="name-error">{errors.segmentName?.message}</InputError>
-				</InputGroup>
+					<FieldError errors={[errors.segmentName]} />
+				</Field>
 
-				<InputGroup>
-					<InputLabel htmlFor="molecule">Molecule Type</InputLabel>
+				<Field>
+					<FieldLabel>Molecule Type</FieldLabel>
 					<Controller
 						name="molecule"
 						control={control}
@@ -93,7 +91,6 @@ export default function SegmentForm({
 								<SelectButton
 									className="w-full normal-case"
 									icon={ChevronDown}
-									id="molecule"
 								/>
 								<SelectContent>
 									{moleculeTypes.map((molecule) => (
@@ -109,7 +106,7 @@ export default function SegmentForm({
 							</Select>
 						)}
 					/>
-				</InputGroup>
+				</Field>
 
 				<Controller
 					name="required"

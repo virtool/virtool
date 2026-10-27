@@ -1,4 +1,6 @@
 import "@app/style.css";
+import { getDocumentTitle } from "@app/development";
+import { RecentAuthenticationProvider } from "@app/recentAuthentication";
 import { readSentryDsn, SENTRY_DSN_META_NAME } from "@app/sentryDsn";
 import { readServerNow, SERVER_NOW_META_NAME } from "@app/serverNow";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -33,7 +35,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 				{ charSet: "utf-8" },
 				{ name: "viewport", content: "width=device-width, initial-scale=1" },
 				{ httpEquiv: "X-UA-Compatible", content: "IE=edge" },
-				{ title: "Virtool" },
+				{ title: getDocumentTitle("Virtool") },
 				// The instant every server-rendered relative time was measured
 				// against. The browser reads it back to render the same strings
 				// during hydration, then switches to its own clock. See
@@ -76,7 +78,7 @@ function NotFoundComponent() {
 
 function RootShell({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="en-CA">
 			<head>
 				<HeadContent />
 			</head>
@@ -96,7 +98,9 @@ function RootComponent() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Outlet />
+			<RecentAuthenticationProvider>
+				<Outlet />
+			</RecentAuthenticationProvider>
 		</QueryClientProvider>
 	);
 }

@@ -38,7 +38,7 @@ export default function OtuToolbar({
 		<SearchToolbar
 			aria-label="Search OTUs"
 			onChange={setTerm}
-			placeholder="Name or abbreviation"
+			placeholder="Name or acronym"
 			value={term}
 		>
 			{canCreate && !archived && (

@@ -122,7 +122,7 @@ describe("findOrfs", () => {
 	 * ORF instead of the one that closes it. The protein is taken from the
 	 * translation and is unaffected.
 	 *
-	 * This one is reproduced for completeness only: NuVs pops `nuc` before the
+	 * This one is reproduced for completeness only: Nuvs pops `nuc` before the
 	 * ORFs reach the stored document, so nothing downstream observes it.
 	 */
 	it("reports forward coordinates but an offset nuc on the reverse strand", () => {
@@ -168,7 +168,7 @@ describe("findOrfs", () => {
 	 * The mirror-image quirk: the reverse-strand `start` subtracts three
 	 * unconditionally and is never clamped, so an ORF with no stop reports a
 	 * negative start. `nuc` inherits it — a negative bound counts back from the
-	 * end of the string, yielding two bases rather than the ORF's 300. NuVs
+	 * end of the string, yielding two bases rather than the ORF's 300. Nuvs
 	 * drops `nuc` before storage, but `pos` is kept and rendered.
 	 */
 	it("reports negative reverse-strand starts when there is no stop", () => {

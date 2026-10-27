@@ -2,12 +2,20 @@ import type { ErrorEvent, EventHint } from "@sentry/tanstackstart-react";
 import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 
 const EXPECTED_CLIENT_ERROR_NAMES = new Set<string>([
 	UNAUTHORIZED_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
 	CLIENT_ERROR_NAME,
 ]);
 
@@ -16,8 +24,9 @@ const EXPECTED_CLIENT_ERROR_NAMES = new Set<string>([
  * reported.
  *
  * Three kinds slip through here, all routine rather than incidents: the auth
- * middleware's 401/403 rejections (`UnauthorizedError` / `ForbiddenError`),
- * whose name the client's retry guard reads to bounce to the login wall; the
+ * middleware's 401/403 rejections (`UnauthorizedError` / `ForbiddenError` /
+ * `SetupRequiredError`), whose name the client's retry guard reads to bounce
+ * to the login wall or a setup surface; the
  * handlers' deliberate 4xx `ClientError`s — a bad login, a missing record, a
  * name conflict — which the client renders as a message; and a request whose
  * client went away before its response finished. Reporting any of them only
@@ -42,7 +51,7 @@ export function dropExpectedClientErrors(
  *
  * Both are unactionable by construction: the peer is gone before anything this
  * side could act on. Each is matched as a *pair* of fields, because the halves
- * on their own are shapes we want reported.
+ * on their own are shapes worth reporting.
  */
 function isClientDisconnect(exception: unknown): boolean {
 	return isSocketReset(exception) || isRequestAbort(exception);

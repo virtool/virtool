@@ -99,6 +99,13 @@ export function createTaskSpawner(options: TaskSpawnerOptions): TaskSpawner {
 
 		recordSpawn(type, result.outcome);
 
+		if (result.retiredTaskIds.length > 0) {
+			logger.warn(
+				{ task_ids: result.retiredTaskIds, type },
+				"retired wedged periodic tasks",
+			);
+		}
+
 		if (result.outcome === "spawned") {
 			logger.info({ task_id: result.task.id, type }, "spawned a periodic task");
 

@@ -133,7 +133,7 @@ export function establishConnection(): void {
 
 	connection.onerror = () => {
 		// Read `readyState` before closing — `close()` forces it to CLOSED and
-		// destroys the only signal the platform gives us. CLOSED here means the
+		// destroys the only signal the platform gives the client. CLOSED here means the
 		// browser gave up on a response it considered fatal and will not retry on
 		// its own. Anything else is a dropped transport, which it would retry.
 		const rejected = connection?.readyState === window.EventSource.CLOSED;

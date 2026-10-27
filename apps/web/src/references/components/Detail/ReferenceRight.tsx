@@ -1,4 +1,10 @@
 import Checkbox from "@base/Checkbox";
+import Field, {
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldTitle,
+} from "@base/Field";
 import type { ReferenceRights } from "@virtool/contracts";
 
 const descriptions: Record<keyof ReferenceRights, string> = {
@@ -21,19 +27,21 @@ type MemberRightProps = {
  */
 export function ReferenceRight({ right, enabled, onToggle }: MemberRightProps) {
 	return (
-		<div className="flex items-start not-last:mb-4">
-			<div className="mt-px">
-				<Checkbox
-					checked={enabled}
-					id={`ReferenceRightCheckbox-${right}`}
-					key={right}
-					onClick={() => onToggle(right, !enabled)}
-				/>
-			</div>
-			<div className="flex flex-col pl-2.5">
-				<strong>{right}</strong>
-				<small className="pt-0.5">{descriptions[right]}</small>
-			</div>
-		</div>
+		<FieldLabel className="not-last:mb-4" variant="row">
+			<Field className="items-start gap-2.5" orientation="horizontal">
+				<div className="mt-px">
+					<Checkbox
+						checked={enabled}
+						onClick={() => onToggle(right, !enabled)}
+					/>
+				</div>
+				<FieldContent>
+					<FieldTitle className="font-bold">{right}</FieldTitle>
+					<FieldDescription className="pt-0.5">
+						{descriptions[right]}
+					</FieldDescription>
+				</FieldContent>
+			</Field>
+		</FieldLabel>
 	);
 }

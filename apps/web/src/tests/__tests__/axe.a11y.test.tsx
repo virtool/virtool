@@ -1,4 +1,4 @@
-import { InputError } from "@base/Input";
+import { FieldError } from "@base/Field";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { expectNoViolations } from "../axe";
@@ -10,7 +10,7 @@ const withContrast = { rules: { "color-contrast": { enabled: true } } };
 
 describe("colour contrast in a real browser", () => {
 	// Guards the WCAG AA text-contrast fixes from VIR-2693: muted `text-gray-500`
-	// on white, the red `InputError` message, and white nav text on the teal
+	// on white, the red `FieldError` message, and white nav text on the teal
 	// `bg-virtool` bar. A regression back to the old, lower-contrast tokens turns
 	// this test red — which the jsdom harness could never catch.
 	it("passes the fixed WCAG AA text colours", async () => {
@@ -18,7 +18,7 @@ describe("colour contrast in a real browser", () => {
 			<main className="bg-white p-4">
 				<h1>Samples</h1>
 				<p className="text-gray-500">No samples found.</p>
-				<InputError>Name is required.</InputError>
+				<FieldError>Name is required.</FieldError>
 				<nav aria-label="Primary" className="bg-virtool p-2 text-white">
 					<span>Samples</span>
 				</nav>

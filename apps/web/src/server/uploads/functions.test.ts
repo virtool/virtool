@@ -1,5 +1,6 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import {
 	type UploadRow,
 	uploads as uploadsTable,
@@ -27,19 +28,35 @@ async function* bodyOf(text: string): AsyncIterable<Uint8Array> {
 }
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
+let currentSessionId: number | null = null;
+let currentUserId: number | null = null;
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
+}));
+
+vi.mock("../auth/instance", () => ({
+	auth: {
+		api: {
+			getSession: vi.fn(async () =>
+				currentSessionId === null || currentUserId === null
+					? null
+					: {
+							session: { id: currentSessionId },
+							user: { id: currentUserId },
+						},
+			),
+		},
+	},
 }));
 
 let db: Db;
@@ -65,8 +82,11 @@ const presignUpload = vi.fn();
 
 // Mutable so a test can flip the chunked-upload flag; reset in `beforeEach`.
 const testConfig = {
+	authSecret: "test-auth-secret-test-auth-secret",
+	publicOrigin: "https://virtool.test",
 	uploadsChunked: false,
 	uploadsChunkedConcurrency: 8,
+	webauthnRpId: "virtool.test",
 };
 
 const handlers = (await import(
@@ -77,6 +97,10 @@ const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
 const { sessionCookie } = await import("../auth/test/fixtures");
+const { updateSettings } = await import("@virtool/data/settings/data");
+const { MAX_UPLOAD_SIZE, DEFAULT_MAX_UPLOAD_SIZE } = await import(
+	"@virtool/contracts"
+);
 
 let database: TestDatabase;
 let cookieHeader = "";
@@ -94,9 +118,14 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	testConfig.uploadsChunked = false;
 	cookieHeader = "";
+	currentSessionId = null;
+	currentUserId = null;
 	await db.delete(uploadsTable);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
+	// The settings row outlives the tables cleared above, so a test that moves
+	// the maximum would otherwise leave it moved for its successors.
+	await updateSettings(db, { maxUploadSize: DEFAULT_MAX_UPLOAD_SIZE });
 	getRequest.mockImplementation(
 		() =>
 			new Request("https://virtool.test/_serverFn/test", {
@@ -109,6 +138,8 @@ beforeEach(async () => {
 async function signIn(administratorRole: "full" | null): Promise<number> {
 	const userId = await seedUser(db, { administratorRole });
 	const { sessionId, token } = await seedSession(db, userId);
+	currentSessionId = sessionId;
+	currentUserId = userId;
 	cookieHeader = sessionCookie({ sessionId, token });
 	return userId;
 }
@@ -213,7 +244,6 @@ describe("deleteUpload", () => {
 		await expect(
 			call("deleteUploadFn", { id: upload.id }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	it("soft-deletes an upload for a permitted user", async () => {
@@ -229,20 +259,24 @@ describe("deleteUpload", () => {
 	it("maps a missing upload to a 404", async () => {
 		await signIn("full");
 
-		await expect(call("deleteUploadFn", { id: 404 })).rejects.toThrow(
-			"Upload not found.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		await expect(call("deleteUploadFn", { id: 404 })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Upload not found.",
+			status: 404,
+		});
 	});
 
 	it("maps a reserved upload to a 409", async () => {
 		const userId = await signIn("full");
 		const upload = await seedUpload(userId, { reserved: true });
 
-		await expect(call("deleteUploadFn", { id: upload.id })).rejects.toThrow(
-			"Upload is reserved and in use.",
-		);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		await expect(
+			call("deleteUploadFn", { id: upload.id }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Upload is reserved and in use.",
+			status: 409,
+		});
 	});
 });
 
@@ -255,16 +289,19 @@ describe("initUpload", () => {
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
-	it("returns proxied and reserves no row when chunked is off", async () => {
+	it("rejects initialization when direct uploads are off", async () => {
 		await signIn("full");
 
-		const result = await call("initUploadFn", {
-			name: "reads.fq.gz",
-			type: "reads",
-			size: 5,
+		await expect(
+			call("initUploadFn", {
+				name: "reads.fq.gz",
+				type: "reads",
+				size: 5,
+			}),
+		).rejects.toMatchObject({
+			message: "Direct uploads are unavailable on this deployment.",
+			status: 503,
 		});
-
-		expect(result).toEqual({ mode: "proxied" });
 		expect(await db.select().from(uploadsTable)).toHaveLength(0);
 		expect(presignUpload).not.toHaveBeenCalled();
 	});
@@ -279,14 +316,12 @@ describe("initUpload", () => {
 			type: "reads",
 			size: 4096,
 		})) as {
-			mode: string;
 			uploadId: number;
 			url: string;
 			blockSize: number;
 			concurrency: number;
 		};
 
-		expect(result.mode).toBe("chunked");
 		expect(result.url).toBe("https://fd/c/blob?sig=x");
 		expect(result.blockSize).toBe(16 * 1024 * 1024);
 		expect(result.concurrency).toBe(8);
@@ -304,30 +339,60 @@ describe("initUpload", () => {
 		);
 	});
 
-	it("increases the block size for files that need more than 50,000 blocks", async () => {
+	it("accepts a file at the application upload ceiling", async () => {
 		testConfig.uploadsChunked = true;
 		presignUpload.mockResolvedValue("https://fd/c/blob?sig=x");
 		await signIn("full");
+		await updateSettings(db, { maxUploadSize: MAX_UPLOAD_SIZE });
 
 		const result = (await call("initUploadFn", {
 			name: "reads.fq.gz",
 			type: "reads",
-			size: 16 * 1024 * 1024 * 50_000 + 1,
+			size: MAX_UPLOAD_SIZE,
 		})) as { blockSize: number };
 
-		expect(result.blockSize).toBe(32 * 1024 * 1024);
+		expect(result.blockSize).toBe(16 * 1024 * 1024);
 	});
 
-	it("rejects files larger than Azure's maximum block blob size", async () => {
+	it("maps a file larger than the application upload ceiling to a 413", async () => {
+		testConfig.uploadsChunked = true;
 		await signIn("full");
+		await updateSettings(db, { maxUploadSize: MAX_UPLOAD_SIZE });
 
 		await expect(
 			call("initUploadFn", {
 				name: "reads.fq.gz",
 				type: "reads",
-				size: 4_000 * 1024 * 1024 * 50_000 + 1,
+				size: MAX_UPLOAD_SIZE + 1,
 			}),
-		).rejects.toThrow();
+		).rejects.toMatchObject({ status: 413 });
+
+		expect(presignUpload).not.toHaveBeenCalled();
+	});
+
+	it("refuses a file above the configured maximum before reserving it", async () => {
+		testConfig.uploadsChunked = true;
+		await signIn("full");
+		await updateSettings(db, { maxUploadSize: 1024 });
+
+		await expect(
+			call("initUploadFn", { name: "reads.fq.gz", type: "reads", size: 1025 }),
+		).rejects.toMatchObject({
+			message: "File exceeds the maximum upload size of 1,024 bytes.",
+			status: 413,
+		});
+
+		expect(await db.select().from(uploadsTable)).toHaveLength(0);
+		expect(presignUpload).not.toHaveBeenCalled();
+	});
+
+	it("publishes the configured maximum as the upload policy", async () => {
+		await signIn(null);
+		await updateSettings(db, { maxUploadSize: 1024 });
+
+		await expect(call("getUploadPolicyFn")).resolves.toEqual({
+			maxUploadSize: 1024,
+		});
 	});
 
 	it("drops the reservation when presigning fails", async () => {
@@ -370,8 +435,11 @@ describe("finalizeChunkedUpload", () => {
 
 		await expect(
 			call("finalizeChunkedUploadFn", { id: upload.id }),
-		).rejects.toThrow("Upload is not complete.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Upload is not complete.",
+			status: 409,
+		});
 	});
 
 	it("maps a commit that does not match the declared size to a 409", async () => {
@@ -385,8 +453,11 @@ describe("finalizeChunkedUpload", () => {
 
 		await expect(
 			call("finalizeChunkedUploadFn", { id: upload.id }),
-		).rejects.toThrow("Upload size does not match the declared size.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Upload size does not match the declared size.",
+			status: 409,
+		});
 	});
 });
 

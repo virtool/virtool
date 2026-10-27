@@ -73,7 +73,7 @@ export const indexes = pgTable(
 			name: "indexes_task_id_fkey",
 		}),
 		unique("indexes_legacy_id_key").on(table.legacy_id),
-		unique("uq_indexes_otus_json_storage_key").on(table.otus_json_storage_key),
+		unique("indexes_otus_json_storage_key_key").on(table.otus_json_storage_key),
 		unique("uq_indexes_reference_id_version").on(
 			table.reference_id,
 			table.version,
@@ -103,7 +103,7 @@ export const indexFiles = pgTable(
 			foreignColumns: [indexes.id],
 			name: "index_files_index_id_fkey",
 		}).onDelete("cascade"),
-		unique("uq_index_files_storage_key").on(table.storage_key),
+		unique("index_files_storage_key_key").on(table.storage_key),
 		// `index_files_index_id_name_key`. Declared because a build's registration
 		// of its artifact upserts on it, and an `ON CONFLICT` naming columns no
 		// constraint covers is an error rather than an insert.

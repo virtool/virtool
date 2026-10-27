@@ -1,12 +1,20 @@
+import { createHmac, randomBytes } from "node:crypto";
 import {
 	type SeededSession,
+	type SeededSetupSession,
 	type SeedUserOptions,
 	seedSession,
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
+import { authVerifications } from "@virtool/data/db/schema/auth";
 import type { Mock } from "vitest";
-import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "../cookies";
+import {
+	SETUP_SESSION_ID_COOKIE,
+	SETUP_SESSION_TOKEN_COOKIE,
+} from "../cookies";
+
+const AUTH_SECRET = "test-auth-secret-test-auth-secret";
 
 /**
  * Encode a seeded session as the `Cookie` header value that authenticates it.
@@ -15,10 +23,12 @@ import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "../cookies";
  * {@link basicAuthHeader}.
  */
 export function sessionCookie({
-	sessionId,
 	token,
 }: Pick<SeededSession, "sessionId" | "token">): string {
-	return `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`;
+	const signature = createHmac("sha256", AUTH_SECRET)
+		.update(token)
+		.digest("base64");
+	return `better-auth.session_token=${encodeURIComponent(`${token}.${signature}`)}`;
 }
 
 /**
@@ -62,4 +72,85 @@ export async function signIn(
 /** Encode `handle` and `key` as an HTTP Basic `Authorization` header value. */
 export function basicAuthHeader(handle: string, key: string): string {
 	return `Basic ${Buffer.from(`${handle}:${key}`, "utf8").toString("base64")}`;
+}
+
+/**
+ * Encode a seeded restricted setup session as the `Cookie` header value that
+ * presents it.
+ *
+ * Deliberately a different pair from {@link sessionCookie}: a restricted
+ * credential is not an application session, and a test that could substitute
+ * one for the other would prove nothing about the boundary between them.
+ */
+export function setupSessionCookie({
+	sessionId,
+	token,
+}: Pick<SeededSetupSession, "sessionId" | "token">): string {
+	return `${SETUP_SESSION_ID_COOKIE}=${sessionId}; ${SETUP_SESSION_TOKEN_COOKIE}=${token}`;
+}
+
+/** Compute the current TOTP code for an `otpauth://` URI. */
+export function totp(uri: string) {
+	const secret = new URL(uri).searchParams.get("secret") ?? "";
+	const bits = [...secret.toUpperCase()]
+		.map((char) =>
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+				.indexOf(char)
+				.toString(2)
+				.padStart(5, "0"),
+		)
+		.join("");
+	const key = Buffer.from(
+		(bits.match(/.{8}/g) ?? []).map((byte) => Number.parseInt(byte, 2)),
+	);
+	const counter = Buffer.alloc(8);
+	counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000)));
+	const digest = createHmac("sha1", key).update(counter).digest();
+	const offset = (digest[digest.length - 1] ?? 0) & 15;
+	return String(
+		(digest.readUInt32BE(offset) & 0x7fffffff) % 1_000_000,
+	).padStart(6, "0");
+}
+
+/** Narrow a two-factor enrollment to TOTP, which exposes the secret and codes. */
+export function assertTotpEnrollment<T extends { method: string }>(
+	enrollment: T,
+): Extract<T, { method: "totp" }> {
+	if (enrollment.method !== "totp") {
+		throw new Error(`Expected TOTP enrollment, got ${enrollment.method}`);
+	}
+	return enrollment as Extract<T, { method: "totp" }>;
+}
+
+/**
+ * Record a Better Auth trusted device for `userId` and return the cookie that
+ * presents it, as the two-factor plugin would issue it.
+ */
+export async function seedTrustDevice(
+	db: Db,
+	userId: number,
+): Promise<{ identifier: string; name: string; value: string }> {
+	const identifier = `trust-device-${randomBytes(16).toString("hex")}`;
+	const token = createHmac("sha256", AUTH_SECRET)
+		.update(`${userId}!${identifier}`)
+		.digest("base64url");
+	const value = `${token}!${identifier}`;
+	const signature = createHmac("sha256", AUTH_SECRET)
+		.update(value)
+		.digest("base64");
+	const now = new Date();
+
+	await db.insert(authVerifications).values({
+		identifier,
+		value: String(userId),
+		expiresAt: new Date(now.getTime() + 60_000),
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	return {
+		identifier,
+		name: "__Secure-better-auth.trust_device",
+		value: encodeURIComponent(`${value}.${signature}`),
+	};
 }

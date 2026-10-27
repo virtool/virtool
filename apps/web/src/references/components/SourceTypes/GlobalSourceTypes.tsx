@@ -1,7 +1,8 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
+import Field, { FieldError, FieldLabel } from "@base/Field";
 import { IconButton } from "@base/Icon";
-import { InputError, InputLabel, InputSimple } from "@base/Input";
+import Input from "@base/Input";
 import SectionHeader from "@base/SectionHeader";
 import Toolbar from "@base/Toolbar";
 import { useUpdateDefaultSourceTypes } from "@references/queries";
@@ -35,11 +36,6 @@ export function GlobalSourceTypes({ sourceTypes }: GlobalSourceTypesProps) {
 				</p>
 			</SectionHeader>
 			<BoxGroup>
-				<BoxGroupHeader>
-					<h2>Source Types</h2>
-					<p>Add or remove default source types.</p>
-				</BoxGroupHeader>
-
 				<SourceTypeList sourceTypes={sourceTypes} onRemove={handleRemove} />
 
 				{lastRemoved && (
@@ -55,21 +51,18 @@ export function GlobalSourceTypes({ sourceTypes }: GlobalSourceTypesProps) {
 
 				<BoxGroupSection>
 					<form onSubmit={handleSubmit}>
-						<InputLabel htmlFor="SourceType">Add Source Type</InputLabel>
-						<Toolbar>
-							<div className="flex-grow">
-								<InputSimple
-									id="SourceType"
-									aria-invalid={Boolean(error) || undefined}
-									aria-describedby={error ? "SourceType-error" : undefined}
-									{...register("sourceType")}
-								/>
-							</div>
-							<Button color="green" type="submit">
-								Add
-							</Button>
-						</Toolbar>
-						<InputError id="SourceType-error">{error}</InputError>
+						<Field className="mb-0 pb-0">
+							<FieldLabel>Add Source Type</FieldLabel>
+							<Toolbar>
+								<div className="flex-grow">
+									<Input {...register("sourceType")} />
+								</div>
+								<Button color="green" type="submit">
+									Add
+								</Button>
+							</Toolbar>
+							<FieldError>{error}</FieldError>
+						</Field>
 					</form>
 				</BoxGroupSection>
 			</BoxGroup>

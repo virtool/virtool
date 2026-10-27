@@ -17,6 +17,8 @@ import { isJobStateTerminal } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
+import { isForeignKeyViolation } from "../db/errors";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -57,6 +59,12 @@ export type FindAnalysesOptions = {
 	/** Restrict the page to the analyses run with these workflows. */
 	workflows?: AnalysisWorkflow[];
 };
+
+/** The scope and non-user filters used to list analysis owners. */
+export type ListAnalysisUsersOptions = Pick<
+	FindAnalysesOptions,
+	"sampleId" | "workflows"
+>;
 
 /** The fields an analysis is created from, plus the user starting it. */
 export type CreateAnalysisValues = {
@@ -108,10 +116,10 @@ export class AnalysisNotOwnedError extends AppError {}
 /** Thrown when an operation requires a finished analysis and it is still running. */
 export class AnalysisRunningError extends AppError {}
 
-/** Thrown when a NuVs-only operation is attempted on another workflow. */
+/** Thrown when a Nuvs-only operation is attempted on another workflow. */
 export class AnalysisNotNuvsError extends AppError {}
 
-/** Thrown when a NuVs analysis has no contig at the requested sequence index. */
+/** Thrown when a Nuvs analysis has no contig at the requested sequence index. */
 export class AnalysisSequenceNotFoundError extends AppError {}
 
 /** Thrown when a create names a sample, reference, or subtraction that does not exist. */
@@ -309,6 +317,40 @@ function analysisReadableFilter(db: Db, actor: SampleActor): SQL | undefined {
 	);
 }
 
+/**
+ * List active users who own at least one analysis in the readable filter scope.
+ */
+export async function listAnalysisUsers(
+	db: Db,
+	options: ListAnalysisUsersOptions,
+	actor: SampleActor,
+): Promise<UserNested[]> {
+	const readable = analysisReadableFilter(db, actor);
+	const sample =
+		options.sampleId === undefined
+			? undefined
+			: eq(analyses.sample_id, options.sampleId);
+	const workflow = options.workflows?.length
+		? inArray(analyses.workflow, options.workflows)
+		: undefined;
+
+	return db
+		.select({ id: users.id, handle: users.handle })
+		.from(users)
+		.innerJoin(analyses, eq(analyses.user_id, users.id))
+		.where(
+			and(
+				eq(users.active, true),
+				eq(users.lifecycleState, "normal"),
+				readable,
+				sample,
+				workflow,
+			),
+		)
+		.groupBy(users.id, users.handle)
+		.orderBy(asc(sql`lower(${users.handle})`));
+}
+
 const SORT_COLUMNS = {
 	createdAt: analyses.created_at,
 	user: users.handle,
@@ -381,7 +423,7 @@ export async function findAnalyses(
 			.leftJoin(users, eq(users.id, analyses.user_id))
 			.where(where)
 			.orderBy(...buildOrderBy(options.sort))
-			.offset((options.page - 1) * options.perPage)
+			.offset(getPageOffset(options.page, options.perPage))
 			.limit(options.perPage),
 	]);
 
@@ -405,7 +447,7 @@ export async function findAnalyses(
 		totalCount,
 		page: options.page,
 		perPage: options.perPage,
-		pageCount: foundCount ? Math.ceil(foundCount / options.perPage) : 0,
+		pageCount: getPageCount(foundCount, options.perPage),
 		items: rows.map((row) =>
 			mapMinimal(
 				row,
@@ -428,13 +470,24 @@ export async function recordAnalysisView(
 	userId: number,
 	analysisId: number,
 ): Promise<void> {
-	await db
-		.insert(analysisViews)
-		.values({ user_id: userId, analysis_id: analysisId, viewed_at: sql`now()` })
-		.onConflictDoUpdate({
-			target: [analysisViews.user_id, analysisViews.analysis_id],
-			set: { viewed_at: sql`now()` },
-		});
+	try {
+		await db
+			.insert(analysisViews)
+			.values({
+				user_id: userId,
+				analysis_id: analysisId,
+				viewed_at: sql`now()`,
+			})
+			.onConflictDoUpdate({
+				target: [analysisViews.user_id, analysisViews.analysis_id],
+				set: { viewed_at: sql`now()` },
+			});
+	} catch (error) {
+		if (isForeignKeyViolation(error, ["analysis_views_analysis_id_fkey"])) {
+			throw new AnalysisNotFoundError();
+		}
+		throw error;
+	}
 }
 
 /**
@@ -497,7 +550,7 @@ export async function findRecentlyViewedAnalyses(
 		totalCount,
 		page: 1,
 		perPage,
-		pageCount: totalCount ? Math.ceil(totalCount / perPage) : 0,
+		pageCount: getPageCount(totalCount, perPage),
 		items: rows.map((row) =>
 			mapMinimal(
 				row,
@@ -993,7 +1046,7 @@ export async function blastNuvs(
 	}
 
 	if (row.workflow !== "nuvs") {
-		throw new AnalysisNotNuvsError("Not a NuVs analysis");
+		throw new AnalysisNotNuvsError("Not a Nuvs analysis");
 	}
 
 	if (!row.ready) {
@@ -1045,7 +1098,7 @@ export async function blastNuvs(
 }
 
 /**
- * The contig at `sequenceIndex` in a NuVs results blob, or `null` when there is
+ * The contig at `sequenceIndex` in a Nuvs results blob, or `null` when there is
  * none.
  */
 export function findNuvsSequenceByIndex(

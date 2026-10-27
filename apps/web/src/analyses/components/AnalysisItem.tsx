@@ -68,7 +68,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 				)}
 			</td>
 			<td className="text-gray-600 text-sm">
-				{getWorkflowVersionLabel(analysis.workflowVersion)}
+				{getWorkflowVersionLabel(analysis)}
 			</td>
 			<td>
 				<SlashList className="m-0">

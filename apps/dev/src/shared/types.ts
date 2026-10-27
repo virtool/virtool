@@ -1,0 +1,118 @@
+/** The state an environment should reconcile toward. */
+export type DesiredState = "absent" | "stopped" | "up";
+
+/** The state currently observed from Docker and readiness checks. */
+export type ObservedState =
+	| "failed"
+	| "missing"
+	| "not_created"
+	| "removing"
+	| "running"
+	| "starting"
+	| "stopped"
+	| "stopping";
+
+/** A Git worktree and its optional development environment. */
+export type Environment = {
+	age: number | null;
+	branch: string;
+	/** Whether the daemon creates the default administrator when the environment starts. */
+	createDefaultAdministrator: boolean;
+	desired: DesiredState;
+	id: string | null;
+	lastError: string | null;
+	name: string | null;
+	observed: ObservedState;
+	openPullRequest: OpenPullRequest | null;
+	operation: Operation | null;
+	path: string;
+	ready: boolean;
+	services: Record<string, ServiceState>;
+	url: string | null;
+	workflowEnabled: boolean;
+	worktreeId: string;
+};
+
+/** An open GitHub pull request associated with a worktree branch. */
+export type OpenPullRequest = {
+	number: number;
+	url: string;
+};
+
+/** Observed health for one Compose service. */
+export type ServiceState = "healthy" | "missing" | "stopped" | "unhealthy";
+
+/** Progress for one asynchronous lifecycle operation. */
+export type Operation = {
+	action: "remove" | "start" | "stop";
+	createdAt: number;
+	error: string | null;
+	finishedAt: number | null;
+	id: number;
+	progress: string;
+	status: "failed" | "pending" | "running" | "succeeded";
+};
+
+/** Health of repository-wide shared infrastructure. */
+export type SharedState = {
+	initialized: boolean;
+	lastError: string | null;
+	services: Record<string, ServiceState>;
+	storage: SharedStorage;
+};
+
+/** Disk usage in bytes for the shared service volumes. */
+export type SharedStorage = {
+	azurite: number | null;
+	postgres: number | null;
+};
+
+/** Runtime state of the global workflow scheduler. */
+export type SchedulerState = {
+	active: Array<{ environmentId: string; workflow: Workflow }>;
+	buildQueue: Array<{ environmentId: string; workflow: Workflow }>;
+	capacity: number;
+	concurrency: number;
+	errors: Record<string, string>;
+	lastError: string | null;
+	queues: Record<string, Partial<Record<Workflow, number>>>;
+};
+
+/** The administrator the daemon creates in environments that have no users. */
+export type DefaultAdministrator = {
+	email: string;
+	handle: string;
+};
+
+/** A complete management UI state snapshot. */
+export type Snapshot = {
+	defaultAdministrator: DefaultAdministrator | null;
+	environments: Environment[];
+	repositoryId: string;
+	scheduler: SchedulerState;
+	shared: SharedState;
+	updatedAt: number;
+	updateAvailable: boolean;
+};
+
+/** One supported bioinformatics workflow. */
+export type Workflow =
+	| "create_sample"
+	| "create_subtraction"
+	| "nuvs"
+	| "pathoscope";
+
+/** A lifecycle mutation accepted by the daemon. */
+export type Mutation = {
+	action:
+		| "disable_workflows"
+		| "enable_workflows"
+		| "remove"
+		| "restart"
+		| "retry"
+		| "start"
+		| "stop";
+	/** Used only by `start` when it creates the environment. The default is `true`. */
+	createDefaultAdministrator?: boolean;
+	worktreeIds: string[];
+};

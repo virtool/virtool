@@ -5,8 +5,12 @@
 // lands.
 export * from "./analyses";
 export * from "./apiKeys";
+export * from "./auth";
 export * from "./banners";
 export * from "./caches";
+export * from "./cacheUsageSnapshots";
+export * from "./dataMigrations";
+export * from "./emailOutbox";
 export * from "./groups";
 export * from "./history";
 export * from "./hmms";
@@ -18,6 +22,7 @@ export * from "./references";
 export * from "./samples";
 export * from "./sessions";
 export * from "./settings";
+export * from "./setup";
 export * from "./subtractions";
 export * from "./tasks";
 export * from "./uploads";

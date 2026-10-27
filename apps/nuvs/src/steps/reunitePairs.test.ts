@@ -83,9 +83,9 @@ describe("reunitePairsStep", () => {
 		);
 	});
 
-	// Biopython's `record.id` is the header up to the first whitespace, and the
-	// two mates of a pair differ in the description that follows it. Splitting
-	// anywhere else would make every read look unpaired.
+	// A read's id is the header up to the first whitespace, and the two mates
+	// of a pair differ in the description that follows it. Splitting anywhere
+	// else would make every read look unpaired.
 	it("matches on the read id, ignoring the description after it", async () => {
 		const setup = await setupStep({ paired: true });
 
@@ -129,8 +129,8 @@ describe("reunitePairsStep", () => {
 
 		await reunitePairsStep.run(setup.context);
 
-		// The separator is written as a bare `+`, which is what Biopython writes
-		// however the input spelled it.
+		// The separator is always written as a bare `+`, however the input
+		// spelled it.
 		await expect(readFile(setup.paths.unmappedPair(1), "utf8")).resolves.toBe(
 			"@r1 desc\nACGT\n+\nIIII\n",
 		);

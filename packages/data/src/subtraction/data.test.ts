@@ -1,8 +1,17 @@
 import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import { seedUser } from "../auth/test/fixtures";
-import type { Db } from "../db/pg";
+import type { Db, PgClient } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { jobs } from "../db/schema/jobs";
 import { legacySampleSubtractions, legacySamples } from "../db/schema/samples";
@@ -10,6 +19,7 @@ import { subtractionFiles, subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { createEmitter } from "../events/emit";
 import { testLogger } from "../test/logger";
 import {
 	createSubtraction,
@@ -417,5 +427,55 @@ describe("deleteSubtraction", () => {
 		await expect(
 			deleteSubtraction(db, storage, testLogger, subtractionId),
 		).rejects.toThrow(SubtractionNotFoundError);
+	});
+});
+
+describe("client events", () => {
+	let notify: ReturnType<typeof vi.fn>;
+
+	beforeEach(() => {
+		// The fixture's emitter really NOTIFYs, so a published frame would be
+		// invisible. Restored in `afterEach` for the rest of the file.
+		notify = vi.fn().mockResolvedValue(undefined);
+		createEmitter({
+			client: { notify } as unknown as PgClient,
+			logger: testLogger,
+		});
+	});
+
+	afterEach(() => {
+		createEmitter({ client: database.client, logger: testLogger });
+	});
+
+	function published() {
+		return notify.mock.calls.map(([, payload]) => JSON.parse(payload));
+	}
+
+	it("publishes an edit and a removal", async () => {
+		const subtractionId = await seedSubtraction();
+
+		await updateSubtraction(db, subtractionId, { name: "Renamed" });
+		await deleteSubtraction(db, new MemoryStorage(), testLogger, subtractionId);
+
+		expect(published()).toEqual([
+			{
+				domain: "subtractions",
+				resource_id: subtractionId,
+				operation: "update",
+			},
+			{
+				domain: "subtractions",
+				resource_id: subtractionId,
+				operation: "delete",
+			},
+		]);
+	});
+
+	it("publishes nothing for an edit that changes no field", async () => {
+		const subtractionId = await seedSubtraction();
+
+		await updateSubtraction(db, subtractionId, {});
+
+		expect(notify).not.toHaveBeenCalled();
 	});
 });

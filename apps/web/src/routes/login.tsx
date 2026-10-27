@@ -1,30 +1,25 @@
-import { oneOfOptional, strOptional } from "@app/searchParams";
+import { isServiceUnavailable } from "@app/queryErrors";
+import { oneOfOptional, safeRedirect } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import LoginWall from "@wall/components/LoginWall";
 
-function isSafeRedirect(value: string): boolean {
-	return (
-		value.startsWith("/") &&
-		!value.startsWith("//") &&
-		!value.startsWith("/login")
-	);
-}
-
 /** Search params for the login wall. */
 type LoginSearch = {
-	reason?: "session-ended";
+	reason?: "remediation-expired" | "session-ended" | "setup-complete";
 	redirect?: string;
 };
 
 function validateLoginSearch(
 	input: Partial<LoginSearch> & SearchSchemaInput,
 ): LoginSearch {
-	const target = strOptional(input.redirect);
-
 	return {
-		reason: oneOfOptional(input.reason, ["session-ended"] as const),
-		redirect: target && isSafeRedirect(target) ? target : undefined,
+		reason: oneOfOptional(input.reason, [
+			"remediation-expired",
+			"session-ended",
+			"setup-complete",
+		] as const),
+		redirect: safeRedirect(input.redirect),
 	};
 }
 
@@ -32,19 +27,29 @@ export const Route = createFileRoute("/login")({
 	validateSearch: validateLoginSearch,
 	beforeLoad: async ({ context, search }) => {
 		const { queryClient } = context;
-		const { accountQueryOptions } = await import("@account/account");
+		const [{ accountQueryOptions }, { getAuthNextStep, getAuthNextStepRoute }] =
+			await Promise.all([import("@account/account"), import("@wall/nextStep")]);
 
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
-		} catch {
-			return;
+		} catch (error) {
+			if (isServiceUnavailable(error)) {
+				throw error;
+			}
+			const step = getAuthNextStep(error);
+			if (
+				step?.type === "email_remediation" ||
+				step?.type === "mfa_enrollment"
+			) {
+				throw redirect(getAuthNextStepRoute(step, search.redirect));
+			}
+			return { passwordResetRequired: step?.type === "password_reset" };
 		}
 
 		throw redirect({ to: search.redirect ?? "/" });
 	},
-	// The forced-reset form this route can render sets a password before there is
-	// a session, so it needs the policy up front. prefetchQuery rather than
-	// ensureQueryData: a failed policy read must not take down the wall.
+	// The forced-reset form needs the policy up front. A failed policy read must
+	// not take down the wall, so prefetch rather than ensuring the query.
 	loader: async ({ context }) => {
 		const { passwordPolicyQueryOptions } = await import(
 			"@administration/passwordPolicy"

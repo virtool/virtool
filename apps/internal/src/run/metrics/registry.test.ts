@@ -212,7 +212,7 @@ describe("recordRun", () => {
 		const metrics = build();
 
 		metrics.recordRun({
-			type: "a_python_task",
+			type: "an_unknown_task",
 			outcome: "succeeded",
 			durationSeconds: 1,
 		});
@@ -223,7 +223,7 @@ describe("recordRun", () => {
 				'virtool_task_runs_total{type="other",outcome="succeeded"}',
 			),
 		).toBe(1);
-		expect(await metrics.render()).not.toContain("a_python_task");
+		expect(await metrics.render()).not.toContain("an_unknown_task");
 	});
 });
 
@@ -288,8 +288,8 @@ describe("setTaskQueue", () => {
 
 		metrics.setTaskQueue({
 			counts: [
-				{ type: "a_python_task", queued: 2, running: 1 },
-				{ type: "another_python_task", queued: 3, running: 0 },
+				{ type: "an_unknown_task", queued: 2, running: 1 },
+				{ type: "another_unknown_task", queued: 3, running: 0 },
 			],
 			oldestQueuedAges: [],
 		});
@@ -308,8 +308,8 @@ describe("setTaskQueue", () => {
 		metrics.setTaskQueue({
 			counts: [],
 			oldestQueuedAges: [
-				{ type: "a_python_task", ageSeconds: 30 },
-				{ type: "another_python_task", ageSeconds: 900 },
+				{ type: "an_unknown_task", ageSeconds: 30 },
+				{ type: "another_unknown_task", ageSeconds: 900 },
 			],
 		});
 

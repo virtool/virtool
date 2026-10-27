@@ -1,6 +1,6 @@
 // Render a pathoscope analysis as a downloadable spreadsheet.
 
-import type { JsonObject } from "@virtool/contracts";
+import type { JsonObject, PathoscopeColumn } from "@virtool/contracts";
 import { formatAnalysis } from "@virtool/data/analyses/format";
 import {
 	asArray,
@@ -11,18 +11,19 @@ import {
 import type { DbOrTx } from "@virtool/data/db/pg";
 import { median } from "es-toolkit";
 
-const HEADERS = [
-	"OTU",
-	"Isolate",
-	"Sequence",
-	"Length",
-	"Weight",
-	"Median Depth",
-	"Coverage",
-] as const;
+type Cell = string | number;
 
-/** A single spreadsheet row: the OTU and isolate names, then numeric metrics. */
-type Row = [string, string, string, number, number, number, number];
+/** The cells of a single spreadsheet row, grouped by the column they fill. */
+type Row = Record<PathoscopeColumn, Cell[]>;
+
+// The name column carries every field that identifies a row, so they move and
+// stay together wherever it is placed.
+const HEADERS: Row = {
+	coverage: ["Coverage"],
+	depth: ["Median Depth"],
+	name: ["OTU", "Isolate", "Sequence", "Length"],
+	weight: ["Weight"],
+};
 
 // Median depth per hit sequence, taken from the raw alignment before formatting
 // replaces it with simplified coordinates. An absent or empty alignment reads
@@ -45,10 +46,20 @@ function calculateMedianDepths(hits: unknown[]): Map<string, number> {
 	return depths;
 }
 
+/** How an exported spreadsheet is laid out. */
+type ExportOptions = {
+	/** The columns to carry, in order */
+	columns: PathoscopeColumn[];
+
+	/** Whether to name an OTU by its acronym, when it has one */
+	preferAcronym: boolean;
+};
+
 async function composeRows(
 	db: DbOrTx,
 	workflow: string,
 	results: JsonObject,
+	{ preferAcronym }: ExportOptions,
 ): Promise<Row[]> {
 	const depths = calculateMedianDepths(asArray(results.hits));
 	const formatted = await formatAnalysis(db, workflow, results);
@@ -61,6 +72,9 @@ async function composeRows(
 		if (!otu) {
 			continue;
 		}
+
+		const acronym = asText(otu.acronym);
+		const otuName = preferAcronym && acronym ? acronym : asText(otu.name);
 
 		for (const isolateEntry of asArray(otu.isolates)) {
 			const isolate = asRecord(isolateEntry);
@@ -76,17 +90,19 @@ async function composeRows(
 					continue;
 				}
 
-				rows.push([
-					asText(otu.name),
-					// Composed by the formatter, so the spreadsheet and the analysis
-					// view cannot disagree about what an isolate is called.
-					asText(isolate.name),
-					asText(sequence.accession),
-					asNumber(sequence.length),
-					asNumber(sequence.pi),
-					depths.get(asText(sequence.id)) ?? 0,
-					asNumber(sequence.coverage),
-				]);
+				rows.push({
+					coverage: [asNumber(sequence.coverage)],
+					depth: [depths.get(asText(sequence.id)) ?? 0],
+					name: [
+						otuName,
+						// Composed by the formatter, so the spreadsheet and the analysis
+						// view cannot disagree about what an isolate is called.
+						asText(isolate.name),
+						asText(sequence.accession),
+						asNumber(sequence.length),
+					],
+					weight: [asNumber(sequence.pi)],
+				});
 			}
 		}
 	}
@@ -94,9 +110,13 @@ async function composeRows(
 	return rows;
 }
 
+function arrange(row: Row, columns: PathoscopeColumn[]): Cell[] {
+	return columns.flatMap((column) => row[column]);
+}
+
 // Every non-numeric field is quoted, numbers are written bare, and an embedded
 // quote is doubled.
-function toCsvField(value: string | number): string {
+function toCsvField(value: Cell): string {
 	if (typeof value === "number") {
 		return String(value);
 	}
@@ -104,7 +124,7 @@ function toCsvField(value: string | number): string {
 	return `"${value.replaceAll('"', '""')}"`;
 }
 
-function toCsvRow(row: readonly (string | number)[]): string {
+function toCsvRow(row: Cell[]): string {
 	return row.map(toCsvField).join(",");
 }
 
@@ -113,11 +133,14 @@ export async function formatAnalysisToCsv(
 	db: DbOrTx,
 	workflow: string,
 	results: JsonObject,
+	options: ExportOptions,
 ): Promise<string> {
-	const rows = await composeRows(db, workflow, results);
+	const rows = await composeRows(db, workflow, results, options);
 
 	// Every row is terminated with CRLF, including the last.
-	return `${[HEADERS, ...rows].map(toCsvRow).join("\r\n")}\r\n`;
+	return `${[HEADERS, ...rows]
+		.map((row) => toCsvRow(arrange(row, options.columns)))
+		.join("\r\n")}\r\n`;
 }
 
 /** Render a pathoscope analysis's results as an XLSX workbook. */
@@ -126,8 +149,9 @@ export async function formatAnalysisToExcel(
 	workflow: string,
 	results: JsonObject,
 	sampleId: number | null,
+	options: ExportOptions,
 ): Promise<Uint8Array<ArrayBuffer>> {
-	const rows = await composeRows(db, workflow, results);
+	const rows = await composeRows(db, workflow, results, options);
 
 	// Imported here rather than at module scope: the workbook writer is a large
 	// dependency and only the xlsx branch of one download route needs it.
@@ -136,11 +160,11 @@ export async function formatAnalysisToExcel(
 	const workbook = new Workbook();
 	const sheet = workbook.addWorksheet(`Pathoscope for ${sampleId}`);
 
-	const header = sheet.addRow([...HEADERS]);
+	const header = sheet.addRow(arrange(HEADERS, options.columns));
 	header.font = { name: "Calibri", bold: true };
 
 	for (const row of rows) {
-		sheet.addRow(row);
+		sheet.addRow(arrange(row, options.columns));
 	}
 
 	// `writeBuffer` is typed as exceljs's own Buffer alias; the bytes are a plain

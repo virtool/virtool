@@ -136,11 +136,11 @@ function clampedSlice(text: string, start: number, end: number): string {
  * Both gates are exact: a sequence of 300 bp or shorter yields nothing and 301
  * can yield ORFs; an ORF of 99 residues is dropped and 100 is kept. Results
  * come out in discovery order — strand `[+1, -1]` outer, frame `0..2` inner —
- * and that order is part of the stored output, because the NuVs workflow
+ * and that order is part of the stored output, because the Nuvs workflow
  * indexes ORFs positionally.
  *
  * Two coordinate quirks are deliberate and load-bearing: `pos` is stored
- * positionally in every NuVs analysis `results` blob already written, and is
+ * positionally in every Nuvs analysis `results` blob already written, and is
  * rendered by the UI. Both are visible in the output:
  *
  * - The forward-strand `end` adds the stop codon's three bases unconditionally
@@ -151,7 +151,7 @@ function clampedSlice(text: string, start: number, end: number): string {
  *   `-2` or `-1`, depending on the trailing remainder.
  *
  * `nuc` inherits both, and is cut with {@link clampedSlice} so a negative start
- * counts back from the end of the sequence. The NuVs workflow drops `nuc`
+ * counts back from the end of the sequence. The Nuvs workflow drops `nuc`
  * before the ORFs reach the stored document, so only `pos` is observable
  * downstream, but it is reproduced here so the whole record matches the
  * goldens.

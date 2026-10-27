@@ -85,7 +85,7 @@ export async function handleGetAnalysis(
  * retained, and flip it ready.
  *
  * Unlike a subtraction or a sample, the filenames here are the workflow's to
- * choose — a NuVs run names its own FASTA and HMM outputs — so they are checked
+ * choose — a Nuvs run names its own FASTA and HMM outputs — so they are checked
  * for shape rather than against a whitelist. The download route addresses these
  * by row id, not by name.
  *

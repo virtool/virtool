@@ -137,8 +137,8 @@ export type PathoscopeSegmentCoverage = {
 
 /** A detected OTU, with the metrics derived from the isolates it owns. */
 export type PathoscopeHit = {
-	/** The abbreviation of the OTU, as it was at the analysed version */
-	abbreviation: string;
+	/** The acronym of the OTU, as it was at the analysed version */
+	acronym: string;
 
 	/** The greatest coverage any of the OTU's isolates achieved */
 	coverage: number;

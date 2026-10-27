@@ -22,10 +22,10 @@ import { parseFastq } from "@virtool/bio";
 /**
  * The id of a read, from its header line.
  *
- * Biopython's `record.id` is the header up to the first whitespace, with the
- * leading `@` removed — the rest of the line is the description, and the two
- * mates of a pair differ there rather than in the id. Splitting anywhere else
- * would make every read look unpaired.
+ * The id is the header up to the first whitespace, with the leading `@`
+ * removed — the rest of the line is the description, and the two mates of a
+ * pair differ there rather than in the id. Splitting anywhere else would make
+ * every read look unpaired.
  */
 function readId(header: string): string {
 	return header.slice(1).split(/\s+/, 1)[0] ?? "";
@@ -80,8 +80,8 @@ export type FilterFastqOptions = {
 /**
  * Copy the records of `source` whose id is in `ids` to `target`.
  *
- * The separator line is written as a bare `+`, which is what Biopython writes
- * however the input spelled it.
+ * The separator line is always written as a bare `+`, however the input
+ * spelled it.
  */
 export async function filterFastqByIds({
 	ids,

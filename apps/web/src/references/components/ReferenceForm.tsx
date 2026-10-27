@@ -1,6 +1,6 @@
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import TextArea from "@base/TextArea";
-import { useId } from "react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
 export type ReferenceFormMode = "edit" | "empty";
@@ -24,38 +24,31 @@ type ReferenceFormProps = {
  * Form input fields for organism, name and description
  */
 export function ReferenceForm({ errors, mode, register }: ReferenceFormProps) {
-	const nameId = useId();
-	const organismId = useId();
-	const descriptionId = useId();
-
 	const organismComponent =
 		mode === "empty" || mode === "edit" ? (
-			<InputGroup>
-				<InputLabel htmlFor={organismId}>Organism</InputLabel>
-				<InputSimple id={organismId} {...register("organism")} />
-			</InputGroup>
+			<Field>
+				<FieldLabel>Organism</FieldLabel>
+				<Input {...register("organism")} />
+			</Field>
 		) : null;
 
 	return (
 		<>
-			<InputGroup className="pb-0">
-				<InputLabel htmlFor={nameId}>Name</InputLabel>
-				<InputSimple
-					id={nameId}
+			<Field className="pb-0">
+				<FieldLabel>Name</FieldLabel>
+				<Input
 					aria-required
-					aria-invalid={Boolean(errors.name) || undefined}
-					aria-describedby={errors.name ? `${nameId}-error` : undefined}
 					{...register("name", { required: "Required Field" })}
 				/>
-				<InputError id={`${nameId}-error`}>{errors.name?.message}</InputError>
-			</InputGroup>
+				<FieldError errors={[errors.name]} />
+			</Field>
 
 			{organismComponent}
 
-			<InputGroup>
-				<InputLabel htmlFor={descriptionId}>Description</InputLabel>
-				<TextArea id={descriptionId} {...register("description")} />
-			</InputGroup>
+			<Field>
+				<FieldLabel>Description</FieldLabel>
+				<TextArea {...register("description")} />
+			</Field>
 		</>
 	);
 }

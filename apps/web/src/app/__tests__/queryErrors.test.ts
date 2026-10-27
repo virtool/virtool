@@ -1,12 +1,15 @@
 import {
 	getErrorStatus,
 	handleQueryError,
+	isServiceUnavailable,
 	type QueryError,
 	shouldRetryQuery,
 } from "@app/queryErrors";
 import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -65,24 +68,38 @@ describe("getErrorStatus", () => {
 	});
 });
 
+describe("isServiceUnavailable", () => {
+	it("recognizes the 503 a database outage answers with", () => {
+		expect(isServiceUnavailable(clientError(503))).toBe(true);
+	});
+
+	it.each([
+		["another server failure", clientError(500)],
+		["an error carrying no status", new Error("network down")],
+	])("rejects %s", (_label, error) => {
+		expect(isServiceUnavailable(error)).toBe(false);
+	});
+});
+
 describe("shouldRetryQuery", () => {
 	it("retries a server function failure that may yet succeed", () => {
 		expect(shouldRetryQuery(0, clientError(500))).toBe(true);
 	});
 
-	it.each([401, 403, 404])(
+	it.each([401, 403, 404, 503])(
 		"gives up immediately on a %i from a server function",
 		(status) => {
 			expect(shouldRetryQuery(0, clientError(status))).toBe(false);
 		},
 	);
 
-	it.each([UNAUTHORIZED_ERROR_NAME, FORBIDDEN_ERROR_NAME])(
-		"gives up immediately on a server function's %s",
-		(name) => {
-			expect(shouldRetryQuery(0, serializedAuthError(name, name))).toBe(false);
-		},
-	);
+	it.each([
+		UNAUTHORIZED_ERROR_NAME,
+		FORBIDDEN_ERROR_NAME,
+		PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	])("gives up immediately on a server function's %s", (name) => {
+		expect(shouldRetryQuery(0, serializedAuthError(name, name))).toBe(false);
+	});
 
 	it("keeps retrying an auth error whose name was lost in serialization", () => {
 		// Guards the adapter's whole reason for existing: without `name`, an
@@ -120,6 +137,17 @@ describe("handleQueryError", () => {
 
 	it("leaves the session alone when the user merely lacks the role", () => {
 		handleQueryError(serializedAuthError(FORBIDDEN_ERROR_NAME, "Forbidden"));
+
+		expect(endSession).not.toHaveBeenCalled();
+	});
+
+	it("leaves a stale but valid session active for ordinary operations", () => {
+		handleQueryError(
+			serializedAuthError(
+				SESSION_NOT_FRESH_ERROR_NAME,
+				"Recent authentication required",
+			),
+		);
 
 		expect(endSession).not.toHaveBeenCalled();
 	});

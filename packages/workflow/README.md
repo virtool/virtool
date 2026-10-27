@@ -9,32 +9,37 @@ and test harness shared by Virtool workflow executors.
   Step IDs use snake case and are stored verbatim by the jobs API.
 - Build the run context once with `buildContext`. Its `data` field must survive
   a JSON round trip; use `state` for mutable step-to-step data.
-- `runWorkflow()` returns an outcome. It does not use the network, install
+- `runWorkflow()` returns an outcome. It doesn't use the network, install
   signal handlers, exit the process, run teardown, or provide lifecycle hooks.
 - `runWorkflowApp()` owns configuration, job claiming, pings, cancellation,
-  reporting, Sentry flushing, and process exit.
+  reporting, Sentry reporting, and process exit.
+- With `VT_SENTRY_DSN` set, the runtime sends a Sentry exception for each
+  failed claim, preparation, step, and finish call. It tags each exception
+  with `workflow` and, after the claim, `jobId`. The default logger also
+  forwards `info`-and-above records to Sentry logs. Cancellation,
+  termination, and a jobs API refusal that names a terminal job state send no
+  exception.
 - Cancellation is cooperative. The runtime abandons the active step when its
   signal aborts and safely observes any later rejection.
 
 The runtime is deliberately small and explicit:
 
-- There is no dependency-injection container. Each workflow builds one ordinary
+- No dependency-injection container exists. Each workflow builds one ordinary
   context before its first step. Metadata resolution is eager, but transfer may
   remain lazy: `buildContext` records storage keys and work paths and checks
   required objects with `storage.size()`, while the step that needs an optional
   input downloads it.
-- There is no teardown layer. Workflow containers are ephemeral, and process
-  exit reclaims their work directory. Do not add `dispose`,
-  `Symbol.asyncDispose`, or an `AsyncExitStack` equivalent.
-- There is no lifecycle-hook registry. `RunWorkflowOptions.onStepStart` is the
+- No teardown layer exists. Workflow containers are ephemeral, and process
+  exit reclaims their work directory. Don't add `dispose`,
+  `Symbol.asyncDispose`, or an `AsyncExitStack`-style abstraction.
+- No lifecycle-hook registry exists. `RunWorkflowOptions.onStepStart` is the
   sole optional callback. Successful completion is represented by the returned
   `RunOutcome`; a failed run leaves a partially built resource for the user to
   delete.
 
 `createWorkflowContext()` verifies on every run that `data` survives a JSON
 round trip. Put storage keys, paths, ids, and other serializable inputs there;
-put live handles and mutable cross-step scratch in `state`. This boundary is
-also the serialization seam for the end-to-end test bed.
+put live handles and mutable cross-step scratch in `state`.
 
 ### Subprocesses
 
@@ -43,12 +48,12 @@ Run every external tool through `context.runSubprocess`:
 - stdout goes to `/dev/null` unless a handler consumes it;
 - stderr is logged line by line and the last 20 lines are attached to failures;
 - lines are limited to 128 MiB by default;
-- the child runs in a process group so cancellation kills descendants;
+- the child runs in a process group so cancellation terminates descendants;
 - cancellation sends `SIGTERM`, then `SIGKILL` after five seconds.
 
 `createRunSubprocess()` logs `ESRCH` and `EPIPE` from a signal racing process
 exit at debug level. An ordinary tool exit with code 15 is a failure; only a
-cancellation-driven kill resolves with `cancelled: true`.
+cancellation-driven termination resolves with `cancelled: true`.
 
 ### Job lifecycle
 
@@ -57,10 +62,10 @@ ownership boundary between this package and the jobs API (`@virtool/internal`).
 
 - Claim paths are unprefixed and wire fields are camel case.
 - A pod gets its job ID and credential from the claim response.
-- Transport failures retry five times at five-second intervals. HTTP responses
-  are not retried.
-- The ping loop treats `401` as cancellation. Five consecutive other failures
-  stop the ping loop but do not stop the workflow.
+- Transport failures and `503` responses retry at five-second intervals for
+  four minutes of wall-clock time. Other HTTP responses aren't retried.
+- The ping loop treats `401` as cancellation. Four minutes without a successful
+  ping stop the ping loop but don't stop the workflow.
 - A completed or failed workflow exits `0`; the jobs API owns those state
   transitions. A broken runner exits `1`, and `SIGTERM` exits `124`.
 
@@ -70,24 +75,32 @@ ownership boundary between this package and the jobs API (`@virtool/internal`).
 - Transfer files with `downloadToPath()` and `uploadFromPath()`; never buffer
   workflow files in memory.
 - Read storage keys from API records. Mint output keys with `mintStorageKey()`
-  and send them back in the finalize manifest; never derive them from row IDs.
+  and send them back in the finalization manifest; never derive them from row IDs.
 - `createWorkflowCache()` stores an uncompressed tar containing one top-level
   directory. Upload the blob before registering the cache row.
+- Build a run's cache with `cacheFor(context)`, which stages archives under the
+  work path. Use `restoreOrBuild()` for every cached artifact; it rejects a
+  blob that restores to a different directory.
+- Analysis workflows resolve their inputs with `fetchAnalysisMetadata()`,
+  `resolveAnalysisInputs()`, and `transferAnalysisInputs()`. Read other job
+  arguments with `readIdArg()`.
 
 `runWorkflowApp()` constructs the storage backend once from configuration and
 passes it through the context. The workflow package never constructs a
 database connection or a module-level storage singleton.
 
-The cache archive's one top-level entry is the cached directory's basename.
-That layout is what lets every workflow share the `reference_mapping_index` and
-`subtraction_mapping_index` namespaces. Registering an already-existing cache
+The cache archive's one top-level entry is the cached directory's basename,
+so a workflow's work-path layout is part of its cache contract. Every cache
+key includes the workflow name and version, so each workflow has its own
+namespaces and never restores an artifact another workflow built from
+different input. Registering an already-existing cache
 key is success. `deriveCacheKey()` serialises params as JSON with keys sorted
 by code point, `,` and `:` separators, and every character outside
-`0x20`–`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
-`float()`, and do not change the frozen golden fixtures to match what the
-implementation currently produces.
+`0x20`-`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
+`float()`. Treat committed golden fixtures as independent expected output;
+don't update them merely to match the current implementation.
 
-Tar and gzip operations belong to `@virtool/archive`; this package does not
+Tar and gzip operations belong to `@virtool/archive`; this package doesn't
 re-export them.
 
 ## Configuration
@@ -140,10 +153,10 @@ Run from the monorepo root.
 The package runs its server-shaped tests under Node through its own `test`
 script, which the recursive workspace test command discovers. Keep this project
 out of `apps/web/vitest.config.js`; the workflow harness has no dependency on
-the SPA. Place tests beside their source as `*.test.ts`.
+the web app. Place tests beside their source as `*.test.ts`.
 
 Workflow data generators, jobs API fakes, and process fakes live in
-`src/testing/` and are imported through `@virtool/workflow/testing`. Do not
+`src/testing/` and are imported through `@virtool/workflow/testing`. Don't
 duplicate them in `apps/web/src/tests/` or a workflow app. Tests that store
 files use `MemoryStorage`.
 

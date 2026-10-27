@@ -31,7 +31,7 @@ const MINIMUM_CONTIG_LENGTH = 300;
  * `nuc` is dropped from every ORF. It is the nucleotide slice the translation
  * came from, recoverable from the contig's own `sequence` and the ORF's `pos`,
  * and keeping it would roughly double a blob that is already the largest thing a
- * NuVs analysis stores.
+ * Nuvs analysis stores.
  */
 export const processAssemblyStep: NuvsStep = {
 	id: "process_assembly",

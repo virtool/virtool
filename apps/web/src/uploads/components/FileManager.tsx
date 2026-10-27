@@ -1,10 +1,9 @@
 import { useFetchAccount } from "@account/account";
 import { checkAdminRoleOrPermissionsFromAccount } from "@administration/utils";
-import { pluralize } from "@app/format";
+import { byteSize, pluralize } from "@app/format";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
-import Icon from "@base/Icon";
 import ListEmpty from "@base/ListEmpty";
 import ListHeader from "@base/ListHeader";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -20,10 +19,11 @@ import type {
 	UploadType,
 } from "@virtool/contracts";
 import { capitalize } from "es-toolkit";
-import { AlertCircle, FileUp, Trash } from "lucide-react";
+import { AlertCircle, FileUp } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
+import { useState } from "react";
 import type { Accept } from "react-dropzone";
-import { useDeleteFiles, useListFiles } from "../queries";
+import { useDeleteFiles, useListFiles, useUploadPolicy } from "../queries";
 import { upload } from "../uploader";
 import { UploadBar } from "./UploadBar";
 import UploadItem from "./UploadItem";
@@ -51,6 +51,14 @@ export type FileManagerProps = {
 	   files listed with it. */
 	renderItemAction?: (upload: Upload, uploads: Upload[]) => ReactNode;
 
+	/* Renders a control acting on the whole selection. The renderer stays mounted
+	   while the list is mounted so it can preserve an in-progress action. */
+	renderSelectionAction?: (
+		selected: Upload[],
+		clear: () => void,
+		remove: (uploads: Upload[]) => void,
+	) => ReactNode;
+
 	setPage?: (page: number) => void;
 
 	setSort?: (sort: UploadSortField, direction: SortDirection) => void;
@@ -67,6 +75,7 @@ export function FileManager({
 	page = 1,
 	regex,
 	renderItemAction,
+	renderSelectionAction,
 	setPage = () => {},
 	setSort = () => {},
 	sort,
@@ -89,6 +98,8 @@ export function FileManager({
 		resetKey: fileType,
 	});
 	const { mutate: deleteFiles } = useDeleteFiles();
+	const { data: policy } = useUploadPolicy();
+	const [rejected, setRejected] = useState<string[]>([]);
 
 	if (isErrorAccount && !account) {
 		return <QueryError noun="account" />;
@@ -110,18 +121,37 @@ export function FileManager({
 		account,
 		"remove_file",
 	);
+	const canSelect = canDelete || Boolean(renderSelectionAction);
 
 	const title = `${fileType === "reads" ? "Read" : capitalize(fileType)} Files`;
 
+	// Upload initialization enforces the limit even while the policy is loading.
 	function handleDrop(acceptedFiles: File[]) {
+		const maximum = policy?.maxUploadSize;
+		const tooLarge =
+			maximum === undefined
+				? []
+				: acceptedFiles.filter((file) => file.size > maximum);
+
+		setRejected(tooLarge.map((file) => file.name));
+
 		for (const file of acceptedFiles) {
-			upload(file, fileType);
+			if (!tooLarge.includes(file)) {
+				upload(file, fileType);
+			}
 		}
 	}
 
 	function handleDelete() {
 		deleteFiles({ ids: selection.selected.map((item) => item.id) });
 		selection.clear();
+	}
+
+	function removeFromSelection(uploads: Upload[]) {
+		const removedIds = new Set(uploads.map((upload) => upload.id));
+		selection.setSelected((selected) =>
+			selected.filter((upload) => !removedIds.has(upload.id)),
+		);
 	}
 
 	function handleSort(field: UploadSortField) {
@@ -138,12 +168,25 @@ export function FileManager({
 			</ViewHeader>
 
 			{canUpload ? (
-				<UploadBar
-					accept={accept}
-					onDrop={handleDrop}
-					hint={hint}
-					regex={regex}
-				/>
+				<>
+					<UploadBar
+						accept={accept}
+						onDrop={handleDrop}
+						hint={hint}
+						regex={regex}
+					/>
+					{rejected.length > 0 && policy && (
+						<Alert color="red" level icon={AlertCircle}>
+							<span>
+								<strong>
+									{pluralize(rejected.length, "file")} exceeded the{" "}
+									{byteSize(policy.maxUploadSize, true)} maximum upload size:
+								</strong>
+								<span> {rejected.join(", ")}</span>
+							</span>
+						</Alert>
+					)}
+				</>
 			) : (
 				<Alert color="orange" level icon={AlertCircle}>
 					<span>
@@ -178,9 +221,14 @@ export function FileManager({
 									: pluralize(files.foundCount, "file")
 							}
 						>
-							{canDelete && selection.selected.length > 0 && (
+							{renderSelectionAction?.(
+								selection.selected,
+								selection.clear,
+								removeFromSelection,
+							)}
+							{selection.selected.length > 0 && canDelete && (
 								<Button color="red" size="small" onClick={handleDelete}>
-									<Icon icon={Trash} /> Delete
+									Delete
 								</Button>
 							)}
 						</ListHeader>
@@ -190,7 +238,7 @@ export function FileManager({
 								checked={selection.getVisibleState(files.items)}
 								direction={direction}
 								onSelectAll={
-									canDelete
+									canSelect
 										? () => selection.toggleVisible(files.items)
 										: undefined
 								}
@@ -206,7 +254,7 @@ export function FileManager({
 										checked={selection.isSelected(item)}
 										key={item.id}
 										onSelect={
-											canDelete
+											canSelect
 												? (event: MouseEvent<HTMLButtonElement>) =>
 														selection.select(item, {
 															shiftKey: event.shiftKey,

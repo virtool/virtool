@@ -1,69 +1,160 @@
+import { cn } from "@app/cn";
+import { usePasskeySupport } from "@app/passkeySupport";
+import { getPasskeyNotice, type PasskeyNotice } from "@app/passkeys";
 import Button from "@base/Button";
-import Checkbox from "@base/Checkbox";
-import { InputGroup, InputLabel, InputSimple } from "@base/Input";
-import { useNavigate } from "@tanstack/react-router";
-import { CircleAlert } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
-import { useLoginMutation } from "../queries";
+import Field, { FieldLabel } from "@base/Field";
+import Input from "@base/Input";
+import { Link } from "@tanstack/react-router";
+import { CircleAlert, Info, KeyRound } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { useForm } from "react-hook-form";
+import { getWallErrorMessage } from "../errors";
+import { useFollowAuthNextStep, usePasskeyAutofill } from "../hooks";
+import {
+	type LoginResult,
+	useLoginMutation,
+	usePasskeySignInMutation,
+} from "../queries";
+import TwoFactorForm from "./TwoFactorForm";
 import { WallTitle } from "./WallTitle";
 
 type LoginFormProps = {
+	/** Content shown below the title on the sign-in step only. */
+	notice?: ReactNode;
+	/** Called when the password is accepted and a two-factor challenge starts. */
+	onChallenge?: () => void;
 	/** URL to navigate to after a successful login. Defaults to "/". */
 	redirect?: string;
-	/** Callback to set the reset code in the parent component state. */
-	setResetCode: (resetCode: string) => void;
+	/** Shows the forced-reset form after the password has been authenticated. */
+	setResetRequired: (required: boolean) => void;
 };
 
 type FormValues = {
 	handle: string;
 	password: string;
-	remember: boolean;
 };
 
 /** Handles the user login process. */
-export default function LoginForm({ redirect, setResetCode }: LoginFormProps) {
-	const { control, handleSubmit, register } = useForm<FormValues>();
+export default function LoginForm({
+	notice,
+	onChallenge,
+	redirect,
+	setResetRequired,
+}: LoginFormProps) {
+	const { handleSubmit, register } = useForm<FormValues>();
 	const loginMutation = useLoginMutation();
-	const navigate = useNavigate();
+	const passkeyMutation = usePasskeySignInMutation();
+	const passkeySupport = usePasskeySupport();
+	const [twoFactor, setTwoFactor] = useState(false);
+	const [continuing, setContinuing] = useState(false);
+	const [continueError, setContinueError] = useState<string | null>(null);
+	const follow = useFollowAuthNextStep();
+	const isSigningIn =
+		loginMutation.isPending || passkeyMutation.isPending || continuing;
 
-	function onSubmit({ handle, password, remember }: FormValues) {
-		loginMutation.mutate(
-			{ handle, password, remember },
-			{
-				onSuccess: (data) => {
-					if (data.resetCode) {
-						setResetCode(data.resetCode);
-						return;
-					}
-					navigate({ to: redirect ?? "/" });
-				},
-			},
+	const [autofillNotice, setAutofillNotice] = useState<PasskeyNotice | null>(
+		null,
+	);
+	const stopAutofill = usePasskeyAutofill({
+		enabled: !twoFactor && !passkeyMutation.isPending && !continuing,
+		onSignedIn: () => void continueSignIn(),
+		onError: (error) => setAutofillNotice(getPasskeyNotice(error)),
+	});
+
+	async function continueSignIn() {
+		setContinuing(true);
+		setContinueError(null);
+		try {
+			const step = await follow(redirect);
+			if (step.type === "password_reset") {
+				setResetRequired(true);
+			} else if (step.type === "login") {
+				setContinueError("Sign-in did not finish. Try again.");
+			}
+		} catch {
+			setContinueError("Virtool could not be reached. Try again.");
+		} finally {
+			setContinuing(false);
+		}
+	}
+
+	function onSignedIn(data: LoginResult) {
+		if ("twoFactorRedirect" in data) {
+			setTwoFactor(true);
+			onChallenge?.();
+			return;
+		}
+		void continueSignIn();
+	}
+
+	function onSubmit({ handle, password }: FormValues) {
+		if (isSigningIn) {
+			return;
+		}
+		passkeyMutation.reset();
+		setAutofillNotice(null);
+		setContinueError(null);
+		loginMutation.mutate({ handle, password }, { onSuccess: onSignedIn });
+	}
+
+	function onPasskeySignIn() {
+		if (isSigningIn) {
+			return;
+		}
+		loginMutation.reset();
+		setAutofillNotice(null);
+		setContinueError(null);
+		passkeyMutation.mutate(stopAutofill, {
+			onSuccess: () => void continueSignIn(),
+		});
+	}
+
+	const isError = loginMutation.isError || continueError !== null;
+	const errorMessage = loginMutation.isError
+		? getWallErrorMessage(loginMutation.error, "Sign-in failed. Try again.")
+		: continueError;
+	const passkeyNotice = passkeyMutation.isError
+		? getPasskeyNotice(passkeyMutation.error)
+		: autofillNotice;
+	const isPasskeyError = passkeyNotice?.tone === "error";
+	const PasskeyNoticeIcon = isPasskeyError ? CircleAlert : Info;
+
+	if (twoFactor) {
+		return (
+			<TwoFactorForm
+				onVerified={() => void continueSignIn()}
+				restart={() => {
+					setTwoFactor(false);
+					loginMutation.reset();
+					passkeyMutation.reset();
+				}}
+			/>
 		);
 	}
 
-	const { error, isError } = loginMutation;
-
 	return (
 		<>
-			<WallTitle title="Login" subtitle="Login with your Virtool account." />
+			<WallTitle
+				title="Sign in"
+				subtitle="Sign in with your Virtool account."
+			/>
+			{notice}
 
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<InputGroup>
-					<InputLabel htmlFor="handle">Username</InputLabel>
-					<InputSimple
-						id="handle"
-						autoComplete="username"
+				<Field>
+					<FieldLabel>Username</FieldLabel>
+					<Input
+						autoComplete="username webauthn"
 						aria-required
 						aria-invalid={isError || undefined}
 						aria-describedby={isError ? "login-error" : undefined}
 						{...register("handle", { required: true })}
 						autoFocus
 					/>
-				</InputGroup>
-				<InputGroup>
-					<InputLabel htmlFor="password">Password</InputLabel>
-					<InputSimple
-						id="password"
+				</Field>
+				<Field>
+					<FieldLabel>Password</FieldLabel>
+					<Input
 						type="password"
 						autoComplete="current-password"
 						aria-required
@@ -71,20 +162,8 @@ export default function LoginForm({ redirect, setResetCode }: LoginFormProps) {
 						aria-describedby={isError ? "login-error" : undefined}
 						{...register("password", { required: true })}
 					/>
-				</InputGroup>
-				<div className="flex justify-between my-4">
-					<Controller
-						name="remember"
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<Checkbox
-								checked={value}
-								id="RememberMe"
-								label="Remember Me"
-								onClick={() => onChange(!value)}
-							/>
-						)}
-					/>
+				</Field>
+				<div className="flex justify-end my-4">
 					{isError && (
 						<div
 							id="login-error"
@@ -92,16 +171,48 @@ export default function LoginForm({ redirect, setResetCode }: LoginFormProps) {
 							className="flex items-center gap-1 text-red-600 font-medium"
 						>
 							<CircleAlert aria-hidden className="shrink-0" size={14} />
-							{error?.message || "An error occurred during login"}
+							{errorMessage}
 						</div>
 					)}
 				</div>
-				<div className="flex justify-end">
-					<Button type="submit" color="blue">
-						Login
+				<div className="flex items-center justify-between">
+					<Link to="/recover">Forgot your password?</Link>
+					<Button type="submit" color="blue" disabled={isSigningIn}>
+						Sign in
 					</Button>
 				</div>
 			</form>
+
+			<div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200">
+				{passkeySupport === "unavailable" ? (
+					<p className="text-gray-600 text-sm">
+						Passkey sign-in is not available in this browser.
+					</p>
+				) : (
+					<Button
+						className="w-full"
+						disabled={passkeySupport !== "available" || isSigningIn}
+						onClick={onPasskeySignIn}
+					>
+						<KeyRound aria-hidden size={16} />
+						{passkeyMutation.isPending
+							? "Waiting for your passkey…"
+							: "Sign in with a passkey"}
+					</Button>
+				)}
+				{passkeyNotice && (
+					<p
+						role={isPasskeyError ? "alert" : "status"}
+						className={cn(
+							"flex items-center gap-1 font-medium",
+							isPasskeyError ? "text-red-600" : "text-gray-600",
+						)}
+					>
+						<PasskeyNoticeIcon aria-hidden className="shrink-0" size={14} />
+						{passkeyNotice.message}
+					</p>
+				)}
+			</div>
 		</>
 	);
 }

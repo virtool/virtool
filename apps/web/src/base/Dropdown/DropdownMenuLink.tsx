@@ -5,6 +5,7 @@ import DropdownMenuItem from "./DropdownMenuItem";
 type DropdownMenuLinkProps = {
 	children: ReactNode;
 	className?: string;
+	hash?: string;
 	to: string;
 	target?: string;
 	rel?: string;
@@ -13,13 +14,14 @@ type DropdownMenuLinkProps = {
 export default function DropdownMenuLink({
 	children,
 	className,
+	hash,
 	to,
 	target,
 	rel,
 }: DropdownMenuLinkProps) {
 	return (
 		<DropdownMenuItem className={className} asChild>
-			<Link to={to} target={target} rel={rel}>
+			<Link hash={hash} to={to} target={target} rel={rel}>
 				{children}
 			</Link>
 		</DropdownMenuItem>

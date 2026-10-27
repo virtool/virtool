@@ -2,10 +2,6 @@ import { describe, expect, it } from "vitest";
 import { createSampleWorkflow } from "./workflow";
 
 describe("createSampleWorkflow", () => {
-	/**
-	 * A step id is stored in the `jobs.steps` column and the SPA renders a job's
-	 * step list from it, so renaming one changes what users see.
-	 */
 	it("declares the two steps, in order", () => {
 		expect(createSampleWorkflow.steps.map((step) => step.id)).toStrictEqual([
 			"run_fastqc",

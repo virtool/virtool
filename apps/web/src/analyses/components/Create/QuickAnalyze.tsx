@@ -2,11 +2,45 @@ import { Dialog, DialogTitle } from "@base/Dialog";
 import QueryError from "@base/QueryError";
 import { useListHmms } from "@hmm/queries";
 import type { SampleMinimal } from "@virtool/contracts";
-import HmmAlert from "../HmmAlert";
+import CreateAnalysisBody from "./CreateAnalysisBody";
 import CreateAnalysisDialogContent from "./CreateAnalysisDialogContent";
-import CreateAnalysisForm from "./CreateAnalysisForm";
 import { SelectedSamples } from "./SelectedSamples";
-import { getCompatibleWorkflows } from "./workflows";
+
+type QuickAnalyzeContentProps = {
+	fromSelection: boolean;
+	onClose: () => void;
+	samples: SampleMinimal[];
+};
+
+/**
+ * Keep data requests inside the dialog content so they start together on open.
+ */
+function QuickAnalyzeContent({
+	fromSelection,
+	onClose,
+	samples,
+}: QuickAnalyzeContentProps) {
+	const { data: hmms, isError } = useListHmms(1, 1, "");
+
+	const sampleIds = samples.map((sample) => sample.id);
+
+	return (
+		<>
+			<DialogTitle>Quick Analyze</DialogTitle>
+			<SelectedSamples fromSelection={fromSelection} samples={samples} />
+			{isError && !hmms ? (
+				<QueryError noun="HMMs" />
+			) : (
+				<CreateAnalysisBody
+					hmms={hmms}
+					onClose={onClose}
+					sampleCount={sampleIds.length}
+					sampleIds={sampleIds}
+				/>
+			)}
+		</>
+	);
+}
 
 type QuickAnalyzeProps = {
 	/** Whether the samples came from the list selection rather than a single sample */
@@ -28,40 +62,13 @@ export default function QuickAnalyze({
 	samples,
 	setOpen,
 }: QuickAnalyzeProps) {
-	const { data: hmms, isPending, isError } = useListHmms(1, 1, "");
-
-	if (isError && !hmms) {
-		return (
-			<Dialog open={open} onOpenChange={setOpen}>
-				<CreateAnalysisDialogContent>
-					<DialogTitle>Quick Analyze</DialogTitle>
-					<QueryError noun="HMMs" />
-				</CreateAnalysisDialogContent>
-			</Dialog>
-		);
-	}
-
-	if (isPending) {
-		return null;
-	}
-
-	const compatibleWorkflows = getCompatibleWorkflows(hmms.totalCount > 0);
-
-	const sampleIds = samples.map((sample) => sample.id);
-
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<CreateAnalysisDialogContent>
-				<DialogTitle>Quick Analyze</DialogTitle>
-				<HmmAlert installed={Boolean(hmms.status.task?.complete)} />
-
-				<SelectedSamples fromSelection={fromSelection} samples={samples} />
-
-				<CreateAnalysisForm
-					compatibleWorkflows={compatibleWorkflows}
+				<QuickAnalyzeContent
+					fromSelection={fromSelection}
 					onClose={() => setOpen(false)}
-					sampleCount={sampleIds.length}
-					sampleIds={sampleIds}
+					samples={samples}
 				/>
 			</CreateAnalysisDialogContent>
 		</Dialog>

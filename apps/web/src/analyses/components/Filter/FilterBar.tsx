@@ -5,11 +5,17 @@ import {
 	FilterGroup,
 } from "@base/Filter";
 import UserFilterGroup from "@users/components/UserFilterGroup";
-import type { AnalysisWorkflow } from "@virtool/contracts";
+import type { AnalysisWorkflow, UserNested } from "@virtool/contracts";
 import { Workflow } from "lucide-react";
 import WorkflowFilterMenu from "./WorkflowFilterMenu";
 
 type FilterBarProps = {
+	/** Whether loading the available users failed. */
+	isUsersError: boolean;
+
+	/** Whether the available users are loading. */
+	isUsersPending: boolean;
+
 	/** Deselects every user. */
 	onClearUsers: () => void;
 
@@ -27,6 +33,9 @@ type FilterBarProps = {
 
 	/** The selected workflows. */
 	selectedWorkflows: AnalysisWorkflow[];
+
+	/** The users who own analyses matching the current list context. */
+	users?: UserNested[];
 };
 
 /**
@@ -34,12 +43,15 @@ type FilterBarProps = {
  * filters
  */
 export default function FilterBar({
+	isUsersError,
+	isUsersPending,
 	onClearUsers,
 	onClearWorkflows,
 	onToggleUser,
 	onToggleWorkflow,
 	selectedUsers,
 	selectedWorkflows,
+	users,
 }: FilterBarProps) {
 	return (
 		<BaseFilterBar label="Filters">
@@ -65,9 +77,12 @@ export default function FilterBar({
 				))}
 			</FilterGroup>
 			<UserFilterGroup
+				isError={isUsersError}
+				isPending={isUsersPending}
 				onClear={onClearUsers}
 				onToggle={onToggleUser}
 				selected={selectedUsers}
+				users={users}
 			/>
 		</BaseFilterBar>
 	);

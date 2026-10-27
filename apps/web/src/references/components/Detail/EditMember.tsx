@@ -1,10 +1,8 @@
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
-import { referenceQueryKeys } from "@references/keys";
 import {
 	type ReferenceMemberNoun,
 	useUpdateReferenceMember,
 } from "@references/queries";
-import { useQueryClient } from "@tanstack/react-query";
 import type {
 	ReferenceGroup,
 	ReferenceRights,
@@ -33,27 +31,17 @@ export default function EditReferenceMember({
 	unsetEditId = () => {},
 }: EditReferenceMemberProps) {
 	const mutation = useUpdateReferenceMember(noun);
-	const queryClient = useQueryClient();
 
 	function handleChange(key: keyof ReferenceRights, enabled: boolean) {
 		if (!editId) {
 			return;
 		}
 
-		mutation.mutate(
-			{
-				refId,
-				id: editId,
-				update: { [key]: enabled } as Partial<ReferenceRights>,
-			},
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({
-						queryKey: referenceQueryKeys.detail(refId),
-					});
-				},
-			},
-		);
+		mutation.mutate({
+			refId,
+			id: editId,
+			update: { [key]: enabled } as Partial<ReferenceRights>,
+		});
 	}
 
 	const rightComponents = rights.map((right) => (

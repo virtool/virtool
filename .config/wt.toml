@@ -1,4 +1,6 @@
 pre-start = "pnpm install"
 
+pre-remove = "{{ primary_worktree_path }}/dev/bin/vtd remove --worktree {{ worktree_path }}"
+
 [list]
-url = "http://localhost:{{ branch | hash_port }}"
+url = "https://dev.localhost:9443"

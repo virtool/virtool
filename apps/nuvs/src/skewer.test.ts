@@ -1,7 +1,9 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { RunSubprocess } from "@virtool/workflow";
-import { createTestWorkPath } from "@virtool/workflow/testing";
+import {
+	createFakeSubprocessRunner,
+	createTestWorkPath,
+} from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { runSkewer } from "./skewer";
 
@@ -33,28 +35,18 @@ async function run(
 	}
 
 	const outputPath = join(workPath, "trimmed");
-	const calls: Parameters<RunSubprocess>[0][] = [];
 
-	const runSubprocess: RunSubprocess = async (options) => {
-		calls.push(options);
+	const runSubprocess = createFakeSubprocessRunner({
+		async effect({ command }) {
+			// `-o` is `<staging>/reads`, so the staging directory is its parent.
+			const prefix = command[command.indexOf("-o") + 1] ?? "";
+			const staging = prefix.slice(0, prefix.lastIndexOf("/"));
 
-		// `-o` is `<staging>/reads`, so the staging directory is its parent.
-		const prefix = options.command[options.command.indexOf("-o") + 1] ?? "";
-		const staging = prefix.slice(0, prefix.lastIndexOf("/"));
-
-		for (const name of outputs) {
-			await writeFile(join(staging, name), name);
-		}
-
-		return {
-			command: options.command,
-			exitCode: 0,
-			signal: null,
-			cancelled: false,
-			stderrTail: [],
-			durationMs: 1,
-		};
-	};
+			for (const name of outputs) {
+				await writeFile(join(staging, name), name);
+			}
+		},
+	});
 
 	await runSkewer({
 		minLength: 100,
@@ -66,7 +58,7 @@ async function run(
 		stagingParent: workPath,
 	});
 
-	return { calls, outputPath, workPath };
+	return { calls: runSubprocess.calls(), outputPath, workPath };
 }
 
 const PAIRED_OUTPUTS = [

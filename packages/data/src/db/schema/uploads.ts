@@ -57,7 +57,7 @@ export const uploads = pgTable(
 			name: "uploads_user_id_fkey",
 		}),
 		unique("uploads_name_on_disk_key").on(table.nameOnDisk),
-		unique("uq_uploads_storage_key").on(table.storageKey),
+		unique("uploads_storage_key_key").on(table.storageKey),
 		check(
 			"ck_uploads_type",
 			sql`${table.type} in ('reference', 'reads', 'subtraction')`,

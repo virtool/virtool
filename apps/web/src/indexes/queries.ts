@@ -1,3 +1,4 @@
+import { invalidateChange } from "@app/invalidate";
 import { indexQueryKeys } from "@indexes/keys";
 import {
 	createIndexFn,
@@ -140,9 +141,11 @@ export function useCreateIndex() {
 	return useMutation<Index, Error, { referenceId: number }>({
 		mutationFn: ({ referenceId }) =>
 			createIndexFn({ data: { referenceId } }) as Promise<Index>,
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: indexQueryKeys.all(),
+		onSuccess: (index) => {
+			invalidateChange(queryClient, {
+				domain: "indexes",
+				operation: "insert",
+				id: index.id,
 			});
 		},
 	});

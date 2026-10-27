@@ -7,7 +7,7 @@ const { name } = Astro.props;
 <div>
   <h3>{name}</h3>
   <div class="flex gap-4">
-    <OptionTag source="CLI" name={`--${name.replace("_", "-")}`} />
+    <OptionTag source="command-line tool" name={`--${name.replace("_", "-")}`} />
     <OptionTag source="ENV" name={`VT_${name.toUpperCase()}`} />
   </div>
 </div>

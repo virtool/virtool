@@ -1,8 +1,9 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { jobs } from "@virtool/data/db/schema/jobs";
 import { legacySamples } from "@virtool/data/db/schema/samples";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -21,19 +22,18 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -71,7 +71,7 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(legacySamples);
 	await db.delete(jobs);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 	getRequest.mockReturnValue(
 		new Request("https://virtool.test/_serverFn/test"),
@@ -110,15 +110,14 @@ describe("getSample", () => {
 		await expect(call("getSampleFn", { sampleId })).rejects.toBeInstanceOf(
 			ForbiddenError,
 		);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	it("returns 404, not 403, for a sample that does not exist", async () => {
 		await signIn(db, getRequest, { administratorRole: null });
 
-		await expect(call("getSampleFn", { sampleId: 123456 })).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
-		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+		await expect(
+			call("getSampleFn", { sampleId: 123456 }),
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns the sample the owner may read", async () => {
@@ -180,8 +179,7 @@ describe("updateSampleRights", () => {
 
 		await expect(
 			call("updateSampleRightsFn", { sampleId: 123456, allRead: true }),
-		).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("refuses a non-owner who is not a full administrator", async () => {
@@ -193,7 +191,6 @@ describe("updateSampleRights", () => {
 		await expect(
 			call("updateSampleRightsFn", { sampleId, allRead: true }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	it("allows the sample owner", async () => {
@@ -231,7 +228,6 @@ describe("deleteSample", () => {
 		await expect(call("deleteSampleFn", { sampleId })).rejects.toBeInstanceOf(
 			ForbiddenError,
 		);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	it("returns 400 when an unfinished sample's job is still running", async () => {
@@ -256,8 +252,10 @@ describe("deleteSample", () => {
 			job_id: jobId,
 		});
 
-		await expect(call("deleteSampleFn", { sampleId })).rejects.toThrow();
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		await expect(call("deleteSampleFn", { sampleId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			status: 400,
+		});
 
 		// The sample must survive the rejected delete.
 		expect(

@@ -1,0 +1,31 @@
+x-labels: &labels
+  ca.virtool.dev.repository: ${VT_DEV_REPOSITORY_ID}
+  ca.virtool.dev.environment: ${VT_DEV_ENVIRONMENT_ID}
+  ca.virtool.dev.generation: ${VT_DEV_GENERATION}
+
+services:
+  cleanup-database:
+    image: postgres:18
+    environment:
+      PGPASSWORD: virtool
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - >-
+        psql --host postgres --username virtool --dbname postgres --set ON_ERROR_STOP=1
+        --command "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${VT_DEV_DATABASE}'"
+        --command "DROP DATABASE IF EXISTS \"${VT_DEV_DATABASE}\""
+    labels: *labels
+
+  cleanup-storage:
+    image: mcr.microsoft.com/azure-cli:2.89.1
+    environment:
+      AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - az storage container delete --name "${VT_DEV_BLOB_CONTAINER}" --output none
+    labels: *labels
+
+networks:
+  default:
+    external: true
+    name: ${VT_DEV_SHARED_NETWORK}

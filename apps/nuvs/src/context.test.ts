@@ -408,9 +408,8 @@ describe("the HMM blobs", () => {
 		);
 	});
 
-	// Virtool generates this blob lazily, on the first request for it, and deletes
-	// it whenever an HMM install commits. There is no jobs API route to trigger
-	// that, so on a fresh install the key is simply cold and a run cannot warm it.
+	// A deployment that has never installed HMMs has no blob, and no jobs API
+	// route writes it, so a run cannot warm it.
 	it("names the cold annotations key rather than reporting a bare miss", async () => {
 		const { input, storage } = await setup();
 
@@ -421,7 +420,7 @@ describe("the HMM blobs", () => {
 		);
 
 		await expect(buildNuvsContext(input)).rejects.toThrow(
-			/request it once from the web API/,
+			/Make sure HMMs are installed/,
 		);
 	});
 
@@ -434,9 +433,6 @@ describe("the HMM blobs", () => {
 	});
 });
 
-// `createWorkflowContext` asserts this on every run, not only under test: the
-// deferred end-to-end bed expresses a run as files plus a JSON blob, and the
-// constraint rots silently the first time someone parks a handle on `data`.
 describe("the run context", () => {
 	it("round-trips through JSON serialization", async () => {
 		const { input } = await setup({ subtractions: 2 });

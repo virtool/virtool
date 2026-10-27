@@ -15,12 +15,12 @@ import type { NuvsOrfHit } from "@virtool/contracts";
 import { Download } from "lucide-react";
 import { type FormEvent, useState } from "react";
 
-type NuVsExportPreviewProps = {
+type NuvsExportPreviewProps = {
 	mode: string;
 };
 
 /** A worked example of the file the chosen mode produces. */
-function NuvsExportPreview({ mode }: NuVsExportPreviewProps) {
+function NuvsExportPreview({ mode }: NuvsExportPreviewProps) {
 	const isContigs = mode === "contigs";
 
 	const previewHeader = isContigs

@@ -1,20 +1,21 @@
 import Button from "@base/Button";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import { usePasswordRules } from "@forms/password";
-import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { getWallErrorMessage } from "../errors";
+import { useFollowAuthNextStep } from "../hooks";
 import { useResetPasswordMutation } from "../queries";
 import { WallTitle } from "./WallTitle";
 
 type ResetFormProps = {
 	/** URL to navigate to after a successful reset. Defaults to "/". */
 	redirect?: string;
-	/** Code required for password reset. */
-	resetCode: string;
 };
 
 /** Handles the password reset process. */
-export default function ResetForm({ redirect, resetCode }: ResetFormProps) {
+export default function ResetForm({ redirect }: ResetFormProps) {
 	const {
 		formState: { errors },
 		register,
@@ -23,20 +24,37 @@ export default function ResetForm({ redirect, resetCode }: ResetFormProps) {
 		defaultValues: { password: "" },
 	});
 	const resetPasswordMutation = useResetPasswordMutation();
-	const navigate = useNavigate();
+	const [continuing, setContinuing] = useState(false);
+	const [continueError, setContinueError] = useState(false);
+	const follow = useFollowAuthNextStep();
 	const passwordRules = usePasswordRules();
 
+	async function continueAfterReset() {
+		setContinuing(true);
+		setContinueError(false);
+		try {
+			await follow(redirect);
+		} catch {
+			setContinueError(true);
+		} finally {
+			setContinuing(false);
+		}
+	}
+
 	function onSubmit({ password }: { password: string }) {
+		if (resetPasswordMutation.isPending || resetPasswordMutation.isSuccess) {
+			return;
+		}
+		// The mutation rotates the session cookies. The server then says which
+		// step comes next.
 		resetPasswordMutation.mutate(
-			{ password, resetCode },
-			// The reset already authenticated us: it rotated the session cookies
-			// and invalidated the account query. Without this the user sits on the
-			// form with no feedback.
-			{ onSuccess: () => navigate({ to: redirect ?? "/" }) },
+			{ password },
+			{ onSuccess: () => void continueAfterReset() },
 		);
 	}
 
 	const { error, isError, isPending } = resetPasswordMutation;
+	const isBusy = isPending || continuing;
 
 	return (
 		<>
@@ -45,33 +63,41 @@ export default function ResetForm({ redirect, resetCode }: ResetFormProps) {
 				subtitle="You must set a new password before proceeding."
 			/>
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<InputGroup>
-					<InputLabel htmlFor="password">Password</InputLabel>
-					<InputSimple
-						id="password"
+				<Field>
+					<FieldLabel>Password</FieldLabel>
+					<Input
 						type="password"
 						autoComplete="new-password"
 						aria-required
-						aria-invalid={Boolean(errors.password) || undefined}
-						aria-describedby={errors.password ? "password-error" : undefined}
 						{...register("password", passwordRules)}
 					/>
-					{errors.password?.message && (
-						<InputError id="password-error">
-							{errors.password.message}
-						</InputError>
-					)}
-					{isError && (
-						<InputError>
-							{error?.message || "An error occurred during password reset"}
-						</InputError>
-					)}
-				</InputGroup>
-				{/* A reset code is single-use. Letting a double-click fire a second
-				    submission only ever earns the user an error. */}
-				<Button type="submit" color="blue" disabled={isPending}>
-					Reset
-				</Button>
+					<FieldError errors={[errors.password]}>
+						{errors.password || !isError
+							? undefined
+							: getWallErrorMessage(
+									error,
+									"Your password could not be changed. Try again.",
+								)}
+					</FieldError>
+				</Field>
+				{continueError ? (
+					<>
+						<p role="alert" className="my-2 font-medium text-red-600">
+							Your password was changed, but Virtool could not be reached.
+						</p>
+						<Button
+							color="blue"
+							disabled={continuing}
+							onClick={() => void continueAfterReset()}
+						>
+							Continue
+						</Button>
+					</>
+				) : (
+					<Button type="submit" color="blue" disabled={isBusy}>
+						Reset
+					</Button>
+				)}
 			</form>
 		</>
 	);

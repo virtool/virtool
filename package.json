@@ -7,17 +7,18 @@
 		"build": "pnpm -r --filter \"./apps/*\" --filter \"!@virtool/site\" build",
 		"check": "biome check --error-on-warnings apps packages",
 		"develop": "pnpm --filter @virtool/web develop",
+		"docs:lint": "vale sync && vale --glob='*.{md,mdx}' .",
 		"format": "biome check --write apps packages",
 		"knip": "knip",
 		"test": "pnpm -r test",
 		"typecheck": "pnpm -r typecheck"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.8",
+		"@biomejs/biome": "^2.5.15",
 		"@changesets/changelog-github": "^1.0.0",
 		"@changesets/cli": "^3.0.1",
-		"@types/node": "^26.4.0",
-		"knip": "^6.32.3",
+		"@types/node": "^26.4.1",
+		"knip": "^6.42.1",
 		"typescript": "^7.0.2"
 	}
 }

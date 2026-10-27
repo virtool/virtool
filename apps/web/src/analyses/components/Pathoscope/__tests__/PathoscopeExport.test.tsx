@@ -1,13 +1,15 @@
 import { AnalysisSearchProvider } from "@analyses/components/AnalysisSearchContext";
 import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
 import {
 	createFakeAnalysisMinimal,
 	createFakePathoscopeHit,
 } from "@tests/fake/analyses";
-import { renderWithProviders } from "@tests/setup";
+import { mockGetAccount, userServerFnMocks } from "@tests/server-fn/users";
+import { renderWithRouter } from "@tests/setup";
 import type { PathoscopeIsolate } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PathoscopeExport from "../PathoscopeExport";
@@ -34,6 +36,7 @@ const analysis: FormattedPathoscopeAnalysis = {
 	results: {
 		hits: [
 			createFakePathoscopeHit({
+				acronym: "AV",
 				id: "a",
 				isolates: [
 					createIsolate({ id: "a1", name: "Isolate A" }),
@@ -48,6 +51,7 @@ const analysis: FormattedPathoscopeAnalysis = {
 				name: "Alpha virus",
 			}),
 			createFakePathoscopeHit({
+				acronym: "",
 				coverage: 0.25,
 				depth: 7,
 				id: "b",
@@ -64,12 +68,11 @@ const analysis: FormattedPathoscopeAnalysis = {
 
 const writeText = vi.fn().mockResolvedValue(undefined);
 
-function renderExport(search: Partial<AnalysisSearch> = {}) {
-	renderWithProviders(
+async function renderExport(search: Partial<AnalysisSearch> = {}) {
+	await renderWithRouter(
 		<AnalysisSearchProvider
 			search={{
 				...DEFAULT_ANALYSIS_SEARCH,
-				showLowOtus: true,
 				dir: "asc",
 				...search,
 			}}
@@ -86,6 +89,7 @@ async function openMenu() {
 
 beforeEach(() => {
 	writeText.mockClear();
+	mockGetAccount(createFakeAccount());
 
 	vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
 	vi.stubGlobal("isSecureContext", true);
@@ -93,7 +97,7 @@ beforeEach(() => {
 
 describe("<PathoscopeExport />", () => {
 	it("should offer a copy and a download section", async () => {
-		renderExport();
+		await renderExport();
 		await openMenu();
 
 		expect(screen.getByRole("group", { name: "Copy" })).toBeInTheDocument();
@@ -101,16 +105,16 @@ describe("<PathoscopeExport />", () => {
 
 		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.xlsx",
+			"/analyses/documents/5.xlsx?columns=name,weight,depth,coverage",
 		);
 		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
 			"href",
-			"/analyses/documents/5.csv",
+			"/analyses/documents/5.csv?columns=name,weight,depth,coverage",
 		);
 	});
 
 	it("should copy the shown viruses as a tab-separated table", async () => {
-		renderExport({ sort: "coverage" });
+		await renderExport({ sort: "coverage" });
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
@@ -124,7 +128,7 @@ describe("<PathoscopeExport />", () => {
 	});
 
 	it("should copy the isolates of every shown virus", async () => {
-		renderExport({ sort: "coverage" });
+		await renderExport({ sort: "coverage" });
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "Isolates" }));
 
@@ -138,8 +142,50 @@ describe("<PathoscopeExport />", () => {
 		);
 	});
 
+	it("should carry the columns the account chose, in its order", async () => {
+		mockGetAccount(
+			createFakeAccount({
+				settings: {
+					...createFakeAccount().settings,
+					pathoscopeColumns: ["weight", "depth", "coverage", "name"],
+				},
+			}),
+		);
+
+		await renderExport({ sort: "coverage" });
+		await openMenu();
+
+		await screen.findByRole("menuitemcheckbox", { name: "Prefer acronym" });
+
+		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
+			"href",
+			"/analyses/documents/5.csv?columns=weight,depth,coverage,name",
+		);
+
+		await userEvent.click(screen.getByRole("menuitem", { name: "Isolates" }));
+
+		expect(writeText).toHaveBeenCalledWith(
+			[
+				"Weight\tDepth\tCoverage\tName\tIsolate",
+				"0.250\t12\t0.500\tBeta virus\tIsolate C",
+				"0.250\t12\t0.500\tAlpha virus\tIsolate A",
+				"0.100\t4\t0.250\tAlpha virus\tIsolate B",
+			].join("\n"),
+		);
+	});
+
+	it("should link to the Pathoscope account settings", async () => {
+		await renderExport();
+		await openMenu();
+
+		expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+			"href",
+			"/account/settings#pathoscope",
+		);
+	});
+
 	it("should leave the header row out when it is not wanted", async () => {
-		renderExport({ find: "Beta" });
+		await renderExport({ find: "Beta" });
 		await openMenu();
 		await userEvent.click(
 			screen.getByRole("menuitem", { name: "OTUs without headers" }),
@@ -149,7 +195,7 @@ describe("<PathoscopeExport />", () => {
 	});
 
 	it("should copy read pseudo-counts when reads are shown", async () => {
-		renderExport({ find: "Alpha", reads: true });
+		await renderExport({ find: "Alpha", reads: true });
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
@@ -160,10 +206,107 @@ describe("<PathoscopeExport />", () => {
 		);
 	});
 
+	it("should name OTUs by acronym when the account prefers it", async () => {
+		mockGetAccount(
+			createFakeAccount({
+				settings: { ...createFakeAccount().settings, preferAcronym: true },
+			}),
+		);
+
+		await renderExport({ sort: "coverage" });
+		await openMenu();
+
+		expect(
+			await screen.findByRole("menuitemcheckbox", {
+				name: "Prefer acronym",
+			}),
+		).toBeChecked();
+		expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
+			"href",
+			"/analyses/documents/5.xlsx?columns=name,weight,depth,coverage&preferAcronym=true",
+		);
+		expect(screen.getByRole("menuitem", { name: "CSV" })).toHaveAttribute(
+			"href",
+			"/analyses/documents/5.csv?columns=name,weight,depth,coverage&preferAcronym=true",
+		);
+
+		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
+
+		expect(writeText).toHaveBeenCalledWith(
+			[
+				"Name\tWeight\tDepth\tCoverage",
+				"Beta virus\t0.500\t7\t0.250",
+				"AV\t0.250\t12\t0.500",
+			].join("\n"),
+		);
+	});
+
+	it("should save the acronym preference to the account", async () => {
+		const account = createFakeAccount();
+		const settings = { ...account.settings, preferAcronym: true };
+
+		mockGetAccount(account);
+		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(settings);
+
+		await renderExport();
+		await openMenu();
+
+		const toggle = await screen.findByRole("menuitemcheckbox", {
+			name: "Prefer acronym",
+		});
+		expect(toggle).not.toBeChecked();
+
+		// The account is read again once the change settles.
+		mockGetAccount({ ...account, settings });
+		await userEvent.click(toggle);
+
+		expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
+			data: { preferAcronym: true },
+		});
+		await waitFor(() => expect(toggle).toBeChecked());
+	});
+
+	it("should save a second toggle only after the first settles", async () => {
+		const account = createFakeAccount();
+		mockGetAccount(account);
+
+		let resolveFirst: (value: typeof account.settings) => void = () => {};
+		userServerFnMocks.updateAccountSettingsFn
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						resolveFirst = resolve;
+					}),
+			)
+			.mockResolvedValueOnce(account.settings);
+
+		await renderExport();
+		await openMenu();
+
+		const toggle = await screen.findByRole("menuitemcheckbox", {
+			name: "Prefer acronym",
+		});
+
+		await userEvent.click(toggle);
+		await userEvent.click(toggle);
+
+		expect(toggle).not.toBeChecked();
+		expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledTimes(1);
+
+		resolveFirst({ ...account.settings, preferAcronym: true });
+
+		await waitFor(() =>
+			expect(
+				userServerFnMocks.updateAccountSettingsFn,
+			).toHaveBeenLastCalledWith({ data: { preferAcronym: false } }),
+		);
+		await waitFor(() => expect(toggle).not.toBeChecked());
+	});
+
 	// The menu closes on a copy, so the trigger is the only place left to say it
 	// happened.
 	it("should report a copy on the trigger", async () => {
-		renderExport();
+		await renderExport();
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
@@ -175,7 +318,7 @@ describe("<PathoscopeExport />", () => {
 	it("should offer downloads alone outside a secure context", async () => {
 		vi.stubGlobal("isSecureContext", false);
 
-		renderExport();
+		await renderExport();
 		await openMenu();
 
 		expect(

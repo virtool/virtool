@@ -4,7 +4,7 @@ import type { NuvsStep } from "./types";
 /**
  * Map the trimmed reads against the reference and keep only what missed.
  *
- * NuVs looks for viruses the reference does *not* know about, so a read that
+ * Nuvs looks for viruses the reference does *not* know about, so a read that
  * aligns to a known OTU is not evidence of anything novel and is dropped here.
  * `--un` is what carries the rest forward; the SAM stream bowtie2 writes to
  * stdout is never read, and the runtime opens it on `/dev/null` for exactly that

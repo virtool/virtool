@@ -37,7 +37,12 @@ import {
 	vi,
 } from "vitest";
 import { runTask } from "../framework/run";
-import { acquireOrThrow, readTaskRow, seedTaskRow } from "../testing/tasks";
+import {
+	acquireOrThrow,
+	createTaskTestContext,
+	readTaskRow,
+	seedTaskRow,
+} from "../testing/tasks";
 import { importReferenceTask } from "./import-reference";
 import type { TaskContext } from "./registry";
 
@@ -75,7 +80,7 @@ beforeEach(async () => {
 	await db.delete(users);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage };
+	ctx = createTaskTestContext({ db, storage });
 
 	userId = await seedUser(db, { handle: "curator" });
 	referenceId = await seedReference(userId);

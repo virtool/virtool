@@ -89,6 +89,7 @@ function buildPresignedUrl(
 		const override = new URL(origin);
 		url.protocol = override.protocol;
 		url.host = override.host;
+		url.port = override.port;
 	}
 
 	return `${url.toString()}?${sas}`;

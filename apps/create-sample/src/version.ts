@@ -8,7 +8,7 @@ import pkg from "../package.json" with { type: "json" };
  * bundled Node app — it would be `undefined` with nothing failing to say so. A
  * JSON import is a real module value the bundler inlines and `vitest` resolves.
  *
- * Like create-subtraction this app *is* published: CI's `publish-ghcr` job runs
+ * CI's `release-ghcr` job sets it from the release tag with
  * `pnpm -C apps/create-sample version` before the Docker build, so a released
  * image carries a real version here. It takes no workflow cache, so nothing but
  * the claim record reads it.

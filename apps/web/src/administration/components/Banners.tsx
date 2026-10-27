@@ -8,6 +8,7 @@ import {
 } from "@banner/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import Field, { FieldLabel } from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
@@ -50,11 +51,13 @@ export default function Banners() {
 	return (
 		<section>
 			<SectionHeader>
-				<h2>Banners</h2>
-				<p>
-					Manage the banner displayed to all users above the navigation bar.
-				</p>
-				<div className="mt-3 flex justify-end">
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h2>Banners</h2>
+						<p>
+							Manage the banner displayed to all users above the navigation bar.
+						</p>
+					</div>
 					<CreateBanner
 						onSubmit={(values) => createMutation.mutateAsync(values)}
 					/>
@@ -67,14 +70,13 @@ export default function Banners() {
 					onValueChange={handleChange}
 				>
 					<BoxGroup>
-						<BoxGroupSection className="flex items-center gap-3">
-							<RadioGroupItem id="banner-off" value="off" />
-							<label
-								htmlFor="banner-off"
-								className="grow cursor-pointer text-gray-600"
-							>
-								Off — no banner displayed
-							</label>
+						<BoxGroupSection>
+							<Field orientation="horizontal">
+								<RadioGroupItem value="off" />
+								<FieldLabel className="grow cursor-pointer font-normal text-gray-600">
+									Off — no banner displayed
+								</FieldLabel>
+							</Field>
 						</BoxGroupSection>
 						{data.map((item) => (
 							<BannerItem

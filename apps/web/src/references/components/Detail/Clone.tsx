@@ -1,4 +1,5 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
+import SectionHeader from "@base/SectionHeader";
 import { Link } from "@tanstack/react-router";
 
 type CloneProps = {
@@ -7,20 +8,22 @@ type CloneProps = {
 
 export function Clone({ source }: CloneProps) {
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2>Clone Reference</h2>
-			</BoxGroupHeader>
+			</SectionHeader>
 
-			<BoxGroupSection>
-				<strong>Source Reference</strong>
-				<span>
-					{" / "}
-					<Link to="/refs/$refId" params={{ refId: String(source.id) }}>
-						{source.name}
-					</Link>
-				</span>
-			</BoxGroupSection>
-		</BoxGroup>
+			<BoxGroup>
+				<BoxGroupSection>
+					<strong>Source Reference</strong>
+					<span>
+						{" / "}
+						<Link to="/refs/$refId" params={{ refId: String(source.id) }}>
+							{source.name}
+						</Link>
+					</span>
+				</BoxGroupSection>
+			</BoxGroup>
+		</section>
 	);
 }

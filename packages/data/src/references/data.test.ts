@@ -17,7 +17,9 @@ import { collectFrames } from "../test/frames";
 import {
 	addReferenceGroup,
 	addReferenceUser,
+	checkReferenceVisibility,
 	createReference,
+	ReferenceMemberConflictError,
 	removeReferenceGroup,
 	removeReferenceUser,
 	setReferenceArchived,
@@ -189,6 +191,62 @@ describe("membership", () => {
 		]);
 	});
 
+	it("rejects a user who is already a member", async () => {
+		const referenceId = await seedReference();
+		const memberId = await seedUser(db, { handle: "bob" });
+		await addReferenceUser(db, referenceId, memberId, {});
+
+		await expect(
+			addReferenceUser(db, referenceId, memberId, {}),
+		).rejects.toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("rejects a group that is already a member", async () => {
+		const referenceId = await seedReference();
+		const groupId = await seedGroup();
+		await addReferenceGroup(db, referenceId, groupId, {});
+
+		await expect(
+			addReferenceGroup(db, referenceId, groupId, {}),
+		).rejects.toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("adds a user once when two requests race", async () => {
+		const referenceId = await seedReference();
+		const memberId = await seedUser(db, { handle: "bob" });
+
+		const results = await Promise.allSettled([
+			addReferenceUser(db, referenceId, memberId, {}),
+			addReferenceUser(db, referenceId, memberId, {}),
+		]);
+
+		expect(results.map((result) => result.status).sort()).toEqual([
+			"fulfilled",
+			"rejected",
+		]);
+		expect(
+			results.find((result) => result.status === "rejected")?.reason,
+		).toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("adds a group once when two requests race", async () => {
+		const referenceId = await seedReference();
+		const groupId = await seedGroup();
+
+		const results = await Promise.allSettled([
+			addReferenceGroup(db, referenceId, groupId, {}),
+			addReferenceGroup(db, referenceId, groupId, {}),
+		]);
+
+		expect(results.map((result) => result.status).sort()).toEqual([
+			"fulfilled",
+			"rejected",
+		]);
+		expect(
+			results.find((result) => result.status === "rejected")?.reason,
+		).toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
 	it("publishes nothing when the member does not exist", async () => {
 		const referenceId = await seedReference();
 
@@ -197,5 +255,29 @@ describe("membership", () => {
 		});
 
 		expect(frames).toEqual([]);
+	});
+});
+
+describe("checkReferenceVisibility", () => {
+	it("returns true for an administrator and an existing reference", async () => {
+		const referenceId = await seedReference();
+
+		expect(
+			await checkReferenceVisibility(db, referenceId, {
+				userId,
+				groupIds: [],
+				isAdmin: true,
+			}),
+		).toBe(true);
+	});
+
+	it("returns false for an administrator and a missing reference", async () => {
+		expect(
+			await checkReferenceVisibility(db, 999_999, {
+				userId,
+				groupIds: [],
+				isAdmin: true,
+			}),
+		).toBe(false);
 	});
 });

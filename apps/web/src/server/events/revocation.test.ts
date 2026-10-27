@@ -1,5 +1,5 @@
 import type { Db } from "@virtool/data/db/pg";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -18,6 +18,7 @@ import {
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 vi.mock("../logger", () => ({
@@ -36,6 +37,7 @@ vi.mock("../composition", () => ({
 }));
 
 const { watchForRevocation } = await import("./revocation");
+const { requireAuthenticatedRequest } = await import("../auth/middleware");
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
@@ -57,7 +59,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 });
 
@@ -76,12 +78,20 @@ describe("watchForRevocation", () => {
 	it("leaves a live session alone", async () => {
 		const request = await connectedRequest();
 		const onRevoked = vi.fn();
+		const [before] = await db.select().from(authSessions);
+
+		for (const method of ["GET", "HEAD", "GET"]) {
+			expect(
+				await requireAuthenticatedRequest(new Request(request, { method })),
+			).toMatchObject({ kind: "browser" });
+		}
 
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
 		await new Promise((resolve) => setTimeout(resolve, INTERVAL * 5));
 		stop();
 
 		expect(onRevoked).not.toHaveBeenCalled();
+		expect((await db.select().from(authSessions))[0]).toEqual(before);
 	});
 
 	it("reports a session that was deleted out from under the stream", async () => {
@@ -89,7 +99,7 @@ describe("watchForRevocation", () => {
 		const onRevoked = vi.fn();
 
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
-		await db.delete(sessions);
+		await db.delete(authSessions);
 
 		await vi.waitFor(() => expect(onRevoked).toHaveBeenCalled(), {
 			timeout: 2000,
@@ -115,7 +125,7 @@ describe("watchForRevocation", () => {
 		const onRevoked = vi.fn();
 
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
-		await db.delete(sessions);
+		await db.delete(authSessions);
 
 		await vi.waitFor(() => expect(onRevoked).toHaveBeenCalled(), {
 			timeout: 2000,
@@ -133,7 +143,7 @@ describe("watchForRevocation", () => {
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
 		stop();
 
-		await db.delete(sessions);
+		await db.delete(authSessions);
 		await new Promise((resolve) => setTimeout(resolve, INTERVAL * 5));
 
 		expect(onRevoked).not.toHaveBeenCalled();

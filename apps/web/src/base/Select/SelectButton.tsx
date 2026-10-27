@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import { useFieldControl } from "@base/Field";
 import Icon from "@base/Icon";
 import {
 	inputFocusClasses,
@@ -30,11 +31,17 @@ export default function SelectButton({
 	"aria-invalid": ariaInvalid,
 	"aria-describedby": ariaDescribedby,
 }: SelectButtonProps) {
+	const fieldProps = useFieldControl({
+		id,
+		"aria-describedby": ariaDescribedby,
+		"aria-invalid": ariaInvalid,
+		"aria-label": ariaLabel,
+	});
+
 	return (
 		<SelectPrimitive.Trigger
-			aria-invalid={ariaInvalid}
+			{...fieldProps}
 			aria-label={ariaLabel}
-			aria-describedby={ariaDescribedby}
 			className={cn(
 				"flex justify-between items-center px-2.5 bg-white border rounded font-medium capitalize [&_svg]:ml-1",
 				inputHeightClass,
@@ -44,7 +51,6 @@ export default function SelectButton({
 				className,
 			)}
 			data-slot="select-trigger"
-			id={id}
 		>
 			<SelectPrimitive.Value placeholder={placeholder} />
 			<Icon icon={LucideIcon} />

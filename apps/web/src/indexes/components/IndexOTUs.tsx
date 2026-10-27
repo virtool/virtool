@@ -1,5 +1,6 @@
 import Badge from "@base/Badge";
-import { BoxGroup, BoxGroupHeader } from "@base/Box";
+import { BoxGroup } from "@base/Box";
+import SectionHeader from "@base/SectionHeader";
 import type { IndexOtu as OTU } from "@virtool/contracts";
 import IndexOTU from "./IndexOTU";
 
@@ -23,14 +24,14 @@ export default function IndexOTUs({ otus, refId }: IndexOTUsProps) {
 	));
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2 className="flex items-center gap-2">
 					OTUs
 					<Badge>{otus.length}</Badge>
 				</h2>
-			</BoxGroupHeader>
-			{otuComponents}
-		</BoxGroup>
+			</SectionHeader>
+			<BoxGroup>{otuComponents}</BoxGroup>
+		</section>
 	);
 }

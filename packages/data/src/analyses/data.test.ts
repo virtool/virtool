@@ -39,6 +39,7 @@ import {
 	findRecentlyViewedAnalyses,
 	getAnalysis,
 	getAnalysisResults,
+	listAnalysisUsers,
 	recordAnalysisView,
 } from "./data";
 
@@ -212,6 +213,62 @@ async function storedKeys(storage: StorageBackend): Promise<Set<string>> {
 const adminActor: SampleActor = { userId: 999, groupIds: [], isAdmin: true };
 
 const page = { page: 1, perPage: 25 };
+
+describe("listAnalysisUsers", () => {
+	it("lists distinct active users with analyses in the sample and workflow scope", async () => {
+		const sampleId = await seedSample();
+		const abe = await seedUser(db, { handle: "abe" });
+		const zoe = await seedUser(db, { handle: "zoe" });
+		const inactive = await seedUser(db, { active: false, handle: "inactive" });
+
+		await seedAnalysis({ sample_id: sampleId, user_id: zoe, workflow: "nuvs" });
+		await seedAnalysis({ sample_id: sampleId, user_id: abe, workflow: "nuvs" });
+		await seedAnalysis({ sample_id: sampleId, user_id: abe, workflow: "nuvs" });
+		await seedAnalysis({
+			sample_id: sampleId,
+			user_id: inactive,
+			workflow: "nuvs",
+		});
+		await seedAnalysis({
+			sample_id: sampleId,
+			user_id: ownerId,
+			workflow: "pathoscope",
+		});
+		await seedAnalysisOnNewSample({ user_id: ownerId, workflow: "nuvs" });
+
+		expect(
+			await listAnalysisUsers(
+				db,
+				{ sampleId, workflows: ["nuvs"] },
+				adminActor,
+			),
+		).toEqual([
+			{ id: abe, handle: "abe" },
+			{ id: zoe, handle: "zoe" },
+		]);
+	});
+
+	it("only lists users with analyses the caller may read", async () => {
+		const caller = await seedUser(db, { handle: "caller" });
+		const visible = await seedUser(db, { handle: "visible" });
+		const hidden = await seedUser(db, { handle: "hidden" });
+
+		await seedAnalysis({
+			sample_id: await seedSample({ all_read: true }),
+			user_id: visible,
+		});
+		await seedAnalysis({
+			sample_id: await seedSample({ all_read: false }),
+			user_id: hidden,
+		});
+
+		const actor = await resolveSampleActor(db, caller);
+
+		expect(await listAnalysisUsers(db, {}, actor)).toEqual([
+			{ id: visible, handle: "visible" },
+		]);
+	});
+});
 
 describe("findAnalyses", () => {
 	it("scopes a non-admin to analyses on samples they may read", async () => {
@@ -636,7 +693,7 @@ describe("getAnalysisResults", () => {
 		expect(await getAnalysisResults(db, analysisId)).toEqual(results);
 	});
 
-	it("merges NuVs BLAST records onto the hit with the matching index", async () => {
+	it("merges Nuvs BLAST records onto the hit with the matching index", async () => {
 		const analysisId = await seedAnalysisOnNewSample({
 			workflow: "nuvs",
 			ready: true,
@@ -1020,7 +1077,7 @@ describe("blastNuvs", () => {
 		);
 	});
 
-	it("refuses an analysis that is not NuVs", async () => {
+	it("refuses an analysis that is not Nuvs", async () => {
 		const analysisId = await seedNuvs({ workflow: "pathoscope" });
 
 		await expect(blastNuvs(db, analysisId, 0)).rejects.toBeInstanceOf(
@@ -1115,6 +1172,12 @@ describe("recordAnalysisView", () => {
 
 		expect(rows).toHaveLength(1);
 		expect(rows[0]?.viewed_at.getTime()).toBeGreaterThan(earlier.getTime());
+	});
+
+	it("throws AnalysisNotFoundError for a missing analysis", async () => {
+		await expect(
+			recordAnalysisView(db, ownerId, 999_999),
+		).rejects.toBeInstanceOf(AnalysisNotFoundError);
 	});
 });
 

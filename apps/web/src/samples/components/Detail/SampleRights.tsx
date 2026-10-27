@@ -1,16 +1,15 @@
 import { useFetchAccount } from "@account/account";
 import { useCheckAdminRole } from "@administration/hooks";
-import Box, { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import Box, { BoxGroup, BoxGroupSection } from "@base/Box";
 import { ContainerNarrow } from "@base/Container";
-import { InputGroup, InputLabel } from "@base/Input";
+import Field, { FieldLabel } from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
+import SectionHeader from "@base/SectionHeader";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { useListGroups } from "@groups/queries";
 import RightsSelect from "@samples/components/RightsSelect";
-import { samplesQueryKeys } from "@samples/keys";
 import { useFetchSample, useUpdateSampleRights } from "@samples/queries";
-import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 
 /**
@@ -44,7 +43,6 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 		isError: isErrorGroups,
 	} = useListGroups();
 
-	const queryClient = useQueryClient();
 	const mutation = useUpdateSampleRights(sampleId);
 
 	if (
@@ -72,34 +70,16 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 
 	function handleChangeGroup(value: string) {
 		const group = value === "" ? null : parseInt(value, 10);
-		mutation.mutate(
-			{ update: { group } },
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({
-						queryKey: samplesQueryKeys.detail(sampleId),
-					});
-				},
-			},
-		);
+		mutation.mutate({ update: { group } });
 	}
 
 	function handleChangeRights(value: string, scope: "all" | "group") {
-		mutation.mutate(
-			{
-				update: {
-					[`${scope}Read`]: value.includes("r"),
-					[`${scope}Write`]: value.includes("w"),
-				},
+		mutation.mutate({
+			update: {
+				[`${scope}Read`]: value.includes("r"),
+				[`${scope}Write`]: value.includes("w"),
 			},
-			{
-				onSuccess: () => {
-					queryClient.invalidateQueries({
-						queryKey: samplesQueryKeys.detail(sampleId),
-					});
-				},
-			},
-		);
+		});
 	}
 
 	if (!canModifyRights) {
@@ -113,56 +93,56 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 
 	return (
 		<ContainerNarrow>
-			<BoxGroup>
-				<BoxGroupHeader>
+			<section>
+				<SectionHeader>
 					<h2>Sample Rights</h2>
 					<p>
 						Control who can read and write this sample and which user group owns
 						the sample.
 					</p>
-				</BoxGroupHeader>
-				<BoxGroupSection>
-					<InputGroup>
-						<InputLabel htmlFor="group">Group</InputLabel>
-						<Select
-							value={selectedGroupId || noGroup}
-							onValueChange={(value) =>
-								handleChangeGroup(value === noGroup ? "" : value)
-							}
-						>
-							<SelectButton className="w-full" icon={ChevronDown} id="group" />
-							<SelectContent>
-								<SelectItem key={noGroup} value={noGroup}>
-									None
-								</SelectItem>
-								{groups.map((group) => (
-									<SelectItem key={group.id} value={group.id.toString()}>
-										{group.name}
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						<Field>
+							<FieldLabel>Group</FieldLabel>
+							<Select
+								value={selectedGroupId || noGroup}
+								onValueChange={(value) =>
+									handleChangeGroup(value === noGroup ? "" : value)
+								}
+							>
+								<SelectButton className="w-full" icon={ChevronDown} />
+								<SelectContent>
+									<SelectItem key={noGroup} value={noGroup}>
+										None
 									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</InputGroup>
+									{groups.map((group) => (
+										<SelectItem key={group.id} value={group.id.toString()}>
+											{group.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</Field>
 
-					<InputGroup>
-						<InputLabel htmlFor="groupRights">Group Rights</InputLabel>
-						<RightsSelect
-							id="groupRights"
-							value={groupRights}
-							onChange={(value) => handleChangeRights(value, "group")}
-						/>
-					</InputGroup>
+						<Field>
+							<FieldLabel>Group Rights</FieldLabel>
+							<RightsSelect
+								value={groupRights}
+								onChange={(value) => handleChangeRights(value, "group")}
+							/>
+						</Field>
 
-					<InputGroup>
-						<InputLabel htmlFor="allUsers">All {"Users'"} Rights</InputLabel>
-						<RightsSelect
-							id="allUsers"
-							value={allRights}
-							onChange={(value) => handleChangeRights(value, "all")}
-						/>
-					</InputGroup>
-				</BoxGroupSection>
-			</BoxGroup>
+						<Field>
+							<FieldLabel>All {"Users'"} Rights</FieldLabel>
+							<RightsSelect
+								value={allRights}
+								onChange={(value) => handleChangeRights(value, "all")}
+							/>
+						</Field>
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
 		</ContainerNarrow>
 	);
 }

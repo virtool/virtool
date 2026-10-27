@@ -1,4 +1,9 @@
-import { handleQueryError, shouldRetryQuery } from "@app/queryErrors";
+import { createOutageRecovery, notifyOutage } from "@app/outage";
+import {
+	handleQueryError,
+	isServiceUnavailable,
+	shouldRetryQuery,
+} from "@app/queryErrors";
 import { readSentryDsn } from "@app/sentryDsn";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import RouteError from "@base/RouteError";
@@ -14,8 +19,24 @@ import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
 	const queryClient = new QueryClient({
-		queryCache: new QueryCache({ onError: handleQueryError }),
-		mutationCache: new MutationCache({ onError: handleQueryError }),
+		queryCache: new QueryCache({
+			onError: (error) => {
+				handleQueryError(error);
+				// The server builds a client per request, so a timer there
+				// would only outlive the response.
+				if (!import.meta.env.SSR && isServiceUnavailable(error)) {
+					recoverFromOutage();
+				}
+			},
+		}),
+		mutationCache: new MutationCache({
+			onError: (error) => {
+				handleQueryError(error);
+				if (isServiceUnavailable(error)) {
+					notifyOutage();
+				}
+			},
+		}),
 		defaultOptions: {
 			queries: {
 				retry: shouldRetryQuery,
@@ -26,6 +47,8 @@ export function getRouter() {
 			},
 		},
 	});
+
+	const recoverFromOutage = createOutageRecovery(queryClient);
 
 	const router = createRouter({
 		routeTree,

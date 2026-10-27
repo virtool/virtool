@@ -15,7 +15,7 @@ export type ButtonProps = Omit<ComponentPropsWithRef<"button">, "color"> & {
 	as?: ElementType;
 	children: ReactNode;
 	color?: PaletteColor;
-	size?: "small" | "large";
+	size?: "small" | "medium" | "large";
 };
 
 function Button({

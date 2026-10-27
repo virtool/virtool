@@ -1,9 +1,12 @@
 import {
+	DEFAULT_MAX_UPLOAD_SIZE,
 	DEFAULT_MINIMUM_PASSWORD_LENGTH,
+	type MfaPolicy,
 	type SampleGroup,
 } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import { CACHE_STORAGE_BUDGET_BYTES } from "../caches/data";
+import type { EncryptedValue } from "../crypto/keyring";
 import type { Db } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
@@ -22,16 +25,32 @@ export type Settings = {
 	 */
 	cacheStorageBudget: number;
 	defaultSourceTypes: string[];
-	enableSentry: boolean;
-	minimumPasswordLength: number;
 	/**
-	 * The instance's NCBI API key, or `""` when none is configured.
+	 * The stored Resend API key's encrypted envelope, or `null` when none is
+	 * configured.
+	 *
+	 * A credential like {@link Settings.ncbiApiKey}, and treated the same way at
+	 * the transport boundary: a client learns only whether a key is stored.
+	 */
+	emailApiKey: EncryptedValue | null;
+	emailEnabled: boolean;
+	emailReplyToAddress: string;
+	emailSenderAddress: string;
+	emailSenderName: string;
+	enableSentry: boolean;
+	/** The maximum accepted upload size, in bytes. */
+	maxUploadSize: number;
+	minimumPasswordLength: number;
+	mfaPolicy: MfaPolicy;
+	/**
+	 * The stored NCBI API key's encrypted envelope, or `null` when none is
+	 * configured.
 	 *
 	 * A credential, so it never leaves the server as-is —
 	 * `apps/web/src/server/settings/functions.ts` reduces it to a boolean before
 	 * publishing the row.
 	 */
-	ncbiApiKey: string;
+	ncbiApiKey: EncryptedValue | null;
 	sampleAllRead: boolean;
 	sampleAllWrite: boolean;
 	sampleGroup: SampleGroup;
@@ -48,9 +67,16 @@ export type Settings = {
 export const DEFAULT_SETTINGS: Settings = {
 	cacheStorageBudget: CACHE_STORAGE_BUDGET_BYTES,
 	defaultSourceTypes: ["isolate", "strain"],
+	emailApiKey: null,
+	emailEnabled: false,
+	emailReplyToAddress: "",
+	emailSenderAddress: "",
+	emailSenderName: "",
 	enableSentry: true,
+	maxUploadSize: DEFAULT_MAX_UPLOAD_SIZE,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
-	ncbiApiKey: "",
+	mfaPolicy: "optional",
+	ncbiApiKey: null,
 	sampleAllRead: true,
 	sampleAllWrite: false,
 	sampleGroup: "none",
@@ -62,8 +88,15 @@ function toSettings(row: SettingsRow): Settings {
 	return {
 		cacheStorageBudget: row.cacheStorageBudget,
 		defaultSourceTypes: row.defaultSourceTypes,
+		emailApiKey: row.emailApiKey,
+		emailEnabled: row.emailEnabled,
+		emailReplyToAddress: row.emailReplyToAddress,
+		emailSenderAddress: row.emailSenderAddress,
+		emailSenderName: row.emailSenderName,
 		enableSentry: row.enableSentry,
+		maxUploadSize: row.maxUploadSize,
 		minimumPasswordLength: row.minimumPasswordLength,
+		mfaPolicy: row.mfaPolicy,
 		ncbiApiKey: row.ncbiApiKey,
 		sampleAllRead: row.sampleAllRead,
 		sampleAllWrite: row.sampleAllWrite,

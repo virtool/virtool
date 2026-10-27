@@ -1,10 +1,11 @@
+import { useFetchAccount } from "@account/account";
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { useSortAndFilterPathoscopeHits } from "@analyses/hooks";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
 import { writeToClipboard } from "@app/clipboard";
 import Accordion from "@base/Accordion";
 import { useListSelection } from "@base/useListSelection";
-import type { PathoscopeHit } from "@virtool/contracts";
+import { PATHOSCOPE_COLUMNS, type PathoscopeHit } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import { PathoscopeItem } from "./PathoscopeItem";
 import PathoscopeListHeader from "./PathoscopeListHeader";
@@ -22,6 +23,12 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 	const { search } = useAnalysisSearch();
 	const showReads = search.reads;
 	const showTable = search.table;
+
+	const { data: account } = useFetchAccount();
+	const columns = account?.settings.pathoscopeColumns ?? [
+		...PATHOSCOPE_COLUMNS,
+	];
+	const preferAcronym = account?.settings.preferAcronym ?? false;
 
 	// Every hit is on screen at once, so a selection that outlived a filter would
 	// be copied without ever being visible. The key is built from the hit ids
@@ -47,8 +54,10 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 	function copySelected() {
 		return writeToClipboard(
 			formatPathoscopeHitsAsTsv(hits.filter(selection.isSelected), {
+				columns,
 				headers: true,
 				mappedCount: analysis.results.readCount,
+				preferAcronym,
 				showReads,
 			}),
 		);
@@ -66,7 +75,7 @@ export function PathoscopeList({ analysis }: PathoscopeListProps) {
 				onCopy={copySelected}
 				onSelectAll={() => selection.toggleVisible(hits)}
 				selectedCount={selection.selected.length}
-				showAbbreviation={hits.some((hit) => Boolean(hit.abbreviation))}
+				showAcronym={hits.some((hit) => Boolean(hit.acronym))}
 				total={analysis.results.hits.length}
 			/>
 			{showTable ? (

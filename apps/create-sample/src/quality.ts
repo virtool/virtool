@@ -56,8 +56,8 @@ export async function readQuality(outputPath: string): Promise<Quality> {
 /**
  * Reduce one or two profiled reads to the single `Quality` a sample stores.
  *
- * A paired sample's two blobs are averaged into one, which is the shape
- * `legacy_samples.quality` holds and every chart in the SPA reads.
+ * A paired sample's two blobs are averaged into the shape stored in
+ * `legacy_samples.quality`.
  *
  * The averaging is order-insensitive in every field but `encoding`, which is
  * taken from the first — and both files of a pair always carry the same one.

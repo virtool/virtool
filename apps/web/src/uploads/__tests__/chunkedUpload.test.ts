@@ -8,6 +8,9 @@ let statusFor: (url: string) => number;
 
 // Every request the run made, in creation order.
 let requests: MockXhr[];
+let settleBlocksAutomatically: boolean;
+let activeBlocks: number;
+let maxActiveBlocks: number;
 
 // A mock XHR that settles itself on the next microtask, so the concurrent block
 // uploads run to completion without a test driving each one by hand.
@@ -20,6 +23,7 @@ class MockXhr {
 	aborted = false;
 	upload = new EventTarget();
 	private events = new EventTarget();
+	private settled = false;
 
 	constructor() {
 		requests.push(this);
@@ -34,12 +38,15 @@ class MockXhr {
 
 	send(body: unknown): void {
 		this.body = body;
-		queueMicrotask(() => {
-			if (this.aborted) {
+		if (this.url.includes("comp=block&")) {
+			activeBlocks++;
+			maxActiveBlocks = Math.max(maxActiveBlocks, activeBlocks);
+			if (!settleBlocksAutomatically) {
 				return;
 			}
-			this.status = statusFor(this.url);
-			this.events.dispatchEvent(new Event("load"));
+		}
+		queueMicrotask(() => {
+			this.respond();
 		});
 	}
 
@@ -48,8 +55,27 @@ class MockXhr {
 	}
 
 	abort(): void {
+		if (this.settled) {
+			return;
+		}
 		this.aborted = true;
+		this.settled = true;
+		if (this.url.includes("comp=block&")) {
+			activeBlocks--;
+		}
 		this.events.dispatchEvent(new Event("abort"));
+	}
+
+	respond(): void {
+		if (this.aborted || this.settled) {
+			return;
+		}
+		this.settled = true;
+		if (this.url.includes("comp=block&")) {
+			activeBlocks--;
+		}
+		this.status = statusFor(this.url);
+		this.events.dispatchEvent(new Event("load"));
 	}
 }
 
@@ -73,6 +99,9 @@ function blockListRequest(): MockXhr | undefined {
 
 beforeEach(() => {
 	requests = [];
+	settleBlocksAutomatically = true;
+	activeBlocks = 0;
+	maxActiveBlocks = 0;
 	statusFor = () => 201;
 	vi.stubGlobal("XMLHttpRequest", function XMLHttpRequestStub() {
 		return new MockXhr();
@@ -118,6 +147,44 @@ describe("uploadBlocks", () => {
 		expect(blockListRequest()?.body).toBe(
 			'<?xml version="1.0" encoding="utf-8"?><BlockList></BlockList>',
 		);
+	});
+
+	it("limits block requests across simultaneous uploads", async () => {
+		settleBlocksAutomatically = false;
+		uploadServerFnMocks.finalizeChunkedUploadFn.mockImplementation(
+			async ({ data }) => ({ id: data.id }),
+		);
+
+		const first = uploadBlocks(
+			init({ uploadId: 7, url: "https://fd/c/first?sig=x" }),
+			new File(["01234567890123456789"], "first.fq.gz"),
+		);
+		const second = uploadBlocks(
+			init({ uploadId: 8, url: "https://fd/c/second?sig=x" }),
+			new File(["01234567890123456789"], "second.fq.gz"),
+		);
+
+		await vi.waitFor(() => expect(blockRequests()).toHaveLength(4));
+
+		while (blockRequests().length < 10) {
+			const requestCount = blockRequests().length;
+			for (const request of blockRequests()) {
+				request.respond();
+			}
+			await vi.waitFor(() =>
+				expect(blockRequests().length).toBeGreaterThan(requestCount),
+			);
+		}
+
+		for (const request of blockRequests()) {
+			request.respond();
+		}
+
+		await expect(Promise.all([first, second])).resolves.toEqual([
+			{ id: 7 },
+			{ id: 8 },
+		]);
+		expect(maxActiveBlocks).toBe(4);
 	});
 
 	it("cancels the reservation and rejects when a block fails", async () => {

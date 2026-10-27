@@ -1,201 +1,208 @@
-import { randomBytes } from "node:crypto";
-
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
 
 import type { DbOrTx } from "../db/pg";
-import { takeFirstOrThrow } from "../db/rows";
-import { type SessionRow, sessions } from "../db/schema/sessions";
+import { authSessions } from "../db/schema/auth";
+import { settings } from "../db/schema/settings";
+import { users } from "../db/schema/users";
 import { nowUtc } from "../db/time";
-import { hashToken, newSessionId, newSessionToken } from "./tokens";
 
-/**
- * How long an authenticated session lasts when the user ticked "remember me".
- */
-const SESSION_LIFETIME_REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
-
-/**
- * How long an authenticated session lasts when the user did not.
- */
-const SESSION_LIFETIME_NO_REMEMBER_MS = 60 * 60 * 1000;
-
-/**
- * How long a forced-reset session lasts.
- */
-const RESET_LIFETIME_MS = 10 * 60 * 1000;
-
-/** Inputs to mint an authenticated session row. */
-export type CreateAuthenticatedSessionInput = {
+/** A live Better Auth session resolved with the database clock. */
+export type ResolvedBrowserSession = {
+	sessionId: number;
 	userId: number;
-	ip: string;
-	remember: boolean;
+	createdAt: Date;
+	forceReset: boolean;
+	/** Whether the live MFA policy restricts this session to TOTP enrollment. */
+	mfaEnrollmentRequired: boolean;
 };
-
-/** Output: the cookie values the caller must set, plus the inserted row. */
-export type CreateAuthenticatedSessionResult = {
-	sessionId: string;
-	token: string;
-	row: SessionRow;
-};
-
-export async function createAuthenticatedSession(
-	db: DbOrTx,
-	{ userId, ip, remember }: CreateAuthenticatedSessionInput,
-): Promise<CreateAuthenticatedSessionResult> {
-	const sessionId = newSessionId();
-	const token = newSessionToken();
-	const tokenHash = hashToken(token);
-	const now = new Date();
-	const lifetime = remember
-		? SESSION_LIFETIME_REMEMBER_MS
-		: SESSION_LIFETIME_NO_REMEMBER_MS;
-	const expiresAt = new Date(now.getTime() + lifetime);
-
-	const row = takeFirstOrThrow(
-		await db
-			.insert(sessions)
-			.values({
-				sessionId,
-				userId,
-				ip,
-				createdAt: now,
-				expiresAt,
-				tokenHash,
-				sessionType: "authenticated",
-			})
-			.returning(),
-	);
-
-	return { sessionId, token, row };
-}
-
-/** Inputs to mint a forced-reset session row. */
-export type CreateResetSessionInput = {
-	userId: number;
-	ip: string;
-	remember: boolean;
-};
-
-/** Output: the session_id cookie value, the reset_code returned to the client, and the row. */
-export type CreateResetSessionResult = {
-	sessionId: string;
-	resetCode: string;
-	row: SessionRow;
-};
-
-export async function createResetSession(
-	db: DbOrTx,
-	{ userId, ip, remember }: CreateResetSessionInput,
-): Promise<CreateResetSessionResult> {
-	const sessionId = newSessionId();
-	const resetCode = randomBytes(32).toString("hex");
-	const now = new Date();
-	const expiresAt = new Date(now.getTime() + RESET_LIFETIME_MS);
-
-	const row = takeFirstOrThrow(
-		await db
-			.insert(sessions)
-			.values({
-				sessionId,
-				userId,
-				ip,
-				createdAt: now,
-				expiresAt,
-				resetCode,
-				resetRemember: remember,
-				sessionType: "reset",
-			})
-			.returning(),
-	);
-
-	return { sessionId, resetCode, row };
-}
-
-export async function invalidateSession(
-	db: DbOrTx,
-	sessionId: string,
-): Promise<void> {
-	await db.delete(sessions).where(eq(sessions.sessionId, sessionId));
-}
 
 /**
- * Delete a reset session, reporting whether this call is the one that consumed
- * it. False means it was already spent (or never existed).
- *
- * A reset code is single-use, but nothing between reading it and writing the
- * new password holds a lock — and the bcrypt hash in that gap is slow. Called
- * inside the reset transaction, this is the point two concurrent resets for the
- * same code serialize on: the second blocks on the row lock, then finds nothing
- * to delete and rolls back rather than clobbering the session the first minted.
+ * Whether the live MFA policy restricts the joined `users` row to TOTP
+ * enrollment. Read with the session rather than from a cached policy, so a
+ * policy change or a TOTP disable restricts every live session on its next
+ * request. A missing settings row means the `optional` default.
  */
-export async function consumeResetSession(
-	db: DbOrTx,
-	sessionId: string,
-): Promise<boolean> {
-	const rows = await db
-		.delete(sessions)
-		.where(
-			and(eq(sessions.sessionId, sessionId), eq(sessions.sessionType, "reset")),
-		)
-		.returning({ sessionId: sessions.sessionId });
+export const mfaEnrollmentRequired = sql<boolean>`(
+	coalesce((select ${settings.mfaPolicy} from ${settings} where ${settings.id} = 1), 'optional') = 'required'
+	and not coalesce(${users.twoFactorEnabled}, false)
+)`;
 
-	return rows.length > 0;
-}
+/** A live Better Auth session row safe for account-session display shaping. */
+export type ActiveBrowserSessionRow = {
+	id: number;
+	ipAddress: string | null;
+	userAgent: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	expiresAt: Date;
+};
 
-export async function invalidateUserSessions(
+/** List one user's live Better Auth sessions with the current row first. */
+export async function findActiveBrowserSessions(
 	db: DbOrTx,
 	userId: number,
-): Promise<void> {
-	await db.delete(sessions).where(eq(sessions.userId, userId));
+	currentSessionId: number,
+): Promise<ActiveBrowserSessionRow[]> {
+	return db
+		.select({
+			id: authSessions.id,
+			ipAddress: authSessions.ipAddress,
+			userAgent: authSessions.userAgent,
+			createdAt: authSessions.createdAt,
+			updatedAt: authSessions.updatedAt,
+			expiresAt: authSessions.expiresAt,
+		})
+		.from(authSessions)
+		.where(
+			and(
+				eq(authSessions.userId, userId),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.orderBy(
+			desc(sql`${authSessions.id} = ${currentSessionId}`),
+			desc(authSessions.updatedAt),
+			desc(authSessions.id),
+		);
+}
+
+/** Delete a user's selected live session, returning whether it was present. */
+export async function deleteActiveBrowserSession(
+	db: DbOrTx,
+	userId: number,
+	managementId: number,
+): Promise<boolean> {
+	const deleted = await db
+		.delete(authSessions)
+		.where(
+			and(
+				eq(authSessions.id, managementId),
+				eq(authSessions.userId, userId),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.returning({ id: authSessions.id });
+	return deleted.length === 1;
+}
+
+/** Delete every Better Auth session for a user except the current row. */
+export async function deleteOtherBrowserSessions(
+	db: DbOrTx,
+	userId: number,
+	currentSessionId: number,
+): Promise<number> {
+	const deleted = await db
+		.delete(authSessions)
+		.where(
+			and(
+				eq(authSessions.userId, userId),
+				ne(authSessions.id, currentSessionId),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+				or(
+					isNull(authSessions.replacementForSessionId),
+					ne(authSessions.replacementForSessionId, currentSessionId),
+				),
+			),
+		)
+		.returning({ id: authSessions.id });
+	return deleted.length;
 }
 
 /**
- * How many expired sessions one statement removes.
+ * Lock and resolve the authoritative current session for a revocation transaction.
  *
- * Low thousands, so a single pass is short enough that nothing else waiting on
- * a `sessions` row waits long, and few enough passes are needed that the loop
- * is not itself the cost. The first production run clears years of accumulated
- * rows, which is the run this bound exists for.
+ * The user row is locked before the session row. Credential changes lock the
+ * user row and then delete every session, so the same order prevents a
+ * deadlock with them and with a concurrent revocation from another session.
+ * `NO KEY UPDATE` does not block the foreign-key check of a new sign-in.
  */
+export async function resolveBrowserSessionForUpdate(
+	db: DbOrTx,
+	sessionId: number,
+	userId: number,
+): Promise<ResolvedBrowserSession | null> {
+	await db
+		.select({ id: users.id })
+		.from(users)
+		.where(eq(users.id, userId))
+		.for("no key update");
+
+	const [row] = await db
+		.select({
+			sessionId: authSessions.id,
+			userId: authSessions.userId,
+			createdAt: authSessions.createdAt,
+			forceReset: users.forceReset,
+			mfaEnrollmentRequired,
+		})
+		.from(authSessions)
+		.innerJoin(users, eq(users.id, authSessions.userId))
+		.where(
+			and(
+				eq(authSessions.id, sessionId),
+				eq(authSessions.userId, userId),
+				eq(users.active, true),
+				eq(users.lifecycleState, "normal"),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.limit(1)
+		.for("update", { of: authSessions });
+
+	return row ?? null;
+}
+
+/** Resolve a live Better Auth session and its active user authoritatively. */
+export async function resolveBrowserSession(
+	db: DbOrTx,
+	sessionId: number,
+	userId: number,
+): Promise<ResolvedBrowserSession | null> {
+	const [row] = await db
+		.select({
+			sessionId: authSessions.id,
+			userId: authSessions.userId,
+			createdAt: authSessions.createdAt,
+			forceReset: users.forceReset,
+			mfaEnrollmentRequired,
+		})
+		.from(authSessions)
+		.innerJoin(users, eq(users.id, authSessions.userId))
+		.where(
+			and(
+				eq(authSessions.id, sessionId),
+				eq(authSessions.userId, userId),
+				eq(users.active, true),
+				eq(users.lifecycleState, "normal"),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.limit(1);
+
+	return row ?? null;
+}
+
+/** Rows removed per statement so the sweep does not hold every row lock at once. */
 const SESSION_CLEANUP_BATCH_SIZE = 2_000;
 
-/** What {@link deleteExpiredSessions} accepts. */
+/** Options for deleting expired application sessions. */
 export type DeleteExpiredSessionsOptions = {
-	/** Rows removed per statement. Defaults to {@link SESSION_CLEANUP_BATCH_SIZE}. */
+	/** Rows removed per statement. */
 	batchSize?: number;
-	/** Aborts the loop between batches. Committed batches stand. */
+	/** Aborts the loop between batches. */
 	signal?: AbortSignal;
 };
 
 /**
- * Delete every session row whose `expires_at` has passed, and report how many
- * went.
+ * Delete every expired Better Auth session.
  *
- * **The delete is batched, and each batch is its own transaction.** A single
- * statement covering years of accumulated rows would hold every one of their
- * locks and pin `xmin` for its whole duration, stalling autovacuum across the
- * database rather than just this table. Nothing here opens a transaction, so a
- * `db` handle runs each statement autocommitted; passing a transaction instead
- * folds the whole loop into it and gives back exactly the long-running delete
- * being avoided.
+ * Each batch autocommits when `db` is a database handle, keeping the delete
+ * from holding every expired row lock until the full sweep finishes. Postgres
+ * supplies the cutoff because `expires_at` is a naive UTC timestamp and
+ * binding a JavaScript `Date` would cast it through the connection time zone.
  *
- * **The cutoff is Postgres's clock, never a `Date` bound from here.**
- * `expires_at` is `timestamp without time zone` holding naive UTC, and a
- * JavaScript `Date` bound against it casts through the session `TimeZone` —
- * unset in this pool, so the offset is silent and hour-scale. Deleting a live
- * session logs a user out early, which is the only harm this can do.
- *
- * **The expiry test is repeated on the outer `delete`**, where it looks
- * redundant against the subquery that already applied it. Under Read Committed
- * a row updated by a transaction that commits mid-statement is re-checked
- * against the outer `where` alone — the subquery is not re-run — so a predicate
- * naming only the id passes on a row whose `expires_at` has since moved
- * forward, and a session the sliding refresh just extended is deleted out from
- * under its user.
- *
- * The loop stops on a batch shorter than the limit. A concurrent logout that
- * removes an expired row between the select and the delete, or a refresh the
- * re-check then spares, can end a run one batch early; the next run takes what
- * is left, and no run deletes a row it should not have.
+ * The outer expiry check protects a session that Better Auth refreshes after
+ * the subquery selects it but before the delete acquires its row lock.
  */
 export async function deleteExpiredSessions(
 	db: DbOrTx,
@@ -216,15 +223,15 @@ export async function deleteExpiredSessions(
 		signal?.throwIfAborted();
 
 		const deleted = await db
-			.delete(sessions)
+			.delete(authSessions)
 			.where(
-				sql`${sessions.expiresAt} < ${nowUtc()} and ${sessions.id} in (
-					select id from ${sessions}
-					where expires_at < ${nowUtc()}
+				sql`${authSessions.expiresAt} <= ${nowUtc()} and ${authSessions.id} in (
+					select id from ${authSessions}
+					where expires_at <= ${nowUtc()}
 					limit ${batchSize}
 				)`,
 			)
-			.returning({ id: sessions.id });
+			.returning({ id: authSessions.id });
 
 		total += deleted.length;
 

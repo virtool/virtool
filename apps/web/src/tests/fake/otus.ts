@@ -112,7 +112,7 @@ export function createFakeOtuMinimal(
 	overrides?: Partial<OtuMinimal>,
 ): OtuMinimal {
 	const defaultOtuMinimal = {
-		abbreviation: `${faker.string.fromCharacters("AHJKYUIQWE", { min: 2, max: 4 })}V`,
+		acronym: `${faker.string.fromCharacters("AHJKYUIQWE", { min: 2, max: 4 })}V`,
 		id: faker.string.alphanumeric({ casing: "lower", length: 8 }),
 		name: faker.word.noun({ strategy: "any-length" }),
 		reference: createFakeOtuReferenceNested(),

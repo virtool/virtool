@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
+import { FieldLabel } from "@base/Field";
 import Icon from "@base/Icon";
-import { InputLabel } from "@base/Input";
 import { useCombobox, useMultipleSelection } from "downshift";
 import { ChevronDown, X } from "lucide-react";
 import { Popover } from "radix-ui";
@@ -135,13 +135,13 @@ export default function MultiSelectComboBox<Item>({
 
 	return (
 		<div>
-			<InputLabel
+			<FieldLabel
 				className={cn(hideLabel && "sr-only")}
 				htmlFor={labelProps.htmlFor}
 				id={labelProps.id}
 			>
 				{label}
-			</InputLabel>
+			</FieldLabel>
 			<Popover.Root open={isOpen} onOpenChange={() => {}}>
 				<Popover.Anchor
 					className={cn(

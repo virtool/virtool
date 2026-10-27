@@ -1,3 +1,4 @@
+import { PATHOSCOPE_COLUMNS, type PathoscopeColumn } from "@virtool/contracts";
 import {
 	AnalysisNotFoundError,
 	getAnalysisForExport,
@@ -20,6 +21,29 @@ function isExtension(value: string): value is Extension {
 	return value in CONTENT_TYPES;
 }
 
+function isPathoscopeColumn(value: string): value is PathoscopeColumn {
+	return (PATHOSCOPE_COLUMNS as readonly string[]).includes(value);
+}
+
+// Held to the same rules as the saved setting: known, unique, and never empty.
+// An absent list carries every column.
+function parseColumns(value: string | null): PathoscopeColumn[] | null {
+	if (value === null) {
+		return [...PATHOSCOPE_COLUMNS];
+	}
+
+	const columns = value.split(",");
+
+	if (
+		!columns.every(isPathoscopeColumn) ||
+		new Set(columns).size !== columns.length
+	) {
+		return null;
+	}
+
+	return columns;
+}
+
 /**
  * Serve an analysis as a CSV or XLSX download, backing
  * `GET /analyses/documents/{id}.{extension}`.
@@ -27,6 +51,10 @@ function isExtension(value: string): value is Extension {
  * This is a raw route rather than a server function because the client reaches
  * it with a plain `<a href>` — the browser has to see a real response with a
  * `Content-Disposition`, which an RPC call cannot produce.
+ *
+ * A `columns` query parameter lists the columns to carry, in order, separated
+ * by commas. A `preferAcronym=true` query parameter names each OTU by its
+ * acronym, where it has one.
  *
  * Being a route means no policy middleware runs, so the authorization floor is
  * enforced here: a valid session, then the read right on the analysis's parent
@@ -58,6 +86,13 @@ export async function handleAnalysisDocument(
 		return textResponse(`Invalid extension: ${extension}`, 400);
 	}
 
+	const { searchParams } = new URL(request.url);
+	const columns = parseColumns(searchParams.get("columns"));
+
+	if (columns === null) {
+		return textResponse("Invalid columns", 400);
+	}
+
 	const rights = await getAnalysisSampleRights(db, analysisId);
 
 	if (rights === null) {
@@ -86,6 +121,11 @@ export async function handleAnalysisDocument(
 		return textResponse("Not found", 404);
 	}
 
+	const options = {
+		columns,
+		preferAcronym: searchParams.get("preferAcronym") === "true",
+	};
+
 	const headers = {
 		"content-disposition": contentDisposition(`${analysisId}.${extension}`),
 		"content-type": CONTENT_TYPES[extension],
@@ -93,7 +133,12 @@ export async function handleAnalysisDocument(
 
 	if (extension === "csv") {
 		return new Response(
-			await formatAnalysisToCsv(db, analysis.workflow, analysis.results),
+			await formatAnalysisToCsv(
+				db,
+				analysis.workflow,
+				analysis.results,
+				options,
+			),
 			{ headers },
 		);
 	}
@@ -104,6 +149,7 @@ export async function handleAnalysisDocument(
 			analysis.workflow,
 			analysis.results,
 			analysis.sample_id,
+			options,
 		),
 		{ headers },
 	);

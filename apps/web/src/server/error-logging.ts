@@ -1,6 +1,33 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { getRequest, getResponseStatus } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
+import {
+	FORBIDDEN_ERROR_NAME,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+	UNAUTHORIZED_ERROR_NAME,
+	UNAVAILABLE_MESSAGE,
+} from "@virtool/contracts";
+import { isDatabaseUnavailable } from "@virtool/data/db/errors";
+import { ClientError } from "./errors";
 import { logger } from "./logger";
+
+const FORBIDDEN_ERROR_NAMES = new Set([
+	FORBIDDEN_ERROR_NAME,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+]);
+
+function isExpectedAuthenticationError(err: unknown): err is Error {
+	return (
+		err instanceof Error &&
+		(err.name === UNAUTHORIZED_ERROR_NAME ||
+			FORBIDDEN_ERROR_NAMES.has(err.name))
+	);
+}
 
 /**
  * Global server-function middleware that logs every error a server function
@@ -12,9 +39,17 @@ import { logger } from "./logger";
  * chokepoint every server function passes through, guarantees that cause is
  * recorded regardless of how each feature maps its own domain errors.
  *
- * Intentional client errors set a 4xx status before throwing (see each
- * feature's `rethrowAsHttp`); those are logged at debug. Anything else is
- * unexpected and logged at error with its full `cause` chain.
+ * The error itself says whether it was expected, because the response status
+ * can't: server functions don't set one. A `ClientError` with a 4xx status (see
+ * each feature's `rethrowAsHttp`) is logged at debug. Expected authentication
+ * and authorization rejections omit the error object so routine rejections do
+ * not emit stacks or credential-bearing details. Anything else is unexpected
+ * and logged at error with its full `cause` chain.
+ *
+ * An unreachable database is the exception that is rewritten rather than only
+ * logged. Postgres restarts for maintenance, so it is logged at warn and
+ * rethrown as a 503 `ClientError`: the client shows a message it can act on,
+ * and `dropExpectedClientErrors` keeps the restart out of Sentry.
  */
 export const errorLoggingMiddleware = createMiddleware({
 	type: "function",
@@ -22,25 +57,59 @@ export const errorLoggingMiddleware = createMiddleware({
 	try {
 		return await next();
 	} catch (err) {
-		const status = getResponseStatus();
 		// `path` is the incoming request, which during SSR is the page being
 		// rendered rather than the function's own URL. `serverFn` is what names the
 		// failing handler on both paths.
 		const path = new URL(getRequest().url).pathname;
 		const serverFn = serverFnMeta.name;
 
-		if (status >= 400 && status < 500) {
+		if (isDatabaseUnavailable(err)) {
+			logger.warn({ err, path, serverFn }, "database unavailable");
+
+			throw new ClientError(UNAVAILABLE_MESSAGE, 503);
+		}
+
+		if (isExpectedAuthenticationError(err)) {
 			logger.debug(
-				{ err, path, serverFn, status },
+				{ errorName: err.name, path, serverFn },
+				"server function rejected request",
+			);
+		} else if (err instanceof ClientError && err.status < 500) {
+			logger.debug(
+				{ err, path, serverFn, status: err.status },
 				"server function rejected request",
 			);
 		} else {
-			logger.error(
-				{ err, path, serverFn, status },
-				"unhandled server function error",
-			);
+			logger.error({ err, path, serverFn }, "unhandled server function error");
 		}
 
 		throw err;
 	}
 });
+
+/**
+ * Global request middleware that answers 503 when a raw route fails because
+ * Postgres is unreachable.
+ *
+ * Raw routes run outside the server-function middleware above, so this gives
+ * them the same outage handling: a warning, no Sentry report, and a status the
+ * caller can retry on.
+ */
+export const databaseUnavailableMiddleware = createMiddleware().server(
+	async ({ next, pathname }) => {
+		try {
+			return await next();
+		} catch (err) {
+			if (!isDatabaseUnavailable(err)) {
+				throw err;
+			}
+
+			logger.warn({ err, path: pathname }, "database unavailable");
+
+			return new Response(UNAVAILABLE_MESSAGE, {
+				status: 503,
+				headers: { "retry-after": "5" },
+			});
+		}
+	},
+);

@@ -1,9 +1,12 @@
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import type { Logger } from "@virtool/logger";
 import { createIndexArtifact, openWorkflowIndex } from "@virtool/sqlite";
-import { deriveCacheKey, type RunSubprocess } from "@virtool/workflow";
-import { cacheFor } from "../cache";
+import {
+	cacheFor,
+	type RunSubprocess,
+	restoreOrBuild,
+} from "@virtool/workflow";
 import {
 	buildCollapsedReferenceCacheParams,
 	getCdHitEstVersion,
@@ -22,7 +25,7 @@ import type { PathoscopeStep } from "./types";
  * Collapse redundant isolates out of the reference and write the survivors as a
  * second index artifact.
  *
- * Cache-aware, on a namespace **forked** from the shared one — the artifact is
+ * Cache-aware, on a namespace **forked** from the one older releases wrote — the artifact is
  * a SQLite file this code writes, so one this code did not write is not
  * interchangeable with it. See `cacheParams.ts`.
  */
@@ -32,43 +35,32 @@ export const collapseReferenceStep: PathoscopeStep = {
 	async run(context) {
 		const { data, logger, proc, runSubprocess, workPath } = context;
 		const paths = workPaths(workPath);
-		const cache = cacheFor(context);
-
 		const params = buildCollapsedReferenceCacheParams({
 			indexId: data.index.id,
 			toolVersion: await getCdHitEstVersion(runSubprocess),
 			workflowVersion: APP_VERSION,
 		});
 
-		const key = deriveCacheKey(params);
-		const targetDir = paths.collapsedReferenceDir;
-		const log = logger.child({ key, indexId: data.index.id });
+		const log = logger.child({ indexId: data.index.id });
 
-		// Restored into the work path, so the archive's one top-level entry
-		// recreates `collapsed_reference/` itself.
-		if (await cache.get(key, dirname(targetDir))) {
-			log.info("restored cached collapsed reference");
-
-			return;
-		}
-
-		log.info("collapsing reference");
-
-		const summary = await collapseReference({
-			index: data.index,
+		await restoreOrBuild({
+			cache: cacheFor(context),
+			kind: "collapsed_reference",
+			params,
+			directory: paths.collapsedReferenceDir,
 			logger: log,
-			paths,
-			proc,
-			runSubprocess,
+			async build() {
+				const summary = await collapseReference({
+					index: data.index,
+					logger: log,
+					paths,
+					proc,
+					runSubprocess,
+				});
+
+				log.info(summary, "reference collapse complete");
+			},
 		});
-
-		log.info(summary, "reference collapse complete");
-
-		// An already-registered key is success: another run can have collapsed
-		// the same reference while this one was working.
-		const created = await cache.put(key, targetDir, params);
-
-		log.info({ created }, "cached collapsed reference");
 	},
 };
 

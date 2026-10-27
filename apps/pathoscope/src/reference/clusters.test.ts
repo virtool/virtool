@@ -1,13 +1,13 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { createTestWorkPath } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { parseCdHitClusters } from "./clusters";
 
 async function withClusterFile(contents: string): Promise<string> {
-	const directory = await mkdtemp(join(tmpdir(), "pathoscope-clusters-"));
+	const { path: directory, cleanup } = await createTestWorkPath();
 
-	onTestFinished(() => rm(directory, { force: true, recursive: true }));
+	onTestFinished(cleanup);
 
 	const path = join(directory, "otu-1-segment-.cdhit.clstr");
 

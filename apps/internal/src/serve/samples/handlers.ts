@@ -85,7 +85,7 @@ export async function handleGetSample(
 
 	try {
 		// The uploads are a second statement rather than a join on the sample
-		// read, which is shared with the SPA and must not learn a bucket key.
+		// read, which is also used by the web app and must not learn a bucket key.
 		const [sample, uploads] = await Promise.all([
 			getSample(deps.db, sampleId),
 			getSampleUploads(deps.db, sampleId),

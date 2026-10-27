@@ -1,4 +1,0 @@
-namePrefix: virtool-
-
-resources:
-  - deployment.yaml

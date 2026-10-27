@@ -14,8 +14,6 @@ const rights = [
 ];
 
 type RightsSelectProps = {
-	/** Associates the trigger with its label via `htmlFor`. */
-	id: string;
 	/** The current rights string: `""`, `"r"`, or `"rw"`. */
 	value: string;
 	/** Called with the new rights string when a value is selected. */
@@ -26,17 +24,13 @@ type RightsSelectProps = {
  * A dropdown for choosing read/write rights, mapping the "None" option to an
  * empty string.
  */
-export default function RightsSelect({
-	id,
-	value,
-	onChange,
-}: RightsSelectProps) {
+export default function RightsSelect({ value, onChange }: RightsSelectProps) {
 	return (
 		<Select
 			value={value || noRights}
 			onValueChange={(value) => onChange(value === noRights ? "" : value)}
 		>
-			<SelectButton className="w-full normal-case" icon={ChevronDown} id={id} />
+			<SelectButton className="w-full normal-case" icon={ChevronDown} />
 			<SelectContent>
 				{rights.map((entry) => (
 					<SelectItem

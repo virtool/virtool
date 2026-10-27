@@ -1,9 +1,26 @@
 import {
+	cacheUsageQueryKeys,
+	emailQueryKeys,
 	passwordPolicyQueryKeys,
 	roleQueryKeys,
 	settingsQueryKeys,
 } from "@administration/keys";
-import { getSettingsFn, updateSettingsFn } from "@server/settings/functions";
+import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
+import {
+	clearEmailApiKeyFn,
+	getEmailSettingsFn,
+	sendTestEmailFn,
+	setEmailApiKeyFn,
+	updateEmailSettingsFn,
+} from "@server/email/functions";
+import {
+	clearNcbiApiKeyFn,
+	getCacheUsageFn,
+	getSettingsFn,
+	setMfaPolicyFn,
+	setNcbiApiKeyFn,
+	updateSettingsFn,
+} from "@server/settings/functions";
 import { listAdministratorRolesFn } from "@server/users/functions";
 import {
 	queryOptions,
@@ -12,7 +29,14 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { Settings } from "@virtool/contracts";
+import { uploadPolicyQueryKeys } from "@uploads/keys";
+import type {
+	CacheUsageSnapshot,
+	EmailSettings,
+	EmailTestResult,
+	MfaPolicy,
+	Settings,
+} from "@virtool/contracts";
 
 /** Fields that can be changed when updating the server settings */
 export type SettingsUpdate = {
@@ -20,9 +44,9 @@ export type SettingsUpdate = {
 	cacheStorageBudget?: number;
 	defaultSourceTypes?: string[];
 	enableSentry?: boolean;
+	/** A new maximum accepted upload size, in bytes. */
+	maxUploadSize?: number;
 	minimumPasswordLength?: number;
-	/** A new NCBI API key, or `""` to clear the configured one. */
-	ncbiApiKey?: string;
 	sampleAllRead?: boolean;
 	sampleAllWrite?: boolean;
 	sampleGroup?: string;
@@ -41,18 +65,6 @@ export function settingsQueryOptions() {
 }
 
 /**
- * Fetch the API settings without suspending.
- *
- * For components on routes that do not prefetch the settings, and for the
- * settings route itself, which any `users` administrator can reach but only a
- * `settings` administrator may read — so the query has to be allowed to fail
- * beside the parts of the view that do render.
- */
-export function useFetchSettings() {
-	return useQuery(settingsQueryOptions());
-}
-
-/**
  * Fetch the API settings, suspending until they resolve.
  *
  * `data` is always defined, and a failed request throws to the nearest route
@@ -61,6 +73,19 @@ export function useFetchSettings() {
  */
 export function useSuspenseSettings() {
 	return useSuspenseQuery(settingsQueryOptions());
+}
+
+/** Query options for the retained workflow-cache usage history. */
+export function cacheUsageQueryOptions() {
+	return queryOptions<CacheUsageSnapshot[]>({
+		queryKey: cacheUsageQueryKeys.all(),
+		queryFn: () => getCacheUsageFn(),
+	});
+}
+
+/** Fetch the workflow-cache usage history prefetched by the caching route. */
+export function useSuspenseCacheUsage() {
+	return useSuspenseQuery(cacheUsageQueryOptions());
 }
 
 /**
@@ -77,12 +102,65 @@ export function useUpdateSettings() {
 			queryClient.invalidateQueries({
 				queryKey: settingsQueryKeys.all(),
 			});
+			queryClient.invalidateQueries({
+				queryKey: uploadPolicyQueryKeys.all(),
+			});
 			// The minimum password length lives in these settings, so the policy the
 			// password forms validate against has just gone stale.
 			queryClient.invalidateQueries({
 				queryKey: passwordPolicyQueryKeys.all(),
 			});
 		},
+	});
+}
+
+function useSettingsInvalidation() {
+	const queryClient = useQueryClient();
+
+	return () =>
+		queryClient.invalidateQueries({ queryKey: settingsQueryKeys.all() });
+}
+
+/**
+ * Store a new NCBI API key, replacing any already stored.
+ *
+ * The settings are refetched rather than written from the result: availability
+ * depends on decryption, which only the server can judge.
+ */
+export function useSetNcbiApiKey() {
+	const invalidate = useSettingsInvalidation();
+
+	return useMutation<Settings, Error, string>({
+		mutationFn: (apiKey) => setNcbiApiKeyFn({ data: { apiKey } }),
+		onSuccess: invalidate,
+	});
+}
+
+/**
+ * Set whether every user must turn on two-factor authentication.
+ *
+ * The server asks for recent authentication, so a stale session gets one
+ * identity check and one retry.
+ */
+export function useSetMfaPolicy() {
+	const invalidate = useSettingsInvalidation();
+	const mutationFn = useRecentlyAuthenticatedMutation((mfaPolicy: MfaPolicy) =>
+		setMfaPolicyFn({ data: { mfaPolicy } }),
+	);
+
+	return useMutation<Settings, Error, MfaPolicy>({
+		mutationFn,
+		onSuccess: invalidate,
+	});
+}
+
+/** Remove the stored NCBI API key. */
+export function useClearNcbiApiKey() {
+	const invalidate = useSettingsInvalidation();
+
+	return useMutation<Settings, Error, void>({
+		mutationFn: () => clearNcbiApiKeyFn(),
+		onSuccess: invalidate,
 	});
 }
 
@@ -103,4 +181,83 @@ export function administratorRolesQueryOptions() {
  */
 export function useGetAdministratorRoles() {
 	return useQuery(administratorRolesQueryOptions());
+}
+
+/**
+ * Query options for the instance email delivery configuration.
+ *
+ * The response carries non-secret fields and a flag saying whether a key is
+ * stored; the key itself never leaves the server.
+ */
+export function emailSettingsQueryOptions() {
+	return queryOptions<EmailSettings>({
+		queryKey: emailQueryKeys.all(),
+		queryFn: () => getEmailSettingsFn(),
+	});
+}
+
+/** Fetch the email delivery configuration prefetched by the route loader. */
+export function useSuspenseEmailSettings() {
+	return useSuspenseQuery(emailSettingsQueryOptions());
+}
+
+/** The non-secret email delivery fields that can be changed. */
+export type EmailSettingsUpdate = {
+	enabled?: boolean;
+	/** An address replies go to, or `""` to send them to the sender address. */
+	replyToAddress?: string;
+	senderAddress?: string;
+	senderName?: string;
+};
+
+function useEmailInvalidation() {
+	const queryClient = useQueryClient();
+
+	return () =>
+		queryClient.invalidateQueries({ queryKey: emailQueryKeys.all() });
+}
+
+/** Update the non-secret email delivery settings. */
+export function useUpdateEmailSettings() {
+	const invalidate = useEmailInvalidation();
+
+	return useMutation<EmailSettings, Error, EmailSettingsUpdate>({
+		mutationFn: (update) => updateEmailSettingsFn({ data: update }),
+		onSuccess: invalidate,
+	});
+}
+
+/** Store a new Resend API key, replacing any already stored. */
+export function useSetEmailApiKey() {
+	const invalidate = useEmailInvalidation();
+
+	return useMutation<EmailSettings, Error, string>({
+		mutationFn: (apiKey) => setEmailApiKeyFn({ data: { apiKey } }),
+		onSuccess: invalidate,
+	});
+}
+
+/** Remove the stored Resend API key, which also disables delivery. */
+export function useClearEmailApiKey() {
+	const invalidate = useEmailInvalidation();
+
+	return useMutation<EmailSettings, Error, void>({
+		mutationFn: () => clearEmailApiKeyFn(),
+		onSuccess: invalidate,
+	});
+}
+
+/**
+ * Send a test email to one recipient.
+ *
+ * A configuration failure means the stored settings are worse than the last
+ * read said, so the configuration is refetched on every outcome.
+ */
+export function useSendTestEmail() {
+	const invalidate = useEmailInvalidation();
+
+	return useMutation<EmailTestResult, Error, string>({
+		mutationFn: (recipient) => sendTestEmailFn({ data: { recipient } }),
+		onSettled: invalidate,
+	});
 }

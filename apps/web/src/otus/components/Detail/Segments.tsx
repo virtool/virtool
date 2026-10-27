@@ -71,7 +71,7 @@ export default function Segments() {
 		return <LoadingPlaceholder />;
 	}
 
-	const { abbreviation, name } = data;
+	const { acronym, name } = data;
 
 	const schema = pendingSchema ?? data.schema;
 
@@ -171,7 +171,7 @@ export default function Segments() {
 			)}
 
 			<SegmentCreate
-				abbreviation={abbreviation}
+				acronym={acronym}
 				name={name}
 				otuId={otuId}
 				open={openAddSegment && !archived}
@@ -179,7 +179,7 @@ export default function Segments() {
 				setOpen={setOpenAddSegment}
 			/>
 			<SegmentEdit
-				abbreviation={abbreviation}
+				acronym={acronym}
 				editSegmentName={archived ? undefined : segmentToEdit}
 				name={name}
 				otuId={otuId}
@@ -187,7 +187,7 @@ export default function Segments() {
 				unsetEditSegmentName={() => setSegmentToEdit(undefined)}
 			/>
 			<DeleteSegment
-				abbreviation={abbreviation}
+				acronym={acronym}
 				name={name}
 				open={Boolean(segmentToDelete)}
 				otuId={otuId}

@@ -15,7 +15,7 @@ export const pathoscopeWorkflow: workflow = {
 export const nuvsWorkflow: workflow = {
 	description: "Find novel viruses.",
 	id: "nuvs",
-	name: "NuVs",
+	name: "Nuvs",
 };
 
 export const workflows = [pathoscopeWorkflow, nuvsWorkflow] as workflow[];

@@ -1,4 +1,5 @@
 import { useElementSize } from "@app/hooks";
+import SectionHeader from "@base/SectionHeader";
 import type { RefObject } from "react";
 import { drawBasesChart } from "./Bases";
 import { drawNucleotidesChart } from "./Nucleotides";
@@ -18,32 +19,38 @@ export function Quality({ bases, composition, sequences }: QualityProps) {
 		<div ref={ref as RefObject<HTMLDivElement>}>
 			{width && (
 				<>
-					<h5 className="flex justify-between text-base">
-						<strong>Quality Distribution at Read Positions</strong>
-					</h5>
-					<SampleChart
-						createChart={drawBasesChart}
-						data={bases}
-						width={width}
-					/>
+					<section>
+						<SectionHeader>
+							<h2>Quality Distribution at Read Positions</h2>
+						</SectionHeader>
+						<SampleChart
+							createChart={drawBasesChart}
+							data={bases}
+							width={width}
+						/>
+					</section>
 
-					<h5 className="flex justify-between text-base">
-						<strong>Nucleotide Composition at Read Positions</strong>
-					</h5>
-					<SampleChart
-						createChart={drawNucleotidesChart}
-						data={composition}
-						width={width}
-					/>
+					<section>
+						<SectionHeader>
+							<h2>Nucleotide Composition at Read Positions</h2>
+						</SectionHeader>
+						<SampleChart
+							createChart={drawNucleotidesChart}
+							data={composition}
+							width={width}
+						/>
+					</section>
 
-					<h5 className="flex justify-between text-base">
-						<strong>Read-wise Quality Occurrence</strong>
-					</h5>
-					<SampleChart
-						createChart={drawSequencesChart}
-						data={sequences}
-						width={width}
-					/>
+					<section>
+						<SectionHeader>
+							<h2>Read-wise Quality Occurrence</h2>
+						</SectionHeader>
+						<SampleChart
+							createChart={drawSequencesChart}
+							data={sequences}
+							width={width}
+						/>
+					</section>
 				</>
 			)}
 		</div>

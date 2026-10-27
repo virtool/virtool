@@ -1,39 +1,75 @@
 import {
 	type Account,
+	type AccountLifecycleState,
+	type AccountSecurity,
 	type AccountSettings,
+	ADMINISTRATOR_ROLES,
+	type AdministeredUserDetail,
+	type AdministeredUserSearchResult,
+	type AdministratorRole,
 	type AdministratorRoleName,
+	AVATAR_SOURCES,
+	type AvatarSource,
 	emptyPermissions,
+	normalizeEmail,
+	PATHOSCOPE_COLUMNS,
+	type PathoscopeColumn,
 	PERMISSION_NAMES,
 	type Permissions,
+	REFERENCE_EXPORT_FASTA_HEADERS,
+	REFERENCE_EXPORT_TABLE_FORMATS,
+	type ReferenceExportFastaHeader,
+	type ReferenceExportTableFormat,
+	type SortDirection,
 	type User,
 	type UserNested,
+	type UserRoleFilter,
 	type UserSearchResult,
+	type UserSortField,
+	type UserStatus,
 } from "@virtool/contracts";
 import {
 	and,
 	asc,
 	count,
+	desc,
 	eq,
 	ilike,
 	inArray,
 	isNotNull,
 	isNull,
-	ne,
+	or,
+	type SQL,
 	sql,
 } from "drizzle-orm";
-import type { PostgresError } from "postgres";
-import { hashPassword, verifyPassword } from "../auth/password";
+import { claimEmail } from "../auth/email";
+import { queueEmailVerificationInTransaction } from "../auth/emailVerification";
 import {
-	createAuthenticatedSession,
-	invalidateUserSessions,
-} from "../auth/session";
-import type { Db } from "../db/pg";
+	CREDENTIAL_PROVIDER_ID,
+	updateAuthPassword,
+	updateAuthUsername,
+} from "../auth/identity";
+import { hashPassword, verifyPassword } from "../auth/password";
+import { queuePasswordChangedEmail } from "../auth/securityEmail";
+import {
+	invalidateUserSetupSessions,
+	invalidateUserSetupTokens,
+	lockUserSetupCredentials,
+	supersedeSetupTokens,
+} from "../auth/setup";
+import { isForeignKeyViolation, isUniqueViolation } from "../db/errors";
+import { getPageCount, getPageOffset } from "../db/pagination";
+import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
+import { authAccounts, authSessions } from "../db/schema/auth";
 import {
 	groups as groupsTable,
 	userGroups as userGroupsTable,
 } from "../db/schema/groups";
+import { settings as settingsTable } from "../db/schema/settings";
+import { setupTokens } from "../db/schema/setup";
 import { type UserRow, users as usersTable } from "../db/schema/users";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -49,11 +85,26 @@ import { emit } from "../events/emit";
  * blind cast, so nothing but this mapper stands between a rename on this side
  * and every existing user's preferences silently reading `undefined`.
  */
+function isPathoscopeColumns(value: unknown): value is PathoscopeColumn[] {
+	return (
+		Array.isArray(value) &&
+		value.length > 0 &&
+		new Set(value).size === value.length &&
+		value.every((column) => PATHOSCOPE_COLUMNS.includes(column))
+	);
+}
+
 type StoredAccountSettings = {
+	pathoscope_columns: PathoscopeColumn[];
+	/** Stored under its older name; the model calls it `preferAcronym`. */
+	prefer_abbreviation: boolean;
 	quick_analyze_workflow: "nuvs" | "pathoscope";
+	reference_export_fasta_header: ReferenceExportFastaHeader;
+	reference_export_table_format: ReferenceExportTableFormat;
 	show_ids: boolean;
 	show_versions: boolean;
 	skip_quick_analyze_dialog: boolean;
+	avatar_source: AvatarSource;
 };
 
 /**
@@ -67,13 +118,31 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 	const blob = (stored ?? {}) as Partial<StoredAccountSettings>;
 
 	return {
+		pathoscopeColumns: isPathoscopeColumns(blob.pathoscope_columns)
+			? blob.pathoscope_columns
+			: DEFAULT_USER_SETTINGS.pathoscopeColumns,
+		preferAcronym:
+			blob.prefer_abbreviation ?? DEFAULT_USER_SETTINGS.preferAcronym,
 		quickAnalyzeWorkflow:
 			blob.quick_analyze_workflow ?? DEFAULT_USER_SETTINGS.quickAnalyzeWorkflow,
+		referenceExportFastaHeader: REFERENCE_EXPORT_FASTA_HEADERS.includes(
+			blob.reference_export_fasta_header as ReferenceExportFastaHeader,
+		)
+			? (blob.reference_export_fasta_header as ReferenceExportFastaHeader)
+			: DEFAULT_USER_SETTINGS.referenceExportFastaHeader,
+		referenceExportTableFormat: REFERENCE_EXPORT_TABLE_FORMATS.includes(
+			blob.reference_export_table_format as ReferenceExportTableFormat,
+		)
+			? (blob.reference_export_table_format as ReferenceExportTableFormat)
+			: DEFAULT_USER_SETTINGS.referenceExportTableFormat,
 		showIds: blob.show_ids ?? DEFAULT_USER_SETTINGS.showIds,
 		showVersions: blob.show_versions ?? DEFAULT_USER_SETTINGS.showVersions,
 		skipQuickAnalyzeDialog:
 			blob.skip_quick_analyze_dialog ??
 			DEFAULT_USER_SETTINGS.skipQuickAnalyzeDialog,
+		avatarSource: AVATAR_SOURCES.includes(blob.avatar_source as AvatarSource)
+			? (blob.avatar_source as AvatarSource)
+			: DEFAULT_USER_SETTINGS.avatarSource,
 	};
 }
 
@@ -82,10 +151,15 @@ function toStoredAccountSettings(
 	settings: AccountSettings,
 ): StoredAccountSettings {
 	return {
+		pathoscope_columns: settings.pathoscopeColumns,
+		prefer_abbreviation: settings.preferAcronym,
 		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
+		reference_export_fasta_header: settings.referenceExportFastaHeader,
+		reference_export_table_format: settings.referenceExportTableFormat,
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
 		skip_quick_analyze_dialog: settings.skipQuickAnalyzeDialog,
+		avatar_source: settings.avatarSource,
 	};
 }
 
@@ -96,6 +170,14 @@ export type FindUsersFilters = {
 	perPage?: number;
 	administrator?: boolean;
 	active?: boolean;
+	/**
+	 * Which lifecycle states to return. Defaults to `"normal"`, so a caller
+	 * that has not thought about pending accounts does not publish them.
+	 *
+	 * The user administration list reads pending accounts through
+	 * {@link findAdministeredUsers} instead.
+	 */
+	lifecycleState?: AccountLifecycleState | "any";
 };
 
 /** Values accepted when creating a user. */
@@ -103,7 +185,17 @@ export type CreateUserValues = {
 	handle: string;
 	password: string;
 	forceReset: boolean;
+	email?: string;
+	emailVerified?: boolean;
 	administratorRole?: AdministratorRoleName | null;
+};
+
+/** Values accepted when creating a pending user. */
+export type CreatePendingUserValues = {
+	email: string;
+	administratorRole?: AdministratorRoleName | null;
+	groups?: number[];
+	primaryGroup?: number | null;
 };
 
 /** Partial values accepted when updating a user. */
@@ -121,24 +213,6 @@ export type ChangePasswordValues = {
 	userId: number;
 	oldPassword: string;
 	password: string;
-	ip: string;
-};
-
-/**
- * A completed password change, with the session credentials that replace the
- * ones the change revoked.
- */
-export type ChangePasswordResult = {
-	account: Account;
-	sessionId: string;
-	token: string;
-};
-
-/** A selectable administrator role with its human-readable name and description. */
-export type AdministratorRole = {
-	id: AdministratorRoleName;
-	name: string;
-	description: string;
 };
 
 /** Thrown when a requested user does not exist. */
@@ -150,44 +224,41 @@ export class InvalidPasswordError extends AppError {}
 /** Thrown when a user handle conflicts with an existing user. */
 export class UserConflictError extends AppError {}
 
-/** Thrown when a primary group is set to a group the user does not belong to. */
+/** Thrown when a user's group assignment names an invalid group. */
 export class GroupMembershipError extends AppError {}
+
+function mapUnknownGroup(error: unknown): never {
+	if (isForeignKeyViolation(error, ["user_groups_group_id_fkey"])) {
+		throw new GroupMembershipError();
+	}
+	throw error;
+}
+
+/**
+ * Thrown when an operation that assumes a usable account is aimed at one that
+ * has not completed setup.
+ */
+export class PendingAccountError extends AppError {}
+
+/** Thrown when first-instance creation runs after any user already exists. */
+export class FirstAdministratorExistsError extends AppError {}
 
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
 const DEFAULT_USER_SETTINGS: AccountSettings = {
+	pathoscopeColumns: [...PATHOSCOPE_COLUMNS],
+	preferAcronym: false,
 	skipQuickAnalyzeDialog: true,
 	showIds: true,
 	showVersions: true,
 	quickAnalyzeWorkflow: "pathoscope",
+	referenceExportFastaHeader: "full",
+	referenceExportTableFormat: "csv",
+	avatarSource: "initials",
 };
 
 // Every member of the administrator-role enum, with its capitalized name and
 // description.
-const ADMINISTRATOR_ROLES: AdministratorRole[] = [
-	{
-		id: "full",
-		name: "Full",
-		description: "Manage who is an administrator and what they can do.",
-	},
-	{
-		id: "settings",
-		name: "Settings",
-		description: "Manage instance settings.",
-	},
-	{
-		id: "users",
-		name: "Users",
-		description: "Create user accounts. Control activation of user accounts.",
-	},
-	{
-		id: "base",
-		name: "Base",
-		description:
-			"Provides ability to:\n    - Manage HMMs and common references.\n    - View all running jobs.\n    - Cancel any job.",
-	},
-];
-
 /** Merge the permissions granted by membership in a list of groups. */
 function mergePermissions(memberships: Permissions[]): Permissions {
 	const merged = emptyPermissions();
@@ -200,19 +271,6 @@ function mergePermissions(memberships: Permissions[]): Permissions {
 		}
 	}
 	return merged;
-}
-
-function isUniqueViolation(error: unknown): boolean {
-	if (error === null || typeof error !== "object") {
-		return false;
-	}
-	const cause = (error as { cause?: unknown }).cause;
-	return (
-		(error as Partial<PostgresError>).code === "23505" ||
-		(cause !== null &&
-			typeof cause === "object" &&
-			(cause as Partial<PostgresError>).code === "23505")
-	);
 }
 
 type GroupMembershipRow = {
@@ -263,6 +321,7 @@ function buildUser(row: UserRow, memberships: GroupMembershipRow[]): User {
 		forceReset: row.forceReset,
 		groups,
 		lastPasswordChange: row.lastPasswordChange,
+		lifecycleState: row.lifecycleState,
 		permissions: mergePermissions(
 			memberships.map((membership) => membership.permissions),
 		),
@@ -299,12 +358,19 @@ export async function getUserCount(db: Db): Promise<number> {
 	return row?.value ?? 0;
 }
 
-/** List every active user, for populating selectors and filters. */
+/**
+ * List every usable user, for populating selectors and filters.
+ *
+ * Pending accounts are left out. This answers "who can something be assigned
+ * to", and an account that cannot sign in yet is not an answer to that.
+ */
 export async function listUsers(db: Db): Promise<UserNested[]> {
 	return db
 		.select({ id: usersTable.id, handle: usersTable.handle })
 		.from(usersTable)
-		.where(eq(usersTable.active, true))
+		.where(
+			and(eq(usersTable.active, true), eq(usersTable.lifecycleState, "normal")),
+		)
 		.orderBy(asc(sql`lower(${usersTable.handle})`));
 }
 
@@ -318,9 +384,13 @@ export async function findUsers(
 		perPage = 25,
 		administrator,
 		active = true,
+		lifecycleState = "normal",
 	} = filters;
 
 	const conditions = [eq(usersTable.active, active)];
+	if (lifecycleState !== "any") {
+		conditions.push(eq(usersTable.lifecycleState, lifecycleState));
+	}
 	if (administrator === true) {
 		conditions.push(isNotNull(usersTable.administratorRole));
 	}
@@ -328,10 +398,9 @@ export async function findUsers(
 		conditions.push(isNull(usersTable.administratorRole));
 	}
 	if (term) {
-		conditions.push(ilike(usersTable.handle, `%${term}%`));
+		conditions.push(ilike(usersTable.handle, toSearchPattern(term)));
 	}
 	const filter = and(...conditions);
-	const skip = page > 1 ? (page - 1) * perPage : 0;
 
 	const [[totalRow], [foundRow], rows] = await Promise.all([
 		db.select({ value: count() }).from(usersTable),
@@ -342,7 +411,7 @@ export async function findUsers(
 			.where(filter)
 			.orderBy(asc(sql`lower(${usersTable.handle})`))
 			.limit(perPage)
-			.offset(skip),
+			.offset(getPageOffset(page, perPage)),
 	]);
 
 	const foundCount = foundRow?.value ?? 0;
@@ -352,12 +421,145 @@ export async function findUsers(
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,
-		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 	};
 }
 
-export async function getUser(db: Db, userId: number): Promise<User> {
+/** Filters and ordering accepted by the user administration list. */
+export type FindAdministeredUsersOptions = {
+	term?: string;
+	page?: number;
+	perPage?: number;
+	/** The account states to return. Empty returns every state. */
+	statuses?: UserStatus[];
+	/** The roles to return, where `"none"` means no administrator role. Empty returns every role. */
+	roles?: UserRoleFilter[];
+	sort?: UserSortField;
+	direction?: SortDirection;
+};
+
+function getStatusCondition(status: UserStatus): SQL | undefined {
+	if (status === "deactivated") {
+		return eq(usersTable.active, false);
+	}
+
+	return and(
+		eq(usersTable.active, true),
+		eq(usersTable.lifecycleState, status === "invited" ? "pending" : "normal"),
+	);
+}
+
+function getRoleCondition(roles: UserRoleFilter[]): SQL | undefined {
+	const named = roles.filter((role) => role !== "none");
+
+	return or(
+		named.length ? inArray(usersTable.administratorRole, named) : undefined,
+		roles.includes("none") ? isNull(usersTable.administratorRole) : undefined,
+	);
+}
+
+function getSortExpressions(sort: UserSortField, direction: SortDirection) {
+	const order = direction === "ascending" ? asc : desc;
+	const handle = sql`lower(${usersTable.handle})`;
+
+	switch (sort) {
+		case "email":
+			// Accounts without an address go last in either direction.
+			return [
+				asc(sql`${usersTable.email} = ''`),
+				order(sql`lower(${usersTable.email})`),
+			];
+		case "role":
+			return [
+				order(sql`case ${usersTable.administratorRole}
+					when 'full' then 0
+					when 'settings' then 1
+					when 'users' then 2
+					when 'base' then 3
+					else 4 end`),
+			];
+		case "status":
+			return [
+				order(sql`case
+					when not ${usersTable.active} then 2
+					when ${usersTable.lifecycleState} = 'pending' then 1
+					else 0 end`),
+			];
+		default:
+			// Pending accounts have no handle yet, so they go last in either
+			// direction.
+			return [asc(sql`${usersTable.handle} = ''`), order(handle)];
+	}
+}
+
+/**
+ * Find users for the user administration list, with their email addresses.
+ *
+ * Unlike {@link findUsers}, this returns pending and deactivated accounts, so
+ * only administrators may call it.
+ */
+export async function findAdministeredUsers(
+	db: Db,
+	options: FindAdministeredUsersOptions,
+): Promise<AdministeredUserSearchResult> {
+	const {
+		term = "",
+		page = 1,
+		perPage = 25,
+		statuses = [],
+		roles = [],
+		sort = "handle",
+		direction = "ascending",
+	} = options;
+
+	const filter = and(
+		term
+			? or(
+					ilike(usersTable.handle, toSearchPattern(term)),
+					ilike(usersTable.email, toSearchPattern(term)),
+				)
+			: undefined,
+		statuses.length ? or(...statuses.map(getStatusCondition)) : undefined,
+		roles.length ? getRoleCondition(roles) : undefined,
+	);
+	const [[totalRow], [foundRow], rows] = await Promise.all([
+		db.select({ value: count() }).from(usersTable),
+		db.select({ value: count() }).from(usersTable).where(filter),
+		db
+			.select()
+			.from(usersTable)
+			.where(filter)
+			.orderBy(
+				...getSortExpressions(sort, direction),
+				...getSortExpressions("handle", "ascending"),
+				asc(usersTable.id),
+			)
+			.limit(perPage)
+			.offset(getPageOffset(page, perPage)),
+	]);
+
+	const foundCount = foundRow?.value ?? 0;
+	const users = await assembleUsers(db, rows);
+
+	return {
+		items: users.map((user, index) => ({
+			...user,
+			email: rows[index]?.email ?? "",
+		})),
+		foundCount,
+		totalCount: totalRow?.value ?? 0,
+		page,
+		pageCount: getPageCount(foundCount, perPage),
+		perPage,
+	};
+}
+
+/** Read a user for the administrator detail view, with their TOTP state. */
+export async function getUser(
+	db: Db,
+	userId: number,
+): Promise<AdministeredUserDetail> {
 	const [row] = await db
 		.select()
 		.from(usersTable)
@@ -368,7 +570,44 @@ export async function getUser(db: Db, userId: number): Promise<User> {
 		throw new UserNotFoundError();
 	}
 
-	return takeFirstOrThrow(await assembleUsers(db, [row]));
+	const user = takeFirstOrThrow(await assembleUsers(db, [row]));
+
+	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
+}
+
+/**
+ * Get the email whose Gravatar represents the user with `handle`, or `null`
+ * when the user has none to show.
+ *
+ * Only an active user who chose Gravatar has one.
+ */
+export async function getGravatarEmail(
+	db: Db,
+	handle: string,
+): Promise<string | null> {
+	const [row] = await db
+		.select({
+			active: usersTable.active,
+			email: usersTable.email,
+			settings: usersTable.settings,
+		})
+		.from(usersTable)
+		.where(
+			and(
+				sql`lower(${usersTable.handle}) = lower(${handle})`,
+				sql`${usersTable.handle} <> ''`,
+			),
+		)
+		.limit(1);
+
+	if (
+		!row?.active ||
+		fromStoredAccountSettings(row.settings).avatarSource !== "gravatar"
+	) {
+		return null;
+	}
+
+	return normalizeEmail(row.email) || null;
 }
 
 /** Read the signed-in user's own account, including their email and settings. */
@@ -393,47 +632,126 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 }
 
 /**
- * Set the signed-in user's email address.
+ * Read the signed-in user's email verification and TOTP state.
  *
- * An empty string clears it, which is what a user who wants no address on file
- * submits and what the email check deliberately allows.
+ * The recovery-code count is not here. Better Auth holds the codes encrypted,
+ * so the caller counts them through Better Auth.
  */
-export async function updateAccountEmail(
+export async function getAccountSecurity(
 	db: Db,
 	userId: number,
-	email: string,
-): Promise<Account> {
-	const [row] = await db
-		.update(usersTable)
-		.set({ email })
-		.where(eq(usersTable.id, userId))
-		.returning({ id: usersTable.id });
+): Promise<Omit<AccountSecurity, "recoveryCodesRemaining">> {
+	const [[row], [pending], [policy]] = await Promise.all([
+		db
+			.select({
+				email: usersTable.email,
+				emailVerified: usersTable.emailVerified,
+				twoFactorEnabled: usersTable.twoFactorEnabled,
+			})
+			.from(usersTable)
+			.where(eq(usersTable.id, userId))
+			.limit(1),
+		db
+			.select({ candidateEmail: setupTokens.candidateEmail })
+			.from(setupTokens)
+			.where(
+				and(
+					eq(setupTokens.userId, userId),
+					eq(setupTokens.purpose, "email_verification"),
+					isNull(setupTokens.consumedAt),
+					isNull(setupTokens.supersededAt),
+					sql`${setupTokens.expiresAt} > timezone('utc', clock_timestamp())`,
+				),
+			)
+			.limit(1),
+		db
+			.select({ mfaPolicy: settingsTable.mfaPolicy })
+			.from(settingsTable)
+			.where(eq(settingsTable.id, 1))
+			.limit(1),
+	]);
 
 	if (!row) {
 		throw new UserNotFoundError();
 	}
 
-	return getAccount(db, userId);
+	// A token for the current address verifies it and changes nothing.
+	const candidateEmail = pending?.candidateEmail ?? null;
+	const pendingEmail =
+		candidateEmail && candidateEmail !== normalizeEmail(row.email)
+			? candidateEmail
+			: null;
+
+	return {
+		emailVerified: row.emailVerified,
+		mfaRequired: policy?.mfaPolicy === "required",
+		pendingEmail,
+		twoFactorEnabled: row.twoFactorEnabled ?? false,
+	};
+}
+
+const STORED_ACCOUNT_SETTINGS_KEYS: {
+	[K in keyof AccountSettings]: keyof StoredAccountSettings;
+} = {
+	pathoscopeColumns: "pathoscope_columns",
+	preferAcronym: "prefer_abbreviation",
+	quickAnalyzeWorkflow: "quick_analyze_workflow",
+	referenceExportFastaHeader: "reference_export_fasta_header",
+	referenceExportTableFormat: "reference_export_table_format",
+	showIds: "show_ids",
+	showVersions: "show_versions",
+	skipQuickAnalyzeDialog: "skip_quick_analyze_dialog",
+	avatarSource: "avatar_source",
+};
+
+/**
+ * Merge a partial change into the signed-in user's own settings and return
+ * the settings that result.
+ *
+ * The merge happens in one statement, so two changes to different keys made
+ * at the same time cannot overwrite each other.
+ */
+export async function updateAccountSettings(
+	db: Db,
+	userId: number,
+	settings: Partial<AccountSettings>,
+): Promise<AccountSettings> {
+	const patch = Object.fromEntries(
+		Object.entries(settings)
+			.filter(([, value]) => value !== undefined)
+			.map(([key, value]) => [
+				STORED_ACCOUNT_SETTINGS_KEYS[key as keyof AccountSettings],
+				value,
+			]),
+	);
+
+	const [row] = await db
+		.update(usersTable)
+		.set({
+			settings: sql`${usersTable.settings} || ${JSON.stringify(patch)}::jsonb`,
+		})
+		.where(eq(usersTable.id, userId))
+		.returning({ settings: usersTable.settings });
+
+	if (!row) {
+		throw new UserNotFoundError();
+	}
+
+	return fromStoredAccountSettings(row.settings);
 }
 
 /**
  * Change the signed-in user's own password, after verifying the one they
  * already hold.
  *
- * The change clears `force_reset`, revokes every session the user has, and
- * mints a replacement so the browser that submitted the form is not signed out
- * by its own request. The replacement never remembers — `remember` is false
- * here too — so a password change downgrades a 30-day session to the 60-minute
- * one.
- *
- * The caller writes the returned credentials to the response cookies. Unlike
- * login and reset, which set different cookies depending on how they resolve,
- * this has no branch to make, so the transport stays out of the data layer.
+ * The change clears `force_reset` and revokes every Better Auth session in the
+ * same transaction. The web boundary signs the caller in again after commit;
+ * session cookies remain transport state and never enter the data layer.
  */
 export async function changePassword(
 	db: Db,
-	{ userId, oldPassword, password, ip }: ChangePasswordValues,
-): Promise<ChangePasswordResult> {
+	{ userId, oldPassword, password }: ChangePasswordValues,
+): Promise<Account> {
 	const [existing] = await db
 		.select({ password: usersTable.password })
 		.from(usersTable)
@@ -444,7 +762,16 @@ export async function changePassword(
 		throw new UserNotFoundError();
 	}
 
-	if (!(await verifyPassword(oldPassword, existing.password))) {
+	// A pending account has no password to verify against and no session to
+	// have reached this from. Reported as a bad credential rather than as a
+	// lifecycle state, which is all the caller of a password form needs.
+	if (existing.password === null) {
+		throw new InvalidPasswordError();
+	}
+
+	const currentPassword = existing.password;
+
+	if (!(await verifyPassword(oldPassword, currentPassword))) {
 		throw new InvalidPasswordError();
 	}
 
@@ -457,7 +784,7 @@ export async function changePassword(
 	// the old sessions, then create the replacement, which has to come last or
 	// the revocation would take it with the rest.
 	//
-	// The update matches on the hash we verified, not just the id. Nothing held a
+	// The update matches on the verified hash, not just the id. Nothing held a
 	// lock across the read, the bcrypt verify, and the bcrypt hash above, and at
 	// cost 12 that gap is hundreds of milliseconds — long enough for an
 	// administrator responding to a compromise to reset this password or set
@@ -466,7 +793,8 @@ export async function changePassword(
 	// session. Matching on the old hash makes the loser of that race update
 	// nothing, and an unchanged password is exactly the case the caller already
 	// reports as bad credentials.
-	const { sessionId, token } = await db.transaction(async (tx) => {
+	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
 		const updated = await tx
 			.update(usersTable)
 			.set({
@@ -477,7 +805,7 @@ export async function changePassword(
 			.where(
 				and(
 					eq(usersTable.id, userId),
-					eq(usersTable.password, existing.password),
+					eq(usersTable.password, currentPassword),
 				),
 			)
 			.returning({ id: usersTable.id });
@@ -486,9 +814,11 @@ export async function changePassword(
 			throw new InvalidPasswordError();
 		}
 
-		await invalidateUserSessions(tx, userId);
-
-		return createAuthenticatedSession(tx, { userId, ip, remember: false });
+		await updateAuthPassword(tx, userId, hashed);
+		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
+		await supersedeSetupTokens(tx, userId, "password_recovery");
+		await supersedeSetupTokens(tx, userId, "administrator_recovery");
+		await queuePasswordChangedEmail(tx, userId);
 	});
 
 	// An administrator with this user's detail open sees last_password_change and
@@ -496,7 +826,7 @@ export async function changePassword(
 	// updateUser publishes its own.
 	await emit("users", userId, "update");
 
-	return { account: await getAccount(db, userId), sessionId, token };
+	return getAccount(db, userId);
 }
 
 /** Read a user's administrator role without assembling the full user. */
@@ -513,6 +843,89 @@ export async function getAdministratorRole(
 	return row?.administratorRole ?? null;
 }
 
+/**
+ * Create an account that exists but cannot yet be signed in as.
+ *
+ * The administrator role and group memberships are set here. The handle stays
+ * empty so the invitee can choose it during acceptance.
+ * The credential is also missing: `password` stays null and `lifecycle_state` is `pending`,
+ * which the `pending_has_no_password` constraint holds together.
+ *
+ * No password is generated and none is transmitted. Completing the account is
+ * `completeAccountSetup`'s job, authorized by a setup token.
+ *
+ * `active` is left at its default of true. Activation is the administrator's
+ * separate switch, and a pending account is already unusable — conflating the
+ * two would make deactivating an invited user indistinguishable from never
+ * having invited them.
+ */
+export async function createPendingUserInTransaction(
+	tx: DbOrTx,
+	values: CreatePendingUserValues,
+): Promise<number> {
+	const groupIds = Array.from(new Set(values.groups ?? []));
+	if (
+		values.primaryGroup !== undefined &&
+		values.primaryGroup !== null &&
+		!groupIds.includes(values.primaryGroup)
+	) {
+		throw new GroupMembershipError();
+	}
+
+	if (groupIds.length > 0) {
+		const existing = await tx
+			.select({ id: groupsTable.id })
+			.from(groupsTable)
+			.where(inArray(groupsTable.id, groupIds));
+		if (existing.length !== groupIds.length) {
+			throw new GroupMembershipError();
+		}
+	}
+
+	const email = normalizeEmail(values.email);
+	const now = new Date();
+	await claimEmail(tx, 0, email);
+	const row = takeFirstOrThrow(
+		await tx
+			.insert(usersTable)
+			.values({
+				authMigratedAt: now,
+				email,
+				handle: "",
+				lifecycleState: "pending",
+				administratorRole: values.administratorRole ?? null,
+				lastPasswordChange: now,
+				legacyId: null,
+				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+			})
+			.returning({ id: usersTable.id }),
+	);
+
+	await tx.insert(authAccounts).values({
+		accountId: String(row.id),
+		providerId: CREDENTIAL_PROVIDER_ID,
+		userId: row.id,
+		password: null,
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	if (groupIds.length > 0) {
+		await tx
+			.insert(userGroupsTable)
+			.values(
+				groupIds.map((groupId) => ({
+					userId: row.id,
+					groupId,
+					primary: groupId === values.primaryGroup,
+				})),
+			)
+			.catch(mapUnknownGroup);
+	}
+
+	return row.id;
+}
+
 export async function createUser(
 	db: Db,
 	values: CreateUserValues,
@@ -520,24 +933,13 @@ export async function createUser(
 	const password = await hashPassword(values.password);
 
 	try {
-		const row = takeFirstOrThrow(
-			await db
-				.insert(usersTable)
-				.values({
-					handle: values.handle,
-					password,
-					forceReset: values.forceReset,
-					administratorRole: values.administratorRole ?? null,
-					lastPasswordChange: new Date(),
-					legacyId: null,
-					settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-				})
-				.returning({ id: usersTable.id }),
+		const userId = await db.transaction((tx) =>
+			createUserInTransaction(tx, values, password),
 		);
 
-		await emit("users", row.id, "create");
+		await emit("users", userId, "create");
 
-		return getUser(db, row.id);
+		return getUser(db, userId);
 	} catch (error) {
 		if (isUniqueViolation(error)) {
 			throw new UserConflictError();
@@ -546,19 +948,145 @@ export async function createUser(
 	}
 }
 
+/** Insert a normal user and Better Auth credential in the caller's transaction. */
+export async function createUserInTransaction(
+	tx: DbOrTx,
+	values: CreateUserValues,
+	password: Buffer,
+): Promise<number> {
+	const now = new Date();
+	const email = values.email ? normalizeEmail(values.email) : "";
+	if (email) {
+		await claimEmail(tx, 0, email);
+	}
+	const row = takeFirstOrThrow(
+		await tx
+			.insert(usersTable)
+			.values({
+				authMigratedAt: now,
+				handle: values.handle,
+				username: values.handle.toLowerCase(),
+				displayUsername: values.handle,
+				email,
+				emailVerified: values.emailVerified ?? false,
+				password,
+				forceReset: values.forceReset,
+				administratorRole: values.administratorRole ?? null,
+				lastPasswordChange: now,
+				legacyId: null,
+				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+			})
+			.returning({ id: usersTable.id }),
+	);
+
+	await tx.insert(authAccounts).values({
+		accountId: String(row.id),
+		providerId: CREDENTIAL_PROVIDER_ID,
+		userId: row.id,
+		password: password.toString("utf8"),
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	return row.id;
+}
+
+/** Inputs for transactionally creating the first instance administrator. */
+export type CreateFirstAdministratorInput = {
+	handle: string;
+	email: string;
+	password: string;
+	deliveryAvailable: boolean;
+	getVerificationUrl: (token: string) => string;
+};
+
+/** Create exactly one first administrator and optional verification message. */
+export async function createFirstAdministrator(
+	db: Db,
+	input: CreateFirstAdministratorInput,
+): Promise<{ user: User; emailVerificationRequired: boolean }> {
+	// The endpoint is unauthenticated, so refuse before the costly hash. The
+	// locked count below still decides concurrent attempts.
+	const [anyUser] = await db
+		.select({ id: usersTable.id })
+		.from(usersTable)
+		.limit(1);
+	if (anyUser) {
+		throw new FirstAdministratorExistsError();
+	}
+
+	const password = await hashPassword(input.password);
+	const result = await db.transaction(async (tx) => {
+		await tx.execute(
+			sql`select pg_advisory_xact_lock(hashtext('first_instance_bootstrap'))`,
+		);
+		const [existing] = await tx.select({ value: count() }).from(usersTable);
+		if ((existing?.value ?? 0) > 0) {
+			throw new FirstAdministratorExistsError();
+		}
+
+		const userId = await createUserInTransaction(
+			tx,
+			{
+				handle: input.handle,
+				email: input.email,
+				password: input.password,
+				forceReset: false,
+				administratorRole: "full",
+				emailVerified: false,
+			},
+			password,
+		);
+
+		let emailVerificationRequired = false;
+		if (input.deliveryAvailable) {
+			const verification = await queueEmailVerificationInTransaction(tx, {
+				userId,
+				candidateEmail: normalizeEmail(input.email),
+				sourceEmail: normalizeEmail(input.email),
+				handle: input.handle,
+				getVerificationUrl: input.getVerificationUrl,
+			});
+			emailVerificationRequired = verification.queued;
+		}
+		return { userId, emailVerificationRequired };
+	});
+
+	await emit("users", result.userId, "create");
+	return {
+		user: await getUser(db, result.userId),
+		emailVerificationRequired: result.emailVerificationRequired,
+	};
+}
+
 export async function updateUser(
 	db: Db,
 	userId: number,
 	values: UserUpdateValues,
 ): Promise<User> {
 	const [existing] = await db
-		.select({ id: usersTable.id })
+		.select({
+			id: usersTable.id,
+			lifecycleState: usersTable.lifecycleState,
+		})
 		.from(usersTable)
 		.where(eq(usersTable.id, userId))
 		.limit(1);
 
 	if (!existing) {
 		throw new UserNotFoundError();
+	}
+
+	// Setting a password on a pending account would complete its setup without
+	// the token that authorizes the transition, and leave a `pending` row
+	// carrying a credential the `pending_has_no_password` constraint forbids.
+	// Refused here so the caller gets a stated reason rather than a check
+	// violation.
+	if (
+		(values.password !== undefined || values.handle !== undefined) &&
+		existing.lifecycleState === "pending"
+	) {
+		throw new PendingAccountError();
 	}
 
 	// Changing credentials or activation revokes every existing session for the
@@ -585,9 +1113,31 @@ export async function updateUser(
 		values.password !== undefined;
 
 	await db.transaction(async (tx) => {
+		if (
+			values.active === false ||
+			values.password !== undefined ||
+			values.forceReset === true
+		) {
+			await lockUserSetupCredentials(tx, userId);
+		}
 		if (Object.keys(patch).length > 0) {
 			try {
 				await tx.update(usersTable).set(patch).where(eq(usersTable.id, userId));
+
+				if (values.handle !== undefined) {
+					await tx
+						.update(usersTable)
+						.set({
+							username: values.handle.toLowerCase(),
+							displayUsername: values.handle,
+						})
+						.where(
+							and(
+								eq(usersTable.id, userId),
+								isNotNull(usersTable.authMigratedAt),
+							),
+						);
+				}
 			} catch (error) {
 				if (isUniqueViolation(error)) {
 					throw new UserConflictError();
@@ -596,8 +1146,26 @@ export async function updateUser(
 			}
 		}
 
+		if (values.password !== undefined && patch.password) {
+			await updateAuthPassword(tx, userId, patch.password);
+			await queuePasswordChangedEmail(tx, userId);
+		}
+
+		if (values.handle !== undefined) {
+			await updateAuthUsername(tx, userId, values.handle);
+		}
+
 		if (revokeSessions) {
-			await invalidateUserSessions(tx, userId);
+			await tx.delete(authSessions).where(eq(authSessions.userId, userId));
+		}
+		if (values.password !== undefined || values.forceReset === true) {
+			await supersedeSetupTokens(tx, userId, "password_recovery");
+			await supersedeSetupTokens(tx, userId, "administrator_recovery");
+		}
+
+		if (values.active === false) {
+			await invalidateUserSetupTokens(tx, userId);
+			await invalidateUserSetupSessions(tx, userId);
 		}
 
 		if (values.groups !== undefined) {
@@ -621,13 +1189,16 @@ export async function updateUser(
 
 			const uniqueGroupIds = Array.from(new Set(values.groups));
 			if (uniqueGroupIds.length > 0) {
-				await tx.insert(userGroupsTable).values(
-					uniqueGroupIds.map((groupId) => ({
-						userId,
-						groupId,
-						primary: groupId === currentPrimary,
-					})),
-				);
+				await tx
+					.insert(userGroupsTable)
+					.values(
+						uniqueGroupIds.map((groupId) => ({
+							userId,
+							groupId,
+							primary: groupId === currentPrimary,
+						})),
+					)
+					.catch(mapUnknownGroup);
 			}
 		}
 
@@ -637,6 +1208,11 @@ export async function updateUser(
 				.set({ primary: false })
 				.where(eq(userGroupsTable.userId, userId));
 		} else if (values.primaryGroup !== undefined) {
+			await tx
+				.update(userGroupsTable)
+				.set({ primary: false })
+				.where(eq(userGroupsTable.userId, userId));
+
 			const promoted = await tx
 				.update(userGroupsTable)
 				.set({ primary: true })
@@ -651,16 +1227,6 @@ export async function updateUser(
 			if (promoted.length === 0) {
 				throw new GroupMembershipError();
 			}
-
-			await tx
-				.update(userGroupsTable)
-				.set({ primary: false })
-				.where(
-					and(
-						eq(userGroupsTable.userId, userId),
-						ne(userGroupsTable.groupId, values.primaryGroup),
-					),
-				);
 		}
 	});
 
@@ -674,15 +1240,18 @@ export async function setAdministratorRole(
 	userId: number,
 	role: AdministratorRoleName | null,
 ): Promise<User> {
-	const [row] = await db
-		.update(usersTable)
-		.set({ administratorRole: role })
-		.where(eq(usersTable.id, userId))
-		.returning({ id: usersTable.id });
-
-	if (!row) {
-		throw new UserNotFoundError();
-	}
+	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
+		const [row] = await tx
+			.update(usersTable)
+			.set({ administratorRole: role })
+			.where(eq(usersTable.id, userId))
+			.returning({ id: usersTable.id });
+		if (!row) {
+			throw new UserNotFoundError();
+		}
+		await supersedeSetupTokens(tx, userId, "administrator_recovery");
+	});
 
 	await emit("users", userId, "update");
 

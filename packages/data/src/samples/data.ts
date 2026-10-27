@@ -18,7 +18,7 @@ import type {
 	UserNested,
 	WorkflowState,
 } from "@virtool/contracts";
-import { AnalysisWorkflow } from "@virtool/contracts";
+import { AnalysisWorkflow, getReadDownloadName } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import {
@@ -37,6 +37,8 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
+import { isUniqueViolation } from "../db/errors";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses, analysisFiles } from "../db/schema/analyses";
@@ -54,6 +56,7 @@ import { subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
 import { sampleViews } from "../db/schema/views";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
@@ -157,6 +160,13 @@ export class SampleNotOwnedError extends AppError {}
 /** Thrown when a sample name is already taken. */
 export class SampleNameConflictError extends AppError {}
 
+function mapSampleNameConflict(error: unknown): never {
+	if (isUniqueViolation(error, ["legacy_samples_name_key"])) {
+		throw new SampleNameConflictError("Sample name is already in use");
+	}
+	throw error;
+}
+
 /** Thrown when a create or update references a label that does not exist. */
 export class SampleLabelsNotFoundError extends AppError {}
 
@@ -203,11 +213,6 @@ type WorkflowTags = {
 	pathoscope: boolean | string;
 	workflows: SampleWorkflows;
 };
-
-// Escape LIKE wildcards so a user's `%` or `_` matches literally.
-function escapeLike(term: string): string {
-	return term.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
 
 // `None` (no analyses) is a `false` tag, a ready analysis is `true`, and an
 // unfinished analysis is `"ip"` — the legacy top-level tag encoding.
@@ -641,7 +646,7 @@ export async function findSamples(
 	const narrowing: SQL[] = [];
 
 	if (options.term) {
-		narrowing.push(ilike(legacySamples.name, `%${escapeLike(options.term)}%`));
+		narrowing.push(ilike(legacySamples.name, toSearchPattern(options.term)));
 	}
 
 	if (options.users.length > 0) {
@@ -695,7 +700,7 @@ export async function findSamples(
 			.leftJoin(users, eq(users.id, legacySamples.user_id))
 			.where(where)
 			.orderBy(...buildOrderBy(options.sort))
-			.offset((options.page - 1) * options.perPage)
+			.offset(getPageOffset(options.page, options.perPage))
 			.limit(options.perPage),
 	]);
 
@@ -722,7 +727,7 @@ export async function findSamples(
 		totalCount,
 		page: options.page,
 		perPage: options.perPage,
-		pageCount: foundCount ? Math.ceil(foundCount / options.perPage) : 0,
+		pageCount: getPageCount(foundCount, options.perPage),
 		items: rows.map(({ sample, ownerHandle }) =>
 			mapMinimal(
 				sample,
@@ -812,7 +817,7 @@ export async function findRecentlyViewedSamples(
 		totalCount,
 		page: 1,
 		perPage,
-		pageCount: totalCount ? Math.ceil(totalCount / perPage) : 0,
+		pageCount: getPageCount(totalCount, perPage),
 		items: rows.map(({ sample, ownerHandle }) =>
 			mapMinimal(
 				sample,
@@ -921,8 +926,7 @@ export async function getSample(db: Db, sampleId: number): Promise<Sample> {
  *
  * These are the raw reads `create_sample` normalizes, and the only files a
  * sample has before it is finalized. It is not folded into {@link getSample}:
- * that shape is served to the SPA as well, and an upload's `storage_key` has no
- * business crossing that wire.
+ * an upload's `storage_key` must not be returned.
  *
  * **The order is the link.** `sample_uploads.index` is the position the upload
  * held in the create request, and {@link finalizeSample} pairs the reads rows it
@@ -1031,21 +1035,30 @@ export async function checkSampleRight(
 	return hasSampleRight(row, actor, right);
 }
 
+/** A sample read file's storage key and the filename it downloads as. */
+export type SampleReadDownload = {
+	filename: string;
+	storageKey: string;
+};
+
 /**
- * The storage key of one of a sample's read files, or `null` when the sample
- * has no read by that name.
+ * The storage key and download filename of one of a sample's read files, or
+ * `null` when the sample has no read by that name.
  *
  * The row is matched on `name`, which is what the URL carries, and the key is
  * then read off that row. Nothing is composed from the caller's input, so a
  * filename carrying path segments names no object.
+ *
+ * The file downloads under the name derived from the sample, which is the name
+ * the client shows in its link.
  */
-export async function getSampleReadsFileKey(
+export async function getSampleReadDownload(
 	db: DbOrTx,
 	sampleId: number,
 	filename: string,
-): Promise<string | null> {
+): Promise<SampleReadDownload | null> {
 	const [sample] = await db
-		.select({ legacy_id: legacySamples.legacy_id })
+		.select({ legacy_id: legacySamples.legacy_id, name: legacySamples.name })
 		.from(legacySamples)
 		.where(eq(legacySamples.id, sampleId))
 		.limit(1);
@@ -1070,30 +1083,14 @@ export async function getSampleReadsFileKey(
 		)
 		.limit(1);
 
-	return read?.storageKey ?? null;
-}
-
-async function checkNameInUse(
-	db: DbOrTx,
-	name: string,
-	excludeId?: number,
-): Promise<void> {
-	const [row] = await db
-		.select({ id: legacySamples.id })
-		.from(legacySamples)
-		.where(
-			excludeId === undefined
-				? eq(legacySamples.name, name)
-				: and(
-						eq(legacySamples.name, name),
-						not(eq(legacySamples.id, excludeId)),
-					),
-		)
-		.limit(1);
-
-	if (row) {
-		throw new SampleNameConflictError("Sample name is already in use");
+	if (!read?.storageKey) {
+		return null;
 	}
+
+	return {
+		filename: getReadDownloadName(sample.name, filename),
+		storageKey: read.storageKey,
+	};
 }
 
 async function checkLabelsExist(db: DbOrTx, labelIds: number[]): Promise<void> {
@@ -1186,7 +1183,6 @@ export async function createSample(
 	const settings = await getSettings(db);
 
 	await Promise.all([
-		checkNameInUse(db, values.name),
 		checkLabelsExist(db, values.labels),
 		checkSubtractionsExist(db, values.subtractions),
 	]);
@@ -1197,7 +1193,7 @@ export async function createSample(
 
 	const groupId = await resolveCreateGroup(db, values, settings.sampleGroup);
 
-	const { sampleId, jobId } = await db.transaction(async (tx) => {
+	const create = db.transaction(async (tx) => {
 		// Reserve uploads and create the job inside the sample's transaction so
 		// everything commits atomically: a runner must not claim the job before
 		// the sample row it derives its arguments from exists.
@@ -1266,6 +1262,7 @@ export async function createSample(
 
 		return { sampleId, jobId };
 	});
+	const { sampleId, jobId } = await create.catch(mapSampleNameConflict);
 
 	await emit("jobs", jobId, "create");
 	await emit("samples", sampleId, "create");
@@ -1290,9 +1287,6 @@ export async function updateSample(
 
 	const checks: Promise<void>[] = [];
 
-	if (values.name !== undefined) {
-		checks.push(checkNameInUse(db, values.name, sampleId));
-	}
 	if (values.labels !== undefined) {
 		checks.push(checkLabelsExist(db, values.labels));
 	}
@@ -1322,7 +1316,7 @@ export async function updateSample(
 		scalars.notes = values.notes;
 	}
 
-	await db.transaction(async (tx) => {
+	const update = db.transaction(async (tx) => {
 		if (Object.keys(scalars).length > 0) {
 			await tx
 				.update(legacySamples)
@@ -1360,6 +1354,7 @@ export async function updateSample(
 			}
 		}
 	});
+	await update.catch(mapSampleNameConflict);
 
 	await emit("samples", sampleId, "update");
 

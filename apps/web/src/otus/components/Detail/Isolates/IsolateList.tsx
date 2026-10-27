@@ -7,7 +7,9 @@ import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import { InputSearch } from "@base/Input";
 import { SubviewHeader } from "@base/Subview";
 import Toolbar from "@base/Toolbar";
+import { useListSelection } from "@base/useListSelection";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
+import { describeExportRows, describeSelection } from "@otus/export";
 import {
 	useCheckReferenceRight,
 	useReferenceIsArchived,
@@ -17,6 +19,8 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import type { OtuIsolate } from "@virtool/contracts";
 import { TestTubes } from "lucide-react";
 import { useCallback, useState } from "react";
+import OtuExport from "../OtuExport";
+import SelectionHeader from "../SelectionHeader";
 import CreateIsolate from "./CreateIsolate";
 import DeleteIsolate from "./DeleteIsolate";
 import IsolateItem from "./IsolateItem";
@@ -58,6 +62,18 @@ export default function IsolateList() {
 		isolates,
 		ISOLATE_SEARCH_KEYS,
 	);
+
+	// A selection that outlived a search would be exported without being
+	// visible, so changing the search clears it.
+	const selection = useListSelection<OtuIsolate>({
+		getKey: (isolate) => isolate.id,
+		resetKey: term,
+	});
+
+	// Taken from the results rather than the selection, so the export keeps the
+	// list order and the isolates as they are now.
+	const selectedIsolates = results.filter(selection.isSelected);
+	const exportIsolates = selectedIsolates.length ? selectedIsolates : results;
 
 	const [scrollMargin, setScrollMargin] = useState(0);
 
@@ -103,11 +119,34 @@ export default function IsolateList() {
 
 			{results.length ? (
 				<>
-					{term && (
-						<p className="mb-2 text-sm text-gray-500">
-							Showing {results.length} of {isolates.length}
-						</p>
-					)}
+					<div className="border border-b-0 border-gray-300 rounded-t">
+						<SelectionHeader
+							actions={
+								<OtuExport
+									description={describeExportRows(
+										selectedIsolates.length,
+										results.length,
+										isolates.length,
+										"isolate",
+									)}
+									filenameParts={[otu.name]}
+									includeIsolateTable
+									isolates={exportIsolates}
+									otu={otu}
+									size="small"
+								/>
+							}
+							ariaLabel="Select all isolates"
+							checked={selection.getVisibleState(results)}
+							onSelectAll={() => selection.toggleVisible(results)}
+							summary={describeSelection(
+								selectedIsolates.length,
+								results.length,
+								isolates.length,
+								"isolate",
+							)}
+						/>
+					</div>
 					{/* Which rows are virtualized depends on measuring the page's scroll
 					    container, which does not exist while rendering on the server — so
 					    the server would emit an empty list and hydration would find a full
@@ -116,12 +155,12 @@ export default function IsolateList() {
 					<ClientOnly
 						fallback={
 							<div
-								className="border border-gray-300 rounded overflow-hidden"
+								className="border border-gray-300 rounded-b overflow-hidden"
 								style={{ height: results.length * ROW_HEIGHT }}
 							/>
 						}
 					>
-						<div className="border border-gray-300 rounded overflow-hidden">
+						<div className="border border-gray-300 rounded-b overflow-hidden">
 							<div
 								ref={listRef}
 								className="relative w-full"
@@ -147,6 +186,13 @@ export default function IsolateList() {
 												otuId={otuId}
 												canDelete={canModifyIsolates}
 												onDelete={setIsolateToDelete}
+												onSelect={(event) =>
+													selection.select(isolate, {
+														shiftKey: event.shiftKey,
+														visibleItems: results,
+													})
+												}
+												selected={selection.isSelected(isolate)}
 											/>
 										</div>
 									);

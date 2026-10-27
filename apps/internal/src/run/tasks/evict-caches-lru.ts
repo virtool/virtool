@@ -1,4 +1,5 @@
 import { evictLruCaches } from "@virtool/data/caches/data";
+import { recordCacheUsage } from "@virtool/data/caches/usage";
 import { getSettings } from "@virtool/data/settings/data";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
@@ -21,11 +22,11 @@ const payload = z.object({});
  * `evictLruCaches`: select the LRU rows whose removal brings the store under
  * that budget, delete their objects, then delete the rows.
  *
- * It is idempotent as a reclaim requires. A re-run selects whatever is still
- * over budget — nothing, if the first attempt committed — and every storage
- * delete it makes is idempotent on its own, so a run that was interrupted
- * part-way through its objects is finished by the next one rather than
- * repaired by it.
+ * It is idempotent as a reclaim requires. The usage snapshot is keyed by the
+ * task ID, a re-run selects whatever is still over budget — nothing, if the
+ * first attempt committed — and every storage delete it makes is idempotent on
+ * its own, so a run interrupted part-way through its objects is finished by
+ * the next one rather than repaired by it.
  *
  * It reports no progress inside the step. The candidate count is not known
  * until the select returns and the deletes that follow are a handful of round
@@ -43,9 +44,12 @@ export const evictCachesLruTask = defineTask<typeof payload, TaskContext>({
 	// The name is written to the row's `step` column, which is what the UI shows
 	// and what rows already written carry, so it is fixed.
 	steps: ["evict"],
-	async run({ ctx, helpers, logger, signal }) {
+	async run({ ctx, helpers, logger, signal, taskId }) {
 		await helpers.runStep("evict", async () => {
-			const { cacheStorageBudget } = await getSettings(ctx.db);
+			const [{ cacheStorageBudget }] = await Promise.all([
+				getSettings(ctx.db),
+				recordCacheUsage(ctx.db, taskId),
+			]);
 
 			await evictLruCaches(
 				ctx.db,

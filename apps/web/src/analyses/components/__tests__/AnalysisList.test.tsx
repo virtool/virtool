@@ -7,10 +7,13 @@ import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeHmmSearchResults } from "@tests/fake/hmm";
 import { createFakeSample } from "@tests/fake/samples";
 import { createFakeUserNested } from "@tests/fake/user";
-import { mockFindAnalyses } from "@tests/server-fn/analyses";
+import {
+	mockFindAnalyses,
+	mockListAnalysisUsers,
+} from "@tests/server-fn/analyses";
 import { mockFindHmms } from "@tests/server-fn/hmm";
 import { mockGetSample } from "@tests/server-fn/samples";
-import { mockGetAccount, mockListUsers } from "@tests/server-fn/users";
+import { mockGetAccount } from "@tests/server-fn/users";
 import { at, MemoryRouter, renderWithProviders } from "@tests/setup";
 import type { AnalysisMinimal, AnalysisSortField } from "@virtool/contracts";
 import { useState } from "react";
@@ -296,7 +299,7 @@ describe("<AnalysesList /> filtering", () => {
 		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 		mockGetSample(sample);
 		mockFindHmms(createFakeHmmSearchResults());
-		mockListUsers(users);
+		mockListAnalysisUsers(users);
 		mockFindAnalyses([
 			createFakeAnalysisMinimal({
 				sample: { id: sample.id, name: sample.name },
@@ -382,6 +385,17 @@ describe("<AnalysesList /> filtering", () => {
 		await waitFor(() => {
 			expect(findAnalyses).toHaveBeenCalledWith({
 				data: expect.objectContaining({ userIds: [at(users, 0).id] }),
+			});
+		});
+	});
+
+	it("requests user options for the sample and workflow filters", async () => {
+		const listAnalysisUsers = mockListAnalysisUsers(users);
+		renderList({ workflows: ["pathoscope"] });
+
+		await waitFor(() => {
+			expect(listAnalysisUsers).toHaveBeenCalledWith({
+				data: { sampleId: sample.id, workflows: ["pathoscope"] },
 			});
 		});
 	});

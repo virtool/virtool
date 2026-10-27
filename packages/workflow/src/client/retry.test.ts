@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRecordingLogger } from "../testing";
-import { ConflictError, TransportError } from "./errors";
-import { MAX_RETRIES, RETRY_DELAY_MS, sleep, withRetry } from "./retry";
+import {
+	ConflictError,
+	ServiceUnavailableError,
+	TransportError,
+} from "./errors";
+import { RETRY_DELAY_MS, RETRY_WINDOW_MS, sleep, withRetry } from "./retry";
+
+/** Retries an immediately failing attempt gets inside the window. */
+const FAST_RETRIES = RETRY_WINDOW_MS / RETRY_DELAY_MS;
 
 function transportError(): TransportError {
 	return new TransportError("unreachable", {
@@ -19,7 +26,7 @@ describe("withRetry", () => {
 		vi.useRealTimers();
 	});
 
-	it("retries a transport failure five times at a flat delay", async () => {
+	it("retries a transport failure until the window closes", async () => {
 		const attempt = vi.fn(() => Promise.reject(transportError()));
 
 		const promise = withRetry(attempt, {
@@ -30,7 +37,48 @@ describe("withRetry", () => {
 
 		await expect(promise).resolves.toBeInstanceOf(TransportError);
 
-		expect(attempt).toHaveBeenCalledTimes(MAX_RETRIES + 1);
+		expect(attempt).toHaveBeenCalledTimes(FAST_RETRIES + 1);
+	});
+
+	it("counts the time an attempt hangs against the window", async () => {
+		const attempt = vi.fn(async () => {
+			await sleep(60_000);
+			throw transportError();
+		});
+
+		const promise = withRetry(attempt, {
+			logger: createRecordingLogger().logger,
+		}).catch((err: unknown) => err);
+
+		await vi.runAllTimersAsync();
+
+		await expect(promise).resolves.toBeInstanceOf(TransportError);
+
+		// Attempts end at 60 s, 125 s, 190 s, and 255 s; the window closes at
+		// 240 s, so no retry follows the fourth.
+		expect(attempt).toHaveBeenCalledTimes(4);
+	});
+
+	it("retries a 503 and returns once it clears", async () => {
+		const attempt = vi
+			.fn<() => Promise<string>>()
+			.mockRejectedValueOnce(
+				new ServiceUnavailableError("Database unavailable", {
+					method: "POST",
+					path: "/jobs/1/finish",
+					status: 503,
+				}),
+			)
+			.mockResolvedValueOnce("done");
+
+		const promise = withRetry(attempt, {
+			logger: createRecordingLogger().logger,
+		});
+
+		await vi.runAllTimersAsync();
+
+		await expect(promise).resolves.toBe("done");
+		expect(attempt).toHaveBeenCalledTimes(2);
 	});
 
 	it("waits a flat five seconds between attempts rather than doubling", async () => {
@@ -51,13 +99,7 @@ describe("withRetry", () => {
 
 		const gaps = at.slice(1).map((time, index) => time - (at[index] ?? 0));
 
-		expect(gaps).toEqual([
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-			RETRY_DELAY_MS,
-		]);
+		expect(gaps).toEqual(Array(FAST_RETRIES).fill(RETRY_DELAY_MS));
 	});
 
 	it("logs each retry at info and the exhaustion at warn", async () => {
@@ -72,7 +114,7 @@ describe("withRetry", () => {
 
 		const levels = records().map((record) => record.level);
 
-		expect(levels.filter((level) => level === 30)).toHaveLength(MAX_RETRIES);
+		expect(levels.filter((level) => level === 30)).toHaveLength(FAST_RETRIES);
 		expect(levels.filter((level) => level === 40)).toHaveLength(1);
 	});
 
@@ -122,7 +164,7 @@ describe("withRetry", () => {
 		controller.abort();
 
 		// No timer is advanced, so anything that resolves here did so on the abort
-		// rather than by waiting out the remaining 25 s.
+		// rather than by waiting out the remaining window.
 		await expect(promise).resolves.toBeInstanceOf(TransportError);
 
 		expect(attempt).toHaveBeenCalledTimes(1);

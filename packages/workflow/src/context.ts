@@ -85,9 +85,8 @@ export type WorkflowContext<TData, TState> = {
 /**
  * Build a run's context by calling the workflow's own `buildContext`.
  *
- * The seam exists so `assertSerializableData` cannot be skipped: a caller that
- * assembled the context itself would be free to forget it, and the failure it
- * catches is otherwise invisible until the end-to-end test bed is built.
+ * Centralizing context construction ensures callers cannot skip
+ * `assertSerializableData`.
  *
  * @throws {WorkflowError} when `buildContext` returns data that does not
  *   survive a JSON round trip.

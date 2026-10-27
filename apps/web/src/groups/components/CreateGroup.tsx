@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@base/Dialog";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Field, { FieldError, FieldLabel } from "@base/Field";
+import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import { useForm } from "react-hook-form";
 import { useCreateGroup } from "../queries";
@@ -43,19 +44,16 @@ export default function CreateGroup({
 			<DialogContent>
 				<DialogTitle>Create Group</DialogTitle>
 				<form onSubmit={handleSubmit(onSubmit)}>
-					<InputGroup>
-						<InputLabel htmlFor="name">Name</InputLabel>
-						<InputSimple
-							id="name"
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<Input
 							aria-required
-							aria-invalid={Boolean(errors.name) || undefined}
-							aria-describedby={errors.name ? "name-error" : undefined}
 							{...register("name", {
 								required: "Provide a name for the group",
 							})}
 						/>
-						<InputError id="name-error">{errors.name?.message}</InputError>
-					</InputGroup>
+						<FieldError errors={[errors.name]} />
+					</Field>
 					<DialogFooter>
 						<SaveButton />
 					</DialogFooter>

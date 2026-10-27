@@ -1,3 +1,4 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import {
@@ -5,11 +6,14 @@ import {
 	analysisSubtractions,
 	nuvsBlast,
 } from "@virtool/data/db/schema/analyses";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { indexes } from "@virtool/data/db/schema/indexes";
 import { jobs } from "@virtool/data/db/schema/jobs";
-import { legacyReferences } from "@virtool/data/db/schema/references";
+import {
+	legacyReferences,
+	legacyReferenceUsers,
+} from "@virtool/data/db/schema/references";
 import { legacySamples } from "@virtool/data/db/schema/samples";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -29,19 +33,18 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 // The handlers read the `db` singleton at module scope. A getter defers the
@@ -67,7 +70,6 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { ForbiddenError } = await import("../auth/middleware");
-const { ClientError } = await import("../errors");
 const { seedUser } = await import("@virtool/data/auth/test/fixtures");
 const { signIn } = await import("../auth/test/fixtures");
 
@@ -92,10 +94,11 @@ beforeEach(async () => {
 	await db.delete(analysisSubtractions);
 	await db.delete(analyses);
 	await db.delete(indexes);
+	await db.delete(legacyReferenceUsers);
 	await db.delete(legacyReferences);
 	await db.delete(legacySamples);
 	await db.delete(jobs);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 
 	getRequest.mockReturnValue(
@@ -125,6 +128,17 @@ async function seedReference(
 			})
 			.returning({ id: legacyReferences.id }),
 	).id;
+}
+
+/** Make `userId` a member of the reference, holding no rights. */
+async function addMember(referenceId: number, userId: number): Promise<void> {
+	await db.insert(legacyReferenceUsers).values({
+		reference_id: referenceId,
+		user_id: userId,
+		build: false,
+		modify: false,
+		modify_otu: false,
+	});
 }
 
 async function seedIndex(values: {
@@ -219,15 +233,45 @@ function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
 }
 
+describe("listAnalysisUsers", () => {
+	it("lists users with analyses matching the sample and workflow scope", async () => {
+		await signInAsNewUser();
+		const matchingUser = await seedUser(db, { handle: "matching" });
+		const otherUser = await seedUser(db, { handle: "other" });
+		const sampleId = await seedSample({ all_read: true });
+
+		await seedAnalysis({
+			sample_id: sampleId,
+			user_id: matchingUser,
+			workflow: "pathoscope",
+		});
+		await seedAnalysis({
+			sample_id: sampleId,
+			user_id: ownerId,
+			workflow: "nuvs",
+		});
+		await seedAnalysis({
+			sample_id: await seedSample({ all_read: true }),
+			user_id: otherUser,
+			workflow: "pathoscope",
+		});
+
+		expect(
+			await call("listAnalysisUsersFn", {
+				sampleId,
+				workflows: ["pathoscope"],
+			}),
+		).toEqual([{ id: matchingUser, handle: "matching" }]);
+	});
+});
+
 describe("getAnalysis", () => {
 	it("returns 404 for an analysis that does not exist", async () => {
 		await signInAsNewUser();
 
 		await expect(
 			call("getAnalysisFn", { analysisId: 123456 }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
-		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns 403 when the caller may not read the parent sample", async () => {
@@ -239,7 +283,6 @@ describe("getAnalysis", () => {
 		await expect(call("getAnalysisFn", { analysisId })).rejects.toBeInstanceOf(
 			ForbiddenError,
 		);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	it("allows a caller holding only the sample's read right", async () => {
@@ -261,9 +304,7 @@ describe("getAnalysisResults", () => {
 
 		await expect(
 			call("getAnalysisResultsFn", { analysisId: 123456 }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
-		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns 403 when the caller may not read the parent sample", async () => {
@@ -275,7 +316,6 @@ describe("getAnalysisResults", () => {
 		await expect(
 			call("getAnalysisResultsFn", { analysisId }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
 
 	it("allows a caller holding only the sample's read right", async () => {
@@ -311,9 +351,7 @@ describe("createAnalysis", () => {
 
 		await expect(
 			call("createAnalysisFn", values(123456)),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
-		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("refuses a caller holding only the sample's read right", async () => {
@@ -324,7 +362,21 @@ describe("createAnalysis", () => {
 		await expect(
 			call("createAnalysisFn", values(sampleId)),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
+		expect(await db.select().from(analyses)).toHaveLength(0);
+	});
+
+	it("returns 409 for a reference the caller cannot see", async () => {
+		const sampleId = await seedSample({ all_write: true });
+
+		await signInAsNewUser();
+
+		await expect(
+			call("createAnalysisFn", values(sampleId)),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference does not exist",
+			status: 409,
+		});
 		expect(await db.select().from(analyses)).toHaveLength(0);
 	});
 
@@ -333,12 +385,11 @@ describe("createAnalysis", () => {
 		const archived = await seedReference({ archived: true });
 		await seedIndex({ referenceId: archived, ready: true });
 
-		await signInAsNewUser();
+		await addMember(archived, await signInAsNewUser());
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: archived })),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 	});
 
 	it("returns 409 when the reference has no ready index", async () => {
@@ -346,17 +397,17 @@ describe("createAnalysis", () => {
 		const unbuilt = await seedReference();
 		await seedIndex({ referenceId: unbuilt, ready: false });
 
-		await signInAsNewUser();
+		await addMember(unbuilt, await signInAsNewUser());
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: unbuilt })),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 	});
 
 	it("returns 201 and the new analysis for a caller with write rights", async () => {
 		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
+		await addMember(referenceId, userId);
 
 		const analysis = (await call("createAnalysisFn", values(sampleId))) as {
 			id: number;
@@ -366,7 +417,6 @@ describe("createAnalysis", () => {
 
 		expect(analysis.workflow).toBe("nuvs");
 		expect(analysis.ready).toBe(false);
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 
 		const [row] = await db
 			.select({ user_id: analyses.user_id })
@@ -382,8 +432,7 @@ describe("deleteAnalysis", () => {
 
 		await expect(
 			call("deleteAnalysisFn", { analysisId: 123456 }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("refuses a caller holding only the sample's read right", async () => {
@@ -394,7 +443,6 @@ describe("deleteAnalysis", () => {
 		await expect(
 			call("deleteAnalysisFn", { analysisId }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(await db.select().from(analyses)).toHaveLength(1);
 	});
 
@@ -409,8 +457,7 @@ describe("deleteAnalysis", () => {
 
 		await expect(
 			call("deleteAnalysisFn", { analysisId }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 
 		// The analysis must survive the rejected delete.
 		expect(
@@ -452,11 +499,10 @@ describe("blastNuvs", () => {
 		await expect(
 			call("blastNuvsFn", { analysisId, sequenceIndex: 0 }),
 		).rejects.toBeInstanceOf(ForbiddenError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(await db.select().from(nuvsBlast)).toHaveLength(0);
 	});
 
-	it("returns 409 for an analysis that is not NuVs", async () => {
+	it("returns 409 for an analysis that is not Nuvs", async () => {
 		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({
@@ -467,8 +513,7 @@ describe("blastNuvs", () => {
 
 		await expect(
 			call("blastNuvsFn", { analysisId, sequenceIndex: 0 }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 409 });
 	});
 
 	it("returns 404 when there is no contig at the sequence index", async () => {
@@ -478,8 +523,7 @@ describe("blastNuvs", () => {
 
 		await expect(
 			call("blastNuvsFn", { analysisId, sequenceIndex: 4 }),
-		).rejects.toBeInstanceOf(ClientError);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 404 });
 	});
 
 	it("returns 201 and the pending BLAST record for a caller with write rights", async () => {
@@ -494,7 +538,6 @@ describe("blastNuvs", () => {
 
 		expect(blast.ready).toBe(false);
 		expect(blast.sequenceIndex).toBe(0);
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 		expect(await db.select().from(nuvsBlast)).toHaveLength(1);
 	});
 });

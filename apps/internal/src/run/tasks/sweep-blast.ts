@@ -1,5 +1,5 @@
 /**
- * `sweep_blast` — advance every outstanding NuVs BLAST search against NCBI.
+ * `sweep_blast` — advance every outstanding Nuvs BLAST search against NCBI.
  *
  * The body is one call to `sweepBlasts` (`@virtool/data/blast/data`) inside one
  * step. Everything about which rows are touched, how they are spaced out, and
@@ -39,7 +39,7 @@ import type { TaskContext } from "./registry";
 /** `sweep_blast` is spawned on a schedule and carries nothing. */
 const payload = z.object({});
 
-/** Advance every outstanding NuVs BLAST search against NCBI. */
+/** Advance every outstanding Nuvs BLAST search against NCBI. */
 export const sweepBlastTask = defineTask<typeof payload, TaskContext>({
 	type: "sweep_blast",
 	payload,

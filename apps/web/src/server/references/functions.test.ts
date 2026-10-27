@@ -1,12 +1,13 @@
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import {
 	legacyReferenceGroups,
 	legacyReferences,
 	legacyReferenceUsers,
 } from "@virtool/data/db/schema/references";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { uploads } from "@virtool/data/db/schema/uploads";
 import { users } from "@virtool/data/db/schema/users";
@@ -26,19 +27,18 @@ import {
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
-const setResponseStatus = vi.fn();
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
 	getRequest,
 	setCookie: vi.fn(),
-	setResponseStatus,
 }));
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -69,7 +69,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(legacyReferenceUsers);
 	await db.delete(legacyReferenceGroups);
 	await db.delete(legacyReferences);
@@ -116,6 +116,17 @@ async function seedReference(
 	});
 
 	return reference.id;
+}
+
+/** Make `userId` a member of the reference, holding no rights. */
+async function addMember(referenceId: number, userId: number): Promise<void> {
+	await db.insert(legacyReferenceUsers).values({
+		reference_id: referenceId,
+		user_id: userId,
+		build: false,
+		modify: false,
+		modify_otu: false,
+	});
 }
 
 async function seedUpload(userId: number): Promise<number> {
@@ -185,8 +196,11 @@ describe("getReference", () => {
 
 		await expect(
 			call("getReferenceFn", { referenceId: 999_999 }),
-		).rejects.toThrow("Reference not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
 	});
 
 	it("returns the detail with its seeded owner membership", async () => {
@@ -211,10 +225,9 @@ describe("getReference", () => {
 		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
-		await expect(call("getReferenceFn", { referenceId })).rejects.toThrow(
-			"Reference not found.",
+		await expect(call("getReferenceFn", { referenceId })).rejects.toMatchObject(
+			{ message: "Reference not found.", status: 404 },
 		);
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 
 	it("returns the detail for a full administrator who is not a member", async () => {
@@ -281,7 +294,6 @@ describe("createReference", () => {
 			organism: "virus",
 		})) as { id: number; sourceTypes: string[]; users: { id: number }[] };
 
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 		expect(reference.sourceTypes).toEqual(["isolate", "strain"]);
 		expect(reference.users).toHaveLength(1);
 		expect(reference.users[0]?.id).toBe(userId);
@@ -305,6 +317,30 @@ describe("createReference", () => {
 		expect(taskRows.some((row) => row.type === "clone_reference")).toBe(true);
 	});
 
+	it("refuses to clone a reference the caller cannot see, as if it were missing", async () => {
+		const ownerId = await seedUser(db, {
+			administratorRole: null,
+			handle: "bob",
+		});
+		// A base administrator holds `create_ref` but not reference visibility.
+		await signIn(db, getRequest, { administratorRole: "base" });
+		const sourceId = await seedReference(ownerId);
+
+		await expect(
+			call("createReferenceFn", {
+				name: "",
+				description: "",
+				organism: "",
+				cloneFrom: sourceId,
+			}),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Source reference does not exist.",
+			status: 400,
+		});
+		expect(await db.select().from(legacyReferences)).toHaveLength(1);
+	});
+
 	it("maps a missing import upload to a 400", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });
 
@@ -315,8 +351,11 @@ describe("createReference", () => {
 				organism: "",
 				importFrom: 999_999,
 			}),
-		).rejects.toThrow("Upload does not exist.");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Upload does not exist.",
+			status: 400,
+		});
 	});
 
 	it("imports from an existing upload", async () => {
@@ -336,13 +375,31 @@ describe("createReference", () => {
 });
 
 describe("updateReference", () => {
-	it("refuses a caller without modify on the reference", async () => {
+	it("returns 404 to a caller who cannot see the reference", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
 			handle: "bob",
 		});
 		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
+
+		await expect(
+			call("updateReferenceFn", { referenceId, name: "Renamed" }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference not found.",
+			status: 404,
+		});
+	});
+
+	it("refuses a member without modify on the reference", async () => {
+		const ownerId = await seedUser(db, {
+			administratorRole: null,
+			handle: "bob",
+		});
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReference(ownerId);
+		await addMember(referenceId, userId);
 
 		await expect(
 			call("updateReferenceFn", { referenceId, name: "Renamed" }),
@@ -369,8 +426,11 @@ describe("updateReference", () => {
 
 		await expect(
 			call("updateReferenceFn", { referenceId, name: "Renamed" }),
-		).rejects.toThrow("Reference is archived.");
-		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Reference is archived.",
+			status: 409,
+		});
 	});
 });
 
@@ -404,7 +464,6 @@ describe("reference membership", () => {
 			modify: true,
 		})) as { id: number; modify: boolean };
 
-		expect(setResponseStatus).toHaveBeenCalledWith(201);
 		expect(member.id).toBe(group.id);
 		expect(member.modify).toBe(true);
 	});
@@ -414,8 +473,9 @@ describe("reference membership", () => {
 			administratorRole: null,
 			handle: "bob",
 		});
-		await signIn(db, getRequest, { administratorRole: null });
+		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
+		await addMember(referenceId, userId);
 		const group = takeFirstOrThrow(
 			await db
 				.insert(groups)
@@ -450,7 +510,10 @@ describe("reference membership", () => {
 
 		await expect(
 			call("removeReferenceUserFn", { referenceId, userId: 999_999 }),
-		).rejects.toThrow("Member not found.");
-		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Member not found.",
+			status: 404,
+		});
 	});
 });

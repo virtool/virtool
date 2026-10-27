@@ -1,4 +1,6 @@
-import { SelectBox, SelectBoxItem } from "@base/Select";
+import Field, { FieldLabel } from "@base/Field";
+import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
+import { ChevronDown } from "lucide-react";
 
 type LibraryTypeSelectorProps = {
 	libraryType: string;
@@ -13,20 +15,25 @@ export default function LibraryTypeSelector({
 	onSelect,
 }: LibraryTypeSelectorProps) {
 	return (
-		<SelectBox
-			className="grid-cols-2 mb-6"
-			label="Library Type"
-			onValueChange={onSelect}
-			value={libraryType}
-		>
-			<SelectBoxItem value="normal">
-				<div>Normal</div>
-				<span>Search against whole genome references using normal reads.</span>
-			</SelectBoxItem>
-			<SelectBoxItem value="srna">
-				<div>sRNA</div>
-				<span>Search against whole genome references using sRNA reads</span>
-			</SelectBoxItem>
-		</SelectBox>
+		<Field className="mb-6">
+			<FieldLabel>Library Type</FieldLabel>
+			<Select value={libraryType} onValueChange={onSelect}>
+				<SelectButton className="w-full" icon={ChevronDown} />
+				<SelectContent>
+					<SelectItem
+						description="Search against whole genome references using normal reads."
+						value="normal"
+					>
+						Normal
+					</SelectItem>
+					<SelectItem
+						description="Search against whole genome references using sRNA reads."
+						value="srna"
+					>
+						sRNA
+					</SelectItem>
+				</SelectContent>
+			</Select>
+		</Field>
 	);
 }
