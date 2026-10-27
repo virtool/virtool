@@ -37,6 +37,14 @@ describe("parseIlluminaHeader", () => {
 		});
 	});
 
+	it("accepts negative X and Y coordinates", () => {
+		expect(
+			parseIlluminaHeader(
+				"@M00123:42:000000000-ABCDE:1:1101:-15589:-1331 1:N:0:TAAGGCGA",
+			),
+		).toMatchObject({ instrument: "M00123", runNumber: 42, lane: 1 });
+	});
+
 	it("accepts a UMI field after the coordinates", () => {
 		expect(
 			parseIlluminaHeader(
@@ -65,6 +73,7 @@ describe("parseIlluminaHeader", () => {
 			"a non-numeric lane",
 			"@M00123:42:000000000-ABCDE:X:1101:15589:1331 1:N:0:1",
 		],
+		["a negative tile", "@M00123:42:FC:1:-1101:15589:1331 1:N:0:1"],
 		["a non-numeric tile", "@M00123:42:FC:1:tile:15589:1331 1:N:0:1"],
 		["a missing @", "M00123:42:000000000-ABCDE:1:1101:15589:1331 1:N:0:1"],
 		["an empty line", ""],
@@ -243,6 +252,14 @@ describe("parseSampleSheet", () => {
 		]);
 	});
 
+	it("treats a zero Read2Cycles as single-end", () => {
+		const sheet = parseSampleSheet(
+			"[Header]\nFileFormatVersion,2\n[Reads]\nRead1Cycles,101\nRead2Cycles,0\n[BCLConvert_Data]\nSample_ID\nS1",
+		);
+
+		expect(sheet.reads).toEqual([101]);
+	});
+
 	it.each([
 		["a missing [Header]", "[Data]\nSample_ID\nS1", /missing \[Header\]/],
 		["a missing [Data]", "[Header]\nIEMFileVersion,4", /missing \[Data\]/],
@@ -282,6 +299,11 @@ describe("parseSampleSheet", () => {
 			"a non-numeric read",
 			"[Header]\n[Reads]\nabc\n[Data]\nSample_ID",
 			/cycle count/,
+		],
+		[
+			"a v2 sheet without Read1Cycles",
+			"[Header]\nFileFormatVersion,2\n[Reads]\nRead2Cycles,151\n[BCLConvert_Data]\nSample_ID",
+			/cycle count for Read1Cycles/,
 		],
 		[
 			"a zero v2 read",

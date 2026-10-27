@@ -51,6 +51,8 @@ const HEADER_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 const INTEGER_PATTERN = /^\d+$/;
 
+const SIGNED_INTEGER_PATTERN = /^-?\d+$/;
+
 /**
  * Parse the run identity from a CASAVA 1.8+ FASTQ header line:
  * `@<instrument>:<run>:<flowcell>:<lane>:<tile>:<x>:<y>[:<umi>] <read>:<filtered>:<control>:<index>`.
@@ -78,7 +80,9 @@ export function parseIlluminaHeader(line: string): IlluminaHeader | null {
 	if (
 		!HEADER_NAME_PATTERN.test(instrument) ||
 		!HEADER_NAME_PATTERN.test(flowcell) ||
-		!fields.slice(4, 7).every((field) => INTEGER_PATTERN.test(field)) ||
+		!INTEGER_PATTERN.test(fields[4] ?? "") ||
+		// Tile edge clusters can have negative X and Y coordinates.
+		!fields.slice(5, 7).every((field) => SIGNED_INTEGER_PATTERN.test(field)) ||
 		!INTEGER_PATTERN.test(runNumber) ||
 		!INTEGER_PATTERN.test(lane)
 	) {
@@ -310,13 +314,19 @@ function parseV1Reads(rows: string[][]): number[] {
 	return rows.map(([cycles]) => parseCycles(cycles, "read"));
 }
 
-/** A v2 `[Reads]` section holds `Read1Cycles`, `Index1Cycles`, and so on. */
+/**
+ * A v2 `[Reads]` section holds `Read1Cycles`, `Index1Cycles`, and so on. A
+ * single-end sheet can omit `Read2Cycles` or set it to `0`.
+ */
 function parseV2Reads(rows: string[][]): number[] {
 	const values = parseKeyValues(rows);
+	const reads = [parseCycles(values.Read1Cycles, "Read1Cycles")];
 
-	return ["Read1Cycles", "Read2Cycles"]
-		.filter((key) => values[key] !== undefined)
-		.map((key) => parseCycles(values[key], key));
+	if (values.Read2Cycles !== undefined && values.Read2Cycles !== "0") {
+		reads.push(parseCycles(values.Read2Cycles, "Read2Cycles"));
+	}
+
+	return reads;
 }
 
 function parseEntries(rows: string[][]): SampleSheetEntry[] {
