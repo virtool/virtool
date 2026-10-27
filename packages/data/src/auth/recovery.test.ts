@@ -21,8 +21,7 @@ import {
 	EmailVerificationRateLimitedError,
 	inspectEmailVerificationLink,
 } from "./emailVerification";
-import { isBcryptHash } from "./migration";
-import { hashPassword, verifyPassword } from "./password";
+import { hashPassword, isPasswordHash, verifyPassword } from "./password";
 import {
 	completePasswordRecovery,
 	getSelfServiceRecoveryTarget,
@@ -365,7 +364,7 @@ describe("password recovery", () => {
 
 		const [user] = await db.select().from(users).where(eq(users.id, userId));
 		expect(user?.authMigratedAt).toBeNull();
-		expect(isBcryptHash(user?.password ?? null)).toBe(true);
+		expect(isPasswordHash(user?.password ?? null)).toBe(true);
 		expect(
 			await verifyPassword(
 				"replacement-password-123",

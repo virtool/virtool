@@ -43,7 +43,7 @@ export type SeededSession = {
  * `handle` is unique (case-insensitively), so a test seeding a second user must
  * pass a distinct one.
  *
- * `password` defaults to a placeholder that is not a real bcrypt hash. A test
+ * `password` defaults to a placeholder that is not a real password hash. A test
  * that exercises a code path which verifies the stored password must pass a
  * hash from `hashPassword`.
  *

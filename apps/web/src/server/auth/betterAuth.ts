@@ -290,10 +290,10 @@ export function createAuth({
 			// account, or the first-run bootstrap creates the first one. Both stay
 			// Virtool workflows.
 			disableSignUp: true,
-			// The `$2b$12$` hashes already in `users.password` have to keep
-			// verifying, so bcrypt at the same cost is the algorithm on both sides
-			// rather than Better Auth's default scrypt. `@virtool/data/auth/password`
-			// is the one place the cost is stated.
+			// Legacy bcrypt hashes have to keep verifying until a sign-in replaces
+			// them, so Better Auth uses Virtool's hashing rather than its default
+			// scrypt. `@virtool/data/auth/password` is the one place the algorithms
+			// and their parameters are stated.
 			password: {
 				hash: async (password) =>
 					(await hashPassword(password)).toString("utf8"),

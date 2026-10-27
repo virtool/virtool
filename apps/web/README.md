@@ -440,6 +440,19 @@ the limit to authenticated users for client validation.
 The setting and declared sizes are capped at the application ceiling of
 120,000,000,000 bytes (120 GB), independent of the storage backend.
 
+### Password hashing
+
+New passwords are hashed with Argon2id at the OWASP baseline: 19 MiB of
+memory, two passes, and one lane. Better Auth uses the same hashing as the
+rest of the server. Legacy bcrypt hashes continue to verify. The hash prefix
+selects the algorithm.
+
+After a successful password sign-in, an outdated hash is replaced with a new
+Argon2id hash in `users.password` and in the Better Auth credential account.
+An outdated hash is a bcrypt hash or an Argon2id hash with other parameters.
+No user has to reset a password. If the replacement fails, the failure is
+logged and the sign-in continues.
+
 ### The setup boundary
 
 Some accounts are neither anonymous nor fully authenticated: an
@@ -450,7 +463,7 @@ else. A user under the `required` MFA policy is restricted differently; see
 [Two-factor authentication](#two-factor-authentication).
 
 Login checks an unmigrated legacy identity before Better Auth. A matching
-legacy bcrypt password mints only a purpose-bound `email_remediation` setup
+legacy password mints only a purpose-bound `email_remediation` setup
 session, never an application session. A forced reset waits until remediation
 completes and then runs on the Better Auth session. An unmigrated user who
 forgets the password needs an administrator-issued recovery link, because

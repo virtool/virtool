@@ -11,7 +11,7 @@ import {
 	inspectEmailVerificationLink,
 } from "@virtool/data/auth/emailVerification";
 import { EmailInUseError } from "@virtool/data/auth/lifecycle";
-import { verifyPassword } from "@virtool/data/auth/password";
+import { TIMING_DUMMY_HASH, verifyPassword } from "@virtool/data/auth/password";
 import {
 	completePasswordRecovery,
 	getSelfServiceRecoveryTarget,
@@ -61,11 +61,6 @@ const recoveryTokenSchema = z.object({
 	purpose: z.enum(["password_recovery", "administrator_recovery"]),
 });
 const userIdSchema = z.object({ userId: rowIdSchema });
-
-const TIMING_DUMMY_HASH = Buffer.from(
-	"$2b$12$VJ/Rqk01lYZEyqA8ue4PAuuApLBrZoE.HmhYg6b5uPOrDh3huVNB.",
-	"utf8",
-);
 
 function digestRecoveryBudget(value: string): string {
 	return createHmac("sha256", config.authSecret).update(value).digest("hex");
