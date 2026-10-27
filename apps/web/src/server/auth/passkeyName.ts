@@ -1,14 +1,13 @@
 import { getAuthenticatorName } from "@better-auth/passkey";
 import { DEFAULT_PASSKEY_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
-import { users } from "@virtool/data/db/schema/users";
+import { getUserHandle } from "@virtool/data/users/data";
 import type { BetterAuthPlugin } from "better-auth";
 import {
 	APIError,
 	createAuthMiddleware,
 	getSessionFromCtx,
 } from "better-auth/api";
-import { eq } from "drizzle-orm";
 import { getUserAgentLabel } from "./sessionMetadata";
 
 /**
@@ -52,16 +51,12 @@ export function passkeyNamePlugin(db: Db) {
 							return;
 						}
 
-						const [user] = await db
-							.select({ handle: users.handle })
-							.from(users)
-							.where(eq(users.id, Number(session.user.id)))
-							.limit(1);
-						if (!user?.handle) {
+						const handle = await getUserHandle(db, Number(session.user.id));
+						if (!handle) {
 							return;
 						}
 
-						return { context: { query: { ...ctx.query, name: user.handle } } };
+						return { context: { query: { ...ctx.query, name: handle } } };
 					}),
 				},
 				{

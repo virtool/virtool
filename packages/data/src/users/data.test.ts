@@ -24,6 +24,7 @@ import {
 	getGravatarEmail,
 	getUser,
 	getUserCount,
+	getUserHandle,
 	InvalidPasswordError,
 	listAdministratorRoles,
 	listUsers,
@@ -218,6 +219,24 @@ describe("getAccount", () => {
 	// is signed in", so this must throw rather than resolve undefined.
 	it("throws when the user does not exist", async () => {
 		await expect(getAccount(db, 404)).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+});
+
+describe("getUserHandle", () => {
+	it("returns the user's handle", async () => {
+		const userId = await seedUser(db, { handle: "Alice" });
+
+		expect(await getUserHandle(db, userId)).toBe("Alice");
+	});
+
+	it("returns null when the user has no handle", async () => {
+		const userId = await seedUser(db, { handle: "" });
+
+		expect(await getUserHandle(db, userId)).toBeNull();
+	});
+
+	it("returns null when the user does not exist", async () => {
+		expect(await getUserHandle(db, 999)).toBeNull();
 	});
 });
 
