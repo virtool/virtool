@@ -33,7 +33,7 @@ Apps bundle; packages stay source.
 | [`@virtool/contracts`](packages/contracts/README.md) | Shared wire shapes and isolated server-only helpers. |
 | [`@virtool/data`](packages/data/README.md) | Server-only Drizzle schema mirror and Postgres queries. |
 | [`@virtool/logger`](packages/logger/README.md) | Shared pino configuration. |
-| `@virtool/image-build` | Buildx Bake graph for shipped images. |
+| `@virtool/image-build` | `docker buildx bake` graph for shipped images. |
 | [`@virtool/ncbi`](packages/ncbi/README.md) | NCBI Nucleotide and Taxonomy client. |
 | [`@virtool/sentry`](packages/sentry/README.md) | Shared browser and server Sentry wiring. |
 | [`@virtool/service`](packages/service/README.md) | Shared lifecycle utilities for long-lived services. |
@@ -285,7 +285,7 @@ type(scope): description
 - Releases are automated with Changesets. A pull request that changes a
   versioned workspace must add a changeset (`pnpm changeset`), or CI fails; a
   change that ships nothing to users records an empty one
-  (`pnpm changeset --empty`). See [docs/ci.md](docs/ci.md#releases).
+  (`pnpm changeset --empty`). See [Releases](docs/ci.md#releases).
 - Changesets does not propagate releases through `devDependencies`. A change to
   an ignored build-input workspace must name its consuming shipped apps in the
   changeset; use the mapping in [CONTRIBUTING.md](CONTRIBUTING.md#changesets).

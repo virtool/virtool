@@ -17,9 +17,9 @@ image.
 Adding an image requires an app Dockerfile, a Bake target, and a release-matrix entry. For
 the five targets in `build`, keep its matrix entry in step with
 `release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
-above, and their `matrix.image` values must match the cache scopes those jobs
+above. Their `matrix.image` values must match the cache scopes those jobs
 write, so the release reuses the caches they populated rather than rebuilding
-the Rust crate, bioinformatics tools, or SPAdes inside the shared 20-minute
+the Rust crate and bioinformatics tools inside the shared 20-minute
 release timeout.
 
 See [Images](../README.md#images) to build one image locally.
@@ -50,7 +50,7 @@ The `web` and `internal` images are a `fixed` group: they share one unified
 version and bump together, so a change to either publishes both at the same
 version. Create Sample, Create Subtraction, Pathoscope, and Nuvs are versioned
 independently and publish only when they change. Shared `packages/*` are
-versioned on their own and cascade a `patch` into the apps that depend on them. `apps/site` is in `ignore` — it deploys
+versioned on their own and cascade a `patch` into the apps that depend on them. `apps/site` is in `ignore`: it deploys
 elsewhere and ships no image. The Rust crates, `workflow-tools`, and
 `image-build` and `tsconfig` build-input workspaces are also ignored: they exist in pnpm only
 to express image build edges. Because Changesets does not propagate version
@@ -66,13 +66,20 @@ same build and test jobs that gate a pull request:
    applies the bumps, updates each `CHANGELOG.md`, and deletes the consumed
    changesets. A `packages/*` bump cascades a `patch` into dependent apps.
 2. Merging that pull request lands the bumps with no changesets left. The next
-   push runs the `publish` script, `changeset tag`, which creates and pushes a
-   git tag per bumped workspace in the form `@virtool/web@1.2.3`.
+   push runs the `publish` script, `changeset tag`, which creates a git tag per
+   bumped workspace in the form `@virtool/web@1.2.3`. The action pushes the tags
+   and creates a GitHub Release for each one, using that version's
+   `CHANGELOG.md` entry as the body.
 
-The action's `publishedPackages` output lists every tagged workspace.
+The action rebuilds the Version Packages branch from `main` on every push, so
+commits pushed to it last only until the next merge. The action opens it with
+`GITHUB_TOKEN`, so its CI runs wait until a maintainer selects **Approve
+workflows to run**. The `Changeset` check skips it.
+
+The action's `published-packages` output lists every tagged workspace.
 `release-ghcr-matrix` maps that list to image builds, keeping only the deployable
-apps — a `packages/*` bump tags a package but ships no image — and
-`release-ghcr` builds each at the version in its tag, publishing `:<version>`
+apps. A `packages/*` bump tags a package but ships no image. `release-ghcr`
+builds each at the version in its tag, publishing `:<version>`
 and `:latest`. A release that bumped only shared packages publishes no image.
 
 The `Changeset` check fails a pull request that changes a versioned workspace

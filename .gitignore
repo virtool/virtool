@@ -18,6 +18,7 @@ coverage
 /misc
 /watch
 config.json
+!.changeset/config.json
 /settings.json
 *.log*
 .cache

@@ -1,6 +1,6 @@
 {
 	"name": "@virtool/web",
-	"version": "0.0.0",
+	"version": "42.60.0",
 	"private": true,
 	"type": "module",
 	"scripts": {

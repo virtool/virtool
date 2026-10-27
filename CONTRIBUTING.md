@@ -62,10 +62,22 @@ consumer apps directly:
 - `@virtool/quality-core`: Create Sample
 - `@virtool/tsconfig`: every shipped app whose generated output changes
 
-For a change that ships nothing to users — a refactor, a test, or a CI tweak —
-record an empty changeset with `pnpm changeset --empty`.
+For a change that ships nothing to users, such as a refactor, a test, or a CI
+tweak, record an empty changeset with `pnpm changeset --empty`.
 
 Merging to `main` opens an automated **Version Packages** pull request that
 applies the pending bumps and updates each `CHANGELOG.md`; merging that pull
 request tags the bumped workspaces and publishes the affected images. See
-[docs/ci.md](docs/ci.md#releases).
+[Releases](docs/ci.md#releases).
+
+### Release notes
+
+The summary of a changeset becomes its entry in the workspace's `CHANGELOG.md` and
+in the GitHub Release. Write it for users, not reviewers.
+
+To reword notes before a release, edit the `.changeset/*.md` files on `main`.
+The Version Packages pull request is rebuilt from them on every push, so edits
+pushed to it directly are lost when anything else merges first.
+
+For a bigger release, add a changeset that holds only the user-facing summary,
+such as a `minor` bump for `@virtool/web` with a few paragraphs of prose.

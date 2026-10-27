@@ -517,7 +517,8 @@ jobs:
         name: Changeset
         runs-on: ubuntu-24.04
         timeout-minutes: 10
-        if: github.event_name == 'pull_request'
+        # The version PR consumes the changesets it releases, so it would fail.
+        if: github.event_name == 'pull_request' && github.head_ref != 'changeset-release/main'
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -566,7 +567,7 @@ jobs:
         if: github.event_name == 'push'
         outputs:
             published: ${{ steps.changesets.outputs.published }}
-            published-packages: ${{ steps.changesets.outputs.publishedPackages }}
+            published-packages: ${{ steps.changesets.outputs.published-packages }}
         permissions:
             contents: write
             pull-requests: write
@@ -582,14 +583,16 @@ jobs:
               uses: ./.github/actions/setup
             - name: Changesets
               id: changesets
-              uses: changesets/action@v1
+              # The version PR is opened with `GITHUB_TOKEN`, so its CI runs wait
+              # for a maintainer to approve them. `changeset tag` writes tag events
+              # to the action's output file, which it reads to push the tags,
+              # create a GitHub Release per tag, and set `published-packages`.
+              uses: changesets/action@v2.1.2
               with:
-                  version: pnpm changeset version
-                  publish: pnpm changeset tag
-                  title: "chore: version packages"
-                  commit: "chore: version packages"
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  version-script: pnpm changeset version
+                  publish-script: pnpm changeset tag
+                  pr-title: "chore: version packages"
+                  commit-message: "chore: version packages"
     release-ghcr-matrix:
         name: Release / Matrix
         runs-on: ubuntu-24.04
