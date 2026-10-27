@@ -1,3 +1,4 @@
+import { accountSettingsMutationKey } from "@account/keys";
 import { labelQueryKeys } from "@labels/keys";
 import { samplesQueryKeys } from "@samples/keys";
 import { QueryClient } from "@tanstack/react-query";
@@ -94,6 +95,36 @@ describe("reactQueryHandler", () => {
 		expect(invalidate).toHaveBeenCalledWith({
 			queryKey: taskQueryKeys.all(),
 		});
+	});
+
+	it("defers account frames while an account-settings save is pending", async () => {
+		const save = Promise.withResolvers<void>();
+		const pending = queryClient
+			.getMutationCache()
+			.build(queryClient, {
+				mutationKey: accountSettingsMutationKey,
+				mutationFn: () => save.promise,
+			})
+			.execute(undefined);
+
+		reactQueryHandler(queryClient)({
+			domain: "account",
+			operation: "update",
+			id: 1,
+		});
+
+		expect(invalidate).not.toHaveBeenCalled();
+
+		save.resolve();
+		await pending;
+
+		reactQueryHandler(queryClient)({
+			domain: "account",
+			operation: "update",
+			id: 1,
+		});
+
+		expect(invalidate).toHaveBeenCalled();
 	});
 
 	it("ignores messages for unknown domains", () => {
