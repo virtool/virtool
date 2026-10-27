@@ -5,8 +5,6 @@ updates:
       schedule:
           interval: "weekly"
       open-pull-requests-limit: 10
-      commit-message:
-          prefix: "chore(deps)"
       cooldown:
           default-days: 1
       ignore:
@@ -57,8 +55,6 @@ updates:
       directory: "/"
       schedule:
           interval: "monthly"
-      commit-message:
-          prefix: "chore(deps)"
       groups:
           actions:
               patterns:
@@ -72,8 +68,6 @@ updates:
           - "/apps/*"
       schedule:
           interval: "daily"
-      commit-message:
-          prefix: "chore(deps)"
       allow:
           - dependency-name: "node"
       ignore:

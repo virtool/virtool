@@ -562,8 +562,8 @@ jobs:
               with:
                   version-script: pnpm changeset version
                   publish-script: pnpm changeset tag
-                  pr-title: "chore: version packages"
-                  commit-message: "chore: version packages"
+                  pr-title: "Version packages"
+                  commit-message: "Version packages"
     release-ghcr-matrix:
         name: Release / Matrix
         runs-on: ubuntu-24.04

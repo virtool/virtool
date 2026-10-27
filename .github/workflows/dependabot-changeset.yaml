@@ -1,12 +1,13 @@
 name: Dependabot Changeset
 
-# Dependabot's Node base-image bumps change only app Dockerfiles, so they carry
-# no changeset and would never release. This adds a patch changeset for each
-# app whose Dockerfile the pull request changes.
+# Dependabot writes no changesets, so its npm and Node base-image bumps would
+# fail the `Changeset` check and never release. This adds one patch changeset
+# for every versioned workspace whose `package.json` or Dockerfile the pull
+# request changes, with the pull request title as its summary.
 #
 # `pull_request_target` gives the token write access to Dependabot's branch.
 # The job never installs or runs code from that branch: it reads the diff and
-# writes one Markdown file.
+# the changed `package.json` files, and writes one Markdown file.
 on:
     pull_request_target:
         types: [opened, synchronize, reopened]
@@ -21,7 +22,10 @@ jobs:
         name: Dependabot / Changeset
         runs-on: ubuntu-24.04
         timeout-minutes: 5
-        if: github.event.pull_request.user.login == 'dependabot[bot]' && startsWith(github.event.pull_request.head.ref, 'dependabot/docker/')
+        if: >-
+            github.event.pull_request.user.login == 'dependabot[bot]' &&
+            (startsWith(github.event.pull_request.head.ref, 'dependabot/docker/') ||
+            startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/'))
         permissions:
             contents: write
         steps:
@@ -35,23 +39,34 @@ jobs:
               env:
                   BASE_SHA: ${{ github.event.pull_request.base.sha }}
                   PR_NUMBER: ${{ github.event.pull_request.number }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
               run: |
-                  file=".changeset/dependabot-docker-${PR_NUMBER}.md"
-                  apps=$(git diff --name-only "$BASE_SHA"...HEAD -- 'apps/*/Dockerfile' | cut -d/ -f2 | sort -u)
-                  if [[ -z "$apps" || -f "$file" ]]; then
+                  file=".changeset/dependabot-${PR_NUMBER}.md"
+                  if [[ -f "$file" ]]; then
+                      exit 0
+                  fi
+                  # Changesets rejects a changeset that names an ignored workspace.
+                  packages=$(
+                      git diff --name-only "$BASE_SHA"...HEAD -- \
+                          'apps/*/Dockerfile' 'apps/*/package.json' 'packages/*/package.json' |
+                          xargs -r -n1 dirname | sort -u |
+                          while read -r dir; do jq -r .name "$dir/package.json"; done |
+                          grep -vxF -f <(jq -r '.ignore[]' .changeset/config.json) || true
+                  )
+                  if [[ -z "$packages" ]]; then
                       exit 0
                   fi
                   {
                       echo "---"
-                      for app in $apps; do
-                          echo "\"@virtool/${app}\": patch"
+                      for package in $packages; do
+                          echo "\"${package}\": patch"
                       done
                       echo "---"
                       echo
-                      echo "Update the Node base image."
+                      echo "${PR_TITLE}."
                   } > "$file"
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
                   git add "$file"
-                  git commit -m "chore(deps): add changeset for node base image"
+                  git commit -m "Add changeset"
                   git push

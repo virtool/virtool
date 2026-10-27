@@ -2,38 +2,23 @@
 
 ## Commit and pull request titles
 
-Use Conventional Commits for commit and pull request titles:
+Write titles in sentence case, in the imperative mood, with no prefix and no
+period. Keep them under 72 characters. This matches the messages that Git,
+GitHub, and Dependabot generate.
 
-```
-type(scope): description
-```
+Write user-facing changes as user outcomes. Put implementation details in the
+commit or pull request body:
 
-The available types are:
+- Prefer `Correct submit button label` to
+  `Use shared Button component with corrected label`.
+- Prefer `Prevent rare data loss when saving` to
+  `Wrap save handler in a transaction`.
 
-- `feat`: a new user-facing feature or capability;
-- `fix`: a bug fix or correction to user-visible behaviour, including UI and
-  performance improvements;
-- `chore`: internal code that's not yet exposed to users, configuration,
-  dependencies, file moves, and build scripts;
-- `refactor`: restructuring without a change in behaviour;
-- `style`: formatting without logic changes;
-- `docs`: documentation-only changes;
-- `test`: test additions or updates;
-- `ci`: CI/CD pipeline changes.
+Developer-facing changes can describe the implementation directly:
 
-Write `feat` and `fix` descriptions as user outcomes. Put implementation
-details in the commit or pull request body:
-
-- Prefer `fix: correct submit button label` to
-  `fix: use shared Button component with corrected label`.
-- Prefer `fix: prevent rare data loss when saving` to
-  `feat: wrap save handler in a transaction`.
-
-Developer-facing types can describe the implementation directly:
-
-- `refactor: extract form helpers into src/forms/`
-- `chore: add csv parser`
-- `test: add tests for table components and hooks`
+- `Extract form helpers into src/forms/`
+- `Add CSV parser`
+- `Add tests for table components and hooks`
 
 Pull request titles follow the same format so the pull request can be
 squash-merged into one well-formed commit.
