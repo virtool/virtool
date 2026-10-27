@@ -54,16 +54,29 @@ FROM rust:1.97-bookworm AS chef
 RUN cargo install cargo-chef --locked
 WORKDIR /build
 
-FROM chef AS pathoscope-planner
+FROM chef AS pathoscope-chef
 RUN apt-get update && apt-get install -y --no-install-recommends libclang-dev && rm -rf /var/lib/apt/lists/*
+
+FROM chef AS pathoscope-planner
 COPY packages/pathoscope-core .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM pathoscope-planner AS pathoscope-builder
+FROM pathoscope-chef AS pathoscope-builder
 COPY --from=pathoscope-planner /build/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY packages/pathoscope-core .
 RUN cargo build --release --bin pathoscope-core
+
+# Runs the crate's checks against the same toolchain and bowtie2 the image ships.
+# bowtie2 needs Perl for its wrapper and Python for bowtie2-build.
+FROM pathoscope-chef AS pathoscope-test
+RUN apt-get update && apt-get install -y --no-install-recommends perl python3 && rm -rf /var/lib/apt/lists/*
+COPY --from=bowtie2 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
+COPY --from=pathoscope-planner /build/recipe.json recipe.json
+RUN cargo chef cook --all-targets --recipe-path recipe.json
+COPY packages/pathoscope-core .
+ENV VT_REQUIRE_BOWTIE2=1
+RUN cargo fmt --check && cargo test
 
 FROM chef AS quality-planner
 COPY packages/quality-core .

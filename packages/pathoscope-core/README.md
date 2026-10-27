@@ -75,7 +75,20 @@ and `pnpm typecheck` don't reach it.
 | `cargo clippy` | Lint |
 
 Building needs `libclang-dev` installed, because `hts-sys` runs bindgen against
-htslib's headers.
+htslib's headers. Without `bowtie2` and `bowtie2-build` on `PATH`, `cargo test`
+skips the `candidates` golden vectors with a warning.
+
+To run the checks as CI does, from the repository root:
+
+```bash
+docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope-core-test --progress=plain
+```
+
+This runs `cargo fmt --check` and `cargo test` in the workflow-tools
+Dockerfile, with the toolchain, `libclang-dev`, and bowtie2 build that the image
+uses. It sets `VT_REQUIRE_BOWTIE2`, so a missing bowtie2 fails the run instead
+of skipping the `candidates` vectors. BuildKit caches the result, so a second
+run with unchanged inputs doesn't run the tests again.
 
 ## Tooling exclusions
 
@@ -125,7 +138,7 @@ reports `CACHED`.
 against htslib's headers for `x86_64-unknown-linux-gnu` and doesn't fall back
 to the pre-generated bindings that ship for some targets. Without the package,
 the build fails with `Unable to find libclang`. The requirement also applies to
-the `pathoscope-test` CI job and developer machines.
+developer machines that run `cargo` directly.
 
 The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6`, `perl`,
 `python3`, and `pigz`. Bowtie2 needs `libgomp1`, Perl for its `bowtie2` wrapper,

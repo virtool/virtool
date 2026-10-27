@@ -84,8 +84,9 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/pathoscope test:watch` | Vitest in watch mode |
 | `pnpm --filter @virtool/pathoscope typecheck` | `tsc --noEmit` |
 
-The Rust crate isn't a pnpm workspace. Run `cargo test` in
-`packages/pathoscope-core` directly. Building it needs `libclang-dev`.
+`pnpm` doesn't run the Rust crate's tests. Run `cargo test` in
+`packages/pathoscope-core`, or the `pathoscope-core-test` Bake target to run
+them as CI does. See the crate README.
 
 ## Documentation
 

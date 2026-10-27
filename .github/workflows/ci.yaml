@@ -362,75 +362,29 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v7
-            # hts-sys runs bindgen against htslib's headers and does not fall
-            # back to pre-generated bindings, so libclang is required here just
-            # as it is in the image build. Unlike the accessibility job's
-            # Playwright libraries it cannot simply be dropped, so apt is
-            # bounded instead. The runner's mirrorlist puts
-            # azure.archive.ubuntu.com first; when that host goes unreachable
-            # apt retries it for every index against a two-minute default
-            # timeout before falling back to archive.ubuntu.com, which reads as
-            # a hang. Rewriting the mirrorlist skips the dead host outright and
-            # the acquire options cap what a merely slow one can cost, for the
-            # package downloads as well as the index fetch. The step timeout is
-            # the backstop for both.
-            - name: Install libclang
-              timeout-minutes: 5
-              run: |
-                  if [ -f /etc/apt/apt-mirrors.txt ]; then
-                      sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/apt-mirrors.txt
-                  fi
-                  printf 'Acquire::Retries "2";\nAcquire::http::Timeout "15";\nAcquire::https::Timeout "15";\n' \
-                      | sudo tee /etc/apt/apt.conf.d/99-ci-timeouts > /dev/null
-                  sudo apt-get update
-                  sudo apt-get install -y --no-install-recommends libclang-dev
-            # The `candidates` golden vectors shell out to bowtie2. Without it
-            # the harness skips them; VT_REQUIRE_BOWTIE2 below turns that skip
-            # into a failure so CI can never quietly stop checking them. It is
-            # built from the shared workflow-tools Dockerfile rather than apt, so
-            # this job and the workflow images always run the same bowtie2
-            # build.
+            # Format and test run inside the workflow-tools Dockerfile, against
+            # the same Rust toolchain, libclang, and bowtie2 build the image
+            # ships. That stage sets VT_REQUIRE_BOWTIE2, so the `candidates`
+            # golden vectors can never be skipped silently.
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
             # Inline Bake commands get no cache service credentials, so the gha
             # cache needs this step to expose them.
             - name: Expose Actions runtime
               uses: crazy-max/ghaction-github-runtime@v4
-            - name: Build bowtie2
-              run: |
-                  docker buildx bake -f packages/image-build/docker-bake.hcl bowtie2 \
-                      --set 'bowtie2.output=type=local,dest=.docker-build/bowtie2' \
-                      --set 'bowtie2.cache-from=type=gha,scope=bowtie2' \
-                      --set 'bowtie2.cache-to=type=gha,mode=max,scope=bowtie2'
-            - name: Install bowtie2
-              run: |
-                  sudo cp .docker-build/bowtie2/tools/bowtie2/2.5.4/* /usr/local/bin/
-                  bowtie2 --version | head -1
-            - name: Cache cargo
-              uses: actions/cache@v6
-              with:
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                      packages/pathoscope-core/target
-                  key: cargo-${{ runner.os }}-${{ hashFiles('packages/pathoscope-core/Cargo.lock') }}
-                  restore-keys: cargo-${{ runner.os }}-
-            - name: Format
-              run: cargo fmt --check
-              working-directory: packages/pathoscope-core
             - name: Test
-              run: cargo test
-              working-directory: packages/pathoscope-core
-              env:
-                  VT_REQUIRE_BOWTIE2: "1"
+              run: |
+                  docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope-core-test \
+                      --progress=plain \
+                      --set 'pathoscope-core-test.cache-from=type=gha,scope=pathoscope-core-test' \
+                      --set 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test'
 
     # -------------------------------------------------------------------------
     # Quality (packages/quality-core)
     # -------------------------------------------------------------------------
-    # Much cheaper than pathoscope-test, and deliberately so: this crate links
-    # nothing native, so there is no libclang install, and its goldens are
-    # FastQC output checked in rather than something a tool has to be built to
-    # produce. Just cargo.
+    # Plain cargo on the runner, unlike pathoscope-test: this crate links
+    # nothing native, and its goldens are FastQC output checked in rather than
+    # something a tool has to be built to produce.
     quality-test:
         name: Quality / Test
         runs-on: ubuntu-24.04
@@ -674,8 +628,8 @@ jobs:
             # Only the deployable apps whose version bumped this release, built
             # from `release-ghcr-matrix`. The pathoscope and nuvs legs read the
             # gha cache under the same scope build-pathoscope and build-nuvs
-            # write it to (matching pathoscope-test's bowtie2 scope too), so the
-            # release reuses what those 45/60-minute jobs already produced
+            # write it to, so the release reuses what those 45/60-minute jobs
+            # already produced
             # rather than rebuilding the Rust crate, the bioinformatics tools
             # and SPAdes from scratch inside this job's shared 20-minute timeout.
             matrix:

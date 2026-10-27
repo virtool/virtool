@@ -71,3 +71,10 @@ target "bowtie2" {
   dockerfile = "packages/workflow-tools/Dockerfile"
   target = "bowtie2"
 }
+
+target "pathoscope-core-test" {
+  context = "."
+  dockerfile = "packages/workflow-tools/Dockerfile"
+  target = "pathoscope-test"
+  output = ["type=cacheonly"]
+}
