@@ -691,9 +691,10 @@ WebAuthn rules:
 The server sets the user's handle as the account label that the authenticator
 shows, whatever the options request asks for. The server also names the stored
 passkey. It uses the provider name of a known AAGUID, or else the browser and
-operating system of the registration request, such as Firefox on Linux, or
-else "Passkey". Registration refuses a request that names the passkey with
-`PASSKEY_NAME_NOT_ACCEPTED`, because the plugin applies no limits to that name.
+operating system of the registration request, such as Firefox on Linux. If it
+has neither, it uses "Passkey" as the name. Registration refuses a request
+that names the passkey with `PASSKEY_NAME_NOT_ACCEPTED`, because the plugin
+applies no limits to that name.
 The user can rename the passkey. Names are whitespace-normalized, 1 to 64
 characters, and contain no control characters.
 
