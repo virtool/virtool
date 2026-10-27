@@ -8,6 +8,9 @@ name: Dependabot Changeset
 # `pull_request_target` gives the token write access to Dependabot's branch.
 # The job never installs or runs code from that branch: it reads the diff and
 # the changed `package.json` files, and writes one Markdown file.
+#
+# The push uses `GITHUB_TOKEN`, so CI runs on the changeset commit wait until a
+# maintainer selects **Approve workflows to run**.
 on:
     pull_request_target:
         types: [opened, synchronize, reopened]

@@ -90,3 +90,9 @@ and `:latest`. A release that bumped only shared packages publishes no image.
 The `Changeset` check fails a pull request that changes a versioned workspace
 that none of its changesets release, directly or by cascade. See
 [CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for how to add one.
+
+Dependabot writes no changesets. The **Dependabot Changeset** workflow adds a
+patch changeset to each Dependabot npm or Docker pull request for every
+versioned workspace that the bump changes. It pushes the changeset with
+`GITHUB_TOKEN`, so CI runs on that commit wait until a maintainer selects
+**Approve workflows to run**.
