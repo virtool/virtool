@@ -1,0 +1,13 @@
+[Header]
+FileFormatVersion,2
+RunName,Run8
+
+[Reads]
+Read1Cycles,101
+Index1Cycles,8
+
+[BCLConvert_Data]
+Lane,Sample_ID,Index
+1,S1,ACGTACGT
+2,S1,ACGTACGT
+3,S2,TGCATGCA

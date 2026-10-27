@@ -1,0 +1,11 @@
+[Header]
+IEMFileVersion,4
+Experiment Name,Lanes
+
+[Reads]
+75
+
+[Data]
+Lane,Sample_ID,Sample_Name,index,Sample_Project
+1,S1,,ACGTACGT,Potato
+2,S1,,ACGTACGT,Potato

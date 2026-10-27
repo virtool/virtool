@@ -10,3 +10,14 @@ export {
 } from "./bio";
 export { compositeQuality, roundHalfEven } from "./fastqc";
 export { type HmmerHit, parseHmmerTblout } from "./hmmer";
+export {
+	type IlluminaFilename,
+	type IlluminaHeader,
+	inferInstrumentModel,
+	parseIlluminaFilename,
+	parseIlluminaHeader,
+	parseSampleSheet,
+	type ReadSide,
+	type SampleSheet,
+	type SampleSheetEntry,
+} from "./illumina";

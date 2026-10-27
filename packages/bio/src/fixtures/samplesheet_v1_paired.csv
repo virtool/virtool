@@ -1,0 +1,20 @@
+[Header]
+IEMFileVersion,4
+Investigator Name,Jane
+Experiment Name,Run42
+Date,2024-03-01
+Workflow,GenerateFASTQ
+Chemistry,Amplicon
+,
+[Reads]
+151
+151
+,
+[Settings]
+Adapter,CTGTCTCTTATACACATCT
+,
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+S1,Leaf A,,,N701,TAAGGCGA,S502,CTCTCTAT,Grapevine,
+"S2",Leaf B,,,N702,CGTACTAG,S502,CTCTCTAT,Grapevine,"note, with comma"
+,,,,,,,,,

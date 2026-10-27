@@ -8,6 +8,15 @@ to reduce two `packages/quality-core` reports into the one blob a sample
 stores, and `roundHalfEven`, the half-to-even rounding both that averaging and
 `quality-core` are specified to use.
 
+`@virtool/bio/illumina` reads Illumina run identity. It has parsers for
+CASAVA 1.8+ FASTQ headers, BCL Convert filenames, and v1 (IEM) and v2
+(BCL Convert) sample sheets. It also infers an instrument model from the
+serial prefix. That inference is a heuristic to pre-fill a form. Never use it
+to override a model that the user chose. Header and filename parsers return
+`null` for input that is not from Illumina, because the upload must not fail
+on such input. The sample sheet parser throws, because the user supplies a
+sheet on purpose and must know why it was rejected.
+
 Nothing here touches the filesystem, the network, or the database. Callers read
 the bytes and hand over text. Walking a results directory or joining an HMM
 hit to its annotation belongs to the workflow that does the IO.
