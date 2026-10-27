@@ -4,7 +4,7 @@ import { usePasskeySupport } from "@app/passkeySupport";
 import type { PasskeyNotice } from "@app/passkeys";
 import Button, { LinkButton } from "@base/Button";
 import Field, { FieldError, FieldLabel } from "@base/Field";
-import Input, { InputPassword } from "@base/Input";
+import { InputOTP, InputPassword } from "@base/Input";
 import {
 	challengeRecentAuthenticationFn,
 	getRecentAuthenticationMethodsFn,
@@ -14,6 +14,7 @@ import {
 	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAVAILABLE_MESSAGE,
 } from "@virtool/contracts";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { CircleAlert, Info, KeyRound } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import {
@@ -25,7 +26,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 type Methods = Awaited<ReturnType<typeof getRecentAuthenticationMethodsFn>>;
 
@@ -284,6 +285,7 @@ export function RecentAuthenticationForm({
 }) {
 	const {
 		clearErrors,
+		control,
 		formState: { errors, isSubmitting },
 		handleSubmit,
 		register,
@@ -371,6 +373,13 @@ export function RecentAuthenticationForm({
 				}
 				if (getChallengeStatus(error) === 503) {
 					setPasskeyNotice({ message: UNAVAILABLE_MESSAGE, tone: "error" });
+					return;
+				}
+				if (getChallengeStatus(error) === 429) {
+					setPasskeyNotice({
+						message: normalizeError(error).message,
+						tone: "error",
+					});
 					return;
 				}
 				if (isTerminalChallengeError(error)) {
@@ -486,14 +495,26 @@ export function RecentAuthenticationForm({
 			) : (
 				<Field>
 					<FieldLabel>Authenticator code</FieldLabel>
-					<Input
-						autoComplete="one-time-code"
-						autoFocus
-						inputMode="numeric"
-						maxLength={6}
-						{...register("code", {
+					<Controller
+						name="code"
+						control={control}
+						rules={{
 							required: "Enter your authenticator code.",
-						})}
+							pattern: {
+								value: /^\d{6}$/,
+								message: "Enter the 6-digit code.",
+							},
+						}}
+						render={({ field }) => (
+							<InputOTP
+								autoComplete="one-time-code"
+								autoFocus
+								inputMode="numeric"
+								length={6}
+								pattern={REGEXP_ONLY_DIGITS}
+								{...field}
+							/>
+						)}
 					/>
 					<FieldError errors={[errors.code]} />
 				</Field>
@@ -548,10 +569,11 @@ function getChallengeStatus(error: unknown): number | undefined {
 	return (normalizeError(error) as Error & { status?: number }).status;
 }
 
-// A refused credential and an outage both leave the challenge open to retry.
+// A refused credential, a rate limit, and an outage all leave the challenge
+// open to retry.
 function isTerminalChallengeError(error: unknown): boolean {
 	const status = getChallengeStatus(error);
-	return status !== 400 && status !== 503;
+	return status !== 400 && status !== 429 && status !== 503;
 }
 
 function FormActions({

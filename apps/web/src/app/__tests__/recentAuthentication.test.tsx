@@ -204,6 +204,34 @@ describe("recent authentication orchestration", () => {
 		expect(operation).toHaveBeenCalledTimes(1);
 	});
 
+	it("keeps the challenge open and clears the password when rate-limited", async () => {
+		const operation = vi
+			.fn<(value: string) => Promise<string>>()
+			.mockRejectedValueOnce(staleError());
+		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockRejectedValue(
+			Object.assign(new Error("Too many attempts. Wait and try again."), {
+				name: CLIENT_ERROR_NAME,
+				status: 429,
+			}),
+		);
+		const { result } = renderHook(
+			() => useRecentlyAuthenticatedMutation(operation),
+			{ wrapper },
+		);
+
+		act(() => {
+			void result.current("unchanged");
+		});
+		await userEvent.type(await screen.findByLabelText("Password"), "secret");
+		await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+		expect(
+			await screen.findByText("Too many attempts. Wait and try again."),
+		).toBeInTheDocument();
+		expect(screen.getByLabelText("Password")).toHaveValue("");
+		expect(operation).toHaveBeenCalledTimes(1);
+	});
+
 	it("submits a password without an authenticator code when both methods are enrolled", async () => {
 		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
 			{ passkey: false, password: true, totp: true },
@@ -494,6 +522,27 @@ describe("recent authentication with a passkey", () => {
 			await screen.findByText("Too many attempts. Wait and try again."),
 		).toHaveAttribute("role", "alert");
 		expect(webauthn.startAuthentication).not.toHaveBeenCalled();
+	});
+
+	it("keeps the challenge open when the server rate-limits a passkey", async () => {
+		mockMethods({ passkey: true, password: true, totp: false });
+		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockRejectedValue(
+			Object.assign(new Error("Too many attempts. Wait and try again."), {
+				name: CLIENT_ERROR_NAME,
+				status: 429,
+			}),
+		);
+		const { operation } = startChallenge();
+
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Continue with a passkey" }),
+		);
+
+		expect(
+			await screen.findByText("Too many attempts. Wait and try again."),
+		).toHaveAttribute("role", "alert");
+		expect(screen.getByLabelText("Password")).toBeVisible();
+		expect(operation).toHaveBeenCalledTimes(1);
 	});
 
 	it("shows a neutral notice when the passkey ceremony does not finish", async () => {

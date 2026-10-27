@@ -1,4 +1,8 @@
-import { CLIENT_ERROR_NAME } from "@virtool/contracts";
+import {
+	CLIENT_ERROR_NAME,
+	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+} from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -257,15 +261,46 @@ describe("challengeRecentAuthenticationFn", () => {
 	});
 
 	it.each([
-		new APIError("UNAUTHORIZED", {
-			code: "INVALID_CODE",
-			message: "invalid code",
-		}),
+		[
+			"password",
+			{ method: "password", password: "wrong-password" },
+			new APIError("BAD_REQUEST", {
+				code: "INVALID_PASSWORD",
+				message: "Invalid password",
+			}),
+			"The password is not correct.",
+		],
+		[
+			"TOTP",
+			{ method: "totp", code: "012345" },
+			new APIError("UNAUTHORIZED", {
+				code: "INVALID_CODE",
+				message: "invalid code",
+			}),
+			"The code is not correct. Enter the code your app shows now.",
+		],
+	])("names an incorrect %s", async (_, data, error, message) => {
+		await signIn({ totp: true });
+		handleAuthRequest.mockResolvedValue(
+			Response.json(error.body, { status: error.statusCode }),
+		);
+
+		await expect(
+			call("challengeRecentAuthenticationFn", data),
+		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, message, status: 400 });
+		expect(createStepUpSession).not.toHaveBeenCalled();
+	});
+
+	it.each([
 		new APIError("BAD_REQUEST", {
 			code: "TOTP_NOT_ENABLED",
 			message: "not enrolled",
 		}),
-	])("returns one generic response for an invalid challenge", async (error) => {
+		new APIError("BAD_REQUEST", {
+			code: "constructor",
+			message: "unexpected",
+		}),
+	])("returns a generic response for another refusal", async (error) => {
 		await signIn({ totp: true });
 		handleAuthRequest.mockResolvedValue(
 			Response.json(error.body, { status: error.statusCode }),
@@ -296,9 +331,27 @@ describe("challengeRecentAuthenticationFn", () => {
 			}),
 		).rejects.toMatchObject({
 			name: CLIENT_ERROR_NAME,
-			message: "Authentication challenge failed.",
+			message: "Too many attempts. Wait and try again.",
 			status: 429,
 		});
+		expect(createStepUpSession).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		["PASSWORD_RESET_REQUIRED", PASSWORD_RESET_REQUIRED_ERROR_NAME],
+		["MFA_ENROLLMENT_REQUIRED", MFA_ENROLLMENT_REQUIRED_ERROR_NAME],
+	])("passes a %s restriction through", async (code, name) => {
+		await signIn();
+		handleAuthRequest.mockResolvedValue(
+			Response.json({ code, message: "restricted" }, { status: 403 }),
+		);
+
+		await expect(
+			call("challengeRecentAuthenticationFn", {
+				method: "password",
+				password: "correct-password",
+			}),
+		).rejects.toMatchObject({ name });
 		expect(createStepUpSession).not.toHaveBeenCalled();
 	});
 

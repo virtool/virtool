@@ -201,7 +201,7 @@ describe("<LoginForm />", () => {
 		const user = userEvent.setup();
 		loginMock.mockResolvedValue({ twoFactorRedirect: true });
 		verifyMock.mockRejectedValueOnce(
-			createClientError("Invalid or expired verification code."),
+			createClientError("The code is not correct."),
 		);
 		verifyMock.mockResolvedValueOnce({ reset: true });
 		rejectAccount(PASSWORD_RESET_REQUIRED_ERROR_NAME);
@@ -221,8 +221,9 @@ describe("<LoginForm />", () => {
 		expect(setResetRequired).not.toHaveBeenCalled();
 		await user.click(screen.getByRole("button", { name: "Verify" }));
 		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"Invalid or expired",
+			"The code is not correct.",
 		);
+		expect(screen.getByLabelText("Authentication code")).toHaveValue("");
 		expect(verifyMock).toHaveBeenCalledWith(
 			{ code: "123456", recovery: false },
 			expect.anything(),
@@ -239,6 +240,42 @@ describe("<LoginForm />", () => {
 			expect.anything(),
 		);
 	});
+
+	it.each([
+		[410, "Your sign-in expired. Sign in again."],
+		[429, "Too many incorrect codes. Wait a few minutes, then sign in again."],
+	])(
+		"returns to sign-in when the challenge ends with %i",
+		async (status, message) => {
+			const user = userEvent.setup();
+			loginMock.mockResolvedValue({ twoFactorRedirect: true });
+			verifyMock.mockRejectedValueOnce(createClientError(message, status));
+			renderWithProviders(
+				<MemoryRouter>
+					<LoginForm setResetRequired={vi.fn()} />
+				</MemoryRouter>,
+			);
+			await user.type(await screen.findByLabelText("Username"), "Alice");
+			await user.type(screen.getByLabelText("Password"), "password");
+			await user.click(screen.getByRole("button", { name: "Sign in" }));
+			await user.type(
+				await screen.findByLabelText("Authentication code"),
+				"123456",
+			);
+			await user.click(screen.getByRole("button", { name: "Verify" }));
+
+			expect(
+				await screen.findByRole("button", { name: "Sign in" }),
+			).toBeInTheDocument();
+			expect(screen.getByText(message)).toBeInTheDocument();
+
+			await user.type(screen.getByLabelText("Password"), "password");
+			await user.click(screen.getByRole("button", { name: "Sign in" }));
+			await screen.findByLabelText("Authentication code");
+			await user.click(screen.getByRole("button", { name: "Back to sign in" }));
+			expect(screen.queryByText(message)).not.toBeInTheDocument();
+		},
+	);
 
 	it("hides an unexpected error behind a generic message", async () => {
 		loginMock.mockRejectedValue(new Error("BETTER_AUTH internal detail"));

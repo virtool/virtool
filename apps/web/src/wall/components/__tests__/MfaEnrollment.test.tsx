@@ -65,6 +65,7 @@ describe("<MfaEnrollment />", () => {
 		).toBeInTheDocument();
 		expect(screen.getByDisplayValue("JBSWY3DPEHPK3PXP")).toBeInTheDocument();
 		expect(screen.queryByText("aaaa-1111")).toBeNull();
+		expect(screen.getByLabelText("Code")).toHaveFocus();
 
 		await user.type(screen.getByLabelText("Code"), "123456");
 		await user.click(screen.getByRole("button", { name: "Turn on" }));

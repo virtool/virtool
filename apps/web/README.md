@@ -354,7 +354,11 @@ ceremony only when the user selects the passkey button. Cancellation leaves the 
 session and form state intact and never navigates to the login wall.
 
 Step-up delegates password and TOTP verification to Better Auth, with trusted
-device disabled and recovery codes excluded. Step-up does not use Better Auth's
+device disabled and recovery codes excluded. Every TOTP user also has a
+password, so a recovery code would only spend a one-time code that the user
+keeps for a lost authenticator. A wrong password or code gets a message that
+names only the method the user chose. A rate-limited attempt keeps the
+challenge open with a message to wait. Step-up does not use Better Auth's
 passkey sign-in endpoint, because that endpoint starts a session for the owner
 of any registered passkey. The recent-authentication plugin in
 `@server/auth/recentAuthenticationChallenge` runs its own ceremony instead:
@@ -467,7 +471,10 @@ forgets the password needs an administrator-issued recovery link, because
 self-service recovery needs an email. Migrated identities continue
 through Better Auth. A two-factor challenge keeps the login wall open for an authenticator
 or recovery code; only successful verification establishes a session and checks
-whether a password reset is required. Unknown, ineligible, and wrong-password attempts keep the same
+whether a password reset is required. After five wrong codes, Better Auth ends
+the challenge, and a run of wrong codes across challenges locks the account for
+a short time. Either one returns the wall to the sign-in form with a notice
+that says why. Unknown, ineligible, and wrong-password attempts keep the same
 generic response and constant-cost behavior. The remediation wall stages a
 normalized unique email as unverified. When delivery is enabled, only the
 emailed one-time link marks it verified; when delivery is unavailable, setup
