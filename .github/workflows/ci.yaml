@@ -23,8 +23,13 @@ jobs:
     # Change detection
     # -------------------------------------------------------------------------
     # Image inputs are pnpm workspace dependencies. The leading ellipsis selects
-    # every dependent of a workspace changed since the PR base, so shared
-    # package changes automatically select the images that consume them.
+    # every dependent of a workspace changed since the base, so shared package
+    # changes automatically select the jobs that consume them.
+    #
+    # A pull request compares against `main`. A push to `main` compares against
+    # the head of the last successful push run, not `github.event.before`: a
+    # newer push cancels a pending run, and a failed run must not let the next
+    # push skip what it broke. With no usable base, every workspace is selected.
     #
     # Files outside every workspace belong to the root package, which has no
     # dependents. A change to one that every job consumes selects every
@@ -33,23 +38,46 @@ jobs:
         name: Changes
         runs-on: ubuntu-24.04
         timeout-minutes: 5
+        permissions:
+            actions: read
+            contents: read
         outputs:
             packages: ${{ steps.affected.outputs.packages }}
+            package-tests: ${{ steps.affected.outputs.package-tests }}
         steps:
             - name: Checkout
-              if: github.event_name == 'pull_request'
               uses: actions/checkout@v7
               with:
                   fetch-depth: 0
             - name: Setup
-              if: github.event_name == 'pull_request'
               uses: ./.github/actions/setup
+            - name: Find base
+              id: base
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  if [ "${{ github.event_name }}" = pull_request ]; then
+                      git fetch --no-tags origin main
+                      base=origin/main
+                  else
+                      base=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yaml \
+                          --branch main --event push --status success --limit 1 \
+                          --json headSha --jq '.[0].headSha // empty')
+                      if [ -z "$base" ] || ! git merge-base --is-ancestor "$base" HEAD; then
+                          base=
+                      fi
+                  fi
+                  echo "base=$base" >> "$GITHUB_OUTPUT"
+            # Packages / Test covers every selected workspace with a `test`
+            # script except the root and the five that run in dedicated jobs:
+            # web, internal and dev-tools, and the two persistence packages
+            # that share Data & Storage / Test.
             - name: Find affected workspaces
               id: affected
-              if: github.event_name == 'pull_request'
+              env:
+                  BASE: ${{ steps.base.outputs.base }}
               run: |
-                  git fetch --no-tags origin main
-                  if git diff --name-only origin/main...HEAD -- \
+                  if [ -z "$BASE" ] || git diff --name-only "$BASE"...HEAD -- \
                       .github/workflows/ci.yaml \
                       .github/actions \
                       .nvmrc \
@@ -59,10 +87,18 @@ jobs:
                       | grep -q .; then
                       filter='*'
                   else
-                      filter='...[origin/main]'
+                      filter="...[$BASE]"
                   fi
-                  packages=$(pnpm --filter "$filter" list --depth -1 --json | jq -c '[.[].name]')
+                  affected="$RUNNER_TEMP/affected.json"
+                  pnpm --filter "$filter" list --depth -1 --json > "$affected"
+                  packages=$(jq -c '[.[].name]' "$affected")
+                  package_tests=$(jq -r --arg root "$PWD" '.[]
+                      | select(.path != $root)
+                      | select(.name | IN("@virtool/web", "@virtool/data", "@virtool/storage", "@virtool/internal", "@virtool/dev-tools") | not)
+                      | .path + "/package.json"' "$affected" \
+                      | xargs -r jq -s -c '[.[] | select(.scripts.test) | .name]')
                   echo "packages=$packages" >> "$GITHUB_OUTPUT"
+                  echo "package-tests=${package_tests:-[]}" >> "$GITHUB_OUTPUT"
 
     # -------------------------------------------------------------------------
     # Checks (repo-wide)
@@ -158,13 +194,13 @@ jobs:
                       area: Create Subtraction
         steps:
             - name: Checkout
-              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: actions/checkout@v7
             - name: Setup
-              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: ./.github/actions/setup
             - name: Prepare image context
-              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               run: |
                   pnpm --filter ${{ matrix.package }} build
                   # The web image runs its self-contained `.output` bundle from
@@ -175,15 +211,15 @@ jobs:
             # The default `docker` driver cannot export a build cache, so the
             # gha cache below needs a docker-container builder.
             - name: Setup Buildx
-              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/setup-buildx-action@v4
             # Inline Bake commands get no cache service credentials, so the gha
             # cache needs this step to expose them.
             - name: Expose Actions runtime
-              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: crazy-max/ghaction-github-runtime@v4
             - name: Build
-              if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               run: |
                   docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} \
                       --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
@@ -194,12 +230,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 45
         needs: [changes]
-        # Unconditional on `push`, deliberately. `release` lists this job in
-        # `needs`, and running it on every push to main keeps that gate complete
-        # without the skipped-dependency handling
-        # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
-        # dependency would otherwise force onto it. PRs get the savings.
-        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -228,6 +259,8 @@ jobs:
         name: Web / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 10
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -242,6 +275,8 @@ jobs:
         name: Web / Test Server
         runs-on: ubuntu-24.04
         timeout-minutes: 15
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -256,6 +291,8 @@ jobs:
         name: Web / Accessibility
         runs-on: ubuntu-24.04
         timeout-minutes: 10
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -297,6 +334,8 @@ jobs:
         name: Internal / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 15
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/internal') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/dev-tools')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -325,12 +364,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 60
         needs: [changes]
-        # Unconditional on `push`, deliberately. `release` lists this job in
-        # `needs`, and running it on every push to main keeps that gate complete
-        # without the skipped-dependency handling
-        # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
-        # dependency would otherwise force onto it. PRs get the savings.
-        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -357,7 +391,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 10
         needs: [changes]
-        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -376,9 +410,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 45
         needs: [changes]
-        # See the note on `build-pathoscope`: filtered on pull requests,
-        # unconditional on `push` so the `release` gate stays complete.
-        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope-core') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/workflow-tools')
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope-core') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/workflow-tools')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -410,9 +442,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         needs: [changes]
-        # See the note on `build-pathoscope`: filtered on pull requests,
-        # unconditional on `push` so the `release` gate stays complete.
-        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/quality-core')
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/quality-core')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -442,6 +472,8 @@ jobs:
         name: Site / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 10
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/site')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -459,17 +491,17 @@ jobs:
         name: Packages / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 10
+        needs: [changes]
+        if: needs.changes.outputs.package-tests != '[]'
         steps:
             - name: Checkout
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-            # Exclusions rather than an inclusion list, so a new workspace that
-            # declares `test` is covered without editing this job. The five
-            # excluded here run in dedicated jobs: web, internal and dev-tools,
-            # and the two persistence packages that share Data & Storage / Test.
             - name: Test
-              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" --filter "!@virtool/dev-tools" test
+              env:
+                  PACKAGES: ${{ needs.changes.outputs.package-tests }}
+              run: pnpm -r $(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES") test
 
     # -------------------------------------------------------------------------
     # Data and Storage (packages/data, packages/storage)
@@ -478,6 +510,8 @@ jobs:
         name: Data & Storage / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 15
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/data') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/storage')
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -538,6 +572,7 @@ jobs:
                 build,
                 build-nuvs,
                 build-pathoscope,
+                changes,
                 checks,
                 data-storage-test,
                 docs-lint,
@@ -551,7 +586,13 @@ jobs:
                 web-test-a11y,
                 web-test-server,
             ]
-        if: github.event_name == 'push'
+        # A filtered job skips when a push does not affect it. Release runs
+        # after skipped jobs, but not after a failed or cancelled job. `changes`
+        # is in `needs` because its failure skips every filtered job.
+        if: >-
+            github.event_name == 'push' && !cancelled()
+            && !contains(needs.*.result, 'failure')
+            && !contains(needs.*.result, 'cancelled')
         outputs:
             published: ${{ steps.changesets.outputs.published }}
             published-packages: ${{ steps.changesets.outputs.published-packages }}
