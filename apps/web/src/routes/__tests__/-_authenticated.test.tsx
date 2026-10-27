@@ -1,7 +1,10 @@
 import { accountQueryKeys } from "@account/keys";
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
 import { authServerFnMocks } from "@tests/server-fn/auth";
 import {
+	mockGetAccount,
 	mockGetAccountMfaEnrollmentRequired,
 	mockGetAccountUnauthorized,
 	userServerFnMocks,
@@ -93,6 +96,30 @@ describe("<AuthenticatedLayout />", () => {
 			expect(
 				screen.getByText("Virtool is temporarily unavailable"),
 			).toBeInTheDocument();
+		});
+		expect(router.state.location.pathname).toBe("/samples");
+	});
+
+	it("offers a retry instead of the login page when the account fetch fails", async () => {
+		mockGetAccount(createFakeAccount()).mockRejectedValueOnce(
+			new TypeError("Failed to fetch"),
+		);
+
+		const { router } = await renderRoute("/samples", {
+			seed: (queryClient) => {
+				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+			},
+		});
+
+		const retry = await screen.findByRole("button", { name: "Try again" });
+		expect(router.state.location.pathname).toBe("/samples");
+
+		await userEvent.click(retry);
+
+		await waitFor(() => {
+			expect(
+				document.querySelector("nav[aria-label='Primary']"),
+			).not.toBeNull();
 		});
 		expect(router.state.location.pathname).toBe("/samples");
 	});
