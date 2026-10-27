@@ -753,10 +753,7 @@ export async function changePassword(
 	{ userId, oldPassword, password }: ChangePasswordValues,
 ): Promise<Account> {
 	const [existing] = await db
-		.select({
-			authMigratedAt: usersTable.authMigratedAt,
-			password: usersTable.password,
-		})
+		.select({ password: usersTable.password })
 		.from(usersTable)
 		.where(eq(usersTable.id, userId))
 		.limit(1);
@@ -817,10 +814,7 @@ export async function changePassword(
 			throw new InvalidPasswordError();
 		}
 
-		if (existing.authMigratedAt !== null) {
-			await updateAuthPassword(tx, userId, hashed);
-		}
-
+		await updateAuthPassword(tx, userId, hashed);
 		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
 		await supersedeSetupTokens(tx, userId, "password_recovery");
 		await supersedeSetupTokens(tx, userId, "administrator_recovery");
