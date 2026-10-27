@@ -38,6 +38,8 @@ export function createSoftwareAuthenticator(defaults: {
 	origin: string;
 	rpId: string;
 	credentialId?: Uint8Array;
+	/** The authenticator model as a UUID. All zeros by default. */
+	aaguid?: string;
 }) {
 	const { privateKey, publicKey } = generateKeyPairSync("ec", {
 		namedCurve: "P-256",
@@ -70,7 +72,9 @@ export function createSoftwareAuthenticator(defaults: {
 			const length = Buffer.alloc(2);
 			length.writeUInt16BE(credentialId.length);
 			parts.push(
-				Buffer.alloc(16),
+				defaults.aaguid
+					? Buffer.from(defaults.aaguid.replaceAll("-", ""), "hex")
+					: Buffer.alloc(16),
 				length,
 				Buffer.from(credentialId),
 				Buffer.from(cosePublicKey),

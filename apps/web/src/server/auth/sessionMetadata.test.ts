@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	getBrowserSessionDisplay,
 	getClientIpFromHeaders,
+	getUserAgentLabel,
 	normalizeBrowserSessionMetadata,
 	normalizeSessionIpAddress,
 } from "./sessionMetadata";
@@ -42,6 +43,24 @@ describe("getBrowserSessionDisplay", () => {
 			browser: "Unknown browser",
 			operatingSystem: "Unknown operating system",
 		});
+	});
+});
+
+describe("getUserAgentLabel", () => {
+	it("names the browser and operating system without versions", () => {
+		expect(
+			getUserAgentLabel(
+				"Mozilla/5.0 (Macintosh; Intel Mac OS X 15_6) AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15",
+			),
+		).toBe("Safari on macOS");
+	});
+
+	it.each([
+		["an absent user agent", null],
+		["an unknown browser", "curl/8.5.0 (Linux)"],
+		["an unknown operating system", "Mozilla/5.0 Firefox/131.0"],
+	])("returns null for %s", (_, userAgent) => {
+		expect(getUserAgentLabel(userAgent)).toBeNull();
 	});
 });
 

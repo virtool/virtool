@@ -30,6 +30,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
+import { getNewPasskeyName, passkeyNamePlugin } from "./passkeyName";
 import { assertDatabaseReachable } from "./probe";
 import { createRateLimitStorage } from "./rateLimitStorage";
 import {
@@ -386,6 +387,7 @@ export function createAuth({
 				// row sits beside the TOTP secret it would otherwise stand in for.
 				backupCodeOptions: { storeBackupCodes: "encrypted" },
 			}),
+			passkeyNamePlugin(db),
 			passkey({
 				rpID: webauthnRpId,
 				rpName: "Virtool",
@@ -402,7 +404,7 @@ export function createAuth({
 				// false` whatever the options above ask the browser for, so the flag
 				// is checked again here, after the signature has been verified.
 				registration: {
-					async afterVerification({ verification }) {
+					async afterVerification({ ctx, verification }) {
 						const info = verification.registrationInfo;
 						if (!info?.userVerified) {
 							rejectUnverifiedUser();
@@ -410,6 +412,12 @@ export function createAuth({
 						if (await isPasskeyCredentialRegistered(db, info.credential.id)) {
 							rejectRegisteredPasskey();
 						}
+						return {
+							name: getNewPasskeyName(
+								info.aaguid,
+								ctx.headers?.get("user-agent") ?? null,
+							),
+						};
 					},
 				},
 				authentication: {

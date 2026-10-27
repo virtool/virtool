@@ -67,7 +67,7 @@ export default function AccountSecurity() {
 		return <LoadingPlaceholder />;
 	}
 
-	const { administratorRole, email, handle, lastPasswordChange } = data;
+	const { administratorRole, email, lastPasswordChange } = data;
 
 	return (
 		<section className="flex flex-col gap-4">
@@ -84,7 +84,7 @@ export default function AccountSecurity() {
 			/>
 			<AccountPassword lastPasswordChange={lastPasswordChange} />
 			<AccountTwoFactor />
-			<AccountPasskeys handle={handle} />
+			<AccountPasskeys />
 			<AccountSessions />
 		</section>
 	);

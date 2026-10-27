@@ -305,18 +305,18 @@ describe("signInWithPasskey", () => {
 });
 
 describe("addPasskey", () => {
-	it("names the new passkey", async () => {
+	it("leaves the name of the new passkey to the server", async () => {
 		client.addPasskey.mockResolvedValue({ data: {}, error: null });
 
-		await addPasskey("Alice");
+		await addPasskey();
 
-		expect(client.addPasskey).toHaveBeenCalledWith({ name: "Alice" });
+		expect(client.addPasskey).toHaveBeenCalledWith();
 	});
 
 	it("asks for recent authentication when the session is stale", async () => {
 		client.addPasskey.mockResolvedValue(failure(403, "SESSION_NOT_FRESH"));
 
-		const caught = await addPasskey("Alice").catch((err) => err);
+		const caught = await addPasskey().catch((err) => err);
 
 		expect(caught).toMatchObject({
 			name: SESSION_NOT_FRESH_ERROR_NAME,
@@ -327,7 +327,7 @@ describe("addPasskey", () => {
 	it("ends the session when Better Auth no longer knows it", async () => {
 		client.addPasskey.mockResolvedValue(failure(401, "UNAUTHORIZED"));
 
-		const caught = await addPasskey("Alice").catch((err) => err);
+		const caught = await addPasskey().catch((err) => err);
 
 		expect(caught.name).toBe(UNAUTHORIZED_ERROR_NAME);
 	});
@@ -338,9 +338,7 @@ describe("addPasskey", () => {
 	])("says a %i %s is already registered", async (status, code) => {
 		client.addPasskey.mockResolvedValue(failure(status, code));
 
-		expect(
-			getPasskeyNotice(await addPasskey("Alice").catch((err) => err)),
-		).toEqual({
+		expect(getPasskeyNotice(await addPasskey().catch((err) => err))).toEqual({
 			message: "This passkey is already registered.",
 			tone: "error",
 		});
@@ -352,7 +350,7 @@ describe("addPasskey", () => {
 		client.signInPasskey.mockResolvedValue(notAllowed);
 
 		const [registration, assertion] = await Promise.all([
-			addPasskey("Alice").catch((err) => err),
+			addPasskey().catch((err) => err),
 			signInWithPasskey().catch((err) => err),
 		]);
 
@@ -372,7 +370,7 @@ describe("addPasskey", () => {
 			failure(500, "UNKNOWN_ERROR", "clientDataJSON=secret"),
 		);
 
-		const caught = await addPasskey("Alice").catch((err) => err);
+		const caught = await addPasskey().catch((err) => err);
 
 		expect(getPasskeyNotice(caught)).toEqual({
 			message: "The passkey could not be registered. Try again.",
@@ -412,9 +410,11 @@ describe("useSingleCeremony", () => {
 
 	it("cancels a running ceremony on unmount", async () => {
 		client.addPasskey.mockReturnValue(new Promise(() => {}));
-		const { result, unmount } = renderHook(() => useSingleCeremony(addPasskey));
+		const { result, unmount } = renderHook(() =>
+			useSingleCeremony<void, void>(addPasskey),
+		);
 
-		result.current("Alice");
+		result.current();
 		await vi.waitFor(() => expect(client.addPasskey).toHaveBeenCalled());
 		unmount();
 
