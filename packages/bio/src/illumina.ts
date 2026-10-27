@@ -65,6 +65,7 @@ const SIGNED_INTEGER_PATTERN = /^-?\d+$/;
  * fail an upload.
  *
  * @param line - the first line of a FASTQ record, including the leading `@`
+ * @public
  */
 export function parseIlluminaHeader(line: string): IlluminaHeader | null {
 	if (!line.startsWith("@")) {
@@ -131,6 +132,7 @@ const INSTRUMENT_MODELS: [RegExp, string][] = [
  * pre-filling a form, never for overriding a model the user chose.
  *
  * @param serial - the instrument serial from a FASTQ header
+ * @public
  */
 export function inferInstrumentModel(serial: string): string | null {
 	for (const [pattern, model] of INSTRUMENT_MODELS) {
@@ -152,6 +154,7 @@ const FILENAME_PATTERN =
  * Returns `null` for names that don't follow the pattern.
  *
  * @param name - the filename, without any directory
+ * @public
  */
 export function parseIlluminaFilename(name: string): IlluminaFilename | null {
 	const match = FILENAME_PATTERN.exec(name);
@@ -183,6 +186,7 @@ export function parseIlluminaFilename(name: string): IlluminaFilename | null {
  * supplied on purpose, so the user needs to know why it was rejected.
  *
  * @param text - the whole sample sheet
+ * @public
  */
 export function parseSampleSheet(text: string): SampleSheet {
 	const sections = splitSections(text);
