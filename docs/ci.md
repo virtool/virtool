@@ -82,5 +82,5 @@ builds each at the version in its tag, publishing `:<version>`
 and `:latest`. A release that bumped only shared packages publishes no image.
 
 The `Changeset` check fails a pull request that changes a versioned workspace
-without a changeset. See [CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for how
-to add one.
+that none of its changesets release, directly or by cascade. See
+[CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for how to add one.

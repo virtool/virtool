@@ -26,8 +26,8 @@ squash-merged into one well-formed commit.
 ## Changesets
 
 Releases are driven by [Changesets](https://github.com/changesets/changesets),
-not by commit types. A pull request that changes a versioned workspace must add
-a changeset, or the `Changeset` check fails.
+not by commit types. Each versioned workspace that a pull request changes must
+be released by one of its changesets, or the `Changeset` check fails.
 
 Run `pnpm changeset`, select the workspaces to bump and the bump level (`patch`,
 `minor`, or `major`), and write a one-line summary. The command writes a Markdown

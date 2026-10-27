@@ -276,9 +276,9 @@ Write commit and PR titles in sentence case, in the imperative mood, with no
 prefix and no period. Keep them under 72 characters. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for examples.
 
-- Releases are automated with Changesets. A pull request that changes a
-  versioned workspace must add a changeset (`pnpm changeset`), or CI fails; a
-  change that ships nothing to users records an empty one
+- Releases are automated with Changesets. Each versioned workspace that a pull
+  request changes must be released by a changeset (`pnpm changeset`), or CI
+  fails; a change that ships nothing to users records an empty one
   (`pnpm changeset --empty`). See [Releases](docs/ci.md#releases).
 - Image build inputs (`image-build`, `workflow-tools`, and the Rust crates) are
   production `dependencies` of the apps that use them, with

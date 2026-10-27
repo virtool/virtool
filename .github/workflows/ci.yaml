@@ -478,12 +478,8 @@ jobs:
     # -------------------------------------------------------------------------
     # Changeset (pull requests)
     # -------------------------------------------------------------------------
-    # Fails a pull request that changes a versioned workspace without adding a
-    # changeset. `changeset status --since` exits 1 when a changed package has
-    # no changeset and passes cleanly when nothing versioned changed, so a
-    # docs- or CI-only pull request is unaffected. A change that intentionally
-    # ships nothing to users records that with an empty changeset
-    # (`pnpm changeset --empty`).
+    # Fails a pull request that changes a versioned workspace that none of its
+    # changesets release. A docs- or CI-only pull request is unaffected.
     changeset-check:
         name: Changeset
         runs-on: ubuntu-24.04
@@ -499,10 +495,10 @@ jobs:
               uses: ./.github/actions/setup
             # `--since` resolves the base branch as a local ref; the pull-request
             # checkout only brings the head, so fetch main first.
-            - name: Status
+            - name: Coverage
               run: |
                   git fetch --no-tags origin main
-                  pnpm changeset status --since=origin/main
+                  node scripts/check-changesets.mjs origin/main
 
     # -------------------------------------------------------------------------
     # Release
