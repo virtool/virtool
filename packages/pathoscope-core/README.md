@@ -75,7 +75,20 @@ and `pnpm typecheck` don't reach it.
 | `cargo clippy` | Lint |
 
 Building needs `libclang-dev` installed, because `hts-sys` runs bindgen against
-htslib's headers.
+htslib's headers. Without `bowtie2` and `bowtie2-build` on `PATH`, `cargo test`
+skips the `candidates` golden vectors with a warning.
+
+To run the checks as CI does, from the repository root:
+
+```bash
+docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope-core-test --progress=plain
+```
+
+This runs `cargo fmt --check` and `cargo test` in the workflow-tools
+Dockerfile, with the toolchain, `libclang-dev`, and bowtie2 build that the image
+uses. It sets `VT_REQUIRE_BOWTIE2`, so a missing bowtie2 fails the run instead
+of skipping the `candidates` vectors. BuildKit caches the result, so a second
+run with unchanged inputs doesn't run the tests again.
 
 ## Tooling exclusions
 
@@ -85,7 +98,9 @@ Two tooling exclusions are still needed:
   Biome ignores `.rs`, `.toml` and the fixtures, but it does parse
   `tests/golden/vectors.json` and wants to reformat it. Keep the corpus as
   committed; reformatting it rewrites every line without changing a value.
-- **knip**: `packages/pathoscope-core/**` in `knip.json`'s `ignore`. `hts-sys`
+- **knip**: `packages/pathoscope-core/**` in `knip.json`'s `ignore`. The crate
+  is a private workspace so pnpm can follow its image-build consumers, but it
+  has no JavaScript entry point for knip to scan. Also, `hts-sys`
   vendors htslib's C source into `target/`, and that tree carries a
   `htscodecs/javascript/` directory which knip reports as unused files after any
   local `cargo build`. knip itself emits a configuration hint asking for this
@@ -94,18 +109,14 @@ Two tooling exclusions are still needed:
   that hint: it's right about the clean checkout and wrong about every machine
   that has run `cargo build`.
 
-The root `Dockerfile` copies `packages/` **per package**, not as a blanket
-`COPY packages ./packages`. The UI image has no use for the crate, and a blanket
-copy would pull its `src/` and `Cargo.lock` in and bust that layer's cache on
-every Rust edit. Add a line there when a new TypeScript package appears.
-`**/target` is in `.dockerignore` for the same reason, from the other side.
+The shared workflow-tools Dockerfile copies this crate explicitly. Its
+Dockerfile-specific ignore excludes every Cargo `target/` tree so local output
+never enters the build context.
 
 ## The image build
 
-The root `Dockerfile`'s `pathoscope` target builds
-`ghcr.io/virtool/pathoscope`. The crate is compiled in the same Dockerfile as
-its only consumer, so there is no second release stream to coordinate and no
-window in which the workflow and its core disagree.
+The `pathoscope` Bake target builds `ghcr.io/virtool/pathoscope`. The crate and
+app are linked in the pnpm graph, so they remain one release stream.
 
 The `Pathoscope / Build` job compiles the Dockerfile on every run and
 `release-ghcr` pushes it on release.
@@ -127,7 +138,7 @@ reports `CACHED`.
 against htslib's headers for `x86_64-unknown-linux-gnu` and doesn't fall back
 to the pre-generated bindings that ship for some targets. Without the package,
 the build fails with `Unable to find libclang`. The requirement also applies to
-the `pathoscope-test` CI job and developer machines.
+developer machines that run `cargo` directly.
 
 The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6`, `perl`,
 `python3`, and `pigz`. Bowtie2 needs `libgomp1`, Perl for its `bowtie2` wrapper,

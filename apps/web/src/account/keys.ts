@@ -19,3 +19,6 @@ export const accountQueryKeys = {
 	recentAuthentication: () =>
 		[...accountKeys.all(), "recentAuthentication"] as const,
 };
+
+/** Mutation key shared by every queued account-settings save. */
+export const accountSettingsMutationKey = ["account", "settings"];

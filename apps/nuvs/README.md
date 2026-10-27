@@ -10,14 +10,16 @@ Image: `ghcr.io/virtool/nuvs`. Ten steps use six external tools: `skewer`,
 
 ## Building the image
 
-The root Dockerfile builds each external tool in an independent stage. SPAdes
+The shared workflow-tools Dockerfile builds each external tool independently. SPAdes
 4.2.0 is compiled from source because it has no binary release suitable for
 the runtime base. The runtime installs Perl for the Bowtie 2 wrapper, Python
 for `bowtie2-build` and `spades.py`, `pigz`, and the shared libraries required
 by the copied binaries.
 
 ```console
-docker build --target nuvs .
+pnpm --filter @virtool/nuvs build
+pnpm --filter @virtool/nuvs --prod deploy .docker-build/nuvs --force
+docker buildx bake -f packages/image-build/docker-bake.hcl nuvs
 ```
 
 ## Result shape

@@ -20,8 +20,8 @@ for architecture, data safety, workflow scheduling, and troubleshooting.
 
 ## Images
 
-Every image ships from a target in the root `Dockerfile`, and every release
-publishes all of them.
+Every image ships from its app's `Dockerfile`. A release publishes only the
+images whose app version changed; see [Continuous integration](docs/ci.md).
 
 | Target | Published image |
 | --- | --- |
@@ -32,8 +32,11 @@ publishes all of them.
 | `pathoscope` | `ghcr.io/virtool/pathoscope` |
 | `nuvs` | `ghcr.io/virtool/nuvs` |
 
-Build one image locally by naming its target:
+Build one image locally by building the app, preparing its pruned context, and
+naming its Bake target:
 
 ```shell
-docker build --target pathoscope .
+pnpm --filter @virtool/pathoscope build
+pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
+docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```

@@ -1,11 +1,26 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
 	"ignoreExportsUsedInFile": true,
-	"ignoreDependencies": ["conventional-changelog-conventionalcommits"],
+	"ignoreDependencies": ["@virtool/tsconfig"],
 	"ignoreBinaries": ["vale"],
 	"ignoreWorkspaces": ["apps/site"],
 	"ignore": [".venv/**", "packages/pathoscope-core/**"],
 	"workspaces": {
+		"apps/create-sample": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/quality-core", "@virtool/workflow-tools"]
+		},
+		"apps/create-subtraction": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/workflow-tools"]
+		},
+		"apps/internal": {
+			"ignoreDependencies": ["@virtool/image-build"]
+		},
+		"apps/nuvs": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/workflow-tools"]
+		},
+		"apps/pathoscope": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/pathoscope-core", "@virtool/workflow-tools"]
+		},
 		"apps/web": {
 			"entry": [
 				"src/instrument.server.ts",
@@ -15,7 +30,7 @@
 				"src/tests/postgresGuard.ts"
 			],
 			"project": ["src/**/*.{ts,tsx,css}"],
-			"ignoreDependencies": ["@node-rs/argon2", "bcrypt"]
+			"ignoreDependencies": ["@node-rs/argon2", "@virtool/image-build", "bcrypt"]
 		},
 		"packages/bio": {
 			"entry": ["src/**/*.test.ts"]

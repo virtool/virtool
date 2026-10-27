@@ -14,6 +14,13 @@ const SERVICE: Record<Workflow, string> = {
 	pathoscope: "workflow-pathoscope",
 };
 
+const APP: Record<Workflow, string> = {
+	create_sample: "create-sample",
+	create_subtraction: "create-subtraction",
+	nuvs: "nuvs",
+	pathoscope: "pathoscope",
+};
+
 type Executor = { environmentId: string; workflow: Workflow };
 
 export class WorkflowCoordinator {
@@ -79,6 +86,9 @@ export class WorkflowCoordinator {
 							environment.workflowEnabled,
 					),
 			);
+			const worktrees = new Map(
+				ready.map((environment) => [environment.id, environment.path]),
+			);
 			const errors: SchedulerState["errors"] = {};
 			const candidates: QueueCandidate[] = [];
 			const queues: SchedulerState["queues"] = {};
@@ -115,7 +125,10 @@ export class WorkflowCoordinator {
 			);
 			for (const candidate of this.fair.select(candidates, capacity)) {
 				try {
-					await this.launch(candidate);
+					await this.launch(
+						candidate,
+						worktrees.get(candidate.environmentId) as string,
+					);
 				} catch (error) {
 					errors[candidate.environmentId] = this.recordFailure(
 						candidate.environmentId,
@@ -184,19 +197,17 @@ export class WorkflowCoordinator {
 		return counts.pending;
 	}
 
-	private async launch(candidate: QueueCandidate): Promise<void> {
+	private async launch(
+		candidate: QueueCandidate,
+		worktree: string,
+	): Promise<void> {
 		this.buildQueue = [
 			{ environmentId: candidate.environmentId, workflow: candidate.workflow },
 		];
 		this.publish();
 		try {
 			await this.builds.run("workflow", () =>
-				this.compose(candidate.environmentId, [
-					"--profile",
-					"workflow",
-					"build",
-					SERVICE[candidate.workflow],
-				]),
+				this.buildImage(candidate.environmentId, candidate.workflow, worktree),
 			);
 		} finally {
 			this.buildQueue = [];
@@ -214,6 +225,46 @@ export class WorkflowCoordinator {
 			environmentId: candidate.environmentId,
 			workflow: candidate.workflow,
 		});
+	}
+
+	/**
+	 * Build a workflow image the way CI does: from the app's pruned `pnpm deploy`
+	 * output, with Bake linking the shared native-tool stages.
+	 */
+	private async buildImage(
+		environmentId: string,
+		workflow: Workflow,
+		worktree: string,
+	): Promise<void> {
+		const app = APP[workflow];
+		const filter = `@virtool/${app}`;
+		await this.run("pnpm", ["--filter", filter, "build"], { cwd: worktree });
+		await this.run(
+			"pnpm",
+			[
+				"--filter",
+				filter,
+				"--prod",
+				"deploy",
+				`.docker-build/${app}`,
+				"--force",
+			],
+			{ cwd: worktree },
+		);
+		await this.run(
+			"docker",
+			[
+				"buildx",
+				"bake",
+				"--file",
+				"packages/image-build/docker-bake.hcl",
+				app,
+				"--load",
+				"--set",
+				`${app}.tags=virtool-dev-${environmentId}/${app}`,
+			],
+			{ cwd: worktree },
+		);
 	}
 
 	private compose(environmentId: string, args: string[]) {

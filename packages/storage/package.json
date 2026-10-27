@@ -21,6 +21,7 @@
 		"@azure/storage-blob": "^12.33.0"
 	},
 	"devDependencies": {
+		"@virtool/tsconfig": "workspace:*",
 		"testcontainers": "^12.2.1",
 		"vitest": "^5.0.5"
 	}

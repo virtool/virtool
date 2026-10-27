@@ -20,13 +20,14 @@ which it runs **as a subprocess** rather than through FFI.
 
 ## Building the image
 
-Its stages in the root `Dockerfile` are a cargo-chef build of
-`packages/pathoscope-core`, a Node build on the shared `base`, and a runtime
-layering the `bowtie2`, `cd-hit` and `samtools` tool stages over both, with
+The shared workflow-tools Dockerfile builds `packages/pathoscope-core`,
+Bowtie 2, CD-HIT, and samtools. The app Dockerfile layers them into the runtime, with
 `pigz` from apt:
 
 ```
-docker build --target pathoscope .
+pnpm --filter @virtool/pathoscope build
+pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
+docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```
 
 ### The runtime stage installs interpreters, not just libraries
@@ -52,7 +53,7 @@ runs in a pod. Verify a shebang against the version the `Dockerfile` pins, never
 upstream's current source:
 
 ```
-docker build --target bowtie2 -t vt-tool-bowtie2 .
+docker buildx bake -f packages/image-build/docker-bake.hcl bowtie2 --set bowtie2.tags=vt-tool-bowtie2 --load
 docker run --rm vt-tool-bowtie2 head -1 /tools/bowtie2/2.5.4/bowtie2-build
 ```
 
@@ -83,8 +84,9 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/pathoscope test:watch` | Vitest in watch mode |
 | `pnpm --filter @virtool/pathoscope typecheck` | `tsc --noEmit` |
 
-The Rust crate isn't a pnpm workspace. Run `cargo test` in
-`packages/pathoscope-core` directly. Building it needs `libclang-dev`.
+`pnpm` doesn't run the Rust crate's tests. Run `cargo test` in
+`packages/pathoscope-core`, or the `pathoscope-core-test` Bake target to run
+them as CI does. See the crate README.
 
 ## Documentation
 

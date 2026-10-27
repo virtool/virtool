@@ -78,6 +78,11 @@ The environment detail page shows the choice. **Create**, **Start**, and
 
 ## Workflows
 
-Workflow images build on demand. The daemon runs queued workflow jobs from all
+Workflow images build on demand, the same way CI builds them. The daemon builds
+the app in the environment's worktree, prepares its `pnpm deploy` context, and
+runs the app's `docker buildx bake` target. The core services build from
+`dev/Dockerfile`.
+
+The daemon runs queued workflow jobs from all
 ready environments, one at a time by default. Set the concurrency in the UI.
 Stopped and failed environments receive no new workflow jobs.

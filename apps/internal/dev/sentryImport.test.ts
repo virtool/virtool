@@ -7,7 +7,7 @@ import { expect, test } from "vitest";
 const appRoot = join(import.meta.dirname, "..");
 
 const launchers = [
-	join(appRoot, "../../Dockerfile"),
+	join(appRoot, "Dockerfile"),
 	join(appRoot, "dev/main.ts"),
 	join(appRoot, "dev/entrypoint.sh"),
 ];

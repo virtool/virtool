@@ -15,6 +15,7 @@
 		"pino": "^10.1.0"
 	},
 	"devDependencies": {
+		"@virtool/tsconfig": "workspace:*",
 		"vitest": "^5.0.5"
 	}
 }

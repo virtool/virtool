@@ -1,0 +1,10 @@
+*
+!packages/
+!packages/pathoscope-core/
+!packages/pathoscope-core/**
+!packages/quality-core/
+!packages/quality-core/**
+# After the re-includes above, which would otherwise bring these back.
+**/target
+**/node_modules
+**/dist

@@ -1,4 +1,4 @@
-import { accountQueryKeys } from "@account/keys";
+import { accountQueryKeys, accountSettingsMutationKey } from "@account/keys";
 import { recentAuthenticationQueryOptions } from "@account/recentAuthentication";
 import {
 	confirmTotp,
@@ -50,8 +50,6 @@ import type {
 	PasskeySummary,
 	Permissions,
 } from "@virtool/contracts";
-
-const ACCOUNT_SETTINGS_MUTATION_KEY = ["account", "settings"];
 
 /** Query options for whether this instance can send email. */
 export function emailDeliveryQueryOptions() {
@@ -134,7 +132,7 @@ export function useUpdateAccountSettings() {
 		{ previous: Account | undefined }
 	>({
 		mutationFn: (settings) => updateAccountSettingsFn({ data: settings }),
-		mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY,
+		mutationKey: accountSettingsMutationKey,
 		scope: { id: "account-settings" },
 		onMutate: async (settings) => {
 			await queryClient.cancelQueries({
@@ -164,8 +162,7 @@ export function useUpdateAccountSettings() {
 			// A refetch while a queued change waits would show the settings from
 			// before that change.
 			if (
-				queryClient.isMutating({ mutationKey: ACCOUNT_SETTINGS_MUTATION_KEY }) >
-				1
+				queryClient.isMutating({ mutationKey: accountSettingsMutationKey }) > 1
 			) {
 				return;
 			}
