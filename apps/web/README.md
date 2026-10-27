@@ -736,7 +736,7 @@ normal API so authorization remains at the request boundary.
 
 Every stream receives every event, except `account` events. An `account` event
 goes only to the streams of the user it names, so a change to one user's
-account refreshes that user's other sessions and no one else's.
+account refreshes only that user's other sessions.
 
 Adding a domain requires both `SseMessageSchema` and the `domains` record in
 `@app/invalidate`. A frame that fails validation—an
