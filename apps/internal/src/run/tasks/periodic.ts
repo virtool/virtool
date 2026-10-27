@@ -68,8 +68,8 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	{ type: "timeout_jobs", intervalSeconds: 600 },
 	{ type: "evict_caches_lru", intervalSeconds: 3600 },
 	/*
-	 * Hourly. Both session verifiers reject expiry without waiting for cleanup,
-	 * so this only bounds retained rows and index growth during compatibility.
+	 * Hourly. Session verification rejects expiry without waiting for cleanup,
+	 * so this only bounds retained rows and index growth.
 	 */
 	{ type: "cleanup_sessions", intervalSeconds: 3600 },
 	/*

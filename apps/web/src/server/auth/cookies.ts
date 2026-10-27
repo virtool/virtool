@@ -2,14 +2,15 @@ import { createServerOnlyFn } from "@tanstack/react-start";
 import {
 	deleteCookie,
 	getCookie,
+	getCookies,
 	setCookie,
 } from "@tanstack/react-start/server";
 
-/** Retained legacy-session identifier used during the compatibility window. */
-export const SESSION_ID_COOKIE = "session_id";
-
-/** Retained legacy-session bearer token used during the compatibility window. */
-export const SESSION_TOKEN_COOKIE = "session_token";
+/**
+ * Cookies of the retired legacy session system. No release after the cutover
+ * reads them, so a browser that still holds them has them expired.
+ */
+const LEGACY_SESSION_COOKIES = ["session_id", "session_token"] as const;
 
 /**
  * The opaque identifier of a restricted setup session. Names the row and
@@ -48,7 +49,6 @@ const SETUP_MAX_AGE_SECONDS = 3_600;
  * credential and authorizes nothing.
  */
 const LOGIN_DEVICE_COOKIE = "login_device";
-const LEGACY_SESSION_MAX_AGE_SECONDS = 3_600;
 
 type Bool = boolean;
 
@@ -82,13 +82,26 @@ export const setLoginDevices = createServerOnlyFn(
 	},
 );
 
-/** Read/write/clear access to legacy compatibility and setup cookies. */
+/**
+ * Expire any legacy session cookie the request carries. The attributes match
+ * the ones the legacy cookies were set with, so the browser replaces them.
+ */
+export const expireLegacySessionCookies = createServerOnlyFn((): void => {
+	const cookies = getCookies();
+	for (const name of LEGACY_SESSION_COOKIES) {
+		if (name in cookies) {
+			deleteCookie(name, {
+				httpOnly: true,
+				secure: isSecure(),
+				sameSite: "lax",
+				path: "/",
+			});
+		}
+	}
+});
+
+/** Read/write/clear access to the restricted setup cookies. */
 export type CookieAdapter = {
-	getSessionId(): string | undefined;
-	getSessionToken(): string | undefined;
-	setLegacySession(sessionId: string, token: string): void;
-	setLegacyResetSession(sessionId: string, token: string): void;
-	clearLegacySession(): void;
 	getSetupSessionId(): string | undefined;
 	getSetupSessionToken(): string | undefined;
 	setSetupSession(
@@ -104,38 +117,6 @@ export type CookieAdapter = {
    recognizes — otherwise the object literal at module scope would pin
    @tanstack/react-start/server in any client-reachable import chain. */
 export const realCookies: CookieAdapter = {
-	getSessionId: createServerOnlyFn(() => getCookie(SESSION_ID_COOKIE)),
-	getSessionToken: createServerOnlyFn(() => getCookie(SESSION_TOKEN_COOKIE)),
-	setLegacySession: createServerOnlyFn((sessionId: string, token: string) => {
-		setCookie(
-			SESSION_ID_COOKIE,
-			sessionId,
-			cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
-		);
-		setCookie(
-			SESSION_TOKEN_COOKIE,
-			token,
-			cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
-		);
-	}),
-	setLegacyResetSession: createServerOnlyFn(
-		(sessionId: string, token: string) => {
-			setCookie(
-				SESSION_ID_COOKIE,
-				sessionId,
-				cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
-			);
-			setCookie(
-				SESSION_TOKEN_COOKIE,
-				token,
-				cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
-			);
-		},
-	),
-	clearLegacySession: createServerOnlyFn(() => {
-		deleteCookie(SESSION_ID_COOKIE, { path: "/" });
-		deleteCookie(SESSION_TOKEN_COOKIE, { path: "/" });
-	}),
 	getSetupSessionId: createServerOnlyFn(() =>
 		getCookie(SETUP_SESSION_ID_COOKIE),
 	),

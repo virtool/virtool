@@ -43,7 +43,6 @@ import { ClientError } from "../errors";
 import { getLoginDevices, realCookies, setLoginDevices } from "./cookies";
 import {
 	createFirstUser,
-	establishEmailRemediationSession,
 	FirstUserExistsError,
 	InvalidCredentialsError,
 	loginLegacyIdentity,
@@ -360,11 +359,7 @@ export const logoutFn = createServerFn({ method: "POST" })
 /** Revalidate the established shell and allow Better Auth to roll its session. */
 export const refreshBrowserSessionFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
-	.handler(async ({ context }) => {
-		if (context.principal.sessionStore === "legacy") {
-			return null;
-		}
-
+	.handler(async () => {
 		const { auth } = await import("./instance");
 		const session = await auth.api.getSession({
 			headers: getRequest().headers,
@@ -377,8 +372,8 @@ export const refreshBrowserSessionFn = createServerFn({ method: "POST" })
 	});
 
 /**
- * Reset-password server function. The caller has a Better Auth or retained
- * legacy reset session restricted until the password change is complete.
+ * Reset-password server function. The caller has a Better Auth session
+ * restricted until the password change is complete.
  */
 export const resetPasswordFn = createServerFn({ method: "POST" })
 	.middleware([passwordResetOnly()])
@@ -387,27 +382,12 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const result = await resetPassword(db, {
+			await resetPassword(db, {
 				userId: context.principal.userId,
 				password: data.password,
-				legacySessionId: realCookies.getSessionId(),
 			});
-
-			if (result.migrated) {
-				await createReplacementSession(context.principal.userId);
-			} else {
-				await establishEmailRemediationSession(
-					db,
-					realCookies,
-					context.principal.userId,
-					getClientIp(),
-				);
-			}
-			return {
-				login: false as const,
-				remediation: !result.migrated,
-				reset: false as const,
-			};
+			await createReplacementSession(context.principal.userId);
+			return { login: false as const, reset: false as const };
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
@@ -434,7 +414,6 @@ async function finishEmailRemediation(
 	) {
 		throw new SetupCredentialError();
 	}
-	realCookies.clearLegacySession();
 	realCookies.clearSetup();
 	await createReplacementSession(user.id);
 	return { complete: true as const };
@@ -519,7 +498,6 @@ export const completeEmailRemediationFn = createServerFn({ method: "POST" })
 				);
 				if (claimed) {
 					await createReplacementSession(result.userId);
-					realCookies.clearLegacySession();
 					realCookies.clearSetup();
 					authenticated = true;
 				}
@@ -595,7 +573,6 @@ export const promoteEmailRemediationFn = createServerFn({ method: "POST" })
 				throw new SetupCredentialError();
 			}
 			await createReplacementSession(context.principal.userId);
-			realCookies.clearLegacySession();
 			realCookies.clearSetup();
 			return { complete: true as const };
 		} catch (err) {
@@ -608,7 +585,6 @@ export const cancelEmailRemediationFn = createServerFn({ method: "POST" })
 	.middleware([setupOnly("email_remediation")])
 	.handler(async ({ context }) => {
 		await cancelEmailRemediation(db, context.principal.userId);
-		realCookies.clearLegacySession();
 		realCookies.clearSetup();
 		return null;
 	});

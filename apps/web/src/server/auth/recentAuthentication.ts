@@ -9,20 +9,12 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "../composition";
 import { ClientError } from "../errors";
 import { getSessionFreshRemainingMs } from "./freshness";
-import {
-	attributePrincipal,
-	ForbiddenError,
-	UnauthorizedError,
-} from "./middleware";
+import { attributePrincipal, UnauthorizedError } from "./middleware";
 import { authenticated } from "./policy";
 import {
 	RECENT_AUTHENTICATION_PATH,
 	recentAuthenticationChallengeSchema,
 } from "./recentAuthenticationChallenge";
-
-function rejectUnsupportedSession(): never {
-	throw new ForbiddenError();
-}
 
 async function checkChallengeResponse(response: Response): Promise<void> {
 	if (response.ok) {
@@ -61,9 +53,6 @@ export const getRecentAuthenticationRemainingFn = createServerFn({
 })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		if (context.principal.sessionStore !== "better_auth") {
-			return 0;
-		}
 		const session = await resolveBrowserSession(
 			db,
 			context.principal.sessionId,
@@ -81,10 +70,6 @@ export const getRecentAuthenticationMethodsFn = createServerFn({
 })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		if (context.principal.sessionStore !== "better_auth") {
-			rejectUnsupportedSession();
-		}
-
 		const [passwordAccount, twoFactor, passkey] = await Promise.all([
 			db
 				.select({ id: authAccounts.id })
@@ -124,10 +109,6 @@ export const challengeRecentAuthenticationFn = createServerFn({
 	.middleware([authenticated()])
 	.validator(recentAuthenticationChallengeSchema)
 	.handler(async ({ context, data }) => {
-		if (context.principal.sessionStore !== "better_auth") {
-			rejectUnsupportedSession();
-		}
-
 		const [{ auth, handleAuthRequest }, request] = await Promise.all([
 			import("./instance"),
 			Promise.resolve(getRequest()),
@@ -164,7 +145,6 @@ export const challengeRecentAuthenticationFn = createServerFn({
 				userId: context.principal.userId,
 				sessionId,
 				createdAt: replacement.createdAt,
-				sessionStore: "better_auth",
 			});
 
 			return {

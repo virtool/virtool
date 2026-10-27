@@ -54,14 +54,9 @@ beforeEach(async () => {
 
 function fakeCookies(setupSessionId?: string): CookieAdapter {
 	return {
-		clearLegacySession: vi.fn(),
 		clearSetup: vi.fn(),
-		getSessionId: vi.fn(),
-		getSessionToken: vi.fn(),
 		getSetupSessionId: vi.fn(() => setupSessionId),
 		getSetupSessionToken: vi.fn(),
-		setLegacyResetSession: vi.fn(),
-		setLegacySession: vi.fn(),
 		setSetupSession: vi.fn(),
 	};
 }
@@ -153,9 +148,9 @@ describe("loginLegacyIdentity", () => {
 		},
 	);
 
-	it("keeps an unmigrated forced-reset user in the legacy reset flow", async () => {
+	it("sends an unmigrated forced-reset user to remediation first", async () => {
 		const password = await hashPassword("legacy-password-123");
-		await seedUser(db, { forceReset: true, password });
+		const userId = await seedUser(db, { forceReset: true, password });
 		const cookies = fakeCookies();
 
 		await expect(
@@ -164,14 +159,11 @@ describe("loginLegacyIdentity", () => {
 				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
-		).resolves.toEqual({ reset: true });
+		).resolves.toEqual({ remediation: true, reset: false });
 
-		const [session] = await db.select().from(sessions);
-		expect(session?.sessionType).toBe("reset");
-		expect(cookies.setLegacyResetSession).toHaveBeenCalledWith(
-			session?.sessionId,
-			expect.any(String),
-		);
+		const [session] = await db.select().from(setupSessions);
+		expect(session).toMatchObject({ userId, purpose: "email_remediation" });
+		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
 	it("leaves migrated identities to Better Auth", async () => {
@@ -248,7 +240,7 @@ describe("createFirstUser", () => {
 });
 
 describe("logout", () => {
-	it("invalidates setup state and clears setup and obsolete cookies", async () => {
+	it("invalidates setup state and clears the setup cookies", async () => {
 		const userId = await seedUser(db, { lifecycleState: "pending" });
 		const setup = await seedSetupSession(db, userId, "account_completion");
 		const cookies = fakeCookies(setup.sessionId);
@@ -256,7 +248,6 @@ describe("logout", () => {
 		await logout(db, cookies);
 
 		expect(await db.select().from(setupSessions)).toHaveLength(0);
-		expect(cookies.clearLegacySession).toHaveBeenCalledOnce();
 		expect(cookies.clearSetup).toHaveBeenCalledOnce();
 	});
 });
@@ -267,7 +258,7 @@ describe("resetPassword", () => {
 		await seedSession(db, userId);
 		await seedSession(db, userId);
 
-		const result = await resetPassword(db, {
+		await resetPassword(db, {
 			userId,
 			password: "new-password-123",
 		});
@@ -277,7 +268,6 @@ describe("resetPassword", () => {
 			.select()
 			.from(authAccounts)
 			.where(eq(authAccounts.userId, userId));
-		expect(result).toEqual({ migrated: true });
 		expect(user?.forceReset).toBe(false);
 		expect(
 			await verifyPassword("new-password-123", user?.password as Buffer),

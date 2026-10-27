@@ -10,7 +10,7 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `run` | The periodic task spawner and the task runner, in one long-lived process. |
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
 | `data-migrations` | Inspects recorded audits and backfills. Run as a Job. |
-| `auth-remediation` | Reports the live legacy-email population that gates auth cutover. |
+| `auth-remediation` | Reports how many accounts have not completed email remediation. |
 
 Image: `ghcr.io/virtool/internal`. The image is shared; the processes are
 separate.
@@ -37,17 +37,14 @@ and version, with finding counts by code and the `export` document attached as
 `<key>-v<version>.json`. Both are tagged `data_migration` and
 `data_migration_version`.
 
-## `auth-remediation`: cutover report
+## `auth-remediation`: remediation report
 
 Run `node dist/index.mjs auth-remediation report` against the production
-database immediately before disabling legacy authentication. It writes one JSON
-document with active and deactivated normal users whose `auth_migrated_at` is
-still null. The command exits non-zero while `activeUnmigrated` is non-zero.
-
-Legacy login may be disabled only when `readyForCutover` is `true` (equivalently,
-`activeUnmigrated` is zero) on production-shaped data. Pending invitations and
-deactivated legacy accounts do not block cutover; their separate lifecycle
-policies remain authoritative.
+database to write one JSON document. It counts active and deactivated normal
+users whose `auth_migrated_at` is still null. The counts are information only.
+Unmigrated users do not block the cutover, because they can still complete
+email remediation after it. The command exits non-zero only when it can't read
+the database.
 
 ## `serve`: the jobs API
 

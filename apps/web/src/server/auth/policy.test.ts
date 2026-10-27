@@ -73,7 +73,6 @@ function browser(userId: number) {
 		kind: "browser" as const,
 		sessionId: 1,
 		createdAt: new Date(),
-		sessionStore: "better_auth" as const,
 		userId,
 	};
 }

@@ -1,8 +1,7 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 
-import type { Db } from "../db/pg";
+import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions } from "../db/schema/auth";
-import { sessions } from "../db/schema/sessions";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
@@ -79,11 +78,28 @@ export async function inspectRecoveryLink(
 		)
 		.limit(1);
 	return row?.active &&
-		row.authMigratedAt &&
+		(row.authMigratedAt || purpose === "administrator_recovery") &&
 		row.lifecycleState === "normal" &&
 		(purpose !== "password_recovery" || row.emailVerified)
 		? "usable"
 		: "unusable";
+}
+
+async function getCredential(
+	db: DbOrTx,
+	userId: number,
+): Promise<{ password: string | null } | undefined> {
+	const [credential] = await db
+		.select({ password: authAccounts.password })
+		.from(authAccounts)
+		.where(
+			and(
+				eq(authAccounts.userId, userId),
+				eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
+			),
+		)
+		.limit(1);
+	return credential;
 }
 
 /** Issue a recovery link, optionally queuing mail in the same transaction. */
@@ -107,22 +123,17 @@ export async function issueRecoveryLink(
 			.where(eq(users.id, input.userId))
 			.for("update")
 			.limit(1);
-		const [credential] = await tx
-			.select({ id: authAccounts.id })
-			.from(authAccounts)
-			.where(
-				and(
-					eq(authAccounts.userId, input.userId),
-					eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
-				),
-			)
-			.limit(1);
-		if (
-			!user?.active ||
-			!user.authMigratedAt ||
-			user.lifecycleState !== "normal" ||
-			!credential
-		) {
+		if (!user?.active || user.lifecycleState !== "normal") {
+			throw new RecoveryNotEligibleError();
+		}
+		// An unmigrated account has no email to recover through, so only an
+		// administrator's link reaches it. The link replaces the legacy password,
+		// and the next sign-in opens email remediation.
+		if (user.authMigratedAt !== null) {
+			if ((await getCredential(tx, input.userId)) === undefined) {
+				throw new RecoveryNotEligibleError();
+			}
+		} else if (input.purpose !== "administrator_recovery") {
 			throw new RecoveryNotEligibleError();
 		}
 		if (
@@ -268,39 +279,38 @@ export async function completePasswordRecovery(
 			.where(eq(users.id, consumed.userId))
 			.for("update")
 			.limit(1);
-		const [credential] = await tx
-			.select({ password: authAccounts.password })
-			.from(authAccounts)
-			.where(
-				and(
-					eq(authAccounts.userId, consumed.userId),
-					eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
-				),
-			)
-			.limit(1);
+		if (!user) {
+			throw new SetupCredentialError();
+		}
+		const migrated = user.authMigratedAt !== null;
+		const credential = migrated
+			? await getCredential(tx, consumed.userId)
+			: undefined;
+		const current = migrated
+			? credential?.password && Buffer.from(credential.password, "utf8")
+			: user.password;
 		if (
-			!user?.active ||
-			!user.authMigratedAt ||
+			!user.active ||
 			user.lifecycleState !== "normal" ||
 			(purpose === "password_recovery" && !user.emailVerified) ||
-			!credential?.password
+			(migrated ? !current : purpose !== "administrator_recovery")
 		) {
 			throw new SetupCredentialError();
 		}
-		if (
-			await verifyPassword(password, Buffer.from(credential.password, "utf8"))
-		) {
+		if (current && (await verifyPassword(password, current))) {
 			throw new RecoveryPasswordReuseError();
 		}
-		await tx
-			.update(authAccounts)
-			.set({ password: hashed.toString("utf8"), updatedAt: new Date() })
-			.where(
-				and(
-					eq(authAccounts.userId, consumed.userId),
-					eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
-				),
-			);
+		if (migrated) {
+			await tx
+				.update(authAccounts)
+				.set({ password: hashed.toString("utf8"), updatedAt: new Date() })
+				.where(
+					and(
+						eq(authAccounts.userId, consumed.userId),
+						eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
+					),
+				);
+		}
 		await tx
 			.update(users)
 			.set({
@@ -312,7 +322,6 @@ export async function completePasswordRecovery(
 		await tx
 			.delete(authSessions)
 			.where(eq(authSessions.userId, consumed.userId));
-		await tx.delete(sessions).where(eq(sessions.userId, consumed.userId));
 		await tx
 			.delete(setupSessions)
 			.where(eq(setupSessions.userId, consumed.userId));

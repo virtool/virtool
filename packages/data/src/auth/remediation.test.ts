@@ -15,7 +15,7 @@ beforeEach(async () => {
 	await db.delete(users);
 }, 60_000);
 
-it("reports the active unmigrated population as the cutover gate", async () => {
+it("counts active and deactivated unmigrated accounts", async () => {
 	const migrated = await seedUser(db, { handle: "migrated" });
 	await db
 		.update(users)
@@ -29,14 +29,4 @@ it("reports the active unmigrated population as the cutover gate", async () => {
 
 	expect(report.activeUnmigrated).toBe(1);
 	expect(report.deactivatedUnmigrated).toBe(1);
-	expect(report.readyForCutover).toBe(false);
-});
-
-it("allows cutover when no active normal account remains unmigrated", async () => {
-	await seedUser(db, { active: false, handle: "inactive-legacy" });
-
-	const report = await getEmailRemediationReport(db);
-
-	expect(report.activeUnmigrated).toBe(0);
-	expect(report.readyForCutover).toBe(true);
 });

@@ -11,9 +11,10 @@ import {
 import type { Db } from "../../db/pg";
 import { apiKeys } from "../../db/schema/apiKeys";
 import { authSessions } from "../../db/schema/auth";
+import { sessions } from "../../db/schema/sessions";
 import { setupSessions, setupTokens } from "../../db/schema/setup";
 import { users } from "../../db/schema/users";
-import { hashToken, newSessionToken } from "../tokens";
+import { hashToken, newSessionId, newSessionToken } from "../tokens";
 
 /** What {@link seedUser} accepts. */
 export type SeedUserOptions = {
@@ -129,6 +130,38 @@ export async function seedSession(
 	}
 
 	return { sessionId: session.id, token, userId };
+}
+
+/** A live row of the retired legacy session store and its cookie values. */
+export type SeededLegacySession = {
+	sessionId: string;
+	token: string;
+};
+
+/**
+ * Insert a live row into the retired legacy `sessions` store, as a release from
+ * before the cutover would have left it, so a test can prove nothing accepts it.
+ */
+export async function seedLegacySession(
+	db: Db,
+	userId: number,
+	sessionType: "authenticated" | "reset" = "authenticated",
+): Promise<SeededLegacySession> {
+	const sessionId = newSessionId();
+	const token = newSessionToken();
+	const now = new Date();
+
+	await db.insert(sessions).values({
+		sessionId,
+		userId,
+		ip: "127.0.0.1",
+		createdAt: now,
+		expiresAt: new Date(now.getTime() + 60 * 60_000),
+		tokenHash: hashToken(token),
+		sessionType,
+	});
+
+	return { sessionId, token };
 }
 
 /**

@@ -87,13 +87,6 @@ function rethrowSessionManagementError(
 export const findActiveBrowserSessionsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		if (context.principal.sessionStore !== "better_auth") {
-			throw new ClientError(
-				"Active session management is unavailable for this session.",
-				403,
-			);
-		}
-
 		try {
 			return await getActiveBrowserSessions(
 				db,
@@ -253,14 +246,7 @@ async function loadAuth() {
 /** List the signed-in user's passkeys without any credential material. */
 export const findPasskeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async ({ context }) => {
-		if (context.principal.sessionStore !== "better_auth") {
-			throw new ClientError(
-				"Passkey management is unavailable for this session.",
-				403,
-			);
-		}
-
+	.handler(async () => {
 		const { auth, headers } = await loadAuth();
 		try {
 			const rows = await auth.api.listPasskeys({

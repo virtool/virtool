@@ -208,10 +208,6 @@ export function recentlyAuthenticated(operation: ProtectedOperation) {
 	return createMiddleware({ type: "function" }).server(
 		async ({ context, next }) => {
 			const principal = await resolveBrowser(context);
-			if (principal.sessionStore !== "better_auth") {
-				rejectStaleSession(operation);
-			}
-
 			const session = await resolveBrowserSession(
 				db,
 				principal.sessionId,

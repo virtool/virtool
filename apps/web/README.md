@@ -283,7 +283,9 @@ does not expose an anonymous recovery URL. An administrator with recent
 authentication can issue a one-time recovery URL, including a copy-only URL
 when delivery is unavailable. Consuming either recovery link changes the
 password and revokes browser and setup sessions and tokens; the user signs in
-again. `/recover` and `/verify-email` consume these links; see
+again. An administrator link also reaches an account that has not completed
+email remediation. It replaces only the legacy password, and the next sign-in
+opens remediation. `/recover` and `/verify-email` consume these links; see
 [The wall](#the-wall).
 
 Administrators create human accounts by email invitation and assign access.
@@ -316,17 +318,17 @@ bounded invitation, bootstrap, and administrator TOTP reset operations without
 identity labels.
 
 Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
-compatible with existing foreign keys. `auth_sessions` is the target browser
-session store. The legacy `sessions` table remains available to unmigrated users
-during email remediation, but Better Auth wins when both credentials are
-present. Purpose-bound setup sessions remain separate from both.
+compatible with existing foreign keys. `auth_sessions` is the only browser
+session store. No flow reads or writes the legacy `sessions` table. A request
+that carries the legacy `session_id` or `session_token` cookie has them expired
+with their original path and attributes, and the user signs in again.
+Purpose-bound setup sessions remain separate.
 
 Normal Better Auth sessions use the library's seven-day rolling lifetime and
 one-day refresh age, with no absolute cap. The authenticated shell calls
 `refreshBrowserSessionFn` once on mount and when the window regains focus.
 That function lets Better Auth extend eligible sessions and propagate its
-cookie through the TanStack Start integration. Retained legacy sessions are
-validated without extension.
+cookie through the TanStack Start integration.
 
 Security-sensitive mutations additionally require recent authentication. A
 Better Auth session is fresh for 15 minutes from its immutable `created_at`;
@@ -344,8 +346,8 @@ Logout and revocation of the current session remain available without recent
 authentication. Reads require it only when they reveal a one-time secret.
 
 Only a normal Better Auth browser principal can satisfy this policy. API keys,
-restricted setup credentials, forced-reset sessions, MFA-enrollment sessions,
-and retained legacy sessions cannot. A stale protected call returns 403 with the
+restricted setup credentials, forced-reset sessions, and MFA-enrollment
+sessions cannot. A stale protected call returns 403 with the
 stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
 insufficient operation-specific authority remains an ordinary 403. The client
 responds only to the code: it opens one shared full-page passkey, password, or
@@ -447,11 +449,13 @@ credential** that completes exactly one named transition and reaches nothing
 else. A user under the `required` MFA policy is restricted differently; see
 [Two-factor authentication](#two-factor-authentication).
 
-Login checks an unmigrated legacy identity before Better Auth. During the
-compatibility window, a matching legacy password mints a purpose-bound
-`email_remediation` setup session, or a forced-reset session followed by that
-setup session. Migrated identities continue through
-Better Auth. A two-factor challenge keeps the login wall open for an authenticator
+Login checks an unmigrated legacy identity before Better Auth. A matching
+legacy bcrypt password mints only a purpose-bound `email_remediation` setup
+session, never an application session. A forced reset waits until remediation
+completes and then runs on the Better Auth session. An unmigrated user who
+forgets the password needs an administrator-issued recovery link, because
+self-service recovery needs an email. Migrated identities continue
+through Better Auth. A two-factor challenge keeps the login wall open for an authenticator
 or recovery code; only successful verification establishes a session and checks
 whether a password reset is required. Unknown, ineligible, and wrong-password attempts keep the same
 generic response and constant-cost behavior. The remediation wall stages a
@@ -464,8 +468,8 @@ browser's cookie and never authenticates a different browser. A matching setup
 session has the same 72-hour expiry as the link and can be claimed once for one
 Better Auth session; otherwise the result screen sends the holder to login.
 Pending state is server-owned, reports terminal outbox failure, and supports a
-server-throttled repeat delivery, address change, and cancellation. Completion revokes
-legacy sessions; claiming promotion revokes the restricted setup sessions.
+server-throttled repeat delivery, address change, and cancellation. Claiming
+promotion revokes the restricted setup sessions.
 
 The credential is its own cookie pair, `setup_session_id` and
 `setup_session_token`, deliberately not the session pair. `@virtool/data` owns
@@ -579,10 +583,7 @@ through `setMfaPolicyFn` on the **Administration › Security** page. It refuses
 administrator who sets it.
 
 Under `required`, a Better Auth session whose user has no confirmed TOTP
-resolves to an `mfa_enrollment` principal. A retained legacy session for such a
-user resolves to no principal and answers 401, because enrollment runs only
-through Better Auth. The user signs in again to get a Better Auth session. The
-restriction is read from the policy and `users.two_factor_enabled` on every
+resolves to an `mfa_enrollment` principal. The restriction is read from the policy and `users.two_factor_enabled` on every
 request, so it applies to live sessions as soon as the policy changes or a user
 disables TOTP. It ends when the first `verify-totp` succeeds.
 

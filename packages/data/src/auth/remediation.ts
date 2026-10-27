@@ -2,12 +2,11 @@ import { and, count, eq, isNull } from "drizzle-orm";
 import type { Db } from "../db/pg";
 import { users } from "../db/schema/users";
 
-/** The live legacy-email population that gates the Better Auth-only cutover. */
+/** The live count of normal accounts that have not completed email remediation. */
 export type EmailRemediationReport = {
 	activeUnmigrated: number;
 	deactivatedUnmigrated: number;
 	generatedAt: string;
-	readyForCutover: boolean;
 };
 
 /** Count normal legacy accounts that still lack a Better Auth identity. */
@@ -29,6 +28,5 @@ export async function getEmailRemediationReport(
 		activeUnmigrated,
 		deactivatedUnmigrated,
 		generatedAt: new Date().toISOString(),
-		readyForCutover: activeUnmigrated === 0,
 	};
 }

@@ -9,10 +9,8 @@ import {
 import {
 	mockGetAccount,
 	mockGetAccountMfaEnrollmentRequired,
-	userServerFnMocks,
 } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
-import { SETUP_REQUIRED_ERROR_NAME } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { navigateMock, resetPasswordMock } = vi.hoisted(() => ({
@@ -161,33 +159,6 @@ describe("<ResetForm />", () => {
 		await waitFor(() =>
 			expect(navigateMock).toHaveBeenCalledWith({
 				to: "/samples",
-				replace: true,
-			}),
-		);
-	});
-
-	it("carries the redirect into email remediation", async () => {
-		resetPasswordMock.mockResolvedValue({
-			login: false,
-			remediation: true,
-			reset: false,
-		});
-		userServerFnMocks.getAccountFn.mockRejectedValue(
-			Object.assign(new Error("Setup required"), {
-				name: SETUP_REQUIRED_ERROR_NAME,
-				purpose: "email_remediation",
-			}),
-		);
-
-		renderWithProviders(<ResetForm redirect="/samples" />);
-
-		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
-		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
-
-		await waitFor(() =>
-			expect(navigateMock).toHaveBeenCalledWith({
-				to: "/email-remediation",
-				search: { redirect: "/samples" },
 				replace: true,
 			}),
 		);

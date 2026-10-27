@@ -4,9 +4,9 @@ import {
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 } from "@virtool/contracts";
-import { createAuthenticatedSession } from "@virtool/data/auth/session";
 import {
 	seedApiKey,
+	seedLegacySession,
 	seedSession,
 	seedSetupSession,
 	seedUser,
@@ -62,7 +62,6 @@ vi.mock("../composition", () => ({
 const { authenticationExceptions, passwordResetEndpoints } = await import(
 	"./exceptions"
 );
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import("./cookies");
 const {
 	createAuthenticationMiddleware,
 	ForbiddenError,
@@ -154,7 +153,6 @@ function browserPrincipal(userId: number) {
 		kind: "browser" as const,
 		sessionId: 1,
 		createdAt: new Date(),
-		sessionStore: "better_auth" as const,
 		userId,
 	};
 }
@@ -220,32 +218,24 @@ describe("browser boundary", () => {
 		},
 	);
 
-	it("resolves a retained legacy browser principal", async () => {
-		const userId = await seedUser(db);
-		const session = await createAuthenticatedSession(db, {
-			userId,
-			ip: "127.0.0.1",
-		});
-		getRequest.mockReturnValue(
-			requestFor(
-				`${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`,
-			),
-		);
-		const next = vi.fn().mockResolvedValue("result");
+	it.each(["authenticated", "reset"] as const)(
+		"rejects a live legacy %s session",
+		async (sessionType) => {
+			const userId = await seedUser(db, {
+				forceReset: sessionType === "reset",
+			});
+			const legacy = await seedLegacySession(db, userId, sessionType);
+			getRequest.mockReturnValue(
+				requestFor(
+					`session_id=${legacy.sessionId}; session_token=${legacy.token}`,
+				),
+			);
 
-		await serverHandler()({ next, serverFnMeta: { id: "ordinary" } });
-
-		expect(next).toHaveBeenCalledWith({
-			context: {
-				principal: expect.objectContaining({
-					kind: "browser",
-					sessionId: session.row.id,
-					sessionStore: "legacy",
-					userId,
-				}),
-			},
-		});
-	});
+			await expect(
+				serverHandler()({ next: vi.fn(), serverFnMeta: { id: "ordinary" } }),
+			).rejects.toBeInstanceOf(UnauthorizedError);
+		},
+	);
 
 	it("resolves one Better Auth browser principal", async () => {
 		const userId = await seedUser(db);
@@ -263,7 +253,6 @@ describe("browser boundary", () => {
 				principal: expect.objectContaining({
 					kind: "browser",
 					sessionId: session.sessionId,
-					sessionStore: "better_auth",
 					userId,
 				}),
 			},
@@ -275,16 +264,13 @@ describe("browser boundary", () => {
 		});
 	});
 
-	it("prefers Better Auth when both session families are present", async () => {
+	it("resolves Better Auth beside a stale legacy cookie pair", async () => {
 		const userId = await seedUser(db);
 		const betterAuth = await seedSession(db, userId);
-		const legacy = await createAuthenticatedSession(db, {
-			userId,
-			ip: "127.0.0.1",
-		});
+		const legacy = await seedLegacySession(db, userId);
 		getRequest.mockReturnValue(
 			requestFor(
-				`${sessionCookie(betterAuth)}; ${SESSION_ID_COOKIE}=${legacy.sessionId}; ${SESSION_TOKEN_COOKIE}=${legacy.token}`,
+				`${sessionCookie(betterAuth)}; session_id=${legacy.sessionId}; session_token=${legacy.token}`,
 			),
 		);
 		const next = vi.fn().mockResolvedValue("result");
@@ -296,7 +282,6 @@ describe("browser boundary", () => {
 				principal: expect.objectContaining({
 					kind: "browser",
 					sessionId: betterAuth.sessionId,
-					sessionStore: "better_auth",
 					userId,
 				}),
 			},
@@ -342,7 +327,6 @@ describe("browser boundary", () => {
 				principal: expect.objectContaining({
 					kind: "password_reset",
 					sessionId: session.sessionId,
-					sessionStore: "better_auth",
 					userId,
 				}),
 			},
@@ -406,22 +390,15 @@ describe("setup boundary", () => {
 });
 
 describe("raw request boundary", () => {
-	it("accepts retained legacy sessions", async () => {
+	it("rejects a live legacy session", async () => {
 		const userId = await seedUser(db);
-		const session = await createAuthenticatedSession(db, {
-			userId,
-			ip: "127.0.0.1",
-		});
-		const cookie = `${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`;
+		const legacy = await seedLegacySession(db, userId);
+		const cookie = `session_id=${legacy.sessionId}; session_token=${legacy.token}`;
 
-		await expect(
-			requireAuthenticatedRequest(requestFor(cookie)),
-		).resolves.toMatchObject({
-			kind: "browser",
-			sessionId: session.row.id,
-			sessionStore: "legacy",
-			userId,
-		});
+		const response = await requireAuthenticatedRequest(requestFor(cookie));
+
+		expect(response).toBeInstanceOf(Response);
+		expect((response as Response).status).toBe(401);
 	});
 
 	it("accepts browser sessions and API keys as distinct principals", async () => {
@@ -433,7 +410,6 @@ describe("raw request boundary", () => {
 		).resolves.toMatchObject({
 			kind: "browser",
 			sessionId: session.sessionId,
-			sessionStore: "better_auth",
 			userId,
 		});
 		const [unchanged] = await db
@@ -489,7 +465,6 @@ describe("policy helpers", () => {
 		await expect(requireBrowserPrincipal()).resolves.toMatchObject({
 			kind: "browser",
 			sessionId: session.sessionId,
-			sessionStore: "better_auth",
 			userId,
 		});
 	});
