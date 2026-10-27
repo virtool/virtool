@@ -53,7 +53,10 @@ independently and publish only when they change. Shared `packages/*` are
 versioned on their own and cascade a `patch` into the apps that depend on them. `apps/site` is in `ignore` — it deploys
 elsewhere and ships no image. The Rust crates, `workflow-tools`, and
 `image-build` and `tsconfig` build-input workspaces are also ignored: they exist in pnpm only
-to express image build edges and are released through their consuming apps.
+to express image build edges. Because Changesets does not propagate version
+bumps through `devDependencies`, a changeset for one of these build inputs names
+the affected consuming apps directly; see
+[CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for the mapping.
 
 The `release` job runs `changesets/action` on every push to `main`, after the
 same build and test jobs that gate a pull request:

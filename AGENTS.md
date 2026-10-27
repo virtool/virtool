@@ -286,6 +286,9 @@ type(scope): description
   versioned workspace must add a changeset (`pnpm changeset`), or CI fails; a
   change that ships nothing to users records an empty one
   (`pnpm changeset --empty`). See [docs/ci.md](docs/ci.md#releases).
+- Changesets does not propagate releases through `devDependencies`. A change to
+  an ignored build-input workspace must name its consuming shipped apps in the
+  changeset; use the mapping in [CONTRIBUTING.md](CONTRIBUTING.md#changesets).
 - Don't push or create PRs unless asked.
 - Never amend or force-push a pushed branch. Add follow-up commits instead.
 - Don't include a Test plan section in pull request descriptions or comments.

@@ -50,6 +50,18 @@ file under `.changeset/`; commit it with your change. A shared `packages/*` bump
 cascades a `patch` into every app that depends on it, so you only declare the
 package you changed.
 
+Build-only workspaces are ignored by Changesets and linked to their consuming
+apps through `devDependencies`. Changesets does not propagate releases through
+development dependencies, so changes to these workspaces must name their
+consumer apps directly:
+
+- `@virtool/image-build`: all shipped apps
+- `@virtool/workflow-tools`: Create Sample, Create Subtraction, Pathoscope, and
+  Nuvs
+- `@virtool/pathoscope-core`: Pathoscope
+- `@virtool/quality-core`: Create Sample
+- `@virtool/tsconfig`: every shipped app whose generated output changes
+
 For a change that ships nothing to users — a refactor, a test, or a CI tweak —
 record an empty changeset with `pnpm changeset --empty`.
 
