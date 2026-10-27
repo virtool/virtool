@@ -28,7 +28,7 @@
     "node-cache": "^5.1.2",
     "prettier": "^3.9.9",
     "prismjs": "^1.30.0",
-    "satteri": "^0.10.5",
+    "satteri": "^0.11.1",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.2.2"
   },
