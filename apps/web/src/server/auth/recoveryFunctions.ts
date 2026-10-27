@@ -92,7 +92,12 @@ export const getEmailDeliveryAvailableFn = createServerFn({ method: "GET" })
 		available: await isEmailDeliveryAvailable(),
 	}));
 
-/** Start a pending account-email change without replacing the current address. */
+/**
+ * Start a pending account-email change without replacing the current address.
+ *
+ * This replaces Better Auth's `/change-email`, whose links are stateless JWTs
+ * that can't be single use or superseded.
+ */
 export const requestAccountEmailChangeFn = createServerFn({ method: "POST" })
 	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.accountEmailChange)])
 	.validator(emailChallengeSchema)
@@ -160,7 +165,14 @@ export const completeAccountEmailChangeFn = createServerFn({ method: "POST" })
 		}
 	});
 
-/** Acknowledge every public recovery request identically. */
+/**
+ * Acknowledge every public recovery request identically.
+ *
+ * This replaces Better Auth's `/request-password-reset`. That endpoint keeps
+ * its token outside `setup_tokens`, so the outbox can't drop mail for a dead
+ * link. It also gives a credential to an unmigrated account and has no
+ * administrator or copy-only path.
+ */
 export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 	.middleware([open()])
 	.validator(recoveryRequestSchema)
