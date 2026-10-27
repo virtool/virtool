@@ -8,7 +8,8 @@
 		".": "./src/index.ts",
 		"./bio": "./src/bio.ts",
 		"./fastqc": "./src/fastqc.ts",
-		"./hmmer": "./src/hmmer.ts"
+		"./hmmer": "./src/hmmer.ts",
+		"./illumina": "./src/illumina.ts"
 	},
 	"scripts": {
 		"test": "vitest run",
