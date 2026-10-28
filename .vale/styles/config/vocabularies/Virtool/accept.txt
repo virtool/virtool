@@ -1,4 +1,5 @@
 # Product names
+Dependabot
 Coasts
 
 # One-off identifiers
