@@ -15,7 +15,7 @@ image.
 `dist` retains its name because tooling outside this repository targets it.
 
 Adding an image requires an app Dockerfile, a Bake target, and a release-matrix entry. For
-the five targets in `build`, keep its matrix entry in step with
+the four targets in `build`, keep its matrix entry in step with
 `release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
 above. Their `matrix.image` values must match the cache scopes those jobs
 write, so the release reuses the caches they populated rather than rebuilding
@@ -26,15 +26,30 @@ See [Images](../README.md#images) to build one image locally.
 
 ## Affected jobs
 
-The `changes` job asks pnpm for workspaces selected by
-`...\[origin/main\]`. The leading ellipsis includes dependents, so an app is
-selected when either its own files or any workspace dependency changes. The
-expensive image and native-tool jobs, plus the per-app Nuvs test job, run only
-for selected workspaces on pull requests and remain unconditional on pushes to
-`main`.
+The `changes` job asks pnpm for workspaces selected by `...\[<base>\]`. The
+leading ellipsis includes dependents, so an app is selected when either its own
+files or any workspace dependency changes. The build and test jobs run only for
+selected workspaces. `Checks` and `Docs / Lint` run on every change.
+`Packages / Test` runs only the selected workspaces that have a `test` script
+and no dedicated job.
+
+On a pull request, the base is `origin/main`. On a push to `main`, the base is
+the head commit of the last successful push run. A newer push cancels a
+pending run, and a failed run must not let the next push skip what it broke,
+so `github.event.before` is not sufficient. If there is no successful run, or
+its commit is not an ancestor of the push, every workspace is selected.
+
+Root files have no dependents in the graph. Thus a change to a shared root
+input, such as the lockfile or the CI workflow, selects every workspace.
+
+The `release` job needs every build and test job. It runs when they pass or
+skip, and stops when one fails or is cancelled.
 
 CI first runs the app's build and then `pnpm --prod deploy`, making the Docker
 context exactly the production closure recorded in the workspace graph. The
+web image is the exception: its `.output` bundle carries its own dependencies,
+so it builds from the app directory, and a `.dockerignore` limits the context
+to `.output` and `package.json`. The
 Rust crates and shared native-tool recipe are private pnpm workspaces, listed
 as dependencies of the apps that consume their build products. Each one sets
 `"files": ["package.json"]`, so the deployed context gets only an empty
@@ -82,5 +97,13 @@ builds each at the version in its tag, publishing `:<version>`
 and `:latest`. A release that bumped only shared packages publishes no image.
 
 The `Changeset` check fails a pull request that changes a versioned workspace
-without a changeset. See [CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for how
-to add one.
+that none of its changesets release, directly or by cascade. See
+[CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for how to add one.
+
+Dependabot writes no changesets. The **Dependabot** workflow adds a
+patch changeset to each Dependabot npm or Docker pull request for every
+versioned workspace that the bump changes. A bump that changes only the
+lockfile names no workspace, so the changeset releases every app that ships an
+image. It pushes the changeset with
+`GITHUB_TOKEN`, so CI runs on that commit wait until a maintainer selects
+**Approve workflows to run**.

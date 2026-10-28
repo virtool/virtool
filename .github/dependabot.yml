@@ -5,8 +5,6 @@ updates:
       schedule:
           interval: "weekly"
       open-pull-requests-limit: 10
-      commit-message:
-          prefix: "chore(deps)"
       cooldown:
           default-days: 1
       ignore:
@@ -57,23 +55,21 @@ updates:
       directory: "/"
       schedule:
           interval: "monthly"
-      commit-message:
-          prefix: "chore(deps)"
       groups:
           actions:
               patterns:
                   - "*"
     # Only the Node base image reaches published images; the other stages
-    # compile tools. The Dependabot Changeset workflow adds a patch changeset to
-    # each bump, so Node and Debian security fixes ship without waiting for an
-    # unrelated change.
+    # compile tools. The Dependabot workflow adds a patch changeset for
+    # each app a bump changes, so Node and Debian security fixes ship without
+    # waiting for an unrelated change. The dev image moves with them so `vtd`
+    # environments run the same Node and libc as production.
     - package-ecosystem: "docker"
       directories:
           - "/apps/*"
+          - "/dev"
       schedule:
           interval: "daily"
-      commit-message:
-          prefix: "chore(deps)"
       allow:
           - dependency-name: "node"
       ignore:
