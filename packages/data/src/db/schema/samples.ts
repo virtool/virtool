@@ -18,6 +18,7 @@ import {
 import { groups } from "./groups";
 import { jobs } from "./jobs";
 import { labels } from "./labels";
+import { runs } from "./runs";
 import { subtractions } from "./subtractions";
 import { uploads } from "./uploads";
 import { users } from "./users";
@@ -89,6 +90,7 @@ export const legacySamples = pgTable(
 			.notNull(),
 		user_id: integer("user_id"),
 		job_id: integer("job_id"),
+		run_id: integer("run_id"),
 	},
 	(table) => [
 		foreignKey({
@@ -106,6 +108,11 @@ export const legacySamples = pgTable(
 			foreignColumns: [jobs.id],
 			name: "legacy_samples_job_id_fkey",
 		}),
+		foreignKey({
+			columns: [table.run_id],
+			foreignColumns: [runs.id],
+			name: "legacy_samples_run_id_fkey",
+		}).onDelete("set null"),
 		unique("legacy_samples_legacy_id_key").on(table.legacy_id),
 		unique("legacy_samples_job_id_key").on(table.job_id),
 		unique("legacy_samples_name_key").on(table.name),
@@ -113,6 +120,7 @@ export const legacySamples = pgTable(
 			.on(table.all_read)
 			.where(sql`${table.all_read} = true`),
 		index("ix_legacy_samples_group_id").on(table.group_id),
+		index("ix_legacy_samples_run_id").on(table.run_id),
 		index("ix_legacy_samples_group_read")
 			.on(table.group_read)
 			.where(sql`${table.group_read} = true`),

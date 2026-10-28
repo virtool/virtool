@@ -26,6 +26,7 @@ export * from "./permissions";
 export * from "./permissionsSchema";
 export * from "./principals";
 export * from "./references";
+export * from "./runs";
 export * from "./samples";
 export * from "./search";
 export * from "./sessions";
