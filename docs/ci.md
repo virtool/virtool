@@ -100,7 +100,7 @@ The `Changeset` check fails a pull request that changes a versioned workspace
 that none of its changesets release, directly or by cascade. See
 [CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for how to add one.
 
-Dependabot writes no changesets. The **Dependabot Changeset** workflow adds a
+Dependabot writes no changesets. The **Dependabot** workflow adds a
 patch changeset to each Dependabot npm or Docker pull request for every
 versioned workspace that the bump changes. A bump that changes only the
 lockfile names no workspace, so the changeset releases every app that ships an

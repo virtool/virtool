@@ -60,7 +60,7 @@ updates:
               patterns:
                   - "*"
     # Only the Node base image reaches published images; the other stages
-    # compile tools. The Dependabot Changeset workflow adds a patch changeset for
+    # compile tools. The Dependabot workflow adds a patch changeset for
     # each app a bump changes, so Node and Debian security fixes ship without
     # waiting for an unrelated change. The dev image moves with them so `vtd`
     # environments run the same Node and libc as production.

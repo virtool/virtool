@@ -1,4 +1,4 @@
-name: Dependabot Changeset
+name: Dependabot
 
 # Dependabot writes no changesets, so its npm and Node base-image bumps would
 # fail the `Changeset` check and never release. This adds one patch changeset
@@ -24,7 +24,7 @@ permissions:
 
 jobs:
     changeset:
-        name: Dependabot / Changeset
+        name: Changeset
         runs-on: ubuntu-24.04
         timeout-minutes: 5
         if: >-
