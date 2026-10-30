@@ -18,7 +18,7 @@
     "@astrojs/mdx": "^8.1.1",
     "@astrojs/prism": "^4.1.1",
     "@astrojs/sitemap": "^3.7.4",
-    "@lucide/astro": "^1.42.0",
+    "@lucide/astro": "^1.62.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^26.4.1",
