@@ -19,7 +19,7 @@
 		"@aws-sdk/lib-storage": "^3.1156.0",
 		"@azure/identity": "^4.14.0",
 		"@azure/storage-blob": "^12.33.0",
-		"@sentry/node": "^11.8.0",
+		"@sentry/node": "^11.9.0",
 		"@virtool/bio": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/image-build": "workspace:*",
