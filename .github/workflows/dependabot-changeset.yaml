@@ -1,11 +1,16 @@
 name: Dependabot
 
 # Dependabot writes no changesets, so its npm and Node base-image bumps would
-# fail the `Changeset` check and never release. This adds one patch changeset
-# for every versioned workspace whose `package.json` or Dockerfile the pull
-# request changes, with the pull request title as its summary. A bump that
-# changes only the lockfile, such as a transitive security update, names no
-# workspace, so it releases every app that ships an image instead.
+# fail the `Changeset` check and never release. This adds one changeset to each
+# pull request, with the pull request title as its summary:
+#
+# - A bump that changes the `package.json` or Dockerfile of a versioned
+#   workspace releases a patch of each such workspace.
+# - A bump that reaches only the root `package.json` or an ignored workspace,
+#   such as a lint tool or the product website, ships nothing, so the changeset
+#   is empty.
+# - A bump that changes only the lockfile, such as a transitive security
+#   update, names no workspace, so it releases every app that ships an image.
 #
 # `pull_request_target` gives the token write access to Dependabot's branch.
 # The job never installs or runs code from that branch: it reads the diff and
@@ -50,24 +55,35 @@ jobs:
                   if [[ -f "$file" ]]; then
                       exit 0
                   fi
-                  # Changesets rejects a changeset that names an ignored workspace.
-                  packages=$(
+                  ignored=$(jq -r '.ignore[]' .changeset/config.json)
+                  # A bare `*` in a git pathspec also matches `/`, so these
+                  # patterns reach every manifest and Dockerfile in the tree.
+                  manifests=$(
                       git diff --name-only "$BASE_SHA"...HEAD -- \
-                          'apps/*/Dockerfile' 'apps/*/package.json' 'packages/*/package.json' |
-                          xargs -r -n1 dirname | sort -u |
-                          while read -r dir; do jq -r .name "$dir/package.json"; done |
-                          grep -vxF -f <(jq -r '.ignore[]' .changeset/config.json) || true
+                          '*package.json' '*Dockerfile'
                   )
-                  if [[ -z "$packages" ]] &&
+                  # Changesets rejects a changeset that names an ignored
+                  # workspace. The root `package.json` is not a workspace.
+                  packages=$(
+                      for manifest in $manifests; do
+                          dir=$(dirname "$manifest")
+                          if [[ "$dir" != . && -f "$dir/package.json" ]]; then
+                              jq -r 'select(.version != null) | .name' "$dir/package.json"
+                          fi
+                      done |
+                          sort -u |
+                          grep -vxF -f <(echo "$ignored") || true
+                  )
+                  if [[ -z "$packages" && -z "$manifests" ]] &&
                       git diff --quiet "$BASE_SHA"...HEAD -- pnpm-lock.yaml; then
                       exit 0
                   fi
-                  if [[ -z "$packages" ]]; then
+                  if [[ -z "$packages" && -z "$manifests" ]]; then
                       packages=$(
                           for dir in apps/*/; do
                               [[ -f "$dir/Dockerfile" ]] && jq -r .name "$dir/package.json"
                           done |
-                              grep -vxF -f <(jq -r '.ignore[]' .changeset/config.json) || true
+                              grep -vxF -f <(echo "$ignored") || true
                       )
                   fi
                   {
