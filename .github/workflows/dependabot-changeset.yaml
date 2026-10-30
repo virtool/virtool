@@ -13,12 +13,13 @@ name: Dependabot
 # - A bump that changes only the lockfile, such as a transitive security
 #   update, names no workspace, so it releases every app that ships an image.
 #
-# `pull_request_target` gives the token write access to Dependabot's branch.
-# The job never installs or runs code from that branch: it reads the diff and
-# the changed `package.json` files, and writes one Markdown file.
+# `pull_request_target` runs with the base branch's secrets, so the job can
+# push to Dependabot's branch. It never installs or runs code from that branch:
+# it reads the diff and the changed `package.json` files, and writes one
+# Markdown file.
 #
-# The push uses `GITHUB_TOKEN`, so CI runs on the changeset commit wait until a
-# maintainer selects **Approve workflows to run**.
+# A commit pushed with `GITHUB_TOKEN` never starts CI, so the push is made as
+# the `virtool-releaser` GitHub App.
 on:
     pull_request_target:
         types: [opened, synchronize, reopened]
@@ -37,14 +38,20 @@ jobs:
             github.event.pull_request.user.login == 'dependabot[bot]' &&
             (startsWith(github.event.pull_request.head.ref, 'dependabot/docker/') ||
             startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/'))
-        permissions:
-            contents: write
         steps:
+            - name: Token
+              id: app-token
+              uses: actions/create-github-app-token@v3
+              with:
+                  client-id: ${{ vars.RELEASER_CLIENT_ID }}
+                  private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
+                  permission-contents: write
             - name: Checkout
               uses: actions/checkout@v7
               with:
                   ref: ${{ github.event.pull_request.head.ref }}
                   fetch-depth: 0
+                  token: ${{ steps.app-token.outputs.token }}
                   persist-credentials: true
             - name: Write changeset
               env:

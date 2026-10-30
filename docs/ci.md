@@ -86,9 +86,12 @@ same build and test jobs that gate a pull request:
    `CHANGELOG.md` entry as the body.
 
 The action rebuilds the Version Packages branch from `main` on every push, so
-commits pushed to it last only until the next merge. The action opens it with
-`GITHUB_TOKEN`, so its CI runs wait until a maintainer selects **Approve
-workflows to run**. The `Changeset` check skips it.
+commits pushed to it last only until the next merge. A pull request opened with
+`GITHUB_TOKEN` never starts its own CI, so the action opens it as the
+`virtool-releaser` GitHub App, which holds write access to contents and pull
+requests on this repository only. The `RELEASER_CLIENT_ID` Actions variable and
+`RELEASER_PRIVATE_KEY` secret identify the app. The `Changeset` check skips the
+pull request.
 
 The action's `published-packages` output lists every tagged workspace.
 `release-ghcr-matrix` maps that list to image builds, keeping only the deployable
@@ -107,6 +110,5 @@ such workspace. A bump that reaches only the root `package.json` or an ignored
 workspace, such as a lint tool or the product website, ships nothing, so the
 changeset is empty. A bump that changes only the lockfile, such as a transitive
 security update, names no workspace, so the changeset releases every app that
-ships an image. The workflow pushes the changeset with `GITHUB_TOKEN`, so CI
-runs on that commit wait until a maintainer selects **Approve workflows to
-run**.
+ships an image. The workflow pushes the changeset as the `virtool-releaser`
+GitHub App for the same reason the release job does.
