@@ -2,7 +2,8 @@ name: Dependabot
 
 # Dependabot writes no changesets, so its npm and Node base-image bumps would
 # fail the `Changeset` check and never release. This adds one changeset to each
-# pull request, with the pull request title as its summary:
+# pull request, with the pull request title as its summary, rewritten as a
+# release note:
 #
 # - A bump that changes the `package.json` or Dockerfile of a versioned
 #   workspace releases a patch of each such workspace.
@@ -86,6 +87,18 @@ jobs:
                               grep -vxF -f <(echo "$ignored") || true
                       )
                   fi
+                  # Titles read `chore(deps): bump <name> from X to Y` or
+                  # `chore(deps): bump the <group> group ...`. Drop the commit
+                  # type, capitalize, and quote the package name as code so
+                  # Vale doesn't lint it as prose.
+                  summary=$(
+                      sed -E \
+                          -e 's/^[a-z]+(\([^)]*\))?!?: *//' \
+                          -e 's/^bump /Bump /' \
+                          -e 's/^Bump ([^ ]+)/Bump `\1`/' \
+                          -e 's/^Bump `the`/Bump the/' \
+                          <<< "$PR_TITLE"
+                  )
                   {
                       echo "---"
                       for package in $packages; do
@@ -93,7 +106,7 @@ jobs:
                       done
                       echo "---"
                       echo
-                      echo "${PR_TITLE}."
+                      echo "${summary}."
                   } > "$file"
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
