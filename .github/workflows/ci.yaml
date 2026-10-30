@@ -597,9 +597,6 @@ jobs:
         outputs:
             published: ${{ steps.changesets.outputs.published }}
             published-packages: ${{ steps.changesets.outputs.published-packages }}
-        permissions:
-            contents: write
-            pull-requests: write
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -610,14 +607,24 @@ jobs:
                   fetch-depth: 0
             - name: Setup
               uses: ./.github/actions/setup
+            # A pull request opened with `GITHUB_TOKEN` never starts its own CI,
+            # so the version PR is opened as the `virtool-releaser` GitHub App.
+            - name: Token
+              id: app-token
+              uses: actions/create-github-app-token@v3
+              with:
+                  client-id: ${{ vars.RELEASER_CLIENT_ID }}
+                  private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
             - name: Changesets
               id: changesets
-              # The version PR is opened with `GITHUB_TOKEN`, so its CI runs wait
-              # for a maintainer to approve them. `changeset tag` writes tag events
-              # to the action's output file, which it reads to push the tags,
-              # create a GitHub Release per tag, and set `published-packages`.
+              # `changeset tag` writes tag events to the action's output file,
+              # which it reads to push the tags, create a GitHub Release per tag,
+              # and set `published-packages`.
               uses: changesets/action@v2.1.2
               with:
+                  github-token: ${{ steps.app-token.outputs.token }}
                   version-script: pnpm changeset version
                   publish-script: pnpm changeset tag
                   pr-title: "Version packages"
