@@ -1,4 +1,4 @@
-name: Change check
+name: Knope
 
 # This check is in its own workflow because it must run again when a label
 # changes. If CI listened to label events, each label change would start all
@@ -19,9 +19,9 @@ concurrency:
 jobs:
     # Fails a pull request that changes an image app that no change file names,
     # unless the pull request has the `no-release` label. The ruleset requires
-    # a check with the name `Changeset`.
-    change-check:
-        name: Changeset
+    # a check with the name `Knope / Check`.
+    check:
+        name: Check
         runs-on: ubuntu-24.04
         timeout-minutes: 10
         # The release pull request deletes the change files that it releases.

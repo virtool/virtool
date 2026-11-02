@@ -1,5 +1,5 @@
 // Renovate runs this as a post-upgrade task, once for each branch, before it
-// commits. It writes the change file that the `Changeset` check requires, so
+// commits. It writes the change file that the `Knope / Check` job requires, so
 // that a Renovate bump releases the images that it changes.
 //
 // - A bump that changes the `package.json` or Dockerfile of a workspace
