@@ -26,7 +26,7 @@
 		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"drizzle-orm": "^0.45.2",
-		"hono": "^4.13.9",
+		"hono": "^4.13.11",
 		"pino": "^10.1.0",
 		"postgres": "^3.4.9",
 		"prom-client": "^15.1.3",
