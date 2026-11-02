@@ -35,7 +35,7 @@ See [Images](../README.md#images) to build one image locally.
 The `changes` job asks pnpm for workspaces selected by `...\[<base>\]`. The
 leading ellipsis includes dependents, so an app is selected when either its own
 files or any workspace dependency changes. The build and test jobs run only for
-selected workspaces. `Checks` and `Docs / Lint` run on every change.
+selected workspaces. `Checks` runs on every change.
 `Packages / Test` runs only the selected workspaces that have a `test` script
 and no dedicated job.
 
