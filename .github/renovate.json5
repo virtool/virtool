@@ -1,0 +1,101 @@
+{
+	$schema: "https://docs.renovatebot.com/renovate-schema.json",
+	extends: ["config:recommended"],
+	enabledManagers: ["npm", "github-actions", "dockerfile"],
+	semanticCommits: "disabled",
+	timezone: "UTC",
+	schedule: ["* 0-3 * * 1"],
+	// A range that already allows the new version would otherwise change
+	// only the lockfile, and the change file would then release every image.
+	// Security fixes need the same setting, because they default to a
+	// lockfile-only update.
+	rangeStrategy: "bump",
+	// pnpm rejects lockfile entries published less than 24h ago.
+	minimumReleaseAge: "1 day",
+	internalChecksFilter: "strict",
+	osvVulnerabilityAlerts: true,
+	vulnerabilityAlerts: {
+		rangeStrategy: "bump",
+	},
+	// A later rule overrides an earlier one, so each group comes after the
+	// broader rules that it narrows.
+	packageRules: [
+		{
+			matchManagers: ["npm"],
+			matchDepTypes: [
+				"dependencies",
+				"optionalDependencies",
+				"peerDependencies",
+			],
+			matchUpdateTypes: ["minor", "patch"],
+			groupName: "production dependencies",
+		},
+		{
+			matchManagers: ["npm"],
+			matchDepTypes: ["devDependencies", "packageManager"],
+			matchUpdateTypes: ["minor", "patch"],
+			groupName: "development dependencies",
+		},
+		// The passkey plugin's inferred types must resolve to the same
+		// SimpleWebAuthn copy as the app's, so these move together, majors
+		// included.
+		{
+			matchManagers: ["npm"],
+			matchPackageNames: [
+				"better-auth",
+				"@better-auth/**",
+				"@simplewebauthn/**",
+			],
+			groupName: "auth",
+		},
+		{
+			matchManagers: ["npm"],
+			matchPackageNames: ["superagent", "@types/superagent", "nock"],
+			enabled: false,
+		},
+		// Each override pins a vulnerable range of a transitive dependency
+		// until its parents move past it, so it changes only by hand.
+		{
+			matchManagers: ["npm"],
+			matchDepTypes: ["pnpm-workspace.overrides"],
+			enabled: false,
+		},
+		{
+			matchManagers: ["github-actions"],
+			groupName: "GitHub Actions",
+			schedule: ["* 0-3 1 * *"],
+		},
+		// Only the Node base image reaches published images; the other stages
+		// compile tools. The dev image moves with them so `vtd` environments
+		// run the same Node and libc as production. Node and Debian security
+		// fixes arrive as digest updates, so they are not held to the weekly
+		// schedule.
+		{
+			matchManagers: ["dockerfile"],
+			matchPackageNames: ["!node"],
+			enabled: false,
+		},
+		{
+			matchManagers: ["dockerfile"],
+			matchPackageNames: ["node"],
+			groupName: "Node base images",
+			schedule: ["at any time"],
+		},
+		// A version update would also make the tag more precise, such as
+		// `24.22.2-bookworm-slim`, so only the digest moves.
+		{
+			matchManagers: ["dockerfile"],
+			matchUpdateTypes: ["major", "minor", "patch"],
+			enabled: false,
+		},
+		{
+			matchManagers: ["npm", "dockerfile"],
+			postUpgradeTasks: {
+				commands: ["node scripts/write-renovate-change-file.mjs"],
+				dataFileTemplate: '{"branchName": "{{{branchName}}}", "baseBranch": "{{{baseBranch}}}", "groupName": "{{{groupName}}}", "upgrades": [{{#each upgrades}}{"depName": "{{{depName}}}", "currentValue": "{{{currentValue}}}", "newValue": "{{{newValue}}}", "currentDigest": "{{{currentDigest}}}", "newDigest": "{{{newDigest}}}"}{{#unless @last}},{{/unless}}{{/each}}]}',
+				fileFilters: [".changeset/**"],
+				executionMode: "branch",
+			},
+		},
+	],
+}
