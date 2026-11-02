@@ -126,8 +126,8 @@ target, and a CI matrix entry. This is the one deliberate exception.
 
 - **`pnpm build`** is `pnpm -r --filter "./apps/*" --filter
   "!@virtool/site" build`. Every app but the site, which is deliberately
-  excluded from the repo-wide gates and covered by its own `site-build`
-  CI job.
+  excluded from the repo-wide gates. Cloudflare builds the site for each
+  preview branch, and that build is a required status check.
 - **`pnpm check` / `pnpm format`** run biome over `apps packages` rather
   than a literal `apps/web/src`. `apps/site` is excluded once, in
   `biome.json`'s `files.includes`, because Astro isn't linted by biome.

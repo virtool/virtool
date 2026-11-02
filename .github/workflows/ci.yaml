@@ -465,25 +465,6 @@ jobs:
               working-directory: packages/quality-core
 
     # -------------------------------------------------------------------------
-    # Site (apps/site)
-    # -------------------------------------------------------------------------
-    site-build:
-        name: Site / Build
-        runs-on: ubuntu-24.04
-        timeout-minutes: 10
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/site')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Build site
-              run: pnpm --filter @virtool/site build
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    # -------------------------------------------------------------------------
     # Packages (packages/*, excluding Data and Storage below)
     # -------------------------------------------------------------------------
     packages-test:
@@ -560,7 +541,6 @@ jobs:
                 pathoscope-build,
                 pathoscope-test,
                 quality-test,
-                site-build,
                 web-test,
                 web-test-a11y,
                 web-test-server,
