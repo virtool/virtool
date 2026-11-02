@@ -6,4 +6,4 @@ pathoscope: patch
 nuvs: patch
 ---
 
-Adopt per-app image builds and Changesets-based releases.
+Build and release each image separately.

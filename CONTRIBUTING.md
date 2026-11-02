@@ -35,7 +35,7 @@ Run `knope document-change`. Select the packages to bump, the bump level
 (`patch`, `minor`, or `major`), and write a one-line summary. The command writes
 a Markdown file in `.changeset/`. Commit it with your change.
 
-A change file has YAML frontmatter that lists Knope package names with a bump
+A change file has YAML front matter that lists Knope package names with a bump
 level. The summary follows it:
 
 ```md

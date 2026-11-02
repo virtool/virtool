@@ -591,11 +591,13 @@ jobs:
                   permission-contents: write
                   permission-pull-requests: write
             # Knope finds the pull request of each change file in the history.
+            # The App token stays out of `.git/config`, so dependency install
+            # scripts can't read it. Only the push uses it.
             - name: Checkout
               uses: actions/checkout@v7
               with:
                   fetch-depth: 0
-                  token: ${{ steps.app-token.outputs.token }}
+                  persist-credentials: false
             - name: Find change files
               id: pending
               run: |
@@ -652,7 +654,7 @@ jobs:
                   git config user.name "${APP_SLUG}[bot]"
                   git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
                   git commit -m "Release"
-                  git push --force origin knope/release
+                  git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" knope/release
 
                   number=$(gh pr list --head knope/release --base main --state open --json number --jq '.[0].number // empty')
                   if [ -n "$number" ]; then

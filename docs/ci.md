@@ -119,9 +119,9 @@ The `Changeset` check has its own workflow, because it must run again when a
 label changes. If CI listened to label events, each label change would start all
 of CI again. The check does the following:
 
-- It rejects a malformed change file: a frontmatter line that is not exactly
+- It rejects a malformed change file: a front matter line that is not exactly
   `<name>: major|minor|patch`, an unknown or quoted package name, a package
-  named twice, empty frontmatter, or a missing summary.
+  named twice, empty front matter, or a missing summary.
 - It finds the image apps that the pull request affects through the workspace
   graph, and requires that some change file names each one. A docs- or CI-only
   pull request affects no image app and needs no change file.
