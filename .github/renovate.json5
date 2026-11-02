@@ -13,6 +13,10 @@
 	// pnpm rejects lockfile entries published less than 24h ago.
 	minimumReleaseAge: "1 day",
 	internalChecksFilter: "strict",
+	// Match the `Area / Action` names of the CI checks.
+	statusCheckNames: {
+		artifactError: "Renovate / Artifacts",
+	},
 	osvVulnerabilityAlerts: true,
 	vulnerabilityAlerts: {
 		rangeStrategy: "bump",
