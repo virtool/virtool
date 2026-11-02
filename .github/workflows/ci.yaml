@@ -314,7 +314,7 @@ jobs:
     # -------------------------------------------------------------------------
     # Also published by `release-ghcr` as `ghcr.io/virtool/nuvs`.
     #
-    # The 45-minute timeout is longer than pathoscope's 30: this image compiles
+    # The 60-minute timeout is longer than pathoscope's 45: this image compiles
     # SPAdes from source, which is the single most expensive thing either
     # workflow build does. It is the first stage in the Dockerfile and depends on
     # nothing else, so a warm layer cache skips it entirely.
