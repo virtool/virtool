@@ -32,8 +32,9 @@ must name that app in a change file, or `Knope / Check` fails.
 Install Knope with `mise install`. The version is pinned in `mise.toml`.
 
 Run `knope document-change`. Select the packages to bump, the bump level
-(`patch`, `minor`, or `major`), and write a one-line summary. The command writes
-a Markdown file in `.changeset/`. Commit it with your change.
+(`patch`, `minor`, or `major`), and write a summary. The command writes a
+Markdown file in `.changeset/`. Edit the file to add details, then commit it
+with your change.
 
 A change file has YAML front matter that lists Knope package names with a bump
 level. The summary follows it:
@@ -75,8 +76,27 @@ creates the tags and GitHub Releases. See [Releases](docs/ci.md#releases).
 
 ### Release notes
 
-The summary of a change file becomes its entry in the changelog and in the
-GitHub Release. Write it for users, not reviewers.
+The text of a change file becomes its entry in the changelog and in the
+GitHub Release. Write it for users, not reviewers. Tell users what they will
+see that is different, not how the code changed.
+
+The first line is the summary. A change file with only a summary becomes a
+bullet. Text after the summary becomes the details: the summary becomes a
+heading, and the details go below it. Add details when users must know more,
+for example what was wrong before, what to do now, or which pages changed:
+
+```md
+---
+virtool: patch
+---
+
+Return to the correct page after you sign in
+
+When you open a Virtool link before you sign in, Virtool now takes you to that
+page after you sign in. It keeps the search terms and filters in the link.
+```
+
+Run `knope prepare-release --dry-run` to see the changelog entry.
 
 To reword notes before a release, edit the `.changeset/*.md` files on `main`.
 The Release pull request is rebuilt from them on every push, so edits pushed to
