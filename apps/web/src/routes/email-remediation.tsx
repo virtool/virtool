@@ -1,5 +1,5 @@
 import { getErrorStatus } from "@app/queryErrors";
-import { safeRedirect } from "@app/searchParams";
+import { safeRedirect } from "@server/auth/redirect";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";

@@ -65,6 +65,7 @@ import {
 } from "./loginRateLimit";
 import { UnauthorizedError } from "./middleware";
 import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
+import { safeRedirect } from "./redirect";
 import { resolveRestrictedSetup } from "./restricted";
 import { checkConfiguredPasswordLength } from "./service";
 import {
@@ -113,9 +114,16 @@ const accountSetupSchema = z.object({
 	password: z.string(),
 });
 
+// The verification link carries the redirect, so drop one the wall would not follow.
+const remediationRedirectSchema = z
+	.string()
+	.max(2048)
+	.optional()
+	.transform(safeRedirect);
+
 const emailRemediationSchema = z.object({
 	email: z.string().trim().min(1).max(254),
-	redirect: z.string().max(2048).optional(),
+	redirect: remediationRedirectSchema,
 });
 
 const emailRemediationTokenSchema = z.object({
@@ -559,7 +567,7 @@ function getRemediationVerificationUrl(token: string, redirect?: string) {
 /** Send a replacement mailbox challenge for the staged address. */
 export const resendEmailRemediationFn = createServerFn({ method: "POST" })
 	.middleware([setupOnly("email_remediation")])
-	.validator(z.object({ redirect: z.string().max(2048).optional() }))
+	.validator(z.object({ redirect: remediationRedirectSchema }))
 	.handler(async ({ context, data }) => {
 		try {
 			const result = await resendEmailRemediation(db, {

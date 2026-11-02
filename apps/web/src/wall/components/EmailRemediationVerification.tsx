@@ -1,7 +1,7 @@
 import { accountQueryKeys } from "@account/keys";
-import { safeRedirect } from "@app/searchParams";
 import Alert from "@base/Alert";
 import Button from "@base/Button";
+import { safeRedirect } from "@server/auth/redirect";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { EmailRemediationVerificationResult } from "@virtool/contracts";

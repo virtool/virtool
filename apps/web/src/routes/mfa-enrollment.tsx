@@ -1,4 +1,4 @@
-import { safeRedirect } from "@app/searchParams";
+import { safeRedirect } from "@server/auth/redirect";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import MfaEnrollment from "@wall/components/MfaEnrollment";

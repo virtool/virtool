@@ -338,6 +338,41 @@ it("forces a reset on the session that email remediation establishes", async () 
 	).toBe(true);
 });
 
+it("drops an unsafe redirect from the remediation verification link", async () => {
+	const userId = await seedUser(db, {
+		email: "",
+		handle: "Alice",
+		password: Buffer.from(hash),
+	});
+	const encrypted = keyring.encrypt("resend_api_key", "re_secret");
+	if (!encrypted.ok) {
+		throw new Error("expected a ready keyring");
+	}
+	await seedSettings(db, {
+		emailApiKey: encrypted.value,
+		emailEnabled: true,
+		emailSenderAddress: "noreply@virtool.test",
+	});
+	const setup = await seedSetupSession(db, userId, "email_remediation");
+	cookies.set("setup_session_id", setup.sessionId);
+	cookies.set("setup_session_token", setup.token);
+
+	await callServerFn(handlers, "submitEmailRemediationFn", {
+		email: "alice@example.com",
+		redirect: "/\\example.com",
+	});
+
+	const [queued] = await db.select().from(emailOutbox);
+	if (queued?.template.type !== "email_verification") {
+		throw new Error("expected an email verification message");
+	}
+	const fragment = new URLSearchParams(
+		new URL(queued.template.verifyUrl).hash.slice(1),
+	);
+	expect(fragment.has("token")).toBe(true);
+	expect(fragment.has("redirect")).toBe(false);
+});
+
 it("requires the emailed token before marking a remediated email verified", async () => {
 	const userId = await seedUser(db, {
 		email: "",

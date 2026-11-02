@@ -40,9 +40,11 @@ describe("getAuthNextStep", () => {
 describe("getAuthNextStepRoute", () => {
 	it("carries the redirect into the application and every wall", () => {
 		expect(getAuthNextStepRoute({ type: "application" }, "/samples")).toEqual({
-			to: "/samples",
+			href: "/samples",
 		});
-		expect(getAuthNextStepRoute({ type: "application" })).toEqual({ to: "/" });
+		expect(getAuthNextStepRoute({ type: "application" })).toEqual({
+			href: "/",
+		});
 		expect(
 			getAuthNextStepRoute({ type: "mfa_enrollment" }, "/samples"),
 		).toEqual({ to: "/mfa-enrollment", search: { redirect: "/samples" } });
