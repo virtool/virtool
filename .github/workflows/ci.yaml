@@ -351,7 +351,7 @@ jobs:
                       ${{ github.event_name == 'push' && 'nuvs.cache-to=type=gha,mode=max,scope=nuvs' || '' }}
 
     nuvs-test:
-        name: NuVs / Test
+        name: Nuvs / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 10
         needs: [changes]
