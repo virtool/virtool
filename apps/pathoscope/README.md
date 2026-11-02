@@ -25,8 +25,6 @@ Bowtie 2, CD-HIT, and samtools. The app Dockerfile layers them into the runtime,
 `pigz` from apt:
 
 ```
-pnpm --filter @virtool/pathoscope build
-pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
 docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```
 

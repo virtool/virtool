@@ -68,10 +68,11 @@ Apps bundle; packages stay source.
 | Test (one file) | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>` |
 | Rust crates | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
 
-Every shipped app owns `apps/<name>/Dockerfile`. CI builds from a
-`pnpm deploy`-pruned context and derives affected images from the pnpm workspace
-graph, so every non-package image input must be represented by a private
-workspace dependency. Shared native tools live in
+Every shipped app owns `apps/<name>/Dockerfile`. Each app builds inside Docker:
+shared stages in `packages/image-build/Dockerfile` install, build, and
+`pnpm deploy` it, and the app Dockerfile copies the result. CI derives affected
+images from the pnpm workspace graph, so every non-package image input must be
+represented by a private workspace dependency. Shared native tools live in
 `packages/workflow-tools/Dockerfile` and are linked to app builds by
 `packages/image-build/docker-bake.hcl`.
 

@@ -191,23 +191,6 @@ it("builds the workflow image from the environment worktree before launch", asyn
 	await workflows.tick([createEnvironment("healthy")]);
 
 	expect(run).toHaveBeenCalledWith(
-		"pnpm",
-		["--filter", "@virtool/nuvs", "build"],
-		{ cwd: "/repo/healthy" },
-	);
-	expect(run).toHaveBeenCalledWith(
-		"pnpm",
-		[
-			"--filter",
-			"@virtool/nuvs",
-			"--prod",
-			"deploy",
-			".docker-build/nuvs",
-			"--force",
-		],
-		{ cwd: "/repo/healthy" },
-	);
-	expect(run).toHaveBeenCalledWith(
 		"docker",
 		[
 			"buildx",
@@ -221,6 +204,7 @@ it("builds the workflow image from the environment worktree before launch", asyn
 		],
 		{ cwd: "/repo/healthy" },
 	);
+	expect(run.mock.calls.some(([command]) => command === "pnpm")).toBe(false);
 	const launch = run.mock.calls.findIndex(([, args]) =>
 		isLaunch(args, "healthy"),
 	);

@@ -16,8 +16,6 @@ The shared workflow-tools Dockerfile uses cargo-chef to build `quality-core`,
 then the app Dockerfile copies it into a runtime that installs `pigz` from apt:
 
 ```console
-pnpm --filter @virtool/create-sample build
-pnpm --filter @virtool/create-sample --prod deploy .docker-build/create-sample --force
 docker buildx bake -f packages/image-build/docker-bake.hcl create-sample
 ```
 
