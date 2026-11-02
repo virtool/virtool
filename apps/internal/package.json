@@ -4,8 +4,7 @@
 	"private": true,
 	"type": "module",
 	"files": [
-		"dist",
-		"Dockerfile"
+		"dist"
 	],
 	"scripts": {
 		"build": "tsdown",

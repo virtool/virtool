@@ -2,9 +2,10 @@
 
 ## Images
 
-Every image ships from its app's Dockerfile. The image-build Bake file preserves the
-existing target names and links workflow apps to the shared native-tool stages
-in `packages/workflow-tools/Dockerfile`. Four images use the `build` job matrix;
+Every image ships from its app's Dockerfile. The image-build Bake file keeps
+the existing target names. It links every app to the shared build stages in
+`@virtool/image-build`, and links workflow apps to the shared native-tool
+stages in `@virtool/workflow-tools`. Four images use the `build` job matrix;
 Pathoscope and Nuvs have separate, longer affected-only jobs. `release-ghcr`
 publishes only the targets whose app version bumped in a release (see
 [Releases](#releases)).
@@ -14,13 +15,13 @@ image.
 
 `dist` retains its name because tooling outside this repository targets it.
 
-Adding an image requires an app Dockerfile, a Bake target, and a release-matrix entry. For
-the four targets in `build`, keep its matrix entry in step with
-`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
-above. Their `matrix.image` values must match the cache scopes those jobs
-write, so the release reuses the caches they populated rather than rebuilding
-the Rust crate and bioinformatics tools inside the shared 20-minute
-release timeout.
+Adding an image requires an app Dockerfile, its Bake build and image targets,
+and a release-matrix entry. For the four targets in `build`, keep its matrix
+entry in step with `release-ghcr`. Pathoscope and Nuvs instead use the
+dedicated build jobs above. Their `matrix.image` values must match the cache
+scopes those jobs write, so the release reuses the caches they populated rather
+than rebuilding the Rust crate and bioinformatics tools inside the shared
+20-minute release timeout.
 
 Only pushes to `main` write the image build caches. Pull requests read them
 but don't write them. A cache that a pull request writes is visible only to
@@ -51,16 +52,18 @@ input, such as the lockfile or the CI workflow, selects every workspace.
 The `release` job needs every build and test job. It runs when they pass or
 skip, and stops when one fails or is cancelled.
 
-CI first runs the app's build and then `pnpm --prod deploy`, making the Docker
-context exactly the production closure recorded in the workspace graph. The
-web image is the exception: its `.output` bundle carries its own dependencies,
-so it builds from the app directory, and a `.dockerignore` limits the context
-to `.output` and `package.json`. The
-Rust crates and shared native-tool recipe are private pnpm workspaces, listed
-as dependencies of the apps that consume their build products. Each one sets
-`"files": ["package.json"]`, so the deployed context gets only an empty
-package. This
-lets the same graph select Pathoscope for a Pathoscope crate change, Create
+CI runs only the Bake target. The app's build and `pnpm --prod deploy` run in
+the shared image-build stages, so the image holds exactly the production
+closure recorded in the workspace graph. The web image is the exception: its
+`.output` bundle carries its own dependencies, so it skips the deploy. The
+build jobs don't install dependencies on the runner. The install layer depends
+only on the manifests and the lockfile, so the Actions layer cache reuses it
+until a dependency changes.
+
+The Rust crates and shared native-tool recipe are private pnpm workspaces,
+listed as dependencies of the apps that consume their build products. Each one
+sets `"files": ["package.json"]`, so the deployed tree gets only an empty
+package. This lets the same graph select Pathoscope for a Pathoscope crate change, Create
 Sample for a quality crate change, and both native workflows for a shared-tool
 recipe change without hand-maintained path lists.
 

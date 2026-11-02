@@ -32,14 +32,18 @@ images whose app version changed; see [Continuous integration](docs/ci.md).
 | `pathoscope` | `ghcr.io/virtool/pathoscope` |
 | `nuvs` | `ghcr.io/virtool/nuvs` |
 
-Build one image locally by building the app, preparing its pruned context, and
-naming its Bake target:
+Build one image locally by naming its Bake target:
 
 ```shell
-pnpm --filter @virtool/pathoscope build
-pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
 docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```
 
-The web image needs no pruned context. Build the app and then name the `web`
-Bake target.
+The app builds inside Docker. A shared build stage installs the app's
+workspace closure from the lockfile, builds the app, and runs
+`pnpm --prod deploy`. The app Dockerfile copies only what its runtime needs
+from that stage. The web image copies the self-contained `.output` bundle and
+needs no deploy.
+
+The web build uploads its source maps to Sentry only when `SENTRY_AUTH_TOKEN`
+is set. `SENTRY_RELEASE` names the Sentry release, because the build context
+has no Git history. The release job sets both.

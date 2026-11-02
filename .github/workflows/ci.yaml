@@ -178,28 +178,15 @@ jobs:
             - name: Checkout
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: actions/checkout@v7
-            - name: Setup
-              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              uses: ./.github/actions/setup
-            - name: Prepare image context
-              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              run: |
-                  pnpm --filter ${{ matrix.package }} build
-                  # The web image runs its self-contained `.output` bundle from
-                  # the app directory, so it needs no deployed dependencies.
-                  if [ "${{ matrix.image }}" != web ]; then
-                      pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
-                  fi
             # The default `docker` driver cannot export a build cache, so the
             # gha cache below needs a docker-container builder.
             - name: Setup Buildx
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/setup-buildx-action@v4
-            # `source: .` builds from the working directory, because the image
-            # context is made on the runner and is not in Git. Pull requests
-            # read the cache but don't write it. A pull request's cache is
-            # visible only to that pull request, and those writes push the main
-            # branch's layers out of the cache.
+            # `source: .` builds from the checkout, the same context a local
+            # build uses. Pull requests read the cache but don't write it. A
+            # pull request's cache is visible only to that pull request, and
+            # those writes push the main branch's layers out of the cache.
             - name: Build
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/bake-action@v7
@@ -327,19 +314,12 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Prepare image context
-              run: |
-                  pnpm --filter @virtool/nuvs build
-                  pnpm --filter @virtool/nuvs --prod deploy .docker-build/nuvs --force
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
-            # `source: .` builds from the working directory, because the image
-            # context is made on the runner and is not in Git. Pull requests
-            # read the cache but don't write it. A pull request's cache is
-            # visible only to that pull request, and those writes push the main
-            # branch's layers out of the cache.
+            # `source: .` builds from the checkout, the same context a local
+            # build uses. Pull requests read the cache but don't write it. A
+            # pull request's cache is visible only to that pull request, and
+            # those writes push the main branch's layers out of the cache.
             - name: Build
               uses: docker/bake-action@v7
               with:
@@ -379,19 +359,12 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Prepare image context
-              run: |
-                  pnpm --filter @virtool/pathoscope build
-                  pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
-            # `source: .` builds from the working directory, because the image
-            # context is made on the runner and is not in Git. Pull requests
-            # read the cache but don't write it. A pull request's cache is
-            # visible only to that pull request, and those writes push the main
-            # branch's layers out of the cache.
+            # `source: .` builds from the checkout, the same context a local
+            # build uses. Pull requests read the cache but don't write it. A
+            # pull request's cache is visible only to that pull request, and
+            # those writes push the main branch's layers out of the cache.
             - name: Build
               uses: docker/bake-action@v7
               with:
@@ -751,18 +724,6 @@ jobs:
               uses: actions/checkout@v7
               with:
                   ref: ${{ matrix.ref }}
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Prepare image context
-              env:
-                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-              run: |
-                  pnpm --filter ${{ matrix.package }} build
-                  # The web image runs its self-contained `.output` bundle from
-                  # the app directory, so it needs no deployed dependencies.
-                  if [ "${{ matrix.image }}" != web ]; then
-                      pnpm --filter ${{ matrix.package }} --prod deploy .docker-build/${{ matrix.image }} --force
-                  fi
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
             - name: Login
@@ -771,10 +732,14 @@ jobs:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
-            # `source: .` builds from the working directory, because the image
-            # context is made on the runner and is not in Git.
+            # `source: .` builds from the checkout at the release commit. The
+            # web build uploads its source maps to Sentry under that commit;
+            # the other images ignore both variables.
             - name: Build & Push
               uses: docker/bake-action@v7
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  SENTRY_RELEASE: ${{ matrix.ref }}
               with:
                   source: .
                   files: packages/image-build/docker-bake.hcl

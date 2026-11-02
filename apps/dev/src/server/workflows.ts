@@ -228,8 +228,8 @@ export class WorkflowCoordinator {
 	}
 
 	/**
-	 * Build a workflow image the way CI does: from the app's pruned `pnpm deploy`
-	 * output, with Bake linking the shared native-tool stages.
+	 * Build a workflow image the way CI does: Bake builds the app inside its
+	 * Dockerfile and links the shared native-tool stages.
 	 */
 	private async buildImage(
 		environmentId: string,
@@ -237,20 +237,6 @@ export class WorkflowCoordinator {
 		worktree: string,
 	): Promise<void> {
 		const app = APP[workflow];
-		const filter = `@virtool/${app}`;
-		await this.run("pnpm", ["--filter", filter, "build"], { cwd: worktree });
-		await this.run(
-			"pnpm",
-			[
-				"--filter",
-				filter,
-				"--prod",
-				"deploy",
-				`.docker-build/${app}`,
-				"--force",
-			],
-			{ cwd: worktree },
-		);
 		await this.run(
 			"docker",
 			[

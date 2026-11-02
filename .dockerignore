@@ -1,17 +1,30 @@
 .idea
 .agents
+.claude
 .codex
+.changeset
 data
 # Local development configuration is not part of shipped image builds.
 .worktrees
 dev
-**/dist
 docker
 docs
+.git
+.github
+# Build output and local state. The image builds make their own.
+**/.cache
+**/.nitro
+**/.output
+**/.tanstack
+**/coverage
+**/dist
 **/node_modules
+**/*.log
+**/*.tsbuildinfo
+# Local environment files can hold secrets and change what Vite builds.
+**/.env
+**/.env.*
 # Rust build output. Sending a crate's target/ into the build context would be
 # gigabytes and would invalidate the context on every local cargo run; the
 # images build both crates from source in their own stages.
 **/target
-.git
-.github

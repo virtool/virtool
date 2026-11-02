@@ -14,8 +14,6 @@ The shared workflow-tools Dockerfile builds SeqKit and the app Dockerfile copies
 it into a runtime that installs `pigz` from apt:
 
 ```console
-pnpm --filter @virtool/create-subtraction build
-pnpm --filter @virtool/create-subtraction --prod deploy .docker-build/create-subtraction --force
 docker buildx bake -f packages/image-build/docker-bake.hcl create-subtraction
 ```
 

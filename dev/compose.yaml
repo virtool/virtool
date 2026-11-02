@@ -36,8 +36,8 @@ x-volumes: &volumes
   - ${VT_DEV_WORKTREE}/packages/storage/src:/repo/packages/storage/src:ro
   - ${VT_DEV_WORKTREE}/packages/data/drizzle:/repo/packages/data/drizzle:ro
 
-# The daemon builds workflow images with Bake before it runs them, because each
-# one needs a pruned `pnpm deploy` context. See `apps/dev/src/server/workflows.ts`.
+# The daemon builds workflow images with Bake before it runs them, so each run
+# uses the worktree's code. See `apps/dev/src/server/workflows.ts`.
 x-workflow-environment: &workflow-environment
   # The workflow targets are the shipped images, which set production.
   NODE_ENV: development

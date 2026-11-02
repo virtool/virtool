@@ -17,8 +17,6 @@ for `bowtie2-build` and `spades.py`, `pigz`, and the shared libraries required
 by the copied binaries.
 
 ```console
-pnpm --filter @virtool/nuvs build
-pnpm --filter @virtool/nuvs --prod deploy .docker-build/nuvs --force
 docker buildx bake -f packages/image-build/docker-bake.hcl nuvs
 ```
 
