@@ -340,7 +340,7 @@ jobs:
     # SPAdes from source, which is the single most expensive thing either
     # workflow build does. It is the first stage in the Dockerfile and depends on
     # nothing else, so a warm layer cache skips it entirely.
-    build-nuvs:
+    nuvs-build:
         name: Nuvs / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 60
@@ -394,7 +394,7 @@ jobs:
     # Pathoscope (apps/pathoscope, packages/pathoscope-core)
     # -------------------------------------------------------------------------
     # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
-    build-pathoscope:
+    pathoscope-build:
         name: Pathoscope / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 45
@@ -581,15 +581,15 @@ jobs:
         needs:
             [
                 build,
-                build-nuvs,
-                build-pathoscope,
                 changes,
                 checks,
                 data-storage-test,
                 docs-lint,
                 internal-test,
+                nuvs-build,
                 nuvs-test,
                 packages-test,
+                pathoscope-build,
                 pathoscope-test,
                 quality-test,
                 site-build,
@@ -792,7 +792,7 @@ jobs:
         strategy:
             fail-fast: false
             # The pathoscope and nuvs legs read the gha cache that
-            # build-pathoscope and build-nuvs write. Thus this job does not
+            # pathoscope-build and nuvs-build write. Thus this job does not
             # build the Rust crate, the bioinformatics tools, and SPAdes again
             # in its 20-minute timeout.
             matrix:
