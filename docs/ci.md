@@ -60,55 +60,85 @@ recipe change without hand-maintained path lists.
 
 ## Releases
 
-Versioning and publishing run on [Changesets](https://github.com/changesets/changesets).
-Every app and TypeScript package is `private`, so nothing publishes to npm; the config sets
-`privatePackages: { version: true, tag: true }` to version and tag them anyway.
-The `web` and `internal` images are a `fixed` group: they share one unified
-version and bump together, so a change to either publishes both at the same
-version. Create Sample, Create Subtraction, Pathoscope, and Nuvs are versioned
-independently and publish only when they change. Shared `packages/*` are
-versioned on their own and cascade a `patch` into the apps that depend on them. Image build inputs, which are the Rust crates,
-`workflow-tools`, and `image-build`, cascade the same way. `apps/site` is in
-`ignore`: it deploys elsewhere and ships no image. The development apps and
-`tsconfig` are also ignored.
+Versioning runs on [Knope](https://knope.tech), and CI publishes. Every app and
+TypeScript package is `private`, so nothing publishes to npm. Only the six
+images are released.
 
-The `release` job runs `changesets/action` on every push to `main`, after the
-same build and test jobs that gate a pull request:
+`knope.toml` declares five Knope packages. `virtool` holds the `web` and
+`internal` apps. They share one version, one changelog (`CHANGELOG.md` at the
+repository root), one tag, and one GitHub Release. `create-sample`,
+`create-subtraction`, `pathoscope`, and `nuvs` are versioned independently, each
+with its own changelog in its app directory. `packages/*`, `apps/site`, and the
+development apps are not Knope packages, so they have no releases.
 
-1. While unreleased changesets exist, the action maintains a **Version
-   Packages** pull request. Its `version` script runs `changeset version`, which
-   applies the bumps, updates each `CHANGELOG.md`, and deletes the consumed
-   changesets. A `packages/*` bump cascades a `patch` into dependent apps.
-2. Merging that pull request lands the bumps with no changesets left. The next
-   push runs the `publish` script, `changeset tag`, which creates a git tag per
-   bumped workspace in the form `@virtool/web@1.2.3`. The action pushes the tags
-   and creates a GitHub Release for each one, using that version's
-   `CHANGELOG.md` entry as the body.
+Pending changes are Markdown files in `.changeset/`. Each file lists Knope
+package names with a bump level, then a summary. Knope reads every Markdown
+file in that directory, so it holds nothing else. The summary becomes the
+changelog entry, with a link to its pull request. See
+[CONTRIBUTING.md](../CONTRIBUTING.md#change-files) for how to add one.
 
-The action rebuilds the Version Packages branch from `main` on every push, so
-commits pushed to it last only until the next merge. A pull request opened with
-`GITHUB_TOKEN` never starts its own CI, so the action opens it as the
-`virtool-releaser` GitHub App, which holds write access to contents and pull
-requests on this repository only. The `RELEASER_CLIENT_ID` Actions variable and
+The `release` job runs on every push to `main`, after the same build and test
+jobs that gate a pull request:
+
+1. While change files exist, the job runs `knope prepare-release` on branch
+   `knope/release`. It formats the changed `package.json` files, force-pushes
+   the branch, and opens or updates a pull request titled **Release**. The body
+   holds the new changelog sections. Merging it applies the bumps, updates the
+   changelogs, and deletes the consumed change files.
+2. The job finds each Knope package whose `package.json` version has no tag.
+   `virtool` tags are the plain version, such as `42.61.2`, which continues the
+   earlier semantic-release tags. Other tags are `<name>@<version>`, such as
+   `create-sample@42.61.2`. `release-ghcr` builds each of those images at the
+   commit that last changed that version, and publishes `:<version>` and
+   `:latest`. Then `release-github` creates the tag and a GitHub Release for
+   each package at that same commit. The Release title is the tag, and the body
+   is that version's changelog section. Only the `virtool` Release is marked
+   latest. A Release exists only after its image is pushed.
+
+The release pull request merge removes the change files, so its push takes the
+second path. A push with no untagged version publishes nothing.
+
+If an image leg fails, `release-github` does not run. Re-run the failed jobs of
+that workflow run. A later push also retries the release, and it builds from
+the same commit, so the images do not include changes made after the release.
+
+Knope's own `Release` step adds a `v` to each tag, so CI does not use it. A
+script creates the tags and Releases with `gh release create`. It skips a tag
+that exists, so a re-run makes only the missing Releases. If a changelog has no
+section for the version, the job fails before it creates a Release.
+
+The Release branch is rebuilt from `main` on every push, so commits pushed to it
+last only until the next merge. A pull request opened with `GITHUB_TOKEN` never
+starts its own CI, so the job pushes and opens it as the `virtool-releaser`
+GitHub App. The app holds write access to contents and pull requests on this
+repository only. The `RELEASER_CLIENT_ID` Actions variable and
 `RELEASER_PRIVATE_KEY` secret identify the app. The `Changeset` check skips the
-pull request.
+Release pull request, but not a fork branch with the same name.
 
-The action's `published-packages` output lists every tagged workspace.
-`release-ghcr-matrix` maps that list to image builds, keeping only the deployable
-apps. A `packages/*` bump tags a package but ships no image. `release-ghcr`
-builds each at the version in its tag, publishing `:<version>`
-and `:latest`. A release that bumped only shared packages publishes no image.
+The `Changeset` check has its own workflow, because it must run again when a
+label changes. If CI listened to label events, each label change would start all
+of CI again. The check does the following:
 
-The `Changeset` check fails a pull request that changes a versioned workspace
-that none of its changesets release, directly or by cascade. See
-[CONTRIBUTING.md](../CONTRIBUTING.md#changesets) for how to add one.
+- It rejects a malformed change file: a frontmatter line that is not exactly
+  `<name>: major|minor|patch`, an unknown or quoted package name, a package
+  named twice, empty frontmatter, or a missing summary.
+- It finds the image apps that the pull request affects through the workspace
+  graph, and requires that some change file names each one. A docs- or CI-only
+  pull request affects no image app and needs no change file.
+- The `no-release` label waives the second rule. It does not waive the first.
 
-Dependabot writes no changesets. The **Dependabot** workflow adds one
-changeset to each Dependabot npm or Docker pull request. A bump that changes the
-`package.json` or Dockerfile of a versioned workspace releases a patch of each
-such workspace. A bump that reaches only the root `package.json` or an ignored
-workspace, such as a lint tool or the product website, ships nothing, so the
-changeset is empty. A bump that changes only the lockfile, such as a transitive
-security update, names no workspace, so the changeset releases every app that
-ships an image. The workflow pushes the changeset as the `virtool-releaser`
-GitHub App for the same reason the release job does.
+Knope is installed with `mise` from the pin in `mise.toml`. Dependabot does not
+update that pin. See [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
+
+Dependabot writes no change files itself. The **Dependabot** change file
+workflow adds one change file to each Dependabot npm or Docker pull request. A
+bump that changes the `package.json` or Dockerfile of a workspace releases a
+patch of each Knope package that the workspace reaches. A bump that reaches only
+the root `package.json` or workspaces that ship no image, such as a lint tool or
+the product website, ships nothing, so the workflow writes no change file. The
+check passes those pull requests. A bump that changes only the lockfile, such as
+a transitive security update, names no workspace, so the change file releases
+every Knope package. The workflow reads `knope.toml` from `main`, not from the
+Dependabot branch. It replaces a change file that is not in Knope format, such
+as one written before the move to Knope. The workflow pushes the change file as
+the `virtool-releaser` GitHub App for the same reason the release job does.

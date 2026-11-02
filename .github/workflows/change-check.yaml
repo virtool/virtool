@@ -1,0 +1,43 @@
+name: Change check
+
+# This check is in its own workflow because it must run again when a label
+# changes. If CI listened to label events, each label change would start all
+# of CI again and cancel the run in progress.
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, labeled, unlabeled]
+        branches:
+            - "main"
+
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref }}
+    cancel-in-progress: true
+
+jobs:
+    # Fails a pull request that changes an image app that no change file names,
+    # unless the pull request has the `no-release` label. The ruleset requires
+    # a check with the name `Changeset`.
+    change-check:
+        name: Changeset
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+        # The release pull request deletes the change files that it releases.
+        # A fork can name a branch `knope/release` too.
+        if: >-
+            github.head_ref != 'knope/release'
+            || github.event.pull_request.head.repo.full_name != github.repository
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+            - name: Setup
+              uses: ./.github/actions/setup
+            # The pull request checkout does not include `main`.
+            - name: Check
+              run: |
+                  git fetch --no-tags origin main
+                  node scripts/check-change-files.mjs origin/main

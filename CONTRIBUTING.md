@@ -23,43 +23,71 @@ Developer-facing changes can describe the implementation directly:
 Pull request titles follow the same format so the pull request can be
 squash-merged into one well-formed commit.
 
-## Changesets
+## Change files
 
-Releases are driven by [Changesets](https://github.com/changesets/changesets),
-not by commit types. Each versioned workspace that a pull request changes must
-be released by one of its changesets, or the `Changeset` check fails.
+Releases are driven by change files, not by commit types. Knope reads the
+change files and releases the images. A pull request that affects an image app
+must name that app in a change file, or the `Changeset` check fails.
 
-Run `pnpm changeset`, select the workspaces to bump and the bump level (`patch`,
-`minor`, or `major`), and write a one-line summary. The command writes a Markdown
-file under `.changeset/`; commit it with your change. A shared `packages/*` bump
-cascades a `patch` into every app that depends on it, so you only declare the
-package you changed.
+Install Knope with `mise install`. The version is pinned in `mise.toml`.
 
-Image build inputs cascade the same way. A changeset for
-`@virtool/pathoscope-core` also releases Pathoscope, and one for
-`@virtool/workflow-tools` releases every workflow that uses it.
+Run `knope document-change`. Select the packages to bump, the bump level
+(`patch`, `minor`, or `major`), and write a one-line summary. The command writes
+a Markdown file in `.changeset/`. Commit it with your change.
 
-`@virtool/tsconfig` is ignored. If a change to it alters an app's build output,
-add a changeset for that app.
+A change file has YAML frontmatter that lists Knope package names with a bump
+level. The summary follows it:
 
-For a change that ships nothing to users, such as a refactor, a test, or a CI
-tweak, record an empty changeset with `pnpm changeset --empty`. An empty
-changeset covers the pull request only when every changeset in it is empty;
-beside one that releases something, it excuses nothing.
+```md
+---
+virtool: patch
+pathoscope: minor
+---
 
-Merging to `main` opens an automated **Version Packages** pull request that
-applies the pending bumps and updates each `CHANGELOG.md`; merging that pull
-request tags the bumped workspaces and publishes the affected images. See
-[Releases](docs/ci.md#releases).
+Fix the sample table sort order
+```
+
+Write the names without quotes. These are the Knope packages:
+
+| Name | Releases |
+| --- | --- |
+| `virtool` | The web and internal images, with one shared version |
+| `create-sample` | The Create Sample image |
+| `create-subtraction` | The Create Subtraction image |
+| `pathoscope` | The Pathoscope image |
+| `nuvs` | The Nuvs image |
+
+The check finds the apps that your pull request affects through the workspace
+graph. A change to a shared `packages/*` workspace affects every app that
+depends on it. A change to an image build input affects the apps that use it.
+For example, a change to `@virtool/pathoscope-core` affects Pathoscope, and a
+change to `@virtool/workflow-tools` affects every workflow that uses it. You
+name the affected apps in the change file. Knope does not cascade bumps.
+
+A pull request that affects no image app needs no change file. Empty change files are not allowed.
+When a pull request affects an app but ships nothing to
+users, such as a refactor, a test, or a CI tweak, add the `no-release` label.
+The label waives the check.
+
+Merging to `main` opens or updates a **Release** pull request that applies the
+pending bumps and updates the changelogs. Merging it publishes the images and
+creates the tags and GitHub Releases. See [Releases](docs/ci.md#releases).
 
 ### Release notes
 
-The summary of a changeset becomes its entry in the workspace's `CHANGELOG.md` and
-in the GitHub Release. Write it for users, not reviewers.
+The summary of a change file becomes its entry in the changelog and in the
+GitHub Release. Write it for users, not reviewers.
 
 To reword notes before a release, edit the `.changeset/*.md` files on `main`.
-The Version Packages pull request is rebuilt from them on every push, so edits
-pushed to it directly are lost when anything else merges first.
+The Release pull request is rebuilt from them on every push, so edits pushed to
+it directly are lost when anything else merges first.
 
-For a bigger release, add a changeset that holds only the user-facing summary,
-such as a `minor` bump for `@virtool/web` with a few paragraphs of prose.
+For a bigger release, add a change file that holds only the user-facing
+summary, such as a `minor` bump for `virtool` with a few paragraphs of prose.
+
+### Upgrade Knope
+
+Dependabot does not update `mise.toml`. To upgrade Knope, change `version` in
+the `github:knope-dev/knope` entry of `mise.toml`, run `mise install`, and run
+`knope --upgrade`. The last command migrates `knope.toml` when the
+configuration syntax changes. Commit both files.

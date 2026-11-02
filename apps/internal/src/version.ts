@@ -10,8 +10,8 @@ import pkg from "../package.json" with { type: "json" };
  * value: the bundler inlines it, `vitest` resolves it, and the version is then
  * passed explicitly into `createMetrics` rather than read from ambient scope.
  *
- * `changeset version` writes each release's version into the manifest, and
- * CI's `release-ghcr` job builds from that release's tag. Builds between
- * releases carry the last released version.
+ * `knope prepare-release` writes each release's version into the manifest, and
+ * CI's `release-ghcr` job builds from the commit that set the version. Builds
+ * between releases carry the last released version.
  */
 export const APP_VERSION: string = pkg.version;
