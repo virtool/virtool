@@ -148,10 +148,9 @@ jobs:
             # cleared against; a floating install could add rules that fail a
             # branch nothing changed.
             - name: Install Vale
-              run: |
-                  curl -sfL https://github.com/errata-ai/vale/releases/download/v3.18.0/vale_3.18.0_Linux_64-bit.tar.gz \
-                      | sudo tar -xz -C /usr/local/bin vale
-                  vale --version
+              uses: jdx/mise-action@v5
+              with:
+                  install_args: vale
             - name: Sync styles
               run: vale sync
             - name: Lint
