@@ -127,18 +127,56 @@ of CI again. The check does the following:
   pull request affects no image app and needs no change file.
 - The `no-release` label waives the second rule. It does not waive the first.
 
-Knope is installed with `mise` from the pin in `mise.toml`. Dependabot does not
+Knope is installed with `mise` from the pin in `mise.toml`. Renovate does not
 update that pin. See [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
 
-Dependabot writes no change files itself. The **Dependabot** change file
-workflow adds one change file to each Dependabot npm or Docker pull request. A
-bump that changes the `package.json` or Dockerfile of a workspace releases a
-patch of each Knope package that the workspace reaches. A bump that reaches only
-the root `package.json` or workspaces that ship no image, such as a lint tool or
-the product website, ships nothing, so the workflow writes no change file. The
-check passes those pull requests. A bump that changes only the lockfile, such as
-a transitive security update, names no workspace, so the change file releases
-every Knope package. The workflow reads `knope.toml` from `main`, not from the
-Dependabot branch. It replaces a change file that is not in Knope format, such
-as one written before the move to Knope. The workflow pushes the change file as
-the `virtool-releaser` GitHub App for the same reason the release job does.
+## Dependency updates
+
+Renovate runs in the **Renovate** workflow every two hours, not as the hosted
+app. The repository config is `.github/renovate.json5`. The workflow holds the
+settings that Renovate reads only from a self-hosted configuration, such as the
+list of allowed post-upgrade commands.
+
+Renovate opens these pull requests:
+
+- One for minor and patch updates of production dependencies, and one for
+  development dependencies, each Monday.
+- One for each major update. Packages from the same monorepo move together.
+- One for `better-auth` and SimpleWebAuthn together, for all update types. The
+  passkey plugin must resolve the same SimpleWebAuthn copy as the app.
+- One for GitHub Actions on the first day of each month.
+- One for the Node base image digest at any time. Only the Node image reaches
+  published images, so Renovate ignores the other Docker images. Node versions
+  change only by hand.
+- One for each security fix found in the OSV database, at any time.
+
+Renovate does not change the overrides in `pnpm-workspace.yaml`. Each one pins
+a vulnerable range of a transitive dependency, so it changes only by hand.
+
+The **Dependency Dashboard** issue lists the pending and postponed updates.
+
+Each Renovate npm or Docker branch gets its change file in the same commit as
+the bump. Renovate runs a script as a post-upgrade task, once for each branch:
+
+- A bump that changes the `package.json` or Dockerfile of a workspace releases a
+  patch of each Knope package that the workspace reaches.
+- A bump that reaches only the root `package.json` or workspaces that ship no
+  image, such as a lint tool or the product website, ships nothing, so the
+  script writes no change file. The check passes those pull requests.
+- A bump that changes only the lockfile names no workspace, so the change file
+  releases every Knope package.
+
+Renovate bumps the range in `package.json` even when the range already allows
+the new version. Otherwise, the bump would change only the lockfile and release
+every image.
+
+Each change file name has a hash of its updates, because a group branch name
+comes back each week while the change file of the last merge can still wait on
+`main` for a release. When Renovate updates a branch in place, the script
+deletes the change file of its last run first.
+
+Renovate pushes and opens pull requests as the `virtool-renovator` GitHub App,
+because a pull request opened with `GITHUB_TOKEN` never starts CI. The
+`RENOVATOR_CLIENT_ID` Actions variable and `RENOVATOR_PRIVATE_KEY` secret
+identify the app. It is separate from `virtool-releaser`, because Renovate also
+needs write access to issues and workflows.

@@ -4,7 +4,7 @@
 
 Write titles in sentence case, in the imperative mood, with no prefix and no
 period. Keep them under 72 characters. This matches the messages that Git,
-GitHub, and Dependabot generate.
+GitHub, and Renovate generate.
 
 Write user-facing changes as user outcomes. Put implementation details in the
 commit or pull request body:
@@ -87,7 +87,7 @@ summary, such as a `minor` bump for `virtool` with a few paragraphs of prose.
 
 ### Upgrade Knope
 
-Dependabot does not update `mise.toml`. To upgrade Knope, change `version` in
+Renovate does not update `mise.toml`. To upgrade Knope, change `version` in
 the `github:knope-dev/knope` entry of `mise.toml`, run `mise install`, and run
 `knope --upgrade`. The last command migrates `knope.toml` when the
 configuration syntax changes. Commit both files.

@@ -6,6 +6,9 @@
 	"ignoreWorkspaces": ["apps/site"],
 	"ignore": [".venv/**", "packages/pathoscope-core/**"],
 	"workspaces": {
+		".": {
+			"entry": ["scripts/write-renovate-change-file.mjs"]
+		},
 		"apps/create-sample": {
 			"ignoreDependencies": ["@virtool/image-build", "@virtool/quality-core", "@virtool/workflow-tools"]
 		},
