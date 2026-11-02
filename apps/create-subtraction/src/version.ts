@@ -8,8 +8,8 @@ import pkg from "../package.json" with { type: "json" };
  * bundled Node app — it would be `undefined` with nothing failing to say so. A
  * JSON import is a real module value the bundler inlines and `vitest` resolves.
  *
- * `changeset version` writes each release's version into the manifest, and
- * CI's `release-ghcr` job builds from that release's tag. It takes
+ * `knope prepare-release` writes each release's version into the manifest, and
+ * CI's `release-ghcr` job builds from the commit that set the version. It takes
  * no workflow cache, so nothing but the claim record reads it.
  */
 export const APP_VERSION: string = pkg.version;

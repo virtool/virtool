@@ -1,0 +1,44 @@
+[packages.virtool]
+versioned_files = ["apps/web/package.json", "apps/internal/package.json"]
+changelog = "CHANGELOG.md"
+
+[packages.create-sample]
+versioned_files = ["apps/create-sample/package.json"]
+changelog = "apps/create-sample/CHANGELOG.md"
+
+[packages.create-subtraction]
+versioned_files = ["apps/create-subtraction/package.json"]
+changelog = "apps/create-subtraction/CHANGELOG.md"
+
+[packages.pathoscope]
+versioned_files = ["apps/pathoscope/package.json"]
+changelog = "apps/pathoscope/CHANGELOG.md"
+
+[packages.nuvs]
+versioned_files = ["apps/nuvs/package.json"]
+changelog = "apps/nuvs/CHANGELOG.md"
+
+[changes]
+ignore_conventional_commits = true
+ignore_conventional_merge_commits = true
+
+[release_notes]
+change_templates = [
+    "### $summary ([#$pr_number](https://github.com/virtool/virtool/pull/$pr_number))\n\n$details",
+    "- $summary ([#$pr_number](https://github.com/virtool/virtool/pull/$pr_number))",
+]
+
+[github]
+owner = "virtool"
+repo = "virtool"
+
+[[workflows]]
+name = "document-change"
+[[workflows.steps]]
+type = "CreateChangeFile"
+
+[[workflows]]
+name = "prepare-release"
+[[workflows.steps]]
+type = "PrepareRelease"
+allow_empty = true

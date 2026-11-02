@@ -530,40 +530,21 @@ jobs:
               env:
                   TZ: UTC
 
-    # -------------------------------------------------------------------------
-    # Changeset (pull requests)
-    # -------------------------------------------------------------------------
-    # Fails a pull request that changes a versioned workspace that none of its
-    # changesets release. A docs- or CI-only pull request is unaffected.
-    changeset-check:
-        name: Changeset
-        runs-on: ubuntu-24.04
-        timeout-minutes: 10
-        # The version PR consumes the changesets it releases, so it would fail.
-        if: github.event_name == 'pull_request' && github.head_ref != 'changeset-release/main'
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
-            - name: Setup
-              uses: ./.github/actions/setup
-            # `--since` resolves the base branch as a local ref; the pull-request
-            # checkout only brings the head, so fetch main first.
-            - name: Coverage
-              run: |
-                  git fetch --no-tags origin main
-                  node scripts/check-changesets.mjs origin/main
 
     # -------------------------------------------------------------------------
     # Release
     # -------------------------------------------------------------------------
-    # On push to main, `changesets/action` maintains a "Version Packages" pull
-    # request while unreleased changesets exist; merging that pull request lands
-    # the version bumps with no changesets left, and the next push runs the
-    # `publish` script, which tags each bumped workspace (`@virtool/web@1.2.3`).
-    # `release-ghcr-matrix` reads the tagged packages and `release-ghcr`
-    # publishes only the deployable apps among them.
+    # On push to main, the release jobs do two things:
+    #
+    # - If change files exist, `release` runs Knope to prepare a release on
+    #   branch `knope/release` and opens or updates the "Release" pull request.
+    # - If a Knope package has a version with no tag, `release-ghcr` pushes its
+    #   images and `release-github` then makes the tags and GitHub Releases.
+    #
+    # The merge of the release pull request removes the change files and adds
+    # the new versions, so its push goes to the second path. Both paths can run
+    # on one push. This occurs when a different merge cancels the pending run
+    # of the release merge.
     release:
         name: Release
         runs-on: ubuntu-24.04
@@ -591,24 +572,16 @@ jobs:
         # after skipped jobs, but not after a failed or cancelled job. `changes`
         # is in `needs` because its failure skips every filtered job.
         if: >-
-            github.event_name == 'push' && !cancelled()
+            github.event_name == 'push' && github.repository_owner == 'Virtool'
+            && !cancelled()
             && !contains(needs.*.result, 'failure')
             && !contains(needs.*.result, 'cancelled')
-        outputs:
-            published: ${{ steps.changesets.outputs.published }}
-            published-packages: ${{ steps.changesets.outputs.published-packages }}
+        env:
+            MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
         steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  # `changeset tag` skips a package whose tag already exists, so
-                  # publishing needs the full tag history, not the default
-                  # shallow checkout.
-                  fetch-depth: 0
-            - name: Setup
-              uses: ./.github/actions/setup
-            # A pull request opened with `GITHUB_TOKEN` never starts its own CI,
-            # so the version PR is opened as the `virtool-releaser` GitHub App.
+            # Workflows do not start for a push or pull request made with
+            # `GITHUB_TOKEN`. The release pull request needs CI, so the
+            # `virtool-releaser` GitHub App pushes and opens it.
             - name: Token
               id: app-token
               uses: actions/create-github-app-token@v3
@@ -617,93 +590,181 @@ jobs:
                   private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
                   permission-contents: write
                   permission-pull-requests: write
-            - name: Changesets
-              id: changesets
-              # `changeset tag` writes tag events to the action's output file,
-              # which it reads to push the tags, create a GitHub Release per tag,
-              # and set `published-packages`.
-              uses: changesets/action@v2.1.2
+            # Knope finds the pull request of each change file in the history.
+            # The App token stays out of `.git/config`, so dependency install
+            # scripts can't read it. Only the push uses it.
+            - name: Checkout
+              uses: actions/checkout@v7
               with:
-                  github-token: ${{ steps.app-token.outputs.token }}
-                  version-script: pnpm changeset version
-                  publish-script: pnpm changeset tag
-                  pr-title: "Version packages"
-                  commit-message: "Version packages"
+                  fetch-depth: 0
+                  persist-credentials: false
+            - name: Find change files
+              id: pending
+              run: |
+                  if compgen -G '.changeset/*.md' > /dev/null; then
+                      echo "found=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "found=false" >> "$GITHUB_OUTPUT"
+                  fi
+            - name: Setup
+              if: steps.pending.outputs.found == 'true'
+              uses: ./.github/actions/setup
+            - name: Install Knope
+              if: steps.pending.outputs.found == 'true'
+              uses: jdx/mise-action@v5
+              with:
+                  install_args: github:knope-dev/knope
+            - name: Prepare release
+              if: steps.pending.outputs.found == 'true'
+              env:
+                  GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
+                  APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+              run: |
+                  git switch -C knope/release
+                  knope prepare-release --verbose
+                  if git diff --cached --quiet; then
+                      exit 0
+                  fi
+
+                  # Knope writes package.json with spaces and no final newline.
+                  mapfile -t manifests < <(git diff --cached --name-only --diff-filter=AM -- '*package.json')
+                  if [ "${#manifests[@]}" -gt 0 ]; then
+                      pnpm exec biome format --write "${manifests[@]}"
+                      git add -- "${manifests[@]}"
+                  fi
+
+                  body="$RUNNER_TEMP/release-body.md"
+                  echo "Merge this pull request to publish the images and GitHub Releases below." > "$body"
+                  for changelog in $(git diff --cached --name-only -- CHANGELOG.md 'apps/*/CHANGELOG.md'); do
+                      if [ "$changelog" = CHANGELOG.md ]; then
+                          name=virtool
+                      else
+                          name=$(basename "$(dirname "$changelog")")
+                      fi
+                      {
+                          printf '\n## %s\n\n' "$name"
+                          git diff --cached --no-color --unified=0 -- "$changelog" \
+                              | awk '/^@@/ { h = 1; next } h && /^\+/ { print substr($0, 2) }' \
+                              | sed 's/^#/##/'
+                      } >> "$body"
+                  done
+
+                  user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+                  git config user.name "${APP_SLUG}[bot]"
+                  git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+                  git commit -m "Release"
+                  git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" knope/release
+
+                  number=$(gh pr list --head knope/release --base main --state open --json number --jq '.[0].number // empty')
+                  if [ -n "$number" ]; then
+                      gh pr edit "$number" --title "Release" --body-file "$body"
+                  else
+                      gh pr create --head knope/release --base main --title "Release" --body-file "$body"
+                  fi
     release-ghcr-matrix:
         name: Release / Matrix
         runs-on: ubuntu-24.04
         timeout-minutes: 5
         needs: [release]
-        if: needs.release.outputs.published == 'true'
         outputs:
             include: ${{ steps.matrix.outputs.include }}
             any: ${{ steps.matrix.outputs.any }}
+            releases: ${{ steps.matrix.outputs.releases }}
         steps:
-            # Map the tagged packages to image builds, dropping any that are not
-            # a deployable app (a shared `packages/*` bump tags a package but
-            # ships no image). Keep this map in step with the `build` and
-            # `release-ghcr` matrices.
+            # The full history finds the commit that set each version.
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+            # A Knope package is released when its version has no tag. The
+            # `virtool` tag is the plain version, which continues the earlier
+            # semantic-release tags. Other tags are `<name>@<version>`. Each
+            # package gives its images. Keep this map in step with `knope.toml`
+            # and the `build` matrix.
+            #
+            # Each image is built from the commit that last changed the
+            # package's version, not the pushed commit. A later push that finds
+            # the version still untagged, such as after a failed run, then
+            # publishes what was released and not what came after it.
             - name: Build matrix
               id: matrix
-              env:
-                  PUBLISHED: ${{ needs.release.outputs.published-packages }}
               run: |
-                  include=$(jq -c '
-                    {
-                      "@virtool/web":                {image:"web",                target:"dist"},
-                      "@virtool/internal":           {image:"internal",           target:"internal"},
-                      "@virtool/create-sample":      {image:"create-sample",      target:"create-sample"},
-                      "@virtool/create-subtraction": {image:"create-subtraction", target:"create-subtraction"},
-                      "@virtool/pathoscope":         {image:"pathoscope",         target:"pathoscope"},
-                      "@virtool/nuvs":               {image:"nuvs",               target:"nuvs"}
-                    } as $apps
-                    | [ .[]
-                        | . as $p
-                        | $apps[$p.name] as $m
-                        | select($m != null)
-                        | $m + {
-                            package: $p.name,
-                            version: $p.version,
-                            tag: ($p.name + "@" + $p.version),
-                            images: ("ghcr.io/virtool/" + $m.image)
-                          }
-                      ]' <<< "$PUBLISHED")
+                  set -o pipefail
+                  packages='[
+                    {"name": "virtool", "file": "apps/web/package.json", "changelog": "CHANGELOG.md", "images": [
+                      {"image": "web", "package": "@virtool/web"},
+                      {"image": "internal", "package": "@virtool/internal"}]},
+                    {"name": "create-sample", "file": "apps/create-sample/package.json", "changelog": "apps/create-sample/CHANGELOG.md", "images": [
+                      {"image": "create-sample", "package": "@virtool/create-sample"}]},
+                    {"name": "create-subtraction", "file": "apps/create-subtraction/package.json", "changelog": "apps/create-subtraction/CHANGELOG.md", "images": [
+                      {"image": "create-subtraction", "package": "@virtool/create-subtraction"}]},
+                    {"name": "pathoscope", "file": "apps/pathoscope/package.json", "changelog": "apps/pathoscope/CHANGELOG.md", "images": [
+                      {"image": "pathoscope", "package": "@virtool/pathoscope"}]},
+                    {"name": "nuvs", "file": "apps/nuvs/package.json", "changelog": "apps/nuvs/CHANGELOG.md", "images": [
+                      {"image": "nuvs", "package": "@virtool/nuvs"}]}
+                  ]'
+                  tags=$(git ls-remote --tags --refs origin | cut -f2)
+                  include='[]'
+                  releases='[]'
+                  while read -r package; do
+                      name=$(jq -r .name <<< "$package")
+                      file=$(jq -r .file <<< "$package")
+                      version=$(jq -r .version "$file")
+                      if [ "$name" = virtool ]; then
+                          tag=$version
+                      else
+                          tag="${name}@${version}"
+                      fi
+                      if grep -qxF "refs/tags/${tag}" <<< "$tags"; then
+                          continue
+                      fi
+                      ref=$(git log -1 --first-parent --format=%H -G'^[[:space:]]*"version":' -- "$file")
+                      if [ -z "$ref" ]; then
+                          echo "::error::No commit sets the version in ${file}."
+                          exit 1
+                      fi
+                      echo "Release ${tag} from ${ref}"
+                      include=$(jq -c --argjson p "$package" --arg version "$version" --arg ref "$ref" --arg registry "$REGISTRY" \
+                          '. + [$p.images[] | . + {version: $version, ref: $ref, images: ($registry + "/virtool/" + .image)}]' \
+                          <<< "$include")
+                      releases=$(jq -c --argjson p "$package" --arg version "$version" --arg tag "$tag" --arg ref "$ref" \
+                          '. + [{name: $p.name, version: $version, tag: $tag, ref: $ref, changelog: $p.changelog}]' \
+                          <<< "$releases")
+                  done < <(jq -c '.[]' <<< "$packages")
                   echo "include=$include" >> "$GITHUB_OUTPUT"
+                  echo "releases=$releases" >> "$GITHUB_OUTPUT"
                   if [ "$(jq 'length' <<< "$include")" -gt 0 ]; then
                       echo "any=true" >> "$GITHUB_OUTPUT"
                   else
                       echo "any=false" >> "$GITHUB_OUTPUT"
                   fi
     release-ghcr:
-        # No `${{ matrix.image }}` in the name: this job's `if` is false on
-        # every PR (it only runs post-merge, on push to main), and GitHub
-        # skips a job before expanding its matrix — so a matrix-templated
-        # name would render as the literal, unresolved expression on every
-        # PR's checks list instead of a real image name.
+        # No `${{ matrix.image }}` in the name. GitHub skips this job on each
+        # pull request before it expands the matrix, so the checks list would
+        # show the expression and not an image name.
         name: Release / GHCR
         runs-on: ubuntu-24.04
         timeout-minutes: 20
-        needs: [release, release-ghcr-matrix]
-        if: github.repository_owner == 'Virtool' && needs.release-ghcr-matrix.outputs.any == 'true'
+        needs: [release-ghcr-matrix]
+        if: needs.release-ghcr-matrix.outputs.any == 'true'
         permissions:
             contents: read
             packages: write
         strategy:
             fail-fast: false
-            # Only the deployable apps whose version bumped this release, built
-            # from `release-ghcr-matrix`. The pathoscope and nuvs legs read the
-            # gha cache under the same scope build-pathoscope and build-nuvs
-            # write it to, so the release reuses what those 45/60-minute jobs
-            # already produced
-            # rather than rebuilding the Rust crate, the bioinformatics tools
-            # and SPAdes from scratch inside this job's shared 20-minute timeout.
+            # The pathoscope and nuvs legs read the gha cache that
+            # build-pathoscope and build-nuvs write. Thus this job does not
+            # build the Rust crate, the bioinformatics tools, and SPAdes again
+            # in its 20-minute timeout.
             matrix:
                 include: ${{ fromJSON(needs.release-ghcr-matrix.outputs.include) }}
         steps:
+            # `release-github` makes the tags at the same commit.
             - name: Checkout
               uses: actions/checkout@v7
               with:
-                  ref: ${{ matrix.tag }}
+                  ref: ${{ matrix.ref }}
             - name: Setup
               uses: ./.github/actions/setup
             - name: Prepare image context
@@ -735,3 +796,30 @@ jobs:
                       --set '${{ matrix.image }}.tags+=${{ matrix.images }}:latest' \
                       --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
                       --set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}'
+    # Runs only after all images are pushed, so a GitHub Release always has its
+    # images. Each Release targets the commit its images were built from. A
+    # failed image leg skips this job; re-run the failed legs, not a new push.
+    release-github:
+        name: Release / GitHub
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+        needs: [release-ghcr-matrix, release-ghcr]
+        if: needs.release-ghcr-matrix.outputs.any == 'true'
+        steps:
+            - name: Token
+              id: app-token
+              uses: actions/create-github-app-token@v3
+              with:
+                  client-id: ${{ vars.RELEASER_CLIENT_ID }}
+                  private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
+                  permission-contents: write
+            # The full history holds each package's ref and its changelog.
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+            - name: Release
+              env:
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
+                  RELEASES: ${{ needs.release-ghcr-matrix.outputs.releases }}
+              run: node scripts/create-releases.mjs

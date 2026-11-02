@@ -276,14 +276,16 @@ Write commit and PR titles in sentence case, in the imperative mood, with no
 prefix and no period. Keep them under 72 characters. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for examples.
 
-- Releases are automated with Changesets. Each versioned workspace that a pull
-  request changes must be released by a changeset (`pnpm changeset`), or CI
-  fails; a change that ships nothing to users records an empty one
-  (`pnpm changeset --empty`). See [Releases](docs/ci.md#releases).
+- Releases are automated with Knope. Each pull request that affects an image
+  app must name that app in a change file, or the `Changeset` check fails.
+  Write one with `knope document-change`. Use Knope package names (`virtool`,
+  `create-sample`, `create-subtraction`, `pathoscope`, `nuvs`). Do not use
+  empty change files. A pull request that affects no image app needs none. The
+  `no-release` label waives the check. See [Releases](docs/ci.md#releases).
 - Image build inputs (`image-build`, `workflow-tools`, and the Rust crates) are
   production `dependencies` of the apps that use them, with
-  `"files": ["package.json"]`, so their changesets cascade into those apps
-  without adding files to the deployed image.
+  `"files": ["package.json"]`. A change to one of them makes the check require
+  change files for the dependent apps. The deployed image gets no extra files.
 - Don't push or create PRs unless asked.
 - Never amend or force-push a pushed branch. Add follow-up commits instead.
 - Don't include a Test plan section in pull request descriptions or comments.

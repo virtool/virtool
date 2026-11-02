@@ -1,9 +1,9 @@
 ---
-"@virtool/web": patch
-"@virtool/create-sample": patch
-"@virtool/create-subtraction": patch
-"@virtool/pathoscope": patch
-"@virtool/nuvs": patch
+virtool: patch
+create-sample: patch
+create-subtraction: patch
+pathoscope: patch
+nuvs: patch
 ---
 
-Adopt per-app image builds and Changesets-based releases.
+Build and release each image separately.

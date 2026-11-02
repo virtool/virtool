@@ -9,10 +9,10 @@ import pkg from "../package.json" with { type: "json" };
  * say so. A JSON import is a real module value the bundler inlines and `vitest`
  * resolves.
  *
- * `changeset version` writes each release's version into the manifest, and
- * CI's `release-ghcr` job builds from that release's tag. `workflow_version` is
- * part of all three of this workflow's cache keys, so a cached blob is reused
- * only by a runner of the same release. Builds between releases carry the last
- * released version.
+ * `knope prepare-release` writes each release's version into the manifest, and
+ * CI's `release-ghcr` job builds from the commit that set the version.
+ * `workflow_version` is part of all three of this workflow's cache keys, so a
+ * cached blob is reused only by a runner of the same release. Builds between
+ * releases carry the last released version.
  */
 export const APP_VERSION: string = pkg.version;

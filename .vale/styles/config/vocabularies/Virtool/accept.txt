@@ -218,3 +218,4 @@ SDK('s|s)?
 [Uu]nsetting
 [Ww]orktrees?('s)?
 Worktrunk('s)?
+Knope
