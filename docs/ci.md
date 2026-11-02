@@ -133,7 +133,7 @@ update that pin. See [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
 ## Dependency updates
 
 Renovate runs in the **Renovate** workflow every two hours, not as the hosted
-app. The repository config is `.github/renovate.json5`. The workflow holds the
+app. The repository config holds the update rules. The workflow holds the
 settings that Renovate reads only from a self-hosted configuration, such as the
 list of allowed post-upgrade commands.
 
@@ -150,8 +150,8 @@ Renovate opens these pull requests:
   change only by hand.
 - One for each security fix found in the OSV database, at any time.
 
-Renovate does not change the overrides in `pnpm-workspace.yaml`. Each one pins
-a vulnerable range of a transitive dependency, so it changes only by hand.
+Renovate does not change the pnpm overrides. Each one pins a vulnerable range
+of a transitive dependency, so it changes only by hand.
 
 The **Dependency Dashboard** issue lists the pending and postponed updates.
 
@@ -170,10 +170,10 @@ Renovate bumps the range in `package.json` even when the range already allows
 the new version. Otherwise, the bump would change only the lockfile and release
 every image.
 
-Each change file name has a hash of its updates, because a group branch name
-comes back each week while the change file of the last merge can still wait on
-`main` for a release. When Renovate updates a branch in place, the script
-deletes the change file of its last run first.
+Each change file name has a hash of its updates and their digests, because a
+group branch name comes back each week while the change file of the last merge
+can still wait on `main` for a release. When Renovate updates a branch in place,
+the script deletes the change file of its last run first.
 
 Renovate pushes and opens pull requests as the `virtool-renovator` GitHub App,
 because a pull request opened with `GITHUB_TOKEN` never starts CI. The

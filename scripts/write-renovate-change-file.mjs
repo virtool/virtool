@@ -189,6 +189,7 @@ function main() {
 
 	// Each change file needs its own name, because a branch name comes back
 	// while the change file of its last merge waits on `main` for a release.
+	// The upgrades include digests, because a digest update keeps its tag.
 	const hash = createHash("sha256")
 		.update(JSON.stringify(data.upgrades))
 		.digest("hex")
