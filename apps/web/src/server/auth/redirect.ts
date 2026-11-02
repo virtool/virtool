@@ -25,6 +25,24 @@ function hasUnsafeCharacter(value: string): boolean {
 	return false;
 }
 
+function parseLocal(value: string): URL | undefined {
+	try {
+		const url = new URL(value, BASE);
+		return url.origin === BASE ? url : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function isWallPath(pathname: string): boolean {
+	for (const path of WALL_PATHS) {
+		if (pathname === path || pathname.startsWith(`${path}/`)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 /**
  * Return a normalized local post-authentication redirect, or discard it.
  *
@@ -39,29 +57,26 @@ export function safeRedirect(value: unknown): string | undefined {
 		return undefined;
 	}
 
-	let url: URL;
-	try {
-		url = new URL(value, BASE);
-	} catch {
-		return undefined;
-	}
+	const url = parseLocal(value);
 
-	if (url.origin !== BASE) {
+	if (!url) {
 		return undefined;
 	}
 
 	const { pathname, search, hash } = url;
+
+	// Dot segments can normalize `/a/..//evil.com` to the protocol-relative
+	// `//evil.com`.
+	if (pathname.startsWith("//")) {
+		return undefined;
+	}
 
 	// The email-change wall resumes a link that it holds in session storage.
 	if (pathname === "/verify-email" && !search && !hash) {
 		return pathname;
 	}
 
-	if (
-		WALL_PATHS.some(
-			(path) => pathname === path || pathname.startsWith(`${path}/`),
-		)
-	) {
+	if (isWallPath(pathname)) {
 		return undefined;
 	}
 

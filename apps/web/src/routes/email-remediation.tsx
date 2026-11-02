@@ -1,7 +1,8 @@
 import { getErrorStatus } from "@app/queryErrors";
+import { safeRedirect } from "@server/auth/redirect";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { safeRedirect, UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
+import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
 import EmailRemediation from "@wall/components/EmailRemediation";
 
 type EmailRemediationSearch = {

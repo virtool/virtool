@@ -8,7 +8,6 @@ import {
 	isValidEmail,
 	normalizeEmail,
 	PasswordTooShortError,
-	safeRedirect,
 } from "@virtool/contracts";
 import { upgradePasswordHash } from "@virtool/data/auth/credential";
 import {
@@ -66,6 +65,7 @@ import {
 } from "./loginRateLimit";
 import { UnauthorizedError } from "./middleware";
 import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
+import { safeRedirect } from "./redirect";
 import { resolveRestrictedSetup } from "./restricted";
 import { checkConfiguredPasswordLength } from "./service";
 import {

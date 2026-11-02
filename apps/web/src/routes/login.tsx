@@ -1,8 +1,8 @@
 import { isServiceUnavailable } from "@app/queryErrors";
 import { oneOfOptional } from "@app/searchParams";
+import { safeRedirect } from "@server/auth/redirect";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { safeRedirect } from "@virtool/contracts";
 import LoginWall from "@wall/components/LoginWall";
 
 /** Search params for the login wall. */

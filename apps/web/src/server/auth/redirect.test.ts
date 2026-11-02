@@ -25,6 +25,8 @@ describe("safeRedirect", () => {
 		"//example.com",
 		"/\\example.com",
 		"/samples/../\\example.com",
+		"/samples/..//example.com",
+		"/.//example.com",
 		"/\t/example.com",
 		"/\n/example.com",
 		"/samples\u0000",
