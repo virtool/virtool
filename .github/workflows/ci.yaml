@@ -232,40 +232,6 @@ jobs:
                   docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} \
                       --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
                       "${cache_to[@]}"
-    # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
-    build-pathoscope:
-        name: Pathoscope / Build
-        runs-on: ubuntu-24.04
-        timeout-minutes: 45
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Prepare image context
-              run: |
-                  pnpm --filter @virtool/pathoscope build
-                  pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
-            - name: Setup Buildx
-              uses: docker/setup-buildx-action@v4
-            # Inline Bake commands get no cache service credentials, so the gha
-            # cache needs this step to expose them.
-            - name: Expose Actions runtime
-              uses: crazy-max/ghaction-github-runtime@v4
-            - name: Build
-              run: |
-                  # Pull requests read the cache but don't write it. A pull
-                  # request's cache is visible only to that pull request, and
-                  # those writes push the main branch's layers out of the cache.
-                  cache_to=()
-                  if [ "$GITHUB_EVENT_NAME" = push ]; then
-                      cache_to=(--set 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope')
-                  fi
-                  docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope \
-                      --set 'pathoscope.cache-from=type=gha,scope=pathoscope' \
-                      "${cache_to[@]}"
 
     # -------------------------------------------------------------------------
     # Web (apps/web)
@@ -427,6 +393,41 @@ jobs:
     # -------------------------------------------------------------------------
     # Pathoscope (apps/pathoscope, packages/pathoscope-core)
     # -------------------------------------------------------------------------
+    # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
+    build-pathoscope:
+        name: Pathoscope / Build
+        runs-on: ubuntu-24.04
+        timeout-minutes: 45
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Prepare image context
+              run: |
+                  pnpm --filter @virtool/pathoscope build
+                  pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
+            - name: Setup Buildx
+              uses: docker/setup-buildx-action@v4
+            # Inline Bake commands get no cache service credentials, so the gha
+            # cache needs this step to expose them.
+            - name: Expose Actions runtime
+              uses: crazy-max/ghaction-github-runtime@v4
+            - name: Build
+              run: |
+                  # Pull requests read the cache but don't write it. A pull
+                  # request's cache is visible only to that pull request, and
+                  # those writes push the main branch's layers out of the cache.
+                  cache_to=()
+                  if [ "$GITHUB_EVENT_NAME" = push ]; then
+                      cache_to=(--set 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope')
+                  fi
+                  docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope \
+                      --set 'pathoscope.cache-from=type=gha,scope=pathoscope' \
+                      "${cache_to[@]}"
+
     pathoscope-test:
         name: Pathoscope / Test
         runs-on: ubuntu-24.04
