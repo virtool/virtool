@@ -555,6 +555,9 @@ application shell. Local success in a form is not proof that a restriction
 has lifted.
 
 `safeRedirect` keeps a redirect only if it is a local path outside the wall.
+The client checks each redirect in search params, and the server checks the
+redirect that it puts into a remediation verification link. A redirect is a
+full path with a query and a fragment, so navigate to it with `href`, not `to`.
 Each wall step carries the redirect forward. Bearer tokens never go into a
 redirect, a query key, or router search state: `useCapturedUrlParams` reads them
 from the fragment or query one time and removes them from history before any

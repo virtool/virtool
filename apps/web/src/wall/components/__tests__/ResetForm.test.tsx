@@ -158,7 +158,7 @@ describe("<ResetForm />", () => {
 
 		await waitFor(() =>
 			expect(navigateMock).toHaveBeenCalledWith({
-				to: "/samples",
+				href: "/samples",
 				replace: true,
 			}),
 		);
@@ -173,7 +173,7 @@ describe("<ResetForm />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
 
 		await waitFor(() =>
-			expect(navigateMock).toHaveBeenCalledWith({ to: "/", replace: true }),
+			expect(navigateMock).toHaveBeenCalledWith({ href: "/", replace: true }),
 		);
 	});
 

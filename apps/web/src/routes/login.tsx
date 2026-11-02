@@ -1,7 +1,8 @@
 import { isServiceUnavailable } from "@app/queryErrors";
-import { oneOfOptional, safeRedirect } from "@app/searchParams";
+import { oneOfOptional } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { safeRedirect } from "@virtool/contracts";
 import LoginWall from "@wall/components/LoginWall";
 
 /** Search params for the login wall. */
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/login")({
 			return { passwordResetRequired: step?.type === "password_reset" };
 		}
 
-		throw redirect({ to: search.redirect ?? "/" });
+		throw redirect({ href: search.redirect ?? "/" });
 	},
 	// The forced-reset form needs the policy up front. A failed policy read must
 	// not take down the wall, so prefetch rather than ensuring the query.

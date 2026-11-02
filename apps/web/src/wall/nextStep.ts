@@ -1,5 +1,6 @@
 import { accountQueryOptions } from "@account/account";
 import type { QueryClient } from "@tanstack/react-query";
+import type { NavigateOptions } from "@tanstack/react-router";
 import {
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
@@ -72,17 +73,22 @@ export async function resolveAuthNextStep(
 }
 
 /** The route for a step, carrying a validated redirect where it applies. */
-export function getAuthNextStepRoute(step: AuthNextStep, redirect?: string) {
+export function getAuthNextStepRoute(
+	step: AuthNextStep,
+	redirect?: string,
+): NavigateOptions {
 	switch (step.type) {
 		case "application":
-			return { to: redirect ?? "/" };
+			// The redirect is a full path, which only `href` splits into a path,
+			// search, and hash.
+			return { href: redirect ?? "/" };
 		case "login":
 		case "password_reset":
-			return { to: "/login" as const, search: { redirect } };
+			return { to: "/login", search: { redirect } };
 		case "email_remediation":
-			return { to: "/email-remediation" as const, search: { redirect } };
+			return { to: "/email-remediation", search: { redirect } };
 		case "mfa_enrollment":
-			return { to: "/mfa-enrollment" as const, search: { redirect } };
+			return { to: "/mfa-enrollment", search: { redirect } };
 		default: {
 			const unhandled: never = step;
 			throw new Error(`Unhandled auth step: ${JSON.stringify(unhandled)}`);

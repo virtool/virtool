@@ -1,6 +1,6 @@
-import { safeRedirect } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { safeRedirect } from "@virtool/contracts";
 import MfaEnrollment from "@wall/components/MfaEnrollment";
 
 type MfaEnrollmentSearch = {

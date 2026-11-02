@@ -1,10 +1,10 @@
 import { accountQueryKeys } from "@account/keys";
-import { safeRedirect } from "@app/searchParams";
 import Alert from "@base/Alert";
 import Button from "@base/Button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { EmailRemediationVerificationResult } from "@virtool/contracts";
+import { safeRedirect } from "@virtool/contracts";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { type Dispatch, type SetStateAction, useState } from "react";
 import { useCapturedUrlParams, useFollowAuthNextStep } from "../hooks";

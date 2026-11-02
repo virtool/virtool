@@ -387,7 +387,7 @@ describe("<LoginForm />", () => {
 			);
 			await waitFor(() =>
 				expect(navigateMock).toHaveBeenCalledWith({
-					to: "/samples",
+					href: "/samples",
 					replace: true,
 				}),
 			);
@@ -555,7 +555,7 @@ describe("<LoginForm />", () => {
 
 			await waitFor(() =>
 				expect(navigateMock).toHaveBeenCalledWith({
-					to: "/samples",
+					href: "/samples",
 					replace: true,
 				}),
 			);
@@ -630,7 +630,7 @@ describe("<LoginForm />", () => {
 			await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
 			await waitFor(() =>
-				expect(navigateMock).toHaveBeenCalledWith({ to: "/", replace: true }),
+				expect(navigateMock).toHaveBeenCalledWith({ href: "/", replace: true }),
 			);
 		});
 

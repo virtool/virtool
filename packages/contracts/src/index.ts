@@ -25,6 +25,7 @@ export * from "./pathoscope";
 export * from "./permissions";
 export * from "./permissionsSchema";
 export * from "./principals";
+export * from "./redirect";
 export * from "./references";
 export * from "./samples";
 export * from "./search";
