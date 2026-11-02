@@ -17,6 +17,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
 	existsSync,
+	mkdirSync,
 	readdirSync,
 	readFileSync,
 	rmSync,
@@ -25,7 +26,8 @@ import {
 import { dirname, join } from "node:path";
 import { readKnopePackages } from "./knope.mjs";
 
-const prefix = ".changeset/renovate-";
+const directory = ".changeset";
+const prefix = `${directory}/renovate-`;
 
 function git(...args) {
 	return execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -196,6 +198,8 @@ function main() {
 		.slice(0, 8);
 	const slug = data.branchName.replace(/^renovate\//, "").replace(/\W+/g, "-");
 
+	// Git keeps no empty directory, so a release leaves none on `main`.
+	mkdirSync(join(root, directory), { recursive: true });
 	writeFileSync(
 		join(root, `${prefix}${slug}-${hash}.md`),
 		[
