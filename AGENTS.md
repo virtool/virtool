@@ -277,7 +277,7 @@ prefix and no period. Keep them under 72 characters. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for examples.
 
 - Releases are automated with Knope. Each pull request that affects an image
-  app must name that app in a change file, or the `Changeset` check fails.
+  app must name that app in a change file, or `Knope / Check` fails.
   Write one with `knope document-change`. Use Knope package names (`virtool`,
   `create-sample`, `create-subtraction`, `pathoscope`, `nuvs`). Do not use
   empty change files. A pull request that affects no image app needs none. The

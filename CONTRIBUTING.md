@@ -27,7 +27,7 @@ squash-merged into one well-formed commit.
 
 Releases are driven by change files, not by commit types. Knope reads the
 change files and releases the images. A pull request that affects an image app
-must name that app in a change file, or the `Changeset` check fails.
+must name that app in a change file, or `Knope / Check` fails.
 
 Install Knope with `mise install`. The version is pinned in `mise.toml`.
 

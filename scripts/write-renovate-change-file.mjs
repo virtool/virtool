@@ -1,5 +1,5 @@
 // Renovate runs this as a post-upgrade task, once for each branch, before it
-// commits. It writes the change file that the `Changeset` check requires, so
+// commits. It writes the change file that the `Knope / Check` job requires, so
 // that a Renovate bump releases the images that it changes.
 //
 // - A bump that changes the `package.json` or Dockerfile of a workspace
@@ -17,6 +17,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
 	existsSync,
+	mkdirSync,
 	readdirSync,
 	readFileSync,
 	rmSync,
@@ -25,7 +26,8 @@ import {
 import { dirname, join } from "node:path";
 import { readKnopePackages } from "./knope.mjs";
 
-const prefix = ".changeset/renovate-";
+const directory = ".changeset";
+const prefix = `${directory}/renovate-`;
 
 function git(...args) {
 	return execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -196,6 +198,8 @@ function main() {
 		.slice(0, 8);
 	const slug = data.branchName.replace(/^renovate\//, "").replace(/\W+/g, "-");
 
+	// Git keeps no empty directory, so a release leaves none on `main`.
+	mkdirSync(join(root, directory), { recursive: true });
 	writeFileSync(
 		join(root, `${prefix}${slug}-${hash}.md`),
 		[

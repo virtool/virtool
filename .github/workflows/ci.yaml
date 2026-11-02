@@ -126,36 +126,17 @@ jobs:
                       git status --short --untracked-files=all -- packages/data/drizzle
                       exit 1
                   fi
-
-    # -------------------------------------------------------------------------
-    # Docs prose (*.md, *.mdx)
-    # -------------------------------------------------------------------------
-    # Vale lints Markdown and MDX against the Google and write-good styles named
-    # in `.vale.ini`. `MinAlertLevel = warning` prints warnings but only
-    # error-level alerts set a non-zero exit, so this gate fails on errors and
-    # leaves warnings advisory. No checkout of the styles: they are gitignored
-    # and `vale sync` fetches them from pinned package release URLs. No `Setup`
-    # action either — this job runs no pnpm, and skipping node_modules keeps `vale .`
-    # off the dependency tree it would otherwise walk.
-    docs-lint:
-        name: Docs / Lint
-        runs-on: ubuntu-24.04
-        timeout-minutes: 5
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            # Pinned to the version the vocabulary and style overrides were
-            # cleared against; a floating install could add rules that fail a
-            # branch nothing changed.
+            # Vale lints Markdown and MDX against the styles named in
+            # `.vale.ini`. Warnings print, but only errors fail the job.
+            # `mise.toml` pins it to the version that the vocabulary and style
+            # overrides were cleared against; a floating install could add
+            # rules that fail a branch nothing changed.
             - name: Install Vale
-              run: |
-                  curl -sfL https://github.com/errata-ai/vale/releases/download/v3.18.0/vale_3.18.0_Linux_64-bit.tar.gz \
-                      | sudo tar -xz -C /usr/local/bin vale
-                  vale --version
-            - name: Sync styles
-              run: vale sync
-            - name: Lint
-              run: vale --glob='*.{md,mdx}' .
+              uses: jdx/mise-action@v5
+              with:
+                  install_args: vale
+            - name: Vale
+              run: pnpm docs:lint
 
     # -------------------------------------------------------------------------
     # Docker images (apps/web, apps/internal, apps/create-subtraction,
@@ -214,58 +195,21 @@ jobs:
             - name: Setup Buildx
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/setup-buildx-action@v4
-            # Inline Bake commands get no cache service credentials, so the gha
-            # cache needs this step to expose them.
-            - name: Expose Actions runtime
-              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              uses: crazy-max/ghaction-github-runtime@v4
+            # `source: .` builds from the working directory, because the image
+            # context is made on the runner and is not in Git. Pull requests
+            # read the cache but don't write it. A pull request's cache is
+            # visible only to that pull request, and those writes push the main
+            # branch's layers out of the cache.
             - name: Build
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              run: |
-                  # Pull requests read the cache but don't write it. A pull
-                  # request's cache is visible only to that pull request, and
-                  # those writes push the main branch's layers out of the cache.
-                  cache_to=()
-                  if [ "$GITHUB_EVENT_NAME" = push ]; then
-                      cache_to=(--set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}')
-                  fi
-                  docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} \
-                      --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
-                      "${cache_to[@]}"
-    # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
-    build-pathoscope:
-        name: Pathoscope / Build
-        runs-on: ubuntu-24.04
-        timeout-minutes: 45
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Prepare image context
-              run: |
-                  pnpm --filter @virtool/pathoscope build
-                  pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
-            - name: Setup Buildx
-              uses: docker/setup-buildx-action@v4
-            # Inline Bake commands get no cache service credentials, so the gha
-            # cache needs this step to expose them.
-            - name: Expose Actions runtime
-              uses: crazy-max/ghaction-github-runtime@v4
-            - name: Build
-              run: |
-                  # Pull requests read the cache but don't write it. A pull
-                  # request's cache is visible only to that pull request, and
-                  # those writes push the main branch's layers out of the cache.
-                  cache_to=()
-                  if [ "$GITHUB_EVENT_NAME" = push ]; then
-                      cache_to=(--set 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope')
-                  fi
-                  docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope \
-                      --set 'pathoscope.cache-from=type=gha,scope=pathoscope' \
-                      "${cache_to[@]}"
+              uses: docker/bake-action@v7
+              with:
+                  source: .
+                  files: packages/image-build/docker-bake.hcl
+                  targets: ${{ matrix.image }}
+                  set: |
+                      ${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}
+                      ${{ github.event_name == 'push' && format('{0}.cache-to=type=gha,mode=max,scope={0}', matrix.image) || '' }}
 
     # -------------------------------------------------------------------------
     # Web (apps/web)
@@ -370,11 +314,11 @@ jobs:
     # -------------------------------------------------------------------------
     # Also published by `release-ghcr` as `ghcr.io/virtool/nuvs`.
     #
-    # The 45-minute timeout is longer than pathoscope's 30: this image compiles
+    # The 60-minute timeout is longer than pathoscope's 45: this image compiles
     # SPAdes from source, which is the single most expensive thing either
     # workflow build does. It is the first stage in the Dockerfile and depends on
     # nothing else, so a warm layer cache skips it entirely.
-    build-nuvs:
+    nuvs-build:
         name: Nuvs / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 60
@@ -391,25 +335,23 @@ jobs:
                   pnpm --filter @virtool/nuvs --prod deploy .docker-build/nuvs --force
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
-            # Inline Bake commands get no cache service credentials, so the gha
-            # cache needs this step to expose them.
-            - name: Expose Actions runtime
-              uses: crazy-max/ghaction-github-runtime@v4
+            # `source: .` builds from the working directory, because the image
+            # context is made on the runner and is not in Git. Pull requests
+            # read the cache but don't write it. A pull request's cache is
+            # visible only to that pull request, and those writes push the main
+            # branch's layers out of the cache.
             - name: Build
-              run: |
-                  # Pull requests read the cache but don't write it. A pull
-                  # request's cache is visible only to that pull request, and
-                  # those writes push the main branch's layers out of the cache.
-                  cache_to=()
-                  if [ "$GITHUB_EVENT_NAME" = push ]; then
-                      cache_to=(--set 'nuvs.cache-to=type=gha,mode=max,scope=nuvs')
-                  fi
-                  docker buildx bake -f packages/image-build/docker-bake.hcl nuvs \
-                      --set 'nuvs.cache-from=type=gha,scope=nuvs' \
-                      "${cache_to[@]}"
+              uses: docker/bake-action@v7
+              with:
+                  source: .
+                  files: packages/image-build/docker-bake.hcl
+                  targets: nuvs
+                  set: |
+                      nuvs.cache-from=type=gha,scope=nuvs
+                      ${{ github.event_name == 'push' && 'nuvs.cache-to=type=gha,mode=max,scope=nuvs' || '' }}
 
     nuvs-test:
-        name: NuVs / Test
+        name: Nuvs / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 10
         needs: [changes]
@@ -427,6 +369,39 @@ jobs:
     # -------------------------------------------------------------------------
     # Pathoscope (apps/pathoscope, packages/pathoscope-core)
     # -------------------------------------------------------------------------
+    # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
+    pathoscope-build:
+        name: Pathoscope / Build
+        runs-on: ubuntu-24.04
+        timeout-minutes: 45
+        needs: [changes]
+        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Prepare image context
+              run: |
+                  pnpm --filter @virtool/pathoscope build
+                  pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
+            - name: Setup Buildx
+              uses: docker/setup-buildx-action@v4
+            # `source: .` builds from the working directory, because the image
+            # context is made on the runner and is not in Git. Pull requests
+            # read the cache but don't write it. A pull request's cache is
+            # visible only to that pull request, and those writes push the main
+            # branch's layers out of the cache.
+            - name: Build
+              uses: docker/bake-action@v7
+              with:
+                  source: .
+                  files: packages/image-build/docker-bake.hcl
+                  targets: pathoscope
+                  set: |
+                      pathoscope.cache-from=type=gha,scope=pathoscope
+                      ${{ github.event_name == 'push' && 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope' || '' }}
+
     pathoscope-test:
         name: Pathoscope / Test
         runs-on: ubuntu-24.04
@@ -442,23 +417,18 @@ jobs:
             # golden vectors can never be skipped silently.
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
-            # Inline Bake commands get no cache service credentials, so the gha
-            # cache needs this step to expose them.
-            - name: Expose Actions runtime
-              uses: crazy-max/ghaction-github-runtime@v4
+            # Pull requests read the cache but don't write it. A pull request's
+            # cache is visible only to that pull request, and those writes push
+            # the main branch's layers out of the cache.
             - name: Test
-              run: |
-                  # Pull requests read the cache but don't write it. A pull
-                  # request's cache is visible only to that pull request, and
-                  # those writes push the main branch's layers out of the cache.
-                  cache_to=()
-                  if [ "$GITHUB_EVENT_NAME" = push ]; then
-                      cache_to=(--set 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test')
-                  fi
-                  docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope-core-test \
-                      --progress=plain \
-                      --set 'pathoscope-core-test.cache-from=type=gha,scope=pathoscope-core-test' \
-                      "${cache_to[@]}"
+              uses: docker/bake-action@v7
+              with:
+                  source: .
+                  files: packages/image-build/docker-bake.hcl
+                  targets: pathoscope-core-test
+                  set: |
+                      pathoscope-core-test.cache-from=type=gha,scope=pathoscope-core-test
+                      ${{ github.event_name == 'push' && 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test' || '' }}
 
     # -------------------------------------------------------------------------
     # Quality (packages/quality-core)
@@ -580,15 +550,14 @@ jobs:
         needs:
             [
                 build,
-                build-nuvs,
-                build-pathoscope,
                 changes,
                 checks,
                 data-storage-test,
-                docs-lint,
                 internal-test,
+                nuvs-build,
                 nuvs-test,
                 packages-test,
+                pathoscope-build,
                 pathoscope-test,
                 quality-test,
                 site-build,
@@ -791,7 +760,7 @@ jobs:
         strategy:
             fail-fast: false
             # The pathoscope and nuvs legs read the gha cache that
-            # build-pathoscope and build-nuvs write. Thus this job does not
+            # pathoscope-build and nuvs-build write. Thus this job does not
             # build the Rust crate, the bioinformatics tools, and SPAdes again
             # in its 20-minute timeout.
             matrix:
@@ -816,23 +785,26 @@ jobs:
                   fi
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v4
-            # Inline Bake commands get no cache service credentials, so the gha
-            # cache needs this step to expose them.
-            - name: Expose Actions runtime
-              uses: crazy-max/ghaction-github-runtime@v4
             - name: Login
               uses: docker/login-action@v4
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
+            # `source: .` builds from the working directory, because the image
+            # context is made on the runner and is not in Git.
             - name: Build & Push
-              run: |
-                  docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} --push \
-                      --set '${{ matrix.image }}.tags=${{ matrix.images }}:${{ matrix.version }}' \
-                      --set '${{ matrix.image }}.tags+=${{ matrix.images }}:latest' \
-                      --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
-                      --set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}'
+              uses: docker/bake-action@v7
+              with:
+                  source: .
+                  files: packages/image-build/docker-bake.hcl
+                  targets: ${{ matrix.image }}
+                  push: true
+                  set: |
+                      ${{ matrix.image }}.tags=${{ matrix.images }}:${{ matrix.version }}
+                      ${{ matrix.image }}.tags+=${{ matrix.images }}:latest
+                      ${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}
+                      ${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}
     # Runs only after all images are pushed, so a GitHub Release always has its
     # images. Each Release targets the commit its images were built from. A
     # failed image leg skips this job; re-run the failed legs, not a new push.

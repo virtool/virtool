@@ -35,7 +35,7 @@ See [Images](../README.md#images) to build one image locally.
 The `changes` job asks pnpm for workspaces selected by `...\[<base>\]`. The
 leading ellipsis includes dependents, so an app is selected when either its own
 files or any workspace dependency changes. The build and test jobs run only for
-selected workspaces. `Checks` and `Docs / Lint` run on every change.
+selected workspaces. `Checks` runs on every change.
 `Packages / Test` runs only the selected workspaces that have a `test` script
 and no dedicated job.
 
@@ -118,10 +118,10 @@ last only until the next merge. A pull request opened with `GITHUB_TOKEN` never
 starts its own CI, so the job pushes and opens it as the `virtool-releaser`
 GitHub App. The app holds write access to contents and pull requests on this
 repository only. The `RELEASER_CLIENT_ID` Actions variable and
-`RELEASER_PRIVATE_KEY` secret identify the app. The `Changeset` check skips the
-Release pull request, but not a fork branch with the same name.
+`RELEASER_PRIVATE_KEY` secret identify the app. The `Knope / Check` job skips
+the Release pull request, but not a fork branch with the same name.
 
-The `Changeset` check has its own workflow, because it must run again when a
+The `Knope` workflow exists because `Knope / Check` must run again when a
 label changes. If CI listened to label events, each label change would start all
 of CI again. The check does the following:
 

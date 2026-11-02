@@ -1,6 +1,9 @@
 [env]
 _.path = "./dev/bin"
 
+[tools.vale]
+version = "3.18.0"
+
 [tools."github:knope-dev/knope"]
 version = "0.23.2"
 version_prefix = "knope/v"
