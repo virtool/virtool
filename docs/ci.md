@@ -22,6 +22,12 @@ write, so the release reuses the caches they populated rather than rebuilding
 the Rust crate and bioinformatics tools inside the shared 20-minute
 release timeout.
 
+Only pushes to `main` write the image build caches. Pull requests read them
+but don't write them. A cache that a pull request writes is visible only to
+that pull request. These writes also make the repository go above GitHub's
+10 GB Actions cache limit, and GitHub then removes the layers that `main`
+wrote.
+
 See [Images](../README.md#images) to build one image locally.
 
 ## Affected jobs

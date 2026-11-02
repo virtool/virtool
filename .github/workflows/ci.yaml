@@ -222,9 +222,16 @@ jobs:
             - name: Build
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               run: |
+                  # Pull requests read the cache but don't write it. A pull
+                  # request's cache is visible only to that pull request, and
+                  # those writes push the main branch's layers out of the cache.
+                  cache_to=()
+                  if [ "$GITHUB_EVENT_NAME" = push ]; then
+                      cache_to=(--set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}')
+                  fi
                   docker buildx bake -f packages/image-build/docker-bake.hcl ${{ matrix.image }} \
                       --set '${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}' \
-                      --set '${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}'
+                      "${cache_to[@]}"
     # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
     build-pathoscope:
         name: Pathoscope / Build
@@ -249,9 +256,16 @@ jobs:
               uses: crazy-max/ghaction-github-runtime@v4
             - name: Build
               run: |
+                  # Pull requests read the cache but don't write it. A pull
+                  # request's cache is visible only to that pull request, and
+                  # those writes push the main branch's layers out of the cache.
+                  cache_to=()
+                  if [ "$GITHUB_EVENT_NAME" = push ]; then
+                      cache_to=(--set 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope')
+                  fi
                   docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope \
                       --set 'pathoscope.cache-from=type=gha,scope=pathoscope' \
-                      --set 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope'
+                      "${cache_to[@]}"
 
     # -------------------------------------------------------------------------
     # Web (apps/web)
@@ -383,9 +397,16 @@ jobs:
               uses: crazy-max/ghaction-github-runtime@v4
             - name: Build
               run: |
+                  # Pull requests read the cache but don't write it. A pull
+                  # request's cache is visible only to that pull request, and
+                  # those writes push the main branch's layers out of the cache.
+                  cache_to=()
+                  if [ "$GITHUB_EVENT_NAME" = push ]; then
+                      cache_to=(--set 'nuvs.cache-to=type=gha,mode=max,scope=nuvs')
+                  fi
                   docker buildx bake -f packages/image-build/docker-bake.hcl nuvs \
                       --set 'nuvs.cache-from=type=gha,scope=nuvs' \
-                      --set 'nuvs.cache-to=type=gha,mode=max,scope=nuvs'
+                      "${cache_to[@]}"
 
     nuvs-test:
         name: NuVs / Test
@@ -427,10 +448,17 @@ jobs:
               uses: crazy-max/ghaction-github-runtime@v4
             - name: Test
               run: |
+                  # Pull requests read the cache but don't write it. A pull
+                  # request's cache is visible only to that pull request, and
+                  # those writes push the main branch's layers out of the cache.
+                  cache_to=()
+                  if [ "$GITHUB_EVENT_NAME" = push ]; then
+                      cache_to=(--set 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test')
+                  fi
                   docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope-core-test \
                       --progress=plain \
                       --set 'pathoscope-core-test.cache-from=type=gha,scope=pathoscope-core-test' \
-                      --set 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test'
+                      "${cache_to[@]}"
 
     # -------------------------------------------------------------------------
     # Quality (packages/quality-core)
