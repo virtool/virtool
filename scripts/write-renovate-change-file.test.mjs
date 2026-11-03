@@ -118,7 +118,10 @@ describe("write-renovate-change-file", () => {
 		);
 		assert.equal(
 			fixture.read(`.changeset/${images}`),
-			content(["nuvs"], "Update production dependencies."),
+			content(
+				["nuvs"],
+				"Update production dependencies.\n\nThe `virtool` release lists each bump.",
+			),
 		);
 	});
 
@@ -231,6 +234,40 @@ describe("write-renovate-change-file", () => {
 				["virtool"],
 				"Update dependencies.\n\n- Bump `vite` from 1.0.0 to 2.0.0.",
 			),
+		);
+	});
+
+	test("deletes a change file with an old name that the branch added", () => {
+		fixture.checkout("renovate/deps");
+		fixture.write(".changeset/renovate-foo.md", content(["nuvs"], "Old name."));
+		fixture.commitAll("Earlier run");
+		fixture.bump("apps/web/package.json", "devDependencies", "vite", "2.0.0");
+		write([
+			upgrade("apps/web/package.json", "vite", { depType: "devDependencies" }),
+		]);
+
+		const files = fixture.list(".changeset");
+
+		assert.equal(files.length, 1);
+		assert.match(files[0], /^z-renovate-deps-[0-9a-f]{8}\.md$/);
+	});
+
+	test("keeps a change file that the base branch has", () => {
+		fixture.write(".changeset/other.md", content(["nuvs"], "Pending."));
+		fixture.commitAll("Pending change");
+		fixture.checkout("renovate/deps");
+		fixture.bump("apps/web/package.json", "devDependencies", "vite", "2.0.0");
+		write([
+			upgrade("apps/web/package.json", "vite", { depType: "devDependencies" }),
+		]);
+
+		const files = fixture.list(".changeset");
+
+		assert.equal(files.length, 2);
+		assert.equal(files[0], "other.md");
+		assert.equal(
+			fixture.read(".changeset/other.md"),
+			content(["nuvs"], "Pending."),
 		);
 	});
 });

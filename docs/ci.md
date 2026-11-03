@@ -101,10 +101,15 @@ jobs that gate a pull request:
 1. While change files exist, the job runs `knope prepare-release` on branch
    `knope/release`. It formats the changed `package.json` files, force-pushes
    the branch, and opens or updates a pull request titled **Release**. The body
-   holds the new changelog sections. An image package's entry that matches an
-   entry of `virtool` shows as one "Same as virtool" line, and the commit holds
-   the full changelogs. Merging it applies the bumps, updates the
-   changelogs, and deletes the consumed change files.
+   is built from the change files, which the job reads before Knope deletes
+   them. It lists the version change of each released package, `virtool`
+   first. Then it lists each change once, with the packages it releases, a link
+   to its pull request, and its details. Like Knope, the job asks GitHub for
+   the pull request of the commit that added the change file. A change with no
+   pull request has no link. Changes with only a summary come first,
+   then changes with details, each group in file name order, so `z-renovate-*`
+   files come last. The commit holds the full changelogs. Merging it applies
+   the bumps, updates the changelogs, and deletes the consumed change files.
 2. The job finds each Knope package whose `package.json` version has no tag.
    `virtool` tags are the plain version, such as `42.61.2`, which continues the
    earlier semantic-release tags. Other tags are `<name>@<version>`, such as
@@ -210,9 +215,10 @@ the bump. Renovate runs a script as a post-upgrade task, once for each branch:
   bumps, the changelog leaves out those dependencies, and the bumps in the
   root `package.json` or in workspaces that ship no image.
 - A group of bumps lists every bump once, in the `virtool` changelog. The
-  other packages get one bullet that names the group and links to the same pull
-  request. If the group does not reach `virtool`, every package gets the full
-  list. A single bump is a group of one, so it lists its version change under a
+  other packages get a short entry that names the group, links to the same pull
+  request, and says that the `virtool` release lists each bump. If the group
+  does not reach `virtool`, every package gets the full list. A single bump is
+  a group of one, so it lists its version change under a
   heading in every changelog.
 - Change files are named `z-renovate-*` and each one has a heading with details.
   Knope lists summary-only bullets first, then entries with details by file
@@ -227,7 +233,8 @@ every image.
 Each change file name has a hash of its updates and their digests, because a
 group branch name comes back each week while the change file of the last merge
 can still wait on `main` for a release. When Renovate updates a branch in place,
-the script deletes the change file of its last run first.
+the script first deletes every change file that the branch added, whatever its
+name. It keeps the change files that the base branch has.
 
 Renovate pushes and opens pull requests as the `virtool-renovator` GitHub App,
 because a pull request opened with `GITHUB_TOKEN` never starts CI. The
