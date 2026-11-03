@@ -15,7 +15,7 @@
 		"@virtool/logger": "workspace:*",
 		"bcrypt": "^6.0.0",
 		"pino": "^10.4.0",
-		"postgres": "^3.4.9",
+		"postgres": "^4.0.0",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
