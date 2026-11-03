@@ -83,8 +83,8 @@ TypeScript package is `private`, so nothing publishes to npm. Only the six
 images are released.
 
 `knope.toml` declares five Knope packages. `virtool` holds the `web` and
-`internal` apps. They share one version, one changelog (`CHANGELOG.md` at the
-repository root), one tag, and one GitHub Release. `create-sample`,
+`internal` apps. They share one version, one changelog (`CHANGELOG.md` in
+`apps/web`), one tag, and one GitHub Release. `create-sample`,
 `create-subtraction`, `pathoscope`, and `nuvs` are versioned independently, each
 with its own changelog in its app directory. `packages/*`, `apps/site`, and the
 development apps are not Knope packages, so they have no releases.

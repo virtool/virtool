@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 
 const branch = "knope/release";
+const webChangelog = "apps/web/CHANGELOG.md";
 
 function run(command, ...args) {
 	return execFileSync(command, args, { encoding: "utf8" });
@@ -120,12 +121,11 @@ function getBody() {
 			"--cached",
 			"--name-only",
 			"--",
-			"CHANGELOG.md",
 			"apps/*/CHANGELOG.md",
 		),
 	)) {
 		const name =
-			changelog === "CHANGELOG.md" ? "virtool" : basename(dirname(changelog));
+			changelog === webChangelog ? "virtool" : basename(dirname(changelog));
 		const diff = run(
 			"git",
 			"diff",
