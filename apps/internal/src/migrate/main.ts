@@ -1,10 +1,10 @@
 import { fileURLToPath } from "node:url";
-import { resolveFileBacked } from "@virtool/contracts/env";
 import {
 	acquireDataMigrationsLock,
 	getDataMigration,
 	releaseDataMigrationsLock,
 } from "@virtool/data/data-migrations/data";
+import { resolveFileBacked } from "@virtool/env";
 import type { Logger } from "@virtool/logger";
 import { z } from "zod";
 

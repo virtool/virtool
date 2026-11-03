@@ -1,9 +1,9 @@
-import { resolveFileBacked } from "@virtool/contracts/env";
 import {
 	getDataMigration,
 	listDataMigrations,
 } from "@virtool/data/data-migrations/data";
 import { createDb, type Db } from "@virtool/data/db/pg";
+import { resolveFileBacked } from "@virtool/env";
 import type { Logger } from "@virtool/logger";
 import { z } from "zod";
 

@@ -1,8 +1,8 @@
 # Environment configuration
 
 Virtool services own their configuration schemas, but follow one environment
-loading convention. No shared configuration package exists: the shared piece
-is `resolveFileBacked` from `@virtool/contracts/env`.
+loading convention. No shared configuration schema exists: the shared piece
+is `resolveFileBacked` from `@virtool/env`.
 
 ## Variable names
 
@@ -45,7 +45,7 @@ The resolver doesn't mutate the supplied environment object.
 Resolve file-backed values before parsing the service's schema:
 
 ```ts
-import { resolveFileBacked } from "@virtool/contracts/env";
+import { resolveFileBacked } from "@virtool/env";
 
 export function parseConfig(env: NodeJS.ProcessEnv = process.env): Config {
 	return ConfigSchema.parse(resolveFileBacked(CONFIG_KEYS, env));
@@ -80,8 +80,7 @@ Current integrations are:
 - `apps/internal/src/auth-remediation/main.ts`
 - `packages/workflow/src/config.ts`
 
-The resolver and its precedence tests live in `packages/contracts/src/env.ts`
-and `packages/contracts/src/env.test.ts`.
+The resolver and its precedence tests live in the `@virtool/env` package.
 
 ## Authentication
 

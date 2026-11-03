@@ -3,7 +3,7 @@ import babel from "@rolldown/plugin-babel";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import { resolveFileBacked } from "@virtool/contracts/env";
+import { resolveFileBacked } from "@virtool/env";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";

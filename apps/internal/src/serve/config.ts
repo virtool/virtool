@@ -1,4 +1,4 @@
-import { resolveFileBacked } from "@virtool/contracts/env";
+import { resolveFileBacked } from "@virtool/env";
 import type { StorageConfig } from "@virtool/storage";
 
 /**
@@ -158,7 +158,7 @@ function buildStorage(resolved: NodeJS.ProcessEnv): StorageConfig {
  * Resolve configuration from the environment.
  *
  * Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
- * from, via the resolver shared with `apps/web` in `@virtool/contracts/env`. It
+ * from, via the resolver shared with `apps/web` in `@virtool/env`. It
  * is imported rather than copied so the precedence rule — the file wins over a
  * plain variable of the same name — cannot drift between the two services.
  *

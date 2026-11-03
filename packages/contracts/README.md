@@ -9,9 +9,9 @@ declaring a wire shape, import its names directly, and don't re-export them
 through an app feature. Keep client-only request state in the app and
 data-layer options, values, errors, and row types in `@virtool/data`.
 
-The `@virtool/contracts/bearer` and `@virtool/contracts/env` subpaths are
-server-only because they depend on Node APIs. Keeping them out of the root
-barrel prevents native dependencies from entering the browser graph.
+The `@virtool/contracts/bearer` subpath is server-only because it depends on
+Node APIs. Keeping it out of the root barrel prevents native dependencies from
+entering the browser graph.
 
 ## Commands
 

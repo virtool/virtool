@@ -4,7 +4,6 @@ import {
 	checkAccountCredentials,
 	normalizeEmail,
 } from "@virtool/contracts";
-import { resolveFileBacked } from "@virtool/contracts/env";
 import { createDb, type Db } from "@virtool/data/db/pg";
 import { users } from "@virtool/data/db/schema/users";
 import { createEmitter } from "@virtool/data/events/emit";
@@ -13,6 +12,7 @@ import {
 	createFirstAdministrator,
 	FirstAdministratorExistsError,
 } from "@virtool/data/users/data";
+import { resolveFileBacked } from "@virtool/env";
 import { createLogger } from "@virtool/logger";
 import { z } from "zod";
 

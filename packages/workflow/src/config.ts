@@ -1,5 +1,5 @@
 import { ClaimableJobWorkflow } from "@virtool/contracts";
-import { resolveFileBacked } from "@virtool/contracts/env";
+import { resolveFileBacked } from "@virtool/env";
 import type { StorageConfig } from "@virtool/storage";
 import { z } from "zod";
 import { WorkflowError } from "./errors";

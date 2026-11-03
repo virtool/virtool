@@ -41,6 +41,9 @@
 		"packages/contracts": {
 			"entry": ["src/**/*.test.ts"]
 		},
+		"packages/env": {
+			"entry": ["src/**/*.test.ts"]
+		},
 		"packages/data": {
 			"entry": ["src/**/*.test.ts"]
 		},

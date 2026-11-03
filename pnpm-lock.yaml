@@ -413,6 +413,9 @@ importers:
       '@virtool/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@virtool/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       '@virtool/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -459,6 +462,9 @@ importers:
       '@virtool/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@virtool/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       '@virtool/image-build':
         specifier: workspace:*
         version: link:../../packages/image-build
@@ -760,6 +766,9 @@ importers:
       '@virtool/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@virtool/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       '@virtool/image-build':
         specifier: workspace:*
         version: link:../../packages/image-build
@@ -1025,6 +1034,18 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/browser-playwright@5.0.5)(@vitest/ui@5.0.5)(jsdom@30.1.3(@noble/hashes@2.4.0))(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/env:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/browser-playwright@5.0.5)(@vitest/ui@5.0.5)(jsdom@30.1.3(@noble/hashes@2.4.0))(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
   packages/image-build: {}
 
   packages/logger:
@@ -1143,6 +1164,9 @@ importers:
       '@virtool/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@virtool/env':
+        specifier: workspace:*
+        version: link:../env
       '@virtool/logger':
         specifier: workspace:*
         version: link:../logger
