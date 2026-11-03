@@ -1,28 +1,20 @@
 // Fails a pull request when a change file is malformed, or when an image app
-// changed since the base ref and no change file names its Knope package. The
-// `no-release` label waives the coverage rule, not the format rule.
+// changed since the base ref and no change file names its Knope package. A
+// change to tests, test data, Markdown, or only test-tool dependencies does not
+// count. The `no-release` label waives the coverage rule, not the format rule.
 //
 // Knope ignores a change file with a quoted or unknown package name, and
 // accepts one with no summary, so this check rejects them itself.
 
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { readKnopePackages } from "./knope.mjs";
+import { getAffectedDirs, getChangedFiles, git, lines } from "./workspaces.mjs";
 
 const ref = process.argv[2] ?? "origin/main";
 const waiver = "no-release";
 
-function git(...args) {
-	return execFileSync("git", args, { encoding: "utf8" }).trim();
-}
-
-function lines(output) {
-	return output.split("\n").filter(Boolean);
-}
-
-function getChangeFiles(root) {
-	const base = git("merge-base", ref, "HEAD");
+function getChangeFiles(root, base) {
 	const pathspec = ".changeset/*.md";
 
 	return [
@@ -102,27 +94,12 @@ function parseChangeFile(text, names) {
 	return { errors, packages };
 }
 
-function getAffectedPackages(root, knopePackages) {
-	const listed = JSON.parse(
-		execFileSync(
-			"pnpm",
-			["--filter", `...[${ref}]`, "list", "--depth", "-1", "--json"],
-			{ encoding: "utf8" },
-		),
+function getAffectedPackages(root, base, knopePackages) {
+	return new Set(
+		getAffectedDirs(root, base, getChangedFiles(base))
+			.map((dir) => knopePackages.get(join(dir, "package.json")))
+			.filter(Boolean),
 	);
-	const affected = new Set();
-
-	for (const workspace of listed) {
-		const name = knopePackages.get(
-			join(relative(root, workspace.path), "package.json"),
-		);
-
-		if (name) {
-			affected.add(name);
-		}
-	}
-
-	return affected;
 }
 
 function getLabels() {
@@ -139,12 +116,13 @@ function getLabels() {
 
 function main() {
 	const root = git("rev-parse", "--show-toplevel");
+	const base = git("merge-base", ref, "HEAD");
 	const knopePackages = readKnopePackages(root);
 	const names = new Set(knopePackages.values());
 	const named = new Set();
 	const invalid = [];
 
-	for (const { file, text } of getChangeFiles(root)) {
+	for (const { file, text } of getChangeFiles(root, base)) {
 		const { errors, packages } = parseChangeFile(text, names);
 
 		for (const name of packages) {
@@ -173,7 +151,7 @@ function main() {
 		return 0;
 	}
 
-	const unnamed = [...getAffectedPackages(root, knopePackages)]
+	const unnamed = [...getAffectedPackages(root, base, knopePackages)]
 		.filter((name) => !named.has(name))
 		.toSorted();
 

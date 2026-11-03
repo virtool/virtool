@@ -2,40 +2,28 @@
 // commits. It writes the change file that the `Knope / Check` job requires, so
 // that a Renovate bump releases the images that it changes.
 //
-// - A bump that changes the `package.json` or Dockerfile of a workspace
-//   releases a patch of each Knope package that the workspace reaches through
-//   the workspace graph, which is what the check counts as affected.
-// - A bump that reaches only the root `package.json` or workspaces that ship
-//   no image ships nothing, so no change file is written.
+// - A bump releases a patch of each Knope package that the check counts as
+//   affected by the branch.
+// - A bump of only test tools, or of the root `package.json`, or of
+//   workspaces that ship no image, ships nothing, so no change file is
+//   written.
 // - A bump that changes only the lockfile, such as a transitive security
 //   update, names no workspace, so it releases every Knope package.
-//
-// The Renovate image has no `pnpm` and no installed dependencies when this
-// runs, so the script uses only Node built-ins and `git`.
 
-import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { readKnopePackages } from "./knope.mjs";
+import {
+	getAffectedDirs,
+	getChangedFiles,
+	getReachedDirs,
+	git,
+	isShippedDependency,
+} from "./workspaces.mjs";
 
 const directory = ".changeset";
 const prefix = `${directory}/renovate-`;
-
-function git(...args) {
-	return execFileSync("git", args, { encoding: "utf8" }).trim();
-}
-
-function lines(output) {
-	return output.split("\n").filter(Boolean);
-}
 
 function readData() {
 	const path = process.env.RENOVATE_POST_UPGRADE_COMMAND_DATA_FILE;
@@ -57,92 +45,34 @@ function getMergeBase(baseBranch) {
 	throw new Error(`no merge base with ${baseBranch}`);
 }
 
-// Renovate commits files that the tasks leave in the working tree, so the
-// branch changes are the working tree compared with the merge base.
-function getChangedFiles(base) {
-	return [
-		...new Set([
-			...lines(git("diff", "--name-only", "--no-relative", base)),
-			...lines(git("ls-files", "--others", "--exclude-standard")),
-		]),
-	];
-}
-
-function readWorkspaces(root) {
-	const workspaces = [];
-
-	for (const parent of ["apps", "packages"]) {
-		for (const entry of readdirSync(join(root, parent), {
-			withFileTypes: true,
-		})) {
-			const dir = join(parent, entry.name);
-			const manifest = join(root, dir, "package.json");
-
-			if (!entry.isDirectory() || !existsSync(manifest)) {
-				continue;
-			}
-
-			const json = JSON.parse(readFileSync(manifest, "utf8"));
-
-			workspaces.push({
-				name: json.name,
-				dir,
-				deps: [
-					json.dependencies,
-					json.devDependencies,
-					json.optionalDependencies,
-					json.peerDependencies,
-				].flatMap((deps) => Object.keys(deps ?? {})),
-			});
-		}
-	}
-
-	return workspaces;
-}
-
-// The changed workspaces and every workspace that depends on them, as
-// `pnpm --filter "...[ref]"` finds.
-function getReachedDirs(workspaces, changedDirs) {
-	const names = new Set(
-		workspaces.filter((w) => changedDirs.has(w.dir)).map((w) => w.name),
-	);
-	let size;
-
-	do {
-		size = names.size;
-
-		for (const workspace of workspaces) {
-			if (workspace.deps.some((dep) => names.has(dep))) {
-				names.add(workspace.name);
-			}
-		}
-	} while (names.size !== size);
-
-	return workspaces.filter((w) => names.has(w.name)).map((w) => w.dir);
-}
-
-function getPackages(root, changed) {
-	const knopePackages = readKnopePackages(root);
+// The affected workspaces, or `undefined` when the branch changes only the
+// lockfile, which names no workspace and so affects them all.
+function getAffectedWorkspaces(root, base, changed) {
 	const manifests = changed.filter((file) =>
 		/(^|\/)(package\.json|Dockerfile)$/.test(file),
 	);
 
 	if (manifests.length === 0) {
-		return changed.includes("pnpm-lock.yaml")
-			? new Set(knopePackages.values())
-			: new Set();
+		return changed.includes("pnpm-lock.yaml") ? undefined : [];
 	}
 
-	const dirs = getReachedDirs(
-		readWorkspaces(root),
-		new Set(manifests.map((file) => dirname(file))),
-	);
+	return getAffectedDirs(root, base, changed);
+}
 
-	return new Set(
-		dirs
-			.map((dir) => knopePackages.get(join(dir, "package.json")))
-			.filter(Boolean),
-	);
+function getPackages(root, dirs) {
+	const knopePackages = readKnopePackages(root);
+
+	if (!dirs) {
+		return [...new Set(knopePackages.values())].toSorted();
+	}
+
+	return [
+		...new Set(
+			dirs
+				.map((dir) => knopePackages.get(join(dir, "package.json")))
+				.filter(Boolean),
+		),
+	].toSorted();
 }
 
 function describe({ depName, currentValue, newValue }) {
@@ -154,21 +84,60 @@ function describe({ depName, currentValue, newValue }) {
 }
 
 // A group lists one upgrade for each file that it changes, so the same bump
-// can appear several times.
-function getBumps({ upgrades }) {
-	return [...new Set(upgrades.map(describe))].toSorted();
-}
-
-function getSummary({ groupName }, bumps) {
-	return `Update ${groupName || "dependencies"}.\n\n${bumps.map((bump) => `- ${bump}.`).join("\n")}`;
-}
-
-// Build tools change no user-visible behavior, and the `no-release` label
-// waives the check for them, so they stay out of the changelog.
-function isDevelopmentOnly({ upgrades }) {
-	return upgrades.every(({ depType }) =>
-		["devDependencies", "packageManager"].includes(depType),
+// can appear several times. An upgrade in the root, in a workspace that ships
+// no image, or of a dependency that ships nothing stays out of the changelog,
+// unless the branch bumps nothing else.
+function getBumps(root, { upgrades }, dirs) {
+	const imageDirs = new Set(
+		[...readKnopePackages(root).keys()].map((file) => dirname(file)),
 	);
+	const shipped = upgrades.filter(({ depName, depType, packageFile }) => {
+		const dir = dirname(packageFile);
+
+		return (
+			(!dirs || dirs.includes(dir)) &&
+			isShippedDependency(dir, depType, depName) &&
+			getReachedDirs(root, [dir]).some((reached) => imageDirs.has(reached))
+		);
+	});
+
+	return [
+		...new Set((shipped.length > 0 ? shipped : upgrades).map(describe)),
+	].toSorted();
+}
+
+function getBody(title, bumps) {
+	if (bumps.length === 0) {
+		return title;
+	}
+
+	if (bumps.length === 1) {
+		return `${bumps[0]}.`;
+	}
+
+	return [title, "", ...bumps.map((bump) => `- ${bump}.`)].join("\n");
+}
+
+// A group lists its bumps once, in the `virtool` changelog, and the other
+// packages get a bullet that links to the same pull request. Without
+// `virtool`, every package gets the full list.
+function getFiles(root, data, dirs, packages) {
+	const title = `Update ${data.groupName || "dependencies"}.`;
+	const bumps = getBumps(root, data, dirs);
+	const body = getBody(title, bumps);
+
+	if (bumps.length <= 1 || !packages.includes("virtool")) {
+		return [{ names: packages, suffix: "", body }];
+	}
+
+	const images = packages.filter((name) => name !== "virtool");
+
+	return [
+		{ names: ["virtool"], suffix: "", body },
+		...(images.length > 0
+			? [{ names: images, suffix: "-images", body: title }]
+			: []),
+	];
 }
 
 function main() {
@@ -185,9 +154,10 @@ function main() {
 		}
 	}
 
-	const packages = [...getPackages(root, changed)].toSorted();
+	const dirs = getAffectedWorkspaces(root, base, changed);
+	const packages = getPackages(root, dirs);
 
-	if (packages.length === 0 || isDevelopmentOnly(data)) {
+	if (packages.length === 0) {
 		return;
 	}
 
@@ -200,33 +170,10 @@ function main() {
 		.slice(0, 8);
 	const slug = data.branchName.replace(/^renovate\//, "").replace(/\W+/g, "-");
 
-	// A group lists its bumps once, in the `virtool` changelog. The other
-	// packages get a bullet that links to the same pull request.
-	const bumps = getBumps(data);
-	const files =
-		bumps.length === 1
-			? [{ names: packages, body: `${bumps[0]}.` }]
-			: [
-					{
-						names: packages.filter((name) => name === "virtool"),
-						body: getSummary(data, bumps),
-					},
-					{
-						names: packages.filter((name) => name !== "virtool"),
-						body: `Update ${data.groupName || "dependencies"}.`,
-					},
-				];
-
 	// Git keeps no empty directory, so a release leaves none on `main`.
 	mkdirSync(join(root, directory), { recursive: true });
 
-	for (const { names, body } of files) {
-		if (names.length === 0) {
-			continue;
-		}
-
-		const suffix = names.includes("virtool") ? "" : "-images";
-
+	for (const { names, suffix, body } of getFiles(root, data, dirs, packages)) {
 		writeFileSync(
 			join(root, `${prefix}${slug}-${hash}${suffix}.md`),
 			[

@@ -143,7 +143,21 @@ of CI again. The check does the following:
 - It finds the image apps that the pull request affects through the workspace
   graph, and requires that some change file names each one. A docs- or CI-only
   pull request affects no image app and needs no change file.
-- The `no-release` label waives the second rule. It does not waive the first.
+- A change to these files does not affect a workspace, because no image
+  contains them: tests (`*.test.*`, `*.spec.*`), files in a `__tests__`,
+  `fixtures`, `test`, `testing`, or `tests` directory, `vitest.config.*`, and
+  Markdown. A `package.json` change does not affect a workspace either when it
+  only bumps test and type tools, such as Vitest, Testing Library, Playwright,
+  or `@types/*`, or the development dependencies of a `packages/*` workspace.
+  Packages stay source and the apps bundle them, so those dependencies serve
+  only the package's own tests and types. The other development dependencies
+  of an app, such as Vite, Nitro, or Tailwind, change the build output, so
+  they do affect it.
+- The `no-release` label waives the requirement for change files that name the
+  affected apps. It does not waive the format rule.
+
+`pnpm test:scripts` runs the tests of this check and of the Renovate
+change-file task.
 
 Knope is installed with `mise` from the pin in `mise.toml`. Renovate does not
 update that pin. See [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
@@ -181,12 +195,14 @@ the bump. Renovate runs a script as a post-upgrade task, once for each branch:
 - A bump that reaches only the root `package.json` or workspaces that ship no
   image, such as a lint tool or the product website, ships nothing, so the
   script writes no change file. The check passes those pull requests.
-- A bump of only development dependencies writes no change file. Renovate adds
-  the `no-release` label, which waives the check, so these bumps stay out of
-  the changelog.
+- A bump of only dependencies that ship nothing affects no workspace, so the
+  script writes no change file and the check passes. In a group with other
+  bumps, the changelog leaves out those dependencies, and the bumps in the
+  root `package.json` or in workspaces that ship no image.
 - A group of bumps lists every bump once, in the `virtool` changelog. The
   other packages get one bullet that names the group and links to the same pull
-  request. A single bump names its package and versions in every changelog.
+  request. If the group does not reach `virtool`, every package gets the full
+  list. A single bump names its package and versions in every changelog.
 - A bump that changes only the lockfile names no workspace, so the change file
   releases every Knope package.
 
