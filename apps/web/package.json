@@ -12,12 +12,12 @@
 		"typecheck": "tsc -p tsconfig.server.json && tsc -p tsconfig.app.json"
 	},
 	"dependencies": {
-		"@better-auth/passkey": "1.7.12",
+		"@better-auth/passkey": "1.7.15",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/sortable": "^10.0.0",
 		"@dnd-kit/utilities": "^3.2.2",
 		"@fontsource-variable/inter": "^5.3.0",
-		"@hookform/resolvers": "^6.0.0",
+		"@hookform/resolvers": "^7.0.1",
 		"@node-rs/argon2": "^2.2.2",
 		"@sentry/profiling-node": "11.8.0",
 		"@sentry/replay": "11.8.0",
@@ -37,7 +37,7 @@
 		"@virtool/sentry": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"bcrypt": "^6.0.0",
-		"better-auth": "1.7.12",
+		"better-auth": "1.7.15",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"d3": "^7.9.0",
