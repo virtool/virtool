@@ -149,15 +149,14 @@ jobs:
         needs: [changes]
         strategy:
             fail-fast: false
-            # Adding an app needs an app Dockerfile, a Bake target, and an entry here;
-            # everything else about a new app is generic. Keep this list in
-            # step with the image map in release-ghcr-matrix.
+            # A new app needs an app Dockerfile, a Bake target, and an entry
+            # here. Keep this list in step with the image map in
+            # release-ghcr-matrix.
             #
-            # `release-ghcr` also publishes every image here. Its Nuvs and
-            # Pathoscope legs reuse the cache that these builds write. Nuvs
-            # has the longest timeout: it compiles SPAdes from source, which
-            # is the most expensive step of any workflow image build. A warm
-            # layer cache skips it.
+            # `release-ghcr` reuses the cache that these builds write. Nuvs has
+            # the longest timeout: it compiles SPAdes from source, the most
+            # expensive step of any workflow image build. A warm layer cache
+            # skips it.
             matrix:
                 include:
                     - image: web
@@ -205,12 +204,11 @@ jobs:
             - name: Setup Buildx
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/setup-buildx-action@v4
-            # `source: .` builds from the checkout, the same context a local
-            # build uses. Pull requests read the cache but don't write it. A
-            # pull request's cache is visible only to that pull request, and
-            # those writes push the main branch's layers out of the cache.
-            # `<image>*` also gives the `-build` and `-tools` dependency
-            # targets the cache; Bake builds them separately.
+            # Pull requests read the cache but don't write it. A pull request's
+            # cache is visible only to that pull request, and those writes push
+            # the main branch's layers out of the cache. `<image>*` also gives
+            # the `-build` and `-tools` dependency targets the cache. Bake
+            # builds them separately.
             - name: Build
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/bake-action@v7
@@ -286,7 +284,7 @@ jobs:
             # install`, which carries no timeout of its own: when the runner's
             # Azure mirror goes unreachable apt falls back to
             # archive.ubuntu.com and stalls until the job timeout kills it. The
-            # ubuntu-24.04 image ships Chrome and Edge, so Chromium's shared
+            # runner image ships Chrome and Edge, so Chromium's shared
             # libraries are already present. The step timeout below is a
             # backstop for a slow CDN, not for apt.
             - name: Install Playwright Chromium
@@ -311,10 +309,9 @@ jobs:
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-            # Its own job rather than part of Packages / Test, for the same
-            # reason as Data & Storage / Test: the job guard and the task probes are tested
-            # against a real Postgres testcontainer, and pulling that image does
-            # not belong in the fast package loop.
+            # Its own job, like Data & Storage / Test: these tests start a
+            # Postgres testcontainer, and pulling that image does not belong in
+            # the fast package loop.
             - name: Test
               run: pnpm --filter @virtool/internal --filter @virtool/dev-tools test
               env:
@@ -405,7 +402,7 @@ jobs:
               working-directory: packages/quality-core
 
     # -------------------------------------------------------------------------
-    # Packages (packages/*, excluding Data and Storage below)
+    # Packages (packages/*, except those with their own jobs)
     # -------------------------------------------------------------------------
     packages-test:
         name: Packages / Test
@@ -440,10 +437,9 @@ jobs:
             # Its own job rather than part of Packages / Test: data starts a
             # Postgres testcontainer and storage starts Garage and Azurite,
             # and pulling those images does not belong in the fast package
-            # loop. The two persistence packages share one job, run with
-            # --parallel so their testcontainer pulls overlap despite the
-            # data-on-storage dependency, and neither fills the job's
-            # wall-clock budget.
+            # loop. The two packages share one job. `--parallel` overlaps
+            # their testcontainer pulls despite the data-on-storage
+            # dependency, and the job stays inside its timeout.
             - name: Test
               run: pnpm --parallel --filter @virtool/data --filter @virtool/storage test
               env:
@@ -677,9 +673,9 @@ jobs:
             packages: write
         strategy:
             fail-fast: false
-            # The pathoscope and nuvs legs read the gha cache that the `build`
-            # matrix writes. Thus this job does not build the Rust crate, the
-            # bioinformatics tools, and SPAdes again in its 20-minute timeout.
+            # The legs read the gha cache that the `build` matrix writes. Thus
+            # the Pathoscope and Nuvs legs do not build the Rust crate, the
+            # bioinformatics tools, and SPAdes again in the 20-minute timeout.
             matrix:
                 include: ${{ fromJSON(needs.release-ghcr-matrix.outputs.include) }}
         steps:
