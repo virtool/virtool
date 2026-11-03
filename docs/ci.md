@@ -29,6 +29,14 @@ that pull request. These writes also make the repository go above GitHub's
 10 GB Actions cache limit, and GitHub then removes the layers that `main`
 wrote.
 
+Bake builds each `target:` context, such as `nuvs-tools` and `nuvs-build`, as a
+separate build before the image target. A `--set <image>.cache-from` applies
+only to the image target, so the dependency targets then build without a cache.
+Each build job therefore sets `cache-from` with the `<image>*` target pattern.
+This pattern gives every target in the image's graph the same cache scope. Only
+the image target writes the cache. Its `mode=max` export includes the layers of
+its dependency targets, so a single scope serves all of them.
+
 See [Images](../README.md#images) to build one image locally.
 
 ## Affected jobs

@@ -187,6 +187,8 @@ jobs:
             # build uses. Pull requests read the cache but don't write it. A
             # pull request's cache is visible only to that pull request, and
             # those writes push the main branch's layers out of the cache.
+            # `<image>*` also gives the `-build` and `-tools` dependency
+            # targets the cache; Bake builds them separately.
             - name: Build
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/bake-action@v7
@@ -195,7 +197,7 @@ jobs:
                   files: packages/image-build/docker-bake.hcl
                   targets: ${{ matrix.image }}
                   set: |
-                      ${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}
+                      ${{ matrix.image }}*.cache-from=type=gha,scope=${{ matrix.image }}
                       ${{ github.event_name == 'push' && format('{0}.cache-to=type=gha,mode=max,scope={0}', matrix.image) || '' }}
 
     # -------------------------------------------------------------------------
@@ -327,7 +329,7 @@ jobs:
                   files: packages/image-build/docker-bake.hcl
                   targets: nuvs
                   set: |
-                      nuvs.cache-from=type=gha,scope=nuvs
+                      nuvs*.cache-from=type=gha,scope=nuvs
                       ${{ github.event_name == 'push' && 'nuvs.cache-to=type=gha,mode=max,scope=nuvs' || '' }}
 
     nuvs-test:
@@ -372,7 +374,7 @@ jobs:
                   files: packages/image-build/docker-bake.hcl
                   targets: pathoscope
                   set: |
-                      pathoscope.cache-from=type=gha,scope=pathoscope
+                      pathoscope*.cache-from=type=gha,scope=pathoscope
                       ${{ github.event_name == 'push' && 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope' || '' }}
 
     pathoscope-test:
@@ -748,7 +750,7 @@ jobs:
                   set: |
                       ${{ matrix.image }}.tags=${{ matrix.images }}:${{ matrix.version }}
                       ${{ matrix.image }}.tags+=${{ matrix.images }}:latest
-                      ${{ matrix.image }}.cache-from=type=gha,scope=${{ matrix.image }}
+                      ${{ matrix.image }}*.cache-from=type=gha,scope=${{ matrix.image }}
                       ${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}
     # Runs only after all images are pushed, so a GitHub Release always has its
     # images. Each Release targets the commit its images were built from. A
