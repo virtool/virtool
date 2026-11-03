@@ -4,13 +4,13 @@ Virtool's internal service: **one** image carrying five processes that share a
 schema, a data layer and an object store but not a lifecycle. The subcommand is
 the first argument to the bundle (`node dist/index.mjs <command>`):
 
-| Command | Process |
-| --- | --- |
-| `serve` | The jobs API HTTP server workflow runners claim, update, and finish jobs through. |
-| `run` | The periodic task spawner and the task runner, in one long-lived process. |
-| `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
-| `data-migrations` | Inspects recorded audits and backfills. Run as a Job. |
-| `auth-remediation` | Reports how many accounts have not completed email remediation. |
+| Command            | Process                                                                           |
+| ------------------ | --------------------------------------------------------------------------------- |
+| `serve`            | The jobs API HTTP server workflow runners claim, update, and finish jobs through. |
+| `run`              | The periodic task spawner and the task runner, in one long-lived process.         |
+| `migrate`          | Applies pending Drizzle migrations, then exits. Run as an init Job.               |
+| `data-migrations`  | Inspects recorded audits and backfills. Run as a Job.                             |
+| `auth-remediation` | Reports how many accounts have not completed email remediation.                   |
 
 Image: `ghcr.io/virtool/internal`. The image is shared; the processes are
 separate.
@@ -261,11 +261,11 @@ are data migrations. Any finding fails an attempt; an exception records it as
 errored. Outcomes are stored in `data_migrations`, with bounded finding details
 in `data_migration_findings`.
 
-| Command | Action |
-| --- | --- |
-| `data-migrations list` | Report registered migrations and recorded versions. |
+| Command                        | Action                                                    |
+| ------------------------------ | --------------------------------------------------------- |
+| `data-migrations list`         | Report registered migrations and recorded versions.       |
 | `data-migrations export <key>` | Write the current version's outcome and findings as JSON. |
-| `migrate` | Apply pending SQL and execute or retry its paired bodies. |
+| `migrate`                      | Apply pending SQL and execute or retry its paired bodies. |
 
 Inspection reads only `VT_POSTGRES_URL` and `VT_SENTRY_DSN` (or their `_FILE`
 variants). Before
@@ -354,18 +354,18 @@ values, and the scrape still succeeds.
 `serve` additionally exports HTTP request series and the job-queue depth series
 the KEDA `ScaledJob` scales on. `run` additionally exports the task series:
 
-| Series | Type | Labels |
-| --- | --- | --- |
-| `virtool_task_spawn_total` | counter | `type`, `outcome` |
-| `virtool_task_runs_total` | counter | `type`, `outcome` |
-| `virtool_task_duration_seconds` | histogram | `type` |
-| `virtool_tasks` | gauge | `type`, `state` |
-| `virtool_tasks_oldest_queued_age_seconds` | gauge | `type` |
-| `virtool_email_delivery_attempts_total` | counter | `template`, `outcome` |
-| `virtool_email_retries_scheduled_total` | counter | `template` |
-| `virtool_email_accepted_age_seconds` | histogram | none |
-| `virtool_email_outbox` | gauge | `state` |
-| `virtool_email_availability` | gauge | `state` |
+| Series                                    | Type      | Labels                |
+| ----------------------------------------- | --------- | --------------------- |
+| `virtool_task_spawn_total`                | counter   | `type`, `outcome`     |
+| `virtool_task_runs_total`                 | counter   | `type`, `outcome`     |
+| `virtool_task_duration_seconds`           | histogram | `type`                |
+| `virtool_tasks`                           | gauge     | `type`, `state`       |
+| `virtool_tasks_oldest_queued_age_seconds` | gauge     | `type`                |
+| `virtool_email_delivery_attempts_total`   | counter   | `template`, `outcome` |
+| `virtool_email_retries_scheduled_total`   | counter   | `template`            |
+| `virtool_email_accepted_age_seconds`      | histogram | none                  |
+| `virtool_email_outbox`                    | gauge     | `state`               |
+| `virtool_email_availability`              | gauge     | `state`               |
 
 Task names outside `TaskName` fold into the bounded `other` label. Queue reads
 use the active predicate `complete = false AND error IS NULL`, are bounded by a
@@ -397,31 +397,31 @@ unset.
 `VT_JOBS_API_*` apply to `serve`; `VT_TASKS_*` apply to `run`;
 `VT_MIGRATIONS_PATH` applies to `migrate`; the rest are shared.
 
-| Variable | Type | Default | Use |
-| --- | --- | --- | --- |
-| `VT_JOBS_API_HOST` | String | `0.0.0.0` | `serve`: set the interface on which the API listens. |
-| `VT_JOBS_API_PORT` | Positive integer | `9950` | `serve`: set the API listen port. |
-| `VT_JOBS_API_SHUTDOWN_TIMEOUT` | Positive integer (seconds) | `30` | `serve`: bound graceful shutdown. It must remain below the pod termination grace period. |
-| `VT_TASKS_PROBE_PORT` | Positive integer | `9900` | `run`: listen for health probes and Prometheus scrapes. |
-| `VT_TASKS_SHUTDOWN_TIMEOUT` | Positive integer (seconds) | `40` | `run`: bound the complete graceful-shutdown sequence. It must remain below the pod termination grace period. |
-| `VT_TASKS_DRAIN_TIMEOUT` | Positive integer (seconds) | `25` | `run`: allow an in-flight task to finish before releasing its claim. This must be less than `VT_TASKS_SHUTDOWN_TIMEOUT` and is part of that budget. |
-| `VT_MIGRATIONS_PATH` | String | Bundled `drizzle/` | `migrate`: override the migrations folder, for example to run against the working tree. |
-| `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
-| `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
-| `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | `serve`, `run`, `migrate`, and `data-migrations`: send errors to Sentry. When unset, errors aren't sent to Sentry. |
-| `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
-| `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept encrypted values written under the prior key during rotation. |
-| `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
-| `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
-| `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |
-| `VT_STORAGE_S3_ENDPOINT` | URL string | Unset | Override the S3 endpoint; leave unset for AWS. |
-| `VT_STORAGE_S3_ACCESS_KEY_ID` | String | Unset | Set an explicit S3 access key. Set with `VT_STORAGE_S3_SECRET_ACCESS_KEY`, or leave both unset for the AWS credential chain. |
-| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String | Unset | Set an explicit S3 secret key. Set with `VT_STORAGE_S3_ACCESS_KEY_ID`, or leave both unset for the AWS credential chain. |
-| `VT_STORAGE_AZURE_ACCOUNT` | String | Required for Azure | Name the Azure Storage account. |
-| `VT_STORAGE_AZURE_CONTAINER` | String | Required for Azure | Name the Azure Blob container. |
-| `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
-| `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
+| Variable                          | Type                       | Default            | Use                                                                                                                                                                                                                                           |
+| --------------------------------- | -------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VT_JOBS_API_HOST`                | String                     | `0.0.0.0`          | `serve`: set the interface on which the API listens.                                                                                                                                                                                          |
+| `VT_JOBS_API_PORT`                | Positive integer           | `9950`             | `serve`: set the API listen port.                                                                                                                                                                                                             |
+| `VT_JOBS_API_SHUTDOWN_TIMEOUT`    | Positive integer (seconds) | `30`               | `serve`: bound graceful shutdown. It must remain below the pod termination grace period.                                                                                                                                                      |
+| `VT_TASKS_PROBE_PORT`             | Positive integer           | `9900`             | `run`: listen for health probes and Prometheus scrapes.                                                                                                                                                                                       |
+| `VT_TASKS_SHUTDOWN_TIMEOUT`       | Positive integer (seconds) | `40`               | `run`: bound the complete graceful-shutdown sequence. It must remain below the pod termination grace period.                                                                                                                                  |
+| `VT_TASKS_DRAIN_TIMEOUT`          | Positive integer (seconds) | `25`               | `run`: allow an in-flight task to finish before releasing its claim. This must be less than `VT_TASKS_SHUTDOWN_TIMEOUT` and is part of that budget.                                                                                           |
+| `VT_MIGRATIONS_PATH`              | String                     | Bundled `drizzle/` | `migrate`: override the migrations folder, for example to run against the working tree.                                                                                                                                                       |
+| `VT_POSTGRES_URL`                 | URL                        | Required           | Connect to the Virtool Postgres database.                                                                                                                                                                                                     |
+| `VT_POSTGRES_POOL_MAX`            | Positive integer           | `10`               | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection).                                                                                                                                                 |
+| `VT_METRICS_TOKEN`                | String                     | Unset              | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404.                                                                                                                                           |
+| `VT_SENTRY_DSN`                   | URL string                 | Unset              | `serve`, `run`, `migrate`, and `data-migrations`: send errors to Sentry. When unset, errors aren't sent to Sentry.                                                                                                                            |
+| `VT_ENCRYPTION_KEY`               | Base64 string (32 bytes)   | Unset              | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
+| `VT_ENCRYPTION_KEY_PREVIOUS`      | Base64 string (32 bytes)   | Unset              | `run`: accept encrypted values written under the prior key during rotation.                                                                                                                                                                   |
+| `VT_STORAGE_BACKEND`              | `s3` \| `azure`            | Required           | Select the object-storage backend shared with the other Virtool services.                                                                                                                                                                     |
+| `VT_STORAGE_S3_BUCKET`            | String                     | Required for S3    | Name the S3 bucket.                                                                                                                                                                                                                           |
+| `VT_STORAGE_S3_REGION`            | String                     | Unset              | Set the S3 region.                                                                                                                                                                                                                            |
+| `VT_STORAGE_S3_ENDPOINT`          | URL string                 | Unset              | Override the S3 endpoint; leave unset for AWS.                                                                                                                                                                                                |
+| `VT_STORAGE_S3_ACCESS_KEY_ID`     | String                     | Unset              | Set an explicit S3 access key. Set with `VT_STORAGE_S3_SECRET_ACCESS_KEY`, or leave both unset for the AWS credential chain.                                                                                                                  |
+| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String                     | Unset              | Set an explicit S3 secret key. Set with `VT_STORAGE_S3_ACCESS_KEY_ID`, or leave both unset for the AWS credential chain.                                                                                                                      |
+| `VT_STORAGE_AZURE_ACCOUNT`        | String                     | Required for Azure | Name the Azure Storage account.                                                                                                                                                                                                               |
+| `VT_STORAGE_AZURE_CONTAINER`      | String                     | Required for Azure | Name the Azure Blob container.                                                                                                                                                                                                                |
+| `VT_STORAGE_AZURE_ACCESS_KEY`     | String                     | Unset              | Set an Azure account key; leave unset to use managed identity.                                                                                                                                                                                |
+| `VT_STORAGE_AZURE_ENDPOINT`       | URL string                 | Unset              | Override the Azure Blob endpoint.                                                                                                                                                                                                             |
 
 `migrate` reads only `VT_POSTGRES_URL`, `VT_MIGRATIONS_PATH`, and
 `VT_SENTRY_DSN`, and `data-migrations` reads only `VT_POSTGRES_URL` and
@@ -431,12 +431,12 @@ unset.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/internal develop serve` / `develop run` | Watch, rebuild, and gracefully restart the selected service. |
-| `pnpm --filter @virtool/internal build` | Bundle to `dist/index.mjs`. |
-| `pnpm --filter @virtool/internal test` | Run the Vitest suite. It needs Docker for the Postgres testcontainer. |
-| `pnpm --filter @virtool/internal typecheck` | Run `tsc --noEmit`. |
+| Command                                                         | Action                                                                |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `pnpm --filter @virtool/internal develop serve` / `develop run` | Watch, rebuild, and gracefully restart the selected service.          |
+| `pnpm --filter @virtool/internal build`                         | Bundle to `dist/index.mjs`.                                           |
+| `pnpm --filter @virtool/internal test`                          | Run the Vitest suite. It needs Docker for the Postgres testcontainer. |
+| `pnpm --filter @virtool/internal typecheck`                     | Run `tsc --noEmit`.                                                   |
 
 Migrations remain a one-shot startup step.
 

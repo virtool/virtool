@@ -110,26 +110,26 @@ variable also accepts `<VARIABLE>_FILE`; the file wins, whitespace is trimmed,
 and an empty value is unset. An unreadable file fails startup. The package does
 not read `process.env` at import time.
 
-| Variable | Type | Default | Use |
-| --- | --- | --- | --- |
-| `VT_JOBS_API_URL` | URL | Required | Set the cluster-internal jobs API base URL. |
-| `VT_WORK_PATH` | Path string | Required | Set the disposable run directory. |
-| `VT_WORKFLOW` | `create_sample` \| `create_subtraction` \| `nuvs` \| `pathoscope` | Required | Select the job type to claim. |
-| `VT_MEM` | Positive integer (GiB) | `4` | Report available memory and size tool invocations. |
-| `VT_PROC` | Positive integer | `2` | Report and limit available processors. |
-| `VT_TIMEOUT` | Positive integer (seconds) | `1000` | Bound the workflow run. |
-| `VT_IMAGE` | String | `unknown` | Record the runner image on the job. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. |
-| `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select object storage. |
-| `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
-| `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |
-| `VT_STORAGE_S3_ENDPOINT` | URL string | Unset | Override the S3 endpoint; omit for AWS. |
-| `VT_STORAGE_S3_ACCESS_KEY_ID` | String | Unset | Set with the S3 secret key, or omit both for the AWS credential chain. |
-| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String | Unset | Set with the S3 access key, or omit both for the AWS credential chain. |
-| `VT_STORAGE_AZURE_ACCOUNT` | String | Required for Azure | Name the Azure Storage account. |
-| `VT_STORAGE_AZURE_CONTAINER` | String | Required for Azure | Name the Azure Blob container. |
-| `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an account key; omit for managed identity. |
-| `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
+| Variable                          | Type                                                              | Default            | Use                                                                    |
+| --------------------------------- | ----------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| `VT_JOBS_API_URL`                 | URL                                                               | Required           | Set the cluster-internal jobs API base URL.                            |
+| `VT_WORK_PATH`                    | Path string                                                       | Required           | Set the disposable run directory.                                      |
+| `VT_WORKFLOW`                     | `create_sample` \| `create_subtraction` \| `nuvs` \| `pathoscope` | Required           | Select the job type to claim.                                          |
+| `VT_MEM`                          | Positive integer (GiB)                                            | `4`                | Report available memory and size tool invocations.                     |
+| `VT_PROC`                         | Positive integer                                                  | `2`                | Report and limit available processors.                                 |
+| `VT_TIMEOUT`                      | Positive integer (seconds)                                        | `1000`             | Bound the workflow run.                                                |
+| `VT_IMAGE`                        | String                                                            | `unknown`          | Record the runner image on the job.                                    |
+| `VT_SENTRY_DSN`                   | URL string                                                        | Unset              | Send errors to Sentry.                                                 |
+| `VT_STORAGE_BACKEND`              | `s3` \| `azure`                                                   | Required           | Select object storage.                                                 |
+| `VT_STORAGE_S3_BUCKET`            | String                                                            | Required for S3    | Name the S3 bucket.                                                    |
+| `VT_STORAGE_S3_REGION`            | String                                                            | Unset              | Set the S3 region.                                                     |
+| `VT_STORAGE_S3_ENDPOINT`          | URL string                                                        | Unset              | Override the S3 endpoint; omit for AWS.                                |
+| `VT_STORAGE_S3_ACCESS_KEY_ID`     | String                                                            | Unset              | Set with the S3 secret key, or omit both for the AWS credential chain. |
+| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String                                                            | Unset              | Set with the S3 access key, or omit both for the AWS credential chain. |
+| `VT_STORAGE_AZURE_ACCOUNT`        | String                                                            | Required for Azure | Name the Azure Storage account.                                        |
+| `VT_STORAGE_AZURE_CONTAINER`      | String                                                            | Required for Azure | Name the Azure Blob container.                                         |
+| `VT_STORAGE_AZURE_ACCESS_KEY`     | String                                                            | Unset              | Set an account key; omit for managed identity.                         |
+| `VT_STORAGE_AZURE_ENDPOINT`       | URL string                                                        | Unset              | Override the Azure Blob endpoint.                                      |
 
 Storage is required because workflow pods transfer their own files. The S3
 access and secret keys must be set together or both omitted.
@@ -142,11 +142,11 @@ deleting whatever a relative work path resolves to.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/workflow test` | Run tests. |
+| Command                                      | Action                   |
+| -------------------------------------------- | ------------------------ |
+| `pnpm --filter @virtool/workflow test`       | Run tests.               |
 | `pnpm --filter @virtool/workflow test:watch` | Run tests in watch mode. |
-| `pnpm --filter @virtool/workflow typecheck` | Type-check the package. |
+| `pnpm --filter @virtool/workflow typecheck`  | Type-check the package.  |
 
 ## Testing
 

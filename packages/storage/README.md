@@ -49,8 +49,8 @@ Place tests beside their source as `*.test.ts`.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/storage test` | Run the Vitest projects. |
+| Command                                     | Action                   |
+| ------------------------------------------- | ------------------------ |
+| `pnpm --filter @virtool/storage test`       | Run the Vitest projects. |
 | `pnpm --filter @virtool/storage test:watch` | Run tests in watch mode. |
-| `pnpm --filter @virtool/storage typecheck` | Type-check the package. |
+| `pnpm --filter @virtool/storage typecheck`  | Type-check the package.  |
