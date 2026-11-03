@@ -139,19 +139,25 @@ jobs:
               run: pnpm docs:lint
 
     # -------------------------------------------------------------------------
-    # Docker images (apps/web, apps/internal, apps/create-subtraction,
-    # apps/pathoscope)
+    # Docker images (apps/web, apps/internal, apps/create-sample,
+    # apps/create-subtraction, apps/nuvs, apps/pathoscope)
     # -------------------------------------------------------------------------
     build:
         name: ${{ matrix.area }} / Build
         runs-on: ubuntu-26.04
-        timeout-minutes: 20
+        timeout-minutes: ${{ matrix.timeout }}
         needs: [changes]
         strategy:
             fail-fast: false
             # Adding an app needs an app Dockerfile, a Bake target, and an entry here;
-            # everything else about a new app is generic. Keep this list and the
-            # one in release-ghcr in step.
+            # everything else about a new app is generic. Keep this list in
+            # step with the image map in release-ghcr-matrix.
+            #
+            # `release-ghcr` also publishes every image here. Its Nuvs and
+            # Pathoscope legs reuse the cache that these builds write. Nuvs
+            # has the longest timeout: it compiles SPAdes from source, which
+            # is the most expensive step of any workflow image build. A warm
+            # layer cache skips it.
             matrix:
                 include:
                     - image: web
@@ -159,21 +165,37 @@ jobs:
                       package: "@virtool/web"
                       workspace: apps/web
                       area: Web
+                      timeout: 20
                     - image: internal
                       target: internal
                       package: "@virtool/internal"
                       workspace: apps/internal
                       area: Internal
+                      timeout: 20
                     - image: create-sample
                       target: create-sample
                       package: "@virtool/create-sample"
                       workspace: apps/create-sample
                       area: Create Sample
+                      timeout: 20
                     - image: create-subtraction
                       target: create-subtraction
                       package: "@virtool/create-subtraction"
                       workspace: apps/create-subtraction
                       area: Create Subtraction
+                      timeout: 20
+                    - image: nuvs
+                      target: nuvs
+                      package: "@virtool/nuvs"
+                      workspace: apps/nuvs
+                      area: Nuvs
+                      timeout: 60
+                    - image: pathoscope
+                      target: pathoscope
+                      package: "@virtool/pathoscope"
+                      workspace: apps/pathoscope
+                      area: Pathoscope
+                      timeout: 45
         steps:
             - name: Checkout
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
@@ -301,37 +323,6 @@ jobs:
     # -------------------------------------------------------------------------
     # Nuvs (apps/nuvs)
     # -------------------------------------------------------------------------
-    # Also published by `release-ghcr` as `ghcr.io/virtool/nuvs`.
-    #
-    # The 60-minute timeout is longer than pathoscope's 45: this image compiles
-    # SPAdes from source, which is the single most expensive thing either
-    # workflow build does. It is the first stage in the Dockerfile and depends on
-    # nothing else, so a warm layer cache skips it entirely.
-    nuvs-build:
-        name: Nuvs / Build
-        runs-on: ubuntu-26.04
-        timeout-minutes: 60
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup Buildx
-              uses: docker/setup-buildx-action@v4
-            # `source: .` builds from the checkout, the same context a local
-            # build uses. Pull requests read the cache but don't write it. A
-            # pull request's cache is visible only to that pull request, and
-            # those writes push the main branch's layers out of the cache.
-            - name: Build
-              uses: docker/bake-action@v7
-              with:
-                  source: .
-                  files: packages/image-build/docker-bake.hcl
-                  targets: nuvs
-                  set: |
-                      nuvs*.cache-from=type=gha,scope=nuvs
-                      ${{ github.event_name == 'push' && 'nuvs.cache-to=type=gha,mode=max,scope=nuvs' || '' }}
-
     nuvs-test:
         name: Nuvs / Test
         runs-on: ubuntu-26.04
@@ -351,32 +342,6 @@ jobs:
     # -------------------------------------------------------------------------
     # Pathoscope (apps/pathoscope, packages/pathoscope-core)
     # -------------------------------------------------------------------------
-    # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
-    pathoscope-build:
-        name: Pathoscope / Build
-        runs-on: ubuntu-26.04
-        timeout-minutes: 45
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup Buildx
-              uses: docker/setup-buildx-action@v4
-            # `source: .` builds from the checkout, the same context a local
-            # build uses. Pull requests read the cache but don't write it. A
-            # pull request's cache is visible only to that pull request, and
-            # those writes push the main branch's layers out of the cache.
-            - name: Build
-              uses: docker/bake-action@v7
-              with:
-                  source: .
-                  files: packages/image-build/docker-bake.hcl
-                  targets: pathoscope
-                  set: |
-                      pathoscope*.cache-from=type=gha,scope=pathoscope
-                      ${{ github.event_name == 'push' && 'pathoscope.cache-to=type=gha,mode=max,scope=pathoscope' || '' }}
-
     pathoscope-test:
         name: Pathoscope / Test
         runs-on: ubuntu-26.04
@@ -510,10 +475,8 @@ jobs:
                 checks,
                 data-storage-test,
                 internal-test,
-                nuvs-build,
                 nuvs-test,
                 packages-test,
-                pathoscope-build,
                 pathoscope-test,
                 quality-test,
                 web-test,
@@ -714,10 +677,9 @@ jobs:
             packages: write
         strategy:
             fail-fast: false
-            # The pathoscope and nuvs legs read the gha cache that
-            # pathoscope-build and nuvs-build write. Thus this job does not
-            # build the Rust crate, the bioinformatics tools, and SPAdes again
-            # in its 20-minute timeout.
+            # The pathoscope and nuvs legs read the gha cache that the `build`
+            # matrix writes. Thus this job does not build the Rust crate, the
+            # bioinformatics tools, and SPAdes again in its 20-minute timeout.
             matrix:
                 include: ${{ fromJSON(needs.release-ghcr-matrix.outputs.include) }}
         steps:

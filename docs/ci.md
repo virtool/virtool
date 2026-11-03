@@ -5,10 +5,10 @@
 Every image ships from its app's Dockerfile. The image-build Bake file keeps
 the existing target names. It links every app to the shared build stages in
 `@virtool/image-build`, and links workflow apps to the shared native-tool
-stages in `@virtool/workflow-tools`. Four images use the `build` job matrix;
-Pathoscope and Nuvs have separate, longer affected-only jobs. `release-ghcr`
-publishes only the targets whose app version bumped in a release (see
-[Releases](#releases)).
+stages in `@virtool/workflow-tools`. Every image builds in the `build` job
+matrix, and each entry has its own timeout. Nuvs and Pathoscope have longer
+timeouts because they build native tools. `release-ghcr` publishes only the
+targets whose app version bumped in a release (see [Releases](#releases)).
 
 The [image table](../README.md#images) lists each target and its published
 image.
@@ -16,12 +16,11 @@ image.
 `dist` retains its name because tooling outside this repository targets it.
 
 Adding an image requires an app Dockerfile, its Bake build and image targets,
-and a release-matrix entry. For the four targets in `build`, keep its matrix
-entry in step with `release-ghcr`. Pathoscope and Nuvs instead use the
-dedicated build jobs above. Their `matrix.image` values must match the cache
-scopes those jobs write, so the release reuses the caches they populated rather
-than rebuilding the Rust crate and bioinformatics tools inside the shared
-20-minute release timeout.
+and a release-matrix entry. Keep the `build` matrix entry in step with
+`release-ghcr`. The `matrix.image` value of each `build` entry must match the
+cache scope that `release-ghcr` reads. The release then reuses the caches that
+`build` populated. Without them, it would rebuild the Rust crate and
+bioinformatics tools inside the shared 20-minute release timeout.
 
 Only pushes to `main` write the image build caches. Pull requests read them
 but don't write them. A cache that a pull request writes is visible only to
@@ -32,7 +31,7 @@ wrote.
 Bake builds each `target:` context, such as `nuvs-tools` and `nuvs-build`, as a
 separate build before the image target. A `--set <image>.cache-from` applies
 only to the image target, so the dependency targets then build without a cache.
-Each build job therefore sets `cache-from` with the `<image>*` target pattern.
+The `build` job therefore sets `cache-from` with the `<image>*` target pattern.
 This pattern gives every target in the image's graph the same cache scope. Only
 the image target writes the cache. Its `mode=max` export includes the layers of
 its dependency targets, so a single scope serves all of them.
