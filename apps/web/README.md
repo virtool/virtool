@@ -195,7 +195,7 @@ lookup. Browser sessions, API keys, setup sessions, and forced-reset sessions
 have distinct principal kinds so a policy cannot silently widen one credential
 into another. Row-dependent authorization remains in the handler. Register
 each new `functions.ts` module in
-[src/server/__tests__/authorization.test.ts](src/server/__tests__/authorization.test.ts).
+[src/server/**tests**/authorization.test.ts](src/server/__tests__/authorization.test.ts).
 Keep `createServerFn` at the definition site so the compiler recognizes it.
 
 Restricted setup credentials may complete only their named transition. Each
@@ -370,13 +370,13 @@ of any registered passkey. The recent-authentication plugin in
   session user, and finds the passkey by credential id and session user. It
   verifies the assertion against the configured origin and RP ID with user
   verification required, then stores the new signature counter. Success creates a new session
-through Better Auth, atomically retires the old session, installs Better Auth's
-cookie, and attributes the remainder of the request to the new non-secret
-session id. Concurrent challenges have one durable winner; losing replacement
-sessions are removed. The database replacement necessarily commits before the
-response can install its cookie; if writing that response fails, the new row is
-deleted, while the retired credential stays retired and the browser must sign
-in again.
+  through Better Auth, atomically retires the old session, installs Better Auth's
+  cookie, and attributes the remainder of the request to the new non-secret
+  session id. Concurrent challenges have one durable winner; losing replacement
+  sessions are removed. The database replacement necessarily commits before the
+  response can install its cookie; if writing that response fails, the new row is
+  deleted, while the retired credential stays retired and the browser must sign
+  in again.
 
 Account session management uses that numeric database session id only as an
 opaque management id. Better Auth authenticates with the separate random
@@ -536,15 +536,15 @@ authority rather than one per kind.
 The wall is the set of routes that a browser without an ordinary session can
 open. Each route has one job:
 
-| Route | Job |
-| --- | --- |
-| `/login` | Password, passkey, and TOTP or recovery-code sign-in, and the forced password reset |
-| `/setup` | First-instance bootstrap. It redirects to `/login` when a user exists |
-| `/account-setup` | Invitation acceptance from a `#token=` link |
-| `/recover` | Recovery request and recovery-link consumption |
-| `/verify-email` | Email verification links |
-| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation |
-| `/mfa-enrollment` | TOTP enrollment under the `required` MFA policy |
+| Route                                             | Job                                                                                 |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `/login`                                          | Password, passkey, and TOTP or recovery-code sign-in, and the forced password reset |
+| `/setup`                                          | First-instance bootstrap. It redirects to `/login` when a user exists               |
+| `/account-setup`                                  | Invitation acceptance from a `#token=` link                                         |
+| `/recover`                                        | Recovery request and recovery-link consumption                                      |
+| `/verify-email`                                   | Email verification links                                                            |
+| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation                                                            |
+| `/mfa-enrollment`                                 | TOTP enrollment under the `required` MFA policy                                     |
 
 The server decides where a browser goes next. After every sign-in or setup
 transition, `resolveAuthNextStep` ([nextStep.ts](src/wall/nextStep.ts)) removes
@@ -668,14 +668,14 @@ for it to settle, because the two requests share one challenge cookie and the
 browser runs one ceremony at a time. A failure before the user picks a passkey
 from the autofill shows nothing.
 
-| Operation | Entry point | Policy |
-| --- | --- | --- |
-| Sign in | `authClient.signIn.passkey()`, `startPasskeyAutofill()` | Open, rate limited |
-| Recent authentication | `verifyRecentAuthenticationWithPasskey()` | Session user's passkeys only, rate limited |
-| Register | `authClient.passkey.addPasskey()` | Better Auth fresh session |
-| List | `findPasskeysFn` | `authenticated()`, Better Auth session only |
-| Rename | `renamePasskeyFn` | `passkey.security.update` |
-| Remove | `removePasskeyFn` | `passkey.remove` |
+| Operation             | Entry point                                             | Policy                                      |
+| --------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| Sign in               | `authClient.signIn.passkey()`, `startPasskeyAutofill()` | Open, rate limited                          |
+| Recent authentication | `verifyRecentAuthenticationWithPasskey()`               | Session user's passkeys only, rate limited  |
+| Register              | `authClient.passkey.addPasskey()`                       | Better Auth fresh session                   |
+| List                  | `findPasskeysFn`                                        | `authenticated()`, Better Auth session only |
+| Rename                | `renamePasskeyFn`                                       | `passkey.security.update`                   |
+| Remove                | `removePasskeyFn`                                       | `passkey.remove`                            |
 
 WebAuthn rules:
 
@@ -761,16 +761,16 @@ active-observer filtering and do not restore per-frame `detail(id)` refetches.
 The jobs queue also invalidates job lists because progress changes their state,
 ordering, and counts; tasks have no collection query to invalidate.
 
-| File | Responsibility |
-| --- | --- |
-| `packages/contracts/src/sse.ts` | Domain and per-domain message schemas |
-| `packages/data/src/events/` | Postgres channel contract and publisher |
-| `src/server/events/` | Listener, wire-shape conversion, and session revocation |
-| `src/routes/events.ts` | Authenticated SSE route, keepalive, and framing |
-| `src/app/sse/` | Connection lifecycle, validation, and query routing |
-| `src/app/invalidate.ts` | Keys each change refreshes, shared with mutations |
-| `src/jobs/refresh.ts` | Batched job refresh queue |
-| `src/tasks/refresh.ts` | Batched task refresh queue |
+| File                            | Responsibility                                          |
+| ------------------------------- | ------------------------------------------------------- |
+| `packages/contracts/src/sse.ts` | Domain and per-domain message schemas                   |
+| `packages/data/src/events/`     | Postgres channel contract and publisher                 |
+| `src/server/events/`            | Listener, wire-shape conversion, and session revocation |
+| `src/routes/events.ts`          | Authenticated SSE route, keepalive, and framing         |
+| `src/app/sse/`                  | Connection lifecycle, validation, and query routing     |
+| `src/app/invalidate.ts`         | Keys each change refreshes, shared with mutations       |
+| `src/jobs/refresh.ts`           | Batched job refresh queue                               |
+| `src/tasks/refresh.ts`          | Batched task refresh queue                              |
 
 ## Testing
 
@@ -811,21 +811,21 @@ precedence. Configure the required storage backend using
 [the shared storage settings](../../packages/data/README.md#configuration).
 The table below covers the remaining settings and web-specific storage behavior.
 
-| Variable | Type | Default | Use |
-| --- | --- | --- | --- |
-| `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
-| `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
-| `VT_PUBLIC_ORIGIN` | URL origin | Required | Public browser origin for authentication and WebAuthn, including behind a proxy. Use an HTTPS hostname (HTTP is allowed for localhost), with no path, query, fragment, or credentials. |
-| `VT_AUTH_SECRET` | String (32+ characters) | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session. |
-| `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value can't use `_FILE`. |
-| `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | Encrypt secrets stored by Virtool: the Resend API key and the NCBI API key. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |
-| `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | Accept encrypted values written under the prior key during rotation. |
-| `VT_STORAGE_AZURE_DOWNLOAD_URL` | URL origin | Unset | Rehost redirected Azure downloads on a public origin, such as `https://files.virtool.ca`. Applies only in `redirect` download mode. |
-| `VT_STORAGE_AZURE_UPLOAD_URL` | URL origin | Unset | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint. |
-| `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend can't presign. |
-| `VT_UPLOADS_CHUNKED` | Boolean | `false` | Enable direct Azure Block Blob uploads. When off, or when the backend can't presign uploads, initialization returns 503; there is no proxied fallback. |
-| `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer | `8` | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path. |
+| Variable                         | Type                     | Default  | Use                                                                                                                                                                                                                                                                  |
+| -------------------------------- | ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VT_POSTGRES_URL`                | URL                      | Required | Connect to the Virtool Postgres database.                                                                                                                                                                                                                            |
+| `VT_POSTGRES_POOL_MAX`           | Positive integer         | `10`     | Limit the Postgres connection pool.                                                                                                                                                                                                                                  |
+| `VT_PUBLIC_ORIGIN`               | URL origin               | Required | Public browser origin for authentication and WebAuthn, including behind a proxy. Use an HTTPS hostname (HTTP is allowed for localhost), with no path, query, fragment, or credentials.                                                                               |
+| `VT_AUTH_SECRET`                 | String (32+ characters)  | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session.                                                                           |
+| `VT_METRICS_TOKEN`               | String                   | Unset    | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404.                                                                                                                                                                  |
+| `VT_SENTRY_DSN`                  | URL string               | Unset    | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value can't use `_FILE`.                                                                                                                                          |
+| `VT_ENCRYPTION_KEY`              | Base64 string (32 bytes) | Unset    | Encrypt secrets stored by Virtool: the Resend API key and the NCBI API key. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |
+| `VT_ENCRYPTION_KEY_PREVIOUS`     | Base64 string (32 bytes) | Unset    | Accept encrypted values written under the prior key during rotation.                                                                                                                                                                                                 |
+| `VT_STORAGE_AZURE_DOWNLOAD_URL`  | URL origin               | Unset    | Rehost redirected Azure downloads on a public origin, such as `https://files.virtool.ca`. Applies only in `redirect` download mode.                                                                                                                                  |
+| `VT_STORAGE_AZURE_UPLOAD_URL`    | URL origin               | Unset    | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint.                                                                             |
+| `VT_STORAGE_DOWNLOAD_MODE`       | `stream` \| `redirect`   | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend can't presign.                                                                    |
+| `VT_UPLOADS_CHUNKED`             | Boolean                  | `false`  | Enable direct Azure Block Blob uploads. When off, or when the backend can't presign uploads, initialization returns 503; there is no proxied fallback.                                                                                                               |
+| `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer         | `8`      | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path.                                                                                                                                 |
 
 ## Metrics
 

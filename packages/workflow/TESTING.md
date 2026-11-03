@@ -18,7 +18,7 @@ one.
   `startJobsApiTestServer`, `createFakeSubprocessRunner`, `createTestStorage`,
   `createTestWorkPath`.
 - Nothing is installed by import side effect, and there is no module-level
-  mutable state. Vitest runs test *files* in parallel processes and tests within
+  mutable state. Vitest runs test _files_ in parallel processes and tests within
   a file concurrently on request, so shared module state is a cross-test data
   race.
 - Anything needing cleanup returns its disposer alongside the value, and the
@@ -94,19 +94,19 @@ contract doesn't describe fails there exactly as it would over a wire.
 `JobsApiState` exposes everything a test drives the fixture with or asserts
 against:
 
-| Field | What it records |
-| --- | --- |
-| `job` | The one job served. Flip `state` to drive cancellation. |
-| `key` | The runner key the claim hands out and every call authenticates with. |
-| `acquired` | Whether the job is claimed. A second claim, or one naming another workflow, is a 404. |
-| `stepStartUpdates` | Step ids started, in order. |
-| `finishCalled` | Whether `POST /jobs/{id}/finish` succeeded. |
-| `finalizeCalls` | Every finalize call with the manifest it carried. |
-| `cacheRegistrations` | Every `POST /caches` body, losers of a race included. |
-| `caches` | Cache rows, by logical key. |
-| `samples`, `subtractions`, `indexes`, `analyses`, `references` | Rows the metadata reads serve. |
-| `settings` | The settings singleton. |
-| `now` | The clock the routes stamp with. Injected, never patched. |
+| Field                                                          | What it records                                                                       |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `job`                                                          | The one job served. Flip `state` to drive cancellation.                               |
+| `key`                                                          | The runner key the claim hands out and every call authenticates with.                 |
+| `acquired`                                                     | Whether the job is claimed. A second claim, or one naming another workflow, is a 404. |
+| `stepStartUpdates`                                             | Step ids started, in order.                                                           |
+| `finishCalled`                                                 | Whether `POST /jobs/{id}/finish` succeeded.                                           |
+| `finalizeCalls`                                                | Every finalize call with the manifest it carried.                                     |
+| `cacheRegistrations`                                           | Every `POST /caches` body, losers of a race included.                                 |
+| `caches`                                                       | Cache rows, by logical key.                                                           |
+| `samples`, `subtractions`, `indexes`, `analyses`, `references` | Rows the metadata reads serve.                                                        |
+| `settings`                                                     | The settings singleton.                                                               |
+| `now`                                                          | The clock the routes stamp with. Injected, never patched.                             |
 
 ### camelCase, and why it isn't a spelling nit
 
@@ -114,7 +114,7 @@ The fixture's responses are built from the schemas in `@virtool/contracts`
 rather than hand-spelled, and every field crossing this wire is camelCase:
 `startedAt`, `pingedAt`, never `started_at` / `pinged_at`.
 
-The embedded server is the fixture the jobs API client is tested *against*. If
+The embedded server is the fixture the jobs API client is tested _against_. If
 server and client were both written snake_case they would agree with each other,
 every test would pass, and the mismatch would surface only against the real
 jobs API in `apps/internal`, the worst place to find it.
@@ -128,7 +128,7 @@ with a flag set. A flag would have to be readable by a credential the same
 transition revokes, and it would speak only for `cancelled`. A job swept up by
 the ping timeout is `failed`, and the runner has to stop for that too.
 
-That check sits *after* the key comparison, which is what makes naming the state
+That check sits _after_ the key comparison, which is what makes naming the state
 safe. Every other 401 is opaque (`Invalid credentials`), so a pod stopping on the
 wrong one is visible in the logs rather than invisible.
 
@@ -141,7 +141,7 @@ await expect(client.ping()).rejects.toThrow("Job is cancelled.");
 
 **The refusal covers every route but the claim**, not the ping alone. The real
 service refuses in `requireJobRequest`, which is the floor under every handler;
-the ping is only where a run *notices*. A terminal job's key thus stops serving
+the ping is only where a run _notices_. A terminal job's key thus stops serving
 metadata reads, step starts and finalize calls too, and the three messages are
 the service's own wording: `Job is cancelled.`, `Job has failed.`,
 `Job has succeeded.` A fixture that checked terminal state on the ping alone
@@ -179,7 +179,7 @@ Two more places the fixture matches the service rather than being permissive:
 ### Basic auth, arbitrary statuses, and hung responses
 
 The embedded server enforces `job-{id}:{key}` over HTTP Basic on every route but
-`POST /jobs/claim`, which is unauthenticated because the key comes back *from*
+`POST /jobs/claim`, which is unauthenticated because the key comes back _from_
 it. A route carrying a job id also checks it against the authenticated one and
 answers 403 on a mismatch. The guard rejects invalid credentials; the handler
 rejects a mismatched path.
@@ -226,7 +226,7 @@ subtraction.
 sample `create_sample` hasn't finished, so it carries **uploads and no reads**,
 and three of its details are load-bearing:
 
-- The uploads are named `sample_R{1,2}.fastq.gz`, deliberately *not*
+- The uploads are named `sample_R{1,2}.fastq.gz`, deliberately _not_
   `reads_{1,2}.fq.gz`. An upload keeps whatever the user called it and the
   workflow is what renames it, so a fixture whose uploads already carried the
   target names would pass against a port that renamed nothing.
@@ -263,19 +263,19 @@ the network.
 reproduces the real runner's outcome table exactly, because the three outcomes a
 naive fake collapses into one are the three a workflow step branches on:
 
-| Registration | Outcome |
-| --- | --- |
-| `{ spawnError: "ENOENT" }` | throws `SubprocessSpawnError` |
-| `{ exitCode: 1, stderr: [...] }` | throws `SubprocessFailedError` with the tail |
-| `{ cancelled: true }` | resolves `{ exitCode: null, signal: "SIGTERM", cancelled: true }` |
-| `{}` | resolves `{ exitCode: 0, cancelled: false }` |
+| Registration                     | Outcome                                                           |
+| -------------------------------- | ----------------------------------------------------------------- |
+| `{ spawnError: "ENOENT" }`       | throws `SubprocessSpawnError`                                     |
+| `{ exitCode: 1, stderr: [...] }` | throws `SubprocessFailedError` with the tail                      |
+| `{ cancelled: true }`            | resolves `{ exitCode: null, signal: "SIGTERM", cancelled: true }` |
+| `{}`                             | resolves `{ exitCode: 0, cancelled: false }`                      |
 
 Cancellation is `exitCode === null && signal === "SIGTERM"`, **not**
 `exitCode === 15`. Treating 15 as a success on the reasoning that the run was
 already failing for another reason doesn't survive a tool choosing 15 as an
 ordinary error code.
 
-The stderr tail matters: the real runner drains stderr *and* the process promise
+The stderr tail matters: the real runner drains stderr _and_ the process promise
 before deciding, because a subprocess can exit before its stdio is drained and
 the tail is what says why it failed. Only the last twenty lines are kept, the
 same cap the real runner applies.
@@ -350,7 +350,7 @@ The **builders'** placeholder keys are drawn from the seed rather than from
 `mintStorageKey`, which is `randomUUID`-backed and would cost the determinism a
 checksum assertion stands on. They keep the same uuid-shaped opaque leaf, so
 nothing can compose one; a test that seeds real bytes overwrites them with the
-key the seeding helper returns, and that one *is* minted.
+key the seeding helper returns, and that one _is_ minted.
 
 ## Work paths
 

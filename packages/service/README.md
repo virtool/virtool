@@ -14,8 +14,8 @@ bounds the complete sequence.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/service test` | Run tests. |
+| Command                                     | Action                   |
+| ------------------------------------------- | ------------------------ |
+| `pnpm --filter @virtool/service test`       | Run tests.               |
 | `pnpm --filter @virtool/service test:watch` | Run tests in watch mode. |
-| `pnpm --filter @virtool/service typecheck` | Type-check the package. |
+| `pnpm --filter @virtool/service typecheck`  | Type-check the package.  |

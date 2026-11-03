@@ -12,7 +12,7 @@ than importing one itself.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/sentry test` | Run tests. |
+| Command                                   | Action                  |
+| ----------------------------------------- | ----------------------- |
+| `pnpm --filter @virtool/sentry test`      | Run tests.              |
 | `pnpm --filter @virtool/sentry typecheck` | Type-check the package. |

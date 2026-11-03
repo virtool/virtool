@@ -23,7 +23,7 @@ docker buildx bake -f packages/image-build/docker-bake.hcl nuvs
 ## Result shape
 
 - **The raw `results` shape is pinned by `formatNuvs`**
-  (`packages/data/src/analyses/format.ts`), *not* by
+  (`packages/data/src/analyses/format.ts`), _not_ by
   `packages/contracts/src/nuvs.ts`, which describes the **formatted**
   envelope. The workflow writes each ORF hit's `hit` (an annotation id) and
   never `cluster`, `families` or `names`, which the server merges in from the
@@ -39,10 +39,10 @@ the complete environment-variable table and configuration rules.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/nuvs build` | Bundle to `dist/index.mjs` |
-| `pnpm --filter @virtool/nuvs start` | Run the bundle |
-| `pnpm --filter @virtool/nuvs test` | Run the Vitest suite |
-| `pnpm --filter @virtool/nuvs test:watch` | Vitest in watch mode |
-| `pnpm --filter @virtool/nuvs typecheck` | `tsc --noEmit` |
+| Command                                  | Action                     |
+| ---------------------------------------- | -------------------------- |
+| `pnpm --filter @virtool/nuvs build`      | Bundle to `dist/index.mjs` |
+| `pnpm --filter @virtool/nuvs start`      | Run the bundle             |
+| `pnpm --filter @virtool/nuvs test`       | Run the Vitest suite       |
+| `pnpm --filter @virtool/nuvs test:watch` | Vitest in watch mode       |
+| `pnpm --filter @virtool/nuvs typecheck`  | `tsc --noEmit`             |

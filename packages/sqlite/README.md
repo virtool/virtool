@@ -5,12 +5,12 @@ against one, and the writer that produces one.
 
 Four modules, all exported from the package root:
 
-| Module | What it holds |
-| --- | --- |
-| `schema.ts` | the schema, the filename and format constants, `openIndexArtifact`, `createIndexArtifactSchema` |
-| `queries.ts` | `openWorkflowIndex` and the six reads, plus `writeFasta` |
-| `create.ts` | `createIndexArtifact`, the bulk load |
-| `errors.ts` | `IndexArtifactError` and the five failures a caller can tell apart |
+| Module       | What it holds                                                                                   |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| `schema.ts`  | the schema, the filename and format constants, `openIndexArtifact`, `createIndexArtifactSchema` |
+| `queries.ts` | `openWorkflowIndex` and the six reads, plus `writeFasta`                                        |
+| `create.ts`  | `createIndexArtifact`, the bulk load                                                            |
+| `errors.ts`  | `IndexArtifactError` and the five failures a caller can tell apart                              |
 
 Nothing here touches the network or the database, and it constructs nothing at
 import time.
@@ -24,7 +24,7 @@ package:
   publishes it as `reference-snapshot.v1.sqlite.gz` from the `create_index`
   task.
 - **The workflow executors** stream-decompress that snapshot back to the raw
-  filename before opening it. Pathoscope also *writes* one:
+  filename before opening it. Pathoscope also _writes_ one:
   `cd-hit-est` collapses the supplied reference, and the survivors go into
   `index.v1.sqlite`, which later steps reopen through `openWorkflowIndex`.
 
@@ -40,7 +40,7 @@ opinions about one binary format.
 
 ## This package specifies the format
 
-The artifact format is specified here, and what's specified is the *schema*:
+The artifact format is specified here, and what's specified is the _schema_:
 columns, constraints, and indexes. It's not any particular DDL text. The tables are
 declared explicitly and never reflected, so only the schema itself binds a
 writer.

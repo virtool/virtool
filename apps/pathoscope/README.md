@@ -33,9 +33,9 @@ docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 Two of the four tools are scripts, not ELF binaries, and `node:24-bookworm-slim`
 carries neither interpreter in full:
 
-| Tool | Shebang | Needs |
-| --- | --- | --- |
-| `bowtie2` | `#!/usr/bin/env perl` | full `perl`. The slim base ships `perl-base`, which omits `Sys::Hostname` |
+| Tool            | Shebang                  | Needs                                                                                                |
+| --------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `bowtie2`       | `#!/usr/bin/env perl`    | full `perl`. The slim base ships `perl-base`, which omits `Sys::Hostname`                            |
 | `bowtie2-build` | `#!/usr/bin/env python3` | `python3` with the standard library. `python3-minimal` omits it and the script dies on `import gzip` |
 
 `bowtie2-build` is the wrapper that picks between the real `bowtie2-build-s` and
@@ -74,13 +74,13 @@ the complete environment-variable table and configuration rules.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/pathoscope build` | Bundle to `dist/index.mjs` |
-| `pnpm --filter @virtool/pathoscope start` | Run the bundle |
-| `pnpm --filter @virtool/pathoscope test` | Run the Vitest suite |
-| `pnpm --filter @virtool/pathoscope test:watch` | Vitest in watch mode |
-| `pnpm --filter @virtool/pathoscope typecheck` | `tsc --noEmit` |
+| Command                                        | Action                     |
+| ---------------------------------------------- | -------------------------- |
+| `pnpm --filter @virtool/pathoscope build`      | Bundle to `dist/index.mjs` |
+| `pnpm --filter @virtool/pathoscope start`      | Run the bundle             |
+| `pnpm --filter @virtool/pathoscope test`       | Run the Vitest suite       |
+| `pnpm --filter @virtool/pathoscope test:watch` | Vitest in watch mode       |
+| `pnpm --filter @virtool/pathoscope typecheck`  | `tsc --noEmit`             |
 
 `pnpm` doesn't run the Rust crate's tests. Run `cargo test` in
 `packages/pathoscope-core`, or the `pathoscope-core-test` Bake target to run
