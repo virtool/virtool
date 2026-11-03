@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { resolveFileBacked } from "./env";
+import { resolveFileBacked } from "./index";
 
 function writeSecret(contents: string): string {
 	const path = join(mkdtempSync(join(tmpdir(), "vt-env-")), "secret");

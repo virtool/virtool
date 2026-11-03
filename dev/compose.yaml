@@ -28,6 +28,7 @@ x-volumes: &volumes
   - ${VT_DEV_WORKTREE}/packages/bio/src:/repo/packages/bio/src:ro
   - ${VT_DEV_WORKTREE}/packages/contracts/src:/repo/packages/contracts/src:ro
   - ${VT_DEV_WORKTREE}/packages/data/src:/repo/packages/data/src:ro
+  - ${VT_DEV_WORKTREE}/packages/env/src:/repo/packages/env/src:ro
   - ${VT_DEV_WORKTREE}/packages/logger/src:/repo/packages/logger/src:ro
   - ${VT_DEV_WORKTREE}/packages/ncbi/src:/repo/packages/ncbi/src:ro
   - ${VT_DEV_WORKTREE}/packages/sentry/src:/repo/packages/sentry/src:ro
@@ -165,6 +166,7 @@ services:
       - ${VT_DEV_WORKTREE}/packages/archive/src:/repo/packages/archive/src:ro
       - ${VT_DEV_WORKTREE}/packages/contracts/src:/repo/packages/contracts/src:ro
       - ${VT_DEV_WORKTREE}/packages/data/src:/repo/packages/data/src:ro
+      - ${VT_DEV_WORKTREE}/packages/env/src:/repo/packages/env/src:ro
       - ${VT_DEV_WORKTREE}/packages/logger/src:/repo/packages/logger/src:ro
       - ${VT_DEV_WORKTREE}/packages/sqlite/src:/repo/packages/sqlite/src:ro
       - ${VT_DEV_WORKTREE}/packages/storage/src:/repo/packages/storage/src:ro

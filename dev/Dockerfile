@@ -21,6 +21,7 @@ COPY packages/archive ./packages/archive
 COPY packages/bio ./packages/bio
 COPY packages/contracts ./packages/contracts
 COPY packages/data ./packages/data
+COPY packages/env ./packages/env
 COPY packages/logger ./packages/logger
 COPY packages/ncbi ./packages/ncbi
 COPY packages/sentry ./packages/sentry

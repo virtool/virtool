@@ -23,7 +23,7 @@ config.json
 .cache
 .DS_store
 .worktrees
-env
+/env
 tags
 .vscode
 

@@ -1,6 +1,6 @@
-import { resolveFileBacked } from "@virtool/contracts/env";
 import { getEmailRemediationReport } from "@virtool/data/auth/remediation";
 import { createDb } from "@virtool/data/db/pg";
+import { resolveFileBacked } from "@virtool/env";
 import { createLogger } from "@virtool/logger";
 import { z } from "zod";
 

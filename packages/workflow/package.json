@@ -17,6 +17,7 @@
 		"@sentry/node": "^11.10.0",
 		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
+		"@virtool/env": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",
 		"@virtool/sqlite": "workspace:*",
