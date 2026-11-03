@@ -814,6 +814,23 @@ describe("virtool account state", () => {
 		expect(await db.select().from(authSessions)).toHaveLength(0);
 	});
 
+	it("refuses a deactivated user with two-factor enabled before any challenge", async () => {
+		await seedMigratedUser(LEGACY_HASH, { active: false });
+		await db.update(users).set({ twoFactorEnabled: true });
+
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toMatchObject({
+			code: "INVALID_USERNAME_OR_PASSWORD",
+		});
+	});
+
 	// A completion transaction moves the account out of `pending` before its
 	// caller mints any session, so an ordinary session can only ever be issued
 	// to an account that is already eligible for one.
