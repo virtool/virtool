@@ -9,6 +9,7 @@ import {
 	foreignKey,
 	integer,
 	pgTable,
+	smallint,
 	text,
 	timestamp,
 	unique,
@@ -40,6 +41,14 @@ export const uploads = pgTable(
 		// only when it equals this, so a partial or empty block list cannot be
 		// recorded as ready. Null on rows that never went through the chunked path.
 		expectedSize: bigint("expected_size", { mode: "number" }),
+		// The run identity read from the first FASTQ header of a reads upload. All
+		// null when the header could not be read or names no run. The read side is
+		// only set when the identity is.
+		headerFlowcell: text("header_flowcell"),
+		headerInstrument: text("header_instrument"),
+		headerLane: integer("header_lane"),
+		headerReadSide: smallint("header_read_side"),
+		headerRunNumber: integer("header_run_number"),
 		// The upload's complete object-storage key. Nullable because it was
 		// backfilled from `name_on_disk`, which is itself nullable: a row without one
 		// names no retrievable object.
@@ -61,6 +70,14 @@ export const uploads = pgTable(
 		check(
 			"ck_uploads_type",
 			sql`${table.type} in ('reference', 'reads', 'subtraction')`,
+		),
+		check(
+			"ck_uploads_header_complete",
+			sql`(${table.headerInstrument} is null) = (${table.headerRunNumber} is null) and (${table.headerRunNumber} is null) = (${table.headerFlowcell} is null) and (${table.headerFlowcell} is null) = (${table.headerLane} is null)`,
+		),
+		check(
+			"ck_uploads_header_read_side",
+			sql`(${table.headerReadSide} is null) or (${table.headerReadSide} in (1, 2) and ${table.headerInstrument} is not null)`,
 		),
 	],
 );

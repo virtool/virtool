@@ -44,6 +44,7 @@ import { takeFirstOrThrow } from "../db/rows";
 import { analyses, analysisFiles } from "../db/schema/analyses";
 import { groups, userGroups } from "../db/schema/groups";
 import { labels } from "../db/schema/labels";
+import { runs } from "../db/schema/runs";
 import {
 	type LegacySampleRow,
 	legacySampleLabels,
@@ -59,6 +60,7 @@ import { sampleViews } from "../db/schema/views";
 import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
+import { groupMinimalColumns } from "../groups/data";
 import { createJob, getJobs } from "../jobs/data";
 import { getSettings } from "../settings/data";
 import { reserveUploads } from "../uploads/data";
@@ -110,6 +112,7 @@ export type FindSamplesOptions = {
  */
 export type CreateSampleValues = Omit<SampleCreateRequest, "group"> & {
 	group: number | null;
+	runId?: number | null;
 	userId: number;
 };
 
@@ -175,6 +178,9 @@ export class SampleSubtractionsNotFoundError extends AppError {}
 
 /** Thrown when a rights or create request names a group that does not exist. */
 export class SampleGroupNotFoundError extends AppError {}
+
+/** Thrown when a sample is created for a run that does not exist. */
+export class SampleRunNotFoundError extends AppError {}
 
 /** Thrown when the `force_choice` policy requires a group and none was given. */
 export class SampleGroupRequiredError extends AppError {}
@@ -836,22 +842,12 @@ export async function listSampleGroups(
 	db: Db,
 	actor: SampleActor,
 ): Promise<GroupMinimal[]> {
-	const rows = await db
-		.selectDistinct({
-			id: groups.id,
-			legacyId: groups.legacyId,
-			name: groups.name,
-		})
+	return db
+		.selectDistinct(groupMinimalColumns)
 		.from(groups)
 		.innerJoin(legacySamples, eq(legacySamples.group_id, groups.id))
 		.where(sampleReadableFilter(actor))
 		.orderBy(asc(groups.name));
-
-	return rows.map((row) => ({
-		id: row.id,
-		legacyId: row.legacyId,
-		name: row.name,
-	}));
 }
 
 export async function getSample(db: Db, sampleId: number): Promise<Sample> {
@@ -1113,6 +1109,24 @@ async function checkLabelsExist(db: DbOrTx, labelIds: number[]): Promise<void> {
 	}
 }
 
+async function checkRunExists(
+	db: DbOrTx,
+	runId: number | null | undefined,
+): Promise<void> {
+	if (runId == null) {
+		return;
+	}
+
+	const [row] = await db
+		.select({ id: runs.id })
+		.from(runs)
+		.where(eq(runs.id, runId));
+
+	if (!row) {
+		throw new SampleRunNotFoundError(`Run does not exist: ${runId}`);
+	}
+}
+
 async function checkSubtractionsExist(
 	db: DbOrTx,
 	subtractionIds: number[],
@@ -1184,6 +1198,7 @@ export async function createSample(
 
 	await Promise.all([
 		checkLabelsExist(db, values.labels),
+		checkRunExists(db, values.runId),
 		checkSubtractionsExist(db, values.subtractions),
 	]);
 
@@ -1224,6 +1239,7 @@ export async function createSample(
 					paired: values.files.length === 2,
 					quality: null,
 					ready: false,
+					run_id: values.runId ?? null,
 					user_id: values.userId,
 				})
 				.returning({ id: legacySamples.id }),

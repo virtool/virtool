@@ -18,6 +18,7 @@ import { indexes } from "../db/schema/indexes";
 import { jobs } from "../db/schema/jobs";
 import { labels } from "../db/schema/labels";
 import { legacyReferences } from "../db/schema/references";
+import { runs } from "../db/schema/runs";
 import {
 	legacySampleLabels,
 	legacySampleSubtractions,
@@ -32,6 +33,7 @@ import { sampleViews } from "../db/schema/views";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import { seedIndex, seedReference } from "../indexes/test/fixtures";
+import { createRun } from "../runs/data";
 import { testLogger } from "../test/logger";
 import { UploadNotFoundError } from "../uploads/data";
 import {
@@ -53,6 +55,7 @@ import {
 	SampleNameConflictError,
 	SampleNotFoundError,
 	SampleOwnerlessError,
+	SampleRunNotFoundError,
 	sampleReadableFilter,
 	updateSample,
 	updateSampleRights,
@@ -83,6 +86,7 @@ beforeEach(async () => {
 	await db.delete(sampleUploads);
 	await db.delete(sampleReads);
 	await db.delete(legacySamples);
+	await db.delete(runs);
 	await db.delete(jobs);
 	await db.delete(labels);
 	await db.delete(subtractions);
@@ -726,6 +730,38 @@ describe("createSample", () => {
 			.where(eq(sampleUploads.sample_id, sample.id))
 			.orderBy(sampleUploads.index);
 		expect(links.map((l) => l.upload_id)).toEqual([first, second]);
+	});
+
+	it("links the sample to a run", async () => {
+		const file = await seedUpload();
+		const run = await createRun(db, {
+			autoCreate: false,
+			entries: [],
+			groupId: null,
+			libraryType: "normal",
+			name: "Run",
+			technicianId: null,
+			userId: ownerId,
+		});
+
+		const sample = await createSample(
+			db,
+			values({ files: [file], runId: run.id }),
+		);
+
+		const [row] = await db
+			.select({ runId: legacySamples.run_id })
+			.from(legacySamples)
+			.where(eq(legacySamples.id, sample.id));
+		expect(row?.runId).toBe(run.id);
+	});
+
+	it("rejects a run that does not exist", async () => {
+		const file = await seedUpload();
+
+		await expect(
+			createSample(db, values({ files: [file], runId: 987654 })),
+		).rejects.toBeInstanceOf(SampleRunNotFoundError);
 	});
 
 	it("inserts the label and subtraction join rows", async () => {

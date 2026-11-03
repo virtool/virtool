@@ -33,6 +33,13 @@ export class GroupNotFoundError extends AppError {}
 /** Thrown when a group name conflicts with an existing group. */
 export class GroupConflictError extends AppError {}
 
+/** The columns that project a group row onto `GroupMinimal`. */
+export const groupMinimalColumns = {
+	id: groupsTable.id,
+	legacyId: groupsTable.legacyId,
+	name: groupsTable.name,
+};
+
 function toGroupMinimal(row: GroupRow): GroupMinimal {
 	return {
 		id: row.id,

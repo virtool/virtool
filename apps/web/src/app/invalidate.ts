@@ -9,6 +9,7 @@ import { jobQueryKeys } from "@jobs/keys";
 import { labelQueryKeys } from "@labels/keys";
 import { otuQueryKeys } from "@otus/keys";
 import { referenceQueryKeys } from "@references/keys";
+import { runQueryKeys } from "@runs/keys";
 import { samplesQueryKeys } from "@samples/keys";
 import { subtractionQueryKeys } from "@subtraction/keys";
 import {
@@ -47,6 +48,7 @@ const domains: Record<SseDomain, DomainCache> = {
 	otus: { keys: otuQueryKeys, shape: "records" },
 	references: { keys: referenceQueryKeys, shape: "records" },
 	roles: { keys: roleQueryKeys, shape: "whole" },
+	runs: { keys: runQueryKeys, shape: "records" },
 	samples: { keys: samplesQueryKeys, shape: "records" },
 	subtractions: { keys: subtractionQueryKeys, shape: "records" },
 	tasks: { keys: taskQueryKeys, shape: "whole" },

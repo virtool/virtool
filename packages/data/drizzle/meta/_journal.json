@@ -316,6 +316,13 @@
       "when": 1793125449682,
       "tag": "0044_drop_legacy_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793136024626,
+      "tag": "0045_add_runs_and_instruments",
+      "breakpoints": true
     }
   ]
 }
