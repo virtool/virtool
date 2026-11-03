@@ -809,8 +809,50 @@ describe("virtool account state", () => {
 			}),
 		);
 
+		const wrong = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: "not-the-password",
+			}),
+		);
+
 		expect(response.status).toBe(401);
+		expect(await response.json()).toEqual(await wrong.json());
 		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("refuses a wrong password with the invalid username or password code", async () => {
+		await seedMigratedUser(LEGACY_HASH);
+
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: "not-the-password",
+			}),
+		);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toMatchObject({
+			code: "INVALID_USERNAME_OR_PASSWORD",
+		});
+		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("refuses a deactivated user with two-factor enabled before any challenge", async () => {
+		await seedMigratedUser(LEGACY_HASH, { active: false });
+		await db.update(users).set({ twoFactorEnabled: true });
+
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toMatchObject({
+			code: "INVALID_USERNAME_OR_PASSWORD",
+		});
 	});
 
 	// A completion transaction moves the account out of `pending` before its
@@ -827,6 +869,9 @@ describe("virtool account state", () => {
 		);
 
 		expect(response.status).toBe(401);
+		expect(await response.json()).toMatchObject({
+			code: "INVALID_USERNAME_OR_PASSWORD",
+		});
 		expect(await db.select().from(authSessions)).toHaveLength(0);
 	});
 });

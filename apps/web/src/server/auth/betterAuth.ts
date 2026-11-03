@@ -24,7 +24,7 @@ import {
 	sensitiveSessionMiddleware,
 } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
-import { twoFactor, username } from "better-auth/plugins";
+import { twoFactor, USERNAME_ERROR_CODES, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -329,10 +329,10 @@ export function createAuth({
 							.limit(1);
 
 						if (!user?.active || user.lifecycleState !== "normal") {
-							throw new APIError("UNAUTHORIZED", {
-								message: "Invalid credentials",
-								code: "INVALID_CREDENTIALS",
-							});
+							throw APIError.from(
+								"UNAUTHORIZED",
+								USERNAME_ERROR_CODES.INVALID_USERNAME_OR_PASSWORD,
+							);
 						}
 
 						return {
