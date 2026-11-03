@@ -208,7 +208,9 @@ jobs:
             # cache is visible only to that pull request, and those writes push
             # the main branch's layers out of the cache. `<image>*` also gives
             # the `-build` and `-tools` dependency targets the cache. Bake
-            # builds them separately.
+            # builds them separately. Only the image target writes the cache:
+            # its `mode=max` export holds the layers of its dependency targets,
+            # so one scope serves them all.
             - name: Build
               if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
               uses: docker/bake-action@v7

@@ -25,7 +25,7 @@ images whose app version changed; see [Continuous integration](docs/ci.md).
 
 | Target | Published image |
 | --- | --- |
-| `dist` | `ghcr.io/virtool/web` |
+| `web` | `ghcr.io/virtool/web` |
 | `internal` | `ghcr.io/virtool/internal` |
 | `create-sample` | `ghcr.io/virtool/create-sample` |
 | `create-subtraction` | `ghcr.io/virtool/create-subtraction` |

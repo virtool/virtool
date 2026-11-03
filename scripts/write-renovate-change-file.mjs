@@ -24,6 +24,8 @@ import {
 } from "./workspaces.mjs";
 
 const directory = ".changeset";
+// Knope lists entries with details by file name, so the prefix puts
+// dependency updates last in a release.
 const prefix = `${directory}/z-renovate-`;
 
 function readData() {
