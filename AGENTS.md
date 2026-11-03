@@ -32,6 +32,7 @@ Apps bundle; packages stay source.
 | [`@virtool/bio`](packages/bio/README.md) | Sequence utilities and workflow text parsers. |
 | [`@virtool/contracts`](packages/contracts/README.md) | Shared wire shapes and isolated server-only helpers. |
 | [`@virtool/data`](packages/data/README.md) | Server-only Drizzle schema mirror and Postgres queries. |
+| [`@virtool/env`](packages/env/README.md) | File-backed environment variable resolution. |
 | [`@virtool/logger`](packages/logger/README.md) | Shared pino configuration. |
 | `@virtool/image-build` | `docker buildx bake` graph for shipped images. |
 | [`@virtool/ncbi`](packages/ncbi/README.md) | NCBI Nucleotide and Taxonomy client. |

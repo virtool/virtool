@@ -7,7 +7,6 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./bearer": "./src/bearer.ts",
-		"./env": "./src/env.ts",
 		"./userAgent": "./src/userAgent.ts"
 	},
 	"scripts": {

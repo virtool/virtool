@@ -18,6 +18,7 @@
 		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
+		"@virtool/env": "workspace:*",
 		"@virtool/image-build": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",

@@ -3,5 +3,5 @@
 	"compilerOptions": {
 		"types": ["node"]
 	},
-	"include": ["src/bearer.ts", "src/env.ts", "src/env.test.ts"]
+	"include": ["src/bearer.ts"]
 }
