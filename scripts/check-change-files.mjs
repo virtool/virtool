@@ -1,6 +1,8 @@
 // Fails a pull request when a change file is malformed, or when an image app
-// changed since the base ref and no change file names its Knope package. The
-// `no-release` label waives the coverage rule, not the format rule.
+// changed since the base ref and no change file names its Knope package. A
+// change to tests, test data, Markdown, or only dependencies that ship nothing
+// does not count. The `no-release` label waives the coverage rule, not the
+// format rule.
 //
 // Knope ignores a change file with a quoted or unknown package name, and
 // accepts one with no summary, so this check rejects them itself.
@@ -22,20 +24,18 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { readKnopePackages } from "./knope.mjs";
+import {
+	getAffectedDirs,
+	getChangedFiles,
+	git,
+	isShippedFile,
+	lines,
+} from "./workspaces.mjs";
 
 const ref = process.argv[2] ?? "origin/main";
 const waiver = "no-release";
 
-function git(...args) {
-	return execFileSync("git", args, { encoding: "utf8" }).trim();
-}
-
-function lines(output) {
-	return output.split("\n").filter(Boolean);
-}
-
-function getChangeFiles(root) {
-	const base = git("merge-base", ref, "HEAD");
+function getChangeFiles(root, base) {
 	const pathspec = ".changeset/*.md";
 
 	return [
@@ -130,10 +130,10 @@ function listWorkspaces(root, filter) {
 
 // Maps each affected Knope package name to the app directories that make it
 // affected.
-function getAffectedPackages(root, knopePackages) {
+function getAffectedPackages(root, base, knopePackages, changed) {
 	const affected = new Map();
 
-	for (const dir of listWorkspaces(root, `...[${ref}]`)) {
+	for (const dir of getAffectedDirs(root, base, changed)) {
 		const name = knopePackages.get(join(dir, "package.json"));
 
 		if (name) {
@@ -261,12 +261,11 @@ function build(root, app) {
 
 // Returns the apps whose bundles and production dependencies are the same at
 // the merge base and at `HEAD`.
-function getUnchangedApps(root, apps) {
+function getUnchangedApps(root, base, apps) {
 	if (apps.length === 0) {
 		return new Set();
 	}
 
-	const base = git("merge-base", ref, "HEAD");
 	const worktree = mkdtempSync(join(tmpdir(), "check-change-files-"));
 
 	try {
@@ -306,12 +305,13 @@ function getLabels() {
 
 function main() {
 	const root = git("rev-parse", "--show-toplevel");
+	const base = git("merge-base", ref, "HEAD");
 	const knopePackages = readKnopePackages(root);
 	const names = new Set(knopePackages.values());
 	const named = new Set();
 	const invalid = [];
 
-	for (const { file, text } of getChangeFiles(root)) {
+	for (const { file, text } of getChangeFiles(root, base)) {
 		const { errors, packages } = parseChangeFile(text, names);
 
 		for (const name of packages) {
@@ -340,16 +340,16 @@ function main() {
 		return 0;
 	}
 
-	const affected = getAffectedPackages(root, knopePackages);
+	const changed = getChangedFiles(base);
+	const affected = getAffectedPackages(root, base, knopePackages, changed);
 	const pending = [...affected].filter(([name]) => !named.has(name));
-	const changed = lines(
-		git("diff", "--name-only", "--no-relative", git("merge-base", ref, "HEAD")),
-	);
+	const shipped = changed.filter(isShippedFile);
 	const unchanged = getUnchangedApps(
 		root,
+		base,
 		pending
 			.flatMap(([, apps]) => apps)
-			.filter((app) => isBundleOnlyChange(root, app, changed)),
+			.filter((app) => isBundleOnlyChange(root, app, shipped)),
 	);
 	const unnamed = pending
 		.filter(([, apps]) => !apps.every((app) => unchanged.has(app)))
