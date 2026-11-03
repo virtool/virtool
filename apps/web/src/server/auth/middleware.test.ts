@@ -1,7 +1,6 @@
 import {
 	emptyPermissions,
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 } from "@virtool/contracts";
 import {
@@ -58,9 +57,7 @@ vi.mock("../composition", () => ({
 	},
 }));
 
-const { authenticationExceptions, passwordResetEndpoints } = await import(
-	"./exceptions"
-);
+const { authenticationExceptions } = await import("./exceptions");
 const {
 	createAuthenticationMiddleware,
 	ForbiddenError,
@@ -76,7 +73,6 @@ const {
 	inspectAccountSetupFn,
 	loginFn,
 	logoutFn,
-	resetPasswordFn,
 	verifyTwoFactorFn,
 } = await import("./functions");
 const {
@@ -123,12 +119,10 @@ type ServerHandler = (options: {
 function serverHandler(
 	exceptions: ReadonlyArray<{ url: string }> = authenticationExceptions,
 	setup: ReadonlyArray<SetupEndpoint> = [],
-	passwordReset: ReadonlyArray<{ url: string }> = passwordResetEndpoints,
 ) {
 	const middleware = createAuthenticationMiddleware(
 		async () => exceptions,
 		async () => setup,
-		async () => passwordReset,
 	);
 	return (middleware as unknown as { options: { server: ServerHandler } })
 		.options.server;
@@ -178,7 +172,6 @@ describe("authentication exceptions", () => {
 				.map((fn) => fn.url)
 				.sort(),
 		);
-		expect(passwordResetEndpoints).toEqual([resetPasswordFn]);
 	});
 
 	it("clears attribution and passes a null principal", async () => {
@@ -257,37 +250,6 @@ describe("browser boundary", () => {
 			serverHandler()({ next: vi.fn(), serverFnMeta: { id: "ordinary" } }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 	});
-
-	it("restricts force-reset sessions to the reset endpoint", async () => {
-		const userId = await seedUser(db, { forceReset: true });
-		const session = await seedSession(db, userId);
-		getRequest.mockReturnValue(requestFor(sessionCookie(session)));
-
-		const error = await serverHandler()({
-			next: vi.fn(),
-			serverFnMeta: { id: "ordinary" },
-		}).catch((value) => value);
-		expect(error).toBeInstanceOf(Error);
-		if (!(error instanceof Error)) {
-			throw error;
-		}
-		expect(error.name).toBe(PASSWORD_RESET_REQUIRED_ERROR_NAME);
-
-		const next = vi.fn().mockResolvedValue("result");
-		await serverHandler()({
-			next,
-			serverFnMeta: metaFor(resetPasswordFn),
-		});
-		expect(next).toHaveBeenCalledWith({
-			context: {
-				principal: expect.objectContaining({
-					kind: "password_reset",
-					sessionId: session.sessionId,
-					userId,
-				}),
-			},
-		});
-	});
 });
 
 describe("required MFA boundary", () => {
@@ -304,7 +266,7 @@ describe("required MFA boundary", () => {
 		const next = vi.fn();
 		const error = await serverHandler()({
 			next,
-			serverFnMeta: metaFor(resetPasswordFn),
+			serverFnMeta: metaFor(createSampleFn),
 		}).catch((value) => value);
 
 		expect(error).toBeInstanceOf(Error);
@@ -384,21 +346,6 @@ describe("raw request boundary", () => {
 			requestFor(sessionCookie(session), "Bearer invalid"),
 		);
 		expect((result as Response).status).toBe(401);
-	});
-
-	it("rejects forced-reset and setup credentials", async () => {
-		const resetUser = await seedUser(db, {
-			forceReset: true,
-			handle: "reset-user",
-		});
-		const resetSession = await seedSession(db, resetUser);
-		expect(
-			(
-				(await requireAuthenticatedRequest(
-					requestFor(sessionCookie(resetSession)),
-				)) as Response
-			).status,
-		).toBe(401);
 	});
 });
 

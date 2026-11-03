@@ -26,8 +26,6 @@ type LoginFormProps = {
 	onChallenge?: () => void;
 	/** URL to navigate to after a successful login. Defaults to "/". */
 	redirect?: string;
-	/** Shows the forced-reset form after the password has been authenticated. */
-	setResetRequired: (required: boolean) => void;
 };
 
 type FormValues = {
@@ -40,7 +38,6 @@ export default function LoginForm({
 	notice,
 	onChallenge,
 	redirect,
-	setResetRequired,
 }: LoginFormProps) {
 	const { handleSubmit, register } = useForm<FormValues>();
 	const loginMutation = useLoginMutation();
@@ -68,9 +65,7 @@ export default function LoginForm({
 		setContinueError(null);
 		try {
 			const step = await follow(redirect);
-			if (step.type === "password_reset") {
-				setResetRequired(true);
-			} else if (step.type === "login") {
+			if (step.type === "login") {
 				setContinueError("Sign-in did not finish. Try again.");
 			}
 		} catch {

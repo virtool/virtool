@@ -30,20 +30,10 @@ export const Route = createFileRoute("/_authenticated/administration/users/")({
 	validateSearch: validateUsersSearch,
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context: { queryClient }, deps }) => {
-		const [{ usersQueryOptions }, { passwordPolicyQueryOptions }] =
-			await Promise.all([
-				import("@users/queries"),
-				import("@administration/passwordPolicy"),
-			]);
-
-		return Promise.all([
-			queryClient.ensureQueryData(
-				usersQueryOptions({ ...deps, perPage: DEFAULT_PER_PAGE }),
-			),
-			// For the create-user form. Prefetched, not ensured: a failure here must
-			// not take down the page.
-			queryClient.prefetchQuery(passwordPolicyQueryOptions()),
-		]);
+		const { usersQueryOptions } = await import("@users/queries");
+		return queryClient.ensureQueryData(
+			usersQueryOptions({ ...deps, perPage: DEFAULT_PER_PAGE }),
+		);
 	},
 	component: UsersRoute,
 });

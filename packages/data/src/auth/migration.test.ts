@@ -14,7 +14,7 @@ import { authAccounts } from "../db/schema/auth";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { testLogger } from "../test/logger";
-import { changePassword, updateUser } from "../users/data";
+import { changePassword } from "../users/data";
 import { CREDENTIAL_PROVIDER_ID } from "./credential";
 import {
 	type IdentityClassification,
@@ -470,24 +470,6 @@ describe("password writes before cutover", () => {
 
 		expect(report.counts.migrated).toEqual({ active: 1, deactivated: 0 });
 		expect(report.counts.stale).toEqual({ active: 0, deactivated: 0 });
-	});
-
-	it("carries an administrator reset onto the credential", async () => {
-		const userId = await seedUser(db, {
-			handle: "alice",
-			email: "alice@example.com",
-			password: legacyPassword(),
-		});
-
-		await apply();
-
-		await updateUser(db, userId, { password: "an-administrator-reset" });
-
-		const user = await readUser(userId);
-		const [credential] = await readCredentials(userId);
-
-		expect(credential?.password).toBe(user?.password?.toString("utf8"));
-		expect(credential?.password).not.toBe(LEGACY_HASH);
 	});
 
 	it("corrects a stale credential rather than calling it a conflict", async () => {

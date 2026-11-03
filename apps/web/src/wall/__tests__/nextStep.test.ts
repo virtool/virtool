@@ -4,7 +4,6 @@ import { createFakeAccount } from "@tests/fake/account";
 import { mockGetAccount, userServerFnMocks } from "@tests/server-fn/users";
 import {
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -23,7 +22,6 @@ function namedError(name: string, purpose?: string) {
 describe("getAuthNextStep", () => {
 	it.each([
 		[UNAUTHORIZED_ERROR_NAME, undefined, "login"],
-		[PASSWORD_RESET_REQUIRED_ERROR_NAME, undefined, "password_reset"],
 		[MFA_ENROLLMENT_REQUIRED_ERROR_NAME, undefined, "mfa_enrollment"],
 		[SETUP_REQUIRED_ERROR_NAME, "email_remediation", "email_remediation"],
 		[SETUP_REQUIRED_ERROR_NAME, "account_completion", "login"],

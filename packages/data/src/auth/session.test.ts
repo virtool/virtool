@@ -152,7 +152,7 @@ describe("resolveBrowserSessionForUpdate", () => {
 		const credentialTx = credential.db.transaction(async (tx) => {
 			await tx
 				.update(users)
-				.set({ forceReset: true })
+				.set({ lastPasswordChange: new Date() })
 				.where(eq(users.id, userId));
 			userLocked.release();
 			const revocationWaited = await Promise.race([

@@ -220,7 +220,6 @@ describe("getAccount", () => {
 			handle: "alice",
 			administratorRole: "full",
 			active: true,
-			forceReset: false,
 			groups: [],
 			primaryGroup: null,
 		});
@@ -417,33 +416,6 @@ describe("updateUser", () => {
 		expect((await readUser(userId))?.active).toBe(false);
 	});
 
-	it("deletes the user's sessions when their password changes", async () => {
-		const userId = await seedUser(db);
-		await seedSession(db, userId);
-		const before = await readUser(userId);
-
-		await updateUser(db, userId, { password: "new-password-1234" });
-
-		expect(await countSessions(userId)).toBe(0);
-		const after = await readUser(userId);
-		expect(
-			await verifyPassword("new-password-1234", after?.password as Buffer),
-		).toBe(true);
-		expect(after?.lastPasswordChange.getTime()).toBeGreaterThan(
-			before?.lastPasswordChange.getTime() ?? 0,
-		);
-	});
-
-	it("deletes the user's sessions when forceReset is set", async () => {
-		const userId = await seedUser(db);
-		await seedSession(db, userId);
-
-		await updateUser(db, userId, { forceReset: true });
-
-		expect(await countSessions(userId)).toBe(0);
-		expect((await readUser(userId))?.forceReset).toBe(true);
-	});
-
 	it("leaves sessions alone when only the handle changes", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
@@ -613,14 +585,9 @@ describe("changePassword", () => {
 		return seedUser(db, { password: await hashPassword(password) });
 	}
 
-	it("replaces the password and clears forceReset", async () => {
+	it("replaces the password", async () => {
 		const userId = await seedUserWithPassword("old_password_123");
 		const before = await readUser(userId);
-
-		await db
-			.update(users)
-			.set({ forceReset: true })
-			.where(eq(users.id, userId));
 
 		const account = await changePassword(db, {
 			userId,
@@ -632,7 +599,6 @@ describe("changePassword", () => {
 		expect(
 			await verifyPassword("new_password_123", after?.password as Buffer),
 		).toBe(true);
-		expect(after?.forceReset).toBe(false);
 		expect(after?.lastPasswordChange.getTime()).toBeGreaterThanOrEqual(
 			before?.lastPasswordChange.getTime() ?? 0,
 		);
@@ -689,15 +655,10 @@ describe("changePassword", () => {
 		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
 
-	// Nothing holds a lock across the read, the verify, and the bcrypt hash, and at
-	// cost 12 that gap is hundreds of milliseconds — long enough for an
-	// administrator responding to a compromise to reset the password in between.
-	// The admin's hash is computed up front so the interleaving write itself is a
-	// fast statement landing well inside that window.
-	it("refuses when the password changed after it was verified", async () => {
+	it("refuses when another password change wins the race", async () => {
 		const userId = await seedUserWithPassword("old_password_123");
 		await seedSession(db, userId);
-		const adminHash = await hashPassword("admin_reset_123");
+		const replacementHash = await hashPassword("replacement_password_123");
 
 		const pending = changePassword(db, {
 			userId,
@@ -707,18 +668,19 @@ describe("changePassword", () => {
 
 		await db
 			.update(users)
-			.set({ password: adminHash, forceReset: true })
+			.set({ password: replacementHash })
 			.where(eq(users.id, userId));
 
 		await expect(pending).rejects.toBeInstanceOf(InvalidPasswordError);
 
-		// The administrator's credential and flag survive, and the rolled-back
-		// transaction took its session revocation with it.
+		// The other credential and the rolled-back session revocation survive.
 		const after = await readUser(userId);
 		expect(
-			await verifyPassword("admin_reset_123", after?.password as Buffer),
+			await verifyPassword(
+				"replacement_password_123",
+				after?.password as Buffer,
+			),
 		).toBe(true);
-		expect(after?.forceReset).toBe(true);
 		expect(await countSessions(userId)).toBe(1);
 	});
 });
@@ -1006,14 +968,12 @@ describe("createUser", () => {
 		const user = await createUser(db, {
 			handle: "alice",
 			password: "a-real-password",
-			forceReset: true,
 		});
 
 		expect(user).toMatchObject({
 			handle: "alice",
 			administratorRole: null,
 			active: true,
-			forceReset: true,
 			groups: [],
 			primaryGroup: null,
 		});
@@ -1043,14 +1003,12 @@ describe("createUser", () => {
 		await createUser(db, {
 			handle: "alice",
 			password: "a-real-password",
-			forceReset: false,
 		});
 
 		await expect(
 			createUser(db, {
 				handle: "alice",
 				password: "another-password",
-				forceReset: false,
 			}),
 		).rejects.toBeInstanceOf(UserConflictError);
 	});
@@ -1101,16 +1059,14 @@ describe("listAdministratorRoles", () => {
 });
 
 describe("updateUser on a pending account", () => {
-	// Setting a password here would complete the setup without the token that
-	// authorizes the transition.
-	it("refuses to set a password", async () => {
+	it("refuses to change the handle before setup", async () => {
 		const userId = await seedUser(db, {
 			handle: "",
 			lifecycleState: "pending",
 		});
 
 		await expect(
-			updateUser(db, userId, { password: "a-real-password" }),
+			updateUser(db, userId, { handle: "new-handle" }),
 		).rejects.toBeInstanceOf(PendingAccountError);
 
 		const [row] = await db.select().from(users).where(eq(users.id, userId));

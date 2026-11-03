@@ -279,7 +279,6 @@ export async function completeAccountSetup(
 					password: hashed,
 					email,
 					emailVerified: verified,
-					forceReset: false,
 					lastPasswordChange: new Date(),
 					lifecycleState: "normal",
 				})

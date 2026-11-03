@@ -15,7 +15,7 @@ import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
 import { DeletePendingUser } from "./DeletePendingUser";
 import Handle from "./Handle";
 import { InvitationControls } from "./InvitationControls";
-import Password from "./Password";
+import RecoveryLink from "./RecoveryLink";
 import { ResetUserTotp } from "./ResetUserTotp";
 import { UserActivationBanner } from "./UserActivationBanner";
 import UserAdministratorRole from "./UserAdministratorRole";
@@ -63,16 +63,8 @@ export default function UserDetail({ userId }: UserDetailProps) {
 		);
 	}
 
-	const {
-		handle,
-		administratorRole,
-		id,
-		groups,
-		primaryGroup,
-		permissions,
-		lastPasswordChange,
-		forceReset,
-	} = data;
+	const { handle, administratorRole, id, groups, primaryGroup, permissions } =
+		data;
 
 	return (
 		<div>
@@ -111,12 +103,7 @@ export default function UserDetail({ userId }: UserDetailProps) {
 				<>
 					<UserAdministratorRole id={id} role={administratorRole} />
 					<Handle key={`handle-${id}`} id={id} handle={handle} />
-					<Password
-						key={id}
-						id={id}
-						lastPasswordChange={lastPasswordChange}
-						forceReset={forceReset}
-					/>
+					<RecoveryLink userId={id} />
 				</>
 			)}
 

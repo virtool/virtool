@@ -68,9 +68,8 @@ function rethrowAsHttp(err: unknown): never {
 }
 
 /**
- * Password policy server function. Unauthenticated by necessity — the
- * forced-reset and first-user forms both set a password before any session
- * exists, and they can only apply the configured minimum if they can read it.
+ * Password policy server function. Unauthenticated by necessity because the
+ * first-user form sets a password before any session exists.
  *
  * It returns the minimum length alone rather than the settings row. The rest of
  * that row is instance configuration that no unauthenticated caller has any

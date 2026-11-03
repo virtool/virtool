@@ -8,10 +8,7 @@ import {
 	userServerFnMocks,
 } from "@tests/server-fn/users";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
-import {
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
-	SETUP_REQUIRED_ERROR_NAME,
-} from "@virtool/contracts";
+import { SETUP_REQUIRED_ERROR_NAME } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -124,13 +121,12 @@ describe("<LoginForm />", () => {
 	});
 
 	it("carries the redirect into email remediation", async () => {
-		loginMock.mockResolvedValue({ remediation: true, reset: false });
+		loginMock.mockResolvedValue({ remediation: true });
 		rejectAccount(SETUP_REQUIRED_ERROR_NAME, "email_remediation");
-		const setResetRequired = vi.fn();
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm redirect="/samples" setResetRequired={setResetRequired} />
+				<LoginForm redirect="/samples" />
 			</MemoryRouter>,
 		);
 
@@ -151,13 +147,11 @@ describe("<LoginForm />", () => {
 		const user = userEvent.setup();
 		const handle = "test_Username";
 		const password = "Password";
-		const setResetRequired = vi.fn();
-
-		loginMock.mockResolvedValue({ reset: false });
+		loginMock.mockResolvedValue({ login: true });
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm setResetRequired={setResetRequired} />
+				<LoginForm />
 			</MemoryRouter>,
 		);
 
@@ -180,13 +174,12 @@ describe("<LoginForm />", () => {
 		const handle = "test_Username";
 		const password = "Password";
 		const errorMessage = "Invalid handle or password.";
-		const setResetRequired = vi.fn();
 
 		loginMock.mockRejectedValue(createClientError(errorMessage));
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm setResetRequired={setResetRequired} />
+				<LoginForm />
 			</MemoryRouter>,
 		);
 
@@ -195,50 +188,6 @@ describe("<LoginForm />", () => {
 		await user.click(screen.getByRole("button", { name: "Sign in" }));
 
 		expect(await screen.findByText(errorMessage)).toBeInTheDocument();
-	});
-
-	it("continues a two-factor challenge and handles forced reset only after verification", async () => {
-		const user = userEvent.setup();
-		loginMock.mockResolvedValue({ twoFactorRedirect: true });
-		verifyMock.mockRejectedValueOnce(
-			createClientError("The code is not correct."),
-		);
-		verifyMock.mockResolvedValueOnce({ reset: true });
-		rejectAccount(PASSWORD_RESET_REQUIRED_ERROR_NAME);
-		const setResetRequired = vi.fn();
-		renderWithProviders(
-			<MemoryRouter>
-				<LoginForm redirect="/samples" setResetRequired={setResetRequired} />
-			</MemoryRouter>,
-		);
-		await user.type(await screen.findByLabelText("Username"), "Alice");
-		await user.type(screen.getByLabelText("Password"), "password");
-		await user.click(screen.getByRole("button", { name: "Sign in" }));
-		await user.type(
-			await screen.findByLabelText("Authentication code"),
-			"123456",
-		);
-		expect(setResetRequired).not.toHaveBeenCalled();
-		await user.click(screen.getByRole("button", { name: "Verify" }));
-		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"The code is not correct.",
-		);
-		expect(screen.getByLabelText("Authentication code")).toHaveValue("");
-		expect(verifyMock).toHaveBeenCalledWith(
-			{ code: "123456", recovery: false },
-			expect.anything(),
-		);
-		await user.click(screen.getByRole("button", { name: "Use recovery code" }));
-		await user.type(
-			await screen.findByLabelText("Recovery code"),
-			"backup-code",
-		);
-		await user.click(screen.getByRole("button", { name: "Verify" }));
-		await waitFor(() => expect(setResetRequired).toHaveBeenCalledWith(true));
-		expect(verifyMock).toHaveBeenLastCalledWith(
-			{ code: "backup-code", recovery: true },
-			expect.anything(),
-		);
 	});
 
 	it.each([
@@ -252,7 +201,7 @@ describe("<LoginForm />", () => {
 			verifyMock.mockRejectedValueOnce(createClientError(message, status));
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 			await user.type(await screen.findByLabelText("Username"), "Alice");
@@ -282,7 +231,7 @@ describe("<LoginForm />", () => {
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm setResetRequired={vi.fn()} />
+				<LoginForm />
 			</MemoryRouter>,
 		);
 
@@ -296,12 +245,12 @@ describe("<LoginForm />", () => {
 	});
 
 	it("sends a user who must turn on two-factor authentication to enrollment", async () => {
-		loginMock.mockResolvedValue({ reset: false });
+		loginMock.mockResolvedValue({ login: true });
 		mockGetAccountMfaEnrollmentRequired();
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm redirect="/samples" setResetRequired={vi.fn()} />
+				<LoginForm redirect="/samples" />
 			</MemoryRouter>,
 		);
 
@@ -323,7 +272,7 @@ describe("<LoginForm />", () => {
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm setResetRequired={vi.fn()} />
+				<LoginForm />
 			</MemoryRouter>,
 		);
 
@@ -348,7 +297,7 @@ describe("<LoginForm />", () => {
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm setResetRequired={vi.fn()} />
+				<LoginForm />
 			</MemoryRouter>,
 		);
 
@@ -372,7 +321,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm redirect="/samples" setResetRequired={vi.fn()} />
+					<LoginForm redirect="/samples" />
 				</MemoryRouter>,
 			);
 
@@ -398,7 +347,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -414,7 +363,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -437,7 +386,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -460,7 +409,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -488,7 +437,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -526,7 +475,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -545,7 +494,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm redirect="/samples" setResetRequired={vi.fn()} />
+					<LoginForm redirect="/samples" />
 				</MemoryRouter>,
 			);
 
@@ -567,7 +516,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -590,7 +539,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -611,11 +560,11 @@ describe("<LoginForm />", () => {
 			passkeyMock.mockResolvedValue(
 				passkeyFailure(400, "ERROR_CEREMONY_ABORTED"),
 			);
-			loginMock.mockResolvedValue({ reset: false });
+			loginMock.mockResolvedValue({ login: true });
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -642,7 +591,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -662,7 +611,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -684,7 +633,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 
@@ -702,7 +651,7 @@ describe("<LoginForm />", () => {
 
 			renderWithProviders(
 				<MemoryRouter>
-					<LoginForm setResetRequired={vi.fn()} />
+					<LoginForm />
 				</MemoryRouter>,
 			);
 

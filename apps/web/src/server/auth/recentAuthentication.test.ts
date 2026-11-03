@@ -1,7 +1,6 @@
 import {
 	CLIENT_ERROR_NAME,
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
@@ -337,23 +336,23 @@ describe("challengeRecentAuthenticationFn", () => {
 		expect(createStepUpSession).not.toHaveBeenCalled();
 	});
 
-	it.each([
-		["PASSWORD_RESET_REQUIRED", PASSWORD_RESET_REQUIRED_ERROR_NAME],
-		["MFA_ENROLLMENT_REQUIRED", MFA_ENROLLMENT_REQUIRED_ERROR_NAME],
-	])("passes a %s restriction through", async (code, name) => {
-		await signIn();
-		handleAuthRequest.mockResolvedValue(
-			Response.json({ code, message: "restricted" }, { status: 403 }),
-		);
+	it.each([["MFA_ENROLLMENT_REQUIRED", MFA_ENROLLMENT_REQUIRED_ERROR_NAME]])(
+		"passes a %s restriction through",
+		async (code, name) => {
+			await signIn();
+			handleAuthRequest.mockResolvedValue(
+				Response.json({ code, message: "restricted" }, { status: 403 }),
+			);
 
-		await expect(
-			call("challengeRecentAuthenticationFn", {
-				method: "password",
-				password: "correct-password",
-			}),
-		).rejects.toMatchObject({ name });
-		expect(createStepUpSession).not.toHaveBeenCalled();
-	});
+			await expect(
+				call("challengeRecentAuthenticationFn", {
+					method: "password",
+					password: "correct-password",
+				}),
+			).rejects.toMatchObject({ name });
+			expect(createStepUpSession).not.toHaveBeenCalled();
+		},
+	);
 
 	it("does not disguise an operational provider failure", async () => {
 		await signIn();

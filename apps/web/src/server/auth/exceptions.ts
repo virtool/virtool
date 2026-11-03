@@ -7,7 +7,6 @@ import {
 	inspectAccountSetupFn,
 	loginFn,
 	logoutFn,
-	resetPasswordFn,
 	verifyTwoFactorFn,
 } from "./functions";
 import {
@@ -25,8 +24,7 @@ import {
  *
  * createFirstUserFn runs before any user or session exists.
  *
- * getPasswordPolicyFn serves the first-user form before a session exists and
- * the forced-reset form while ordinary application access is restricted.
+ * getPasswordPolicyFn serves the first-user form before a session exists.
  *
  * getRootFn reports whether first-user setup is needed, read by the
  * `_authenticated` guard before a session exists.
@@ -52,9 +50,4 @@ export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
 	inspectEmailVerificationFn,
 	inspectPasswordRecoveryFn,
 	inspectAccountSetupFn,
-];
-
-/** Server functions reachable by a forced-password-reset principal. */
-export const passwordResetEndpoints: ReadonlyArray<{ url: string }> = [
-	resetPasswordFn,
 ];

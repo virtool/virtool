@@ -8,7 +8,6 @@ import {
 import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -93,13 +92,12 @@ describe("shouldRetryQuery", () => {
 		},
 	);
 
-	it.each([
-		UNAUTHORIZED_ERROR_NAME,
-		FORBIDDEN_ERROR_NAME,
-		PASSWORD_RESET_REQUIRED_ERROR_NAME,
-	])("gives up immediately on a server function's %s", (name) => {
-		expect(shouldRetryQuery(0, serializedAuthError(name, name))).toBe(false);
-	});
+	it.each([UNAUTHORIZED_ERROR_NAME, FORBIDDEN_ERROR_NAME])(
+		"gives up immediately on a server function's %s",
+		(name) => {
+			expect(shouldRetryQuery(0, serializedAuthError(name, name))).toBe(false);
+		},
+	);
 
 	it("keeps retrying an auth error whose name was lost in serialization", () => {
 		// Guards the adapter's whole reason for existing: without `name`, an

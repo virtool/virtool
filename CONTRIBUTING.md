@@ -65,6 +65,11 @@ For example, a change to `@virtool/pathoscope-core` affects Pathoscope, and a
 change to `@virtool/workflow-tools` affects every workflow that uses it. You
 name the affected apps in the change file. Knope does not cascade bumps.
 
+A bundled app that is affected only through a shared package needs no change
+file when its built code and its production dependencies do not change. For
+example, a change to a web-only module in `@virtool/contracts` does not need a
+change file for the workflows. See [Releases](docs/ci.md#releases).
+
 A pull request that affects no image app needs no change file. Empty change files are not allowed.
 When a pull request affects an app but ships nothing to
 users, such as a refactor, a test, or a CI tweak, add the `no-release` label.

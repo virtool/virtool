@@ -1,19 +1,13 @@
-import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
-import {
-	seedSession,
-	seedSetupSession,
-	seedUser,
-} from "@virtool/data/auth/test/fixtures";
+import { hashPassword } from "@virtool/data/auth/password";
+import { seedSetupSession, seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
-import { emailOutbox } from "@virtool/data/db/schema/emailOutbox";
+import { authAccounts } from "@virtool/data/db/schema/auth";
 import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -31,8 +25,6 @@ import {
 	InvalidCredentialsError,
 	loginLegacyIdentity,
 	logout,
-	PasswordReuseError,
-	resetPassword,
 } from "./core";
 
 let database: TestDatabase;
@@ -60,25 +52,6 @@ function fakeCookies(setupSessionId?: string): CookieAdapter {
 	};
 }
 
-async function seedCredentialedUser(forceReset = true): Promise<number> {
-	const password = await hashPassword("old-password-123");
-	const userId = await seedUser(db, { forceReset, password });
-	await db
-		.update(users)
-		.set({ authMigratedAt: new Date() })
-		.where(eq(users.id, userId));
-	const now = new Date();
-	await db.insert(authAccounts).values({
-		accountId: String(userId),
-		providerId: "credential",
-		userId,
-		password: password.toString("utf8"),
-		createdAt: now,
-		updatedAt: now,
-	});
-	return userId;
-}
-
 describe("loginLegacyIdentity", () => {
 	it("exchanges a valid unmigrated password for a remediation session", async () => {
 		const password = await hashPassword("legacy-password-123");
@@ -95,7 +68,7 @@ describe("loginLegacyIdentity", () => {
 				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
-		).resolves.toEqual({ remediation: true, reset: false });
+		).resolves.toEqual({ remediation: true });
 
 		const [session] = await db.select().from(setupSessions);
 		expect(session).toMatchObject({
@@ -145,9 +118,9 @@ describe("loginLegacyIdentity", () => {
 		},
 	);
 
-	it("sends an unmigrated forced-reset user to remediation first", async () => {
+	it("sends an unmigrated user to email remediation", async () => {
 		const password = await hashPassword("legacy-password-123");
-		const userId = await seedUser(db, { forceReset: true, password });
+		const userId = await seedUser(db, { password });
 		const cookies = fakeCookies();
 
 		await expect(
@@ -156,7 +129,7 @@ describe("loginLegacyIdentity", () => {
 				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
-		).resolves.toEqual({ remediation: true, reset: false });
+		).resolves.toEqual({ remediation: true });
 
 		const [session] = await db.select().from(setupSessions);
 		expect(session).toMatchObject({ userId, purpose: "email_remediation" });
@@ -245,56 +218,5 @@ describe("logout", () => {
 
 		expect(await db.select().from(setupSessions)).toHaveLength(0);
 		expect(cookies.clearSetup).toHaveBeenCalledOnce();
-	});
-});
-
-describe("resetPassword", () => {
-	it("updates both password copies and revokes every Better Auth session", async () => {
-		const userId = await seedCredentialedUser();
-		await seedSession(db, userId);
-		await seedSession(db, userId);
-
-		await resetPassword(db, {
-			userId,
-			password: "new-password-123",
-		});
-
-		const [user] = await db.select().from(users).where(eq(users.id, userId));
-		const [credential] = await db
-			.select()
-			.from(authAccounts)
-			.where(eq(authAccounts.userId, userId));
-		expect(user?.forceReset).toBe(false);
-		expect(
-			await verifyPassword("new-password-123", user?.password as Buffer),
-		).toBe(true);
-		expect(credential?.password).toBe(user?.password?.toString("utf8"));
-		expect(await db.select().from(authSessions)).toHaveLength(0);
-	});
-
-	it("notifies the verified address", async () => {
-		await seedSettings(db, { emailEnabled: true });
-		const userId = await seedCredentialedUser();
-		await db
-			.update(users)
-			.set({ email: "alice@example.com", emailVerified: true })
-			.where(eq(users.id, userId));
-
-		await resetPassword(db, { userId, password: "new-password-123" });
-
-		const messages = await db
-			.select()
-			.from(emailOutbox)
-			.where(eq(emailOutbox.recipient, "alice@example.com"));
-		expect(messages.map(({ template }) => template)).toEqual([
-			{ type: "password_changed", username: "alice" },
-		]);
-	});
-
-	it("refuses password reuse", async () => {
-		const userId = await seedCredentialedUser();
-		await expect(
-			resetPassword(db, { userId, password: "old-password-123" }),
-		).rejects.toBeInstanceOf(PasswordReuseError);
 	});
 });

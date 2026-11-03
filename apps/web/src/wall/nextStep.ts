@@ -3,7 +3,6 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { NavigateOptions } from "@tanstack/react-router";
 import {
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -13,7 +12,6 @@ import { rootQueryKeys } from "@wall/keys";
 export type AuthNextStep =
 	| { type: "application" }
 	| { type: "login" }
-	| { type: "password_reset" }
 	| { type: "email_remediation" }
 	| { type: "mfa_enrollment" };
 
@@ -31,8 +29,6 @@ export function getAuthNextStep(error: unknown): AuthNextStep | null {
 	switch (error.name) {
 		case UNAUTHORIZED_ERROR_NAME:
 			return { type: "login" };
-		case PASSWORD_RESET_REQUIRED_ERROR_NAME:
-			return { type: "password_reset" };
 		case MFA_ENROLLMENT_REQUIRED_ERROR_NAME:
 			return { type: "mfa_enrollment" };
 		case SETUP_REQUIRED_ERROR_NAME:
@@ -83,7 +79,6 @@ export function getAuthNextStepRoute(
 			// search, and hash.
 			return { href: redirect ?? "/" };
 		case "login":
-		case "password_reset":
 			return { to: "/login", search: { redirect } };
 		case "email_remediation":
 			return { to: "/email-remediation", search: { redirect } };
