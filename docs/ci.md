@@ -164,8 +164,8 @@ of CI again. The check does the following:
 - The `no-release` label waives the requirement for change files that name the
   affected apps. It does not waive the format rule.
 
-`pnpm test:scripts` runs the tests of this check and of the Renovate
-change-file task.
+The `Knope / Test` job runs `pnpm test:scripts`, which tests this check and
+the Renovate change-file task.
 
 Knope is installed with `mise` from the pin in `mise.toml`. Renovate does not
 update that pin. See [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
