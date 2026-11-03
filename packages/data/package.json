@@ -22,10 +22,10 @@
 		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"bcrypt": "^6.0.0",
-		"drizzle-orm": "^0.45.2",
-		"es-toolkit": "^1.52.0",
-		"postgres": "^3.4.9",
-		"resend": "^6.28.1"
+		"drizzle-orm": "^0.45.4",
+		"es-toolkit": "^1.53.1",
+		"postgres": "^4.0.0",
+		"resend": "^6.37.0"
 	},
 	"devDependencies": {
 		"@virtool/tsconfig": "workspace:*",
