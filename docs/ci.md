@@ -101,7 +101,9 @@ jobs that gate a pull request:
 1. While change files exist, the job runs `knope prepare-release` on branch
    `knope/release`. It formats the changed `package.json` files, force-pushes
    the branch, and opens or updates a pull request titled **Release**. The body
-   holds the new changelog sections. Merging it applies the bumps, updates the
+   holds the new changelog sections. An image package's entry that matches an
+   entry of `virtool` shows as one "Same as virtool" line, and the commit holds
+   the full changelogs. Merging it applies the bumps, updates the
    changelogs, and deletes the consumed change files.
 2. The job finds each Knope package whose `package.json` version has no tag.
    `virtool` tags are the plain version, such as `42.61.2`, which continues the

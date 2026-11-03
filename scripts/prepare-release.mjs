@@ -60,10 +60,58 @@ function getAddedSection(diff) {
 	return lines;
 }
 
+// Splits a section into its structural lines (version and `Fixes` headings)
+// and its entries: a headed entry runs to the next heading, and a summary-only
+// entry is one bullet.
+function getEntries(lines) {
+	const entries = [];
+
+	for (const line of lines) {
+		const current = entries.at(-1);
+		const isEntryHeading = line.startsWith("#####");
+
+		if (line.startsWith("#") && !isEntryHeading) {
+			entries.push({ lines: [line], structural: true });
+		} else if (
+			isEntryHeading ||
+			(line.startsWith("- ") && (!current || current.bullet))
+		) {
+			entries.push({ lines: [line], bullet: !isEntryHeading });
+		} else if (current) {
+			current.lines.push(line);
+		} else {
+			entries.push({ lines: [line], structural: true });
+		}
+	}
+
+	return entries;
+}
+
+function getKey(entry) {
+	return entry.lines.join("\n").trim();
+}
+
+// Replaces each entry of an image package that matches an entry of `virtool`
+// with one line, so the body does not repeat it. The commit holds the full
+// changelogs.
+function dedupe(lines, reference) {
+	return getEntries(lines).flatMap((entry) => {
+		if (entry.structural || !reference.has(getKey(entry))) {
+			return entry.lines;
+		}
+
+		const [first] = entry.lines;
+		const title = first.replace(/^(#+|-) /, "");
+
+		return [`- Same as virtool: ${title}`];
+	});
+}
+
 function getBody() {
 	const sections = [
 		"Merge this pull request to publish the images and GitHub Releases below.",
 	];
+	let reference = new Set();
 
 	for (const changelog of getLines(
 		run(
@@ -88,7 +136,22 @@ function getBody() {
 			changelog,
 		);
 
-		sections.push("", `## ${name}`, "", ...getAddedSection(diff));
+		const added = getAddedSection(diff);
+
+		if (name === "virtool") {
+			reference = new Set(
+				getEntries(added)
+					.filter((entry) => !entry.structural)
+					.map(getKey),
+			);
+		}
+
+		sections.push(
+			"",
+			`## ${name}`,
+			"",
+			...(name === "virtool" ? added : dedupe(added, reference)),
+		);
 	}
 
 	return `${sections.join("\n")}\n`;
