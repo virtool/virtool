@@ -50,7 +50,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={userDetail.id} />);
 
-			expect(screen.getByText(userDetail.handle)).toBeInTheDocument();
+			expect(await screen.findByText(userDetail.handle)).toBeInTheDocument();
 			expect(screen.getByLabelText("Administrator")).toBeInTheDocument();
 
 			expect(await screen.findByText("Groups")).toBeInTheDocument();
@@ -90,6 +90,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={user.id} />);
 
+			expect(await screen.findByText("Group 4")).toBeInTheDocument();
 			expect(screen.queryByLabelText("Administrator")).not.toBeInTheDocument();
 			expect(screen.queryByText("User Role")).not.toBeInTheDocument();
 			expect(screen.getByText("Group 4")).toBeInTheDocument();
