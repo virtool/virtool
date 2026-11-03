@@ -2,7 +2,7 @@
 	"name": "virtool-ui",
 	"private": true,
 	"type": "module",
-	"packageManager": "pnpm@11.28.10",
+	"packageManager": "pnpm@12.16.1",
 	"scripts": {
 		"build": "pnpm -r --filter \"./apps/*\" --filter \"!@virtool/site\" build",
 		"check": "biome check --error-on-warnings apps packages scripts",
