@@ -442,7 +442,7 @@ describe("sign-in", () => {
 
 			expect(response.status).toBe(401);
 			expect(await response.json()).toMatchObject({
-				code: "INVALID_CREDENTIALS",
+				code: "INVALID_USERNAME_OR_PASSWORD",
 			});
 			expect(await db.select().from(authSessions)).toEqual([]);
 		},
