@@ -351,21 +351,6 @@ describe("registration", () => {
 		expect(await response.json()).toMatchObject({ code: "SESSION_NOT_FRESH" });
 	});
 
-	it("refuses a session that must reset its password", async () => {
-		const userId = await seedUser(db, { forceReset: true });
-		const browser = await signedInBrowser(userId);
-
-		const response = await browser.send(
-			"GET",
-			"/passkey/generate-register-options",
-		);
-
-		expect(response.status).toBe(403);
-		expect(await response.json()).toMatchObject({
-			code: "PASSWORD_RESET_REQUIRED",
-		});
-	});
-
 	it("refuses a session that must enroll in TOTP", async () => {
 		const userId = await seedUser(db);
 		await seedSettings(db, { mfaPolicy: "required" });
@@ -442,7 +427,7 @@ describe("sign-in", () => {
 
 			expect(response.status).toBe(401);
 			expect(await response.json()).toMatchObject({
-				code: "INVALID_CREDENTIALS",
+				code: "INVALID_USERNAME_OR_PASSWORD",
 			});
 			expect(await db.select().from(authSessions)).toEqual([]);
 		},
@@ -491,27 +476,6 @@ describe("sign-in", () => {
 		expect(await db.select().from(authSessions)).toMatchObject([{ userId }]);
 		expect(browser.has("__Secure-better-auth.session_token")).toBe(true);
 		expect(browser.has("__Secure-better-auth.two_factor")).toBe(false);
-	});
-
-	it("restricts a user who must reset their password, as a password sign-in would", async () => {
-		const { key, userId } = await enroll();
-		await db
-			.update(users)
-			.set({ forceReset: true })
-			.where(eq(users.id, userId));
-
-		const { browser, response } = await signIn(key);
-		expect(response.status).toBe(200);
-
-		const restricted = await browser.send(
-			"POST",
-			"/passkey/verify-registration",
-			{},
-		);
-		expect(restricted.status).toBe(403);
-		expect(await restricted.json()).toMatchObject({
-			code: "PASSWORD_RESET_REQUIRED",
-		});
 	});
 
 	it("restricts a user the MFA policy requires to enroll, as a password sign-in would", async () => {
@@ -723,22 +687,6 @@ describe("recent authentication", () => {
 		});
 
 		expect(response.status).toBe(400);
-	});
-
-	it("refuses options to a session that must reset its password", async () => {
-		const { userId } = await enroll();
-		await db
-			.update(users)
-			.set({ forceReset: true })
-			.where(eq(users.id, userId));
-		const browser = await signedInBrowser(userId);
-
-		const response = await browser.send("GET", OPTIONS_PATH);
-
-		expect(response.status).toBe(403);
-		expect(await response.json()).toMatchObject({
-			code: "PASSWORD_RESET_REQUIRED",
-		});
 	});
 
 	it("limits option requests from one address", async () => {

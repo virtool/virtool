@@ -64,23 +64,6 @@ describe("verifyBrowserPrincipal", () => {
 		});
 	});
 
-	it("classifies a forced-reset user without widening their authority", async () => {
-		const userId = await seedUser(db, { forceReset: true });
-		const seeded = await seedSession(db, userId);
-		const resolve = vi.fn().mockResolvedValue({
-			session: { id: seeded.sessionId },
-			user: { id: userId },
-		});
-
-		await expect(
-			verifyBrowserPrincipal(db, new Request("https://virtool.test/"), resolve),
-		).resolves.toMatchObject({
-			kind: "password_reset",
-			sessionId: seeded.sessionId,
-			userId,
-		});
-	});
-
 	it.each([
 		["malformed user", { session: { id: 1 }, user: { id: "alice" } }],
 		["malformed session", { session: { id: "token" }, user: { id: 1 } }],

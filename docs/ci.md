@@ -153,6 +153,14 @@ of CI again. The check does the following:
   only the package's own tests and types. The other development dependencies
   of an app, such as Vite, Nitro, or Tailwind, change the build output, so
   they do affect it.
+- The graph marks every app that depends on a changed package, even when the
+  app bundles none of the changed code. For this reason, the check builds each
+  bundled app that the graph marks at the merge base and at the pull request
+  head. If the emitted code and the resolved production dependencies are the
+  same, the app needs no change file. Source maps are not compared, because a
+  deleted comment or type changes them. A shipped change in the app itself, in
+  the `package.json` of a dependency, or in an image build input always needs
+  a change file.
 - The `no-release` label waives the requirement for change files that name the
   affected apps. It does not waive the format rule.
 

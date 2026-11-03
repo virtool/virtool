@@ -7,7 +7,7 @@ import { getSettings } from "@virtool/data/settings/data";
  * throwing `PasswordTooShortError` if it falls short.
  *
  * Every path that sets a password goes through this rather than through the zod
- * validators — `createFirstUserFn`, `resetPasswordFn`, `createUserFn` and
+ * validators — `createFirstUserFn`, `createUserFn` and
  * `updateUserFn`. A validator runs before its handler with no database handle,
  * so it cannot read the configured minimum.
  * carrying a dump of the issue list.

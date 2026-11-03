@@ -24,7 +24,7 @@ import {
 	sensitiveSessionMiddleware,
 } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
-import { twoFactor, username } from "better-auth/plugins";
+import { twoFactor, USERNAME_ERROR_CODES, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -329,10 +329,10 @@ export function createAuth({
 							.limit(1);
 
 						if (!user?.active || user.lifecycleState !== "normal") {
-							throw new APIError("UNAUTHORIZED", {
-								message: "Invalid credentials",
-								code: "INVALID_CREDENTIALS",
-							});
+							throw APIError.from(
+								"UNAUTHORIZED",
+								USERNAME_ERROR_CODES.INVALID_USERNAME_OR_PASSWORD,
+							);
 						}
 
 						return {
@@ -447,7 +447,7 @@ const MFA_ENROLLMENT_ALLOWED_PATHS = new Set([
 
 /**
  * Wrap Better Auth's raw handler with Virtool's endpoint allow-list and its
- * forced-reset and required-MFA restrictions.
+ * required-MFA restriction.
  *
  * Better Auth answers a failed query with a bare 500, so a server error is
  * checked against the database to let an outage reach the client as a 503.
@@ -485,22 +485,16 @@ export function createAuthRequestHandler(
 			const userId = Number(session.user.id);
 			const [user] = Number.isSafeInteger(userId)
 				? await db
-						.select({
-							forceReset: users.forceReset,
-							mfaEnrollmentRequired,
-						})
+						.select({ mfaEnrollmentRequired })
 						.from(users)
 						.where(eq(users.id, userId))
 						.limit(1)
 				: [];
 
-			if (!user || user.forceReset) {
+			if (!user) {
 				return Response.json(
-					{
-						code: "PASSWORD_RESET_REQUIRED",
-						message: "Password reset required",
-					},
-					{ status: 403 },
+					{ code: "UNAUTHORIZED", message: "Unauthorized" },
+					{ status: 401 },
 				);
 			}
 

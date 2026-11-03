@@ -9,8 +9,6 @@ import {
 	FORBIDDEN_ERROR_NAME,
 	hasSufficientAdminRole,
 	isMfaEnrollmentPrincipal,
-	isPasswordResetPrincipal,
-	type PasswordResetPrincipal,
 	type SetupPrincipal,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -19,7 +17,6 @@ import { eq } from "drizzle-orm";
 import { db } from "../composition";
 import {
 	MfaEnrollmentRequiredError,
-	PasswordResetRequiredError,
 	resolveRestrictedSetup,
 	SetupRequiredError,
 } from "./restricted";
@@ -87,9 +84,7 @@ export const requireAdminRole = createServerOnlyFn(
  * session that has already been resolved.
  *
  * A restricted setup credential resolves to nothing here because it is not an
- * application session. Only Better Auth sessions resolve. A forced-reset session
- * resolves to its distinct principal and is rejected here so ordinary policies
- * cannot accidentally authorize it.
+ * application session. Only Better Auth sessions resolve.
  */
 // createServerOnlyFn keeps the getRequest / db / verification references
 // behind a server boundary so import-protection doesn't pin
@@ -99,9 +94,6 @@ export const requireBrowserPrincipal = createServerOnlyFn(
 		const principal = await verifyBrowserPrincipal(db, getRequest());
 		if (!principal) {
 			throw new UnauthorizedError();
-		}
-		if (isPasswordResetPrincipal(principal)) {
-			throw new PasswordResetRequiredError();
 		}
 		if (isMfaEnrollmentPrincipal(principal)) {
 			throw new MfaEnrollmentRequiredError();
@@ -208,7 +200,7 @@ const loadAuthenticationExceptions = createServerOnlyFn(
  * without having to know which branch produced the context.
  */
 export type AuthContext = {
-	principal: BrowserPrincipal | PasswordResetPrincipal | SetupPrincipal | null;
+	principal: BrowserPrincipal | SetupPrincipal | null;
 };
 
 /** Resolves the server functions a restricted setup principal may call. */
@@ -222,18 +214,6 @@ const loadSetupEndpoints = createServerOnlyFn(
 	async (): Promise<ReadonlyArray<{ fn: { url: string } }>> => {
 		const { setupEndpoints } = await import("./setupExceptions");
 		return setupEndpoints;
-	},
-);
-
-/** Resolves the server functions a password-reset principal may call. */
-export type LoadPasswordResetEndpoints = () => Promise<
-	ReadonlyArray<{ url: string }>
->;
-
-const loadPasswordResetEndpoints = createServerOnlyFn(
-	async (): Promise<ReadonlyArray<{ url: string }>> => {
-		const { passwordResetEndpoints } = await import("./exceptions");
-		return passwordResetEndpoints;
 	},
 );
 
@@ -262,12 +242,10 @@ const loadPasswordResetEndpoints = createServerOnlyFn(
 export function createAuthenticationMiddleware(
 	loadExceptions: LoadAuthenticationExceptions = loadAuthenticationExceptions,
 	loadSetup: LoadSetupEndpoints = loadSetupEndpoints,
-	loadPasswordReset: LoadPasswordResetEndpoints = loadPasswordResetEndpoints,
 ) {
 	// Resolved on the first call and cached: the ids never change.
 	let exceptionIds: Set<string> | null = null;
 	let setupIds: Set<string> | null = null;
-	let passwordResetIds: Set<string> | null = null;
 
 	return createMiddleware({ type: "function" }).server(
 		async ({ next, serverFnMeta }) => {
@@ -278,13 +256,10 @@ export function createAuthenticationMiddleware(
 			setupIds ??= new Set(
 				(await loadSetup()).map(({ fn }) => serverFnIdFromUrl(fn.url)),
 			);
-			passwordResetIds ??= new Set(
-				(await loadPasswordReset()).map((fn) => serverFnIdFromUrl(fn.url)),
-			);
 
 			const context: AuthContext = exceptionIds.has(serverFnMeta.id)
 				? { principal: null }
-				: await resolvePrincipal(setupIds, passwordResetIds, serverFnMeta.id);
+				: await resolvePrincipal(setupIds, serverFnMeta.id);
 
 			return next({ context });
 		},
@@ -308,21 +283,11 @@ export function createAuthenticationMiddleware(
  * tokens, sessions or what the holder may do.
  */
 const resolvePrincipal = createServerOnlyFn(
-	async (
-		setupIds: Set<string>,
-		passwordResetIds: Set<string>,
-		serverFnId: string,
-	): Promise<AuthContext> => {
+	async (setupIds: Set<string>, serverFnId: string): Promise<AuthContext> => {
 		const browser = await resolveBrowserOrNull();
 
 		if (browser) {
 			attributePrincipal(browser);
-			if (
-				isPasswordResetPrincipal(browser) &&
-				!passwordResetIds.has(serverFnId)
-			) {
-				throw new PasswordResetRequiredError();
-			}
 			// Enrollment runs through Better Auth's own endpoints, so no server
 			// function is reachable while it is outstanding.
 			if (isMfaEnrollmentPrincipal(browser)) {

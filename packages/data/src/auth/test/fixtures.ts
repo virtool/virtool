@@ -21,7 +21,6 @@ export type SeedUserOptions = {
 	administratorRole?: AdministratorRoleName | null;
 	authMigratedAt?: Date | null;
 	email?: string;
-	forceReset?: boolean;
 	handle?: string;
 	lifecycleState?: AccountLifecycleState;
 	password?: Buffer | null;
@@ -57,7 +56,6 @@ export async function seedUser(
 		administratorRole = null,
 		authMigratedAt = null,
 		email = "",
-		forceReset = false,
 		handle = "alice",
 		lifecycleState = "normal",
 		password = Buffer.from("not-a-real-hash"),
@@ -71,7 +69,6 @@ export async function seedUser(
 			administratorRole,
 			authMigratedAt,
 			email,
-			forceReset,
 			handle,
 			lastPasswordChange: new Date(),
 			lifecycleState,

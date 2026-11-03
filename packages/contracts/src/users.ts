@@ -25,9 +25,6 @@ export type User = UserNested & {
 	/** Whether the user may sign in */
 	active: boolean;
 
-	/** Whether the user must reset their password on next login */
-	forceReset: boolean;
-
 	/** The groups they belong to */
 	groups: GroupMinimal[];
 

@@ -2,7 +2,6 @@ import type { ErrorEvent, EventHint } from "@sentry/tanstackstart-react";
 import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
@@ -49,20 +48,6 @@ describe("dropExpectedClientErrors", () => {
 			{} as ErrorEvent,
 			{
 				originalException: namedError(FORBIDDEN_ERROR_NAME, "Forbidden"),
-			} as EventHint,
-		);
-
-		expect(result).toBeNull();
-	});
-
-	it("drops a password-reset restriction", () => {
-		const result = dropExpectedClientErrors(
-			{} as ErrorEvent,
-			{
-				originalException: namedError(
-					PASSWORD_RESET_REQUIRED_ERROR_NAME,
-					"Password reset required",
-				),
 			} as EventHint,
 		);
 

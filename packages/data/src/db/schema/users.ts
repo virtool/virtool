@@ -43,9 +43,9 @@ export const users = pgTable(
 			.$defaultFn(() => "")
 			.notNull(),
 		emailVerified: boolean("email_verified").notNull().default(false),
-		forceReset: boolean("force_reset")
-			.$defaultFn(() => false)
-			.notNull(),
+		// No longer read. Kept until no running server reads it, so that a
+		// later release can drop it.
+		forceReset: boolean("force_reset").notNull().default(false),
 		handle: text("handle").notNull(),
 		image: text("image"),
 		lastPasswordChange: timestamp("last_password_change").notNull(),
@@ -107,6 +107,9 @@ export const users = pgTable(
 			"pending_has_no_password",
 			sql`${table.lifecycleState} <> 'pending' or ${table.password} is null`,
 		),
+		// Stops a server from an earlier release from flagging a user after the
+		// forced_password_reset backfill has run.
+		check("force_reset_unset", sql`${table.forceReset} = false`),
 	],
 );
 

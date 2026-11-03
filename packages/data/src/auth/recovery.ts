@@ -316,7 +316,6 @@ export async function completePasswordRecovery(
 			.set({
 				password: hashed,
 				lastPasswordChange: new Date(),
-				forceReset: false,
 			})
 			.where(eq(users.id, consumed.userId));
 		await tx

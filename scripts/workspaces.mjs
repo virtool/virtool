@@ -56,7 +56,7 @@ export function isShippedDependency(dir, depType, name) {
 }
 
 // Tests, test data, test configuration, and Markdown are not in any image.
-function isShippedFile(file) {
+export function isShippedFile(file) {
 	const segments = file.split("/");
 	const name = segments.at(-1);
 

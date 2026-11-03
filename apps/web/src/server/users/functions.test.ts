@@ -164,8 +164,7 @@ describe("changePassword", () => {
 		);
 	});
 
-	// lastPasswordChange and forceReset are both on the administration user
-	// detail, so an admin with it open needs the invalidation.
+	// An open administrator view needs the account change invalidation.
 	it("publishes a users update so an open administrator view refreshes", async () => {
 		const { userId } = await signIn();
 

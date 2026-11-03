@@ -50,15 +50,8 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={userDetail.id} />);
 
-			expect(await screen.findByText("Change Password")).toBeInTheDocument();
-
-			expect(screen.getByText(userDetail.handle)).toBeInTheDocument();
+			expect(await screen.findByText(userDetail.handle)).toBeInTheDocument();
 			expect(screen.getByLabelText("Administrator")).toBeInTheDocument();
-
-			expect(
-				screen.getByText("Force user to reset password on next login"),
-			).toBeInTheDocument();
-			expect(screen.getByText("Change Password")).toBeInTheDocument();
 
 			expect(await screen.findByText("Groups")).toBeInTheDocument();
 			expect(
@@ -97,7 +90,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={user.id} />);
 
-			expect(await screen.findByText("Change Password")).toBeInTheDocument();
+			expect(await screen.findByText("Group 4")).toBeInTheDocument();
 			expect(screen.queryByLabelText("Administrator")).not.toBeInTheDocument();
 			expect(screen.queryByText("User Role")).not.toBeInTheDocument();
 			expect(screen.getByText("Group 4")).toBeInTheDocument();
@@ -346,79 +339,6 @@ describe("<UserDetail />", () => {
 		});
 	});
 
-	describe("<Password />", () => {
-		it("should render correctly", async () => {
-			mockListGroups(groups);
-			const getUser = mockGetUser(user.id, user);
-
-			renderWithProviders(<UserDetail userId={user.id} />);
-
-			expect(await screen.findByText("Change Password")).toBeInTheDocument();
-			expect(screen.getByText(/Last changed/)).toBeInTheDocument();
-			expect(
-				screen.getByText("Force user to reset password on next login"),
-			).toBeInTheDocument();
-			expect(screen.getByLabelText("password")).toBeInTheDocument();
-			const passwordForm = screen
-				.getByLabelText("password")
-				.closest("form") as HTMLElement;
-			expect(
-				within(passwordForm).getByRole("button", { name: "Save" }),
-			).toBeInTheDocument();
-
-			expect(getUser).toHaveBeenCalled();
-		});
-
-		it("should submit when password is long enough", async () => {
-			mockListGroups(groups);
-			mockUpdateUser(user.id, 200, { password: "newPassword" }, user);
-			const getUser = mockGetUser(user.id, user);
-
-			renderWithProviders(<UserDetail userId={user.id} />);
-
-			expect(await screen.findByText("Change Password")).toBeInTheDocument();
-
-			const passwordInput = screen.getByLabelText("password");
-			await userEvent.type(passwordInput, "newPassword");
-			const passwordForm = passwordInput.closest("form") as HTMLElement;
-			await userEvent.click(
-				within(passwordForm).getByRole("button", { name: "Save" }),
-			);
-
-			expect(getUser).toHaveBeenCalled();
-		});
-
-		it("should display error when password is not long enough", async () => {
-			mockListGroups(groups);
-			mockUpdateUser(user.id, 400, {
-				id: "bad_request",
-				message: "Password does not meet minimum length requirement (8)",
-			});
-			const getUser = mockGetUser(user.id, user);
-
-			renderWithProviders(<UserDetail userId={user.id} />);
-
-			expect(await screen.findByText("Change Password")).toBeInTheDocument();
-
-			const passwordForm = screen
-				.getByLabelText("password")
-				.closest("form") as HTMLElement;
-			await userEvent.click(
-				within(passwordForm).getByRole("button", { name: "Save" }),
-			);
-
-			await waitFor(() =>
-				expect(
-					screen.getByText(
-						"Password does not meet minimum length requirement (8)",
-					),
-				).toBeInTheDocument(),
-			);
-
-			expect(getUser).toHaveBeenCalled();
-		});
-	});
-
 	describe("<UserPermissions />", () => {
 		it("should render permissions correctly", async () => {
 			mockListGroups(groups);
@@ -494,7 +414,6 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={self.id} />);
 
-			expect(await screen.findByText("Change Password")).toBeInTheDocument();
 			expect(screen.queryByText("Administrator Role")).not.toBeInTheDocument();
 
 			expect(getUser).toHaveBeenCalled();

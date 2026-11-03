@@ -1,18 +1,12 @@
 import Alert from "@base/Alert";
 import { getRouteApi } from "@tanstack/react-router";
 import { Info, TriangleAlert } from "lucide-react";
-import { useState } from "react";
 import LoginForm from "./LoginForm";
-import ResetForm from "./ResetForm";
 import { WallContainer } from "./WallContainer";
 
 const loginRouteApi = getRouteApi("/login");
 
 export default function LoginWall() {
-	const { passwordResetRequired } = loginRouteApi.useRouteContext();
-	// The route context changes without a remount when a route guard sends a
-	// signed-in user who must reset their password back to this route.
-	const [isResetRequired, setIsResetRequired] = useState(false);
 	const { reason, redirect } = loginRouteApi.useSearch();
 	const navigate = loginRouteApi.useNavigate();
 
@@ -22,14 +16,6 @@ export default function LoginWall() {
 		if (reason) {
 			void navigate({ search: { redirect }, replace: true });
 		}
-	}
-
-	if (passwordResetRequired || isResetRequired) {
-		return (
-			<WallContainer>
-				<ResetForm redirect={redirect} />
-			</WallContainer>
-		);
 	}
 
 	return (
@@ -56,7 +42,6 @@ export default function LoginWall() {
 				}
 				onChallenge={clearReason}
 				redirect={redirect}
-				setResetRequired={setIsResetRequired}
 			/>
 		</WallContainer>
 	);
