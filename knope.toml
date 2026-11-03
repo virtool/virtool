@@ -1,6 +1,6 @@
 [packages.virtool]
 versioned_files = ["apps/web/package.json", "apps/internal/package.json"]
-changelog = "CHANGELOG.md"
+changelog = "apps/web/CHANGELOG.md"
 
 [packages.create-sample]
 versioned_files = ["apps/create-sample/package.json"]

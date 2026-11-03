@@ -138,6 +138,18 @@ describe("check-change-files", () => {
 		assert.match(result.stderr, /summary is empty/);
 	});
 
+	test("rejects a summary that wraps onto a second line", () => {
+		fixture.write(
+			".changeset/bad.md",
+			"---\nvirtool: patch\n---\n\nA long summary that\nwraps.\n",
+		);
+
+		const result = check();
+
+		assert.notEqual(result.status, 0);
+		assert.match(result.stderr, /summary must be one line/);
+	});
+
 	test("waives a coverage gap with the label", () => {
 		fixture.write("apps/web/src/x.ts", "export const x = 1;\n");
 

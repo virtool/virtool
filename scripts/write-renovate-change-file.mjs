@@ -20,10 +20,13 @@ import {
 	getReachedDirs,
 	git,
 	isShippedDependency,
+	lines,
 } from "./workspaces.mjs";
 
 const directory = ".changeset";
-const prefix = `${directory}/renovate-`;
+// Knope lists entries with details by file name, so the prefix puts
+// dependency updates last in a release.
+const prefix = `${directory}/z-renovate-`;
 
 function readData() {
 	const path = process.env.RENOVATE_POST_UPGRADE_COMMAND_DATA_FILE;
@@ -43,6 +46,28 @@ function getMergeBase(baseBranch) {
 	}
 
 	throw new Error(`no merge base with ${baseBranch}`);
+}
+
+function getAddedChangeFiles(base) {
+	return [
+		...new Set([
+			...lines(
+				git(
+					"diff",
+					"--name-only",
+					"--no-relative",
+					"--no-renames",
+					"--diff-filter=A",
+					base,
+					"--",
+					directory,
+				),
+			),
+			...lines(
+				git("ls-files", "--others", "--exclude-standard", "--", directory),
+			),
+		]),
+	].filter((file) => file.endsWith(".md") && dirname(file) === directory);
 }
 
 // The affected workspaces, or `undefined` when the branch changes only the
@@ -111,15 +136,12 @@ function getBody(title, bumps) {
 		return title;
 	}
 
-	if (bumps.length === 1) {
-		return `${bumps[0]}.`;
-	}
-
 	return [title, "", ...bumps.map((bump) => `- ${bump}.`)].join("\n");
 }
 
 // A group lists its bumps once, in the `virtool` changelog, and the other
-// packages get a bullet that links to the same pull request. Without
+// packages get a short entry that links to the same pull request. The entry
+// has details so that Knope lists it after the other changes. Without
 // `virtool`, every package gets the full list.
 function getFiles(root, data, dirs, packages) {
 	const title = `Update ${data.groupName || "dependencies"}.`;
@@ -135,7 +157,13 @@ function getFiles(root, data, dirs, packages) {
 	return [
 		{ names: ["virtool"], suffix: "", body },
 		...(images.length > 0
-			? [{ names: images, suffix: "-images", body: title }]
+			? [
+					{
+						names: images,
+						suffix: "-images",
+						body: `${title}\n\nThe \`virtool\` release lists each bump.`,
+					},
+				]
 			: []),
 	];
 }
@@ -146,12 +174,11 @@ function main() {
 	const base = getMergeBase(data.baseBranch);
 	const changed = getChangedFiles(base);
 
-	// A branch that Renovate updates in place keeps the change file of its
-	// last run, which can name packages that the branch no longer changes.
-	for (const file of changed) {
-		if (file.startsWith(prefix)) {
-			rmSync(join(root, file), { force: true });
-		}
+	// A branch that Renovate updates in place keeps the change files of its
+	// last run, which can name packages that the branch no longer changes, or
+	// use an old file name. Change files that the base branch has stay.
+	for (const file of getAddedChangeFiles(base)) {
+		rmSync(join(root, file), { force: true });
 	}
 
 	const dirs = getAffectedWorkspaces(root, base, changed);

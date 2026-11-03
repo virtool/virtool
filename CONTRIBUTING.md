@@ -85,9 +85,11 @@ The text of a change file becomes its entry in the changelog and in the
 GitHub Release. Write it for users, not reviewers. Tell users what they will
 see that is different, not how the code changed.
 
-The first line is the summary. A change file with only a summary becomes a
-bullet. Text after the summary becomes the details: the summary becomes a
-heading, and the details go below it. Add details when users must know more,
+The first line is the summary. Keep it on one line, and leave a blank line
+before any details: `Knope / Check` fails a summary that wraps. A change file
+with only a summary becomes a bullet. Text after the summary becomes the
+details: the summary becomes a heading, and the details go below it. Add
+details when users must know more,
 for example what was wrong before, what to do now, or which pages changed:
 
 ```md

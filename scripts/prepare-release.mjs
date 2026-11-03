@@ -1,6 +1,6 @@
 // Runs `knope prepare-release` on branch `knope/release`, then force-pushes
 // the branch and opens or updates the "Release" pull request. The pull request
-// body lists the new changelog section of each released package.
+// body lists the released versions and each change file once.
 //
 // `GITHUB_TOKEN` must belong to the `virtool-releaser` GitHub App, and
 // `APP_SLUG` must be its slug. Workflows do not start for a push or pull
@@ -8,9 +8,12 @@
 // needs CI.
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { join } from "node:path";
+import { parseChangeFile } from "./change-files.mjs";
+import { readKnopeConfig } from "./knope.mjs";
+import { getReleaseBody } from "./release-body.mjs";
 
 const branch = "knope/release";
 
@@ -39,59 +42,56 @@ function hasStagedChanges() {
 	}
 }
 
-// Takes the lines that a `--unified=0` diff adds and moves each heading one
-// level down, so the package name is the only `##` heading of its section.
-function getAddedSection(diff) {
-	const lines = [];
-	let inHunk = false;
+// Reads the change files before `knope prepare-release` deletes them. Like
+// Knope, it asks GitHub for the pull request of the commit that added the file.
+function readChanges(names, repository) {
+	const directory = ".changeset";
 
-	for (const line of diff.split("\n")) {
-		if (line.startsWith("@@")) {
-			inHunk = true;
-			continue;
-		}
+	return readdirSync(directory)
+		.filter((file) => file.endsWith(".md"))
+		.toSorted()
+		.map((file) => {
+			const path = `${directory}/${file}`;
+			const { summary, details, packages } = parseChangeFile(
+				readFileSync(path, "utf8"),
+				names,
+			);
+			const [sha] = getLines(
+				run("git", "log", "--diff-filter=A", "--format=%H", "--", path),
+			).toReversed();
+			const number = sha
+				? run(
+						"gh",
+						"api",
+						`/repos/${repository}/commits/${sha}/pulls`,
+						"--jq",
+						".[0].number // empty",
+					).trim()
+				: "";
 
-		if (inHunk && line.startsWith("+")) {
-			const added = line.slice(1);
-			lines.push(added.startsWith("#") ? `#${added}` : added);
-		}
-	}
-
-	return lines;
+			return {
+				file,
+				summary,
+				details,
+				packages,
+				number: number || undefined,
+			};
+		});
 }
 
-function getBody() {
-	const sections = [
-		"Merge this pull request to publish the images and GitHub Releases below.",
-	];
+function readVersion(ref, file) {
+	return JSON.parse(run("git", "show", `${ref}${file}`)).version;
+}
 
-	for (const changelog of getLines(
-		run(
-			"git",
-			"diff",
-			"--cached",
-			"--name-only",
-			"--",
-			"CHANGELOG.md",
-			"apps/*/CHANGELOG.md",
-		),
-	)) {
-		const name =
-			changelog === "CHANGELOG.md" ? "virtool" : basename(dirname(changelog));
-		const diff = run(
-			"git",
-			"diff",
-			"--cached",
-			"--no-color",
-			"--unified=0",
-			"--",
-			changelog,
-		);
+// Compares the first versioned file of each package at `HEAD` and in the
+// index.
+function readVersions(config) {
+	return config.flatMap(({ name, files: [file] }) => {
+		const from = readVersion("HEAD:", file);
+		const to = readVersion(":", file);
 
-		sections.push("", `## ${name}`, "", ...getAddedSection(diff));
-	}
-
-	return `${sections.join("\n")}\n`;
+		return from === to ? [] : [{ name, from, to }];
+	});
 }
 
 function main() {
@@ -104,6 +104,13 @@ function main() {
 	}
 
 	runInherit("git", "switch", "-C", branch);
+
+	const config = readKnopeConfig(".");
+	const changes = readChanges(
+		new Set(config.map(({ name }) => name)),
+		GITHUB_REPOSITORY,
+	);
+
 	runInherit("knope", "prepare-release", "--verbose");
 
 	if (!hasStagedChanges()) {
@@ -129,7 +136,10 @@ function main() {
 	}
 
 	const bodyFile = join(mkdtempSync(join(tmpdir(), "release-")), "body.md");
-	writeFileSync(bodyFile, getBody());
+	writeFileSync(
+		bodyFile,
+		getReleaseBody({ versions: readVersions(config), changes }),
+	);
 
 	const bot = `${APP_SLUG}[bot]`;
 	const userId = run("gh", "api", `/users/${bot}`, "--jq", ".id").trim();

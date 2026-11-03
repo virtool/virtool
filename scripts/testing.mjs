@@ -16,7 +16,7 @@ import { dirname, join } from "node:path";
 
 const knopeToml = `[packages.virtool]
 versioned_files = ["apps/web/package.json", "apps/internal/package.json"]
-changelog = "CHANGELOG.md"
+changelog = "apps/web/CHANGELOG.md"
 
 [packages.nuvs]
 versioned_files = ["apps/nuvs/package.json"]

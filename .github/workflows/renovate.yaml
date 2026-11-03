@@ -6,7 +6,9 @@ name: Renovate
 # reads only from the self-hosted configuration.
 #
 # Renovate pushes and opens pull requests as the `virtool-renovator` GitHub App,
-# because a pull request opened with `GITHUB_TOKEN` never starts CI.
+# because a pull request opened with `GITHUB_TOKEN` never starts CI. It is
+# separate from `virtool-releaser` because Renovate also needs write access to
+# issues and workflows.
 on:
     schedule:
         # Each schedule window in the config is four hours long, so a run
