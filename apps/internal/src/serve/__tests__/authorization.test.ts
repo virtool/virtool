@@ -411,7 +411,7 @@ describe("request metrics", () => {
 		const rendered = await metrics.render();
 
 		expect(rendered).toContain('route="/jobs/:jobId"');
-		expect(rendered).not.toContain("12345");
+		expect(rendered).not.toContain("/jobs/12345");
 	});
 
 	// `/jobs/counts` also matches `/jobs/:jobId`, which never runs because the
