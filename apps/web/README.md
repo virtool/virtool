@@ -188,12 +188,12 @@ origin and fetch-metadata headers when changing these request shapes.
 
 Every exported server function declares exactly one policy from
 `@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`,
-`permission(name)`, `recentlyAuthenticated(operation)`, `setupOnly(purpose)`,
-or `passwordResetOnly()`. Read the
+`permission(name)`, `recentlyAuthenticated(operation)`, or
+`setupOnly(purpose)`. Read the
 discriminated principal from `context.principal` and do not perform a second
-lookup. Browser sessions, API keys, setup sessions, and forced-reset sessions
-have distinct principal kinds so a policy cannot silently widen one credential
-into another. Row-dependent authorization remains in the handler. Register
+lookup. Browser sessions, API keys, and setup sessions have distinct principal
+kinds so a policy cannot silently widen one credential into another.
+Row-dependent authorization remains in the handler. Register
 each new `functions.ts` module in
 [src/server/**tests**/authorization.test.ts](src/server/__tests__/authorization.test.ts).
 Keep `createServerFn` at the definition site so the compiler recognizes it.
@@ -261,9 +261,7 @@ request is more than an hour old, the longest window of any budget. A row can
 stay for up to two hours. The web server doesn't prune the table.
 
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
-A user with `force_reset` receives a session that resolves to a
-`password_reset` principal, which can only inspect or end its session and
-replace the password. Virtool signs in by handle; email sign-in is off because
+Virtool signs in by handle; email sign-in is off because
 `users.email` isn't globally unique.
 
 Account email changes queue a verification link and leave the current address
@@ -343,8 +341,8 @@ Logout and revocation of the current session remain available without recent
 authentication. Reads require it only when they reveal a one-time secret.
 
 Only a normal Better Auth browser principal can satisfy this policy. API keys,
-restricted setup credentials, forced-reset sessions, and MFA-enrollment
-sessions cannot. A stale protected call returns 403 with the
+restricted setup credentials and MFA-enrollment sessions cannot. A stale
+protected call returns 403 with the
 stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
 insufficient operation-specific authority remains an ordinary 403. The client
 responds only to the code: it opens one shared full-page passkey, password, or
@@ -465,13 +463,11 @@ else. A user under the `required` MFA policy is restricted differently; see
 
 Login checks an unmigrated legacy identity before Better Auth. A matching
 legacy password mints only a purpose-bound `email_remediation` setup
-session, never an application session. A forced reset waits until remediation
-completes and then runs on the Better Auth session. An unmigrated user who
+session, never an application session. An unmigrated user who
 forgets the password needs an administrator-issued recovery link, because
 self-service recovery needs an email. Migrated identities continue
 through Better Auth. A two-factor challenge keeps the login wall open for an authenticator
-or recovery code; only successful verification establishes a session and checks
-whether a password reset is required. After five wrong codes, Better Auth ends
+or recovery code. After five wrong codes, Better Auth ends
 the challenge, and a run of wrong codes across challenges locks the account for
 a short time. Either one returns the wall to the sign-in form with a notice
 that says why. Unknown, ineligible, and wrong-password attempts keep the same
@@ -538,7 +534,7 @@ open. Each route has one job:
 
 | Route                                             | Job                                                                                 |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `/login`                                          | Password, passkey, and TOTP or recovery-code sign-in, and the forced password reset |
+| `/login`                                          | Password, passkey, and TOTP or recovery-code sign-in                          |
 | `/setup`                                          | First-instance bootstrap. It redirects to `/login` when a user exists               |
 | `/account-setup`                                  | Invitation acceptance from a `#token=` link                                         |
 | `/recover`                                        | Recovery request and recovery-link consumption                                      |
@@ -633,14 +629,14 @@ user out: their next `two-factor/enable` replaces it.
 
 A passkey is an optional primary credential. It does not replace the password,
 which stays available for sign-in and recovery. A passkey sign-in goes through
-the same account gates as a password sign-in: `users.active` and the `normal`
-lifecycle state, forced reset, and the `required` MFA policy. A passkey
+the same account gates as a password sign-in: `users.active`, the `normal`
+lifecycle state, and the `required` MFA policy. A passkey
 verifies the user, so a user enrolled in TOTP does not get a second-factor
 challenge after a passkey. A passkey is not a trusted device.
 
 The browser runs both ceremonies through the plugin's client in
 [`@app/authClient`](src/app/authClient.ts). The requests go to the mounted
-handler, so its forced-reset and MFA-enrollment restrictions apply to them.
+handler, so its MFA-enrollment restriction applies to them.
 Better Auth checks recent authentication for registration with the same
 15-minute freshness window, when it issues the options and again when it
 verifies the response. Registration does not use the automatic retry. Before the

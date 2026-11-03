@@ -25,7 +25,6 @@ import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
-import { verifyBrowserPrincipal } from "./verify";
 
 const cookies = new Map<string, string>();
 let clientIp: string | undefined;
@@ -128,7 +127,7 @@ it("signs in with a persistent seven-day rolling session", async () => {
 	});
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ reset: false });
+	).toEqual({ login: true });
 	const [session] = await db.select().from(authSessions);
 	expect(
 		(session?.expiresAt.getTime() ?? 0) - (session?.createdAt.getTime() ?? 0),
@@ -184,7 +183,7 @@ it("replaces a bcrypt hash with Argon2id after a successful sign-in", async () =
 	cookies.clear();
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ reset: false });
+	).toEqual({ login: true });
 });
 
 it("replaces an unmigrated user's bcrypt hash at the remediation sign-in", async () => {
@@ -192,7 +191,7 @@ it("replaces an unmigrated user's bcrypt hash at the remediation sign-in", async
 
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ remediation: true, reset: false });
+	).toEqual({ remediation: true });
 
 	const [user] = await db.select().from(users).where(eq(users.id, userId));
 	expect(user?.password?.toString("utf8").startsWith("$argon2id$")).toBe(true);
@@ -258,7 +257,7 @@ it("completes offline remediation with an unverified email and one session", asy
 			handle: "alice",
 			password,
 		}),
-	).toEqual({ remediation: true, reset: false });
+	).toEqual({ remediation: true });
 	expect(await db.select().from(setupSessions)).toHaveLength(1);
 
 	expect(
@@ -282,60 +281,6 @@ it("completes offline remediation with an unverified email and one session", asy
 			(await auth.api.getSession({ headers: getRequest().headers }))?.user.id,
 		),
 	).toBe(userId);
-});
-
-it("forces a reset on the session that email remediation establishes", async () => {
-	const userId = await seedUser(db, {
-		email: "",
-		forceReset: true,
-		handle: "Alice",
-		password: Buffer.from(hash),
-	});
-
-	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ remediation: true, reset: false });
-	expect(
-		await callServerFn(handlers, "submitEmailRemediationFn", {
-			email: "alice@example.com",
-		}),
-	).toEqual({ complete: true });
-
-	const [established] = await db.select().from(authSessions);
-	if (!established) {
-		throw new Error("remediation did not create a session");
-	}
-	const principal = await verifyBrowserPrincipal(db, getRequest());
-	expect(principal).toMatchObject({
-		kind: "password_reset",
-		userId,
-		sessionId: established.id,
-	});
-
-	const newPassword = "new-correct-horse-battery-staple";
-	expect(
-		await callServerFn(
-			handlers,
-			"resetPasswordFn",
-			{ password: newPassword },
-			{ principal },
-		),
-	).toEqual({ login: false, reset: false });
-
-	expect(await verifyBrowserPrincipal(db, getRequest())).toMatchObject({
-		kind: "browser",
-		userId,
-	});
-	const [user] = await db.select().from(users);
-	const [account] = await db.select().from(authAccounts);
-	if (!user?.password || !account?.password) {
-		throw new Error("expected both password copies");
-	}
-	expect(user.forceReset).toBe(false);
-	expect(await verifyPassword(newPassword, user.password)).toBe(true);
-	expect(
-		await verifyPassword(newPassword, Buffer.from(account.password, "utf8")),
-	).toBe(true);
 });
 
 it("drops an unsafe redirect from the remediation verification link", async () => {
@@ -511,7 +456,7 @@ it("does not report an anonymous unknown token as authenticated", async () => {
 	});
 });
 
-async function enroll(forceReset: boolean) {
+async function enroll() {
 	const [user] = await db
 		.insert(users)
 		.values({
@@ -526,7 +471,6 @@ async function enroll(forceReset: boolean) {
 			active: true,
 			lifecycleState: "normal",
 			authMigratedAt: new Date(),
-			forceReset,
 		})
 		.returning({ id: users.id });
 	if (!user) {
@@ -556,69 +500,29 @@ async function enroll(forceReset: boolean) {
 	return { ...enrollment, userId: user.id };
 }
 
-it.each([false, true])(
-	"completes the pending TOTP challenge with forceReset=%s",
-	async (forceReset) => {
-		const { totpURI, userId } = await enroll(forceReset);
-		expect(
-			await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-		).toEqual({ twoFactorRedirect: true });
-		expect(await db.select().from(authSessions)).toEqual([]);
-		expect(
-			await auth.api.getSession({ headers: getRequest().headers }),
-		).toBeNull();
-		expect(
-			await callServerFn(handlers, "verifyTwoFactorFn", {
-				code: totp(totpURI),
-				recovery: false,
-			}),
-		).toEqual({ reset: forceReset });
-		const session = await auth.api.getSession({
-			headers: getRequest().headers,
-		});
-		expect(Number(session?.user.id)).toBe(userId);
-	},
-);
-
-it("keeps a TOTP user signed in after a forced reset", async () => {
-	const { totpURI, userId } = await enroll(true);
-	await callServerFn(handlers, "loginFn", { handle: "alice", password });
-	await callServerFn(handlers, "verifyTwoFactorFn", {
-		code: totp(totpURI),
-		recovery: false,
-	});
-	const [reset] = await db.select().from(authSessions);
-	if (!reset) {
-		throw new Error("second factor did not create a session");
-	}
-
+it("completes the pending TOTP challenge", async () => {
+	const { totpURI, userId } = await enroll();
 	expect(
-		await callServerFn(
-			handlers,
-			"resetPasswordFn",
-			{ password: "new-correct-horse-battery-staple" },
-			{
-				principal: {
-					kind: "password_reset",
-					userId,
-					sessionId: reset.id,
-					createdAt: reset.createdAt,
-				},
-			},
-		),
-	).toEqual({ login: false, reset: false });
-
-	const sessions = await db.select().from(authSessions);
-	expect(sessions).toHaveLength(1);
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ twoFactorRedirect: true });
+	expect(await db.select().from(authSessions)).toEqual([]);
+	expect(
+		await auth.api.getSession({ headers: getRequest().headers }),
+	).toBeNull();
+	expect(
+		await callServerFn(handlers, "verifyTwoFactorFn", {
+			code: totp(totpURI),
+			recovery: false,
+		}),
+	).toBeNull();
 	const session = await auth.api.getSession({
 		headers: getRequest().headers,
 	});
-	expect(Number(session?.session.id)).toBe(sessions[0]?.id);
 	expect(Number(session?.user.id)).toBe(userId);
 });
 
 it("asks for TOTP at sign-in from a browser that holds a trust cookie", async () => {
-	const { userId } = await enroll(false);
+	const { userId } = await enroll();
 	const trust = await seedTrustDevice(db, userId);
 	cookies.set(trust.name, trust.value);
 
@@ -669,7 +573,7 @@ it("keeps invalid codes unauthenticated and permits recovery-code continuation",
 			code: backupCodes[0],
 			recovery: true,
 		}),
-	).toEqual({ reset: false });
+	).toBeNull();
 	expect(
 		Number(
 			(await auth.api.getSession({ headers: getRequest().headers }))?.user.id,
@@ -762,7 +666,7 @@ it("limits password sign-in attempts from one address", async () => {
 	clientIp = "198.51.100.2";
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ remediation: true, reset: false });
+	).toEqual({ remediation: true });
 });
 
 it("doesn't spend an account's budget on a blocked address", async () => {
@@ -779,7 +683,7 @@ it("doesn't spend an account's budget on a blocked address", async () => {
 	clientIp = "198.51.100.2";
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ remediation: true, reset: false });
+	).toEqual({ remediation: true });
 });
 
 it("limits failed attempts for one account across addresses", async () => {
@@ -816,7 +720,7 @@ it("clears an account's failures after a correct password", async () => {
 		clientIp = `203.0.113.${round}`;
 		expect(
 			await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-		).toEqual({ remediation: true, reset: false });
+		).toEqual({ remediation: true });
 		cookies.clear();
 	}
 });
@@ -825,7 +729,7 @@ async function signInFromDevice(): Promise<string> {
 	clientIp = "192.0.2.1";
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ remediation: true, reset: false });
+	).toEqual({ remediation: true });
 	const device = cookies.get("login_device");
 	expect(device).toMatch(/^\d+\.\d+\.[\w-]+$/);
 	cookies.clear();
@@ -850,7 +754,7 @@ it("lets a known browser sign in while the account is locked", async () => {
 	clientIp = "192.0.2.2";
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ remediation: true, reset: false });
+	).toEqual({ remediation: true });
 });
 
 it("limits failed attempts from a known browser on its own budget", async () => {
@@ -870,7 +774,7 @@ it("limits failed attempts from a known browser on its own budget", async () => 
 	clientIp = "203.0.113.2";
 	expect(
 		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
-	).toEqual({ remediation: true, reset: false });
+	).toEqual({ remediation: true });
 });
 
 it("ignores a known browser after a password change", async () => {

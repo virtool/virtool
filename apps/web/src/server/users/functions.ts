@@ -133,9 +133,7 @@ const createUserSchema = z.object({
 
 const updateUserSchema = userIdSchema.extend({
 	active: z.boolean().optional(),
-	forceReset: z.boolean().optional(),
 	handle: z.string().trim().min(1).optional(),
-	password: z.string().optional(),
 	groups: z.array(rowIdSchema).optional(),
 	primaryGroup: rowIdSchema.nullable().optional(),
 });
@@ -411,9 +409,6 @@ export const updateUserFn = createServerFn({ method: "POST" })
 			checkReservedHandle(values.handle);
 		}
 		try {
-			if (values.password !== undefined) {
-				await checkConfiguredPasswordLength(db, values.password);
-			}
 			return await updateUser(db, userId, values);
 		} catch (err) {
 			throw rethrowAsHttp(err);

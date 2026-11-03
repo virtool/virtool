@@ -43,9 +43,6 @@ export const users = pgTable(
 			.$defaultFn(() => "")
 			.notNull(),
 		emailVerified: boolean("email_verified").notNull().default(false),
-		forceReset: boolean("force_reset")
-			.$defaultFn(() => false)
-			.notNull(),
 		handle: text("handle").notNull(),
 		image: text("image"),
 		lastPasswordChange: timestamp("last_password_change").notNull(),

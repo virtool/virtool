@@ -8,9 +8,7 @@ import {
 	hasSufficientAdminRole,
 	isApiKeyPrincipal,
 	isBrowserPrincipal,
-	isPasswordResetPrincipal,
 	isSetupPrincipal,
-	type PasswordResetPrincipal,
 	type Permission,
 	SESSION_NOT_FRESH_ERROR_NAME,
 	type SetupPrincipal,
@@ -27,10 +25,7 @@ import {
 	requireBrowserPrincipal,
 	UnauthorizedError,
 } from "./middleware";
-import {
-	PasswordResetRequiredError,
-	resolveRestrictedSetup,
-} from "./restricted";
+import { resolveRestrictedSetup } from "./restricted";
 
 // Every server function declares one of the policies below with `.middleware()`.
 // A policy answers *what the caller may do*; the global authentication
@@ -49,7 +44,7 @@ import {
 // The global authentication middleware has already resolved the session and put
 // it here. Reusing it keeps an authenticated call to a single session lookup.
 type UpstreamContext = {
-	principal?: BrowserPrincipal | PasswordResetPrincipal | SetupPrincipal | null;
+	principal?: BrowserPrincipal | SetupPrincipal | null;
 };
 
 // Absent only in tests, which run a handler without the global middleware.
@@ -58,9 +53,6 @@ const resolveBrowser = createServerOnlyFn(
 		const principal = (context as UpstreamContext).principal;
 		if (principal && isBrowserPrincipal(principal)) {
 			return principal;
-		}
-		if (principal && isPasswordResetPrincipal(principal)) {
-			throw new PasswordResetRequiredError();
 		}
 		return requireBrowserPrincipal();
 	},
@@ -105,17 +97,6 @@ const resolveSetup = createServerOnlyFn(
 		}
 
 		return { kind: "setup", ...restricted };
-	},
-);
-
-const resolvePasswordReset = createServerOnlyFn(
-	async (context: unknown): Promise<PasswordResetPrincipal> => {
-		const principal = (context as UpstreamContext).principal;
-		if (principal && isPasswordResetPrincipal(principal)) {
-			return principal;
-		}
-
-		throw new UnauthorizedError();
 	},
 );
 
@@ -300,16 +281,6 @@ export function setupOnly(purpose: SetupPurpose) {
 				forbid();
 			}
 
-			return next({ context: { principal } });
-		},
-	);
-}
-
-/** Callable only while the Better Auth session requires a password reset. */
-export function passwordResetOnly() {
-	return createMiddleware({ type: "function" }).server(
-		async ({ context, next }) => {
-			const principal = await resolvePasswordReset(context);
 			return next({ context: { principal } });
 		},
 	);

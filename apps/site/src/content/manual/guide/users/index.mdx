@@ -65,44 +65,22 @@ Administrators automatically pass all permission and right checks.
 
 2. Click <DummyButton icon="user-plus" /> to open the user creation dialog.
 
-   ![Create user dialog](./create.png?url)
-
 3. Fill out the user creation form.
 
-   Enter a username and password for the user. Clicking **Force user to reset password on
-   login** displays a password reset page for the user when they login for the first
-   time.
-
-   ![Create user dialog with filled form](./create_filled.png?url)
+   Enter the user's email address. You can also assign groups and choose a primary
+   group. A full administrator can assign an administrator role. Choose email
+   delivery or a link that you will share with the user.
 
 4. Click <DummyButton icon="save">Save</DummyButton>
 
-   This creates the new user. The user appears in the list of users.
+   This creates a pending account and sends or displays the invitation link.
+   The user chooses a handle and password when they accept the invitation.
 
-   ![New user added - Bob](./bob_added.png?url)
+## Help a user recover access
 
-## Change a user's password
-
-Administrators can forcefully change a user's password. This is useful when a user
-forgets their password or an old user account must be accessed.
-
-1. Locate the **Change Password** panel in the **Users** tab
-
-   ![Password panel](./password.png?url)
-
-2. Enter a new password
-
-   ![Password panel with filled form](./password_filled.png?url)
-
-3. Click <DummyButton icon="save">Save</DummyButton>
-
-   The **Last changed** time is updated if you successfully change the password.
-
-   ![Password successfully changed](./password_after.png?url)
-
-   Clicking _Force user to reset password on login_ invalidates all the user's
-   existing sessions and requires them to reset their password when they try to access
-   Virtool.
+Open the user's details and create a password reset link. The user chooses a new
+password with this one-time link. It expires after one hour. If email delivery is
+unavailable, copy the link and send it to the user yourself.
 
 ## Change a user's group membership
 

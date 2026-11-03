@@ -15,10 +15,7 @@ import {
 	RECENT_AUTHENTICATION_PATH,
 	recentAuthenticationChallengeSchema,
 } from "./recentAuthenticationChallenge";
-import {
-	MfaEnrollmentRequiredError,
-	PasswordResetRequiredError,
-} from "./restricted";
+import { MfaEnrollmentRequiredError } from "./restricted";
 
 // Each message names only the method that the user chose, so it tells them
 // nothing that the choice did not.
@@ -43,9 +40,6 @@ async function checkChallengeResponse(response: Response): Promise<void> {
 	const code = await readErrorCode(response);
 	if (response.status === 401 && code === "UNAUTHORIZED") {
 		throw new UnauthorizedError();
-	}
-	if (response.status === 403 && code === "PASSWORD_RESET_REQUIRED") {
-		throw new PasswordResetRequiredError();
 	}
 	if (response.status === 403 && code === "MFA_ENROLLMENT_REQUIRED") {
 		throw new MfaEnrollmentRequiredError();

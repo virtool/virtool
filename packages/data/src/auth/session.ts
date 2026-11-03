@@ -11,7 +11,6 @@ export type ResolvedBrowserSession = {
 	sessionId: number;
 	userId: number;
 	createdAt: Date;
-	forceReset: boolean;
 	/** Whether the live MFA policy restricts this session to TOTP enrollment. */
 	mfaEnrollmentRequired: boolean;
 };
@@ -132,7 +131,6 @@ export async function resolveBrowserSessionForUpdate(
 			sessionId: authSessions.id,
 			userId: authSessions.userId,
 			createdAt: authSessions.createdAt,
-			forceReset: users.forceReset,
 			mfaEnrollmentRequired,
 		})
 		.from(authSessions)
@@ -163,7 +161,6 @@ export async function resolveBrowserSession(
 			sessionId: authSessions.id,
 			userId: authSessions.userId,
 			createdAt: authSessions.createdAt,
-			forceReset: users.forceReset,
 			mfaEnrollmentRequired,
 		})
 		.from(authSessions)

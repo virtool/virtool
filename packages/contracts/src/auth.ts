@@ -37,7 +37,6 @@ export const SESSION_NOT_FRESH_ERROR_NAME = "SESSION_NOT_FRESH";
 export const SETUP_REQUIRED_ERROR_NAME = "SetupRequiredError";
 
 /** Error name returned when a signed-in user must replace their password. */
-export const PASSWORD_RESET_REQUIRED_ERROR_NAME = "PasswordResetRequiredError";
 
 /**
  * Error name returned when instance policy requires TOTP and the signed-in

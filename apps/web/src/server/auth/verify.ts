@@ -65,9 +65,6 @@ export async function verifyBrowserPrincipal(
 		sessionId,
 		createdAt: row.createdAt,
 	};
-	if (row.forceReset) {
-		return { kind: "password_reset", ...identity };
-	}
 	if (row.mfaEnrollmentRequired) {
 		return { kind: "mfa_enrollment", ...identity };
 	}

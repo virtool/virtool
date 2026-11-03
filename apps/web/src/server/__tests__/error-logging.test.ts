@@ -1,7 +1,6 @@
 import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -48,7 +47,6 @@ describe("errorLoggingMiddleware", () => {
 	it.each([
 		UNAUTHORIZED_ERROR_NAME,
 		FORBIDDEN_ERROR_NAME,
-		PASSWORD_RESET_REQUIRED_ERROR_NAME,
 		SETUP_REQUIRED_ERROR_NAME,
 	])("logs a %s without its error object or stack", async (name) => {
 		const thrown = Object.assign(new Error("credential details"), { name });

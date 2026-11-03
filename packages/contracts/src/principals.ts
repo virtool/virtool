@@ -11,16 +11,6 @@ export type BrowserPrincipal = {
 	createdAt: Date;
 };
 
-/** A signed-in human restricted to replacing a forced-reset password. */
-export type PasswordResetPrincipal = {
-	kind: "password_reset";
-	userId: number;
-	/** Stable session-row identifier; never the bearer token. */
-	sessionId: number;
-	/** Immutable time at which this browser session was created. */
-	createdAt: Date;
-};
-
 /**
  * A signed-in human restricted to TOTP enrollment by the `required` MFA
  * policy.
@@ -52,15 +42,11 @@ export type SetupPrincipal = RestrictedSetup & {
 export type AuthenticatedPrincipal = BrowserPrincipal | ApiKeyPrincipal;
 
 /** A principal backed by a Better Auth browser session. */
-export type BrowserSessionPrincipal =
-	| BrowserPrincipal
-	| PasswordResetPrincipal
-	| MfaEnrollmentPrincipal;
+export type BrowserSessionPrincipal = BrowserPrincipal | MfaEnrollmentPrincipal;
 
 /** Any credential resolved by the web authentication boundary. */
 export type AuthenticationPrincipal =
 	| AuthenticatedPrincipal
-	| PasswordResetPrincipal
 	| MfaEnrollmentPrincipal
 	| SetupPrincipal;
 
@@ -76,13 +62,6 @@ export function isApiKeyPrincipal(
 	principal: AuthenticationPrincipal,
 ): principal is ApiKeyPrincipal {
 	return principal.kind === "api_key";
-}
-
-/** Whether a principal must replace its password before ordinary access. */
-export function isPasswordResetPrincipal(
-	principal: AuthenticationPrincipal,
-): principal is PasswordResetPrincipal {
-	return principal.kind === "password_reset";
 }
 
 /** Whether a principal must enroll in TOTP before ordinary access. */

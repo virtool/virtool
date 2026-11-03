@@ -11,7 +11,7 @@ import { logger } from "../logger";
  *
  * This is exactly as sharp as the gate it runs, and no sharper: it catches a
  * deleted session row — including one deleted by an admin-initiated
- * deactivation, password change, or forced reset — and a deactivated user.
+ * deactivation, password change, and a deactivated user.
  *
  * Returns a function that stops the watch. It is safe to call more than once.
  */

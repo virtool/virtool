@@ -48,8 +48,7 @@ export function useCapturedUrlParams<K extends string>(
  * Return a function that resolves the next step from the server and navigates
  * to it.
  *
- * A `password_reset` step is returned without navigation, because the login
- * wall shows the reset form in place.
+ * Return the step after sign-in.
  */
 export function useFollowAuthNextStep() {
 	const queryClient = useQueryClient();
@@ -57,12 +56,10 @@ export function useFollowAuthNextStep() {
 
 	return async function follow(redirect?: string): Promise<AuthNextStep> {
 		const step = await resolveAuthNextStep(queryClient);
-		if (step.type !== "password_reset") {
-			await navigate({
-				...getAuthNextStepRoute(step, redirect),
-				replace: true,
-			});
-		}
+		await navigate({
+			...getAuthNextStepRoute(step, redirect),
+			replace: true,
+		});
 		return step;
 	};
 }

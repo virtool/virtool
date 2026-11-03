@@ -192,34 +192,6 @@ describe("password recovery", () => {
 		).toBe("unusable");
 	});
 
-	it("invalidates links when an administrator resets a password", async () => {
-		const userId = await seedMigratedUser();
-		const issued = await issueRecoveryLink(db, {
-			userId,
-			purpose: "administrator_recovery",
-			deliveryAvailable: false,
-			getRecoveryUrl: () => "https://virtool.test/recover",
-		});
-		await updateUser(db, userId, { password: "replacement-password-123" });
-		expect(
-			await inspectRecoveryLink(db, issued.token, "administrator_recovery"),
-		).toBe("unusable");
-	});
-
-	it("invalidates links when an administrator forces a reset", async () => {
-		const userId = await seedMigratedUser();
-		const issued = await issueRecoveryLink(db, {
-			userId,
-			purpose: "administrator_recovery",
-			deliveryAvailable: false,
-			getRecoveryUrl: () => "https://virtool.test/recover",
-		});
-		await updateUser(db, userId, { forceReset: true });
-		expect(
-			await inspectRecoveryLink(db, issued.token, "administrator_recovery"),
-		).toBe("unusable");
-	});
-
 	it("invalidates administrator links on role changes", async () => {
 		const userId = await seedMigratedUser();
 		const issued = await issueRecoveryLink(db, {
@@ -489,22 +461,9 @@ describe("security emails", () => {
 		]);
 	});
 
-	it("notifies the account after an administrator sets its password", async () => {
-		const userId = await seedMigratedUser();
-		await updateUser(db, userId, { password: "replacement-password-123" });
-
-		expect(await readNotices()).toEqual([
-			{
-				recipient: "ada@example.com",
-				setupTokenId: null,
-				template: { type: "password_changed", username: "ada" },
-			},
-		]);
-	});
-
 	it("does not notify for an update that leaves the password alone", async () => {
 		const userId = await seedMigratedUser();
-		await updateUser(db, userId, { forceReset: true });
+		await updateUser(db, userId, { active: false });
 
 		expect(await readNotices()).toEqual([]);
 	});

@@ -340,6 +340,18 @@ duplicate emails are summarized without failing the migration. Invalid handles
 or bcrypt hashes, corrupt migration state, and unsafe credential linkages are
 recorded as findings under the `user:<id>` subject without password material.
 
+`forced_password_reset@1` replaces each flagged migrated user's password with
+an Argon2id hash of a random secret, then deletes that user's browser and setup
+sessions. Its final phase reports every flagged legacy user by ID. Any finding
+blocks the paired SQL migration that drops the flag column. Before merge, check
+production for users that need an administrator recovery link:
+
+```sql
+SELECT id FROM public.users
+WHERE force_reset = true AND auth_migrated_at IS NULL
+ORDER BY id;
+```
+
 ## Metrics
 
 Both long-lived subcommands own a private Prometheus registry and a token-gated

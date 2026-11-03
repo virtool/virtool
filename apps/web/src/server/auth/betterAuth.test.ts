@@ -94,7 +94,6 @@ async function seedMigratedUser(
 	hash = LEGACY_HASH,
 	state: {
 		active?: boolean;
-		forceReset?: boolean;
 		lifecycleState?: AccountLifecycleState;
 	} = {},
 ): Promise<number> {
@@ -114,7 +113,6 @@ async function seedMigratedUser(
 			lastPasswordChange: new Date(),
 			settings: {},
 			active: state.active ?? true,
-			forceReset: state.forceReset ?? false,
 			lifecycleState: state.lifecycleState ?? "normal",
 		})
 		.returning({ id: users.id });
@@ -336,8 +334,8 @@ describe("the mounted handler", () => {
 		expect(response.status).not.toBe(404);
 	});
 
-	it("blocks Better Auth account operations for a forced-reset session", async () => {
-		await seedMigratedUser(LEGACY_HASH, { forceReset: true });
+	it("serves Better Auth account operations for a signed-in session", async () => {
+		await seedMigratedUser();
 		const signInResponse = await auth.handler(
 			post("/sign-in/username", {
 				username: "alice",
@@ -360,11 +358,7 @@ describe("the mounted handler", () => {
 			}),
 		);
 
-		expect(response.status).toBe(403);
-		expect(await response.json()).toEqual({
-			code: "PASSWORD_RESET_REQUIRED",
-			message: "Password reset required",
-		});
+		expect(response.status).toBe(200);
 	});
 
 	it("refuses to replace an enrolled TOTP factor", async () => {
@@ -804,20 +798,6 @@ describe("virtool account state", () => {
 
 		expect(response.status).toBe(401);
 		expect(await db.select().from(authSessions)).toHaveLength(0);
-	});
-
-	it("issues a session to a user whose password-reset restriction is enforced by policy", async () => {
-		await seedMigratedUser(LEGACY_HASH, { forceReset: true });
-
-		const response = await auth.handler(
-			post("/sign-in/username", {
-				username: "alice",
-				password: LEGACY_PASSWORD,
-			}),
-		);
-
-		expect(response.status).toBe(200);
-		expect(await db.select().from(authSessions)).toHaveLength(1);
 	});
 });
 

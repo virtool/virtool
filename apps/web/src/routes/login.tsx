@@ -44,18 +44,10 @@ export const Route = createFileRoute("/login")({
 			) {
 				throw redirect(getAuthNextStepRoute(step, search.redirect));
 			}
-			return { passwordResetRequired: step?.type === "password_reset" };
+			return {};
 		}
 
 		throw redirect({ href: search.redirect ?? "/" });
-	},
-	// The forced-reset form needs the policy up front. A failed policy read must
-	// not take down the wall, so prefetch rather than ensuring the query.
-	loader: async ({ context }) => {
-		const { passwordPolicyQueryOptions } = await import(
-			"@administration/passwordPolicy"
-		);
-		return context.queryClient.prefetchQuery(passwordPolicyQueryOptions());
 	},
 	component: LoginWall,
 });

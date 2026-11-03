@@ -1,7 +1,6 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import {
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	type RestrictedSetup,
 	SETUP_REQUIRED_ERROR_NAME,
 	type SetupPurpose,
@@ -31,14 +30,6 @@ export class SetupRequiredError extends Error {
 			value: purpose,
 			enumerable: true,
 		});
-	}
-}
-
-/** Thrown while a signed-in user is restricted to replacing their password. */
-export class PasswordResetRequiredError extends Error {
-	constructor() {
-		super("Password reset required");
-		this.name = PASSWORD_RESET_REQUIRED_ERROR_NAME;
 	}
 }
 

@@ -231,9 +231,7 @@ export function useSuspenseUser(userId: number) {
 /** Values accepted when updating a user from the administration views. */
 export type UserUpdate = {
 	active?: boolean;
-	forceReset?: boolean;
 	handle?: string;
-	password?: string;
 	groups?: number[];
 	primaryGroup?: number | null;
 };

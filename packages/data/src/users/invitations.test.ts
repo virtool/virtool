@@ -93,7 +93,6 @@ describe("account invitations", () => {
 		expect(created.user).toMatchObject({
 			administratorRole: "users",
 			active: true,
-			forceReset: false,
 		});
 		expect(created.user.groups.map((entry) => entry.name)).toEqual([
 			"researchers",
