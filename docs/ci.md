@@ -29,12 +29,6 @@ that pull request. These writes also make the repository go above GitHub's
 10 GB Actions cache limit, and GitHub then removes the layers that `main`
 wrote.
 
-The four images in `build` export their cache with `mode=min` because they
-rebuild in minutes. Pathoscope and Nuvs use `mode=max`, which keeps the
-intermediate tool-build layers that take about ten minutes to rebuild. The
-release job reads these caches and doesn't write them, so a release can't
-overwrite a `mode=max` cache with a smaller one or add to the total size.
-
 See [Images](../README.md#images) to build one image locally.
 
 ## Affected jobs
