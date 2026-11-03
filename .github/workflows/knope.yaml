@@ -22,7 +22,7 @@ jobs:
     # a check with the name `Knope / Check`.
     check:
         name: Check
-        runs-on: ubuntu-24.04
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         # The release pull request deletes the change files that it releases.
         # A fork can name a branch `knope/release` too.
