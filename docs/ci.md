@@ -16,11 +16,13 @@ image.
 `dist` retains its name because tooling outside this repository targets it.
 
 Adding an image requires an app Dockerfile, its Bake build and image targets,
-and a release-matrix entry. Keep the `build` matrix entry in step with
-`release-ghcr`. The `matrix.image` value of each `build` entry must match the
-cache scope that `release-ghcr` reads. The release then reuses the caches that
-`build` populated. Without them, it would rebuild the Rust crate and
-bioinformatics tools inside the shared 20-minute release timeout.
+a `build` matrix entry, and its `package.json` in the `versioned_files` of a
+Knope package. The release derives each image name from the app directory of a
+versioned file, so the directory name must be the Bake target. The
+`matrix.image` value of each `build` entry must match that name, because it is
+also the cache scope that `release-ghcr` reads. The release then reuses the
+caches that `build` populated. Without them, it would rebuild the Rust crate
+and bioinformatics tools inside the shared 20-minute release timeout.
 
 Only pushes to `main` write the image build caches. Pull requests read them
 but don't write them. A cache that a pull request writes is visible only to
