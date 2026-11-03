@@ -97,7 +97,7 @@ async function runBatch({
 export const forcedPasswordReset = defineBackfill({
 	key: "forced_password_reset",
 	version: 1,
-	migrationTag: "0045_replace_forced_reset_credentials",
+	migrationTag: "0046_replace_forced_reset_credentials",
 	kind: "backfill",
 	description: "replace the passwords of users flagged for a forced reset",
 	batchSize: 10,

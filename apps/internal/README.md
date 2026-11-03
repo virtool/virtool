@@ -351,8 +351,10 @@ administrator recovery link. Before deploy, list them:
 SELECT id, handle FROM public.users WHERE force_reset = true ORDER BY id;
 ```
 
-The paired SQL migration then adds a check that keeps `force_reset` false, so
-a server from an earlier release cannot flag a user during a rolling deploy.
+An earlier SQL migration adds a check that keeps `force_reset` false, marked
+`NOT VALID` so that it applies only to new writes. A server from an earlier
+release therefore can't flag a user behind the backfill cursor during a rolling
+deploy. The paired SQL migration validates the check after the backfill passes.
 The column stays so that those servers can still read it. A later release
 drops it.
 

@@ -23,7 +23,8 @@ let db: Db;
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
-	// The body runs before the migration that adds this constraint.
+	// Flagged users predate this constraint, which stays unvalidated until the
+	// body passes.
 	await database.client`
 		ALTER TABLE public.users DROP CONSTRAINT force_reset_unset
 	`;
