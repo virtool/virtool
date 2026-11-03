@@ -34,7 +34,6 @@ export function createFakeUser(overrides?: Partial<User>): User {
 		...createFakeUserNested(),
 		active: true,
 		administratorRole: null,
-		forceReset: false,
 		groups,
 		lastPasswordChange: faker.date.past(),
 		lifecycleState: "normal",

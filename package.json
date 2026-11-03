@@ -11,6 +11,7 @@
 		"format": "biome check --write apps packages scripts",
 		"knip": "knip",
 		"test": "pnpm -r test",
+		"test:scripts": "node --test 'scripts/*.test.mjs'",
 		"typecheck": "pnpm -r typecheck"
 	},
 	"devDependencies": {

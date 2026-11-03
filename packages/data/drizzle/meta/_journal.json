@@ -316,6 +316,20 @@
       "when": 1793125449682,
       "tag": "0044_drop_legacy_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793730068698,
+      "tag": "0045_fence_forced_reset",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1793733583768,
+      "tag": "0046_replace_forced_reset_credentials",
+      "breakpoints": true
     }
   ]
 }

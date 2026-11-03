@@ -100,7 +100,7 @@
 			matchManagers: ["npm", "dockerfile"],
 			postUpgradeTasks: {
 				commands: ["node scripts/write-renovate-change-file.mjs"],
-				dataFileTemplate: '{"branchName": "{{{branchName}}}", "baseBranch": "{{{baseBranch}}}", "groupName": "{{{groupName}}}", "upgrades": [{{#each upgrades}}{"depName": "{{{depName}}}", "currentValue": "{{{currentValue}}}", "newValue": "{{{newValue}}}", "currentDigest": "{{{currentDigest}}}", "newDigest": "{{{newDigest}}}"}{{#unless @last}},{{/unless}}{{/each}}]}',
+				dataFileTemplate: '{"branchName": "{{{branchName}}}", "baseBranch": "{{{baseBranch}}}", "groupName": "{{{groupName}}}", "upgrades": [{{#each upgrades}}{"depName": "{{{depName}}}", "depType": "{{{depType}}}", "packageFile": "{{{packageFile}}}", "currentValue": "{{{currentValue}}}", "newValue": "{{{newValue}}}", "currentDigest": "{{{currentDigest}}}", "newDigest": "{{{newDigest}}}"}{{#unless @last}},{{/unless}}{{/each}}]}',
 				fileFilters: [".changeset/**"],
 				executionMode: "branch",
 			},

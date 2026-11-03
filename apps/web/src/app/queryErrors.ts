@@ -3,7 +3,6 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	FORBIDDEN_ERROR_NAME,
 	MFA_ENROLLMENT_REQUIRED_ERROR_NAME,
-	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SESSION_NOT_FRESH_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
@@ -120,7 +119,6 @@ export function shouldRetryQuery(
 	if (
 		error.name === UNAUTHORIZED_ERROR_NAME ||
 		error.name === FORBIDDEN_ERROR_NAME ||
-		error.name === PASSWORD_RESET_REQUIRED_ERROR_NAME ||
 		error.name === MFA_ENROLLMENT_REQUIRED_ERROR_NAME ||
 		error.name === SESSION_NOT_FRESH_ERROR_NAME ||
 		error.name === SETUP_REQUIRED_ERROR_NAME

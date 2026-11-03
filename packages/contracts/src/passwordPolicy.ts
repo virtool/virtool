@@ -31,7 +31,7 @@ export function formatMinimumPasswordLengthMessage(minimum: number): string {
  *
  * Not applied at login: a user whose stored password predates the current
  * minimum must still be able to authenticate, or they could never reach the
- * forced-reset flow that would replace it.
+ * account security form that can replace it.
  */
 export function checkPasswordLength(password: string, minimum: number): void {
 	if (password.length < minimum) {

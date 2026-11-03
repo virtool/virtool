@@ -9,7 +9,6 @@ import {
 	loginFn,
 	promoteEmailRemediationFn,
 	resendEmailRemediationFn,
-	resetPasswordFn,
 	submitEmailRemediationFn,
 	verifyTwoFactorFn,
 } from "@server/auth/functions";
@@ -89,14 +88,6 @@ export function usePasskeySignInMutation() {
 				await ceremony(undefined);
 			}
 		},
-	});
-}
-
-/** Initializes a mutator that changes the password of a forced-reset session. */
-export function useResetPasswordMutation() {
-	return useMutation({
-		mutationFn: ({ password }: { password: string }) =>
-			resetPasswordFn({ data: { password } }),
 	});
 }
 

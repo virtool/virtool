@@ -340,6 +340,24 @@ duplicate emails are summarized without failing the migration. Invalid handles
 or bcrypt hashes, corrupt migration state, and unsafe credential linkages are
 recorded as findings under the `user:<id>` subject without password material.
 
+`forced_password_reset@1` replaces the password of each user flagged for a
+forced reset, migrated or legacy, with an Argon2id hash of a random secret. It
+clears the flag and deletes that user's browser and setup sessions. When email
+is enabled and the address is verified, it queues a password-changed notice.
+It reports no findings. Affected users get access again through an
+administrator recovery link. Before deploy, list them:
+
+```sql
+SELECT id, handle FROM public.users WHERE force_reset = true ORDER BY id;
+```
+
+An earlier SQL migration adds a check that keeps `force_reset` false, marked
+`NOT VALID` so that it applies only to new writes. A server from an earlier
+release therefore can't flag a user behind the backfill cursor during a rolling
+deploy. The paired SQL migration validates the check after the backfill passes.
+The column stays so that those servers can still read it. A later release
+drops it.
+
 ## Metrics
 
 Both long-lived subcommands own a private Prometheus registry and a token-gated

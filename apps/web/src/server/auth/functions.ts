@@ -28,9 +28,7 @@ import {
 	verifyEmailRemediationToken,
 } from "@virtool/data/auth/lifecycle";
 import { SetupCredentialError } from "@virtool/data/auth/setup";
-import { users } from "@virtool/data/db/schema/users";
 import { APIError } from "better-auth/api";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { db } from "../composition";
@@ -49,8 +47,6 @@ import {
 	InvalidCredentialsError,
 	loginLegacyIdentity,
 	logout,
-	PasswordReuseError,
-	resetPassword,
 } from "./core";
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
@@ -64,7 +60,7 @@ import {
 	rememberLoginDevice,
 } from "./loginRateLimit";
 import { UnauthorizedError } from "./middleware";
-import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
+import { authenticated, open, setupOnly } from "./policy";
 import { safeRedirect } from "./redirect";
 import { resolveRestrictedSetup } from "./restricted";
 import { checkConfiguredPasswordLength } from "./service";
@@ -76,18 +72,9 @@ import {
 } from "./sessionActions";
 import { verifyBrowserPrincipal } from "./verify";
 
-// `password` is deliberately not length-checked here. Login authenticates an
-// existing credential rather than setting a new one, and rejecting a short
-// stored password would lock the user out of the reset flow that fixes it.
 const loginSchema = z.object({
 	handle: z.string().min(1),
 	password: z.string().min(1),
-});
-
-// Length is enforced by checkConfiguredPasswordLength in the handlers below, not
-// here — see that function for why the validator is the wrong place for it.
-const resetPasswordSchema = z.object({
-	password: z.string(),
 });
 
 function extendEmailRemediationCookies(sessionId: string) {
@@ -155,9 +142,6 @@ function rethrowAsHttp(err: unknown): never {
 	if (err instanceof FirstUserExistsError) {
 		throw new ClientError("Virtool already has a user.", 409);
 	}
-	if (err instanceof PasswordReuseError) {
-		throw new ClientError("Cannot reuse current password", 400);
-	}
 	if (err instanceof EmailInUseError) {
 		throw new ClientError("Another account uses this email address.", 409);
 	}
@@ -208,7 +192,7 @@ export const loginFn = createServerFn({ method: "POST" })
 				return { twoFactorRedirect: true as const };
 			}
 
-			return await completeLogin(Number(result.user.id));
+			return { login: true as const };
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
@@ -234,20 +218,6 @@ async function settleLoginBudget(attempt: LoginAttempt, budget: LoginBudget) {
 	}
 }
 
-async function completeLogin(userId: number) {
-	const [user] = await db
-		.select({ forceReset: users.forceReset })
-		.from(users)
-		.where(eq(users.id, userId))
-		.limit(1);
-
-	if (!user) {
-		throw new APIError("UNAUTHORIZED");
-	}
-
-	return { reset: user.forceReset };
-}
-
 /** Complete a login using Better Auth's pending two-factor challenge cookie. */
 export const verifyTwoFactorFn = createServerFn({ method: "POST" })
 	.middleware([open()])
@@ -256,8 +226,8 @@ export const verifyTwoFactorFn = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data }) => {
 		try {
-			const result = await verifyTwoFactor(data.code, data.recovery);
-			return await completeLogin(Number(result.user.id));
+			await verifyTwoFactor(data.code, data.recovery);
+			return null;
 		} catch (err) {
 			rethrowTwoFactorError(err);
 		}
@@ -415,28 +385,6 @@ export const refreshBrowserSessionFn = createServerFn({ method: "POST" })
 			throw new UnauthorizedError();
 		}
 		return null;
-	});
-
-/**
- * Reset-password server function. The caller has a Better Auth session
- * restricted until the password change is complete.
- */
-export const resetPasswordFn = createServerFn({ method: "POST" })
-	.middleware([passwordResetOnly()])
-	.validator(resetPasswordSchema)
-	.handler(async ({ context, data }) => {
-		try {
-			await checkConfiguredPasswordLength(db, data.password);
-
-			await resetPassword(db, {
-				userId: context.principal.userId,
-				password: data.password,
-			});
-			await createReplacementSession(context.principal.userId);
-			return { login: false as const, reset: false as const };
-		} catch (err) {
-			rethrowAsHttp(err);
-		}
 	});
 
 async function finishEmailRemediation(
