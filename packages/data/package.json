@@ -24,12 +24,12 @@
 		"bcrypt": "^6.0.0",
 		"drizzle-orm": "^0.45.4",
 		"es-toolkit": "^1.53.1",
-		"postgres": "^3.4.9",
+		"postgres": "^4.0.0",
 		"resend": "^6.37.0"
 	},
 	"devDependencies": {
 		"@virtool/tsconfig": "workspace:*",
-		"@testcontainers/postgresql": "^12.2.0",
+		"@testcontainers/postgresql": "^12.2.1",
 		"@types/bcrypt": "^6.0.0",
 		"drizzle-kit": "^0.31.11",
 		"fflate": "^0.8.3",

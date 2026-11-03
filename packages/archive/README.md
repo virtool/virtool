@@ -10,13 +10,13 @@ BLAST result zip).
 
 ## Exports
 
-| Subpath | Exports |
-| --- | --- |
-| `@virtool/archive` | everything below |
-| `@virtool/archive/tar` | `extractTarToDir`, `extractTarMembers`, `writePathAsTar` |
-| `@virtool/archive/zip` | `readZipMember` |
-| `@virtool/archive/compression` | `compressFile`, `decompressFile`, `decompressGzipToFile`, `DecompressedSizeLimitError`, `isGzipped` |
-| `@virtool/archive/errors` | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError`, `ZipArchiveError`, `ZipMemberMissingError` |
+| Subpath                        | Exports                                                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `@virtool/archive`             | everything below                                                                                                               |
+| `@virtool/archive/tar`         | `extractTarToDir`, `extractTarMembers`, `writePathAsTar`                                                                       |
+| `@virtool/archive/zip`         | `readZipMember`                                                                                                                |
+| `@virtool/archive/compression` | `compressFile`, `decompressFile`, `decompressGzipToFile`, `DecompressedSizeLimitError`, `isGzipped`                            |
+| `@virtool/archive/errors`      | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError`, `ZipArchiveError`, `ZipMemberMissingError` |
 
 Prefer a subpath. Consumers import these functions directly from this package
 so their definitions remain easy to find.

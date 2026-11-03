@@ -23,8 +23,8 @@ hit to its annotation belongs to the workflow that does the IO.
 
 ## Byte-identity with the stored data is the governing constraint
 
-Virtool runs in certified lab settings. A parser that produces *equivalent but
-differently rounded* output is a failure, not a nit. Analysis documents already
+Virtool runs in certified lab settings. A parser that produces _equivalent but
+differently rounded_ output is a failure, not a nit. Analysis documents already
 written sit in the same table as the ones written today and are rendered by the
 same UI.
 

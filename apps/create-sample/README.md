@@ -29,12 +29,12 @@ the complete environment-variable table and configuration rules.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/create-sample build` | Bundle to `dist/index.mjs` |
-| `pnpm --filter @virtool/create-sample start` | Run the bundle |
-| `pnpm --filter @virtool/create-sample test` | Vitest |
-| `pnpm --filter @virtool/create-sample typecheck` | `tsc --noEmit` |
+| Command                                          | Action                     |
+| ------------------------------------------------ | -------------------------- |
+| `pnpm --filter @virtool/create-sample build`     | Bundle to `dist/index.mjs` |
+| `pnpm --filter @virtool/create-sample start`     | Run the bundle             |
+| `pnpm --filter @virtool/create-sample test`      | Vitest                     |
+| `pnpm --filter @virtool/create-sample typecheck` | `tsc --noEmit`             |
 
 ## Decisions
 
@@ -42,7 +42,7 @@ Run from the monorepo root.
 sample this workflow is running has no `sample_reads` rows yet, so the uploads
 are the only files it has. They ride on `GET /samples/{id}` for the same reason
 a subtraction's upload does. The job's `args` carry `sample_id` and nothing
-else. Their order is `sample_uploads.index`, which is the *only* thing linking
+else. Their order is `sample_uploads.index`, which is the _only_ thing linking
 an upload to the reads file it becomes: `finalizeSample` pairs the rows it
 writes with the uploads by that same order.
 
@@ -55,7 +55,7 @@ and gzipping back to produce bytes the user already sent.
 
 **The normalized reads go in `{work_path}/reads/`, not beside their uploads.**
 Writing them next to their sources as `reads_{i + 1}.fq.gz` is a collision
-waiting to happen: upload names are user-supplied, so a sample whose *second*
+waiting to happen: upload names are user-supplied, so a sample whose _second_
 upload is called `reads_1.fq.gz` would have the first upload renamed onto it,
 destroying the second's bytes and causing finalization to store one read twice.
 Separate directories put the target names out of reach of the source names. The
@@ -69,7 +69,7 @@ binning.
 
 The step id is `run_fastqc`, because a step id is stored in the `jobs.steps`
 column and rendered by the UI, so renaming one changes what users see. Its
-*display name* is "Measure quality": that's a label rather than a key, and
+_display name_ is "Measure quality": that's a label rather than a key, and
 naming FastQC there would name a tool this image no longer carries.
 
 **It runs once per read, each writing its own results file.** A single

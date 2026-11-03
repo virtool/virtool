@@ -27,12 +27,12 @@ holds.
 None of the definitions is the obvious one, and each is ported from a named
 Java file:
 
-| Field | FastQC source | The part that surprises |
-| --- | --- | --- |
-| `bases` | `PerBaseQualityScores.java`, `QualityCount.java` | Percentiles are a cumulative walk over an integer histogram, not an interpolation, so every one is a whole number |
-| `composition` | `PerBaseSequenceContent.java` | The denominator is A+C+G+T, so `N` is excluded from it |
-| `count`, `gc`, `length`, `encoding` | `BasicStats.java` | `%GC` is *integer* division and has already lost its fraction |
-| `sequences` | `PerSequenceQualityScores.java` | The per-read mean truncates the summed **raw** characters before subtracting the encoding offset |
+| Field                               | FastQC source                                    | The part that surprises                                                                                           |
+| ----------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `bases`                             | `PerBaseQualityScores.java`, `QualityCount.java` | Percentiles are a cumulative walk over an integer histogram, not an interpolation, so every one is a whole number |
+| `composition`                       | `PerBaseSequenceContent.java`                    | The denominator is A+C+G+T, so `N` is excluded from it                                                            |
+| `count`, `gc`, `length`, `encoding` | `BasicStats.java`                                | `%GC` is _integer_ division and has already lost its fraction                                                     |
+| `sequences`                         | `PerSequenceQualityScores.java`                  | The per-read mean truncates the summed **raw** characters before subtracting the encoding offset                  |
 
 Two more that are easy to miss:
 
@@ -82,12 +82,12 @@ this crate's parser to produce the expected values.
 
 Each fixture targets a specific branch:
 
-| Case | What it's for |
-| --- | --- |
-| `unbinned` | 400 reads of exactly 75bp. This is the deepest possible cycle-for-cycle comparison. Exact equality |
+| Case       | What it's for                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `unbinned` | 400 reads of exactly 75bp. This is the deepest possible cycle-for-cycle comparison. Exact equality                                         |
 | `variable` | Plain input with lengths of 30/55/75. Tail cycles are covered by exactly 100 reads, then 40. This is the row-collapse rule. Exact equality |
-| `all_n` | One cycle where every read is `N`. This is the zero-denominator rule. Exact equality |
-| `binned` | 400 reads of 150bp. This is the one deliberate divergence. |
+| `all_n`    | One cycle where every read is `N`. This is the zero-denominator rule. Exact equality                                                       |
+| `binned`   | 400 reads of 150bp. This is the one deliberate divergence.                                                                                 |
 
 `tests/fixtures/rounding.jsonl` is a separate corpus of 2,058
 `{value, digits, expected}` cases. Each `expected` value is the exact binary
@@ -111,8 +111,8 @@ installs nothing at all.
 
 Run from this directory.
 
-| Command | Action |
-| --- | --- |
-| `cargo test` | Unit tests, the FastQC goldens, and the rounding corpus |
-| `cargo clippy --all-targets -- -D warnings` | Lint |
-| `cargo fmt` | Format |
+| Command                                     | Action                                                  |
+| ------------------------------------------- | ------------------------------------------------------- |
+| `cargo test`                                | Unit tests, the FastQC goldens, and the rounding corpus |
+| `cargo clippy --all-targets -- -D warnings` | Lint                                                    |
+| `cargo fmt`                                 | Format                                                  |

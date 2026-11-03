@@ -17,8 +17,8 @@ barrel prevents native dependencies from entering the browser graph.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/contracts test` | Run tests. |
+| Command                                       | Action                   |
+| --------------------------------------------- | ------------------------ |
+| `pnpm --filter @virtool/contracts test`       | Run tests.               |
 | `pnpm --filter @virtool/contracts test:watch` | Run tests in watch mode. |
-| `pnpm --filter @virtool/contracts typecheck` | Type-check the package. |
+| `pnpm --filter @virtool/contracts typecheck`  | Type-check the package.  |

@@ -30,12 +30,12 @@ import { parseGenbankSet, parseTaxaSet } from "@virtool/ncbi";
 
 Four call shapes cover everything:
 
-| Call | Response |
-| -- | -- |
-| `esearch(nuccore, idtype=acc)` | JSON |
-| `esearch(taxonomy, txid[Subtree])` | JSON |
-| `efetch(taxonomy, id=taxid)` | TaxaSet XML |
-| `efetch(nuccore, rettype=gb, retmode=xml)` | GBSet XML |
+| Call                                       | Response    |
+| ------------------------------------------ | ----------- |
+| `esearch(nuccore, idtype=acc)`             | JSON        |
+| `esearch(taxonomy, txid[Subtree])`         | JSON        |
+| `efetch(taxonomy, id=taxid)`               | TaxaSet XML |
+| `efetch(nuccore, rettype=gb, retmode=xml)` | GBSet XML   |
 
 ESearch supports `retmode=json` and EFetch doesn't, for any database, so two
 of the four are typed JSON fetches.
@@ -159,7 +159,7 @@ pnpm --filter @virtool/ncbi refresh-fixtures
 That rewrites only the responses, never `expected/`. Regenerating the expected
 models from this client's own output would make the test compare the client to
 itself, so a shape change at NCBI shows up as a failing test with a reviewable
-diff. When a failure turns out to be NCBI having changed the *data* rather than
+diff. When a failure turns out to be NCBI having changed the _data_ rather than
 this client having broken, edit the expected file by hand and say so in the
 commit. This was done for the realm `Monodnaviria` being renamed `Floreoviria`
 (taxonomy ID 2731342) and for `unclassified Tolucaviricetes` (taxonomy ID 2788833) being

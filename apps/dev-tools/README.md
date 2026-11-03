@@ -18,8 +18,8 @@ resources it makes are valid for the schema of its branch.
 
 ## Commands
 
-| Command | Result |
-| --- | --- |
+| Command                                                                        | Result                                                                                    |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | `create administrator --handle=<handle> --email=<email> --password=<password>` | Creates a full administrator if the database has no users. Otherwise, it makes no change. |
 
 Give each value in the `--name=value` form. The `--name value` form rejects a

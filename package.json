@@ -14,9 +14,9 @@
 		"typecheck": "pnpm -r typecheck"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.15",
-		"@types/node": "^26.4.1",
-		"knip": "^6.42.1",
+		"@biomejs/biome": "^2.6.4",
+		"@types/node": "^26.6.6",
+		"knip": "^6.44.1",
 		"typescript": "^7.0.2"
 	}
 }

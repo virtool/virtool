@@ -78,14 +78,14 @@ or cancelled in a `stale` pass alongside the `orphaned` reserved-upload pass.
 Storage keys are recorded, never reconstructed. Every read path uses the full
 key stored in the corresponding row:
 
-| Table | Column | Nullable |
-| --- | --- | --- |
-| `sample_reads` | `storage_key` | No |
-| `index_files` | `storage_key` | No |
-| `subtraction_files` | `storage_key` | Yes |
-| `analysis_files` | `storage_key` | Yes |
-| `uploads` | `storage_key` | Yes |
-| `indexes` | `otus_json_storage_key` | Yes |
+| Table               | Column                  | Nullable |
+| ------------------- | ----------------------- | -------- |
+| `sample_reads`      | `storage_key`           | No       |
+| `index_files`       | `storage_key`           | No       |
+| `subtraction_files` | `storage_key`           | Yes      |
+| `analysis_files`    | `storage_key`           | Yes      |
+| `uploads`           | `storage_key`           | Yes      |
+| `indexes`           | `otus_json_storage_key` | Yes      |
 
 Nullable columns mirror nullable legacy sources rather than inventing keys
 for objects that can't be retrieved. The index OTU JSON key is stored on the
@@ -94,13 +94,13 @@ index because the on-demand artifact shouldn't appear in its file listing.
 Mint new keys with `@virtool/storage/keys`. UUID leaves are written in hex and
 so contain no hyphens, matching the keys already in the bucket.
 
-| Minter | Shape |
-| --- | --- |
+| Minter                             | Shape                        |
+| ---------------------------------- | ---------------------------- |
 | `mintStorageKey(domain, parentId)` | `{domain}/{parentId}/{uuid}` |
-| `mintRootStorageKey(domain)` | `{domain}/{uuid}` |
-| `cacheKey(uuid)` | `caches/v1/{uuid}` |
-| `HMM_PROFILES_KEY` | `hmm/profiles.hmm` |
-| `HMM_ANNOTATIONS_KEY` | `hmm/annotations.json.gz` |
+| `mintRootStorageKey(domain)`       | `{domain}/{uuid}`            |
+| `cacheKey(uuid)`                   | `caches/v1/{uuid}`           |
+| `HMM_PROFILES_KEY`                 | `hmm/profiles.hmm`           |
+| `HMM_ANNOTATIONS_KEY`              | `hmm/annotations.json.gz`    |
 
 The parent segment groups objects for inspection but has no read-time
 meaning. Uploads use `mintRootStorageKey`, allowing their object to be written
@@ -121,18 +121,18 @@ The web server parses storage configuration in `src/server/config.ts`.
 `VT_STORAGE_BACKEND` is required and must be `s3` or `azure`; there is no
 filesystem backend.
 
-| Variable | Backend | Requirement |
-| --- | --- | --- |
-| `VT_STORAGE_BACKEND` | Both | Required |
-| `VT_STORAGE_S3_BUCKET` | S3 | Required |
-| `VT_STORAGE_S3_REGION` | S3 | Optional |
-| `VT_STORAGE_S3_ENDPOINT` | S3 | Optional; omit for AWS |
-| `VT_STORAGE_S3_ACCESS_KEY_ID` | S3 | Optional as a credential pair |
-| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | S3 | Optional as a credential pair |
-| `VT_STORAGE_AZURE_ACCOUNT` | Azure | Required |
-| `VT_STORAGE_AZURE_CONTAINER` | Azure | Required |
-| `VT_STORAGE_AZURE_ACCESS_KEY` | Azure | Optional; managed identity if unset |
-| `VT_STORAGE_AZURE_ENDPOINT` | Azure | Optional |
+| Variable                          | Backend | Requirement                         |
+| --------------------------------- | ------- | ----------------------------------- |
+| `VT_STORAGE_BACKEND`              | Both    | Required                            |
+| `VT_STORAGE_S3_BUCKET`            | S3      | Required                            |
+| `VT_STORAGE_S3_REGION`            | S3      | Optional                            |
+| `VT_STORAGE_S3_ENDPOINT`          | S3      | Optional; omit for AWS              |
+| `VT_STORAGE_S3_ACCESS_KEY_ID`     | S3      | Optional as a credential pair       |
+| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | S3      | Optional as a credential pair       |
+| `VT_STORAGE_AZURE_ACCOUNT`        | Azure   | Required                            |
+| `VT_STORAGE_AZURE_CONTAINER`      | Azure   | Required                            |
+| `VT_STORAGE_AZURE_ACCESS_KEY`     | Azure   | Optional; managed identity if unset |
+| `VT_STORAGE_AZURE_ENDPOINT`       | Azure   | Optional                            |
 
 Every variable supports a `_FILE` variant. File values are trimmed, take
 precedence over plain environment values, and fail startup when unreadable.
@@ -238,7 +238,7 @@ The internal runner's `cleanup_auth_verifications` periodic task deletes rows
 whose `expires_at` has passed. Better Auth rejects expired rows, so the task
 only limits how many rows the table keeps.
 
-A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
+A Drizzle property name in `auth.ts` is a Better Auth _field_ name. The adapter
 looks fields up by property, so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
@@ -479,11 +479,11 @@ wanted; each CI job still starts its own containers.
 
 Run from the monorepo root.
 
-| Command | Action |
-| --- | --- |
-| `pnpm --filter @virtool/data test` | Run tests against Postgres. |
-| `pnpm --filter @virtool/data test:watch` | Run tests in watch mode. |
-| `pnpm --filter @virtool/data typecheck` | Type-check the package. |
+| Command                                  | Action                      |
+| ---------------------------------------- | --------------------------- |
+| `pnpm --filter @virtool/data test`       | Run tests against Postgres. |
+| `pnpm --filter @virtool/data test:watch` | Run tests in watch mode.    |
+| `pnpm --filter @virtool/data typecheck`  | Type-check the package.     |
 
 Storage-specific commands are documented in
 [`@virtool/storage`](../storage/README.md#commands).
