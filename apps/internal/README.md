@@ -340,17 +340,21 @@ duplicate emails are summarized without failing the migration. Invalid handles
 or bcrypt hashes, corrupt migration state, and unsafe credential linkages are
 recorded as findings under the `user:<id>` subject without password material.
 
-`forced_password_reset@1` replaces each flagged migrated user's password with
-an Argon2id hash of a random secret, then deletes that user's browser and setup
-sessions. Its final phase reports every flagged legacy user by ID. Any finding
-blocks the paired SQL migration that drops the flag column. Before merge, check
-production for users that need an administrator recovery link:
+`forced_password_reset@1` replaces the password of each user flagged for a
+forced reset, migrated or legacy, with an Argon2id hash of a random secret. It
+clears the flag and deletes that user's browser and setup sessions. When email
+is enabled and the address is verified, it queues a password-changed notice.
+It reports no findings. Affected users get access again through an
+administrator recovery link. Before deploy, list them:
 
 ```sql
-SELECT id FROM public.users
-WHERE force_reset = true AND auth_migrated_at IS NULL
-ORDER BY id;
+SELECT id, handle FROM public.users WHERE force_reset = true ORDER BY id;
 ```
+
+The paired SQL migration then adds a check that keeps `force_reset` false, so
+a server from an earlier release cannot flag a user during a rolling deploy.
+The column stays so that those servers can still read it. A later release
+drops it.
 
 ## Metrics
 

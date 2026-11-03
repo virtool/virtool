@@ -47,8 +47,6 @@ export function useCapturedUrlParams<K extends string>(
 /**
  * Return a function that resolves the next step from the server and navigates
  * to it.
- *
- * Return the step after sign-in.
  */
 export function useFollowAuthNextStep() {
 	const queryClient = useQueryClient();

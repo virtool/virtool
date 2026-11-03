@@ -532,15 +532,15 @@ authority rather than one per kind.
 The wall is the set of routes that a browser without an ordinary session can
 open. Each route has one job:
 
-| Route                                             | Job                                                                                 |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `/login`                                          | Password, passkey, and TOTP or recovery-code sign-in                          |
-| `/setup`                                          | First-instance bootstrap. It redirects to `/login` when a user exists               |
-| `/account-setup`                                  | Invitation acceptance from a `#token=` link                                         |
-| `/recover`                                        | Recovery request and recovery-link consumption                                      |
-| `/verify-email`                                   | Email verification links                                                            |
-| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation                                                            |
-| `/mfa-enrollment`                                 | TOTP enrollment under the `required` MFA policy                                     |
+| Route                                             | Job                                                                   |
+| ------------------------------------------------- | --------------------------------------------------------------------- |
+| `/login`                                          | Password, passkey, and TOTP or recovery-code sign-in                  |
+| `/setup`                                          | First-instance bootstrap. It redirects to `/login` when a user exists |
+| `/account-setup`                                  | Invitation acceptance from a `#token=` link                           |
+| `/recover`                                        | Recovery request and recovery-link consumption                        |
+| `/verify-email`                                   | Email verification links                                              |
+| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation                                              |
+| `/mfa-enrollment`                                 | TOTP enrollment under the `required` MFA policy                       |
 
 The server decides where a browser goes next. After every sign-in or setup
 transition, `resolveAuthNextStep` ([nextStep.ts](src/wall/nextStep.ts)) removes

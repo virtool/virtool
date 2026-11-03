@@ -539,7 +539,7 @@ it("asks for TOTP at sign-in from a browser that holds a trust cookie", async ()
 });
 
 it("refuses to trust the device when the second factor is verified", async () => {
-	const { totpURI } = await enroll(false);
+	const { totpURI } = await enroll();
 	await callServerFn(handlers, "loginFn", { handle: "alice", password });
 
 	await expect(
@@ -555,7 +555,7 @@ it("refuses to trust the device when the second factor is verified", async () =>
 });
 
 it("keeps invalid codes unauthenticated and permits recovery-code continuation", async () => {
-	const { backupCodes, userId } = await enroll(false);
+	const { backupCodes, userId } = await enroll();
 	await callServerFn(handlers, "loginFn", { handle: "alice", password });
 	await expect(
 		callServerFn(handlers, "verifyTwoFactorFn", {
@@ -596,7 +596,7 @@ it("rejects verification without a pending challenge", async () => {
 });
 
 it("refuses an incorrect recovery code with its own message", async () => {
-	await enroll(false);
+	await enroll();
 	await callServerFn(handlers, "loginFn", { handle: "alice", password });
 
 	await expect(
@@ -612,7 +612,7 @@ it("refuses an incorrect recovery code with its own message", async () => {
 });
 
 it("expires the challenge after five incorrect codes", async () => {
-	const { totpURI } = await enroll(false);
+	const { totpURI } = await enroll();
 	await callServerFn(handlers, "loginFn", { handle: "alice", password });
 	for (let attempt = 0; attempt < 5; attempt++) {
 		await expect(

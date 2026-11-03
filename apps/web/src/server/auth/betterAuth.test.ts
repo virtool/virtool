@@ -493,6 +493,36 @@ describe("the mounted handler", () => {
 		expect(await db.select().from(authSessions)).toHaveLength(0);
 	});
 
+	it("answers UNAUTHORIZED when the session's user row is missing", async () => {
+		await seedMigratedUser();
+		const signIn = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signIn.headers.get("set-cookie")?.split(";", 1)[0] ?? "";
+		await db.delete(users);
+
+		const response = await createAuthRequestHandler(
+			db,
+			auth,
+		)(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}/two-factor/enable`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					cookie,
+					origin: ORIGIN,
+				},
+				body: JSON.stringify({ password: LEGACY_PASSWORD }),
+			}),
+		);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toMatchObject({ code: "UNAUTHORIZED" });
+	});
+
 	it("refuses a request to trust the device", async () => {
 		const handler = createAuthRequestHandler(db, auth);
 

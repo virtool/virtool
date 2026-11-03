@@ -492,7 +492,10 @@ export function createAuthRequestHandler(
 				: [];
 
 			if (!user) {
-				return new Response(null, { status: 401 });
+				return Response.json(
+					{ code: "UNAUTHORIZED", message: "Unauthorized" },
+					{ status: 401 },
+				);
 			}
 
 			if (

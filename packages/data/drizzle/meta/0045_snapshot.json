@@ -1,5 +1,5 @@
 {
-  "id": "13cb4a04-933f-4585-b63b-70e12459353f",
+  "id": "438672f0-2bd0-481e-a59f-8554b46d3e65",
   "prevId": "6fae1d3a-44fb-442f-8e56-c3f182cf4cb2",
   "version": "7",
   "dialect": "postgresql",
@@ -5325,6 +5325,13 @@
           "notNull": true,
           "default": false
         },
+        "force_reset": {
+          "name": "force_reset",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "handle": {
           "name": "handle",
           "type": "text",
@@ -5460,6 +5467,10 @@
         "pending_has_no_password": {
           "name": "pending_has_no_password",
           "value": "\"users\".\"lifecycle_state\" <> 'pending' or \"users\".\"password\" is null"
+        },
+        "force_reset_unset": {
+          "name": "force_reset_unset",
+          "value": "\"users\".\"force_reset\" = false"
         }
       },
       "isRLSEnabled": false

@@ -10,8 +10,8 @@ import { logger } from "../logger";
  * until the client happened to reconnect.
  *
  * This is exactly as sharp as the gate it runs, and no sharper: it catches a
- * deleted session row — including one deleted by an admin-initiated
- * deactivation, password change, and a deactivated user.
+ * deleted session row, such as one deleted when an administrator deactivates
+ * the user or when the user changes their own password.
  *
  * Returns a function that stops the watch. It is safe to call more than once.
  */
