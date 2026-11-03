@@ -79,6 +79,7 @@ export function getAuthNextStepRoute(
 			// search, and hash.
 			return { href: redirect ?? "/" };
 		case "login":
+			return { to: "/login", search: { redirect } };
 		case "email_remediation":
 			return { to: "/email-remediation", search: { redirect } };
 		case "mfa_enrollment":
