@@ -53,7 +53,7 @@
 				"@better-auth/**",
 				"@simplewebauthn/**",
 			],
-			groupName: "better-auth and SimpleWebAuthn",
+			groupName: "auth dependencies",
 			commitMessageExtra: "",
 		},
 		{
