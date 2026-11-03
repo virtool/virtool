@@ -43,6 +43,13 @@
 			matchUpdateTypes: ["minor", "patch"],
 			groupName: "development dependencies",
 		},
+		// Development dependencies stay out of the changelog, and the label
+		// waives the release check that would otherwise require a change file.
+		{
+			matchManagers: ["npm"],
+			matchDepTypes: ["devDependencies", "packageManager"],
+			addLabels: ["no-release"],
+		},
 		// The passkey plugin's inferred types must resolve to the same
 		// SimpleWebAuthn copy as the app's, so these move together, majors
 		// included.
@@ -100,7 +107,7 @@
 			matchManagers: ["npm", "dockerfile"],
 			postUpgradeTasks: {
 				commands: ["node scripts/write-renovate-change-file.mjs"],
-				dataFileTemplate: '{"branchName": "{{{branchName}}}", "baseBranch": "{{{baseBranch}}}", "groupName": "{{{groupName}}}", "upgrades": [{{#each upgrades}}{"depName": "{{{depName}}}", "currentValue": "{{{currentValue}}}", "newValue": "{{{newValue}}}", "currentDigest": "{{{currentDigest}}}", "newDigest": "{{{newDigest}}}"}{{#unless @last}},{{/unless}}{{/each}}]}',
+				dataFileTemplate: '{"branchName": "{{{branchName}}}", "baseBranch": "{{{baseBranch}}}", "groupName": "{{{groupName}}}", "upgrades": [{{#each upgrades}}{"depName": "{{{depName}}}", "depType": "{{{depType}}}", "currentValue": "{{{currentValue}}}", "newValue": "{{{newValue}}}", "currentDigest": "{{{currentDigest}}}", "newDigest": "{{{newDigest}}}"}{{#unless @last}},{{/unless}}{{/each}}]}',
 				fileFilters: [".changeset/**"],
 				executionMode: "branch",
 			},

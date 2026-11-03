@@ -181,6 +181,12 @@ the bump. Renovate runs a script as a post-upgrade task, once for each branch:
 - A bump that reaches only the root `package.json` or workspaces that ship no
   image, such as a lint tool or the product website, ships nothing, so the
   script writes no change file. The check passes those pull requests.
+- A bump of only development dependencies writes no change file. Renovate adds
+  the `no-release` label, which waives the check, so these bumps stay out of
+  the changelog.
+- A group of bumps lists every bump once, in the `virtool` changelog. The
+  other packages get one bullet that names the group and links to the same pull
+  request. A single bump names its package and versions in every changelog.
 - A bump that changes only the lockfile names no workspace, so the change file
   releases every Knope package.
 

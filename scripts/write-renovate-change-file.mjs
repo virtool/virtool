@@ -155,18 +155,20 @@ function describe({ depName, currentValue, newValue }) {
 
 // A group lists one upgrade for each file that it changes, so the same bump
 // can appear several times.
-function getSummary({ groupName, upgrades }) {
-	const bumps = [...new Set(upgrades.map(describe))].toSorted();
+function getBumps({ upgrades }) {
+	return [...new Set(upgrades.map(describe))].toSorted();
+}
 
-	if (bumps.length === 1) {
-		return `${bumps[0]}.`;
-	}
+function getSummary({ groupName }, bumps) {
+	return `Update ${groupName || "dependencies"}.\n\n${bumps.map((bump) => `- ${bump}.`).join("\n")}`;
+}
 
-	return [
-		`Update ${groupName || "dependencies"}.`,
-		"",
-		...bumps.map((bump) => `- ${bump}.`),
-	].join("\n");
+// Build tools change no user-visible behavior, and the `no-release` label
+// waives the check for them, so they stay out of the changelog.
+function isDevelopmentOnly({ upgrades }) {
+	return upgrades.every(({ depType }) =>
+		["devDependencies", "packageManager"].includes(depType),
+	);
 }
 
 function main() {
@@ -185,7 +187,7 @@ function main() {
 
 	const packages = [...getPackages(root, changed)].toSorted();
 
-	if (packages.length === 0) {
+	if (packages.length === 0 || isDevelopmentOnly(data)) {
 		return;
 	}
 
@@ -198,19 +200,45 @@ function main() {
 		.slice(0, 8);
 	const slug = data.branchName.replace(/^renovate\//, "").replace(/\W+/g, "-");
 
+	// A group lists its bumps once, in the `virtool` changelog. The other
+	// packages get a bullet that links to the same pull request.
+	const bumps = getBumps(data);
+	const files =
+		bumps.length === 1
+			? [{ names: packages, body: `${bumps[0]}.` }]
+			: [
+					{
+						names: packages.filter((name) => name === "virtool"),
+						body: getSummary(data, bumps),
+					},
+					{
+						names: packages.filter((name) => name !== "virtool"),
+						body: `Update ${data.groupName || "dependencies"}.`,
+					},
+				];
+
 	// Git keeps no empty directory, so a release leaves none on `main`.
 	mkdirSync(join(root, directory), { recursive: true });
-	writeFileSync(
-		join(root, `${prefix}${slug}-${hash}.md`),
-		[
-			"---",
-			...packages.map((name) => `${name}: patch`),
-			"---",
-			"",
-			getSummary(data),
-			"",
-		].join("\n"),
-	);
+
+	for (const { names, body } of files) {
+		if (names.length === 0) {
+			continue;
+		}
+
+		const suffix = names.includes("virtool") ? "" : "-images";
+
+		writeFileSync(
+			join(root, `${prefix}${slug}-${hash}${suffix}.md`),
+			[
+				"---",
+				...names.map((name) => `${name}: patch`),
+				"---",
+				"",
+				body,
+				"",
+			].join("\n"),
+		);
+	}
 }
 
 main();
