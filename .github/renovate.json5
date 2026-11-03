@@ -13,6 +13,9 @@
 	// pnpm rejects lockfile entries published less than 24h ago.
 	minimumReleaseAge: "1 day",
 	internalChecksFilter: "strict",
+	// Release notes made PR bodies exceed the GitHub body size limit.
+	fetchChangeLogs: "off",
+	prBodyTemplate: "{{{header}}}{{{table}}}{{{warnings}}}{{{notes}}}{{{controls}}}",
 	// Match the `Area / Action` names of the CI checks.
 	statusCheckNames: {
 		artifactError: "Renovate / Artifacts",
@@ -50,7 +53,8 @@
 				"@better-auth/**",
 				"@simplewebauthn/**",
 			],
-			groupName: "auth",
+			groupName: "auth dependencies",
+			commitMessageExtra: "",
 		},
 		{
 			matchManagers: ["npm"],
