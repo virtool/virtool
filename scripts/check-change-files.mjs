@@ -5,7 +5,9 @@
 // format rule.
 //
 // Knope ignores a change file with a quoted or unknown package name, and
-// accepts one with no summary, so this check rejects them itself.
+// accepts one with no summary, so this check rejects them itself. Knope ends
+// the summary at the first line break, so a wrapped summary becomes a cut-off
+// heading.
 //
 // The workspace graph is coarse: a change to any module of a shared package
 // marks every app that depends on the package, even when the app bundles none
@@ -103,13 +105,15 @@ function parseChangeFile(text, names) {
 		errors.push("the front matter names no package");
 	}
 
-	if (
-		rest
-			.slice(end + 1)
-			.join("\n")
-			.trim() === ""
-	) {
+	const body = rest.slice(end + 1);
+	const summary = body.findIndex((line) => line.trim() !== "");
+
+	if (summary === -1) {
 		errors.push("the summary is empty");
+	} else if (body[summary + 1]?.trim()) {
+		errors.push(
+			"the summary must be one line, followed by a blank line before any details",
+		);
 	}
 
 	return { errors, packages };
