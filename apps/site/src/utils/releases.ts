@@ -109,16 +109,3 @@ export async function getRepoReleases(repo: string): Promise<Array<object>> {
 
   return data;
 }
-
-export function getLatestLegacyVersion(releases) {
-  const legacyReleases = releases.filter((release) => {
-    return (
-      !release.prerelease &&
-      (release.name.startsWith("v4.") || release.name.startsWith("4."))
-    );
-  });
-
-  const latestRelease = legacyReleases[0];
-
-  return latestRelease.name.replace("v", "");
-}
