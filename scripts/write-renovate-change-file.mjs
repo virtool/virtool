@@ -23,7 +23,7 @@ import {
 } from "./workspaces.mjs";
 
 const directory = ".changeset";
-const prefix = `${directory}/renovate-`;
+const prefix = `${directory}/z-renovate-`;
 
 function readData() {
 	const path = process.env.RENOVATE_POST_UPGRADE_COMMAND_DATA_FILE;
@@ -109,10 +109,6 @@ function getBumps(root, { upgrades }, dirs) {
 function getBody(title, bumps) {
 	if (bumps.length === 0) {
 		return title;
-	}
-
-	if (bumps.length === 1) {
-		return `${bumps[0]}.`;
 	}
 
 	return [title, "", ...bumps.map((bump) => `- ${bump}.`)].join("\n");

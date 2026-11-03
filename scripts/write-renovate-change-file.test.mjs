@@ -47,7 +47,7 @@ describe("write-renovate-change-file", () => {
 	function changeFiles() {
 		return fixture
 			.list(".changeset")
-			.filter((name) => name.startsWith("renovate-"));
+			.filter((name) => name.startsWith("z-renovate-"));
 	}
 
 	function content(names, body) {
@@ -74,10 +74,13 @@ describe("write-renovate-change-file", () => {
 		const [name, ...rest] = changeFiles();
 
 		assert.deepEqual(rest, []);
-		assert.match(name, /^renovate-deps-[0-9a-f]{8}\.md$/);
+		assert.match(name, /^z-renovate-deps-[0-9a-f]{8}\.md$/);
 		assert.equal(
 			fixture.read(`.changeset/${name}`),
-			content(["virtool"], "Bump `vite` from 1.0.0 to 2.0.0."),
+			content(
+				["virtool"],
+				"Update dependencies.\n\n- Bump `vite` from 1.0.0 to 2.0.0.",
+			),
 		);
 	});
 
@@ -186,7 +189,10 @@ describe("write-renovate-change-file", () => {
 		assert.equal(files.length, 1);
 		assert.equal(
 			fixture.read(`.changeset/${files[0]}`),
-			content(["virtool"], "Bump `react` from 1.0.0 to 2.0.0."),
+			content(
+				["virtool"],
+				"Update all dependencies.\n\n- Bump `react` from 1.0.0 to 2.0.0.",
+			),
 		);
 	});
 
@@ -206,7 +212,7 @@ describe("write-renovate-change-file", () => {
 	test("deletes the change file of an earlier run first", () => {
 		fixture.checkout("renovate/deps");
 		fixture.write(
-			".changeset/renovate-deps-00000000.md",
+			".changeset/z-renovate-deps-00000000.md",
 			content(["nuvs"], "Old."),
 		);
 		fixture.commitAll("Earlier run");
@@ -218,10 +224,13 @@ describe("write-renovate-change-file", () => {
 		const files = changeFiles();
 
 		assert.equal(files.length, 1);
-		assert.notEqual(files[0], "renovate-deps-00000000.md");
+		assert.notEqual(files[0], "z-renovate-deps-00000000.md");
 		assert.equal(
 			fixture.read(`.changeset/${files[0]}`),
-			content(["virtool"], "Bump `vite` from 1.0.0 to 2.0.0."),
+			content(
+				["virtool"],
+				"Update dependencies.\n\n- Bump `vite` from 1.0.0 to 2.0.0.",
+			),
 		);
 	});
 });

@@ -210,7 +210,11 @@ the bump. Renovate runs a script as a post-upgrade task, once for each branch:
 - A group of bumps lists every bump once, in the `virtool` changelog. The
   other packages get one bullet that names the group and links to the same pull
   request. If the group does not reach `virtool`, every package gets the full
-  list. A single bump names its package and versions in every changelog.
+  list. A single bump is a group of one, so it lists its version change under a
+  heading in every changelog.
+- Change files are named `z-renovate-*` and each one has a heading with details.
+  Knope lists summary-only bullets first, then entries with details by file
+  name, so the dependency updates come last in a release.
 - A bump that changes only the lockfile names no workspace, so the change file
   releases every Knope package.
 
