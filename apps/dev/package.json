@@ -11,12 +11,12 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@hono/node-server": "^2.1.5",
+		"@hono/node-server": "^2.1.6",
 		"@tanstack/react-router": "^1.170.46",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"hono": "^4.13.9",
-		"lucide-react": "^1.61.0",
+		"lucide-react": "^1.66.0",
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1"
 	},
