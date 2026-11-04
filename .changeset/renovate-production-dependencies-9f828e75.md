@@ -6,7 +6,7 @@ pathoscope: patch
 virtool: patch
 ---
 
-Update production dependencies.
+Update production dependencies
 
 - Bump `@aws-sdk/client-s3` from ^3.1152.0 to ^3.1161.0.
 - Bump `@aws-sdk/lib-storage` from ^3.1156.0 to ^3.1161.0.

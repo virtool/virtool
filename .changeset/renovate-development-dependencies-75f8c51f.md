@@ -6,7 +6,7 @@ pathoscope: patch
 virtool: patch
 ---
 
-Update development dependencies.
+Update development dependencies
 
 - Bump `@babel/core` from ^8.0.1 to ^8.0.10.
 - Bump `@rolldown/plugin-babel` from ^0.2.4 to ^0.3.0.
