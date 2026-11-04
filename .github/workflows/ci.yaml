@@ -539,6 +539,9 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 5
         needs: [release]
+        # Without a status function, a skipped filtered job upstream of
+        # `release` skips this job too.
+        if: ${{ !cancelled() && needs.release.result == 'success' }}
         outputs:
             include: ${{ steps.matrix.outputs.include }}
             any: ${{ steps.matrix.outputs.any }}
@@ -560,7 +563,7 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 20
         needs: [release-ghcr-matrix]
-        if: needs.release-ghcr-matrix.outputs.any == 'true'
+        if: ${{ !cancelled() && needs.release-ghcr-matrix.outputs.any == 'true' }}
         permissions:
             contents: read
             packages: write
@@ -611,7 +614,9 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 10
         needs: [release-ghcr-matrix, release-ghcr]
-        if: needs.release-ghcr-matrix.outputs.any == 'true'
+        if: >-
+            ${{ !cancelled() && needs.release-ghcr-matrix.outputs.any == 'true'
+            && needs.release-ghcr.result == 'success' }}
         steps:
             - name: Token
               id: app-token
