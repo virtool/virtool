@@ -1,632 +1,636 @@
 name: CI
 
 on:
-    push:
-        branches:
-            - "main"
-    pull_request:
-        branches:
-            - "main"
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
 
 permissions:
-    contents: read
+  contents: read
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
-    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-    REGISTRY: ghcr.io
+  REGISTRY: ghcr.io
 
 jobs:
-    # -------------------------------------------------------------------------
-    # Change detection
-    # -------------------------------------------------------------------------
-    # Image inputs are pnpm workspace dependencies. The leading ellipsis selects
-    # every dependent of a workspace changed since the base, so shared package
-    # changes automatically select the jobs that consume them.
-    #
-    # A pull request compares against `main`. A push to `main` compares against
-    # the head of the last successful push run, not `github.event.before`: a
-    # newer push cancels a pending run, and a failed run must not let the next
-    # push skip what it broke. With no usable base, every workspace is selected.
-    #
-    # Files outside every workspace belong to the root package, which has no
-    # dependents. A change to one that every job consumes selects every
-    # workspace, so the filtered jobs can't skip a break that lands on `main`.
-    changes:
-        name: Changes
-        runs-on: ubuntu-26.04
-        timeout-minutes: 5
-        permissions:
-            actions: read
-            contents: read
-        outputs:
-            packages: ${{ steps.affected.outputs.packages }}
-            package-tests: ${{ steps.affected.outputs.package-tests }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Find base
-              id: base
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: |
-                  if [ "${{ github.event_name }}" = pull_request ]; then
-                      git fetch --no-tags origin main
-                      base=origin/main
-                  else
-                      base=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yaml \
-                          --branch main --event push --status success --limit 1 \
-                          --json headSha --jq '.[0].headSha // empty' || true)
-                      if [ -z "$base" ] || ! git merge-base --is-ancestor "$base" HEAD; then
-                          base=
-                      fi
-                  fi
-                  echo "base=$base" >> "$GITHUB_OUTPUT"
-            # Packages / Test covers every selected workspace with a `test`
-            # script except the root and the six that run in dedicated jobs:
-            # web, internal, dev-tools and nuvs, and the two persistence
-            # packages that share Data & Storage / Test.
-            - name: Find affected workspaces
-              id: affected
-              env:
-                  BASE: ${{ steps.base.outputs.base }}
-              run: |
-                  if [ -z "$BASE" ] || git diff --name-only "$BASE"...HEAD -- \
-                      .dockerignore \
-                      .github/workflows/ci.yaml \
-                      .github/actions \
-                      .nvmrc \
-                      package.json \
-                      pnpm-workspace.yaml \
-                      pnpm-lock.yaml \
-                      | grep -q .; then
-                      filter='*'
-                  else
-                      filter="...[$BASE]"
-                  fi
-                  affected="$RUNNER_TEMP/affected.json"
-                  pnpm --filter "$filter" list --depth -1 --json > "$affected"
-                  packages=$(jq -c '[.[].name]' "$affected")
-                  package_tests=$(jq -r --arg root "$PWD" '.[]
-                      | select(.path != $root)
-                      | select(.name | IN("@virtool/web", "@virtool/data", "@virtool/storage", "@virtool/internal", "@virtool/dev-tools", "@virtool/nuvs") | not)
-                      | .path + "/package.json"' "$affected" \
-                      | xargs -r jq -s -c '[.[] | select(.scripts.test) | .name]')
-                  echo "packages=$packages" >> "$GITHUB_OUTPUT"
-                  echo "package-tests=${package_tests:-[]}" >> "$GITHUB_OUTPUT"
-
-    # -------------------------------------------------------------------------
-    # Checks (repo-wide)
-    # -------------------------------------------------------------------------
-    checks:
-        name: Checks
-        runs-on: ubuntu-26.04
-        timeout-minutes: 15
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Biome
-              run: pnpm check
-            - name: Knip
-              run: pnpm knip
-            - name: Typescript
-              run: pnpm typecheck
-            - name: Drizzle schema
-              run: |
-                  pnpm --filter @virtool/data db:generate
-                  if [[ -n "$(git status --porcelain --untracked-files=all -- packages/data/drizzle)" ]]; then
-                      git status --short --untracked-files=all -- packages/data/drizzle
-                      exit 1
-                  fi
-            # Vale lints Markdown and MDX against the styles named in
-            # `.vale.ini`. Warnings print, but only errors fail the job.
-            # `mise.toml` pins it to the version that the vocabulary and style
-            # overrides were cleared against; a floating install could add
-            # rules that fail a branch nothing changed.
-            - name: Install Vale
-              uses: jdx/mise-action@v5
-              with:
-                  install_args: vale
-            - name: Vale
-              run: pnpm docs:lint
-
-    # -------------------------------------------------------------------------
-    # Docker images (apps/web, apps/internal, apps/create-sample,
-    # apps/create-subtraction, apps/nuvs, apps/pathoscope)
-    # -------------------------------------------------------------------------
-    build:
-        name: ${{ matrix.area }} / Build
-        runs-on: ubuntu-26.04
-        timeout-minutes: ${{ matrix.timeout }}
-        needs: [changes]
-        strategy:
-            fail-fast: false
-            # A new app needs an app Dockerfile, a Bake target, and an entry
-            # here. A released image also needs its `package.json` in the
-            # `versioned_files` of its package in `knope.toml`.
-            #
-            # `release-ghcr` reuses the cache that these builds write. Nuvs has
-            # the longest timeout: it compiles SPAdes from source, the most
-            # expensive step of any workflow image build. A warm layer cache
-            # skips it.
-            matrix:
-                include:
-                    - image: web
-                      target: dist
-                      package: "@virtool/web"
-                      workspace: apps/web
-                      area: Web
-                      timeout: 20
-                    - image: internal
-                      target: internal
-                      package: "@virtool/internal"
-                      workspace: apps/internal
-                      area: Internal
-                      timeout: 20
-                    - image: create-sample
-                      target: create-sample
-                      package: "@virtool/create-sample"
-                      workspace: apps/create-sample
-                      area: Create Sample
-                      timeout: 20
-                    - image: create-subtraction
-                      target: create-subtraction
-                      package: "@virtool/create-subtraction"
-                      workspace: apps/create-subtraction
-                      area: Create Subtraction
-                      timeout: 20
-                    - image: nuvs
-                      target: nuvs
-                      package: "@virtool/nuvs"
-                      workspace: apps/nuvs
-                      area: Nuvs
-                      timeout: 60
-                    - image: pathoscope
-                      target: pathoscope
-                      package: "@virtool/pathoscope"
-                      workspace: apps/pathoscope
-                      area: Pathoscope
-                      timeout: 45
-        steps:
-            - name: Checkout
-              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              uses: actions/checkout@v7
-            # The default `docker` driver cannot export a build cache, so the
-            # gha cache below needs a docker-container builder.
-            - name: Setup Buildx
-              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              uses: docker/setup-buildx-action@v4
-            # Pull requests read the cache but don't write it. A pull request's
-            # cache is visible only to that pull request, and those writes push
-            # the main branch's layers out of the cache. `<image>*` also gives
-            # the `-build` and `-tools` dependency targets the cache. Bake
-            # builds them separately. Only the image target writes the cache:
-            # its `mode=max` export holds the layers of its dependency targets,
-            # so one scope serves them all.
-            - name: Build
-              if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
-              uses: docker/bake-action@v7
-              with:
-                  source: .
-                  files: packages/image-build/docker-bake.hcl
-                  targets: ${{ matrix.image }}
-                  set: |
-                      ${{ matrix.image }}*.cache-from=type=gha,scope=${{ matrix.image }}
-                      ${{ github.event_name == 'push' && format('{0}.cache-to=type=gha,mode=max,scope={0}', matrix.image) || '' }}
-
-    # -------------------------------------------------------------------------
-    # Web (apps/web)
-    # -------------------------------------------------------------------------
-    web-test:
-        name: Web / Test
-        runs-on: ubuntu-26.04
-        timeout-minutes: 10
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Test
-              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project web
-              env:
-                  TZ: UTC
-                  VT_TEST_REACT_COMPILER: "1"
-    web-test-server:
-        name: Web / Test Server
-        runs-on: ubuntu-26.04
-        timeout-minutes: 15
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Test
-              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project server
-              env:
-                  TZ: UTC
-                  VT_TEST_REACT_COMPILER: "1"
-    web-test-a11y:
-        name: Web / Accessibility
-        runs-on: ubuntu-26.04
-        timeout-minutes: 10
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            # Keyed on the Playwright version rather than the lockfile hash:
-            # the browser revision a release pins is this cache's only input, so
-            # an unrelated dependency bump must not throw the download away. No
-            # `restore-keys` either — a near-miss restore would seed the
-            # directory with a revision `install` then downloads past, leaving
-            # both in the cache.
-            - name: Resolve Playwright version
-              id: playwright
-              run: echo "version=$(pnpm --filter @virtool/web exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-            - name: Cache Playwright browsers
-              uses: actions/cache@v6
-              with:
-                  path: ~/.cache/ms-playwright
-                  key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-            # No `--with-deps`. It shells out to `apt-get update && apt-get
-            # install`, which carries no timeout of its own: when the runner's
-            # Azure mirror goes unreachable apt falls back to
-            # archive.ubuntu.com and stalls until the job timeout kills it. The
-            # runner image ships Chrome and Edge, so Chromium's shared
-            # libraries are already present. The step timeout below is a
-            # backstop for a slow CDN, not for apt.
-            - name: Install Playwright Chromium
-              run: pnpm --filter @virtool/web exec playwright install chromium
-              timeout-minutes: 5
-            - name: Test
-              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project a11y
-              env:
-                  TZ: UTC
-
-    # -------------------------------------------------------------------------
-    # Internal (apps/internal, apps/dev-tools)
-    # -------------------------------------------------------------------------
-    internal-test:
-        name: Internal / Test
-        runs-on: ubuntu-26.04
-        timeout-minutes: 15
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/internal') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/dev-tools')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            # Its own job, like Data & Storage / Test: these tests start a
-            # Postgres testcontainer, and pulling that image does not belong in
-            # the fast package loop.
-            - name: Test
-              run: pnpm --filter @virtool/internal --filter @virtool/dev-tools test
-              env:
-                  TZ: UTC
-
-    # -------------------------------------------------------------------------
-    # Nuvs (apps/nuvs)
-    # -------------------------------------------------------------------------
-    nuvs-test:
-        name: Nuvs / Test
-        runs-on: ubuntu-26.04
-        timeout-minutes: 10
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Test
-              run: pnpm --filter @virtool/nuvs test
-              env:
-                  TZ: UTC
-
-    # -------------------------------------------------------------------------
-    # Pathoscope (apps/pathoscope, packages/pathoscope-core)
-    # -------------------------------------------------------------------------
-    pathoscope-test:
-        name: Pathoscope / Test
-        runs-on: ubuntu-26.04
-        timeout-minutes: 45
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope-core') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/workflow-tools')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            # Format and test run inside the workflow-tools Dockerfile, against
-            # the same Rust toolchain, libclang, and bowtie2 build the image
-            # ships. That stage sets VT_REQUIRE_BOWTIE2, so the `candidates`
-            # golden vectors can never be skipped silently.
-            - name: Setup Buildx
-              uses: docker/setup-buildx-action@v4
-            # Pull requests read the cache but don't write it. A pull request's
-            # cache is visible only to that pull request, and those writes push
-            # the main branch's layers out of the cache.
-            - name: Test
-              uses: docker/bake-action@v7
-              with:
-                  source: .
-                  files: packages/image-build/docker-bake.hcl
-                  targets: pathoscope-core-test
-                  set: |
-                      pathoscope-core-test.cache-from=type=gha,scope=pathoscope-core-test
-                      ${{ github.event_name == 'push' && 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test' || '' }}
-
-    # -------------------------------------------------------------------------
-    # Quality (packages/quality-core)
-    # -------------------------------------------------------------------------
-    # Plain cargo on the runner, unlike pathoscope-test: this crate links
-    # nothing native, and its goldens are FastQC output checked in rather than
-    # something a tool has to be built to produce.
-    quality-test:
-        name: Quality / Test
-        runs-on: ubuntu-26.04
-        timeout-minutes: 15
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/quality-core')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Cache cargo
-              uses: actions/cache@v6
-              with:
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                      packages/quality-core/target
-                  key: cargo-quality-${{ runner.os }}-${{ hashFiles('packages/quality-core/Cargo.lock') }}
-                  restore-keys: cargo-quality-${{ runner.os }}-
-            - name: Format
-              run: cargo fmt --check
-              working-directory: packages/quality-core
-            - name: Clippy
-              run: cargo clippy --all-targets -- -D warnings
-              working-directory: packages/quality-core
-            - name: Test
-              run: cargo test
-              working-directory: packages/quality-core
-
-    # -------------------------------------------------------------------------
-    # Packages (packages/*, except those with their own jobs)
-    # -------------------------------------------------------------------------
-    packages-test:
-        name: Packages / Test
-        runs-on: ubuntu-26.04
-        timeout-minutes: 10
-        needs: [changes]
-        if: needs.changes.outputs.package-tests != '[]'
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            - name: Test
-              env:
-                  PACKAGES: ${{ needs.changes.outputs.package-tests }}
-              run: pnpm -r $(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES") test
-
-    # -------------------------------------------------------------------------
-    # Data and Storage (packages/data, packages/storage)
-    # -------------------------------------------------------------------------
-    data-storage-test:
-        name: Data & Storage / Test
-        runs-on: ubuntu-26.04
-        timeout-minutes: 15
-        needs: [changes]
-        if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/data') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/storage')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            # Its own job rather than part of Packages / Test: data starts a
-            # Postgres testcontainer and storage starts Garage and Azurite,
-            # and pulling those images does not belong in the fast package
-            # loop. The two packages share one job. `--parallel` overlaps
-            # their testcontainer pulls despite the data-on-storage
-            # dependency, and the job stays inside its timeout.
-            - name: Test
-              run: pnpm --parallel --filter @virtool/data --filter @virtool/storage test
-              env:
-                  TZ: UTC
-
-
-    # -------------------------------------------------------------------------
-    # Release
-    # -------------------------------------------------------------------------
-    # On push to main, the release jobs do two things:
-    #
-    # - If change files exist, `release` runs Knope to prepare a release on
-    #   branch `knope/release` and opens or updates the "Release" pull request.
-    # - If a Knope package has a version with no tag, `release-ghcr` pushes its
-    #   images and `release-github` then makes the tags and GitHub Releases.
-    #
-    # The merge of the release pull request removes the change files and adds
-    # the new versions, so its push goes to the second path. Both paths can run
-    # on one push. This occurs when a different merge cancels the pending run
-    # of the release merge.
-    release:
-        name: Release
-        runs-on: ubuntu-26.04
-        timeout-minutes: 15
-        needs:
-            [
-                build,
-                changes,
-                checks,
-                data-storage-test,
-                internal-test,
-                nuvs-test,
-                packages-test,
-                pathoscope-test,
-                quality-test,
-                web-test,
-                web-test-a11y,
-                web-test-server,
-            ]
-        # A filtered job skips when a push does not affect it. Release runs
-        # after skipped jobs, but not after a failed or cancelled job. `changes`
-        # is in `needs` because its failure skips every filtered job.
-        if: >-
-            github.event_name == 'push' && github.repository_owner == 'Virtool'
-            && !cancelled()
-            && !contains(needs.*.result, 'failure')
-            && !contains(needs.*.result, 'cancelled')
+  # -------------------------------------------------------------------------
+  # Change detection
+  # -------------------------------------------------------------------------
+  # Image inputs are pnpm workspace dependencies. The leading ellipsis selects
+  # every dependent of a workspace changed since the base, so shared package
+  # changes automatically select the jobs that consume them.
+  #
+  # A pull request compares against `main`. A push to `main` compares against
+  # the head of the last successful push run, not `github.event.before`: a
+  # newer push cancels a pending run, and a failed run must not let the next
+  # push skip what it broke. With no usable base, every workspace is selected.
+  #
+  # Files outside every workspace belong to the root package, which has no
+  # dependents. A change to one that every job consumes selects every
+  # workspace, so the filtered jobs can't skip a break that lands on `main`.
+  changes:
+    name: Changes
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      packages: ${{ steps.affected.outputs.packages }}
+      package-tests: ${{ steps.affected.outputs.package-tests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Find base
+        id: base
         env:
-            MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
-        steps:
-            # Workflows do not start for a push or pull request made with
-            # `GITHUB_TOKEN`. The release pull request needs CI, so the
-            # `virtool-releaser` GitHub App pushes and opens it.
-            - name: Token
-              id: app-token
-              uses: actions/create-github-app-token@v3
-              with:
-                  client-id: ${{ vars.RELEASER_CLIENT_ID }}
-                  private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
-                  permission-contents: write
-                  permission-pull-requests: write
-            # Knope finds the pull request of each change file in the history.
-            # The App token stays out of `.git/config`, so dependency install
-            # scripts can't read it. Only the push uses it.
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
-                  persist-credentials: false
-            - name: Find change files
-              id: pending
-              run: |
-                  if compgen -G '.changeset/*.md' > /dev/null; then
-                      echo "found=true" >> "$GITHUB_OUTPUT"
-                  else
-                      echo "found=false" >> "$GITHUB_OUTPUT"
-                  fi
-            - name: Setup
-              if: steps.pending.outputs.found == 'true'
-              uses: ./.github/actions/setup
-            - name: Install Knope
-              if: steps.pending.outputs.found == 'true'
-              uses: jdx/mise-action@v5
-              with:
-                  install_args: github:knope-dev/knope
-            - name: Prepare release
-              if: steps.pending.outputs.found == 'true'
-              env:
-                  GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
-                  APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
-              run: node scripts/prepare-release.mjs
-    release-ghcr-matrix:
-        name: Release / Matrix
-        runs-on: ubuntu-26.04
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = pull_request ]; then
+              git fetch --no-tags origin main
+              base=origin/main
+          else
+              base=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yaml \
+                  --branch main --event push --status success --limit 1 \
+                  --json headSha --jq '.[0].headSha // empty' || true)
+              if [ -z "$base" ] || ! git merge-base --is-ancestor "$base" HEAD; then
+                  base=
+              fi
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+      # Packages / Test covers every selected workspace with a `test`
+      # script except the root and the six that run in dedicated jobs:
+      # web, internal, dev-tools and nuvs, and the two persistence
+      # packages that share Data & Storage / Test.
+      - name: Find affected workspaces
+        id: affected
+        env:
+          BASE: ${{ steps.base.outputs.base }}
+        run: |
+          if [ -z "$BASE" ] || git diff --name-only "$BASE"...HEAD -- \
+              .dockerignore \
+              .github/workflows/ci.yaml \
+              .github/actions \
+              .nvmrc \
+              package.json \
+              pnpm-workspace.yaml \
+              pnpm-lock.yaml \
+              | grep -q .; then
+              filter='*'
+          else
+              filter="...[$BASE]"
+          fi
+          affected="$RUNNER_TEMP/affected.json"
+          pnpm --filter "$filter" list --depth -1 --json > "$affected"
+          packages=$(jq -c '[.[].name]' "$affected")
+          package_tests=$(jq -r --arg root "$PWD" '.[]
+              | select(.path != $root)
+              | select(.name | IN("@virtool/web", "@virtool/data", "@virtool/storage", "@virtool/internal", "@virtool/dev-tools", "@virtool/nuvs") | not)
+              | .path + "/package.json"' "$affected" \
+              | xargs -r jq -s -c '[.[] | select(.scripts.test) | .name]')
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          echo "package-tests=${package_tests:-[]}" >> "$GITHUB_OUTPUT"
+
+  # -------------------------------------------------------------------------
+  # Checks (repo-wide)
+  # -------------------------------------------------------------------------
+  checks:
+    name: Checks
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Biome
+        run: pnpm check
+      - name: Knip
+        run: pnpm knip
+      - name: Typescript
+        run: pnpm typecheck
+      - name: Drizzle schema
+        run: |
+          pnpm --filter @virtool/data db:generate
+          if [[ -n "$(git status --porcelain --untracked-files=all -- packages/data/drizzle)" ]]; then
+              git status --short --untracked-files=all -- packages/data/drizzle
+              exit 1
+          fi
+      # Vale lints Markdown and MDX against the styles named in
+      # `.vale.ini`. Warnings print, but only errors fail the job.
+      # `mise.toml` pins it to the version that the vocabulary and style
+      # overrides were cleared against; a floating install could add
+      # rules that fail a branch nothing changed.
+      - name: Install Vale
+        uses: jdx/mise-action@v5
+        with:
+          install_args: vale
+      - name: Vale
+        run: pnpm docs:lint
+
+  # -------------------------------------------------------------------------
+  # Docker images (apps/web, apps/internal, apps/create-sample,
+  # apps/create-subtraction, apps/nuvs, apps/pathoscope)
+  # -------------------------------------------------------------------------
+  build:
+    name: ${{ matrix.area }} / Build
+    runs-on: ubuntu-26.04
+    timeout-minutes: ${{ matrix.timeout }}
+    needs: [changes]
+    strategy:
+      fail-fast: false
+      # A new app needs an app Dockerfile, a Bake target, and an entry
+      # here. A released image also needs its `package.json` in the
+      # `versioned_files` of its package in `knope.toml`.
+      #
+      # `release-ghcr` reuses the cache that these builds write. Nuvs has
+      # the longest timeout: it compiles SPAdes from source, the most
+      # expensive step of any workflow image build. A warm layer cache
+      # skips it.
+      matrix:
+        include:
+          - image: web
+            target: dist
+            package: "@virtool/web"
+            workspace: apps/web
+            area: Web
+            timeout: 20
+          - image: internal
+            target: internal
+            package: "@virtool/internal"
+            workspace: apps/internal
+            area: Internal
+            timeout: 20
+          - image: create-sample
+            target: create-sample
+            package: "@virtool/create-sample"
+            workspace: apps/create-sample
+            area: Create Sample
+            timeout: 20
+          - image: create-subtraction
+            target: create-subtraction
+            package: "@virtool/create-subtraction"
+            workspace: apps/create-subtraction
+            area: Create Subtraction
+            timeout: 20
+          - image: nuvs
+            target: nuvs
+            package: "@virtool/nuvs"
+            workspace: apps/nuvs
+            area: Nuvs
+            timeout: 60
+          - image: pathoscope
+            target: pathoscope
+            package: "@virtool/pathoscope"
+            workspace: apps/pathoscope
+            area: Pathoscope
+            timeout: 45
+    steps:
+      - name: Checkout
+        if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+        uses: actions/checkout@v7
+      # The default `docker` driver cannot export a build cache, so the
+      # gha cache below needs a docker-container builder.
+      - name: Setup Buildx
+        if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+        uses: docker/setup-buildx-action@v4
+      # Pull requests read the cache but don't write it. A pull request's
+      # cache is visible only to that pull request, and those writes push
+      # the main branch's layers out of the cache. `<image>*` also gives
+      # the `-build` and `-tools` dependency targets the cache. Bake
+      # builds them separately. Only the image target writes the cache:
+      # its `mode=max` export holds the layers of its dependency targets,
+      # so one scope serves them all.
+      - name: Build
+        if: contains(fromJSON(needs.changes.outputs.packages), matrix.package)
+        uses: docker/bake-action@v7
+        with:
+          source: .
+          files: packages/image-build/docker-bake.hcl
+          targets: ${{ matrix.image }}
+          set: |
+            ${{ matrix.image }}*.cache-from=type=gha,scope=${{ matrix.image }}
+            ${{ github.event_name == 'push' && format('{0}.cache-to=type=gha,mode=max,scope={0}', matrix.image) || '' }}
+
+  # -------------------------------------------------------------------------
+  # Web (apps/web)
+  # -------------------------------------------------------------------------
+  web-test:
+    name: Web / Test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Test
+        run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project web
+        env:
+          TZ: UTC
+          VT_TEST_REACT_COMPILER: "1"
+  web-test-server:
+    name: Web / Test Server
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Test
+        run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project server
+        env:
+          TZ: UTC
+          VT_TEST_REACT_COMPILER: "1"
+  web-test-a11y:
+    name: Web / Accessibility
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/web')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      # Keyed on the Playwright version rather than the lockfile hash:
+      # the browser revision a release pins is this cache's only input, so
+      # an unrelated dependency bump must not throw the download away. No
+      # `restore-keys` either — a near-miss restore would seed the
+      # directory with a revision `install` then downloads past, leaving
+      # both in the cache.
+      - name: Resolve Playwright version
+        id: playwright
+        run: echo "version=$(pnpm --filter @virtool/web exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      # No `--with-deps`. It shells out to `apt-get update && apt-get
+      # install`, which carries no timeout of its own: when the runner's
+      # Azure mirror goes unreachable apt falls back to
+      # archive.ubuntu.com and stalls until the job timeout kills it. The
+      # runner image ships Chrome and Edge, so Chromium's shared
+      # libraries are already present. The step timeout below is a
+      # backstop for a slow CDN, not for apt.
+      - name: Install Playwright Chromium
+        run: pnpm --filter @virtool/web exec playwright install chromium
         timeout-minutes: 5
-        needs: [release]
-        outputs:
-            include: ${{ steps.matrix.outputs.include }}
-            any: ${{ steps.matrix.outputs.any }}
-            releases: ${{ steps.matrix.outputs.releases }}
-        steps:
-            # The full history finds the commit that set each version.
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
-            - name: Build matrix
-              id: matrix
-              run: node scripts/plan-releases.mjs
-    release-ghcr:
-        # No `${{ matrix.image }}` in the name. GitHub skips this job on each
-        # pull request before it expands the matrix, so the checks list would
-        # show the expression and not an image name.
-        name: Release / GHCR
-        runs-on: ubuntu-26.04
-        timeout-minutes: 20
-        needs: [release-ghcr-matrix]
-        if: needs.release-ghcr-matrix.outputs.any == 'true'
-        permissions:
-            contents: read
-            packages: write
-        strategy:
-            fail-fast: false
-            # The legs read the gha cache that the `build` matrix writes. Thus
-            # the Pathoscope and Nuvs legs do not build the Rust crate, the
-            # bioinformatics tools, and SPAdes again in the 20-minute timeout.
-            matrix:
-                include: ${{ fromJSON(needs.release-ghcr-matrix.outputs.include) }}
-        steps:
-            # `release-github` makes the tags at the same commit.
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  ref: ${{ matrix.ref }}
-            - name: Setup Buildx
-              uses: docker/setup-buildx-action@v4
-            - name: Login
-              uses: docker/login-action@v4
-              with:
-                  registry: ${{ env.REGISTRY }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-            # `source: .` builds from the checkout at the release commit. The
-            # web build uploads its source maps to Sentry under that commit;
-            # the other images ignore both variables.
-            - name: Build & Push
-              uses: docker/bake-action@v7
-              env:
-                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-                  SENTRY_RELEASE: ${{ matrix.ref }}
-              with:
-                  source: .
-                  files: packages/image-build/docker-bake.hcl
-                  targets: ${{ matrix.image }}
-                  push: true
-                  set: |
-                      ${{ matrix.image }}.tags=${{ matrix.images }}:${{ matrix.version }}
-                      ${{ matrix.image }}.tags+=${{ matrix.images }}:latest
-                      ${{ matrix.image }}*.cache-from=type=gha,scope=${{ matrix.image }}
-                      ${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}
-    # Runs only after all images are pushed, so a GitHub Release always has its
-    # images. Each Release targets the commit its images were built from. A
-    # failed image leg skips this job; re-run the failed legs, not a new push.
-    release-github:
-        name: Release / GitHub
-        runs-on: ubuntu-26.04
-        timeout-minutes: 10
-        needs: [release-ghcr-matrix, release-ghcr]
-        if: needs.release-ghcr-matrix.outputs.any == 'true'
-        steps:
-            - name: Token
-              id: app-token
-              uses: actions/create-github-app-token@v3
-              with:
-                  client-id: ${{ vars.RELEASER_CLIENT_ID }}
-                  private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
-                  permission-contents: write
-            # The full history holds each package's ref and its changelog.
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
-            - name: Release
-              env:
-                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
-                  RELEASES: ${{ needs.release-ghcr-matrix.outputs.releases }}
-              run: node scripts/create-releases.mjs
+      - name: Test
+        run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project a11y
+        env:
+          TZ: UTC
+
+  # -------------------------------------------------------------------------
+  # Internal (apps/internal, apps/dev-tools)
+  # -------------------------------------------------------------------------
+  internal-test:
+    name: Internal / Test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/internal') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/dev-tools')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      # Its own job, like Data & Storage / Test: these tests start a
+      # Postgres testcontainer, and pulling that image does not belong in
+      # the fast package loop.
+      - name: Test
+        run: pnpm --filter @virtool/internal --filter @virtool/dev-tools test
+        env:
+          TZ: UTC
+
+  # -------------------------------------------------------------------------
+  # Nuvs (apps/nuvs)
+  # -------------------------------------------------------------------------
+  nuvs-test:
+    name: Nuvs / Test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Test
+        run: pnpm --filter @virtool/nuvs test
+        env:
+          TZ: UTC
+
+  # -------------------------------------------------------------------------
+  # Pathoscope (apps/pathoscope, packages/pathoscope-core)
+  # -------------------------------------------------------------------------
+  pathoscope-test:
+    name: Pathoscope / Test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/pathoscope-core') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/workflow-tools')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      # Format and test run inside the workflow-tools Dockerfile, against
+      # the same Rust toolchain, libclang, and bowtie2 build the image
+      # ships. That stage sets VT_REQUIRE_BOWTIE2, so the `candidates`
+      # golden vectors can never be skipped silently.
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+      # Pull requests read the cache but don't write it. A pull request's
+      # cache is visible only to that pull request, and those writes push
+      # the main branch's layers out of the cache.
+      - name: Test
+        uses: docker/bake-action@v7
+        with:
+          source: .
+          files: packages/image-build/docker-bake.hcl
+          targets: pathoscope-core-test
+          set: |
+            pathoscope-core-test.cache-from=type=gha,scope=pathoscope-core-test
+            ${{ github.event_name == 'push' && 'pathoscope-core-test.cache-to=type=gha,mode=max,scope=pathoscope-core-test' || '' }}
+
+  # -------------------------------------------------------------------------
+  # Quality (packages/quality-core)
+  # -------------------------------------------------------------------------
+  # Plain cargo on the runner, unlike pathoscope-test: this crate links
+  # nothing native, and its goldens are FastQC output checked in rather than
+  # something a tool has to be built to produce.
+  quality-test:
+    name: Quality / Test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/quality-core')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Cache cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/quality-core/target
+          key: cargo-quality-${{ runner.os }}-${{ hashFiles('packages/quality-core/Cargo.lock') }}
+          restore-keys: cargo-quality-${{ runner.os }}-
+      - name: Format
+        run: cargo fmt --check
+        working-directory: packages/quality-core
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+        working-directory: packages/quality-core
+      - name: Test
+        run: cargo test
+        working-directory: packages/quality-core
+
+  # -------------------------------------------------------------------------
+  # Packages (packages/*, except those with their own jobs)
+  # -------------------------------------------------------------------------
+  packages-test:
+    name: Packages / Test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    needs: [changes]
+    if: needs.changes.outputs.package-tests != '[]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Test
+        env:
+          PACKAGES: ${{ needs.changes.outputs.package-tests }}
+        run: pnpm -r $(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES") test
+
+  # -------------------------------------------------------------------------
+  # Data and Storage (packages/data, packages/storage)
+  # -------------------------------------------------------------------------
+  data-storage-test:
+    name: Data & Storage / Test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    needs: [changes]
+    if: contains(fromJSON(needs.changes.outputs.packages), '@virtool/data') || contains(fromJSON(needs.changes.outputs.packages), '@virtool/storage')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup
+        uses: ./.github/actions/setup
+      # Its own job rather than part of Packages / Test: data starts a
+      # Postgres testcontainer and storage starts Garage and Azurite,
+      # and pulling those images does not belong in the fast package
+      # loop. The two packages share one job. `--parallel` overlaps
+      # their testcontainer pulls despite the data-on-storage
+      # dependency, and the job stays inside its timeout.
+      - name: Test
+        run: pnpm --parallel --filter @virtool/data --filter @virtool/storage test
+        env:
+          TZ: UTC
+
+  # -------------------------------------------------------------------------
+  # Release
+  # -------------------------------------------------------------------------
+  # On push to main, the release jobs do two things:
+  #
+  # - If change files exist, `release` runs Knope to prepare a release on
+  #   branch `knope/release` and opens or updates the "Release" pull request.
+  # - If a Knope package has a version with no tag, `release-ghcr` pushes its
+  #   images and `release-github` then makes the tags and GitHub Releases.
+  #
+  # The merge of the release pull request removes the change files and adds
+  # the new versions, so its push goes to the second path. Both paths can run
+  # on one push. This occurs when a different merge cancels the pending run
+  # of the release merge.
+  release:
+    name: Release
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    needs:
+      [
+        build,
+        changes,
+        checks,
+        data-storage-test,
+        internal-test,
+        nuvs-test,
+        packages-test,
+        pathoscope-test,
+        quality-test,
+        web-test,
+        web-test-a11y,
+        web-test-server,
+      ]
+    # A filtered job skips when a push does not affect it. Release runs
+    # after skipped jobs, but not after a failed or cancelled job. `changes`
+    # is in `needs` because its failure skips every filtered job.
+    if: >-
+      github.event_name == 'push' && github.repository_owner == 'Virtool'
+      && !cancelled()
+      && !contains(needs.*.result, 'failure')
+      && !contains(needs.*.result, 'cancelled')
+    env:
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+    steps:
+      # Workflows do not start for a push or pull request made with
+      # `GITHUB_TOKEN`. The release pull request needs CI, so the
+      # `virtool-releaser` GitHub App pushes and opens it.
+      - name: Token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASER_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      # Knope finds the pull request of each change file in the history.
+      # The App token stays out of `.git/config`, so dependency install
+      # scripts can't read it. Only the push uses it.
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Find change files
+        id: pending
+        run: |
+          if compgen -G '.changeset/*.md' > /dev/null; then
+              echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+              echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Setup
+        if: steps.pending.outputs.found == 'true'
+        uses: ./.github/actions/setup
+      - name: Install Knope
+        if: steps.pending.outputs.found == 'true'
+        uses: jdx/mise-action@v5
+        with:
+          install_args: github:knope-dev/knope
+      - name: Prepare release
+        if: steps.pending.outputs.found == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: node scripts/prepare-release.mjs
+  release-ghcr-matrix:
+    name: Release / Matrix
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    needs: [release]
+    # Without a status function, a skipped filtered job upstream of
+    # `release` skips this job too.
+    if: ${{ !cancelled() && needs.release.result == 'success' }}
+    outputs:
+      include: ${{ steps.matrix.outputs.include }}
+      any: ${{ steps.matrix.outputs.any }}
+      releases: ${{ steps.matrix.outputs.releases }}
+    steps:
+      # The full history finds the commit that set each version.
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Build matrix
+        id: matrix
+        run: node scripts/plan-releases.mjs
+  release-ghcr:
+    # No `${{ matrix.image }}` in the name. GitHub skips this job on each
+    # pull request before it expands the matrix, so the checks list would
+    # show the expression and not an image name.
+    name: Release / GHCR
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    needs: [release-ghcr-matrix]
+    if: ${{ !cancelled() && needs.release-ghcr-matrix.outputs.any == 'true' }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      # The legs read the gha cache that the `build` matrix writes. Thus
+      # the Pathoscope and Nuvs legs do not build the Rust crate, the
+      # bioinformatics tools, and SPAdes again in the 20-minute timeout.
+      matrix:
+        include: ${{ fromJSON(needs.release-ghcr-matrix.outputs.include) }}
+    steps:
+      # `release-github` makes the tags at the same commit.
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.ref }}
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Login
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # `source: .` builds from the checkout at the release commit. The
+      # web build uploads its source maps to Sentry under that commit;
+      # the other images ignore both variables.
+      - name: Build & Push
+        uses: docker/bake-action@v7
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ matrix.ref }}
+        with:
+          source: .
+          files: packages/image-build/docker-bake.hcl
+          targets: ${{ matrix.image }}
+          push: true
+          set: |
+            ${{ matrix.image }}.tags=${{ matrix.images }}:${{ matrix.version }}
+            ${{ matrix.image }}.tags+=${{ matrix.images }}:latest
+            ${{ matrix.image }}*.cache-from=type=gha,scope=${{ matrix.image }}
+            ${{ matrix.image }}.cache-to=type=gha,mode=max,scope=${{ matrix.image }}
+  # Runs only after all images are pushed, so a GitHub Release always has its
+  # images. Each Release targets the commit its images were built from. A
+  # failed image leg skips this job; re-run the failed legs, not a new push.
+  release-github:
+    name: Release / GitHub
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    needs: [release-ghcr-matrix, release-ghcr]
+    if: >-
+      ${{ !cancelled() && needs.release-ghcr-matrix.outputs.any == 'true'
+      && needs.release-ghcr.result == 'success' }}
+    steps:
+      - name: Token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASER_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
+          permission-contents: write
+      # The full history holds each package's ref and its changelog.
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASES: ${{ needs.release-ghcr-matrix.outputs.releases }}
+        run: node scripts/create-releases.mjs
