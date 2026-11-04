@@ -103,6 +103,13 @@ When you open a Virtool link before you sign in, Virtool now takes you to that
 page after you sign in. It keeps the search terms and filters in the link.
 ```
 
+When administrators must do something after they upgrade, start that paragraph
+of the details with `**Action required:**`. The Release pull request body
+copies each of these paragraphs into an "Action required" section at the top.
+
+When users can't see a change, for example a change to how images build, write
+only a one-line summary. The summary must say that nothing changes for users.
+
 Run `knope prepare-release --dry-run` to see the changelog entry.
 
 To reword notes before a release, edit the `.changeset/*.md` files on `main`.

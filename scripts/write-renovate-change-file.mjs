@@ -144,7 +144,7 @@ function getBody(title, bumps) {
 // has details so that Knope lists it after the other changes. Without
 // `virtool`, every package gets the full list.
 function getFiles(root, data, dirs, packages) {
-	const title = `Update ${data.groupName || "dependencies"}.`;
+	const title = `Update ${data.groupName || "dependencies"}`;
 	const bumps = getBumps(root, data, dirs);
 	const body = getBody(title, bumps);
 

@@ -79,7 +79,7 @@ describe("write-renovate-change-file", () => {
 			fixture.read(`.changeset/${name}`),
 			content(
 				["virtool"],
-				"Update dependencies.\n\n- Bump `vite` from 1.0.0 to 2.0.0.",
+				"Update dependencies\n\n- Bump `vite` from 1.0.0 to 2.0.0.",
 			),
 		);
 	});
@@ -113,14 +113,14 @@ describe("write-renovate-change-file", () => {
 			fixture.read(`.changeset/${main}`),
 			content(
 				["virtool"],
-				"Update production dependencies.\n\n- Bump `react` from 1.0.0 to 2.0.0.\n- Bump `zod` from 3.0.0 to 2.0.0.",
+				"Update production dependencies\n\n- Bump `react` from 1.0.0 to 2.0.0.\n- Bump `zod` from 3.0.0 to 2.0.0.",
 			),
 		);
 		assert.equal(
 			fixture.read(`.changeset/${images}`),
 			content(
 				["nuvs"],
-				"Update production dependencies.\n\nThe `virtool` release lists each bump.",
+				"Update production dependencies\n\nThe `virtool` release lists each bump.",
 			),
 		);
 	});
@@ -156,7 +156,7 @@ describe("write-renovate-change-file", () => {
 			fixture.read(`.changeset/${files[0]}`),
 			content(
 				["nuvs", "pathoscope"],
-				"Update production dependencies.\n\n- Bump `pino` from 1.0.0 to 2.0.0.\n- Bump `zod` from 3.0.0 to 4.0.0.",
+				"Update production dependencies\n\n- Bump `pino` from 1.0.0 to 2.0.0.\n- Bump `zod` from 3.0.0 to 4.0.0.",
 			),
 		);
 	});
@@ -194,7 +194,7 @@ describe("write-renovate-change-file", () => {
 			fixture.read(`.changeset/${files[0]}`),
 			content(
 				["virtool"],
-				"Update all dependencies.\n\n- Bump `react` from 1.0.0 to 2.0.0.",
+				"Update all dependencies\n\n- Bump `react` from 1.0.0 to 2.0.0.",
 			),
 		);
 	});
@@ -208,7 +208,7 @@ describe("write-renovate-change-file", () => {
 		assert.equal(files.length, 1);
 		assert.equal(
 			fixture.read(`.changeset/${files[0]}`),
-			content(["nuvs", "pathoscope", "virtool"], "Update dependencies."),
+			content(["nuvs", "pathoscope", "virtool"], "Update dependencies"),
 		);
 	});
 
@@ -232,7 +232,7 @@ describe("write-renovate-change-file", () => {
 			fixture.read(`.changeset/${files[0]}`),
 			content(
 				["virtool"],
-				"Update dependencies.\n\n- Bump `vite` from 1.0.0 to 2.0.0.",
+				"Update dependencies\n\n- Bump `vite` from 1.0.0 to 2.0.0.",
 			),
 		);
 	});
