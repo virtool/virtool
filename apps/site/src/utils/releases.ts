@@ -1,5 +1,7 @@
 import { Cache } from "./cache";
 
+type GitHubRelease = Record<string, any>;
+
 const RELEASE_KEYS = [
   "id",
   "name",
@@ -9,13 +11,13 @@ const RELEASE_KEYS = [
   "html_url",
 ];
 
-export function filterReleases(releases: Array<object>): Array<object> {
+export function filterReleases(releases: GitHubRelease[]): GitHubRelease[] {
   return releases.filter((release) => {
     return release["assets"]?.length > 0 && !release["draft"];
   });
 }
 
-export function formatRelease(release) {
+export function formatRelease(release: GitHubRelease) {
   const formatted = Object.fromEntries(
     RELEASE_KEYS.filter((key) => key in release).map((key) => [
       key,
