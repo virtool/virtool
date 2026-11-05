@@ -4,7 +4,7 @@ import Menu from "@components/menu/Menu.astro";
 import Note from "@components/Note.astro";
 import ReleaseNotes from "@components/ReleaseNotes.astro";
 import Switch from "@components/Switch.astro";
-import Layout from "@layouts/Layout.astro";
+import SidebarLayout from "@layouts/SidebarLayout.astro";
 import {
   getReleaseSections,
   isMaintenanceOnly,
@@ -37,83 +37,76 @@ const releases = page.data.map((release) => ({
 }));
 ---
 
-<Layout title="Changelog">
-  <div class="flex gap-16">
-    <div
-      class="w-32 shrink-0 self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto tabular-nums"
-      data-release-menu
-    >
-      <Menu sections={sections} />
-    </div>
-    <div class="prose max-w-4xl">
-      <div class="mb-8 flex items-center justify-between gap-4">
-        <h1 class="mb-0">Changelog</h1>
-        <label class="not-prose flex shrink-0 items-center gap-2 text-stone-600">
-          <Switch id="show-maintenance" autocomplete="off" />
-          Show maintenance
-        </label>
-      </div>
-      <script is:inline>
-        document.getElementById("show-maintenance").checked =
-          localStorage.getItem("show-maintenance") === "true";
-      </script>
-      {
-        releases.map(({ version, date, actions, body, maintenance, maintenanceOnly, posts }) => (
-          <section
-            id={version}
-            class="scroll-mt-24"
-            data-maintenance={maintenanceOnly || undefined}
-          >
-            <h2 class="mb-1">{version}</h2>
-            <p class="mt-0 text-stone-600">
-              <time datetime={date}>{formatDate(date)}</time>
-            </p>
-            <ActionRequired actions={actions} />
-            {posts.map(({ slug, title }) => (
-              <Note color="blue">
-                <a href={`/posts/${slug}`}>Read the post: {title}</a>
-              </Note>
-            ))}
-            <ReleaseNotes markdown={body} />
-            {maintenance && (
-              <div data-maintenance>
-                <ReleaseNotes markdown={maintenance} />
-              </div>
-            )}
-          </section>
-        ))
-      }
-      {
-        page.lastPage > 1 && (
-          <nav class="not-prose mt-12 flex items-center justify-between text-stone-600">
-            {page.url.prev ? (
-              <a class="hover:text-stone-900" href={page.url.prev}>
-                Newer releases
-              </a>
-            ) : (
-              <span />
-            )}
-            <span>
-              Page {page.currentPage} of {page.lastPage}
-            </span>
-            {page.url.next ? (
-              <a class="hover:text-stone-900" href={page.url.next}>
-                Older releases
-              </a>
-            ) : (
-              <span />
-            )}
-          </nav>
-        )
-      }
-    </div>
+<SidebarLayout title="Changelog">
+  <div slot="sidebar" class="tabular-nums">
+    <Menu sections={sections} />
   </div>
-</Layout>
+  <div class="mb-8 flex items-center justify-between gap-4">
+    <h1 class="mb-0">Changelog</h1>
+    <label class="not-prose flex shrink-0 items-center gap-2 text-stone-600">
+      <Switch id="show-maintenance" autocomplete="off" />
+      Show maintenance
+    </label>
+  </div>
+  <script is:inline>
+    document.getElementById("show-maintenance").checked =
+      localStorage.getItem("show-maintenance") === "true";
+  </script>
+  {
+    releases.map(({ version, date, actions, body, maintenance, maintenanceOnly, posts }) => (
+      <section
+        id={version}
+        class="scroll-mt-24"
+        data-maintenance={maintenanceOnly || undefined}
+      >
+        <h2 class="mb-1">{version}</h2>
+        <p class="mt-0 text-stone-600">
+          <time datetime={date}>{formatDate(date)}</time>
+        </p>
+        <ActionRequired actions={actions} />
+        {posts.map(({ slug, title }) => (
+          <Note color="blue">
+            <a href={`/posts/${slug}`}>Read the post: {title}</a>
+          </Note>
+        ))}
+        <ReleaseNotes markdown={body} />
+        {maintenance && (
+          <div data-maintenance>
+            <ReleaseNotes markdown={maintenance} />
+          </div>
+        )}
+      </section>
+    ))
+  }
+  {
+    page.lastPage > 1 && (
+      <nav class="not-prose mt-12 flex items-center justify-between text-stone-600">
+        {page.url.prev ? (
+          <a class="hover:text-stone-900" href={page.url.prev}>
+            Newer releases
+          </a>
+        ) : (
+          <span />
+        )}
+        <span>
+          Page {page.currentPage} of {page.lastPage}
+        </span>
+        {page.url.next ? (
+          <a class="hover:text-stone-900" href={page.url.next}>
+            Older releases
+          </a>
+        ) : (
+          <span />
+        )}
+      </nav>
+    )
+  }
+</SidebarLayout>
 
 <style is:global>
   body:not(:has(#show-maintenance:checked)) {
     [data-maintenance],
-    [data-release-menu] li:has(> ul):not(:has(li:not([data-maintenance]))) {
+    [data-sidebar] li:has(> ul):not(:has(li:not([data-maintenance]))) {
       display: none;
     }
   }
@@ -122,7 +115,7 @@ const releases = page.data.map((release) => ({
 <script>
   const SCROLL_OFFSET = 100;
 
-  const menu = document.querySelector<HTMLElement>("[data-release-menu]");
+  const menu = document.querySelector<HTMLElement>("[data-sidebar]");
   const sections = [...document.querySelectorAll<HTMLElement>("section[id]")];
   const toggle = document.querySelector<HTMLInputElement>("#show-maintenance");
 

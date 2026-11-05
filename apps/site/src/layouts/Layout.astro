@@ -5,9 +5,10 @@ import "../styles/global.css";
 
 export interface Props {
   title: string;
+  fullWidth?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, fullWidth = false } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -39,7 +40,7 @@ const { title } = Astro.props;
         </div>
       </div>
     </nav>
-    <main class="lg:container mt-24 pb-20 mx-auto">
+    <main class:list={["mt-24 pb-20 mx-auto", { "lg:container": !fullWidth }]}>
       <slot />
     </main>
   </body>

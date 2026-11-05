@@ -1,0 +1,19 @@
+---
+import Layout from "./Layout.astro";
+
+const { title }: { title: string } = Astro.props;
+---
+
+<Layout title={title} fullWidth>
+  <div class="grid grid-cols-[max-content_minmax(0,56rem)_minmax(1.5rem,1fr)]">
+    <div
+      class="sticky top-24 max-h-[calc(100vh-7rem)] self-start overflow-y-auto pl-6 pr-16"
+      data-sidebar
+    >
+      <slot name="sidebar" />
+    </div>
+    <div class="prose max-w-none">
+      <slot />
+    </div>
+  </div>
+</Layout>
