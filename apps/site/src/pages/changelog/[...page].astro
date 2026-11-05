@@ -100,6 +100,8 @@ const releases = page.data.map((release) => ({
       [...menu.querySelectorAll("a")].map((link) => [link.hash.slice(1), link]),
     );
 
+    let pinned: { id: string; scrollY: number } | null = null;
+
     function revealLink(link: HTMLElement, container: HTMLElement) {
       const bottom = link.offsetTop + link.offsetHeight;
 
@@ -111,24 +113,26 @@ const releases = page.data.map((release) => ({
       }
     }
 
-    function getCurrentSection() {
-      const isAtEnd =
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 1;
-
-      if (isAtEnd) {
-        return sections.at(-1);
+    // The line moves down the window as the page scrolls, so that releases too
+    // short to reach the top of the window still become current.
+    function getCurrentId() {
+      if (pinned) {
+        return pinned.id;
       }
+
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+      const line = SCROLL_OFFSET + progress * (window.innerHeight - SCROLL_OFFSET);
 
       return (
         sections.findLast(
-          (section) => section.getBoundingClientRect().top <= SCROLL_OFFSET,
+          (section) => section.getBoundingClientRect().top <= line,
         ) ?? sections[0]
-      );
+      ).id;
     }
 
     function updateCurrentLink() {
-      const link = links.get(getCurrentSection()?.id ?? "");
+      const link = links.get(getCurrentId());
 
       if (!link || link.hasAttribute("aria-current")) {
         return;
@@ -142,7 +146,41 @@ const releases = page.data.map((release) => ({
       revealLink(link, menu);
     }
 
+    function pin(id: string) {
+      if (sections.some((section) => section.id === id)) {
+        pinned = { id, scrollY: window.scrollY };
+        updateCurrentLink();
+      }
+    }
+
     updateCurrentLink();
-    window.addEventListener("scroll", updateCurrentLink, { passive: true });
+
+    function pinLocationHash() {
+      pin(location.hash.slice(1));
+    }
+
+    window.addEventListener("load", pinLocationHash);
+    window.addEventListener("hashchange", pinLocationHash);
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (pinned?.scrollY !== window.scrollY) {
+          pinned = null;
+        }
+
+        updateCurrentLink();
+      },
+      { passive: true },
+    );
+
+    // The timeout lets the browser finish its jump to the anchor first.
+    menu.addEventListener("click", (event) => {
+      const link = (event.target as HTMLElement).closest("a");
+
+      if (link) {
+        setTimeout(() => pin(link.hash.slice(1)));
+      }
+    });
   }
 </script>
