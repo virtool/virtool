@@ -10,6 +10,7 @@ import { nowUtc } from "../db/time";
 export type ResolvedBrowserSession = {
 	sessionId: number;
 	userId: number;
+	handle: string;
 	createdAt: Date;
 	/** Whether the live MFA policy restricts this session to TOTP enrollment. */
 	mfaEnrollmentRequired: boolean;
@@ -130,6 +131,7 @@ export async function resolveBrowserSessionForUpdate(
 		.select({
 			sessionId: authSessions.id,
 			userId: authSessions.userId,
+			handle: users.handle,
 			createdAt: authSessions.createdAt,
 			mfaEnrollmentRequired,
 		})
@@ -160,6 +162,7 @@ export async function resolveBrowserSession(
 		.select({
 			sessionId: authSessions.id,
 			userId: authSessions.userId,
+			handle: users.handle,
 			createdAt: authSessions.createdAt,
 			mfaEnrollmentRequired,
 		})

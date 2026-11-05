@@ -1,3 +1,7 @@
+type MenuItem = { title: string; slug: string; order: number };
+
+type MenuSection = { title: string; items: MenuItem[] };
+
 const SECTION_TITLES: Record<string, string> = {
   api: "API",
 };
@@ -6,7 +10,7 @@ export function getMenuSectionsFromCollection(
   collection: any[],
   sections?: string[]
 ) {
-  let menu = collection.reduce((menu, entry) => {
+  let menu = collection.reduce<Record<string, MenuSection>>((menu, entry) => {
     const key = entry.id.split("/")[0];
 
     let section = menu[key];

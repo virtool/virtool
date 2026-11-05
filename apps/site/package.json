@@ -11,7 +11,8 @@
     "preview:astro": "astro preview",
     "deploy": "astro build && wrangler deploy",
     "astro": "astro",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.6",

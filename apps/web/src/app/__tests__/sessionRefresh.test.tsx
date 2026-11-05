@@ -70,13 +70,36 @@ describe("useBrowserSessionRefresh", () => {
 		expect(Sentry.captureException).not.toHaveBeenCalled();
 	});
 
-	it.each([new TypeError("Network error"), new Error("Server unavailable")])(
-		"keeps operational failure retryable on the next focus: %s",
+	it.each([
+		new TypeError("Cannot read properties of undefined"),
+		new Error("Server unavailable"),
+		new Error("Failed to fetch"),
+	])(
+		"reports an operational failure and retries on the next focus: %s",
 		async (error) => {
 			authServerFnMocks.refreshBrowserSessionFn.mockRejectedValueOnce(error);
 			renderHook(() => useBrowserSessionRefresh(true));
 			await act(async () => {});
 			expect(Sentry.captureException).toHaveBeenCalledWith(error);
+			await focus();
+			expect(authServerFnMocks.refreshBrowserSessionFn).toHaveBeenCalledTimes(
+				2,
+			);
+		},
+	);
+
+	it.each([
+		new TypeError("Failed to fetch"),
+		new TypeError("Failed to fetch (app.virtool.ca)"),
+		new TypeError("Load failed"),
+		new TypeError("NetworkError when attempting to fetch resource."),
+	])(
+		"does not report a network failure and retries on the next focus: %s",
+		async (error) => {
+			authServerFnMocks.refreshBrowserSessionFn.mockRejectedValueOnce(error);
+			renderHook(() => useBrowserSessionRefresh(true));
+			await act(async () => {});
+			expect(Sentry.captureException).not.toHaveBeenCalled();
 			await focus();
 			expect(authServerFnMocks.refreshBrowserSessionFn).toHaveBeenCalledTimes(
 				2,
