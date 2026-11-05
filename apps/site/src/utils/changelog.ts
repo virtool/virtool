@@ -47,7 +47,7 @@ function getBody(lines: Line[]): string {
 
       skipping = DEPENDENCY_HEADING.test(text);
 
-      while (pending.length > 0 && pending.at(-1).level >= level) {
+      while (pending.length > 0 && (pending.at(-1)?.level ?? 0) >= level) {
         pending.pop();
       }
 

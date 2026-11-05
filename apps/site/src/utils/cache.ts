@@ -1,5 +1,9 @@
 import { promises as fs } from "fs";
 
+function hasCode(err: unknown, code: string): boolean {
+  return err instanceof Error && "code" in err && err.code === code;
+}
+
 export class Cache {
   path: string;
 
@@ -11,7 +15,7 @@ export class Cache {
     try {
       await fs.access(this.path);
     } catch (err) {
-      if (err && err.code === "ENOENT") {
+      if (hasCode(err, "ENOENT")) {
         await fs.mkdir(this.path);
       }
     }
@@ -19,9 +23,9 @@ export class Cache {
 
   async get(key: string) {
     try {
-      return JSON.parse(await fs.readFile(`${this.path}/${key}.json`));
+      return JSON.parse(await fs.readFile(`${this.path}/${key}.json`, "utf8"));
     } catch (err) {
-      if (err.code !== "ENOENT") {
+      if (!hasCode(err, "ENOENT")) {
         throw err;
       }
     }
