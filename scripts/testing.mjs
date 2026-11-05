@@ -17,14 +17,17 @@ import { dirname, join } from "node:path";
 const knopeToml = `[packages.virtool]
 versioned_files = ["apps/web/package.json", "apps/internal/package.json"]
 changelog = "apps/web/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [packages.nuvs]
 versioned_files = ["apps/nuvs/package.json"]
 changelog = "apps/nuvs/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [packages.pathoscope]
 versioned_files = ["apps/pathoscope/package.json"]
 changelog = "apps/pathoscope/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [changes]
 ignore_conventional_commits = true

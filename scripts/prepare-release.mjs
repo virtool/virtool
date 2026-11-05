@@ -52,7 +52,7 @@ function readChanges(names, repository) {
 		.toSorted()
 		.map((file) => {
 			const path = `${directory}/${file}`;
-			const { summary, details, packages } = parseChangeFile(
+			const { summary, details, packages, maintenance } = parseChangeFile(
 				readFileSync(path, "utf8"),
 				names,
 			);
@@ -74,6 +74,7 @@ function readChanges(names, repository) {
 				summary,
 				details,
 				packages,
+				maintenance,
 				number: number || undefined,
 			};
 		});

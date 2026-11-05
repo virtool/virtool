@@ -81,8 +81,9 @@ check and not all of CI. It skips the Release pull request.
 
 The check fails a pull request when:
 
-- a change file has incorrect front matter, an unknown package, or no
-  summary on one line;
+- a change file has incorrect front matter, an unknown package, an unknown
+  change type, or no summary on one line;
+- a change file that uses `maintenance` contains `**Action required:**`;
 - an image app that the pull request affects has no change file that names it.
 
 Changes to tests, test data, Markdown, and dependencies that ship nothing do
@@ -114,10 +115,11 @@ Renovate does not change the pnpm overrides. Each override pins a vulnerable
 range of a transitive dependency, so it changes only by hand. The
 **Dependency Dashboard** issue lists pending and postponed updates.
 
-Renovate writes the change file in the same commit as each bump. A bump
-releases a patch of each Knope package that it affects. A bump that ships
-nothing gets no change file. A group lists its bumps once in the `virtool`
-changelog. Dependency updates come last in each release.
+Renovate writes the change file in the same commit as each bump. A bump is a
+`maintenance` change, and it releases a patch of each Knope package that it
+affects. A bump that ships nothing gets no change file. A group lists its bumps
+once in the `virtool` changelog. Dependency updates come last in the Maintenance
+section of each release.
 
 Renovate opens pull requests as the `virtool-renovator` GitHub App. The
 `RENOVATOR_CLIENT_ID` Actions variable and the `RENOVATOR_PRIVATE_KEY` secret

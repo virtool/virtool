@@ -1,7 +1,7 @@
+import { actionMarker } from "./change-files.mjs";
+
 const intro =
 	"Merge this pull request to publish the images and GitHub Releases below.";
-
-const actionMarker = "**Action required:**";
 
 function sortPackages(names) {
 	return [...names].toSorted((a, b) => {
@@ -113,12 +113,13 @@ function groupUpdates(changes) {
 	return [...groups.values()];
 }
 
-function getUpdates(changes, released) {
-	if (changes.length === 0) {
+function getMaintenance(maintenance, renovate, released) {
+	const updates = [...maintenance, ...groupUpdates(renovate)];
+
+	if (updates.length === 0) {
 		return "";
 	}
 
-	const updates = groupUpdates(changes);
 	const count = updates.reduce(
 		(total, { details }) =>
 			total +
@@ -139,29 +140,45 @@ function getUpdates(changes, released) {
 
 	return [
 		"<details>",
-		`<summary>Dependency updates (${count})</summary>`,
+		`<summary>Maintenance (${count})</summary>`,
 		items.join("\n"),
 		"</details>",
 	].join("\n\n");
 }
 
+// Limits a change to `packages`. A change file can give some packages the
+// `maintenance` type and others a bump level, and each group has its own entry.
+function narrow(change, packages) {
+	return packages.length > 0 ? [{ ...change, packages }] : [];
+}
+
 // Builds the release pull request body. `versions` holds `{ name, from, to }`
 // for each released package. `changes` holds
-// `{ file, summary, details, packages, number }` for each change file. Human
-// changes come first, then Renovate updates in a collapsed section, so the
-// order does not depend on file names. Paragraphs that start with the action
-// marker are also copied to the top.
+// `{ file, summary, details, packages, maintenance, number }` for each change
+// file. Changes that users can see come first, then maintenance changes and
+// Renovate updates in a collapsed section, so the order does not depend on file
+// names. Paragraphs that start with the action marker are also copied to the
+// top.
 export function getReleaseBody({ versions, changes }) {
 	const released = versions.map(({ name }) => name);
 	const ordered = changes.toSorted((a, b) => a.file.localeCompare(b.file));
 	const human = ordered.filter((change) => !isRenovate(change));
+	const visible = human.flatMap((change) =>
+		narrow(
+			change,
+			change.packages.filter((name) => !change.maintenance.includes(name)),
+		),
+	);
+	const maintenance = human.flatMap((change) =>
+		narrow(change, change.maintenance),
+	);
 
 	return `${[
 		intro,
 		getVersionTable(versions),
-		getActions(human),
-		getChanges(human, released),
-		getUpdates(ordered.filter(isRenovate), released),
+		getActions(ordered),
+		getChanges(visible, released),
+		getMaintenance(maintenance, ordered.filter(isRenovate), released),
 	]
 		.filter(Boolean)
 		.join("\n\n")}\n`;
