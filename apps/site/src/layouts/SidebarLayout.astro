@@ -5,9 +5,9 @@ const { title }: { title: string } = Astro.props;
 ---
 
 <Layout title={title} fullWidth>
-  <div class="grid grid-cols-[max-content_minmax(0,56rem)] gap-x-8 pr-6">
+  <div class="grid grid-cols-[13rem_minmax(0,56rem)] gap-x-8 pr-6">
     <div
-      class="sticky top-24 max-h-[calc(100vh-7rem)] self-start overflow-y-auto pl-12 pr-20"
+      class="sticky top-24 max-h-[calc(100vh-7rem)] self-start overflow-y-auto pl-12 pr-4"
       data-sidebar
     >
       <slot name="sidebar" />
