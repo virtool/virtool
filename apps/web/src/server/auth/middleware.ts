@@ -9,6 +9,7 @@ import {
 	FORBIDDEN_ERROR_NAME,
 	hasSufficientAdminRole,
 	isMfaEnrollmentPrincipal,
+	isSetupPrincipal,
 	type SetupPrincipal,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -110,7 +111,11 @@ const resolveBrowserOrNull = createServerOnlyFn(async () =>
 
 /** Attribute a resolved credential without exposing its bearer secret. */
 export function attributePrincipal(principal: AuthenticationPrincipal): void {
-	Sentry.setUser({ id: principal.userId });
+	Sentry.setUser(
+		isSetupPrincipal(principal)
+			? { id: principal.userId }
+			: { id: principal.userId, username: principal.handle },
+	);
 	Sentry.setContext("credential", {
 		kind: principal.kind,
 		id: principal.kind === "api_key" ? principal.keyId : principal.sessionId,

@@ -1,3 +1,17 @@
+## 42.61.4 (2026-11-05)
+
+### Fixes
+
+#### Encrypt links in queued email ([#4183](https://github.com/virtool/virtool/pull/4183))
+
+Recovery, verification, and invitation links are now encrypted while they wait
+in the email queue. Virtool removes them from the database when a message is
+sent or fails.
+
+### Maintenance
+
+- Prepare to remove the unused forced password reset column from the database ([#4184](https://github.com/virtool/virtool/pull/4184))
+
 ## 42.61.3 (2026-11-04)
 
 ### Fixes
