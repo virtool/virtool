@@ -74,6 +74,23 @@ it.
 Knope is installed with `mise`. Renovate does not update it. See
 [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
 
+## Site
+
+The `Site` workflow publishes [virtool.ca](https://www.virtool.ca) to Cloudflare
+Workers. It always builds from the tag of the latest `virtool` Release, so a
+push to `main` does not change the live site. A site-only fix goes live with the
+next release.
+
+The workflow runs:
+
+- after `Release / GitHub`, as the `Release / Site` job
+- daily, to get new data from GitHub Releases, such as `/releases/hmms.json`
+- when you start it manually
+
+The `CLOUDFLARE_API_TOKEN` secret and the `CLOUDFLARE_ACCOUNT_ID` Actions
+variable identify the Cloudflare account. The token needs permission to edit
+Workers. Only the deploy step can read it.
+
 ## Change-file check
 
 `Knope / Check` runs in its own workflow, so that a label change runs only this
@@ -81,8 +98,9 @@ check and not all of CI. It skips the Release pull request.
 
 The check fails a pull request when:
 
-- a change file has incorrect front matter, an unknown package, or no
-  summary on one line;
+- a change file has incorrect front matter, an unknown package, an unknown
+  change type, or no summary on one line;
+- a change file that uses `maintenance` contains `**Action required:**`;
 - an image app that the pull request affects has no change file that names it.
 
 Changes to tests, test data, Markdown, and dependencies that ship nothing do
@@ -114,10 +132,11 @@ Renovate does not change the pnpm overrides. Each override pins a vulnerable
 range of a transitive dependency, so it changes only by hand. The
 **Dependency Dashboard** issue lists pending and postponed updates.
 
-Renovate writes the change file in the same commit as each bump. A bump
-releases a patch of each Knope package that it affects. A bump that ships
-nothing gets no change file. A group lists its bumps once in the `virtool`
-changelog. Dependency updates come last in each release.
+Renovate writes the change file in the same commit as each bump. A bump is a
+`maintenance` change, and it releases a patch of each Knope package that it
+affects. A bump that ships nothing gets no change file. A group lists its bumps
+once in the `virtool` changelog. Dependency updates come last in the Maintenance
+section of each release.
 
 Renovate opens pull requests as the `virtool-renovator` GitHub App. The
 `RENOVATOR_CLIENT_ID` Actions variable and the `RENOVATOR_PRIVATE_KEY` secret

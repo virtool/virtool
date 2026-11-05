@@ -637,3 +637,12 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           RELEASES: ${{ needs.release-ghcr-matrix.outputs.releases }}
         run: node scripts/create-releases.mjs
+  # Runs after the GitHub Releases exist, so the site finds the new `virtool`
+  # Release. A release of other packages only publishes the same tag again.
+  release-site:
+    name: Release / Site
+    needs: [release-github]
+    if: ${{ !cancelled() && needs.release-github.result == 'success' }}
+    uses: ./.github/workflows/site.yaml
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

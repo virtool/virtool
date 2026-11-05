@@ -150,6 +150,48 @@ describe("check-change-files", () => {
 		assert.match(result.stderr, /summary must be one line/);
 	});
 
+	test("passes a maintenance change and a mix of types", () => {
+		fixture.write("apps/web/src/x.ts", "export const x = 1;\n");
+		fixture.write("apps/nuvs/src/x.ts", "export const x = 1;\n");
+		fixture.write(
+			".changeset/fix.md",
+			"---\nvirtool: maintenance\nnuvs: minor\n---\n\nPrepare the schema\n",
+		);
+
+		assert.equal(check().status, 0);
+	});
+
+	test("rejects an unknown change type", () => {
+		fixture.write(".changeset/bad.md", "---\nvirtool: chore\n---\n\nFix.\n");
+
+		const result = check();
+
+		assert.notEqual(result.status, 0);
+		assert.match(result.stderr, /name: major\|minor\|patch\|maintenance/);
+	});
+
+	test("rejects an action paragraph in a maintenance change", () => {
+		fixture.write(
+			".changeset/bad.md",
+			"---\nvirtool: maintenance\nnuvs: patch\n---\n\nFix.\n\n**Action required:** Act.\n",
+		);
+
+		const result = check({ GITHUB_EVENT_PATH: writeEvent(["no-release"]) });
+
+		assert.notEqual(result.status, 0);
+		assert.match(result.stderr, /bad\.md/);
+		assert.match(result.stderr, /must not contain/);
+	});
+
+	test("passes an action paragraph in a change with a bump level", () => {
+		fixture.write(
+			".changeset/fix.md",
+			"---\nvirtool: patch\n---\n\nFix.\n\n**Action required:** Act.\n",
+		);
+
+		assert.equal(check().status, 0);
+	});
+
 	test("waives a coverage gap with the label", () => {
 		fixture.write("apps/web/src/x.ts", "export const x = 1;\n");
 

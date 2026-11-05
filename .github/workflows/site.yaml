@@ -1,0 +1,57 @@
+name: Site
+
+# Publishes the site from the latest `virtool` release, so that documentation
+# for unreleased software does not go live. CI calls this workflow after each
+# release. The daily run gets new data from GitHub Releases, such as
+# `/releases/hmms.json`, because the site reads that data at build time.
+on:
+    schedule:
+        - cron: "41 7 * * *"
+    workflow_call:
+        secrets:
+            CLOUDFLARE_API_TOKEN:
+                required: true
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+# Each run finds the latest release when it starts, so a run that waits here
+# cannot publish an older release over a newer one.
+concurrency:
+    group: site-deploy
+    cancel-in-progress: false
+
+jobs:
+    deploy:
+        name: Deploy
+        runs-on: ubuntu-26.04
+        timeout-minutes: 15
+        if: github.repository_owner == 'Virtool'
+        steps:
+            # Only `virtool` Releases are marked as the latest.
+            - name: Find latest release
+              id: latest
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  tag="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+                  echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  ref: refs/tags/${{ steps.latest.outputs.tag }}
+                  persist-credentials: false
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Build
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: pnpm --filter @virtool/site build
+            # The Cloudflare token stays out of the earlier steps, so
+            # dependency install scripts can't read it.
+            - name: Deploy
+              env:
+                  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+                  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+              run: pnpm --filter @virtool/site exec wrangler deploy

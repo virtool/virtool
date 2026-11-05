@@ -1,22 +1,27 @@
 [packages.virtool]
 versioned_files = ["apps/web/package.json", "apps/internal/package.json"]
 changelog = "apps/web/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [packages.create-sample]
 versioned_files = ["apps/create-sample/package.json"]
 changelog = "apps/create-sample/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [packages.create-subtraction]
 versioned_files = ["apps/create-subtraction/package.json"]
 changelog = "apps/create-subtraction/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [packages.pathoscope]
 versioned_files = ["apps/pathoscope/package.json"]
 changelog = "apps/pathoscope/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [packages.nuvs]
 versioned_files = ["apps/nuvs/package.json"]
 changelog = "apps/nuvs/CHANGELOG.md"
+extra_changelog_sections = [{ name = "Maintenance", types = ["maintenance"] }]
 
 [changes]
 ignore_conventional_commits = true

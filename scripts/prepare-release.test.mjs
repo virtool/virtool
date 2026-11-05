@@ -16,6 +16,7 @@ const changes = [
 		details:
 			"- Bump `zod` from 3.0.0 to 4.0.0.\n- Bump `pino` from 1.0.0 to 2.0.0.",
 		packages: ["virtool"],
+		maintenance: ["virtool"],
 		number: "30",
 	},
 	{
@@ -23,6 +24,7 @@ const changes = [
 		summary: "Update production dependencies",
 		details: "The `virtool` release lists each bump.",
 		packages: ["nuvs", "create-sample"],
+		maintenance: ["nuvs", "create-sample"],
 		number: "30",
 	},
 	{
@@ -30,6 +32,7 @@ const changes = [
 		summary: "Bump `postgres` from 3.0.0 to 4.0.0",
 		details: "",
 		packages: ["virtool"],
+		maintenance: ["virtool"],
 		number: "31",
 	},
 	{
@@ -37,6 +40,7 @@ const changes = [
 		summary: "Build each image inside its Dockerfile",
 		details: "",
 		packages: ["virtool", "nuvs", "create-sample"],
+		maintenance: [],
 		number: "12",
 	},
 	{
@@ -45,6 +49,7 @@ const changes = [
 		details:
 			"Administrators can send a link.\n\n**Action required:** Send each\nuser a link.",
 		packages: ["virtool"],
+		maintenance: [],
 		number: "14",
 	},
 	{
@@ -52,7 +57,24 @@ const changes = [
 		summary: "Fix the redirect",
 		details: "The redirect works.",
 		packages: ["virtool", "nuvs", "create-sample"],
+		maintenance: [],
 		number: undefined,
+	},
+	{
+		file: "prepare-schema.md",
+		summary: "Prepare the schema",
+		details: "",
+		packages: ["virtool"],
+		maintenance: ["virtool"],
+		number: "15",
+	},
+	{
+		file: "mixed.md",
+		summary: "Change the shared client",
+		details: "",
+		packages: ["virtool", "nuvs"],
+		maintenance: ["virtool"],
+		number: "16",
 	},
 ];
 
@@ -109,7 +131,9 @@ describe("getReleaseBody", () => {
 			"### Administrators send",
 			"### Other changes",
 			"- Build each image",
-			"<summary>Dependency updates (3)</summary>",
+			"<summary>Maintenance (5)</summary>",
+			"- Change the shared client (#16) — *virtool*",
+			"- Prepare the schema (#15)",
 			"- Bump `postgres`",
 			"- Update production dependencies",
 		].map((text) => body.indexOf(text));
@@ -118,6 +142,24 @@ describe("getReleaseBody", () => {
 		assert.deepEqual(
 			order,
 			order.toSorted((a, b) => a - b),
+		);
+	});
+
+	test("keeps maintenance changes out of the main section", () => {
+		const main = body.slice(0, body.indexOf("<details>"));
+
+		assert.ok(!main.includes("Prepare the schema"));
+		assert.ok(body.includes("- Prepare the schema (#15) — *virtool*"));
+	});
+
+	test("lists a mixed change once for each kind, with its packages", () => {
+		const main = body.slice(0, body.indexOf("<details>"));
+
+		assert.ok(main.includes("- Change the shared client (#16) — *nuvs*"));
+		assert.ok(
+			body
+				.slice(body.indexOf("<details>"))
+				.includes("- Change the shared client (#16) — *virtool*"),
 		);
 	});
 
@@ -152,8 +194,20 @@ It builds faster.
 		assert.deepEqual(parseChangeFile(text, new Set(["virtool", "nuvs"])), {
 			errors: [],
 			packages: ["virtool", "nuvs"],
+			maintenance: [],
 			summary: "Build each image",
 			details: "The image does not change.\n\nIt builds faster.",
 		});
+	});
+
+	test("reads the packages with the maintenance type", () => {
+		const { errors, packages, maintenance } = parseChangeFile(
+			"---\nvirtool: maintenance\nnuvs: minor\n---\n\nPrepare the schema\n",
+			new Set(["virtool", "nuvs"]),
+		);
+
+		assert.deepEqual(errors, []);
+		assert.deepEqual(packages, ["virtool", "nuvs"]);
+		assert.deepEqual(maintenance, ["virtool"]);
 	});
 });

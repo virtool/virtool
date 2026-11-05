@@ -1,33 +1,45 @@
-// Parses a Knope change file: front matter of `name: bump` lines, a one-line
-// summary, and optional details.
+export const actionMarker = "**Action required:**";
+
+// Parses a Knope change file: front matter of `name: type` lines, a one-line
+// summary, and optional details. `packages` holds every name, and `maintenance`
+// holds the names with the `maintenance` type.
 export function parseChangeFile(text, names) {
 	const [first, ...rest] = text.replace(/\r\n/g, "\n").split("\n");
 	const errors = [];
 	const packages = [];
+	const maintenance = [];
 
 	if (first !== "---") {
-		return { errors: ["the first line must be `---`"], packages };
+		return { errors: ["the first line must be `---`"], packages, maintenance };
 	}
 
 	const end = rest.indexOf("---");
 
 	if (end === -1) {
-		return { errors: ["the front matter has no closing `---`"], packages };
+		return {
+			errors: ["the front matter has no closing `---`"],
+			packages,
+			maintenance,
+		};
 	}
 
 	for (const line of rest.slice(0, end)) {
-		const match = line.match(/^([a-z0-9-]+): (major|minor|patch)\s*$/);
+		const match = line.match(
+			/^([a-z0-9-]+): (major|minor|patch|maintenance)\s*$/,
+		);
 
 		if (!match) {
 			if (/^["']/.test(line)) {
 				errors.push(`\`${line}\` has a quoted name; write it without quotes`);
 			} else {
-				errors.push(`\`${line}\` is not a \`name: major|minor|patch\` line`);
+				errors.push(
+					`\`${line}\` is not a \`name: major|minor|patch|maintenance\` line`,
+				);
 			}
 			continue;
 		}
 
-		const [, name] = match;
+		const [, name, type] = match;
 
 		if (!names.has(name)) {
 			errors.push(`\`${name}\` is not a Knope package`);
@@ -35,6 +47,10 @@ export function parseChangeFile(text, names) {
 			errors.push(`\`${name}\` is named more than once`);
 		} else {
 			packages.push(name);
+
+			if (type === "maintenance") {
+				maintenance.push(name);
+			}
 		}
 	}
 
@@ -63,5 +79,13 @@ export function parseChangeFile(text, names) {
 		}
 	}
 
-	return { errors, packages, summary, details };
+	// Release notes collapse maintenance entries, and administrators must not
+	// miss an action.
+	if (maintenance.length > 0 && body.join("\n").includes(actionMarker)) {
+		errors.push(
+			`a \`maintenance\` change must not contain \`${actionMarker}\`; use a bump level`,
+		);
+	}
+
+	return { errors, packages, maintenance, summary, details };
 }

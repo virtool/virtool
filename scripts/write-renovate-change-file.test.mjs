@@ -51,7 +51,7 @@ describe("write-renovate-change-file", () => {
 	}
 
 	function content(names, body) {
-		return `---\n${names.map((name) => `${name}: patch`).join("\n")}\n---\n\n${body}\n`;
+		return `---\n${names.map((name) => `${name}: maintenance`).join("\n")}\n---\n\n${body}\n`;
 	}
 
 	test("writes no file for a test tool bump", () => {

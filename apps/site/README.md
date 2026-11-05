@@ -27,5 +27,11 @@ All commands are run from the monorepo root:
 | `pnpm --filter @virtool/site build`           | Build the production site to `apps/site/dist/` |
 | `pnpm --filter @virtool/site preview`         | Build, then preview locally with Wrangler      |
 | `pnpm --filter @virtool/site test`            | Run the Vitest suite                           |
-| `pnpm --filter @virtool/site deploy`          | Build and deploy to Cloudflare Workers         |
+| `pnpm --filter @virtool/site run deploy`      | Build and deploy to Cloudflare Workers         |
 | `pnpm --filter @virtool/site astro -- --help` | Run the Astro command-line tool                |
+
+## Deployment
+
+GitHub Actions publishes the site from the latest `virtool` release, not from
+`main`. A site change goes live with the next release. See
+[Site](../../docs/ci.md#site) in the CI documentation.

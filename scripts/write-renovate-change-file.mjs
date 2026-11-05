@@ -2,8 +2,8 @@
 // commits. It writes the change file that the `Knope / Check` job requires, so
 // that a Renovate bump releases the images that it changes.
 //
-// - A bump releases a patch of each Knope package that the check counts as
-//   affected by the branch.
+// - A bump is a `maintenance` change, which releases a patch of each Knope
+//   package that the check counts as affected by the branch.
 // - A bump of only test tools, or of the root `package.json`, or of
 //   workspaces that ship no image, ships nothing, so no change file is
 //   written.
@@ -205,7 +205,7 @@ function main() {
 			join(root, `${prefix}${slug}-${hash}${suffix}.md`),
 			[
 				"---",
-				...names.map((name) => `${name}: patch`),
+				...names.map((name) => `${name}: maintenance`),
 				"---",
 				"",
 				body,
