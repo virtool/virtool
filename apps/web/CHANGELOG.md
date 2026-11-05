@@ -16,7 +16,6 @@ sent or fails.
 
 ### Fixes
 
-- Build each image inside its Dockerfile, with no change to the image contents ([#4163](https://github.com/virtool/virtool/pull/4163))
 - Bump `@hookform/resolvers` from ^6.0.0 to ^7.0.1 ([#4168](https://github.com/virtool/virtool/pull/4168))
 - Bump `postgres` from ^3.4.9 to ^4.0.0 ([#4169](https://github.com/virtool/virtool/pull/4169))
 
@@ -80,6 +79,10 @@ also applies to the links in email address verification messages.
 
 A disabled or not-yet-activated account now gets the same error code and
 message as a wrong password. Before, only the status matched.
+
+### Maintenance
+
+- Build each image inside its Dockerfile, with no change to the image contents ([#4163](https://github.com/virtool/virtool/pull/4163))
 
 ## 42.61.2 (2026-11-02)
 
