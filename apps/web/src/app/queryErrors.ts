@@ -1,4 +1,4 @@
-import { endSession } from "@app/session";
+import { followAuthError } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	FORBIDDEN_ERROR_NAME,
@@ -77,22 +77,18 @@ function reportContractDrift(error: Error): void {
 /**
  * Handle a settled query or mutation error at the cache boundary.
  *
- * Wired into the query and mutation caches' `onError`. Ends the session when it
- * is gone, and reports a drifted contract so it fails loudly.
+ * Wired into the query and mutation caches' `onError`. Follows an auth failure
+ * to the login wall or a restriction's wall, and reports a drifted contract so
+ * it fails loudly.
  */
 // Server-function errors reach the client with their `name` preserved only
 // because `serverErrorSerializationAdapter` (start.ts) carries it past Router's
-// ShallowErrorPlugin, so a 401 is matched by name here.
+// ShallowErrorPlugin, so auth failures are matched by name.
 //
-// A 403 is deliberately not handled: the session is valid, the user just lacks
-// the role, so bouncing them to the login wall would be wrong. Nor is a
-// `SetupRequiredError`, for a stronger version of the same reason — the caller
-// holds a live setup credential, and ending their session would take it with
-// it and strand them part-way through a flow.
+// An ordinary 403 is deliberately not handled: the session is valid, the user
+// just lacks the role, so bouncing them to the login wall would be wrong.
 export function handleQueryError(error: Error): void {
-	if (error.name === UNAUTHORIZED_ERROR_NAME) {
-		endSession();
-	}
+	followAuthError(error);
 
 	if (isValidationError(error)) {
 		reportContractDrift(error);

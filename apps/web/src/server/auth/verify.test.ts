@@ -155,6 +155,13 @@ describe("parsers", () => {
 		).toEqual({ handle: "alice", key: "key" });
 	});
 
+	it("keeps a cookie value that is not valid percent-encoding", () => {
+		expect(parseCookieHeader("theme=100%; a=b%20c")).toEqual({
+			theme: "100%",
+			a: "b c",
+		});
+	});
+
 	it("rejects malformed Basic credentials", () => {
 		expect(parseBasicAuthHeader("Bearer token")).toBeNull();
 		expect(parseBasicAuthHeader("Basic !!!!")).toBeNull();

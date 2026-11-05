@@ -1,4 +1,5 @@
 import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
+import { holdSessionEnd } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { PROTECTED_OPERATIONS } from "@server/auth/freshness";
 import { challengeRecentAuthenticationFn } from "@server/auth/recentAuthentication";
@@ -328,12 +329,14 @@ export async function verifyRecentAuthenticationWithPasskey(): Promise<void> {
 		});
 	});
 
-	await challengeRecentAuthenticationFn({
-		data: {
-			method: "passkey",
-			response: { ...response, clientExtensionResults: {} },
-		},
-	});
+	await holdSessionEnd(() =>
+		challengeRecentAuthenticationFn({
+			data: {
+				method: "passkey",
+				response: { ...response, clientExtensionResults: {} },
+			},
+		}),
+	);
 }
 
 /** Stop the passkey ceremony that is running, if there is one. */

@@ -93,9 +93,19 @@ export function parseCookieHeader(
 			continue;
 		}
 		const value = part.slice(idx + 1).trim();
-		out[key] = decodeURIComponent(value);
+		out[key] = decodeCookieValue(value);
 	}
 	return out;
+}
+
+// A browser sends every cookie on the host, including ones Virtool never set, so
+// one malformed value must not fail the request.
+function decodeCookieValue(value: string): string {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
 }
 
 /** The login and password carried by an HTTP Basic `Authorization` header. */

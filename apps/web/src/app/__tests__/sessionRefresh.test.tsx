@@ -5,8 +5,8 @@ import { authServerFnMocks } from "@tests/server-fn/auth";
 import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { endSession } = vi.hoisted(() => ({ endSession: vi.fn() }));
-vi.mock("@app/session", () => ({ endSession }));
+const { followAuthError } = vi.hoisted(() => ({ followAuthError: vi.fn() }));
+vi.mock("@app/session", () => ({ followAuthError }));
 vi.mock("@sentry/tanstackstart-react", () => ({ captureException: vi.fn() }));
 
 async function focus() {
@@ -21,6 +21,7 @@ describe("useBrowserSessionRefresh", () => {
 		vi.clearAllMocks();
 		vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
 		authServerFnMocks.refreshBrowserSessionFn.mockResolvedValue(null);
+		followAuthError.mockReturnValue(false);
 	});
 
 	afterEach(() => {
@@ -57,15 +58,16 @@ describe("useBrowserSessionRefresh", () => {
 		expect(authServerFnMocks.refreshBrowserSessionFn).toHaveBeenCalledTimes(1);
 	});
 
-	it("converges on endSession only for definitive authentication failure", async () => {
-		authServerFnMocks.refreshBrowserSessionFn.mockRejectedValue(
-			Object.assign(new Error("Unauthorized"), {
-				name: UNAUTHORIZED_ERROR_NAME,
-			}),
-		);
+	it("leaves an auth failure to the auth handler, without reporting it", async () => {
+		const error = Object.assign(new Error("Unauthorized"), {
+			name: UNAUTHORIZED_ERROR_NAME,
+		});
+		authServerFnMocks.refreshBrowserSessionFn.mockRejectedValue(error);
+		followAuthError.mockReturnValue(true);
 		renderHook(() => useBrowserSessionRefresh(true));
 		await act(async () => {});
-		expect(endSession).toHaveBeenCalledTimes(1);
+		expect(followAuthError).toHaveBeenCalledWith(error);
+		expect(Sentry.captureException).not.toHaveBeenCalled();
 	});
 
 	it.each([new TypeError("Network error"), new Error("Server unavailable")])(
@@ -74,7 +76,6 @@ describe("useBrowserSessionRefresh", () => {
 			authServerFnMocks.refreshBrowserSessionFn.mockRejectedValueOnce(error);
 			renderHook(() => useBrowserSessionRefresh(true));
 			await act(async () => {});
-			expect(endSession).not.toHaveBeenCalled();
 			expect(Sentry.captureException).toHaveBeenCalledWith(error);
 			await focus();
 			expect(authServerFnMocks.refreshBrowserSessionFn).toHaveBeenCalledTimes(
@@ -98,7 +99,7 @@ describe("useBrowserSessionRefresh", () => {
 			),
 		);
 		await focus();
-		expect(endSession).not.toHaveBeenCalled();
+		expect(followAuthError).not.toHaveBeenCalled();
 		expect(authServerFnMocks.refreshBrowserSessionFn).toHaveBeenCalledTimes(1);
 	});
 });
