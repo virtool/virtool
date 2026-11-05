@@ -7,7 +7,8 @@ import type { EncryptedValue, Keyring } from "../crypto/keyring";
 
 const EMAIL_LINK_PURPOSE = "email_link";
 
-const LINK_FIELDS = {
+/** The template field that holds the bearer link, by template type. */
+export const LINK_FIELDS = {
 	account_setup: "setupUrl",
 	email_verification: "verifyUrl",
 	password_recovery: "recoveryUrl",

@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createKeyring } from "../crypto/keyring";
+import { keyring } from "../crypto/test/fixtures";
 import type { Db, DbOrTx } from "../db/pg";
 import { type EmailOutboxRow, emailOutbox } from "../db/schema/emailOutbox";
 import { settings } from "../db/schema/settings";
@@ -203,10 +204,6 @@ describe("enqueueEmail", () => {
 });
 
 describe("enqueueLinkEmail", () => {
-	const keyring = createKeyring(
-		Buffer.alloc(32, 1).toString("base64"),
-		undefined,
-	);
 	const url = "https://virtool.example/verify#token=abc";
 	const linkInput: EnqueueLinkEmailInput = {
 		idempotencyKey: "email_verification/1/1",
@@ -311,11 +308,6 @@ describe("enqueueLinkEmail", () => {
 });
 
 describe("openEmailTemplate", () => {
-	const keyring = createKeyring(
-		Buffer.alloc(32, 1).toString("base64"),
-		undefined,
-	);
-
 	it("passes a notice through", () => {
 		const template = { type: "password_changed", username: "alice" } as const;
 

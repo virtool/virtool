@@ -378,8 +378,8 @@ documented in [docs/env.md](../../docs/env.md#encryption-key). Neither the
 plaintext key nor its envelope may cross a transport boundary or reach a log.
 
 Features enqueue notices through `enqueueEmail(db, input)` and messages with a
-bearer link through `enqueueLinkEmail(db, keyring, input)`, both in
-`src/email/outbox.ts`, and nothing else:
+bearer link through `enqueueLinkEmail(db, keyring, input)`, and nothing
+else:
 
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.

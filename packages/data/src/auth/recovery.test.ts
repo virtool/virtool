@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { createKeyring } from "../crypto/keyring";
+import { keyring } from "../crypto/test/fixtures";
 
 import type { Db } from "../db/pg";
 import { apiKeys } from "../db/schema/apiKeys";
@@ -33,11 +33,6 @@ import {
 } from "./recovery";
 import { SetupCredentialError } from "./setup";
 import { seedApiKey, seedSession, seedUser } from "./test/fixtures";
-
-const keyring = createKeyring(
-	Buffer.alloc(32, 1).toString("base64"),
-	undefined,
-);
 
 let database: TestDatabase;
 let db: Db;

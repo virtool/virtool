@@ -145,8 +145,8 @@ export type CompleteAccountSetupInput = {
 	deliveryAvailable?: boolean;
 	/** Build a public verification URL if copied-link acceptance needs one. */
 	getVerificationUrl?: (token: string) => string;
-	/** Encrypts the verification link. Without it, no mail is queued. */
-	keyring?: Keyring;
+	/** Encrypts the verification link in the queued mail. */
+	keyring: Keyring;
 };
 
 /** A completed pending-account transition and its follow-up requirement. */
@@ -313,7 +313,7 @@ export async function completeAccountSetup(
 				.where(eq(authSessions.userId, consumed.userId));
 
 			let emailVerificationRequired = false;
-			if (!verified && deliveryAvailable && keyring) {
+			if (!verified && deliveryAvailable) {
 				const verification = await queueEmailVerificationInTransaction(tx, {
 					userId: consumed.userId,
 					candidateEmail: email,

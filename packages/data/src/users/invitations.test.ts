@@ -6,7 +6,7 @@ import {
 	inspectAccountSetup,
 } from "../auth/lifecycle";
 import { seedUser } from "../auth/test/fixtures";
-import { createKeyring } from "../crypto/keyring";
+import { keyring } from "../crypto/test/fixtures";
 import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
@@ -24,11 +24,6 @@ import {
 	InvitationNotEligibleError,
 	regenerateInvitation,
 } from "./invitations";
-
-const keyring = createKeyring(
-	Buffer.alloc(32, 1).toString("base64"),
-	undefined,
-);
 
 let database: TestDatabase;
 let db: Db;
@@ -203,6 +198,7 @@ describe("account invitations", () => {
 		await seedUser(db, { handle: "Ada" });
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token: created.setupToken,
 				handle: "ada",
 				password: "a-real-password",
@@ -280,6 +276,7 @@ describe("account invitations", () => {
 	it("refuses to delete a user who accepted their invitation", async () => {
 		const created = await createInvitation();
 		await completeAccountSetup(db, {
+			keyring,
 			token: created.setupToken,
 			handle: "Ada",
 			password: "a-real-password",
@@ -293,6 +290,7 @@ describe("account invitations", () => {
 	it("accepts once and leaves copied-link email unverified", async () => {
 		const created = await createInvitation();
 		const accepted = await completeAccountSetup(db, {
+			keyring,
 			token: created.setupToken,
 			handle: "Ada",
 			password: "a-real-password",
@@ -308,6 +306,7 @@ describe("account invitations", () => {
 		expect(row?.emailVerified).toBe(false);
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token: created.setupToken,
 				password: "another-password",
 			}),
@@ -347,6 +346,7 @@ describe("account invitations", () => {
 		try {
 			const results = await Promise.allSettled([
 				completeAccountSetup(db, {
+					keyring,
 					token: created.setupToken,
 					password: "a-real-password",
 				}),

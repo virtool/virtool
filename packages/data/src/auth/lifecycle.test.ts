@@ -1,6 +1,6 @@
 import { eq, isNull } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
-import { createKeyring } from "../crypto/keyring";
+import { keyring } from "../crypto/test/fixtures";
 import type { Db } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
@@ -31,11 +31,6 @@ import {
 import { hashPassword, verifyPassword } from "./password";
 import { SetupCredentialError } from "./setup";
 import { seedSetupSession, seedSetupToken, seedUser } from "./test/fixtures";
-
-const keyring = createKeyring(
-	Buffer.alloc(32, 1).toString("base64"),
-	undefined,
-);
 
 let database: TestDatabase;
 let db: Db;
@@ -86,6 +81,7 @@ describe("completeAccountSetup", () => {
 		});
 
 		const result = await completeAccountSetup(db, {
+			keyring,
 			token,
 			password: "a-good-password",
 		});
@@ -114,6 +110,7 @@ describe("completeAccountSetup", () => {
 		});
 
 		await completeAccountSetup(db, {
+			keyring,
 			token,
 			password: "a-good-password",
 		});
@@ -136,6 +133,7 @@ describe("completeAccountSetup", () => {
 		await seedSetupSession(db, userId, "account_completion");
 
 		await completeAccountSetup(db, {
+			keyring,
 			token,
 			password: "a-good-password",
 		});
@@ -152,6 +150,7 @@ describe("completeAccountSetup", () => {
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "a-good-password",
 			}),
@@ -166,6 +165,7 @@ describe("completeAccountSetup", () => {
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "a-good-password",
 			}),
@@ -181,6 +181,7 @@ describe("completeAccountSetup", () => {
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "a-good-password",
 			}),
@@ -202,6 +203,7 @@ describe("completeAccountSetup", () => {
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "a-good-password",
 			}),
@@ -225,6 +227,7 @@ describe("completeAccountSetup", () => {
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "a-good-password",
 			}),
@@ -248,6 +251,7 @@ describe("completeAccountSetup", () => {
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "a-good-password",
 			}),
@@ -273,6 +277,7 @@ describe("completeAccountSetup", () => {
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "a-good-password",
 			}),
@@ -297,12 +302,14 @@ describe("completeAccountSetup", () => {
 		});
 
 		await completeAccountSetup(db, {
+			keyring,
 			token,
 			password: "a-good-password",
 		});
 
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token,
 				password: "another-password",
 			}),
@@ -325,10 +332,12 @@ describe("completeAccountSetup", () => {
 		try {
 			const results = await Promise.allSettled([
 				completeAccountSetup(db, {
+					keyring,
 					token,
 					password: "a-good-password",
 				}),
 				completeAccountSetup(other.db, {
+					keyring,
 					token,
 					password: "a-good-password",
 				}),

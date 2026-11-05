@@ -19,7 +19,7 @@ import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupTokens } from "../db/schema/setup";
 import { nowUtc, secondsAgo } from "../db/time";
-import { type StoredEmailTemplate, sealEmailLink } from "./link";
+import { LINK_FIELDS, type StoredEmailTemplate, sealEmailLink } from "./link";
 import { isEmailEnabled } from "./settings";
 import { EMAIL_TEMPLATE_VERSION } from "./templates";
 
@@ -104,7 +104,11 @@ async function insertEmail(
 	return { status: "queued", created: false, outboxId: existing.id };
 }
 
-/** Queue one notice. See {@link insertEmail} for the discard rule. */
+/**
+ * Queue one notice.
+ *
+ * The message is discarded and no row is written while sending is switched off.
+ */
 export async function enqueueEmail(
 	db: DbOrTx,
 	input: EnqueueEmailInput,
@@ -117,7 +121,8 @@ export async function enqueueEmail(
  *
  * The message is discarded when the keyring cannot encrypt, because the link
  * must not reach the database in plaintext. The caller's discard handling
- * offers the user another route. See {@link insertEmail} for the other rule.
+ * offers the user another route. It is also discarded, with no row written,
+ * while sending is switched off.
  */
 export async function enqueueLinkEmail(
 	db: DbOrTx,
@@ -281,10 +286,14 @@ export type EmailResultTarget = {
  *
  * The template fields cover rows queued before links were encrypted.
  */
-function clearLink() {
+function clearedLinkColumns() {
+	const fields = Object.values(LINK_FIELDS).map(
+		(field) => sql`- ${sql.raw(`'${field}'::text`)}`,
+	);
+
 	return {
 		link: null,
-		template: sql`${emailOutbox.template} - 'setupUrl' - 'verifyUrl' - 'recoveryUrl'`,
+		template: sql`${emailOutbox.template} ${sql.join(fields, sql` `)}`,
 	};
 }
 
@@ -297,7 +306,7 @@ export async function markEmailAccepted(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
-			...clearLink(),
+			...clearedLinkColumns(),
 			accepted_at: nowUtc(),
 			claim_expires_at: null,
 			claim_token: null,
@@ -342,7 +351,7 @@ export async function failEmail(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
-			...clearLink(),
+			...clearedLinkColumns(),
 			claim_expires_at: null,
 			claim_token: null,
 			last_error: error,
