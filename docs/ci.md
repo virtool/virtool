@@ -65,9 +65,11 @@ set its version, so changes merged after the release do not go into it.
 
 The job opens the Release pull request as the `virtool-releaser` GitHub App,
 because a pull request opened with `GITHUB_TOKEN` does not start CI. The app
-can write contents and pull requests on this repository only. The
+can write contents, pull requests, and workflows on this repository only. The
 `RELEASER_CLIENT_ID` Actions variable and the `RELEASER_PRIVATE_KEY` secret
-identify it.
+identify it. Only the `Release / GitHub` job asks for workflows access: GitHub
+refuses a new tag on a commit whose workflow files differ from `main` without
+it.
 
 Knope is installed with `mise`. Renovate does not update it. See
 [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
