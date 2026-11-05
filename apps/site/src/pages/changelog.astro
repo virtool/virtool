@@ -1,0 +1,32 @@
+---
+import Layout from "@layouts/Layout.astro";
+import { parseChangelog } from "@utils/changelog";
+import { micromark } from "micromark";
+import { gfm, gfmHtml } from "micromark-extension-gfm";
+import changelog from "../../../web/CHANGELOG.md?raw";
+
+const releases = parseChangelog(changelog).map((release) => ({
+  ...release,
+  html: micromark(release.body, {
+    extensions: [gfm()],
+    htmlExtensions: [gfmHtml()],
+  }),
+}));
+---
+
+<Layout title="Changelog">
+  <div class="prose max-w-4xl">
+    <h1>Changelog</h1>
+    {
+      releases.map(({ version, date, html }) => (
+        <section>
+          <h2>{version}</h2>
+          <p class="text-stone-600">
+            <time datetime={date}>{date}</time>
+          </p>
+          <Fragment set:html={html} />
+        </section>
+      ))
+    }
+  </div>
+</Layout>
