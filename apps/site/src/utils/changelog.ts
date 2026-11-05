@@ -3,6 +3,7 @@ export type Release = {
   version: string;
   date: string;
   body: string;
+  maintenance: string;
   actions: string[];
   pullRequests: number[];
 };
@@ -11,13 +12,14 @@ type Line = { text: string; fenced: boolean };
 
 type ReleaseSection = {
   title: string;
-  items: { title: string; slug: string }[];
+  items: { title: string; slug: string; maintenance: boolean }[];
 };
 
 export const RELEASES_PER_PAGE = 10;
 
 const RELEASE_HEADING = /^## (\S+) \((\d{4}-\d{2}-\d{2})\)$/;
 const ENTRY_HEADING = /^(#{3,}) /;
+const SECTION_HEADING = /^### /;
 const DEPENDENCY_HEADING = /^#### Update (.+ )?dependencies\b/;
 const MAINTENANCE_HEADING = /^### Maintenance$/;
 const DEPENDENCY_BULLET = /^- (Bump `|Update the `.+` digest)/;
@@ -42,6 +44,22 @@ function getLines(text: string): Line[] {
   });
 }
 
+function splitMaintenance(lines: Line[]) {
+  const main: Line[] = [];
+  const maintenance: Line[] = [];
+  let target = main;
+
+  for (const line of lines) {
+    if (!line.fenced && SECTION_HEADING.test(line.text)) {
+      target = MAINTENANCE_HEADING.test(line.text) ? maintenance : main;
+    }
+
+    target.push(line);
+  }
+
+  return { main, maintenance };
+}
+
 // A heading waits in `pending` until content follows it, so a section that
 // held only dependency entries leaves no empty heading behind.
 function getContent(lines: Line[]): { body: string; actions: string[] } {
@@ -49,7 +67,6 @@ function getContent(lines: Line[]): { body: string; actions: string[] } {
   const kept: string[] = [];
   const pending: { level: number; text: string }[] = [];
   let inAction = false;
-  let maintenance = false;
   let skipping = false;
 
   function flushHeadings() {
@@ -64,11 +81,7 @@ function getContent(lines: Line[]): { body: string; actions: string[] } {
 
       inAction = false;
 
-      if (level === 3) {
-        maintenance = MAINTENANCE_HEADING.test(text);
-      }
-
-      skipping = maintenance || DEPENDENCY_HEADING.test(text);
+      skipping = DEPENDENCY_HEADING.test(text);
 
       while (pending.length > 0 && (pending.at(-1)?.level ?? 0) >= level) {
         pending.pop();
@@ -130,14 +143,23 @@ export function parseChangelog(text: string): Release[] {
     }
   }
 
-  return sections.map(({ version, date, lines }) => ({
-    version,
-    date,
-    ...getContent(lines),
-    pullRequests: lines.flatMap(({ text }) =>
-      [...text.matchAll(PULL_REQUEST)].map((match) => Number(match[1])),
-    ),
-  }));
+  return sections.map(({ version, date, lines }) => {
+    const { main, maintenance } = splitMaintenance(lines);
+
+    return {
+      version,
+      date,
+      ...getContent(main),
+      maintenance: getContent(maintenance).body,
+      pullRequests: lines.flatMap(({ text }) =>
+        [...text.matchAll(PULL_REQUEST)].map((match) => Number(match[1])),
+      ),
+    };
+  });
+}
+
+export function isMaintenanceOnly({ actions, body, maintenance }: Release) {
+  return maintenance !== "" && body === "" && actions.length === 0;
 }
 
 // The parts can hold unbalanced tags, because a link usually sits inside a
@@ -158,9 +180,14 @@ export function getReleaseHref(version: string, index: number): string {
 export function getReleaseSections(releases: Release[]): ReleaseSection[] {
   const sections: ReleaseSection[] = [];
 
-  releases.forEach(({ version }, index) => {
+  releases.forEach((release, index) => {
+    const { version } = release;
     const title = version.split(".").slice(0, 2).join(".");
-    const item = { title: version, slug: getReleaseHref(version, index) };
+    const item = {
+      title: version,
+      slug: getReleaseHref(version, index),
+      maintenance: isMaintenanceOnly(release),
+    };
     const section = sections.at(-1);
 
     if (section?.title === title) {

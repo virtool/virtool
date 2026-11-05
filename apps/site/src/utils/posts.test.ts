@@ -7,7 +7,7 @@ function release(
   date: string,
   pullRequests: number[],
 ): Release {
-  return { version, date, body: "", actions: [], pullRequests };
+  return { version, date, body: "", maintenance: "", actions: [], pullRequests };
 }
 
 function post(slug: string, pr: number) {

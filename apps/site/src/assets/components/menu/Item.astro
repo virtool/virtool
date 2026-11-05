@@ -1,9 +1,9 @@
 ---
-const { title, baseUrl, slug, current } = Astro.props;
+const { title, baseUrl, slug, current, maintenance } = Astro.props;
 const href = baseUrl ? `${baseUrl}/${slug}` : `${slug}`;
 ---
 
-<li>
+<li data-maintenance={maintenance || undefined}>
   <a
     class="-ml-px block border-l-2 border-transparent py-1 pl-3 text-sm text-stone-600 hover:text-stone-900 [&[aria-current]]:border-sky-700 [&[aria-current]]:text-sky-700"
     href={href}

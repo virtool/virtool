@@ -2,17 +2,17 @@
 import ActionRequired from "@components/ActionRequired.astro";
 import Menu from "@components/menu/Menu.astro";
 import Note from "@components/Note.astro";
-import PullRequestLink from "@components/PullRequestLink.astro";
+import ReleaseNotes from "@components/ReleaseNotes.astro";
+import Switch from "@components/Switch.astro";
 import Layout from "@layouts/Layout.astro";
 import {
   getReleaseSections,
+  isMaintenanceOnly,
   parseChangelog,
   RELEASES_PER_PAGE,
-  splitPullRequestLinks,
 } from "@utils/changelog";
 import { formatDate } from "@utils/date";
 import { loadPosts } from "@utils/loadPosts";
-import { renderMarkdown } from "@utils/markdown";
 import type { GetStaticPaths } from "astro";
 import changelog from "../../../../web/CHANGELOG.md?raw";
 
@@ -32,7 +32,7 @@ const { released } = await loadPosts();
 
 const releases = page.data.map((release) => ({
   ...release,
-  parts: splitPullRequestLinks(renderMarkdown(release.body)),
+  maintenanceOnly: isMaintenanceOnly(release),
   posts: released.filter(({ version }) => version === release.version),
 }));
 ---
@@ -46,10 +46,24 @@ const releases = page.data.map((release) => ({
       <Menu sections={sections} />
     </div>
     <div class="prose max-w-4xl">
-      <h1>Changelog</h1>
+      <div class="mb-8 flex items-center justify-between gap-4">
+        <h1 class="mb-0">Changelog</h1>
+        <label class="not-prose flex shrink-0 items-center gap-2 text-stone-600">
+          <Switch id="show-maintenance" autocomplete="off" />
+          Show maintenance
+        </label>
+      </div>
+      <script is:inline>
+        document.getElementById("show-maintenance").checked =
+          localStorage.getItem("show-maintenance") === "true";
+      </script>
       {
-        releases.map(({ version, date, actions, parts, posts }) => (
-          <section id={version} class="scroll-mt-24">
+        releases.map(({ version, date, actions, body, maintenance, maintenanceOnly, posts }) => (
+          <section
+            id={version}
+            class="scroll-mt-24"
+            data-maintenance={maintenanceOnly || undefined}
+          >
             <h2 class="mb-1">{version}</h2>
             <p class="mt-0 text-stone-600">
               <time datetime={date}>{formatDate(date)}</time>
@@ -60,12 +74,11 @@ const releases = page.data.map((release) => ({
                 <a href={`/posts/${slug}`}>Read the post: {title}</a>
               </Note>
             ))}
-            {parts.map((part) =>
-              typeof part === "number" ? (
-                <PullRequestLink number={part} />
-              ) : (
-                <Fragment set:html={part} />
-              ),
+            <ReleaseNotes markdown={body} />
+            {maintenance && (
+              <div data-maintenance>
+                <ReleaseNotes markdown={maintenance} />
+              </div>
             )}
           </section>
         ))
@@ -97,11 +110,21 @@ const releases = page.data.map((release) => ({
   </div>
 </Layout>
 
+<style is:global>
+  body:not(:has(#show-maintenance:checked)) {
+    [data-maintenance],
+    [data-release-menu] li:has(> ul):not(:has(li:not([data-maintenance]))) {
+      display: none;
+    }
+  }
+</style>
+
 <script>
   const SCROLL_OFFSET = 100;
 
   const menu = document.querySelector<HTMLElement>("[data-release-menu]");
   const sections = [...document.querySelectorAll<HTMLElement>("section[id]")];
+  const toggle = document.querySelector<HTMLInputElement>("#show-maintenance");
 
   if (menu && sections.length > 0) {
     const links = new Map(
@@ -132,11 +155,13 @@ const releases = page.data.map((release) => ({
       const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
       const line = SCROLL_OFFSET + progress * (window.innerHeight - SCROLL_OFFSET);
 
+      const visible = sections.filter((section) => section.checkVisibility());
+
       return (
-        sections.findLast(
+        visible.findLast(
           (section) => section.getBoundingClientRect().top <= line,
-        ) ?? sections[0]
-      ).id;
+        ) ?? visible[0]
+      )?.id;
     }
 
     function updateCurrentLink() {
@@ -163,9 +188,25 @@ const releases = page.data.map((release) => ({
 
     updateCurrentLink();
 
+    // A link can point to a release that the toggle hides.
+    function revealLocationHash() {
+      const target = sections.find(({ id }) => id === location.hash.slice(1));
+
+      if (toggle && target && !target.checkVisibility()) {
+        toggle.checked = true;
+        target.scrollIntoView();
+      }
+    }
+
     function pinLocationHash() {
+      revealLocationHash();
       pin(location.hash.slice(1));
     }
+
+    toggle?.addEventListener("change", () => {
+      updateCurrentLink();
+      localStorage.setItem("show-maintenance", String(toggle.checked));
+    });
 
     window.addEventListener("load", pinLocationHash);
     window.addEventListener("hashchange", pinLocationHash);

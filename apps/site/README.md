@@ -34,9 +34,12 @@ All commands are run from the monorepo root:
 
 The `/changelog` page shows the `virtool` releases. The build reads them from
 the web app changelog, which Knope generates, so the page needs no separate
-content. The page leaves out the Maintenance section and dependency entries:
-`Update … dependencies` sections, and bullets that bump a dependency or update
-a digest.
+content. The page leaves out dependency entries: `Update … dependencies`
+sections, and bullets that bump a dependency or update a digest.
+
+The "Show maintenance" switch shows or hides each Maintenance section. It is off
+by default, and the browser remembers the setting. When it is off, the page and
+the left menu also hide releases that have only maintenance content.
 
 The page shows ten releases at a time, and later pages are at
 `/changelog/<page>`. The left menu lists every release, grouped by minor

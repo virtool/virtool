@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getReleaseHref,
   getReleaseSections,
+  isMaintenanceOnly,
   type Release,
   parseChangelog,
   RELEASES_PER_PAGE,
@@ -87,6 +88,7 @@ describe("parseChangelog", () => {
     const [latest, previous] = parseChangelog(changelog);
 
     expect(latest.body).not.toContain("### Maintenance");
+    expect(latest.maintenance).toBe("");
     expect(previous.body).toBe("");
   });
 
@@ -105,8 +107,8 @@ describe("parseChangelog", () => {
     expect(body).toBe(`### Fixes\n\n- Fix the sample list ${link(1)}`);
   });
 
-  it("should remove the maintenance section and keep what follows", () => {
-    const [{ body }] = parseChangelog(`## 1.0.0 (2026-11-02)
+  it("should separate the maintenance section and keep what follows", () => {
+    const [{ body, maintenance }] = parseChangelog(`## 1.0.0 (2026-11-02)
 
 ### Maintenance
 
@@ -122,6 +124,9 @@ The build now runs in Docker.
 `);
 
     expect(body).toBe(`### Features\n\n- Add a sample filter ${link(3)}`);
+    expect(maintenance).toBe(
+      `### Maintenance\n\n- Prepare the schema ${link(1)}\n\n#### Move the build ${link(2)}\n\nThe build now runs in Docker.`,
+    );
   });
 
   it("should keep pull requests from the maintenance section", () => {
@@ -233,12 +238,37 @@ describe("getReleaseHref", () => {
   });
 });
 
+describe("isMaintenanceOnly", () => {
+  const release: Release = {
+    version: "1.0.0",
+    date: "2026-11-04",
+    body: "",
+    maintenance: "### Maintenance",
+    actions: [],
+    pullRequests: [],
+  };
+
+  it("should be true when a release has only maintenance content", () => {
+    expect(isMaintenanceOnly(release)).toBe(true);
+  });
+
+  it("should be false when a release has other content", () => {
+    expect(isMaintenanceOnly({ ...release, body: "### Fixes" })).toBe(false);
+    expect(isMaintenanceOnly({ ...release, actions: ["Act"] })).toBe(false);
+  });
+
+  it("should be false when a release has no maintenance content", () => {
+    expect(isMaintenanceOnly({ ...release, maintenance: "" })).toBe(false);
+  });
+});
+
 describe("getReleaseSections", () => {
   function release(version: string): Release {
     return {
       version,
       date: "2026-11-04",
       body: "",
+      maintenance: "",
       actions: [],
       pullRequests: [],
     };
@@ -255,13 +285,13 @@ describe("getReleaseSections", () => {
       {
         title: "2.1",
         items: [
-          { title: "2.1.1", slug: "/changelog#2.1.1" },
-          { title: "2.1.0", slug: "/changelog#2.1.0" },
+          { title: "2.1.1", slug: "/changelog#2.1.1", maintenance: false },
+          { title: "2.1.0", slug: "/changelog#2.1.0", maintenance: false },
         ],
       },
       {
         title: "2.0",
-        items: [{ title: "2.0.0", slug: "/changelog#2.0.0" }],
+        items: [{ title: "2.0.0", slug: "/changelog#2.0.0", maintenance: false }],
       },
     ]);
   });

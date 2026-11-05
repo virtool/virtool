@@ -9,6 +9,7 @@ type Sections = {
 type item = {
   title: string;
   slug: string;
+  maintenance?: boolean;
 };
 
 const {
@@ -32,6 +33,7 @@ const {
               baseUrl={baseUrl}
               slug={item.slug}
               current={current}
+              maintenance={item.maintenance}
             />
           ))}
         </ul>
