@@ -80,8 +80,14 @@ async function handleRejectedConnection(): Promise<void> {
 	}
 
 	if (status === 401) {
-		connectionStatus = "abandoned";
-		endSession();
+		if (await endSession()) {
+			connectionStatus = "abandoned";
+			return;
+		}
+
+		// The cookie was replaced, or the check did not land. The stream is still
+		// wanted.
+		scheduleReconnect();
 		return;
 	}
 

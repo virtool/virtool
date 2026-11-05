@@ -8,12 +8,9 @@ import {
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
+import { getAuthNextStep } from "../authStep";
 import { rootQueryKeys } from "../keys";
-import {
-	getAuthNextStep,
-	getAuthNextStepRoute,
-	resolveAuthNextStep,
-} from "../nextStep";
+import { getAuthNextStepRoute, resolveAuthNextStep } from "../nextStep";
 
 function namedError(name: string, purpose?: string) {
 	return Object.assign(new Error(name), { name, purpose });

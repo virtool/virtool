@@ -39,10 +39,12 @@ export const Route = createFileRoute("/_authenticated")({
 		const [
 			{ rootQueryOptions },
 			{ accountQueryOptions },
-			{ getAuthNextStep, getAuthNextStepRoute },
+			{ getAuthNextStep },
+			{ getAuthNextStepRoute },
 		] = await Promise.all([
 			import("@nav/queries"),
 			import("@account/account"),
+			import("@wall/authStep"),
 			import("@wall/nextStep"),
 		]);
 

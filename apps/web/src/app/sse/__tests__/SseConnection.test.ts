@@ -96,7 +96,8 @@ describe("SseConnection", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		FakeEventSource.instances = [];
-		endSession.mockClear();
+		endSession.mockReset();
+		endSession.mockResolvedValue(true);
 		handler.mockClear();
 		captureException.mockClear();
 		invalidateQueries.mockClear();
@@ -151,6 +152,21 @@ describe("SseConnection", () => {
 		expect(fetchMock).toHaveBeenCalledWith("/events", { method: "HEAD" });
 		expect(sse.getConnectionStatus()).toBe("abandoned");
 		expect(endSession).toHaveBeenCalledTimes(1);
+	});
+
+	it("reconnects when the session turns out to be live", async () => {
+		fetchMock.mockResolvedValue({ status: 401 });
+		endSession.mockResolvedValue(false);
+		const sse = await establish();
+
+		openConnection().reject();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(sse.getConnectionStatus()).toBe("reconnecting");
+
+		await vi.advanceTimersByTimeAsync(1000);
+
+		expect(FakeEventSource.instances).toHaveLength(2);
 	});
 
 	it("never reconnects once it has abandoned the stream", async () => {

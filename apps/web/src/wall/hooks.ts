@@ -1,12 +1,9 @@
 import { type PasskeyAutofill, startPasskeyAutofill } from "@app/passkeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import type { AuthNextStep } from "@wall/authStep";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
-import {
-	type AuthNextStep,
-	getAuthNextStepRoute,
-	resolveAuthNextStep,
-} from "./nextStep";
+import { getAuthNextStepRoute, resolveAuthNextStep } from "./nextStep";
 
 /**
  * Read bearer parameters from the URL fragment or query, strip them from
