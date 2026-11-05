@@ -39,8 +39,12 @@ content. The page leaves out the Maintenance section and dependency entries:
 a digest.
 
 The page shows ten releases at a time, and later pages are at
-`/changelog/<page>`. The left menu lists every release and links to it on its
-page. A release with a post shows a link to that post.
+`/changelog/<page>`. The left menu lists every release, grouped by minor
+version, and links to it on its page. The menu marks the release that is
+currently in view. A release with a post shows a link to that post.
+
+Each `**Action required:**` paragraph moves out of its entry and into an
+"Action required" box below the release date.
 
 ## Posts
 

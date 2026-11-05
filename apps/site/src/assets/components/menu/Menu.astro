@@ -11,20 +11,28 @@ type item = {
   slug: string;
 };
 
-const { sections, baseUrl }: { sections: Sections; baseUrl: string } =
-  Astro.props;
+const {
+  sections,
+  baseUrl,
+  current = Astro.url.pathname.replace(/\/$/, ""),
+}: { sections: Sections; baseUrl: string; current?: string } = Astro.props;
 ---
 
 <ul>
   {
     sections.map((section) => (
-      <li class="mb-4">
-        <h5 class="capitalize font-medium text-sm mt-3 mb-2">
+      <li class="mb-6">
+        <h5 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
           {section.title}
         </h5>
-        <ul class="border-l border-solid border-stone-300 ml-2 pl-2">
+        <ul class="ml-2 border-l border-solid border-stone-300">
           {section.items.map((item) => (
-            <Item title={item.title} baseUrl={baseUrl} slug={item.slug} />
+            <Item
+              title={item.title}
+              baseUrl={baseUrl}
+              slug={item.slug}
+              current={current}
+            />
           ))}
         </ul>
       </li>

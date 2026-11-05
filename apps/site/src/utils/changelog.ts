@@ -3,10 +3,16 @@ export type Release = {
   version: string;
   date: string;
   body: string;
+  actions: string[];
   pullRequests: number[];
 };
 
 type Line = { text: string; fenced: boolean };
+
+type ReleaseSection = {
+  title: string;
+  items: { title: string; slug: string }[];
+};
 
 export const RELEASES_PER_PAGE = 10;
 
@@ -17,6 +23,7 @@ const MAINTENANCE_HEADING = /^### Maintenance$/;
 const DEPENDENCY_BULLET = /^- (Bump `|Update the `.+` digest)/;
 const FENCE = /^(```|~~~)/;
 const PULL_REQUEST = /\[#(\d+)\]/g;
+const ACTION_MARKER = "**Action required:**";
 
 function getLines(text: string): Line[] {
   let open = false;
@@ -35,17 +42,25 @@ function getLines(text: string): Line[] {
 
 // A heading waits in `pending` until content follows it, so a section that
 // held only dependency entries leaves no empty heading behind.
-function getBody(lines: Line[]): string {
+function getContent(lines: Line[]): { body: string; actions: string[] } {
+  const actions: string[][] = [];
   const kept: string[] = [];
   const pending: { level: number; text: string }[] = [];
+  let inAction = false;
   let maintenance = false;
   let skipping = false;
+
+  function flushHeadings() {
+    kept.push(...pending.splice(0).flatMap((entry) => [entry.text, ""]));
+  }
 
   for (const { text, fenced } of lines) {
     const heading = fenced ? null : text.match(ENTRY_HEADING);
 
     if (heading) {
       const level = heading[1].length;
+
+      inAction = false;
 
       if (level === 3) {
         maintenance = MAINTENANCE_HEADING.test(text);
@@ -69,6 +84,8 @@ function getBody(lines: Line[]): string {
     }
 
     if (text === "" && !fenced) {
+      inAction = false;
+
       if (pending.length === 0) {
         kept.push(text);
       }
@@ -76,10 +93,26 @@ function getBody(lines: Line[]): string {
       continue;
     }
 
-    kept.push(...pending.splice(0).flatMap((entry) => [entry.text, ""]), text);
+    if (inAction) {
+      actions.at(-1)?.push(text);
+      continue;
+    }
+
+    flushHeadings();
+
+    if (!fenced && text.startsWith(ACTION_MARKER)) {
+      inAction = true;
+      actions.push([text.slice(ACTION_MARKER.length).trim()]);
+      continue;
+    }
+
+    kept.push(text);
   }
 
-  return kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return {
+    actions: actions.map((action) => action.join(" ")),
+    body: kept.join("\n").replace(/\n{3,}/g, "\n\n").trim(),
+  };
 }
 
 export function parseChangelog(text: string): Release[] {
@@ -98,7 +131,7 @@ export function parseChangelog(text: string): Release[] {
   return sections.map(({ version, date, lines }) => ({
     version,
     date,
-    body: getBody(lines),
+    ...getContent(lines),
     pullRequests: lines.flatMap(({ text }) =>
       [...text.matchAll(PULL_REQUEST)].map((match) => Number(match[1])),
     ),
@@ -110,4 +143,22 @@ export function getReleaseHref(version: string, index: number): string {
   const path = page === 1 ? "/changelog" : `/changelog/${page}`;
 
   return `${path}#${version}`;
+}
+
+export function getReleaseSections(releases: Release[]): ReleaseSection[] {
+  const sections: ReleaseSection[] = [];
+
+  releases.forEach(({ version }, index) => {
+    const title = version.split(".").slice(0, 2).join(".");
+    const item = { title: version, slug: getReleaseHref(version, index) };
+    const section = sections.at(-1);
+
+    if (section?.title === title) {
+      section.items.push(item);
+    } else {
+      sections.push({ title, items: [item] });
+    }
+  });
+
+  return sections;
 }

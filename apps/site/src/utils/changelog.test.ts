@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   getReleaseHref,
+  getReleaseSections,
+  type Release,
   parseChangelog,
   RELEASES_PER_PAGE,
 } from "./changelog";
@@ -132,6 +134,56 @@ The build now runs in Docker.
     expect(pullRequests).toEqual([1]);
   });
 
+  it("should move action paragraphs out of their entries", () => {
+    const [{ actions, body }] = parseChangelog(`## 1.0.0 (2026-11-02)
+
+### Fixes
+
+#### Send recovery links ${link(1)}
+
+Administrators can send a link.
+
+**Action required:** Send each user a
+recovery link.
+
+Users get a notice.
+
+#### Change the port ${link(2)}
+
+**Action required:** Update your proxy.
+`);
+
+    expect(actions).toEqual([
+      "Send each user a recovery link.",
+      "Update your proxy.",
+    ]);
+    expect(body).toBe(
+      `### Fixes\n\n#### Send recovery links ${link(1)}\n\nAdministrators can send a link.\n\nUsers get a notice.\n\n#### Change the port ${link(2)}`,
+    );
+  });
+
+  it("should return no actions for a release with none", () => {
+    const [{ actions }] = parseChangelog(changelog);
+
+    expect(actions).toEqual([]);
+  });
+
+  it("should leave an action marker in a code fence", () => {
+    const fence = "```md\n**Action required:** Example.\n```";
+
+    const [{ actions, body }] = parseChangelog(`## 1.0.0 (2026-11-02)
+
+### Fixes
+
+#### Show an example ${link(1)}
+
+${fence}
+`);
+
+    expect(actions).toEqual([]);
+    expect(body).toContain(fence);
+  });
+
   it("should collect each pull request before it removes entries", () => {
     const [latest, previous] = parseChangelog(changelog);
 
@@ -176,6 +228,50 @@ describe("getReleaseHref", () => {
     );
     expect(getReleaseHref("0.9.0", RELEASES_PER_PAGE * 2)).toBe(
       "/changelog/3#0.9.0",
+    );
+  });
+});
+
+describe("getReleaseSections", () => {
+  function release(version: string): Release {
+    return {
+      version,
+      date: "2026-11-04",
+      body: "",
+      actions: [],
+      pullRequests: [],
+    };
+  }
+
+  it("groups releases by minor version and keeps their order", () => {
+    expect(
+      getReleaseSections([
+        release("2.1.1"),
+        release("2.1.0"),
+        release("2.0.0"),
+      ]),
+    ).toEqual([
+      {
+        title: "2.1",
+        items: [
+          { title: "2.1.1", slug: "/changelog#2.1.1" },
+          { title: "2.1.0", slug: "/changelog#2.1.0" },
+        ],
+      },
+      {
+        title: "2.0",
+        items: [{ title: "2.0.0", slug: "/changelog#2.0.0" }],
+      },
+    ]);
+  });
+
+  it("links each release to the page that holds it", () => {
+    const releases = Array.from({ length: RELEASES_PER_PAGE + 1 }, (_, index) =>
+      release(`1.0.${RELEASES_PER_PAGE - index}`),
+    );
+
+    expect(getReleaseSections(releases)[0].items.at(-1)?.slug).toBe(
+      "/changelog/2#1.0.0",
     );
   });
 });

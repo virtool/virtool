@@ -108,6 +108,8 @@ page after you sign in. It keeps the search terms and filters in the link.
 When administrators must do something after they upgrade, start that paragraph
 of the details with `**Action required:**`. The Release pull request body
 copies each of these paragraphs into an "Action required" section at the top.
+The site changelog shows them in an "Action required" box at the top of the
+release.
 
 If users can't see the change, use `maintenance`. Examples are a schema
 preparation, a change to how images build, and a dependency update. This type

@@ -1,4 +1,6 @@
 ---
+import { formatDate } from "@utils/date";
+
 const { post, releaseHref } = Astro.props;
 ---
 
@@ -11,5 +13,5 @@ const { post, releaseHref } = Astro.props;
       </>
     )
   }
-  <time datetime={post.date}>{post.date}</time>
+  <time datetime={post.date}>{formatDate(post.date)}</time>
 </p>

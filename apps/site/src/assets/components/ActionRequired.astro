@@ -1,0 +1,22 @@
+---
+import Alert from "@components/Alert.astro";
+import { renderMarkdown } from "@utils/markdown";
+import { TriangleAlert } from "@lucide/astro";
+
+const { actions }: { actions: string[] } = Astro.props;
+
+const html = renderMarkdown(
+  actions.length === 1
+    ? actions[0]
+    : actions.map((action) => `- ${action}`).join("\n"),
+);
+---
+
+{
+  actions.length > 0 && (
+    <Alert title="Action required" variant="warning">
+      <TriangleAlert slot="icon" />
+      <Fragment set:html={html} />
+    </Alert>
+  )
+}

@@ -1,16 +1,17 @@
 ---
+import ActionRequired from "@components/ActionRequired.astro";
 import Menu from "@components/menu/Menu.astro";
 import Note from "@components/Note.astro";
 import Layout from "@layouts/Layout.astro";
 import {
-  getReleaseHref,
+  getReleaseSections,
   parseChangelog,
   RELEASES_PER_PAGE,
 } from "@utils/changelog";
+import { formatDate } from "@utils/date";
 import { loadPosts } from "@utils/loadPosts";
+import { renderMarkdown } from "@utils/markdown";
 import type { GetStaticPaths } from "astro";
-import { micromark } from "micromark";
-import { gfm, gfmHtml } from "micromark-extension-gfm";
 import changelog from "../../../../web/CHANGELOG.md?raw";
 
 export const getStaticPaths = (({ paginate }) => {
@@ -19,15 +20,7 @@ export const getStaticPaths = (({ paginate }) => {
   return paginate(releases, {
     pageSize: RELEASES_PER_PAGE,
     props: {
-      sections: [
-        {
-          title: "Releases",
-          items: releases.map(({ version }, index) => ({
-            title: version,
-            slug: getReleaseHref(version, index),
-          })),
-        },
-      ],
+      sections: getReleaseSections(releases),
     },
   });
 }) satisfies GetStaticPaths;
@@ -37,10 +30,7 @@ const { released } = await loadPosts();
 
 const releases = page.data.map((release) => ({
   ...release,
-  html: micromark(release.body, {
-    extensions: [gfm()],
-    htmlExtensions: [gfmHtml()],
-  }),
+  html: renderMarkdown(release.body),
   posts: released.filter(({ version }) => version === release.version),
 }));
 ---
@@ -48,19 +38,21 @@ const releases = page.data.map((release) => ({
 <Layout title="Changelog">
   <div class="flex gap-16">
     <div
-      class="shrink-0 self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto"
+      class="shrink-0 self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto tabular-nums"
+      data-release-menu
     >
       <Menu sections={sections} />
     </div>
     <div class="prose max-w-4xl">
       <h1>Changelog</h1>
       {
-        releases.map(({ version, date, html, posts }) => (
+        releases.map(({ version, date, actions, html, posts }) => (
           <section id={version} class="scroll-mt-24">
-            <h2>{version}</h2>
-            <p class="text-stone-600">
-              <time datetime={date}>{date}</time>
+            <h2 class="mb-1">{version}</h2>
+            <p class="mt-0 text-stone-600">
+              <time datetime={date}>{formatDate(date)}</time>
             </p>
+            <ActionRequired actions={actions} />
             {posts.map(({ slug, title }) => (
               <Note color="blue">
                 <a href={`/posts/${slug}`}>Read the post: {title}</a>
@@ -96,3 +88,61 @@ const releases = page.data.map((release) => ({
     </div>
   </div>
 </Layout>
+
+<script>
+  const SCROLL_OFFSET = 100;
+
+  const menu = document.querySelector<HTMLElement>("[data-release-menu]");
+  const sections = [...document.querySelectorAll<HTMLElement>("section[id]")];
+
+  if (menu && sections.length > 0) {
+    const links = new Map(
+      [...menu.querySelectorAll("a")].map((link) => [link.hash.slice(1), link]),
+    );
+
+    function revealLink(link: HTMLElement, container: HTMLElement) {
+      const bottom = link.offsetTop + link.offsetHeight;
+
+      if (
+        link.offsetTop < container.scrollTop ||
+        bottom > container.scrollTop + container.clientHeight
+      ) {
+        container.scrollTop = link.offsetTop - container.clientHeight / 2;
+      }
+    }
+
+    function getCurrentSection() {
+      const isAtEnd =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 1;
+
+      if (isAtEnd) {
+        return sections.at(-1);
+      }
+
+      return (
+        sections.findLast(
+          (section) => section.getBoundingClientRect().top <= SCROLL_OFFSET,
+        ) ?? sections[0]
+      );
+    }
+
+    function updateCurrentLink() {
+      const link = links.get(getCurrentSection()?.id ?? "");
+
+      if (!link || link.hasAttribute("aria-current")) {
+        return;
+      }
+
+      for (const other of links.values()) {
+        other.removeAttribute("aria-current");
+      }
+
+      link.setAttribute("aria-current", "location");
+      revealLink(link, menu);
+    }
+
+    updateCurrentLink();
+    window.addEventListener("scroll", updateCurrentLink, { passive: true });
+  }
+</script>
