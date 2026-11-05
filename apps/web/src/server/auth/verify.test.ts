@@ -59,6 +59,7 @@ describe("verifyBrowserPrincipal", () => {
 			verifyBrowserPrincipal(db, new Request("https://virtool.test/"), resolve),
 		).resolves.toMatchObject({
 			kind: "browser",
+			handle: "alice",
 			sessionId: seeded.sessionId,
 			userId,
 		});
@@ -127,6 +128,7 @@ describe("verifyApiKey", () => {
 
 		await expect(verifyApiKey(db, "ALICE", key)).resolves.toEqual({
 			kind: "api_key",
+			handle: "alice",
 			keyId: row?.id,
 			permissions: { ...emptyPermissions(), upload_file: true },
 			userId,
