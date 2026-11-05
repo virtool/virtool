@@ -282,8 +282,11 @@ prefix and no period. Keep them under 72 characters. See
   app must name that app in a change file, or `Knope / Check` fails.
   Write one with `knope document-change`. Write it for users: a summary of
   what they will see, then details when they need more. See
-  [Release notes](CONTRIBUTING.md#release-notes). Use Knope package names
-  (`virtool`, `create-sample`, `create-subtraction`, `pathoscope`, `nuvs`).
+  [Release notes](CONTRIBUTING.md#release-notes). If users can't see the
+  change, use the `maintenance` type. It releases a patch and stays out of the
+  main GitHub Release notes. It must not contain `**Action required:**`. Use
+  Knope package names (`virtool`, `create-sample`, `create-subtraction`,
+  `pathoscope`, `nuvs`).
   Do not use empty change files. A pull request that affects no image app
   needs none. The `no-release` label waives the check. See [Releases](docs/ci.md#releases).
 - Image build inputs (`image-build`, `workflow-tools`, and the Rust crates) are

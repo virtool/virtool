@@ -4,10 +4,10 @@
 // does not count. The `no-release` label waives the coverage rule, not the
 // format rule.
 //
-// Knope ignores a change file with a quoted or unknown package name, and
-// accepts one with no summary, so this check rejects them itself. Knope ends
-// the summary at the first line break, so a wrapped summary becomes a cut-off
-// heading.
+// Knope ignores a change file with a quoted or unknown package name, deletes
+// one with an unknown type without an entry, and accepts one with no summary,
+// so this check rejects them itself. Knope ends the summary at the first line
+// break, so a wrapped summary becomes a cut-off heading.
 //
 // The workspace graph is coarse: a change to any module of a shared package
 // marks every app that depends on the package, even when the app bundles none

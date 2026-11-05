@@ -31,13 +31,14 @@ must name that app in a change file, or `Knope / Check` fails.
 
 Install Knope with `mise install`. The version is pinned in `mise.toml`.
 
-Run `knope document-change`. Select the packages to bump, the bump level
-(`patch`, `minor`, or `major`), and write a summary. The command writes a
-Markdown file in `.changeset/`. Edit the file to add details, then commit it
-with your change.
+Run `knope document-change`. Select the packages to bump, the change type
+(`patch`, `minor`, `major`, or `maintenance`), and write a summary. The command
+writes a Markdown file in `.changeset/`. Edit the file to add details, then
+commit it with your change.
 
-A change file has YAML front matter that lists Knope package names with a bump
-level. The summary follows it:
+A change file has YAML front matter that lists Knope package names with a
+change type. Each package can have a different type. The summary follows the
+front matter:
 
 ```md
 ---
@@ -72,8 +73,9 @@ change file for the workflows. See [Releases](docs/ci.md#releases).
 
 A pull request that affects no image app needs no change file. Empty change files are not allowed.
 Changes to tests, test data, and Markdown affect no app. When a pull request
-affects an app but ships nothing to users, such as a refactor, add the
-`no-release` label. The label waives the check.
+affects an app but needs no release, such as a refactor, add the `no-release`
+label. The label waives the check. To release a change that users can't see,
+use `maintenance`.
 
 Merging to `main` opens or updates a **Release** pull request that applies the
 pending bumps and updates the changelogs. Merging it publishes the images and
@@ -107,8 +109,14 @@ When administrators must do something after they upgrade, start that paragraph
 of the details with `**Action required:**`. The Release pull request body
 copies each of these paragraphs into an "Action required" section at the top.
 
-When users can't see a change, for example a change to how images build, write
-only a one-line summary. The summary must say that nothing changes for users.
+If users can't see the change, use `maintenance`. Examples are a schema
+preparation, a change to how images build, and a dependency update. This type
+releases a patch. `CHANGELOG.md` lists the change in a Maintenance section. The
+GitHub Release and the Release pull request show that section collapsed.
+
+A change that uses `maintenance` must not contain `**Action required:**`, or
+`Knope / Check` fails. Use `patch`, `minor`, or `major` for that change, so that
+the action stays in the main notes.
 
 Run `knope prepare-release --dry-run` to see the changelog entry.
 
