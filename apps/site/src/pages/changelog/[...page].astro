@@ -2,11 +2,13 @@
 import ActionRequired from "@components/ActionRequired.astro";
 import Menu from "@components/menu/Menu.astro";
 import Note from "@components/Note.astro";
+import PullRequestLink from "@components/PullRequestLink.astro";
 import Layout from "@layouts/Layout.astro";
 import {
   getReleaseSections,
   parseChangelog,
   RELEASES_PER_PAGE,
+  splitPullRequestLinks,
 } from "@utils/changelog";
 import { formatDate } from "@utils/date";
 import { loadPosts } from "@utils/loadPosts";
@@ -30,7 +32,7 @@ const { released } = await loadPosts();
 
 const releases = page.data.map((release) => ({
   ...release,
-  html: renderMarkdown(release.body),
+  parts: splitPullRequestLinks(renderMarkdown(release.body)),
   posts: released.filter(({ version }) => version === release.version),
 }));
 ---
@@ -46,7 +48,7 @@ const releases = page.data.map((release) => ({
     <div class="prose max-w-4xl">
       <h1>Changelog</h1>
       {
-        releases.map(({ version, date, actions, html, posts }) => (
+        releases.map(({ version, date, actions, parts, posts }) => (
           <section id={version} class="scroll-mt-24">
             <h2 class="mb-1">{version}</h2>
             <p class="mt-0 text-stone-600">
@@ -58,7 +60,13 @@ const releases = page.data.map((release) => ({
                 <a href={`/posts/${slug}`}>Read the post: {title}</a>
               </Note>
             ))}
-            <Fragment set:html={html} />
+            {parts.map((part) =>
+              typeof part === "number" ? (
+                <PullRequestLink number={part} />
+              ) : (
+                <Fragment set:html={part} />
+              ),
+            )}
           </section>
         ))
       }

@@ -5,6 +5,7 @@ import {
   type Release,
   parseChangelog,
   RELEASES_PER_PAGE,
+  splitPullRequestLinks,
 } from "./changelog";
 
 function link(number: number) {
@@ -273,5 +274,25 @@ describe("getReleaseSections", () => {
     expect(getReleaseSections(releases)[0].items.at(-1)?.slug).toBe(
       "/changelog/2#1.0.0",
     );
+  });
+});
+
+describe("splitPullRequestLinks", () => {
+  function anchor(number: number) {
+    return `<a href="https://github.com/virtool/virtool/pull/${number}">#${number}</a>`;
+  }
+
+  it("should separate each pull request link from the markup", () => {
+    expect(
+      splitPullRequestLinks(
+        `<h4>Encrypt links (${anchor(1)})</h4>\n<ul>\n<li>Fix it (${anchor(2)})</li>\n</ul>`,
+      ),
+    ).toEqual(["<h4>Encrypt links", 1, "</h4>\n<ul>\n<li>Fix it", 2, "</li>\n</ul>"]);
+  });
+
+  it("should keep other links in the markup", () => {
+    const html = `<p>See <a href="https://www.virtool.ca">#1</a> and (<a href="https://example.com">#2</a>)</p>`;
+
+    expect(splitPullRequestLinks(html)).toEqual([html]);
   });
 });
