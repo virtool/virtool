@@ -21,6 +21,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { openEmailTemplate } from "@virtool/data/email/link";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
@@ -308,12 +309,12 @@ it("drops an unsafe redirect from the remediation verification link", async () =
 	});
 
 	const [queued] = await db.select().from(emailOutbox);
-	if (queued?.template.type !== "email_verification") {
+	const opened =
+		queued && openEmailTemplate(keyring, queued.template, queued.link);
+	if (opened?.type !== "email_verification") {
 		throw new Error("expected an email verification message");
 	}
-	const fragment = new URLSearchParams(
-		new URL(queued.template.verifyUrl).hash.slice(1),
-	);
+	const fragment = new URLSearchParams(new URL(opened.verifyUrl).hash.slice(1));
 	expect(fragment.has("token")).toBe(true);
 	expect(fragment.has("redirect")).toBe(false);
 });
@@ -351,12 +352,12 @@ it("requires the emailed token before marking a remediated email verified", asyn
 	});
 
 	const [queued] = await db.select().from(emailOutbox);
-	if (queued?.template.type !== "email_verification") {
+	const opened =
+		queued && openEmailTemplate(keyring, queued.template, queued.link);
+	if (opened?.type !== "email_verification") {
 		throw new Error("expected an email verification message");
 	}
-	const fragment = new URLSearchParams(
-		new URL(queued.template.verifyUrl).hash.slice(1),
-	);
+	const fragment = new URLSearchParams(new URL(opened.verifyUrl).hash.slice(1));
 	const token = fragment.get("token");
 	expect(fragment.get("redirect")).toBe("/samples");
 	if (!token) {
@@ -404,11 +405,13 @@ it("verifies cross-browser without authentication and lets the original browser 
 		email: "alice@example.com",
 	});
 	const [queued] = await db.select().from(emailOutbox);
-	if (queued?.template.type !== "email_verification") {
+	const opened =
+		queued && openEmailTemplate(keyring, queued.template, queued.link);
+	if (opened?.type !== "email_verification") {
 		throw new Error("expected an email verification message");
 	}
 	const token = new URLSearchParams(
-		new URL(queued.template.verifyUrl).hash.slice(1),
+		new URL(opened.verifyUrl).hash.slice(1),
 	).get("token");
 	if (!token) {
 		throw new Error("expected verification token");

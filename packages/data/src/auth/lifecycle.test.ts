@@ -1,5 +1,6 @@
 import { eq, isNull } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
+import { createKeyring } from "../crypto/keyring";
 import type { Db } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
@@ -7,6 +8,7 @@ import { settings } from "../db/schema/settings";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { openEmailTemplate } from "../email/link";
 import { seedSettings } from "../settings/test/fixtures";
 import { UserNotFoundError } from "../users/data";
 import {
@@ -29,6 +31,11 @@ import {
 import { hashPassword, verifyPassword } from "./password";
 import { SetupCredentialError } from "./setup";
 import { seedSetupSession, seedSetupToken, seedUser } from "./test/fixtures";
+
+const keyring = createKeyring(
+	Buffer.alloc(32, 1).toString("base64"),
+	undefined,
+);
 
 let database: TestDatabase;
 let db: Db;
@@ -57,6 +64,7 @@ async function startOfflineEmailRemediation(userId: number, email: string) {
 	const result = await startEmailRemediation(db, {
 		deliveryAvailable: false,
 		email,
+		keyring,
 		getVerificationUrl: () => "https://virtool.test/unused",
 		userId,
 	});
@@ -347,6 +355,7 @@ describe("completeEmailRemediation", () => {
 		await startEmailRemediation(db, {
 			deliveryAvailable: true,
 			email: "new@example.com",
+			keyring,
 			getVerificationUrl: (token) =>
 				`https://virtool.test/email-remediation-verify?token=${token}`,
 			userId,
@@ -372,6 +381,7 @@ describe("completeEmailRemediation", () => {
 				startEmailRemediation(db, {
 					deliveryAvailable: false,
 					email: "second@example.com",
+					keyring,
 					getVerificationUrl: () => "https://virtool.test/unused",
 					userId,
 				}),
@@ -415,6 +425,7 @@ describe("completeEmailRemediation", () => {
 				startEmailRemediation(db, {
 					deliveryAvailable: true,
 					email: "first@example.com",
+					keyring,
 					getVerificationUrl: (token) =>
 						`https://virtool.test/email-remediation-verify?token=${token}`,
 					userId,
@@ -422,6 +433,7 @@ describe("completeEmailRemediation", () => {
 				startEmailRemediation(other.db, {
 					deliveryAvailable: true,
 					email: "second@example.com",
+					keyring,
 					getVerificationUrl: (token) =>
 						`https://virtool.test/email-remediation-verify?token=${token}`,
 					userId,
@@ -439,12 +451,15 @@ describe("completeEmailRemediation", () => {
 			}
 			const attempts = await Promise.allSettled(
 				messages.map((message) => {
-					if (message.template.type !== "email_verification") {
+					const opened = openEmailTemplate(
+						keyring,
+						message.template,
+						message.link,
+					);
+					if (opened?.type !== "email_verification") {
 						throw new Error("expected verification message");
 					}
-					const token = new URL(message.template.verifyUrl).searchParams.get(
-						"token",
-					);
+					const token = new URL(opened.verifyUrl).searchParams.get("token");
 					if (!token) {
 						throw new Error("expected verification token");
 					}
@@ -563,6 +578,7 @@ describe("completeEmailRemediation", () => {
 				startEmailRemediation(db, {
 					deliveryAvailable: true,
 					email: "ada@example.com",
+					keyring,
 					getVerificationUrl: () => "https://virtool.test/verify",
 					userId,
 				}),
@@ -588,6 +604,7 @@ describe("completeEmailRemediation", () => {
 			startEmailRemediation(db, {
 				deliveryAvailable: false,
 				email: "ada@example.com",
+				keyring,
 				getVerificationUrl: () => "https://virtool.test/unused",
 				userId,
 			}),
@@ -773,6 +790,7 @@ describe("email remediation journey", () => {
 		await startEmailRemediation(db, {
 			deliveryAvailable: true,
 			email: "ada@example.com",
+			keyring,
 			getVerificationUrl: (token) =>
 				`https://virtool.test/email-remediation-verify#token=${token}`,
 			userId,
@@ -797,6 +815,7 @@ describe("email remediation journey", () => {
 		});
 		await resendEmailRemediation(db, {
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl: (token) =>
 				`https://virtool.test/email-remediation-verify#token=${token}`,
 			userId,
@@ -812,6 +831,7 @@ describe("email remediation journey", () => {
 		await seedSettings(db, { emailEnabled: true });
 		const input = {
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl: (token: string) =>
 				`https://virtool.test/email-remediation-verify#token=${token}`,
 			userId,
@@ -832,6 +852,7 @@ describe("email remediation journey", () => {
 		await startEmailRemediation(db, {
 			deliveryAvailable: true,
 			email: "ada@example.com",
+			keyring,
 			getVerificationUrl: () => "https://virtool.test/verify",
 			setupSessionId: setup.sessionId,
 			userId,

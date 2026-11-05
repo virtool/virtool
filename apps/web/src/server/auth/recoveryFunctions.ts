@@ -27,7 +27,7 @@ import { SetupCredentialError } from "@virtool/data/auth/setup";
 import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
 import { config } from "../config";
 import {
 	getPublicLink,
@@ -107,6 +107,7 @@ export const requestAccountEmailChangeFn = createServerFn({ method: "POST" })
 				userId: context.principal.userId,
 				email: data.email,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
+				keyring,
 				getVerificationUrl,
 			});
 		} catch (error) {
@@ -193,6 +194,7 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 						userId,
 						purpose: "password_recovery",
 						deliveryAvailable: true,
+						keyring,
 						getRecoveryUrl: (token) =>
 							getPublicLink("/recover", {
 								token,
@@ -271,6 +273,7 @@ export const issueAdministratorRecoveryFn = createServerFn({ method: "POST" })
 				purpose: "administrator_recovery",
 				issuerUserId: context.principal.userId,
 				deliveryAvailable,
+				keyring,
 				getRecoveryUrl: (token) =>
 					getPublicLink("/recover", {
 						token,

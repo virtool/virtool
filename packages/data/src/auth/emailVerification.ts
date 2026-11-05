@@ -4,11 +4,11 @@ import {
 	normalizeEmail,
 } from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
-
+import type { Keyring } from "../crypto/keyring";
 import type { Db, DbOrTx } from "../db/pg";
 import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
-import { enqueueEmail } from "../email/outbox";
+import { enqueueLinkEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { claimEmail } from "./email";
@@ -40,6 +40,7 @@ export type QueueEmailVerificationInput = {
 	sourceEmail: string;
 	handle: string;
 	getVerificationUrl: (token: string) => string;
+	keyring: Keyring;
 };
 
 /** Issue a verification token and queue its message in the caller's transaction. */
@@ -54,7 +55,7 @@ export async function queueEmailVerificationInTransaction(
 		sourceEmail: input.sourceEmail,
 		lifetimeMs: EMAIL_VERIFICATION_LIFETIME_MS,
 	});
-	const queued = await enqueueEmail(tx, {
+	const queued = await enqueueLinkEmail(tx, input.keyring, {
 		idempotencyKey: `email_verification/${input.userId}/${issued.tokenId}`,
 		recipient: input.candidateEmail,
 		setupTokenId: issued.tokenId,
@@ -74,6 +75,7 @@ export type BeginEmailVerificationInput = {
 	email: string;
 	deliveryAvailable: boolean;
 	getVerificationUrl: (token: string) => string;
+	keyring: Keyring;
 };
 
 /** The non-secret result of queuing an email-verification challenge. */
@@ -151,6 +153,7 @@ export async function beginEmailVerification(
 			sourceEmail: user.email,
 			handle: user.handle,
 			getVerificationUrl: input.getVerificationUrl,
+			keyring: input.keyring,
 		});
 		if (!issued.queued) {
 			throw new EmailVerificationUnavailableError();

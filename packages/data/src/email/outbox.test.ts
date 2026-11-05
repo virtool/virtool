@@ -1,15 +1,19 @@
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createKeyring } from "../crypto/keyring";
 import type { Db, DbOrTx } from "../db/pg";
 import { type EmailOutboxRow, emailOutbox } from "../db/schema/emailOutbox";
 import { settings } from "../db/schema/settings";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { seedSettings } from "../settings/test/fixtures";
+import { openEmailTemplate } from "./link";
 import {
 	claimDueEmails,
 	countEmailOutbox,
 	type EnqueueEmailInput,
+	type EnqueueLinkEmailInput,
 	enqueueEmail,
+	enqueueLinkEmail,
 	failEmail,
 	markEmailAccepted,
 	pruneEmailOutbox,
@@ -42,14 +46,9 @@ async function disableSending(): Promise<void> {
 
 function input(overrides: Partial<EnqueueEmailInput> = {}): EnqueueEmailInput {
 	return {
-		idempotencyKey: "email_verification/1/1",
+		idempotencyKey: "password_changed/1/1",
 		recipient: "someone@example.com",
-		template: {
-			expiresInHours: 72,
-			type: "email_verification",
-			username: "alice",
-			verifyUrl: "https://virtool.example/verify?token=abc",
-		},
+		template: { type: "password_changed", username: "alice" },
 		...overrides,
 	};
 }
@@ -101,7 +100,7 @@ describe("enqueueEmail", () => {
 
 		expect(row.status).toBe("queued");
 		expect(row.attempt_count).toBe(0);
-		expect(row.template.type).toBe("email_verification");
+		expect(row.template.type).toBe("password_changed");
 		expect(row.template_version).toBe(EMAIL_TEMPLATE_VERSION);
 	});
 
@@ -200,6 +199,148 @@ describe("enqueueEmail", () => {
 
 		expect(result.created).toBe(true);
 		expect((await readRow(result.outboxId)).status).toBe("queued");
+	});
+});
+
+describe("enqueueLinkEmail", () => {
+	const keyring = createKeyring(
+		Buffer.alloc(32, 1).toString("base64"),
+		undefined,
+	);
+	const url = "https://virtool.example/verify#token=abc";
+	const linkInput: EnqueueLinkEmailInput = {
+		idempotencyKey: "email_verification/1/1",
+		recipient: "someone@example.com",
+		template: {
+			expiresInHours: 72,
+			type: "email_verification",
+			username: "alice",
+			verifyUrl: url,
+		},
+	};
+
+	async function queueLink(): Promise<number> {
+		const result = await enqueueLinkEmail(db, keyring, linkInput);
+
+		if (result.status !== "queued") {
+			throw new Error("expected the message to be queued");
+		}
+
+		return result.outboxId;
+	}
+
+	it("stores the link only as ciphertext", async () => {
+		const row = await readRow(await queueLink());
+
+		expect(JSON.stringify(row)).not.toContain("token=abc");
+		expect(row.template).toEqual({
+			expiresInHours: 72,
+			type: "email_verification",
+			username: "alice",
+		});
+		expect(row.link?.purpose).toBe("email_link");
+	});
+
+	it("hands the delivery loop an envelope that opens to the link", async () => {
+		await queueLink();
+
+		const [claimed] = await claimDueEmails(db, claimOptions);
+
+		if (!claimed) {
+			throw new Error("expected a claimed row");
+		}
+
+		expect(openEmailTemplate(keyring, claimed.template, claimed.link)).toEqual(
+			linkInput.template,
+		);
+	});
+
+	it("discards the message when the keyring cannot encrypt", async () => {
+		await expect(
+			enqueueLinkEmail(db, createKeyring(undefined, undefined), linkInput),
+		).resolves.toEqual({ status: "discarded" });
+		expect(await db.select().from(emailOutbox)).toEqual([]);
+	});
+
+	it("keeps the envelope across a retry", async () => {
+		const outboxId = await queueLink();
+		await claimDueEmails(db, claimOptions);
+
+		await scheduleEmailRetry(
+			db,
+			{ outboxId, claimToken: claimOptions.claimToken },
+			30,
+			"nope",
+		);
+
+		expect((await readRow(outboxId)).link).not.toBeNull();
+	});
+
+	it("clears the envelope on acceptance", async () => {
+		const outboxId = await queueLink();
+		await claimDueEmails(db, claimOptions);
+
+		await markEmailAccepted(
+			db,
+			{ outboxId, claimToken: claimOptions.claimToken },
+			"msg_1",
+		);
+
+		expect((await readRow(outboxId)).link).toBeNull();
+	});
+
+	it("clears the envelope and a legacy link on failure", async () => {
+		const outboxId = await queueLink();
+		await db
+			.update(emailOutbox)
+			.set({ template: linkInput.template })
+			.where(eq(emailOutbox.id, outboxId));
+		await claimDueEmails(db, claimOptions);
+
+		await failEmail(
+			db,
+			{ outboxId, claimToken: claimOptions.claimToken },
+			"nope",
+		);
+
+		const row = await readRow(outboxId);
+
+		expect(row.link).toBeNull();
+		expect(JSON.stringify(row)).not.toContain("token=abc");
+	});
+});
+
+describe("openEmailTemplate", () => {
+	const keyring = createKeyring(
+		Buffer.alloc(32, 1).toString("base64"),
+		undefined,
+	);
+
+	it("passes a notice through", () => {
+		const template = { type: "password_changed", username: "alice" } as const;
+
+		expect(openEmailTemplate(keyring, template, null)).toEqual(template);
+	});
+
+	it("passes a legacy template with a plaintext link through", () => {
+		const template = {
+			expiresInHours: 72,
+			type: "email_verification",
+			username: "alice",
+			verifyUrl: "https://virtool.example/verify#token=abc",
+		} as const;
+
+		expect(openEmailTemplate(keyring, template, null)).toEqual(template);
+	});
+
+	it("refuses a link template with neither an envelope nor a link", () => {
+		expect(
+			openEmailTemplate(
+				keyring,
+				{ type: "password_recovery", username: "alice" },
+				null,
+			),
+		).toBeNull();
 	});
 });
 

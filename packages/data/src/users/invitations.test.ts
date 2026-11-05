@@ -6,6 +6,7 @@ import {
 	inspectAccountSetup,
 } from "../auth/lifecycle";
 import { seedUser } from "../auth/test/fixtures";
+import { createKeyring } from "../crypto/keyring";
 import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
@@ -23,6 +24,11 @@ import {
 	InvitationNotEligibleError,
 	regenerateInvitation,
 } from "./invitations";
+
+const keyring = createKeyring(
+	Buffer.alloc(32, 1).toString("base64"),
+	undefined,
+);
 
 let database: TestDatabase;
 let db: Db;
@@ -50,6 +56,7 @@ async function createInvitation() {
 		issuerUserId,
 		deliveryIntent: "copy_only",
 		deliveryAvailable: false,
+		keyring,
 		getSetupUrl: (token) => `https://virtool.test/account-setup#token=${token}`,
 	});
 	if (!created.setupToken) {
@@ -86,6 +93,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "copy_only",
 			deliveryAvailable: false,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -123,6 +131,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "email",
 			deliveryAvailable: true,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -139,6 +148,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "email",
 			deliveryAvailable: true,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -153,6 +163,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "email" as const,
 			deliveryAvailable: true,
+			keyring,
 			getSetupUrl: (token: string) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		};
@@ -180,6 +191,7 @@ describe("account invitations", () => {
 			issuerUserId: first.invitation.issuerUserId,
 			deliveryIntent: "copy_only",
 			deliveryAvailable: false,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -210,6 +222,7 @@ describe("account invitations", () => {
 				groups: [999_999],
 				deliveryIntent: "copy_only",
 				deliveryAvailable: false,
+				keyring,
 				getSetupUrl: (token) =>
 					`https://virtool.test/account-setup#token=${token}`,
 			}),
@@ -226,6 +239,7 @@ describe("account invitations", () => {
 			issuerUserId: created.invitation.issuerUserId,
 			deliveryIntent: "copy_only",
 			deliveryAvailable: false,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -308,6 +322,7 @@ describe("account invitations", () => {
 			handle: "Ada",
 			password: "a-real-password",
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl: (token) =>
 				`https://virtool.test/verify-email?token=${token}`,
 		});
@@ -339,6 +354,7 @@ describe("account invitations", () => {
 					issuerUserId: created.invitation.issuerUserId,
 					deliveryIntent: "copy_only",
 					deliveryAvailable: false,
+					keyring,
 					getSetupUrl: (token) =>
 						`https://virtool.test/account-setup#token=${token}`,
 				}),

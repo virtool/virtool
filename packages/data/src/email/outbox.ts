@@ -1,4 +1,7 @@
-import type { EmailTemplate } from "@virtool/contracts";
+import type {
+	EmailLinkTemplate,
+	EmailNoticeTemplate,
+} from "@virtool/contracts";
 import {
 	and,
 	asc,
@@ -10,16 +13,17 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
+import type { EncryptedValue, Keyring } from "../crypto/keyring";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupTokens } from "../db/schema/setup";
 import { nowUtc, secondsAgo } from "../db/time";
+import { type StoredEmailTemplate, sealEmailLink } from "./link";
 import { isEmailEnabled } from "./settings";
 import { EMAIL_TEMPLATE_VERSION } from "./templates";
 
-/** What {@link enqueueEmail} needs to queue one logical message. */
-export type EnqueueEmailInput = {
+type EnqueueInput = {
 	/**
 	 * A stable domain key, e.g. `email_verification/{userId}/{tokenId}`.
 	 * Duplicate enqueues under the same key return the existing row.
@@ -28,27 +32,40 @@ export type EnqueueEmailInput = {
 	/** Do not attempt delivery before this time. Defaults to now. */
 	notBefore?: Date;
 	recipient: string;
-	/** The setup token whose link the message carries, if any. */
-	setupTokenId?: number;
-	template: EmailTemplate;
 };
 
-/** What {@link enqueueEmail} returns: a queued row's identity, or a discard. */
+/** What {@link enqueueEmail} needs to queue one notice. */
+export type EnqueueEmailInput = EnqueueInput & {
+	template: EmailNoticeTemplate;
+};
+
+/** What {@link enqueueLinkEmail} needs to queue one message with a bearer link. */
+export type EnqueueLinkEmailInput = EnqueueInput & {
+	/** The setup token whose link the message carries. */
+	setupTokenId?: number;
+	template: EmailLinkTemplate;
+};
+
+/** What enqueueing returns: a queued row's identity, or a discard. */
 export type EnqueueEmailResult =
 	| { status: "queued"; created: boolean; outboxId: number }
 	| { status: "discarded" };
 
 /**
- * Queue one message, returning the existing row for a duplicate key.
+ * Write one outbox row, returning the existing row for a duplicate key.
  *
  * While sending is switched off the message is discarded and no row is
  * written. Holding it instead would let an administrator re-enable delivery
  * days later and send an authentication link nobody is waiting for. Discarding
  * is an ordinary outcome, not a failure.
  */
-export async function enqueueEmail(
+async function insertEmail(
 	db: DbOrTx,
-	input: EnqueueEmailInput,
+	input: EnqueueInput & {
+		link?: EncryptedValue;
+		setupTokenId?: number;
+		template: StoredEmailTemplate;
+	},
 ): Promise<EnqueueEmailResult> {
 	if (!(await isEmailEnabled(db))) {
 		return { status: "discarded" };
@@ -61,6 +78,7 @@ export async function enqueueEmail(
 				attempt_count: 0,
 				created_at: nowUtc(),
 				idempotency_key: input.idempotencyKey,
+				link: input.link,
 				next_attempt_at: input.notBefore ?? nowUtc(),
 				recipient: input.recipient,
 				setup_token_id: input.setupTokenId,
@@ -86,6 +104,35 @@ export async function enqueueEmail(
 	return { status: "queued", created: false, outboxId: existing.id };
 }
 
+/** Queue one notice. See {@link insertEmail} for the discard rule. */
+export async function enqueueEmail(
+	db: DbOrTx,
+	input: EnqueueEmailInput,
+): Promise<EnqueueEmailResult> {
+	return insertEmail(db, input);
+}
+
+/**
+ * Queue one message with a bearer link, storing the link only as ciphertext.
+ *
+ * The message is discarded when the keyring cannot encrypt, because the link
+ * must not reach the database in plaintext. The caller's discard handling
+ * offers the user another route. See {@link insertEmail} for the other rule.
+ */
+export async function enqueueLinkEmail(
+	db: DbOrTx,
+	keyring: Keyring,
+	input: EnqueueLinkEmailInput,
+): Promise<EnqueueEmailResult> {
+	const sealed = sealEmailLink(keyring, input.template);
+
+	if (sealed === null) {
+		return { status: "discarded" };
+	}
+
+	return insertEmail(db, { ...input, ...sealed });
+}
+
 /** A row handed to the delivery loop by {@link claimDueEmails}. */
 export type ClaimedEmail = {
 	/** Including the attempt this claim just started. */
@@ -93,8 +140,9 @@ export type ClaimedEmail = {
 	createdAt: Date;
 	id: number;
 	idempotencyKey: string;
+	link: EncryptedValue | null;
 	recipient: string;
-	template: EmailTemplate;
+	template: StoredEmailTemplate;
 	templateVersion: number;
 };
 
@@ -194,6 +242,7 @@ export async function claimDueEmails(
 				createdAt: emailOutbox.created_at,
 				id: emailOutbox.id,
 				idempotencyKey: emailOutbox.idempotency_key,
+				link: emailOutbox.link,
 				recipient: emailOutbox.recipient,
 				template: emailOutbox.template,
 				templateVersion: emailOutbox.template_version,
@@ -205,6 +254,7 @@ export async function claimDueEmails(
 		createdAt: row.createdAt,
 		id: row.id,
 		idempotencyKey: row.idempotencyKey,
+		link: row.link,
 		recipient: row.recipient,
 		template: row.template,
 		templateVersion: row.templateVersion,
@@ -226,6 +276,18 @@ export type EmailResultTarget = {
 	outboxId: number;
 };
 
+/**
+ * The columns that clear a row's bearer link once it can no longer be sent.
+ *
+ * The template fields cover rows queued before links were encrypted.
+ */
+function clearLink() {
+	return {
+		link: null,
+		template: sql`${emailOutbox.template} - 'setupUrl' - 'verifyUrl' - 'recoveryUrl'`,
+	};
+}
+
 /** Record provider acceptance, or return `false` if the claim was lost. */
 export async function markEmailAccepted(
 	db: Db,
@@ -235,6 +297,7 @@ export async function markEmailAccepted(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
+			...clearLink(),
 			accepted_at: nowUtc(),
 			claim_expires_at: null,
 			claim_token: null,
@@ -279,6 +342,7 @@ export async function failEmail(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
+			...clearLink(),
 			claim_expires_at: null,
 			claim_token: null,
 			last_error: error,

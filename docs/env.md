@@ -111,8 +111,9 @@ recovery codes undecryptable, so rotate it deliberately.
 ## Encryption key
 
 Secrets managed by Virtool are stored in Postgres in purpose-bound AES-256-GCM
-envelopes. The Resend API key and the NCBI API key are the consumers today. The
-process-wide encryption key is supplied through the environment:
+envelopes. The Resend API key, the NCBI API key, and the links in queued email
+are the consumers today. The process-wide encryption key is supplied through
+the environment:
 
 | Variable | Value |
 | --- | --- |
@@ -143,5 +144,8 @@ through `VT_ENCRYPTION_KEY_PREVIOUS`. Unsetting it stops email delivery and
 drops GenBank lookups to the rate limit NCBI applies without a key. Saving a
 replacement API key rewrites that one secret under the active key;
 `reencryptNcbiApiKey` does the same without the plaintext, and is idempotent.
+
+Queued email is not re-encrypted. A queued message whose link can't be decrypted
+fails, so keep the previous key for at least the six-hour delivery deadline.
 Doing it for every secret in the background is tracked in
 [VIR-3114](https://linear.app/virtool/issue/VIR-3114/handle-encryption-key-rotation-automatically).

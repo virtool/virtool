@@ -1,7 +1,7 @@
 import type { EmailTemplate } from "@virtool/contracts";
 
 /** The template payload revision stored on queued email. */
-export const EMAIL_TEMPLATE_VERSION = 3;
+export const EMAIL_TEMPLATE_VERSION = 4;
 
 /** The oldest queued template payload this release can still render. */
 export const MIN_EMAIL_TEMPLATE_VERSION = 1;
