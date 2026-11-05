@@ -617,6 +617,8 @@ jobs:
       ${{ !cancelled() && needs.release-ghcr-matrix.outputs.any == 'true'
       && needs.release-ghcr.result == 'success' }}
     steps:
+      # GitHub refuses a new tag on a commit whose workflow files differ from
+      # `main` unless the token can write workflows.
       - name: Token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -624,6 +626,7 @@ jobs:
           client-id: ${{ vars.RELEASER_CLIENT_ID }}
           private-key: ${{ secrets.RELEASER_PRIVATE_KEY }}
           permission-contents: write
+          permission-workflows: write
       # The full history holds each package's ref and its changelog.
       - name: Checkout
         uses: actions/checkout@v7
