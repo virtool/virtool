@@ -13,6 +13,7 @@ export const RELEASES_PER_PAGE = 10;
 const RELEASE_HEADING = /^## (\S+) \((\d{4}-\d{2}-\d{2})\)$/;
 const ENTRY_HEADING = /^(#{3,}) /;
 const DEPENDENCY_HEADING = /^#### Update (.+ )?dependencies\b/;
+const MAINTENANCE_HEADING = /^### Maintenance$/;
 const DEPENDENCY_BULLET = /^- (Bump `|Update the `.+` digest)/;
 const FENCE = /^(```|~~~)/;
 const PULL_REQUEST = /\[#(\d+)\]/g;
@@ -37,6 +38,7 @@ function getLines(text: string): Line[] {
 function getBody(lines: Line[]): string {
   const kept: string[] = [];
   const pending: { level: number; text: string }[] = [];
+  let maintenance = false;
   let skipping = false;
 
   for (const { text, fenced } of lines) {
@@ -45,7 +47,11 @@ function getBody(lines: Line[]): string {
     if (heading) {
       const level = heading[1].length;
 
-      skipping = DEPENDENCY_HEADING.test(text);
+      if (level === 3) {
+        maintenance = MAINTENANCE_HEADING.test(text);
+      }
+
+      skipping = maintenance || DEPENDENCY_HEADING.test(text);
 
       while (pending.length > 0 && (pending.at(-1)?.level ?? 0) >= level) {
         pending.pop();

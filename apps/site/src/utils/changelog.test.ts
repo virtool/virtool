@@ -90,16 +90,46 @@ describe("parseChangelog", () => {
   it("should keep a section heading when another entry remains", () => {
     const [{ body }] = parseChangelog(`## 1.0.0 (2026-11-02)
 
-### Maintenance
+### Fixes
 
-- Prepare the schema ${link(1)}
+- Fix the sample list ${link(1)}
 
 #### Update dependencies ${link(2)}
 
 - Bump \`zod\` from 3.0.0 to 4.0.0.
 `);
 
-    expect(body).toBe(`### Maintenance\n\n- Prepare the schema ${link(1)}`);
+    expect(body).toBe(`### Fixes\n\n- Fix the sample list ${link(1)}`);
+  });
+
+  it("should remove the maintenance section and keep what follows", () => {
+    const [{ body }] = parseChangelog(`## 1.0.0 (2026-11-02)
+
+### Maintenance
+
+- Prepare the schema ${link(1)}
+
+#### Move the build ${link(2)}
+
+The build now runs in Docker.
+
+### Features
+
+- Add a sample filter ${link(3)}
+`);
+
+    expect(body).toBe(`### Features\n\n- Add a sample filter ${link(3)}`);
+  });
+
+  it("should keep pull requests from the maintenance section", () => {
+    const [{ pullRequests }] = parseChangelog(`## 1.0.0 (2026-11-02)
+
+### Maintenance
+
+- Prepare the schema ${link(1)}
+`);
+
+    expect(pullRequests).toEqual([1]);
   });
 
   it("should collect each pull request before it removes entries", () => {
