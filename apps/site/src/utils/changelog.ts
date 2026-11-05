@@ -8,6 +8,8 @@ export type Release = {
 
 type Line = { text: string; fenced: boolean };
 
+export const RELEASES_PER_PAGE = 10;
+
 const RELEASE_HEADING = /^## (\S+) \((\d{4}-\d{2}-\d{2})\)$/;
 const ENTRY_HEADING = /^(#{3,}) /;
 const DEPENDENCY_HEADING = /^#### Update (.+ )?dependencies\b/;
@@ -95,4 +97,11 @@ export function parseChangelog(text: string): Release[] {
       [...text.matchAll(PULL_REQUEST)].map((match) => Number(match[1])),
     ),
   }));
+}
+
+export function getReleaseHref(version: string, index: number): string {
+  const page = Math.floor(index / RELEASES_PER_PAGE) + 1;
+  const path = page === 1 ? "/changelog" : `/changelog/${page}`;
+
+  return `${path}#${version}`;
 }

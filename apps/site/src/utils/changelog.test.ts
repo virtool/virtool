@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseChangelog } from "./changelog";
+import {
+  getReleaseHref,
+  parseChangelog,
+  RELEASES_PER_PAGE,
+} from "./changelog";
 
 function link(number: number) {
   return `([#${number}](https://github.com/virtool/virtool/pull/${number}))`;
@@ -125,5 +129,23 @@ ${fence}
 
     expect(releases).toHaveLength(1);
     expect(releases[0].body).toContain(fence);
+  });
+});
+
+describe("getReleaseHref", () => {
+  it("links a release on the first page to the base path", () => {
+    expect(getReleaseHref("2.0.0", 0)).toBe("/changelog#2.0.0");
+    expect(getReleaseHref("1.0.0", RELEASES_PER_PAGE - 1)).toBe(
+      "/changelog#1.0.0",
+    );
+  });
+
+  it("links a later release to its numbered page", () => {
+    expect(getReleaseHref("1.0.0", RELEASES_PER_PAGE)).toBe(
+      "/changelog/2#1.0.0",
+    );
+    expect(getReleaseHref("0.9.0", RELEASES_PER_PAGE * 2)).toBe(
+      "/changelog/3#0.9.0",
+    );
   });
 });

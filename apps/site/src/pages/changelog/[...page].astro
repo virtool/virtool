@@ -1,11 +1,38 @@
 ---
+import Menu from "@components/menu/Menu.astro";
 import Layout from "@layouts/Layout.astro";
-import { parseChangelog } from "@utils/changelog";
+import {
+  getReleaseHref,
+  parseChangelog,
+  RELEASES_PER_PAGE,
+} from "@utils/changelog";
+import type { GetStaticPaths } from "astro";
 import { micromark } from "micromark";
 import { gfm, gfmHtml } from "micromark-extension-gfm";
-import changelog from "../../../web/CHANGELOG.md?raw";
+import changelog from "../../../../web/CHANGELOG.md?raw";
 
-const releases = parseChangelog(changelog).map((release) => ({
+export const getStaticPaths = (({ paginate }) => {
+  const releases = parseChangelog(changelog);
+
+  return paginate(releases, {
+    pageSize: RELEASES_PER_PAGE,
+    props: {
+      sections: [
+        {
+          title: "Releases",
+          items: releases.map(({ version }, index) => ({
+            title: version,
+            slug: getReleaseHref(version, index),
+          })),
+        },
+      ],
+    },
+  });
+}) satisfies GetStaticPaths;
+
+const { page, sections } = Astro.props;
+
+const releases = page.data.map((release) => ({
   ...release,
   html: micromark(release.body, {
     extensions: [gfm()],
@@ -15,18 +42,48 @@ const releases = parseChangelog(changelog).map((release) => ({
 ---
 
 <Layout title="Changelog">
-  <div class="prose max-w-4xl">
-    <h1>Changelog</h1>
-    {
-      releases.map(({ version, date, html }) => (
-        <section>
-          <h2>{version}</h2>
-          <p class="text-stone-600">
-            <time datetime={date}>{date}</time>
-          </p>
-          <Fragment set:html={html} />
-        </section>
-      ))
-    }
+  <div class="flex gap-16">
+    <div
+      class="shrink-0 self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto"
+    >
+      <Menu sections={sections} />
+    </div>
+    <div class="prose max-w-4xl">
+      <h1>Changelog</h1>
+      {
+        releases.map(({ version, date, html }) => (
+          <section id={version} class="scroll-mt-24">
+            <h2>{version}</h2>
+            <p class="text-stone-600">
+              <time datetime={date}>{date}</time>
+            </p>
+            <Fragment set:html={html} />
+          </section>
+        ))
+      }
+      {
+        page.lastPage > 1 && (
+          <nav class="not-prose mt-12 flex items-center justify-between text-stone-600">
+            {page.url.prev ? (
+              <a class="hover:text-stone-900" href={page.url.prev}>
+                Newer releases
+              </a>
+            ) : (
+              <span />
+            )}
+            <span>
+              Page {page.currentPage} of {page.lastPage}
+            </span>
+            {page.url.next ? (
+              <a class="hover:text-stone-900" href={page.url.next}>
+                Older releases
+              </a>
+            ) : (
+              <span />
+            )}
+          </nav>
+        )
+      }
+    </div>
   </div>
 </Layout>
