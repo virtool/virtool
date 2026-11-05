@@ -30,6 +30,17 @@ All commands are run from the monorepo root:
 | `pnpm --filter @virtool/site run deploy`      | Build and deploy to Cloudflare Workers         |
 | `pnpm --filter @virtool/site astro -- --help` | Run the Astro command-line tool                |
 
+## Changelog
+
+The `/changelog` page shows the `virtool` releases. The build reads them from
+the web app changelog, which Knope generates, so the page needs no separate
+content. The page leaves out dependency entries: `Update … dependencies`
+sections, and bullets that bump a dependency or update a digest.
+
+The page shows ten releases at a time, and later pages are at
+`/changelog/<page>`. The left menu lists every release and links to it on its
+page.
+
 ## Deployment
 
 GitHub Actions publishes the site from the latest `virtool` release, not from
