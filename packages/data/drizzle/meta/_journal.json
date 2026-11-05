@@ -330,6 +330,13 @@
       "when": 1793733583768,
       "tag": "0046_replace_forced_reset_credentials",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793899236311,
+      "tag": "0047_retire_force_reset",
+      "breakpoints": true
     }
   ]
 }

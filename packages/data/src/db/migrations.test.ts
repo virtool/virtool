@@ -90,6 +90,110 @@ it("keep journal timestamps strictly increasing by idx", () => {
 	}
 });
 
+type SnapshotTables = {
+	tables: Record<
+		string,
+		{ name: string; columns: Record<string, { name: string }> }
+	>;
+};
+
+// Migrations up to this one shipped before drops took two releases.
+const LAST_UNGUARDED_IDX = 47;
+
+/**
+ * Get what a migration drops in the same step that removes it from the mirror.
+ *
+ * A running server still declares anything that its release's mirror has, so
+ * it fails as soon as the migration applies.
+ */
+function getUnsafeDrops(
+	previous: SnapshotTables,
+	current: SnapshotTables,
+	migrationSql: string,
+): string[] {
+	const drops: string[] = [];
+
+	for (const [key, table] of Object.entries(previous.tables)) {
+		const currentTable = current.tables[key];
+
+		if (currentTable === undefined) {
+			if (migrationSql.includes(`DROP TABLE "${table.name}"`)) {
+				drops.push(table.name);
+			}
+			continue;
+		}
+
+		for (const { name } of Object.values(table.columns)) {
+			if (
+				currentTable.columns[name] === undefined &&
+				migrationSql.includes(`DROP COLUMN "${name}"`)
+			) {
+				drops.push(`${table.name}.${name}`);
+			}
+		}
+	}
+
+	return drops;
+}
+
+it("find drops that remove schema from the mirror in the same migration", () => {
+	const previous = {
+		tables: {
+			"public.kept": {
+				name: "kept",
+				columns: { a: { name: "a" }, b: { name: "b" } },
+			},
+			"public.gone": { name: "gone", columns: {} },
+		},
+	};
+	const current = {
+		tables: {
+			"public.kept": { name: "kept", columns: { a: { name: "a" } } },
+		},
+	};
+
+	expect(
+		getUnsafeDrops(
+			previous,
+			current,
+			'DROP TABLE "gone" CASCADE;ALTER TABLE "kept" DROP COLUMN "b";',
+		),
+	).toEqual(["kept.b", "gone"]);
+	expect(getUnsafeDrops(previous, current, "SELECT 1;")).toEqual([]);
+	expect(
+		getUnsafeDrops(current, current, 'ALTER TABLE "kept" DROP COLUMN "b";'),
+	).toEqual([]);
+});
+
+it("keep drops out of the migration that removes schema from the mirror", () => {
+	const journal = JSON.parse(readFileSync(JOURNAL_PATH, "utf8")) as {
+		entries: JournalEntry[];
+	};
+
+	function readSnapshot(idx: number): SnapshotTables {
+		const file = `${idx.toString().padStart(4, "0")}_snapshot.json`;
+
+		return JSON.parse(
+			readFileSync(`${MIGRATIONS_FOLDER}/meta/${file}`, "utf8"),
+		) as SnapshotTables;
+	}
+
+	for (const { idx, tag } of journal.entries) {
+		if (idx <= LAST_UNGUARDED_IDX) {
+			continue;
+		}
+
+		expect(
+			getUnsafeDrops(
+				readSnapshot(idx - 1),
+				readSnapshot(idx),
+				readFileSync(`${MIGRATIONS_FOLDER}/${tag}.sql`, "utf8"),
+			),
+			`${tag} must not drop schema that the previous release declares. See "Dropping a column" in the @virtool/data README`,
+		).toEqual([]);
+	}
+});
+
 async function describeSchema(client: PgClient) {
 	const columns = await client`
 		select table_name, column_name, data_type, is_nullable, column_default,
