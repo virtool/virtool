@@ -39,7 +39,22 @@ sections, and bullets that bump a dependency or update a digest.
 
 The page shows ten releases at a time, and later pages are at
 `/changelog/<page>`. The left menu lists every release and links to it on its
-page.
+page. A release with a post shows a link to that post.
+
+## Posts
+
+The `/posts` page lists all posts, newest first, with the type of each post.
+Each post is at `/posts/<slug>`. The slug comes from the file name, and the web
+app links to posts by slug, so do not rename a post after it is published.
+
+There are two types of post:
+
+- A `release` post names a pull request. The build gets the version and date
+  from the `virtool` release that contains it. The build hides a release post
+  with no matching release and logs a warning for it.
+- A `research` post has no release, and its author gives the date.
+
+See [Posts](../../CONTRIBUTING.md#posts) for how to write a post.
 
 ## Deployment
 

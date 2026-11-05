@@ -1,11 +1,13 @@
 ---
 import Menu from "@components/menu/Menu.astro";
+import Note from "@components/Note.astro";
 import Layout from "@layouts/Layout.astro";
 import {
   getReleaseHref,
   parseChangelog,
   RELEASES_PER_PAGE,
 } from "@utils/changelog";
+import { loadPosts } from "@utils/loadPosts";
 import type { GetStaticPaths } from "astro";
 import { micromark } from "micromark";
 import { gfm, gfmHtml } from "micromark-extension-gfm";
@@ -31,6 +33,7 @@ export const getStaticPaths = (({ paginate }) => {
 }) satisfies GetStaticPaths;
 
 const { page, sections } = Astro.props;
+const { released } = await loadPosts();
 
 const releases = page.data.map((release) => ({
   ...release,
@@ -38,6 +41,7 @@ const releases = page.data.map((release) => ({
     extensions: [gfm()],
     htmlExtensions: [gfmHtml()],
   }),
+  posts: released.filter(({ version }) => version === release.version),
 }));
 ---
 
@@ -51,12 +55,17 @@ const releases = page.data.map((release) => ({
     <div class="prose max-w-4xl">
       <h1>Changelog</h1>
       {
-        releases.map(({ version, date, html }) => (
+        releases.map(({ version, date, html, posts }) => (
           <section id={version} class="scroll-mt-24">
             <h2>{version}</h2>
             <p class="text-stone-600">
               <time datetime={date}>{date}</time>
             </p>
+            {posts.map(({ slug, title }) => (
+              <Note color="blue">
+                <a href={`/posts/${slug}`}>Read the post: {title}</a>
+              </Note>
+            ))}
             <Fragment set:html={html} />
           </section>
         ))

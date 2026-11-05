@@ -1,0 +1,55 @@
+---
+import Aside from "@components/Aside.astro";
+import Icon from "@components/Icon.astro";
+import Key from "@components/Key.astro";
+import MdxImage from "@components/MdxImage.astro";
+import Note from "@components/Note.astro";
+import PostMeta from "@components/PostMeta.astro";
+import Layout from "@layouts/Layout.astro";
+import { getReleaseHref } from "@utils/changelog";
+import { loadPosts } from "@utils/loadPosts";
+import { render } from "astro:content";
+
+export async function getStaticPaths() {
+  const { entries, hidden, published, releases } = await loadPosts();
+
+  for (const { slug, pr } of hidden) {
+    console.warn(`Hiding post "${slug}": no release contains #${pr}`);
+  }
+
+  return published.map((post) => ({
+    params: { slug: post.slug },
+    props: {
+      entry: entries.find(({ id }) => id === post.slug),
+      post,
+      releaseHref:
+        post.type === "release"
+          ? getReleaseHref(
+              post.version,
+              releases.findIndex(({ version }) => version === post.version),
+            )
+          : undefined,
+    },
+  }));
+}
+
+const { entry, post, releaseHref } = Astro.props;
+const { Content, components } = await render(entry);
+---
+
+<Layout title={post.title}>
+  <div class="prose max-w-4xl">
+    <h1>{post.title}</h1>
+    <PostMeta post={post} releaseHref={releaseHref} />
+    <Content
+      components={{
+        ...components,
+        Aside: Aside,
+        Icon: Icon,
+        Key: Key,
+        Note: Note,
+        img: MdxImage,
+      }}
+    />
+  </div>
+</Layout>

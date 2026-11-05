@@ -127,6 +127,64 @@ it directly are lost when anything else merges first.
 For a bigger release, add a change file that holds only the user-facing
 summary, such as a `minor` bump for `virtool` with a few paragraphs of prose.
 
+### Posts
+
+A post is an optional article on the site, at `/posts`. There are two types:
+
+| Type | Use |
+| --- | --- |
+| `release` | Explains a change in more detail than a changelog entry. The release in the changelog links to the post. |
+| `research` | Tells users about work that is not part of a release, such as a paper. |
+
+Add an MDX file to `apps/site/src/content/posts/`. If the post has images, put
+the post in its own directory as `index.mdx`, with the images beside it. The
+file or directory name is the slug, and the post URL is `/posts/<slug>`. Do not
+change the slug after the post is published, because links use it.
+
+Each post needs `type`, `title`, and `summary`. Write `summary` as one sentence,
+because it shows in the post list. The build fails if a field is missing.
+
+A `release` post also needs `pr`:
+
+```mdx
+---
+type: release
+title: Recover access with a one-time link
+summary: Administrators now send recovery links instead of setting passwords.
+pr: 4175
+---
+
+Write the post here.
+```
+
+A post cannot name its version, because Knope calculates the version later.
+Set `pr` to the number of the pull request that makes the change. The build
+finds that pull request in the `virtool` changelog, and gets the version and
+date from that release. The pull request must have a change file that names
+`virtool`, or the changelog will not contain it.
+
+Until that release exists, the site hides the post. The build logs a warning
+for each hidden post. If a post stays hidden after its release, make sure that
+`pr` is correct.
+
+A `research` post also needs `date`:
+
+```mdx
+---
+type: research
+title: A new method to find novel viruses
+summary: Our paper describes how Virtool finds viruses absent from references.
+date: 2026-12-01
+---
+
+Write the post here.
+```
+
+Merge a post through a normal pull request, not the Release pull request. A
+release post can be in the same pull request as the change, or in a different
+one. The site builds from the latest release, so a post goes live with the next
+release, not on a date that you choose.
+
 ### Upgrade Knope
 
 Renovate does not update `mise.toml`. To upgrade Knope, change `version` in
