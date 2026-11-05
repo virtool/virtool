@@ -146,6 +146,7 @@ function browserPrincipal(userId: number) {
 		kind: "browser" as const,
 		sessionId: 1,
 		createdAt: new Date(),
+		handle: "alice",
 		userId,
 	};
 }
@@ -230,7 +231,7 @@ describe("browser boundary", () => {
 				}),
 			},
 		});
-		expect(setUser).toHaveBeenCalledWith({ id: userId });
+		expect(setUser).toHaveBeenCalledWith({ id: userId, username: "alice" });
 		expect(setContext).toHaveBeenCalledWith("credential", {
 			kind: "browser",
 			id: session.sessionId,
@@ -301,6 +302,7 @@ describe("setup boundary", () => {
 			throw error;
 		}
 		expect(error.name).toBe(SETUP_REQUIRED_ERROR_NAME);
+		expect(setUser).toHaveBeenLastCalledWith({ id: userId });
 		expect((error as Error & { purpose: string }).purpose).toBe(
 			"account_completion",
 		);
@@ -333,10 +335,12 @@ describe("raw request boundary", () => {
 			),
 		).resolves.toEqual({
 			kind: "api_key",
+			handle: "alice",
 			keyId: row?.id,
 			permissions: { ...emptyPermissions(), upload_file: true },
 			userId,
 		});
+		expect(setUser).toHaveBeenLastCalledWith({ id: userId, username: "alice" });
 	});
 
 	it("does not fall back to a browser cookie after an invalid header", async () => {

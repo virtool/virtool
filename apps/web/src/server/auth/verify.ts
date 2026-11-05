@@ -62,6 +62,7 @@ export async function verifyBrowserPrincipal(
 
 	const identity = {
 		userId,
+		handle: row.handle,
 		sessionId,
 		createdAt: row.createdAt,
 	};
@@ -169,6 +170,7 @@ export async function verifyApiKey(
 		.select({
 			keyId: apiKeys.id,
 			userId: users.id,
+			handle: users.handle,
 			active: users.active,
 			lifecycleState: users.lifecycleState,
 			permissions: apiKeys.permissions,
@@ -196,6 +198,7 @@ export async function verifyApiKey(
 		kind: "api_key",
 		keyId: row.keyId,
 		userId: row.userId,
+		handle: row.handle,
 		permissions: { ...emptyPermissions(), ...row.permissions },
 	};
 }
