@@ -138,10 +138,10 @@ A post is an optional article on the site, at `/posts`. There are two types:
 | `release` | Explains a change in more detail than a changelog entry. The release in the changelog links to the post. |
 | `research` | Tells users about work that is not part of a release, such as a paper. |
 
-Add an MDX file to `apps/site/src/content/posts/`. If the post has images, put
-the post in its own directory as `index.mdx`, with the images beside it. The
-file or directory name is the slug, and the post URL is `/posts/<slug>`. Do not
-change the slug after the post is published, because links use it.
+Add an MDX file to the `posts` content collection of the site. If the post has
+images, put the post in its own directory as `index.mdx`, with the images beside
+it. The file or directory name is the slug, and the post URL is `/posts/<slug>`.
+Do not change the slug after the post is published, because links use it.
 
 Each post needs `type`, `title`, and `summary`. Write `summary` as one sentence,
 because it shows in the post list. The build fails if a field is missing.
