@@ -40,7 +40,7 @@ const releases = page.data.map((release) => ({
 <Layout title="Changelog">
   <div class="flex gap-16">
     <div
-      class="shrink-0 self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto tabular-nums"
+      class="w-32 shrink-0 self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto tabular-nums"
       data-release-menu
     >
       <Menu sections={sections} />
@@ -144,18 +144,34 @@ const releases = page.data.map((release) => ({
       }
     }
 
-    // The line moves down the window as the page scrolls, so that releases too
-    // short to reach the top of the window still become current.
+    // The line stays near the top of the window until the last release that can
+    // reach it has passed. It then moves down the window, so that the releases
+    // too close to the end of the page to reach the top still become current.
+    function getLine(visible: HTMLElement[]) {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+
+      const lastReachable = visible
+        .map((section) => section.getBoundingClientRect().top + window.scrollY)
+        .findLast((top) => top <= maxScroll + SCROLL_OFFSET);
+
+      const start = (lastReachable ?? SCROLL_OFFSET) - SCROLL_OFFSET;
+
+      if (window.scrollY <= start) {
+        return SCROLL_OFFSET;
+      }
+
+      const progress = (window.scrollY - start) / (maxScroll - start);
+
+      return SCROLL_OFFSET + progress * (window.innerHeight - SCROLL_OFFSET);
+    }
+
     function getCurrentId() {
       if (pinned) {
         return pinned.id;
       }
 
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
-      const line = SCROLL_OFFSET + progress * (window.innerHeight - SCROLL_OFFSET);
-
       const visible = sections.filter((section) => section.checkVisibility());
+      const line = getLine(visible);
 
       return (
         visible.findLast(
