@@ -12,7 +12,7 @@
     "deploy": "astro build && wrangler deploy",
     "astro": "astro",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "astro sync && tsc --noEmit"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.6",
