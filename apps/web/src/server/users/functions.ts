@@ -57,7 +57,7 @@ import {
 } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { createReplacementSession } from "../auth/sessionActions";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
 import { config } from "../config";
 import { isEmailDeliveryAvailable } from "../email/delivery";
 import { ClientError } from "../errors";
@@ -284,6 +284,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 				deliveryIntent: data.deliveryIntent,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
 				issuerUserId: context.principal.userId,
+				keyring,
 				getSetupUrl,
 			});
 			recordAccountLifecycle({
@@ -336,6 +337,7 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 				issuerUserId: context.principal.userId,
 				deliveryIntent: data.deliveryIntent ?? "copy_only",
 				deliveryAvailable: await isEmailDeliveryAvailable(),
+				keyring,
 				getSetupUrl,
 			});
 			recordAccountLifecycle({

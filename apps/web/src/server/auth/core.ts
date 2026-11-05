@@ -8,6 +8,7 @@ import {
 	createSetupSession,
 	invalidateSetupSession,
 } from "@virtool/data/auth/setup";
+import type { Keyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -100,6 +101,7 @@ export type CreateFirstUserInput = {
 	password: string;
 	deliveryAvailable: boolean;
 	getVerificationUrl: (token: string) => string;
+	keyring: Keyring;
 };
 
 /**

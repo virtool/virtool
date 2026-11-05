@@ -6,6 +6,7 @@ import {
 	inspectAccountSetup,
 } from "../auth/lifecycle";
 import { seedUser } from "../auth/test/fixtures";
+import { keyring } from "../crypto/test/fixtures";
 import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
@@ -50,6 +51,7 @@ async function createInvitation() {
 		issuerUserId,
 		deliveryIntent: "copy_only",
 		deliveryAvailable: false,
+		keyring,
 		getSetupUrl: (token) => `https://virtool.test/account-setup#token=${token}`,
 	});
 	if (!created.setupToken) {
@@ -86,6 +88,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "copy_only",
 			deliveryAvailable: false,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -123,6 +126,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "email",
 			deliveryAvailable: true,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -139,6 +143,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "email",
 			deliveryAvailable: true,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -153,6 +158,7 @@ describe("account invitations", () => {
 			issuerUserId,
 			deliveryIntent: "email" as const,
 			deliveryAvailable: true,
+			keyring,
 			getSetupUrl: (token: string) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		};
@@ -180,6 +186,7 @@ describe("account invitations", () => {
 			issuerUserId: first.invitation.issuerUserId,
 			deliveryIntent: "copy_only",
 			deliveryAvailable: false,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -191,6 +198,7 @@ describe("account invitations", () => {
 		await seedUser(db, { handle: "Ada" });
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token: created.setupToken,
 				handle: "ada",
 				password: "a-real-password",
@@ -210,6 +218,7 @@ describe("account invitations", () => {
 				groups: [999_999],
 				deliveryIntent: "copy_only",
 				deliveryAvailable: false,
+				keyring,
 				getSetupUrl: (token) =>
 					`https://virtool.test/account-setup#token=${token}`,
 			}),
@@ -226,6 +235,7 @@ describe("account invitations", () => {
 			issuerUserId: created.invitation.issuerUserId,
 			deliveryIntent: "copy_only",
 			deliveryAvailable: false,
+			keyring,
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
@@ -266,6 +276,7 @@ describe("account invitations", () => {
 	it("refuses to delete a user who accepted their invitation", async () => {
 		const created = await createInvitation();
 		await completeAccountSetup(db, {
+			keyring,
 			token: created.setupToken,
 			handle: "Ada",
 			password: "a-real-password",
@@ -279,6 +290,7 @@ describe("account invitations", () => {
 	it("accepts once and leaves copied-link email unverified", async () => {
 		const created = await createInvitation();
 		const accepted = await completeAccountSetup(db, {
+			keyring,
 			token: created.setupToken,
 			handle: "Ada",
 			password: "a-real-password",
@@ -294,6 +306,7 @@ describe("account invitations", () => {
 		expect(row?.emailVerified).toBe(false);
 		await expect(
 			completeAccountSetup(db, {
+				keyring,
 				token: created.setupToken,
 				password: "another-password",
 			}),
@@ -308,6 +321,7 @@ describe("account invitations", () => {
 			handle: "Ada",
 			password: "a-real-password",
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl: (token) =>
 				`https://virtool.test/verify-email?token=${token}`,
 		});
@@ -332,6 +346,7 @@ describe("account invitations", () => {
 		try {
 			const results = await Promise.allSettled([
 				completeAccountSetup(db, {
+					keyring,
 					token: created.setupToken,
 					password: "a-real-password",
 				}),
@@ -339,6 +354,7 @@ describe("account invitations", () => {
 					issuerUserId: created.invitation.issuerUserId,
 					deliveryIntent: "copy_only",
 					deliveryAvailable: false,
+					keyring,
 					getSetupUrl: (token) =>
 						`https://virtool.test/account-setup#token=${token}`,
 				}),

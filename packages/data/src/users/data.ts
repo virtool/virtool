@@ -57,6 +57,7 @@ import {
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
+import type { Keyring } from "../crypto/keyring";
 import { isForeignKeyViolation, isUniqueViolation } from "../db/errors";
 import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
@@ -1000,6 +1001,7 @@ export type CreateFirstAdministratorInput = {
 	password: string;
 	deliveryAvailable: boolean;
 	getVerificationUrl: (token: string) => string;
+	keyring: Keyring;
 };
 
 /** Create exactly one first administrator and optional verification message. */
@@ -1047,6 +1049,7 @@ export async function createFirstAdministrator(
 				sourceEmail: normalizeEmail(input.email),
 				handle: input.handle,
 				getVerificationUrl: input.getVerificationUrl,
+				keyring: input.keyring,
 			});
 			emailVerificationRequired = verification.queued;
 		}

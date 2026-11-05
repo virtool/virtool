@@ -1,10 +1,10 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
-
+import type { Keyring } from "../crypto/keyring";
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions } from "../db/schema/auth";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
-import { enqueueEmail } from "../email/outbox";
+import { enqueueLinkEmail } from "../email/outbox";
 import { EMAIL_DELIVERY_DEADLINE_SECONDS } from "../email/retry";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
@@ -43,6 +43,7 @@ export type IssueRecoveryLinkInput = {
 	issuerUserId?: number;
 	deliveryAvailable: boolean;
 	getRecoveryUrl: (token: string) => string;
+	keyring: Keyring;
 };
 
 /** An administrator's one-time link and bounded delivery result. */
@@ -169,7 +170,7 @@ export async function issueRecoveryLink(
 				delivery: "copy_only" as const,
 			};
 		}
-		const queued = await enqueueEmail(tx, {
+		const queued = await enqueueLinkEmail(tx, input.keyring, {
 			idempotencyKey: `${input.purpose}/${input.userId}/${issued.tokenId}`,
 			recipient: user.email,
 			setupTokenId: issued.tokenId,

@@ -10,7 +10,7 @@ import {
 	type User,
 } from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
-
+import type { Keyring } from "../crypto/keyring";
 import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
@@ -18,7 +18,7 @@ import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { nowUtc } from "../db/time";
-import { enqueueEmail } from "../email/outbox";
+import { enqueueLinkEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getUser, UserNotFoundError } from "../users/data";
@@ -145,6 +145,8 @@ export type CompleteAccountSetupInput = {
 	deliveryAvailable?: boolean;
 	/** Build a public verification URL if copied-link acceptance needs one. */
 	getVerificationUrl?: (token: string) => string;
+	/** Encrypts the verification link in the queued mail. */
+	keyring: Keyring;
 };
 
 /** A completed pending-account transition and its follow-up requirement. */
@@ -182,6 +184,7 @@ export async function completeAccountSetup(
 		handle: requestedHandle,
 		deliveryAvailable = false,
 		getVerificationUrl = () => "",
+		keyring,
 	}: CompleteAccountSetupInput,
 ): Promise<CompletedAccountSetup> {
 	const [preflight] = await db
@@ -317,6 +320,7 @@ export async function completeAccountSetup(
 					sourceEmail: email,
 					handle,
 					getVerificationUrl,
+					keyring,
 				});
 				emailVerificationRequired = verification.queued;
 			}
@@ -409,6 +413,8 @@ export type StartEmailRemediationInput = PrepareEmailRemediationInput & {
 	deliveryAvailable: boolean;
 	/** Build the public mailbox-challenge URL around the new bearer token. */
 	getVerificationUrl: (token: string) => string;
+	/** Encrypts the mailbox-challenge link. */
+	keyring: Keyring;
 	/** The restricted browser session to keep alive for the challenge lifetime. */
 	setupSessionId?: string;
 };
@@ -577,6 +583,7 @@ async function startEmailRemediationInTransaction(
 		deliveryAvailable,
 		email,
 		getVerificationUrl,
+		keyring,
 		setupSessionId,
 		userId,
 	}: StartEmailRemediationInput,
@@ -607,7 +614,7 @@ async function startEmailRemediationInTransaction(
 	if (!deliveryAvailable) {
 		return { status: "offline", token: issued.token };
 	}
-	const delivery = await enqueueEmail(tx, {
+	const delivery = await enqueueLinkEmail(tx, keyring, {
 		idempotencyKey: `email_remediation/${userId}/${issued.tokenId}`,
 		recipient: prepared.email,
 		setupTokenId: issued.tokenId,

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { openEmailTemplate } from "@virtool/data/email/link";
 import {
 	type ClaimedEmail,
 	claimDueEmails,
@@ -113,10 +114,20 @@ async function deliverOne(
 		return "failed";
 	}
 
+	const opened = openEmailTemplate(ctx.keyring, item.template, item.link);
+
+	if (opened === null) {
+		await failEmail(ctx.db, target, "the email link could not be decrypted");
+		ctx.metrics.recordEmailAttempt(template, "permanent");
+		logger.error({ ...base }, "email link could not be decrypted");
+
+		return "failed";
+	}
+
 	let rendered: RenderedEmail;
 
 	try {
-		rendered = renderEmailTemplate(item.template, item.templateVersion);
+		rendered = renderEmailTemplate(opened, item.templateVersion);
 	} catch (err) {
 		await failEmail(ctx.db, target, "the template payload failed to render");
 		ctx.metrics.recordEmailAttempt(template, "permanent");

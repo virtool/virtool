@@ -1,4 +1,3 @@
-import type { EmailTemplate } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	check,
@@ -11,6 +10,8 @@ import {
 	timestamp,
 	unique,
 } from "drizzle-orm/pg-core";
+import type { EncryptedValue } from "../../crypto/keyring";
+import type { StoredEmailTemplate } from "../../email/link";
 import { setupTokens } from "./setup";
 
 /** The delivery state of an email outbox row. */
@@ -27,6 +28,8 @@ export const emailOutbox = pgTable(
 		created_at: timestamp("created_at").notNull(),
 		idempotency_key: text("idempotency_key").notNull(),
 		last_error: text("last_error"),
+		/** The encrypted bearer link. Cleared when the row reaches a terminal state. */
+		link: jsonb("link").$type<EncryptedValue>(),
 		next_attempt_at: timestamp("next_attempt_at").notNull(),
 		provider_message_id: text("provider_message_id"),
 		recipient: text("recipient").notNull(),
@@ -37,7 +40,7 @@ export const emailOutbox = pgTable(
 		 */
 		setup_token_id: integer("setup_token_id"),
 		status: text("status").$type<EmailOutboxStatus>().notNull(),
-		template: jsonb("template").$type<EmailTemplate>().notNull(),
+		template: jsonb("template").$type<StoredEmailTemplate>().notNull(),
 		template_version: integer("template_version").notNull(),
 		terminal_at: timestamp("terminal_at"),
 	},

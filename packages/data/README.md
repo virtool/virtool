@@ -377,8 +377,9 @@ The Resend API key is encrypted under the environment-owned encryption key
 documented in [docs/env.md](../../docs/env.md#encryption-key). Neither the
 plaintext key nor its envelope may cross a transport boundary or reach a log.
 
-Features enqueue mail through `enqueueEmail(db, input)` in
-`src/email/outbox.ts` and nothing else:
+Features enqueue notices through `enqueueEmail(db, input)` and messages with a
+bearer link through `enqueueLinkEmail(db, keyring, input)`, and nothing
+else:
 
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.
@@ -389,7 +390,14 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 - Keep provider errors, retries, and the Resend SDK behind the email package.
 - Handle `{ status: "discarded" }`. It's an ordinary outcome, not an error:
   a flow that depends on the email must offer the user another route rather
-  than fail.
+  than fail. A link message is also discarded when the keyring can't encrypt.
+
+A bearer link never reaches the outbox in plaintext. `enqueueLinkEmail` removes
+the link from the template and stores it in the `link` envelope.
+`deliver_email` decrypts the envelope to render the message, and fails a row
+whose envelope it can't decrypt. Acceptance and failure clear the envelope.
+Rows queued in plaintext by an earlier release are sent as they are, and their
+links are cleared the same way.
 
 A password change, a completed recovery, and a completed email change each
 queue a notice in the
@@ -402,9 +410,9 @@ provider's `Retry-After` when it sends one. Retries stop at the delivery
 deadline in `src/email/retry.ts`, which stays inside the lifetime of the tokens
 in the auth-link templates; the attempt cap is only a backstop.
 
-Terminal rows are pruned after their configured retention periods. Template
-payloads remain stored until their rows are pruned; don't enqueue data that
-can't tolerate that retention.
+Terminal rows are pruned after their configured retention periods. Other
+template fields remain stored until their rows are pruned; don't put data that
+can't tolerate that retention in them.
 
 `sendEmailViaResend` in `src/email/send.ts` is the only module that talks to
 Resend, and its unit tests stub global `fetch` rather than the network. A failed

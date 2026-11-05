@@ -31,7 +31,7 @@ import { SetupCredentialError } from "@virtool/data/auth/setup";
 import { APIError } from "better-auth/api";
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
 import { config } from "../config";
 import {
 	getPublicLink,
@@ -282,6 +282,7 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 				email,
 				password: data.password,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
+				keyring,
 				getVerificationUrl,
 			});
 			await signInUsername(data.handle, data.password);
@@ -323,6 +324,7 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 				handle: data.handle,
 				password: data.password,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
+				keyring,
 				getVerificationUrl,
 			});
 			await signInUsername(completed.user.handle, data.password);
@@ -436,6 +438,7 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 			const result = await startEmailRemediation(db, {
 				deliveryAvailable: await isEmailDeliveryAvailable(),
 				email: data.email,
+				keyring,
 				getVerificationUrl: (token) =>
 					getRemediationVerificationUrl(token, data.redirect),
 				setupSessionId: context.principal.sessionId,
@@ -520,6 +523,7 @@ export const resendEmailRemediationFn = createServerFn({ method: "POST" })
 		try {
 			const result = await resendEmailRemediation(db, {
 				deliveryAvailable: await isEmailDeliveryAvailable(),
+				keyring,
 				getVerificationUrl: (token) =>
 					getRemediationVerificationUrl(token, data.redirect),
 				setupSessionId: context.principal.sessionId,
