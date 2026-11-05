@@ -74,6 +74,23 @@ it.
 Knope is installed with `mise`. Renovate does not update it. See
 [CONTRIBUTING.md](../CONTRIBUTING.md#upgrade-knope).
 
+## Site
+
+The `Site` workflow publishes [virtool.ca](https://www.virtool.ca) to Cloudflare
+Workers. It always builds from the tag of the latest `virtool` Release, so a
+push to `main` does not change the live site. A site-only fix goes live with the
+next release.
+
+The workflow runs:
+
+- after `Release / GitHub`, as the `Release / Site` job
+- daily, to get new data from GitHub Releases, such as `/releases/hmms.json`
+- when you start it manually
+
+The `CLOUDFLARE_API_TOKEN` secret and the `CLOUDFLARE_ACCOUNT_ID` Actions
+variable identify the Cloudflare account. The token needs permission to edit
+Workers. Only the deploy step can read it.
+
 ## Change-file check
 
 `Knope / Check` runs in its own workflow, so that a label change runs only this
