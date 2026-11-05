@@ -13,8 +13,8 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import {
-	type EnqueueEmailInput,
-	enqueueEmail,
+	type EnqueueLinkEmailInput,
+	enqueueLinkEmail,
 } from "@virtool/data/email/outbox";
 import {
 	EMAIL_DELIVERY_DEADLINE_SECONDS,
@@ -302,9 +302,9 @@ const template = {
 
 /** Enqueue a fixture message, failing the test if it was discarded. */
 async function queue(
-	overrides: Partial<EnqueueEmailInput> = {},
+	overrides: Partial<EnqueueLinkEmailInput> = {},
 ): Promise<{ created: boolean; outboxId: number }> {
-	const result = await enqueueEmail(db, {
+	const result = await enqueueLinkEmail(db, keyring, {
 		idempotencyKey: "email_verification/1/1",
 		recipient: "someone@example.com",
 		template,
@@ -348,6 +348,50 @@ describe("deliverEmailTask", () => {
 		expect(recorded.acceptedAges).toHaveLength(1);
 	});
 
+	it("sends the decrypted link and clears it after acceptance", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await queue();
+		const fetchMock = stubSend(jsonResponse(200, { id: "msg_1" }));
+
+		await runDrain();
+
+		const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+		expect(JSON.parse(String(init.body)).text).toContain(template.verifyUrl);
+
+		const row = await readOutboxRow(outboxId);
+
+		expect(row.status).toBe("accepted");
+		expect(row.link).toBeNull();
+	});
+
+	it("fails a row whose link cannot be decrypted", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await queue();
+		const other = keys().encrypt("email_link", template.verifyUrl);
+
+		if (!other.ok) {
+			throw new Error("expected ready keyring");
+		}
+
+		await db
+			.update(emailOutbox)
+			.set({ link: other.value })
+			.where(eq(emailOutbox.id, outboxId));
+		const fetchMock = stubSend(jsonResponse(200, { id: "msg_1" }));
+
+		await runDrain();
+
+		const row = await readOutboxRow(outboxId);
+
+		expect(fetchMock).not.toHaveBeenCalled();
+		expect(row.status).toBe("failed");
+		expect(row.link).toBeNull();
+		expect(recorded.attempts).toEqual([["email_verification", "permanent"]]);
+	});
+
 	it("sends queued version-one verification payloads without an expiry", async () => {
 		await seedEmailSettings();
 
@@ -355,6 +399,7 @@ describe("deliverEmailTask", () => {
 		await db
 			.update(emailOutbox)
 			.set({
+				link: null,
 				template: sql`'{"type":"email_verification","username":"alice","verifyUrl":"https://virtool.example/verify?token=abc"}'::jsonb`,
 				template_version: 1,
 			})

@@ -25,6 +25,15 @@ export type EmailTemplate =
 	| { type: "password_recovery"; username: string; recoveryUrl: string }
 	| { type: "test" };
 
+/** A transactional email template that carries a bearer link. */
+export type EmailLinkTemplate = Extract<
+	EmailTemplate,
+	{ type: "account_setup" | "email_verification" | "password_recovery" }
+>;
+
+/** A transactional email template that carries no bearer link. */
+export type EmailNoticeTemplate = Exclude<EmailTemplate, EmailLinkTemplate>;
+
 /** Whether transactional email can currently be delivered. */
 export type EmailAvailability =
 	| "unconfigured"

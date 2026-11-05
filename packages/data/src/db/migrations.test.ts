@@ -98,7 +98,7 @@ type SnapshotTables = {
 };
 
 // Migrations up to this one shipped before drops took two releases.
-const LAST_UNGUARDED_IDX = 47;
+const LAST_UNGUARDED_IDX = 48;
 
 /**
  * Get what a migration drops in the same step that removes it from the mirror.

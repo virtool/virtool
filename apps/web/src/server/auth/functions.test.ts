@@ -5,7 +5,7 @@ import {
 	seedSetupSession,
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
-import { createKeyring } from "@virtool/data/crypto/keyring";
+import { keyring } from "@virtool/data/crypto/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -21,6 +21,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { openEmailTemplate } from "@virtool/data/email/link";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
@@ -51,10 +52,6 @@ vi.mock("@tanstack/react-start/server", () => ({
 	},
 }));
 let db: Db;
-const keyring = createKeyring(
-	Buffer.alloc(32, 1).toString("base64"),
-	undefined,
-);
 let auth: ReturnType<typeof import("./betterAuth").createAuth>;
 vi.mock("../composition", () => ({
 	get db() {
@@ -103,6 +100,16 @@ beforeEach(async () => {
 	await db.delete(settings);
 	await db.delete(users);
 });
+
+async function readQueuedVerificationFragment() {
+	const [queued] = await db.select().from(emailOutbox);
+	const opened =
+		queued && openEmailTemplate(keyring, queued.template, queued.link);
+	if (opened?.type !== "email_verification") {
+		throw new Error("expected an email verification message");
+	}
+	return new URLSearchParams(new URL(opened.verifyUrl).hash.slice(1));
+}
 
 it("signs in with a persistent seven-day rolling session", async () => {
 	const userId = await seedUser(db, {
@@ -307,13 +314,7 @@ it("drops an unsafe redirect from the remediation verification link", async () =
 		redirect: "/\\example.com",
 	});
 
-	const [queued] = await db.select().from(emailOutbox);
-	if (queued?.template.type !== "email_verification") {
-		throw new Error("expected an email verification message");
-	}
-	const fragment = new URLSearchParams(
-		new URL(queued.template.verifyUrl).hash.slice(1),
-	);
+	const fragment = await readQueuedVerificationFragment();
 	expect(fragment.has("token")).toBe(true);
 	expect(fragment.has("redirect")).toBe(false);
 });
@@ -350,13 +351,7 @@ it("requires the emailed token before marking a remediated email verified", asyn
 		},
 	});
 
-	const [queued] = await db.select().from(emailOutbox);
-	if (queued?.template.type !== "email_verification") {
-		throw new Error("expected an email verification message");
-	}
-	const fragment = new URLSearchParams(
-		new URL(queued.template.verifyUrl).hash.slice(1),
-	);
+	const fragment = await readQueuedVerificationFragment();
 	const token = fragment.get("token");
 	expect(fragment.get("redirect")).toBe("/samples");
 	if (!token) {
@@ -403,13 +398,7 @@ it("verifies cross-browser without authentication and lets the original browser 
 	await callServerFn(handlers, "submitEmailRemediationFn", {
 		email: "alice@example.com",
 	});
-	const [queued] = await db.select().from(emailOutbox);
-	if (queued?.template.type !== "email_verification") {
-		throw new Error("expected an email verification message");
-	}
-	const token = new URLSearchParams(
-		new URL(queued.template.verifyUrl).hash.slice(1),
-	).get("token");
+	const token = (await readQueuedVerificationFragment()).get("token");
 	if (!token) {
 		throw new Error("expected verification token");
 	}

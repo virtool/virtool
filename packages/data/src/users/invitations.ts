@@ -11,12 +11,13 @@ import {
 	issueSetupTokenInTransaction,
 	lockUserSetupCredentials,
 } from "../auth/setup";
+import type { Keyring } from "../crypto/keyring";
 import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
-import { enqueueEmail } from "../email/outbox";
+import { enqueueLinkEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import {
@@ -38,6 +39,7 @@ export type InvitationIssueOptions = {
 	deliveryIntent: "copy_only" | "email";
 	deliveryAvailable: boolean;
 	getSetupUrl: (token: string) => string;
+	keyring: Keyring;
 };
 
 /** Inputs for atomically creating a pending account and its first invitation. */
@@ -73,7 +75,7 @@ async function issueInvitationInTransaction(
 
 	let delivery: InvitationDelivery = "copy_only";
 	if (requestedEmail) {
-		const queued = await enqueueEmail(tx, {
+		const queued = await enqueueLinkEmail(tx, options.keyring, {
 			idempotencyKey: `account_setup/${user.id}/${generation}`,
 			recipient: user.email,
 			setupTokenId: issued.tokenId,

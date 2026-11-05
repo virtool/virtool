@@ -4,6 +4,7 @@ import {
 	checkAccountCredentials,
 	normalizeEmail,
 } from "@virtool/contracts";
+import { createKeyring } from "@virtool/data/crypto/keyring";
 import { createDb, type Db } from "@virtool/data/db/pg";
 import { users } from "@virtool/data/db/schema/users";
 import { createEmitter } from "@virtool/data/events/emit";
@@ -50,6 +51,7 @@ export async function createAdministrator(
 			deliveryAvailable: false,
 			email,
 			getVerificationUrl: () => "",
+			keyring: createKeyring(undefined, undefined),
 			handle: input.handle,
 			password: input.password,
 		});

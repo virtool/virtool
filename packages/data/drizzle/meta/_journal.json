@@ -334,8 +334,15 @@
     {
       "idx": 47,
       "version": "7",
-      "when": 1793899236311,
-      "tag": "0047_retire_force_reset",
+      "when": 1793825777471,
+      "tag": "0047_encrypt_email_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1793900663042,
+      "tag": "0048_retire_force_reset",
       "breakpoints": true
     }
   ]

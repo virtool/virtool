@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { keyring } from "../crypto/test/fixtures";
 
 import type { Db } from "../db/pg";
 import { apiKeys } from "../db/schema/apiKeys";
@@ -87,6 +88,7 @@ describe("email verification", () => {
 			userId,
 			email: "ada@example.com",
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl(value) {
 				token = value;
 				return `https://virtool.test/verify-email#token=${value}`;
@@ -106,6 +108,7 @@ describe("email verification", () => {
 			userId,
 			email: " New@Example.com ",
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl(token) {
 				link = token;
 				return `https://virtool.test/verify-email#token=${token}`;
@@ -136,6 +139,7 @@ describe("email verification", () => {
 				userId,
 				email: "new@example.com",
 				deliveryAvailable: false,
+				keyring,
 				getVerificationUrl: () => "unused",
 			}),
 		).rejects.toThrow();
@@ -148,6 +152,7 @@ describe("email verification", () => {
 			userId,
 			email: "new@example.com",
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl: (token: string) =>
 				`https://virtool.test/verify-email#token=${token}`,
 		};
@@ -167,6 +172,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "password_recovery",
 			deliveryAvailable: true,
+			keyring,
 			getRecoveryUrl: () => "https://virtool.test/recover",
 		});
 		expect(issued.expiresAt.getTime() - Date.now()).toBeGreaterThan(
@@ -180,6 +186,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "password_recovery",
 			deliveryAvailable: true,
+			keyring,
 			getRecoveryUrl: () => "https://virtool.test/recover",
 		});
 		await changePassword(db, {
@@ -198,6 +205,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "administrator_recovery",
 			deliveryAvailable: false,
+			keyring,
 			getRecoveryUrl: () => "https://virtool.test/recover",
 		});
 		await setAdministratorRole(db, userId, "full");
@@ -219,6 +227,7 @@ describe("password recovery", () => {
 				issuerUserId,
 				purpose: "administrator_recovery",
 				deliveryAvailable: false,
+				keyring,
 				getRecoveryUrl: () => "https://virtool.test/recover",
 			}),
 		).rejects.toBeInstanceOf(RecoveryNotEligibleError);
@@ -232,6 +241,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "password_recovery",
 			deliveryAvailable: true,
+			keyring,
 			getRecoveryUrl: (token) => `https://virtool.test/recover#token=${token}`,
 		});
 		expect(issued.delivery).toBe("queued");
@@ -280,6 +290,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "administrator_recovery",
 			deliveryAvailable: false,
+			keyring,
 			getRecoveryUrl: (token) => `https://virtool.test/recover#token=${token}`,
 		});
 		expect(issued.delivery).toBe("copy_only");
@@ -289,6 +300,7 @@ describe("password recovery", () => {
 				userId,
 				purpose: "password_recovery",
 				deliveryAvailable: false,
+				keyring,
 				getRecoveryUrl: () => "unused",
 			}),
 		).rejects.toBeInstanceOf(RecoveryNotEligibleError);
@@ -305,6 +317,7 @@ describe("password recovery", () => {
 				userId,
 				purpose: "password_recovery",
 				deliveryAvailable: true,
+				keyring,
 				getRecoveryUrl: () => "unused",
 			}),
 		).rejects.toBeInstanceOf(RecoveryNotEligibleError);
@@ -312,6 +325,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "administrator_recovery",
 			deliveryAvailable: true,
+			keyring,
 			getRecoveryUrl: () => "unused",
 		});
 		expect(issued.delivery).toBe("copy_only");
@@ -366,6 +380,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "administrator_recovery",
 			deliveryAvailable: false,
+			keyring,
 			getRecoveryUrl: () => "unused",
 		});
 		await expect(
@@ -387,6 +402,7 @@ describe("password recovery", () => {
 			userId,
 			purpose: "administrator_recovery",
 			deliveryAvailable: false,
+			keyring,
 			getRecoveryUrl: () => "unused",
 		});
 		const results = await Promise.allSettled([
@@ -435,6 +451,7 @@ describe("security emails", () => {
 			userId,
 			email,
 			deliveryAvailable: true,
+			keyring,
 			getVerificationUrl(value) {
 				token = value;
 				return `https://virtool.test/verify-email#token=${value}`;
@@ -476,6 +493,7 @@ describe("security emails", () => {
 				userId,
 				purpose,
 				deliveryAvailable: true,
+				keyring,
 				getRecoveryUrl: (token) =>
 					`https://virtool.test/recover#token=${token}`,
 			});

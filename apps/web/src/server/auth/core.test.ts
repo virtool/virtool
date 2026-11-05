@@ -1,5 +1,6 @@
 import { hashPassword } from "@virtool/data/auth/password";
 import { seedSetupSession, seedUser } from "@virtool/data/auth/test/fixtures";
+import { createKeyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { authAccounts } from "@virtool/data/db/schema/auth";
 import { setupSessions } from "@virtool/data/db/schema/setup";
@@ -26,6 +27,8 @@ import {
 	loginLegacyIdentity,
 	logout,
 } from "./core";
+
+const keyring = createKeyring(undefined, undefined);
 
 let database: TestDatabase;
 let db: Db;
@@ -159,6 +162,7 @@ describe("createFirstUser", () => {
 			email: "alice@example.com",
 			password: "a-real-password",
 			deliveryAvailable: false,
+			keyring,
 			getVerificationUrl: () => "https://virtool.test/verify-email",
 		});
 
@@ -174,6 +178,7 @@ describe("createFirstUser", () => {
 				email: "bob@example.com",
 				password: "a-real-password",
 				deliveryAvailable: false,
+				keyring,
 				getVerificationUrl: () => "https://virtool.test/verify-email",
 			}),
 		).rejects.toBeInstanceOf(FirstUserExistsError);
@@ -188,6 +193,7 @@ describe("createFirstUser", () => {
 					email: "alice@example.com",
 					password: "a-real-password",
 					deliveryAvailable: false,
+					keyring,
 					getVerificationUrl: () => "https://virtool.test/verify-email",
 				}),
 				createFirstUser(other.db, {
@@ -195,6 +201,7 @@ describe("createFirstUser", () => {
 					email: "bob@example.com",
 					password: "another-real-password",
 					deliveryAvailable: false,
+					keyring,
 					getVerificationUrl: () => "https://virtool.test/verify-email",
 				}),
 			]);

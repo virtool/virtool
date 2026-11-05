@@ -44,7 +44,8 @@ export async function recordCacheUsage(
 				where ${cacheUsageSnapshots.recorded_at} < ${sql.param(cutoff, cacheUsageSnapshots.recorded_at)}`,
 		);
 
-		return { ...snapshot, recordedAt: new Date(snapshot.recordedAt) };
+		// A raw query returns the naive UTC column as text with no offset.
+		return { ...snapshot, recordedAt: new Date(`${snapshot.recordedAt}+0000`) };
 	});
 }
 
