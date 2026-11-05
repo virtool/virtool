@@ -189,6 +189,25 @@ add a journal entry or SQL migration without its snapshot; the next generation
 would diff against an older schema state and emit duplicate DDL. Rerun
 `db:generate` before committing and expect it to report no schema changes.
 
+### Dropping a column
+
+Drizzle names every declared column in whole-row selects and in inserts, so a
+running server fails as soon as a column it declares is dropped. `migrate` runs
+before the rollout, so a drop takes two releases:
+
+1. Remove the column from the mirror and run `db:generate`. Replace the
+   generated SQL with a no-op and keep the snapshot. Add the column and its
+   constraints to the retired schema in the test database fixture, so test
+   databases still match migrated ones. The column must be nullable or have a
+   default, because the new release no longer writes it.
+2. After that release is on every server, run
+   `pnpm --filter @virtool/data db:generate --custom --name <name>`, write the
+   drop by hand, and remove the retired schema entries.
+
+A test fails when one migration removes a column or table from the mirror and
+also drops it. It can't tell whether the first release has reached every server,
+so check that before you merge the second step.
+
 `drizzle/0000_baseline.sql` describes the schema as it stood when ownership
 moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.

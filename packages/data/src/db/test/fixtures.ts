@@ -46,6 +46,17 @@ export type TestDatabaseOptions = {
 };
 
 /**
+ * Schema that production still has but the mirror no longer declares. A column
+ * leaves the mirror one release before a migration drops it, because Drizzle
+ * names every declared column and a running server must never name a dropped
+ * one. Applying it here keeps test databases equal to migrated ones.
+ */
+const RETIRED_SCHEMA = [
+	`ALTER TABLE "users" ADD COLUMN "force_reset" boolean DEFAULT false NOT NULL`,
+	`ALTER TABLE "users" ADD CONSTRAINT "force_reset_unset" CHECK ("users"."force_reset" = false)`,
+];
+
+/**
  * The DDL for the whole schema, derived by diffing an empty schema against
  * ours. Cached because generating it costs more than running it, and every
  * test file in a worker needs the same statements.
@@ -102,7 +113,7 @@ export async function createTestDatabase(
 		}),
 	});
 
-	for (const statement of statements) {
+	for (const statement of [...statements, ...RETIRED_SCHEMA]) {
 		await client.unsafe(statement);
 	}
 
