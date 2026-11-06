@@ -19,4 +19,17 @@ describe("<AboutDialog />", () => {
 			within(webApp as HTMLElement).getByText(__APP_VERSION__),
 		).toBeInTheDocument();
 	});
+
+	it("links to the changelog page for the web app version", async () => {
+		mockGetRoot({ firstUser: false, version: "5.4.3" });
+
+		renderWithProviders(<AboutDialog open setOpen={() => undefined} />);
+
+		expect(
+			await screen.findByRole("link", { name: "Changelog" }),
+		).toHaveAttribute(
+			"href",
+			`https://www.virtool.ca/changelog/${__APP_VERSION__}`,
+		);
+	});
 });

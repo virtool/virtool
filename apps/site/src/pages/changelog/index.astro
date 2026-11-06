@@ -1,0 +1,34 @@
+---
+import ReleaseContent from "@components/ReleaseContent.astro";
+import ChangelogLayout from "@layouts/ChangelogLayout.astro";
+import {
+  getReleaseHref,
+  getReleaseSections,
+  isMaintenanceOnly,
+} from "@utils/changelog";
+import { loadPosts } from "@utils/loadPosts";
+
+const { released, releases } = await loadPosts();
+---
+
+<ChangelogLayout
+  title="Changelog"
+  heading="Changelog"
+  sections={getReleaseSections(releases)}
+>
+  {
+    releases.map((release) => (
+      <section data-maintenance={isMaintenanceOnly(release) || undefined}>
+        <h2 class="mb-1">
+          <a class="no-underline hover:underline" href={getReleaseHref(release.version)}>
+            {release.version}
+          </a>
+        </h2>
+        <ReleaseContent
+          release={release}
+          posts={released.filter(({ version }) => version === release.version)}
+        />
+      </section>
+    ))
+  }
+</ChangelogLayout>

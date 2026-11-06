@@ -1,0 +1,60 @@
+---
+import ReleaseContent from "@components/ReleaseContent.astro";
+import ChangelogLayout from "@layouts/ChangelogLayout.astro";
+import {
+  getReleaseHref,
+  getReleaseSections,
+  isMaintenanceOnly,
+} from "@utils/changelog";
+import { loadPosts } from "@utils/loadPosts";
+
+export async function getStaticPaths() {
+  const { released, releases } = await loadPosts();
+  const sections = getReleaseSections(releases);
+
+  return releases.map((release, index) => ({
+    params: { version: release.version },
+    props: {
+      newer: releases[index - 1],
+      older: releases[index + 1],
+      posts: released.filter(({ version }) => version === release.version),
+      release,
+      sections,
+    },
+  }));
+}
+
+const { newer, older, posts, release, sections } = Astro.props;
+---
+
+<ChangelogLayout
+  title={`Virtool ${release.version} changelog`}
+  heading={release.version}
+  sections={sections}
+>
+  <ReleaseContent
+    release={release}
+    posts={posts}
+    alwaysShowMaintenance={isMaintenanceOnly(release)}
+  />
+  <nav class="not-prose mt-12 flex items-center justify-between text-stone-600">
+    {
+      newer ? (
+        <a class="hover:text-stone-900" href={getReleaseHref(newer.version)}>
+          Newer release: {newer.version}
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      older ? (
+        <a class="hover:text-stone-900" href={getReleaseHref(older.version)}>
+          Older release: {older.version}
+        </a>
+      ) : (
+        <span />
+      )
+    }
+  </nav>
+</ChangelogLayout>

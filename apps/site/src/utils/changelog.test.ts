@@ -5,7 +5,6 @@ import {
   isMaintenanceOnly,
   type Release,
   parseChangelog,
-  RELEASES_PER_PAGE,
   splitPullRequestLinks,
 } from "./changelog";
 
@@ -221,20 +220,8 @@ ${fence}
 });
 
 describe("getReleaseHref", () => {
-  it("links a release on the first page to the base path", () => {
-    expect(getReleaseHref("2.0.0", 0)).toBe("/changelog#2.0.0");
-    expect(getReleaseHref("1.0.0", RELEASES_PER_PAGE - 1)).toBe(
-      "/changelog#1.0.0",
-    );
-  });
-
-  it("links a later release to its numbered page", () => {
-    expect(getReleaseHref("1.0.0", RELEASES_PER_PAGE)).toBe(
-      "/changelog/2#1.0.0",
-    );
-    expect(getReleaseHref("0.9.0", RELEASES_PER_PAGE * 2)).toBe(
-      "/changelog/3#0.9.0",
-    );
+  it("links a release to its version page", () => {
+    expect(getReleaseHref("2.0.0")).toBe("/changelog/2.0.0");
   });
 });
 
@@ -285,25 +272,15 @@ describe("getReleaseSections", () => {
       {
         title: "2.1",
         items: [
-          { title: "2.1.1", slug: "/changelog#2.1.1", maintenance: false },
-          { title: "2.1.0", slug: "/changelog#2.1.0", maintenance: false },
+          { title: "2.1.1", slug: "/changelog/2.1.1", maintenance: false },
+          { title: "2.1.0", slug: "/changelog/2.1.0", maintenance: false },
         ],
       },
       {
         title: "2.0",
-        items: [{ title: "2.0.0", slug: "/changelog#2.0.0", maintenance: false }],
+        items: [{ title: "2.0.0", slug: "/changelog/2.0.0", maintenance: false }],
       },
     ]);
-  });
-
-  it("links each release to the page that holds it", () => {
-    const releases = Array.from({ length: RELEASES_PER_PAGE + 1 }, (_, index) =>
-      release(`1.0.${RELEASES_PER_PAGE - index}`),
-    );
-
-    expect(getReleaseSections(releases)[0].items.at(-1)?.slug).toBe(
-      "/changelog/2#1.0.0",
-    );
   });
 });
 

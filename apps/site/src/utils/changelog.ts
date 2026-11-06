@@ -10,12 +10,11 @@ export type Release = {
 
 type Line = { text: string; fenced: boolean };
 
-type ReleaseSection = {
+/** A minor version group of releases in the changelog sidebar. */
+export type ReleaseSection = {
   title: string;
   items: { title: string; slug: string; maintenance: boolean }[];
 };
-
-export const RELEASES_PER_PAGE = 10;
 
 const RELEASE_HEADING = /^## (\S+) \((\d{4}-\d{2}-\d{2})\)$/;
 const ENTRY_HEADING = /^(#{3,}) /;
@@ -170,22 +169,19 @@ export function splitPullRequestLinks(html: string): (string | number)[] {
     .map((part, index) => (index % 2 === 1 ? Number(part) : part));
 }
 
-export function getReleaseHref(version: string, index: number): string {
-  const page = Math.floor(index / RELEASES_PER_PAGE) + 1;
-  const path = page === 1 ? "/changelog" : `/changelog/${page}`;
-
-  return `${path}#${version}`;
+export function getReleaseHref(version: string): string {
+  return `/changelog/${version}`;
 }
 
 export function getReleaseSections(releases: Release[]): ReleaseSection[] {
   const sections: ReleaseSection[] = [];
 
-  releases.forEach((release, index) => {
+  for (const release of releases) {
     const { version } = release;
     const title = version.split(".").slice(0, 2).join(".");
     const item = {
       title: version,
-      slug: getReleaseHref(version, index),
+      slug: getReleaseHref(version),
       maintenance: isMaintenanceOnly(release),
     };
     const section = sections.at(-1);
@@ -195,7 +191,7 @@ export function getReleaseSections(releases: Release[]): ReleaseSection[] {
     } else {
       sections.push({ title, items: [item] });
     }
-  });
+  }
 
   return sections;
 }
