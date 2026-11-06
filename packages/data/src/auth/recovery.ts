@@ -2,6 +2,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Keyring } from "../crypto/keyring";
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions } from "../db/schema/auth";
+import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { enqueueLinkEmail } from "../email/outbox";
@@ -23,9 +24,13 @@ import { hashToken } from "./tokens";
 const RECOVERY_LIFETIME_MS = 60 * 60 * 1000;
 const EMAILED_RECOVERY_LIFETIME_MS =
 	(EMAIL_DELIVERY_DEADLINE_SECONDS + 60 * 60) * 1000;
+const SELF_SERVICE_REISSUE_DELAY_SECONDS = 60 * 60;
 
 /** A recovery link cannot be issued for the requested account. */
 export class RecoveryNotEligibleError extends AppError {}
+
+/** A recent self-service recovery link is still live for the account. */
+export class RecoveryRecentlyIssuedError extends AppError {}
 
 /** The replacement password matches the current credential. */
 export class RecoveryPasswordReuseError extends AppError {}
@@ -103,7 +108,41 @@ async function getCredential(
 	return credential;
 }
 
-/** Issue a recovery link, optionally queuing mail in the same transaction. */
+/**
+ * Report whether the user holds a recent live self-service link.
+ *
+ * A link whose email failed doesn't count, because the user never received it.
+ */
+async function hasRecentSelfServiceLink(
+	db: DbOrTx,
+	userId: number,
+): Promise<boolean> {
+	const [recent] = await db
+		.select({ id: setupTokens.id })
+		.from(setupTokens)
+		.leftJoin(emailOutbox, eq(emailOutbox.setup_token_id, setupTokens.id))
+		.where(
+			and(
+				eq(setupTokens.userId, userId),
+				eq(setupTokens.purpose, "password_recovery"),
+				isNull(setupTokens.consumedAt),
+				isNull(setupTokens.supersededAt),
+				sql`${setupTokens.expiresAt} > timezone('utc', clock_timestamp())`,
+				sql`${setupTokens.createdAt} > timezone('utc', clock_timestamp()) - make_interval(secs => ${SELF_SERVICE_REISSUE_DELAY_SECONDS})`,
+				sql`${emailOutbox.status} is distinct from 'failed'`,
+			),
+		)
+		.limit(1);
+	return recent !== undefined;
+}
+
+/**
+ * Issue a recovery link, optionally queuing mail in the same transaction.
+ *
+ * Issuing supersedes the user's earlier links, and the outbox drops mail for a
+ * superseded link. A public request therefore leaves a recent link in place, so
+ * anyone who knows a handle can't invalidate the link its owner is waiting for.
+ */
 export async function issueRecoveryLink(
 	db: Db,
 	input: IssueRecoveryLinkInput,
@@ -155,6 +194,12 @@ export async function issueRecoveryLink(
 			input.deliveryAvailable && user.emailVerified && user.email !== "";
 		if (input.purpose === "password_recovery" && !canEmail) {
 			throw new RecoveryNotEligibleError();
+		}
+		if (
+			input.purpose === "password_recovery" &&
+			(await hasRecentSelfServiceLink(tx, input.userId))
+		) {
+			throw new RecoveryRecentlyIssuedError();
 		}
 		const issued = await issueSetupTokenInTransaction(tx, {
 			userId: input.userId,
