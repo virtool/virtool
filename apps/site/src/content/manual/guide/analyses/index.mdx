@@ -175,11 +175,12 @@ Pathoscope is a workflow that finds known viruses in a sample.
    The dashed line on a chart shows the maximum observed depth. All charts of an
    OTU use this scale.
 
-   - Deep, wide coverage of an isolate is indicative of an infection.
-   - Shallow, wide, and broken coverage is suggestive of intra-plate contamination. Hits
-     due to contamination also typically have low weights.
-   - Isolates with high weight, and deep localized coverage are typical of low-complexity
-     or host-similar regions in the isolate genome and don't show true infections.
+   - Deep, wide coverage of an isolate often occurs with an infection.
+   - Shallow, wide, and broken coverage can occur with contamination between samples on
+     the same plate. These hits usually have low weights.
+   - High weight with deep coverage in a small area usually comes from low-complexity or
+     host-similar regions of the isolate genome. This pattern usually does not show a
+     true infection.
 
 4. To hide low-coverage hits, click **Filter**.
 
@@ -189,7 +190,7 @@ Pathoscope is a workflow that finds known viruses in a sample.
    - Use **Hide when coverage less than** to set the limit. The default limit is
      0.50.
 
-Approximately 5 million reads is a useful baseline for a dsRNA library, but the
+As a guide, a dsRNA library can have approximately 5 million reads, but the
 percentage of mapped reads is more important. For dsRNA, this percentage can
 range from less than 1% to greater than 80%. Greater viral RNA enrichment,
 measured by the percentage of mapped reads, reduces the total number of reads
@@ -197,9 +198,12 @@ required. For example, 100,000 mapped reads—2% of 5 million—may be sufficien
 
 | Values   | Description                                                                                                                                                                                                                                                                  |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Coverage | The proportion of genome positions with at least one mapped read. The value for an OTU is the highest coverage of its isolates. In general, coverage of greater than 0.5 indicates positive detection and coverage of less than 0.2 indicates negative detection.             |
+| Coverage | The proportion of genome positions with at least one mapped read. The value for an OTU is the highest coverage of its isolates. As a guide, coverage above 0.5 often occurs with a positive detection, and coverage below 0.2 often occurs with a negative detection.             |
 | Depth    | The median number of mapped reads at each genome position.                                                                                                                                                                                                                   |
-| Weight   | The calculated proportion of reads mapping to a virus. The weight is roughly proportional to the titre. Higher the titre, higher the weight. A weight greater than 0.001 is a strong indicator of positive detection.                                                          |
+| Weight   | The calculated proportion of reads mapping to a virus. The weight is roughly proportional to the titre. Higher the titre, higher the weight. As a guide, a weight above 0.001 often occurs with a positive detection.                                                          |
+
+These values are guides, not fixed limits. Use them together with the coverage
+charts to make a decision.
 
 ### Work with the results
 
@@ -229,44 +233,39 @@ link to show the same view.
 
 #### High quality positive
 
-After running Pathoscope, the analyses tab lists all viruses Virtool thinks are likely
-to be in the sample. In this example, one viroid and four viruses are likely to be in the
+This sample comes from a _Malus_ host. It has 9,225,241 total reads, and 46.40% of
+them mapped to the reference. This shows good enrichment of viral RNA. Virtool
+subtracted 16,908 reads that mapped better to _Malus domestica_. This left
+4,263,751 reads for analysis.
+
+![Mapping overview and hit list toolbar](./pathoscope_overview.png?url)
+
+The hit list shows 31 hits. These two viruses have high weight, depth, and coverage:
+
+| OTU                      | Weight | Depth | Coverage |
+| ------------------------ | ------ | ----- | -------- |
+| Foveavirus mali (ASPV)   | 0.716  | 22604 | 1.000    |
+| Capillovirus mali (ASGV) | 0.078  | 309   | 0.998    |
+
+Alphaendornavirus phaseoli is the internal control. It has a weight of 0.148, a
+depth of 289, and a coverage of 1.000.
+
+![Hit list with three OTUs and their coverage charts](./pathoscope_hits.png?url)
+
+A virus or viroid can be present with a low weight. Apscaviroid cicatricimali has
+a weight of 1.50E-4, a depth of 16, and a coverage of 1.000. Coguvirus eburi has a
+weight of 1.48E-4, a depth of 10, and a coverage of 0.958. Both are present in this
 sample.
 
-![Likely Viruses](./pathoscope_filtered.png?url)
+Click the name of an OTU to see its isolates. Capillovirus mali has two isolates.
+Isolate 13TF142 has a weight of 0.078, a depth of 309, and a coverage of 0.998.
+Isolate A16 has a weight of 0, a depth of 0, and a coverage of 0.019. The reads
+support isolate 13TF142.
 
-By default, the list shows all hits, including hits with low coverage. To hide
-these hits, click **Filter** and turn on **Hide low-coverage OTUs**.
+Click a chart panel to see its sequence details. For isolate 13TF142, 21,285 reads
+mapped to sequence MZ126530.1, which has a length of 6,495 nt.
 
-![Filtered Out](./pathoscope_unfiltered.png?url)
-
-For this example, the focus is on the five pathogens that have the greatest coverage.
-
-The section on top of the list of pathogens gives a quick overview of the total and mapped
-reads in the sample.
-
-![Overview](./pathoscope_mapping.png?url)
-
-This sample has over 5.3 million total reads and over 3.7 million mapped reads
-(69.78% mapped reads), illustrating good enrichment of viral RNA.
-
-The high weight, depth, and coverage values indicate that these pathogens are present in
-the sample.
-
-Clicking on a pathogen shows sequencing coverage charts for the isolates that may be
-in your sample.
-
-![Coverage Charts](./pathoscope_isolates_peach.png?url)
-
-In the top example, there are three isolates for the Peach latent mosaic viroid that are
-present in the sample. The x-axis represents the genome size and the y-axis represents the
-number of reads.
-
-![Coverage Charts](./pathoscope_isolates_plum.png?url)
-
-The Plum bark necrosis stem pitting-associated virus result contains two isolate
-coverage charts. Its viral genome is larger than the viroid genome in the
-previous example, so the x-axis spans a greater range.
+![Expanded OTU with isolate charts and sequence details](./pathoscope_isolates.png?url)
 
 #### High quality negative
 
@@ -288,9 +287,12 @@ that this sample is from a healthy plant.
 Below is an example of an analysis from a contaminated sample.
 ![Contaminated sample analysis](./pathoscope_contaminated.png?url)
 
-Although many mapped reads cover 53.26% of the viral genome, most listed
-pathogens are associated with grapevines. Grape viruses are uncommon in tree
-fruits, so this is likely contamination.
+In this sample, 53.26% of reads map to the reference. Most of these reads belong
+to Phaseolus vulgaris endornavirus 1, the internal control, with a weight of 0.996
+and a depth of 4021.
+Grapevine rupestris stem pitting-associated virus also shows, but it has a low
+weight (8.95E-4) and a low depth (3). Grape viruses are uncommon in tree fruits,
+so this hit is likely contamination.
 
 ![Poor quality analysis](./poor_quality_analysis.png?url)
 
@@ -330,10 +332,8 @@ The Basic Local Alignment Search Tool (BLAST) compares sequences with known sequ
 6. Wait for the BLAST search to complete.
 
    Interpreting Nuvs results includes using BLAST to check whether contigs are
-   unknown. The BLAST results for this sequence show that it likely came from
-   contamination by a technician.
-
-   ![BLAST Results](./nuvs_blast.png?url)
+   unknown. When the search completes, the **NCBI BLAST** table shows below the
+   contig.
 
 Nuvs discovers potential novel viral sequences in a sample library. The workflow:
 
@@ -348,7 +348,7 @@ The Nuvs output lists numbered contigs. Each contig has three values:
 | Value   | Description                                                                   |
 | ------- | ----------------------------------------------------------------------------- |
 | Length  | Number of base pairs in the sequence                                          |
-| E-value | The probability that an ORF in the contig matches a known viral protein motif |
+| E-value | The lowest E-value of the HMM matches in the contig. An E-value is the number of matches of this quality that you can expect by chance. A lower value shows a stronger match. |
 | ORFs    | The number of open reading frames in the contig with an HMM match             |
 
 The left pane lists the assembled contigs. By default, the list does not show
@@ -393,8 +393,9 @@ This table states the E-value, score, and identity of the viral sequences found 
 
 The E-values, scores, and identities in the BLAST results show high-quality matches.
 This indicates that these contigs don't represent novel viral genomes.
-However, they don't exist in the Virtool reference database because they weren't
-eliminated during the initial subtraction step of the Nuvs workflow.
+However, the Virtool reference does not contain these sequences. Nuvs removes reads
+that map to the reference before assembly, so these reads stayed in the sample and
+formed contigs.
 
 This sample contains Phaseolus vulgaris endornavirus as an internal control introduced
 during nucleic acid extraction. This explains the identification of Phaseolus vulgaris
@@ -432,9 +433,8 @@ significant BLAST hits to known viruses (for example, Nectarine marafivirus M), 
 identities are low (0.73–0.76). This low identity suggests that the contig may
 represent a novel virus dissimilar to related known viruses.
 
-Additionally, this sample is isolated from a _Prunus_ host and Nectarine marafivirus M is
-not known to infect _Prunus_ species. Because the size of the sequence is large (6382 bp)
-it's worth assembling to discover more about the viral genome.
+The sequence is large (6382 bp), so it is worth assembling to find more about the viral
+genome.
 
 ### Non-viral result
 
