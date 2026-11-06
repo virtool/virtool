@@ -32,14 +32,7 @@ export type ServerConfig = {
 	webauthnRpId: string;
 	authSecret: string;
 	metricsToken: string | undefined;
-	/**
-	 * Server-side Sentry DSN.
-	 *
-	 * Parsed here rather than read by `@virtool/sentry`'s `readDsn`, which goes
-	 * straight to `process.env` and so would miss a `VT_SENTRY_DSN_FILE` mount.
-	 * The browser DSN is a separate value baked in at build time by Vite and
-	 * cannot be file-backed at all.
-	 */
+	/** Sentry DSN for the server, also rendered into the document for the browser. */
 	sentryDsn: string | undefined;
 	/** Active key for encrypting secrets stored by Virtool. */
 	encryptionKey: string | undefined;

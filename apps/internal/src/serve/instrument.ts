@@ -28,10 +28,7 @@ export const SERVICE = "jobs-api";
  * carrying its own `dist` so the two images' source maps do not collide under
  * the shared release version. Both come from `getCommonOptions`.
  *
- * `dsn` is passed in rather than read from the environment here, because the
- * value has already been through the `<KEY>_FILE` resolution in `config.ts` and
- * `readDsn` would go straight back to `process.env` and miss it. No DSN means
- * no `init`, so dev and unconfigured deploys are untouched.
+ * No DSN means no `init`, so dev and unconfigured deploys are untouched.
  *
  * There is deliberately no `beforeSend` filter. The web app needs one because a
  * server function signals an expected 4xx by *throwing* `ClientError`, which
@@ -55,7 +52,7 @@ export const SERVICE = "jobs-api";
  * silences the service again, with a green build to say so.
  */
 export function initSentry(dsn: string | undefined, logger: Logger): void {
-	const options = getCommonOptions(SERVICE);
+	const options = getCommonOptions(SERVICE, dsn);
 
 	if (!dsn) {
 		logger.info(
@@ -65,7 +62,7 @@ export function initSentry(dsn: string | undefined, logger: Logger): void {
 		return;
 	}
 
-	Sentry.init({ ...options, dsn });
+	Sentry.init(options);
 
 	logger.info(
 		{ environment: options.environment, foundSentryDsn: true },
