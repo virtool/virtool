@@ -355,9 +355,8 @@ An earlier SQL migration adds a check that keeps `force_reset` false, marked
 `NOT VALID` so that it applies only to new writes. A server from an earlier
 release therefore can't flag a user behind the backfill cursor during a rolling
 deploy. The paired SQL migration validates the check after the backfill passes.
-The schema mirror no longer declares the column, but it stays in the database
-because servers from earlier releases still name it in their queries. A later
-release drops it.
+A later SQL migration drops the check and the column, so the query above works
+only on a database that hasn't reached that migration.
 
 ## Metrics
 

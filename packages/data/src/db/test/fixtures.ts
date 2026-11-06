@@ -51,10 +51,7 @@ export type TestDatabaseOptions = {
  * names every declared column and a running server must never name a dropped
  * one. Applying it here keeps test databases equal to migrated ones.
  */
-const RETIRED_SCHEMA = [
-	`ALTER TABLE "users" ADD COLUMN "force_reset" boolean DEFAULT false NOT NULL`,
-	`ALTER TABLE "users" ADD CONSTRAINT "force_reset_unset" CHECK ("users"."force_reset" = false)`,
-];
+const RETIRED_SCHEMA: string[] = [];
 
 /**
  * The DDL for the whole schema, derived by diffing an empty schema against
