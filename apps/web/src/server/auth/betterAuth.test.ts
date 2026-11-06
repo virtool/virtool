@@ -14,7 +14,7 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { symmetricDecrypt } from "better-auth/crypto";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -837,7 +837,12 @@ describe("step-up session replacement", () => {
 
 	it("gives the failure budget back after a correct proof", async () => {
 		const { cookie } = await signInForReplacement();
-		await spendFailures(cookie, 9);
+		await spendFailures(cookie, 1);
+		// Each failure costs a password hash, so the budget is set, not spent.
+		await db
+			.update(authRateLimits)
+			.set({ count: 9 })
+			.where(like(authRateLimits.key, "virtool:step-up:user:%"));
 
 		const response = await challenge(
 			cookie,
@@ -846,7 +851,7 @@ describe("step-up session replacement", () => {
 		);
 		expect(response.status).toBe(200);
 
-		await spendFailures(cookie, 9);
+		await spendFailures(cookie, 1);
 	});
 
 	it("refuses a TOTP code that step-up already accepted", async () => {

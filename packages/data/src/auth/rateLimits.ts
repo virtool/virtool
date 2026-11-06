@@ -21,6 +21,10 @@ const RATE_LIMIT_RETENTION_MS = MAX_WINDOW_SECONDS * 1000;
 
 const RATE_LIMIT_PRUNE_BATCH_SIZE = 2_000;
 
+// One value per statement, so every use in a statement agrees on whether the
+// window ended.
+const NOW_MS = sql<number>`floor(extract(epoch from statement_timestamp()) * 1000)`;
+
 /** Build the key of one Virtool budget from its parts. */
 export function getRateLimitKey(
 	budget: RateLimitBudget,
@@ -50,17 +54,15 @@ export async function spendRateLimit(
 	}
 
 	const windowMs = rule.window * 1000;
-	// One value per statement, so both columns agree on whether the window ended.
-	const nowMs = sql<number>`floor(extract(epoch from statement_timestamp()) * 1000)`;
-	const windowEnded = sql`${authRateLimits.lastRequest} <= ${nowMs} - ${windowMs}`;
+	const windowEnded = sql`${authRateLimits.lastRequest} <= ${NOW_MS} - ${windowMs}`;
 	const [row] = await db
 		.insert(authRateLimits)
-		.values({ key, count: 1, lastRequest: nowMs })
+		.values({ key, count: 1, lastRequest: NOW_MS })
 		.onConflictDoUpdate({
 			target: authRateLimits.key,
 			set: {
 				count: sql`case when ${windowEnded} then 1 else ${authRateLimits.count} + 1 end`,
-				lastRequest: sql`case when ${windowEnded} then ${nowMs} else ${authRateLimits.lastRequest} end`,
+				lastRequest: sql`case when ${windowEnded} then ${NOW_MS} else ${authRateLimits.lastRequest} end`,
 			},
 			setWhere: sql`${windowEnded} or ${authRateLimits.count} < ${rule.max}`,
 		})
@@ -86,12 +88,18 @@ export function createRateLimitStorage(db: Db) {
 			return { allowed: true, retryAfter: null };
 		}
 
+		// Postgres's clock, the one that refused the attempt. A fast web host
+		// would otherwise see the window as ended and retry until it really ends.
 		const [row] = await db
-			.select({ lastRequest: authRateLimits.lastRequest })
+			.select({
+				retryAfterMs:
+					sql`${authRateLimits.lastRequest} + ${rule.window * 1000} - ${NOW_MS}`.mapWith(
+						Number,
+					),
+			})
 			.from(authRateLimits)
 			.where(sql`${authRateLimits.key} = ${key}`);
-		const retryAfterMs =
-			(row?.lastRequest ?? 0) + rule.window * 1000 - Date.now();
+		const retryAfterMs = row?.retryAfterMs ?? 0;
 		// The window ended between the refusal and the read, so a new one opens.
 		if (retryAfterMs <= 0) {
 			return consume(key, rule);
