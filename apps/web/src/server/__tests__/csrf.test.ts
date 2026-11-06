@@ -43,6 +43,33 @@ describe("isCsrfCandidate", () => {
 		).toBe(false);
 	});
 
+	it("skips an API key sent with an unrelated cookie", () => {
+		expect(
+			isCsrfCandidate(
+				candidate("POST", "/api/v1/uploads", {
+					authorization: "Basic dXNlcjprZXk=",
+					cookie: "sticky=1; not-better-auth.session_token=a",
+				}),
+			),
+		).toBe(false);
+	});
+
+	it.each([
+		"better-auth.session_token=a",
+		"__Secure-better-auth.session_token=a",
+		"sticky=1; better-auth.session_token=a",
+		"sticky=1;__Secure-better-auth.session_token=a",
+	])("checks an Authorization header sent with %s", (cookie) => {
+		expect(
+			isCsrfCandidate(
+				candidate("POST", "/api/v1/uploads", {
+					authorization: "Basic cHJveHk6cGFzc3dvcmQ=",
+					cookie,
+				}),
+			),
+		).toBe(true);
+	});
+
 	it.each(["GET", "HEAD", "OPTIONS"])("skips a safe %s request", (method) => {
 		expect(isCsrfCandidate(candidate(method, "/api/v1/uploads"))).toBe(false);
 	});
