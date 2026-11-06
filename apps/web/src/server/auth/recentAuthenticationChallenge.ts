@@ -10,9 +10,13 @@ import {
 	getUserPasskey,
 	setPasskeyCounter,
 } from "@virtool/data/auth/passkeys";
+import {
+	clearRateLimit,
+	getRateLimitKey,
+	spendRateLimit,
+} from "@virtool/data/auth/rateLimits";
 import { hasVerifiedTotp } from "@virtool/data/auth/twoFactor";
 import type { Db } from "@virtool/data/db/pg";
-import { authRateLimits } from "@virtool/data/db/schema/auth";
 import type { BetterAuthPlugin } from "better-auth";
 import {
 	APIError,
@@ -20,9 +24,7 @@ import {
 	sensitiveSessionMiddleware,
 } from "better-auth/api";
 import { generateRandomString } from "better-auth/crypto";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { createRateLimitStorage } from "./rateLimitStorage";
 
 export const RECENT_AUTHENTICATION_PATH = "/virtool-session/challenge";
 
@@ -32,13 +34,11 @@ const PASSKEY_CHALLENGE_MAX_AGE_SECONDS = 300;
 
 const PASSKEY_CHALLENGE_TYPE = "step-up";
 
-const STEP_UP_KEY_PREFIX = "virtool:step-up:";
-
 // Matches the lockout that Better Auth applies to TOTP at sign-in.
 const FAILURE_RULE = { window: 900, max: 10 };
 
-// A code stays valid for about 90 seconds. The margin covers clock differences
-// between web instances.
+// A code stays valid for about 90 seconds on the clock of the web instance
+// that checks it. The margin covers an instance whose clock runs behind.
 const USED_CODE_RULE = { window: 120, max: 1 };
 
 const TRANSPORTS = new Set<string>([
@@ -123,12 +123,12 @@ function getSessionUserId(user: { id: string | number }): number {
 }
 
 function getFailureKey(userId: number): string {
-	return `${STEP_UP_KEY_PREFIX}user:${userId}`;
+	return getRateLimitKey("step-up", "user", String(userId));
 }
 
 function getUsedCodeKey(userId: number, code: string): string {
 	const digest = createHash("sha256").update(code).digest("hex");
-	return `${STEP_UP_KEY_PREFIX}code:${userId}:${digest}`;
+	return getRateLimitKey("step-up", "code", String(userId), digest);
 }
 
 function toTransports(value: string | null): string[] {
@@ -163,8 +163,6 @@ export function recentAuthenticationPlugin({
 	rpID,
 	verify,
 }: RecentAuthenticationOptions) {
-	const storage = createRateLimitStorage(db);
-
 	return {
 		id: "virtool-recent-authentication",
 		rateLimit: [
@@ -250,8 +248,7 @@ export function recentAuthenticationPlugin({
 
 					if (ctx.body.method !== "passkey") {
 						const failureKey = getFailureKey(userId);
-						const budget = await storage.consume(failureKey, FAILURE_RULE);
-						if (!budget.allowed) {
+						if (!(await spendRateLimit(db, failureKey, FAILURE_RULE))) {
 							throw new APIError("TOO_MANY_REQUESTS", {
 								code: "STEP_UP_LOCKED",
 								message: "Too many failed attempts",
@@ -261,11 +258,12 @@ export function recentAuthenticationPlugin({
 						await verify(ctx.headers, ctx.body);
 
 						if (ctx.body.method === "totp") {
-							const unused = await storage.consume(
+							const unused = await spendRateLimit(
+								db,
 								getUsedCodeKey(userId, ctx.body.code),
 								USED_CODE_RULE,
 							);
-							if (!unused.allowed) {
+							if (!unused) {
 								throw new APIError("UNAUTHORIZED", {
 									code: "INVALID_CODE",
 									message: "Invalid code",
@@ -273,9 +271,7 @@ export function recentAuthenticationPlugin({
 							}
 						}
 
-						await db
-							.delete(authRateLimits)
-							.where(eq(authRateLimits.key, failureKey));
+						await clearRateLimit(db, failureKey);
 						return ctx.json({ status: true });
 					}
 
