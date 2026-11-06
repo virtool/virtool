@@ -415,8 +415,6 @@ A bearer link never reaches the outbox in plaintext. `enqueueLinkEmail` removes
 the link from the template and stores it in the `link` envelope.
 `deliver_email` decrypts the envelope to render the message, and fails a row
 whose envelope it can't decrypt. Acceptance and failure clear the envelope.
-Rows queued in plaintext by an earlier release are sent as they are, and their
-links are cleared the same way.
 
 A password change, a completed recovery, and a completed email change each
 queue a notice in the

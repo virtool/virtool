@@ -19,7 +19,7 @@ import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupTokens } from "../db/schema/setup";
 import { nowUtc, secondsAgo } from "../db/time";
-import { LINK_FIELDS, type StoredEmailTemplate, sealEmailLink } from "./link";
+import { type StoredEmailTemplate, sealEmailLink } from "./link";
 import { isEmailEnabled } from "./settings";
 import { EMAIL_TEMPLATE_VERSION } from "./templates";
 
@@ -281,22 +281,6 @@ export type EmailResultTarget = {
 	outboxId: number;
 };
 
-/**
- * The columns that clear a row's bearer link once it can no longer be sent.
- *
- * The template fields cover rows queued before links were encrypted.
- */
-function clearedLinkColumns() {
-	const fields = Object.values(LINK_FIELDS).map(
-		(field) => sql`- ${sql.raw(`'${field}'::text`)}`,
-	);
-
-	return {
-		link: null,
-		template: sql`${emailOutbox.template} ${sql.join(fields, sql` `)}`,
-	};
-}
-
 /** Record provider acceptance, or return `false` if the claim was lost. */
 export async function markEmailAccepted(
 	db: Db,
@@ -306,7 +290,7 @@ export async function markEmailAccepted(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
-			...clearedLinkColumns(),
+			link: null,
 			accepted_at: nowUtc(),
 			claim_expires_at: null,
 			claim_token: null,
@@ -351,7 +335,7 @@ export async function failEmail(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
-			...clearedLinkColumns(),
+			link: null,
 			claim_expires_at: null,
 			claim_token: null,
 			last_error: error,
