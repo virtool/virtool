@@ -27,8 +27,7 @@ const QUALITY_CORE_TOOL = "quality-core";
 /**
  * Profile one read file, writing the blob to `outputPath`.
  *
- * The crate reads gzip natively, so this runs against the upload as it lies
- * and the run never writes a decompressed FASTQ.
+ * The crate reads gzip natively, so the run never writes a decompressed FASTQ.
  */
 export function buildQualityCommand(
 	readPath: string,

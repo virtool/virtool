@@ -3,17 +3,19 @@
 Image: `ghcr.io/virtool/create-sample`.
 
 Turns a user's uploaded FASTQ files into a sample an analysis can run against:
-measures their quality, normalizes them to `reads_1.fq.gz` and
-`reads_2.fq.gz`, and commits them to object storage.
+normalizes them to `reads_1.fq.gz` and `reads_2.fq.gz`, measures their quality,
+and commits them to object storage. Uploads can be plain, gzip, or bzip2.
 
-Two steps, `run_fastqc` and `finalize`, and two external binaries: `pigz` and
+Three steps, `normalize_reads`, `run_fastqc` and `finalize`, and three external
+binaries: `lbzip2`, `pigz` and
 [`quality-core`](../../packages/quality-core/README.md), a Rust crate in this
 repo rather than a third-party tool.
 
 ## Building the image
 
 The shared workflow-tools Dockerfile uses cargo-chef to build `quality-core`,
-then the app Dockerfile copies it into a runtime that installs `pigz` from apt:
+then the app Dockerfile copies it into a runtime that installs `lbzip2` and
+`pigz` from apt:
 
 ```console
 docker buildx bake -f packages/image-build/docker-bake.hcl create-sample
@@ -53,6 +55,16 @@ so a running `create_sample` job is always served `paired: false`.
 and these files run to gigabytes. Recompressing means decompressing
 and gzipping back to produce bytes the user already sent.
 
+**A bzip2 upload is converted to gzip before anything else reads it.**
+`quality-core` reads only gzip and plain text, and every later consumer expects
+`reads_{n}.fq.gz`. For this reason, `normalize_reads` runs first. The conversion
+goes through a pipe, so the decompressed FASTQ never reaches the disk. The first
+bytes of the file decide the format, not its name.
+
+**`lbzip2` decompresses, not `pbzip2`.** `pbzip2` decompresses in parallel only
+the files that `pbzip2` made. With four threads on a file that `bzip2` made, it
+took 13.7 seconds. `bzip2` took 9.6 seconds and `lbzip2` took 1.8 seconds.
+
 **The normalized reads go in `{work_path}/reads/`, not beside their uploads.**
 Writing them next to their sources as `reads_{i + 1}.fq.gz` is a collision
 waiting to happen: upload names are user-supplied, so a sample whose _second_
@@ -84,8 +96,10 @@ quality objects.
 the user to remove, and the jobs API exposes no destructive route a job key
 could reach. This matches `create_subtraction`, `pathoscope` and `nuvs`.
 
-**The runtime installs only `pigz`.** `quality-core` links only glibc, so it
-doesn't require a JRE, Python, Perl, or additional shared libraries.
+**The runtime installs only `lbzip2` and `pigz`.** `quality-core` links only
+glibc, so it doesn't require a JRE, Python, Perl, or additional shared
+libraries. The conversion pipeline uses the `bash` from the base image, because
+`dash` has no `pipefail`.
 
 ## Fixtures
 

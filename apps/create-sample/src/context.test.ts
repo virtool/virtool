@@ -119,7 +119,20 @@ describe("buildCreateSampleContext", () => {
 
 		const { data } = await build();
 
-		expect(data.uploadsAreGzipped).toStrictEqual([true, false]);
+		expect(data.uploadFormats).toStrictEqual(["gzip", "plain"]);
+	});
+
+	it("detects bzip2 uploads by content, not by name", async () => {
+		const { build } = await setup([
+			// Named as though it were plain, but bzip2.
+			{ name: "left.fq", contents: "BZh91AY&SY" },
+			// Named as though it were bzip2, but plain.
+			{ name: "right.fq.bz2", contents: RIGHT },
+		]);
+
+		const { data } = await build();
+
+		expect(data.uploadFormats).toStrictEqual(["bzip2", "plain"]);
 	});
 
 	it("handles a single-read sample", async () => {

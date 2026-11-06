@@ -8,6 +8,7 @@ import {
 	DecompressedSizeLimitError,
 	decompressFile,
 	decompressGzipToFile,
+	isBzip2,
 	isGzipped,
 } from "./compression";
 
@@ -175,5 +176,31 @@ describe("isGzipped", () => {
 		await writeFile(path, Buffer.from([0x1f, 0x8b, 0x08]));
 
 		expect(await isGzipped(path)).toBe(true);
+	});
+});
+
+describe("isBzip2", () => {
+	it.each([
+		["a bzip2 header", "BZh91AY&SY", true],
+		["the smallest block size", "BZh1", true],
+		["a block size digit out of range", "BZh0", false],
+		["a non-digit block size", "BZhx", false],
+		["a file shorter than the header", "BZh", false],
+		["plain FASTQ", "@r1\nACGT\n+\nIIII\n", false],
+		["an empty file", "", false],
+	])("reports %s", async (_, contents, expected) => {
+		const path = join(workPath, "reads.fq.bz2");
+
+		await writeFile(path, contents);
+
+		expect(await isBzip2(path)).toBe(expected);
+	});
+
+	it("does not report a gzip file as bzip2", async () => {
+		const path = join(workPath, "reads.fq.bz2");
+
+		await writeFile(path, gzipSync("@r1\nACGT\n+\nIIII\n"));
+
+		expect(await isBzip2(path)).toBe(false);
 	});
 });

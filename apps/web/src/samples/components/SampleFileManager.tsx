@@ -30,13 +30,14 @@ export default function SampleFileManager({
 			<FileManager
 				accept={{
 					"application/gzip": [".fasta.gz", ".fa.gz", ".fastq.gz", ".fq.gz"],
+					"application/x-bzip2": [".fastq.bz2", ".fq.bz2"],
 					"text/plain": [".fasta", ".fa", ".fastq", ".fq"],
 				}}
 				direction={direction}
 				fileType="reads"
 				page={page}
-				hint="Supports plain or gzipped FASTA and FASTQ"
-				regex={/\.f(ast)?q(\.gz)?$/}
+				hint="Supports plain or gzipped FASTA and FASTQ, and bzip2 compressed FASTQ"
+				regex={/\.f(ast)?q(\.(gz|bz2))?$/}
 				renderItemAction={
 					canCreate
 						? (upload, uploads) => (

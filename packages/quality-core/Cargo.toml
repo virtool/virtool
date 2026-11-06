@@ -22,7 +22,7 @@ path = "src/lib.rs"
 clap = { version = "4.5", features = ["derive"] }
 # gzip only. The default feature set adds bzip2, xz and zstd, each of which
 # links a C library this crate would then need in every image that copies the
-# binary — and a FASTQ upload is gzipped or plain, never any of the three.
+# binary — and `create_sample` hands it gzipped reads, never any of the three.
 needletail = { version = "0.7", default-features = false, features = ["flate2"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

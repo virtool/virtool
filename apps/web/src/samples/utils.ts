@@ -74,7 +74,7 @@ export function getLibraryTypeDisplayName(libraryType: LibraryType) {
 	return libraryTypes[libraryType];
 }
 
-const extensionRegex = /^(.*)\.(fq|fastq|fa|fasta)(\.gz)?$/i;
+const extensionRegex = /^(.*)\.(fq|fastq|fa|fasta)(\.(gz|bz2))?$/i;
 
 /**
  * Derives a sample name from the read files it will be created from. The read
