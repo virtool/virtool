@@ -205,15 +205,19 @@ Restricted setup credentials may complete only their named transition. Each
 Raw routes handle transports RPC can't provide, such as uploads, streaming
 downloads, avatar images, SSE, probes, metrics, and `/api/auth/*`. They
 enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
-and API keys; server functions are session-only. Better Auth owns sign-in, while Virtool owns
+and API keys; server functions are session-only. A valid API key wins over a
+session cookie. Any other `Authorization` header falls back to the cookie,
+because a reverse proxy that uses HTTP Basic forwards its own credentials on
+every browser request. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
 The CSRF middleware checks every server function and every mutating raw-route
-request that has no `Authorization` header. It requires `Sec-Fetch-Site:
-same-origin`, or a same-origin `Origin` when the browser sends no Fetch
-Metadata. API-key requests are not checked, because a browser cannot attach
-them to a forged request. `/api/auth/*` is exempt, because Better Auth does its
-own origin check.
+request that has a session cookie or no `Authorization` header. It requires
+`Sec-Fetch-Site: same-origin`, or a same-origin `Origin` when the browser sends
+no Fetch Metadata. Requests with an `Authorization` header and no session cookie
+are not checked, because they cannot authenticate with a cookie that a browser
+attaches to a forged request. `/api/auth/*` is exempt, because Better Auth does
+its own origin check.
 
 Better Auth is mounted at `/api/auth/$` and composed in
 `@server/auth/betterAuth`. It authenticates interactive users; Virtool still

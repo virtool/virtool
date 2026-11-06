@@ -137,11 +137,14 @@ function clearPrincipalAttribution(): void {
  * endpoints a script can reach without the generated RPC client, so they are
  * where key authentication has to live; server functions stay cookie-only.
  *
- * An `Authorization` header commits the request to the key path — a malformed
- * one is a 401 rather than a silent fall back to whatever cookies happen to be
- * attached. A restricted setup credential in the cookies does not change that
- * and never could: neither branch here reads the setup cookies, so a
- * restricted holder gets the same 401 an anonymous caller gets from SSE,
+ * A valid API key wins over a session cookie. Any other `Authorization` header
+ * falls through to the cookie, because a reverse proxy that uses HTTP Basic
+ * forwards its own credentials on every browser request. That fall-through is
+ * why `isCsrfCandidate` checks a request that carries both.
+ *
+ * A restricted setup credential in the cookies changes nothing and never
+ * could: neither branch here reads the setup cookies, so a restricted holder
+ * gets the same 401 an anonymous caller gets from SSE,
  * uploads, downloads and every streamed file. `middleware.test.ts` pins it,
  * because "it happens not to look" is only a guarantee while nobody adds a
  * third branch.
@@ -150,18 +153,12 @@ export const requireAuthenticatedRequest = createServerOnlyFn(
 	async (request: Request): Promise<AuthenticatedPrincipal | Response> => {
 		clearPrincipalAttribution();
 		const header = request.headers.get("authorization");
-
-		let principal: AuthenticatedPrincipal | null;
-
-		if (header) {
-			const credentials = parseBasicAuthHeader(header);
-			principal = credentials
-				? await verifyApiKey(db, credentials.handle, credentials.key)
-				: null;
-		} else {
-			const browser = await verifyBrowserPrincipal(db, request);
-			principal = browser?.kind === "browser" ? browser : null;
-		}
+		const credentials = header ? parseBasicAuthHeader(header) : null;
+		const apiKey = credentials
+			? await verifyApiKey(db, credentials.handle, credentials.key)
+			: null;
+		const browser = apiKey ? null : await verifyBrowserPrincipal(db, request);
+		const principal = apiKey ?? (browser?.kind === "browser" ? browser : null);
 
 		if (!principal) {
 			return new Response("Unauthorized", { status: 401 });

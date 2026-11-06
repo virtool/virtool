@@ -343,11 +343,35 @@ describe("raw request boundary", () => {
 		expect(setUser).toHaveBeenLastCalledWith({ id: userId, username: "alice" });
 	});
 
-	it("does not fall back to a browser cookie after an invalid header", async () => {
+	it.each([
+		["a non-Basic scheme", "Bearer invalid"],
+		["proxy Basic credentials", basicAuthHeader("proxy", "password")],
+	])("falls back to a browser cookie after %s", async (_, header) => {
 		const userId = await seedUser(db);
 		const session = await seedSession(db, userId);
+		await expect(
+			requireAuthenticatedRequest(requestFor(sessionCookie(session), header)),
+		).resolves.toMatchObject({
+			kind: "browser",
+			sessionId: session.sessionId,
+			userId,
+		});
+	});
+
+	it("prefers a valid API key over a browser cookie", async () => {
+		const userId = await seedUser(db);
+		const session = await seedSession(db, userId);
+		const key = await seedApiKey(db, userId, { upload_file: true });
+		await expect(
+			requireAuthenticatedRequest(
+				requestFor(sessionCookie(session), basicAuthHeader("alice", key)),
+			),
+		).resolves.toMatchObject({ kind: "api_key", userId });
+	});
+
+	it("rejects an invalid header without a browser cookie", async () => {
 		const result = await requireAuthenticatedRequest(
-			requestFor(sessionCookie(session), "Bearer invalid"),
+			requestFor(undefined, basicAuthHeader("proxy", "password")),
 		);
 		expect((result as Response).status).toBe(401);
 	});

@@ -7,13 +7,26 @@ export type CsrfCandidate = {
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+// Better Auth adds the `__Secure-` prefix in production.
+const SESSION_COOKIE = /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/;
+
+function isApiKeyOnly(headers: Headers): boolean {
+	return (
+		headers.has("authorization") &&
+		!SESSION_COOKIE.test(headers.get("cookie") ?? "")
+	);
+}
+
 /**
  * Whether the CSRF middleware should check a request.
  *
  * Server functions are always checked. Any other mutating request is checked
- * when it has no `Authorization` header, because it then authenticates with the
- * session cookie that a browser attaches to same-site forged requests. A script
- * that sends an API key sends no `Origin` and must not be blocked.
+ * when it can authenticate with the session cookie that a browser attaches to
+ * same-site forged requests. An `Authorization` header does not exclude that:
+ * a browser also attaches cached reverse-proxy Basic credentials, and a raw
+ * route falls back to the cookie when they are not an API key. A script that
+ * sends an API key sends no `Origin` and must not be blocked, so only a request
+ * with the header and no session cookie is skipped.
  *
  * Only `/api/auth/*` is exempt, because Better Auth does its own origin check.
  * The rule names the exemption rather than the protected routes: `pathname` is
@@ -30,7 +43,7 @@ export function isCsrfCandidate({
 	}
 	return (
 		!SAFE_METHODS.has(request.method) &&
-		!request.headers.has("authorization") &&
+		!isApiKeyOnly(request.headers) &&
 		!pathname.startsWith("/api/auth/")
 	);
 }

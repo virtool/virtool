@@ -118,8 +118,7 @@ export type BasicCredentials = {
 /**
  * Parse an HTTP Basic `Authorization` header into its login and password.
  * Returns `null` for anything malformed — a non-Basic scheme, undecodable
- * base64, a missing separator, or an empty login — which callers treat as a
- * failed authentication rather than falling back to cookies.
+ * base64, a missing separator, or an empty login.
  */
 export function parseBasicAuthHeader(header: string): BasicCredentials | null {
 	// RFC 7235 allows one *or more* spaces between the scheme and the
