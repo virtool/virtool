@@ -130,7 +130,7 @@ requirement. Sign-out and revocation of the current session never need it.
 
 Users can list and revoke their other sessions. Revocation takes effect on the
 next request and on the next server-push recheck. A lost session returns the user
-to sign-in with the message "Your session ended". Network and server errors never
+to sign-in with the message "Your session ended." Network and server errors never
 end a session.
 
 ### Accounts

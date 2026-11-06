@@ -13,7 +13,7 @@ doesn't sweep storage for objects that no row records.
 
 ## Configuration
 
-Each service that uses object storage reads these variables at startup. There is
+Each service that uses object storage reads these variables at startup. Virtool has
 no filesystem backend.
 
 | Variable                          | Backend | Requirement                                         |
