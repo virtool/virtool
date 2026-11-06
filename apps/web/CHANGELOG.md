@@ -1,3 +1,31 @@
+## 42.63.1 (2026-11-06)
+
+### Fixes
+
+#### Fix the documentation link in the About dialog ([#4201](https://github.com/virtool/virtool/pull/4201))
+
+The documentation link in the About dialog opened a page that does not exist. It
+now opens the manual.
+
+#### Lock identity checks after repeated failures and refuse reused authenticator codes ([#4205](https://github.com/virtool/virtool/pull/4205))
+
+Ten failed password or authenticator code attempts at an identity check now
+block those two methods for 15 minutes. A correct password or code resets the
+count, and a passkey still works during the block. An authenticator code that an
+identity check already accepted is now refused.
+
+#### Send web logs and browser errors to Sentry when the DSN comes from a file ([#4206](https://github.com/virtool/virtool/pull/4206))
+
+When you set only `VT_SENTRY_DSN_FILE`, the web server did not forward logs to Sentry and the browser did not report errors. Both now use the value from the file.
+
+### Maintenance
+
+- Remove avoidable warnings from web test runs ([#4204](https://github.com/virtool/virtool/pull/4204))
+- Remove the unused forced password reset column from the database ([#4199](https://github.com/virtool/virtool/pull/4199))
+- Move internal service developer documentation into code ([#4201](https://github.com/virtool/virtool/pull/4201))
+- Move package and repository developer documentation into code ([#4201](https://github.com/virtool/virtool/pull/4201))
+- Move web developer documentation into code and link the administration pages to the configuration manual ([#4201](https://github.com/virtool/virtool/pull/4201))
+
 ## 42.63.0 (2026-11-06)
 
 ### Features
