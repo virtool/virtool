@@ -782,6 +782,115 @@ describe("step-up session replacement", () => {
 		expect((await auth.handler(request)).status).toBe(429);
 	});
 
+	function challenge(cookie: string, body: unknown, ip: string) {
+		const request = post("/virtool-session/challenge", body);
+		request.headers.set("cookie", cookie);
+		request.headers.set("x-forwarded-for", ip);
+		return auth.handler(request);
+	}
+
+	async function spendFailures(cookie: string, count: number): Promise<void> {
+		for (let attempt = 0; attempt < count; attempt++) {
+			const response = await challenge(
+				cookie,
+				{ method: "password", password: "wrong-password" },
+				`198.51.100.${attempt}`,
+			);
+			expect(response.status).toBe(400);
+		}
+	}
+
+	it("locks password and TOTP challenges after failures from any address", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		await spendFailures(cookie, 10);
+
+		const password = await challenge(
+			cookie,
+			{ method: "password", password: LEGACY_PASSWORD },
+			"203.0.113.1",
+		);
+		expect(password.status).toBe(429);
+		expect(await password.json()).toMatchObject({ code: "STEP_UP_LOCKED" });
+
+		const totp = await challenge(
+			cookie,
+			{ method: "totp", code: await getCurrentTotpCode() },
+			"203.0.113.2",
+		);
+		expect(totp.status).toBe(429);
+	});
+
+	it("releases the lock after the window", async () => {
+		const { cookie } = await signInForReplacement();
+		await spendFailures(cookie, 10);
+		await db.update(authRateLimits).set({ lastRequest: Date.now() - 901_000 });
+
+		const response = await challenge(
+			cookie,
+			{ method: "password", password: LEGACY_PASSWORD },
+			"203.0.113.1",
+		);
+		expect(response.status).toBe(200);
+	});
+
+	it("gives the failure budget back after a correct proof", async () => {
+		const { cookie } = await signInForReplacement();
+		await spendFailures(cookie, 9);
+
+		const response = await challenge(
+			cookie,
+			{ method: "password", password: LEGACY_PASSWORD },
+			"203.0.113.1",
+		);
+		expect(response.status).toBe(200);
+
+		await spendFailures(cookie, 9);
+	});
+
+	it("refuses a TOTP code that step-up already accepted", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		const body = { method: "totp", code: await getCurrentTotpCode() };
+
+		expect((await challenge(cookie, body, "203.0.113.1")).status).toBe(200);
+
+		const reused = await challenge(cookie, body, "203.0.113.2");
+		expect(reused.status).toBe(401);
+		expect(await reused.json()).toMatchObject({ code: "INVALID_CODE" });
+	});
+
+	it("accepts one of two concurrent uses of a TOTP code", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		const body = { method: "totp", code: await getCurrentTotpCode() };
+
+		const responses = await Promise.all([
+			challenge(cookie, body, "203.0.113.1"),
+			challenge(cookie, body, "203.0.113.2"),
+		]);
+		expect(responses.map((response) => response.status).sort()).toEqual([
+			200, 401,
+		]);
+	});
+
+	it("counts a reused TOTP code as a failure", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		const body = { method: "totp", code: await getCurrentTotpCode() };
+		await challenge(cookie, body, "203.0.113.1");
+
+		await spendFailures(cookie, 9);
+		expect((await challenge(cookie, body, "203.0.113.2")).status).toBe(401);
+
+		const locked = await challenge(cookie, body, "203.0.113.3");
+		expect(locked.status).toBe(429);
+	});
+
 	it("creates a fresh replacement and revokes the old session", async () => {
 		const { cookie, session: oldSession } = await signInForReplacement();
 

@@ -610,6 +610,25 @@ describe("recent authentication", () => {
 		expect(await db.select().from(authVerifications)).toEqual([]);
 	});
 
+	it("accepts a passkey while password and TOTP attempts are locked", async () => {
+		const { key, userId } = await enroll();
+		const browser = await signedInBrowser(userId);
+		await db.insert(authRateLimits).values({
+			key: `virtool:step-up:user:${userId}`,
+			count: 10,
+			lastRequest: Date.now(),
+		});
+
+		const locked = await browser.send("POST", CHALLENGE_PATH, {
+			method: "password",
+			password: "any-password",
+		});
+		expect(locked.status).toBe(429);
+
+		const { response } = await stepUp(browser, key);
+		expect(response.status).toBe(200);
+	});
+
 	it("does not create a session", async () => {
 		const { key, userId } = await enroll();
 		const browser = await signedInBrowser(userId);
