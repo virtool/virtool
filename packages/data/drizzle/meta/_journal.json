@@ -351,6 +351,13 @@
       "when": 1793990753939,
       "tag": "0049_add_changelog_watermark",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793997641986,
+      "tag": "0050_drop_force_reset",
+      "breakpoints": true
     }
   ]
 }
