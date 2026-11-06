@@ -1,14 +1,15 @@
 import Alert from "@base/Alert";
 import Link from "@base/Link";
+import type { HmmStatus } from "@virtool/contracts";
 import { CircleAlert } from "lucide-react";
 
 type AnalysisHmmAlertProps = {
-	installed: boolean;
+	status: HmmStatus;
 };
 
 /** Banner informing the user when HMMs are not installed */
-export default function AnalysisHmmAlert({ installed }: AnalysisHmmAlertProps) {
-	if (installed) {
+export default function AnalysisHmmAlert({ status }: AnalysisHmmAlertProps) {
+	if (status.installed?.ready ?? status.task?.complete) {
 		return null;
 	}
 
