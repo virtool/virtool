@@ -38,6 +38,7 @@ import {
 	inArray,
 	isNotNull,
 	isNull,
+	lt,
 	or,
 	type SQL,
 	sql,
@@ -638,8 +639,34 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 	return {
 		...user,
 		email: row.email,
+		lastSeenChangelogAt: row.lastSeenChangelogAt,
 		settings: fromStoredAccountSettings(row.settings),
 	};
+}
+
+/**
+ * Advance the user's changelog watermark to the date of the newest entry they
+ * have seen.
+ *
+ * The watermark starts at the time the user was created or the column was
+ * added, which can be later than an entry's date. The write only moves it
+ * forward, so marking an older entry as seen can't bring back entries the user
+ * never had as unread.
+ */
+export async function markChangelogSeen(
+	db: Db,
+	userId: number,
+	newestEntryDate: Date,
+): Promise<void> {
+	await db
+		.update(usersTable)
+		.set({ lastSeenChangelogAt: newestEntryDate })
+		.where(
+			and(
+				eq(usersTable.id, userId),
+				lt(usersTable.lastSeenChangelogAt, newestEntryDate),
+			),
+		);
 }
 
 /**

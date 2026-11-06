@@ -46,6 +46,11 @@ export const users = pgTable(
 		handle: text("handle").notNull(),
 		image: text("image"),
 		lastPasswordChange: timestamp("last_password_change").notNull(),
+		// Holds the date of the newest changelog entry the user has seen, not the
+		// time they saw it. Defaults to now so that no user starts with a backlog.
+		lastSeenChangelogAt: timestamp("last_seen_changelog_at")
+			.notNull()
+			.default(sql`timezone('utc', now())`),
 		legacyId: text("legacy_id"),
 		// A real database default rather than a `$defaultFn`, because the
 		// migration that adds the column has to backfill every existing row and

@@ -36,10 +36,12 @@ export function createFakeAccountSecurity(
 }
 
 export function createFakeAccount(overrides?: Partial<Account>): Account {
-	const { settings, email, ...userProps } = overrides || {};
+	const { settings, email, lastSeenChangelogAt, ...userProps } =
+		overrides || {};
 
 	return {
 		email: email ?? faker.internet.email(),
+		lastSeenChangelogAt: lastSeenChangelogAt ?? faker.date.past(),
 		settings: { ...defaultSettings, ...settings },
 		...createFakeUser(userProps),
 	};
