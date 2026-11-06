@@ -1,10 +1,9 @@
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import type { FinalizeSampleRequest, Quality } from "@virtool/contracts";
 import {
-	checksumFile,
 	createFakeContext,
 	createFakeJobsApiClient,
 	createFakeNewSample,
@@ -34,27 +33,21 @@ const QUALITY: Quality = {
 	sequences: [0, 2],
 };
 
-/** A run whose uploads are on disk, each gzipped or not as asked. */
-async function setup(
-	uploads: readonly { contents: string; gzipped: boolean }[],
-) {
+/** A run whose normalized reads are on disk. */
+async function setup(reads: readonly string[]) {
 	const { path: workPath, cleanup } = await createTestWorkPath();
 
 	onTestFinished(cleanup);
 
-	const names = uploads.map((_, index) => `upload_${index}.fq`);
+	const names = reads.map((_, index) => `upload_${index}.fq`);
 	const paths = workPaths(workPath, names);
 
 	await Promise.all(
 		paths.reads.map(async (read, index) => {
-			const upload = uploads[index];
-
-			await mkdir(dirname(read.upload), { recursive: true });
+			await mkdir(dirname(read.normalized), { recursive: true });
 			await writeFile(
-				read.upload,
-				upload?.gzipped
-					? gzipSync(Buffer.from(upload.contents))
-					: (upload?.contents ?? ""),
+				read.normalized,
+				gzipSync(Buffer.from(reads[index] ?? "")),
 			);
 		}),
 	);
@@ -69,7 +62,7 @@ async function setup(
 		sampleId: SAMPLE_ID,
 		sampleName: "Test",
 		uploadStorageKeys: names.map((_, index) => `uploads/${index}`),
-		uploadsAreGzipped: uploads.map((upload) => upload.gzipped),
+		uploadFormats: reads.map(() => "gzip"),
 		paths,
 	};
 
@@ -79,7 +72,7 @@ async function setup(
 		{ client: createFakeJobsApiClient(state), storage, workPath },
 	);
 
-	return { context, paths, state, storage };
+	return { context, state, storage };
 }
 
 /**
@@ -125,10 +118,7 @@ async function readStored(
 
 describe("finalizeStep", () => {
 	it("stores a paired sample's reads under the names the route whitelists", async () => {
-		const { context, state, storage } = await setup([
-			{ contents: LEFT, gzipped: true },
-			{ contents: RIGHT, gzipped: true },
-		]);
+		const { context, state, storage } = await setup([LEFT, RIGHT]);
 
 		await finalizeStep.run(context);
 
@@ -153,7 +143,7 @@ describe("finalizeStep", () => {
 	 * sits under this sample's own prefix.
 	 */
 	it("declares a minted key under the sample's prefix, and no size", async () => {
-		const { context, state } = await setup([{ contents: LEFT, gzipped: true }]);
+		const { context, state } = await setup([LEFT]);
 
 		await finalizeStep.run(context);
 
@@ -169,7 +159,7 @@ describe("finalizeStep", () => {
 	});
 
 	it("sends the quality data unchanged", async () => {
-		const { context, state } = await setup([{ contents: LEFT, gzipped: true }]);
+		const { context, state } = await setup([LEFT]);
 
 		await finalizeStep.run(context);
 
@@ -184,7 +174,7 @@ describe("finalizeStep", () => {
 	 * would change this without changing any assertion about the values.
 	 */
 	it("serializes the quality payload in a pinned key order", async () => {
-		const { context, state } = await setup([{ contents: LEFT, gzipped: true }]);
+		const { context, state } = await setup([LEFT]);
 
 		await finalizeStep.run(context);
 
@@ -201,78 +191,8 @@ describe("finalizeStep", () => {
 		);
 	});
 
-	/**
-	 * Almost every upload is already gzipped, and re-encoding one would mean
-	 * decompressing several gigabytes to produce bytes the user already sent.
-	 * The check is that the stored object is byte-identical to the upload, which
-	 * a recompression would not be — `node:zlib` stamps its own header.
-	 */
-	it("renames an already-gzipped upload rather than re-encoding it", async () => {
-		const { context, paths, state, storage } = await setup([
-			{ contents: LEFT, gzipped: true },
-		]);
-
-		const uploaded = await readFile(paths.reads[0]?.upload ?? "");
-
-		await finalizeStep.run(context);
-
-		const [file] = sampleFinalize(state).files;
-
-		const stored = await readStoredBytes(storage, file?.storageKey ?? "");
-
-		expect(stored.equals(uploaded)).toBe(true);
-
-		// Renamed, so the source path is gone.
-		await expect(access(paths.reads[0]?.upload ?? "")).rejects.toThrow();
-	});
-
-	it("compresses an upload that is not gzipped", async () => {
-		const { context, paths, state, storage } = await setup([
-			{ contents: LEFT, gzipped: false },
-		]);
-
-		await finalizeStep.run(context);
-
-		const [file] = sampleFinalize(state).files;
-
-		const stored = await readStoredBytes(storage, file?.storageKey ?? "");
-
-		// Actually gzipped, and the same content once decompressed.
-		expect(stored[0]).toBe(0x1f);
-		expect(stored[1]).toBe(0x8b);
-		expect(gunzipSync(stored).toString()).toBe(LEFT);
-
-		// Not a rename: the upload is still there.
-		await expect(access(paths.reads[0]?.upload ?? "")).resolves.toBeUndefined();
-	});
-
-	/**
-	 * Decompressed content, which is what makes a checksum comparable across
-	 * compressors — the rename path keeps the user's gzip and the compress path
-	 * writes `node:zlib`'s.
-	 */
-	it("preserves content through both paths", async () => {
-		const gzippedRun = await setup([{ contents: LEFT, gzipped: true }]);
-		const plainRun = await setup([{ contents: LEFT, gzipped: false }]);
-
-		await finalizeStep.run(gzippedRun.context);
-		await finalizeStep.run(plainRun.context);
-
-		const expected = createHash("sha256").update(LEFT).digest("hex");
-
-		await expect(
-			checksumFile(gzippedRun.paths.reads[0]?.normalized ?? ""),
-		).resolves.toBe(expected);
-		await expect(
-			checksumFile(plainRun.paths.reads[0]?.normalized ?? ""),
-		).resolves.toBe(expected);
-	});
-
 	it("mints a distinct key per read", async () => {
-		const { context, state } = await setup([
-			{ contents: LEFT, gzipped: true },
-			{ contents: RIGHT, gzipped: true },
-		]);
+		const { context, state } = await setup([LEFT, RIGHT]);
 
 		await finalizeStep.run(context);
 
@@ -282,7 +202,7 @@ describe("finalizeStep", () => {
 	});
 
 	it("refuses to finalize without quality data", async () => {
-		const { context } = await setup([{ contents: LEFT, gzipped: true }]);
+		const { context } = await setup([LEFT]);
 
 		context.state.quality = null;
 

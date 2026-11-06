@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { createSampleWorkflow } from "./workflow";
 
 describe("createSampleWorkflow", () => {
-	it("declares the two steps, in order", () => {
+	it("declares the three steps, in order", () => {
 		expect(createSampleWorkflow.steps.map((step) => step.id)).toStrictEqual([
+			"normalize_reads",
 			"run_fastqc",
 			"finalize",
 		]);
@@ -19,7 +20,7 @@ describe("createSampleWorkflow", () => {
 	 * carries.
 	 */
 	it("names the step for what it measures rather than the tool", () => {
-		expect(createSampleWorkflow.steps[0]?.name).toBe("Measure quality");
+		expect(createSampleWorkflow.steps[1]?.name).toBe("Measure quality");
 	});
 
 	/**

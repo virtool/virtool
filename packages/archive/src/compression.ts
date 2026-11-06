@@ -17,6 +17,12 @@ import { createGunzip, createGzip } from "node:zlib";
 // The two-byte gzip magic number, RFC 1952 §2.3.1.
 const GZIP_MAGIC = [0x1f, 0x8b];
 
+// The bzip2 stream header: `BZh`, then a block size digit from `1` to `9`.
+const BZIP2_MAGIC = [0x42, 0x5a, 0x68];
+const BZIP2_HEADER_LENGTH = BZIP2_MAGIC.length + 1;
+const BZIP2_MIN_BLOCK_SIZE = 0x31;
+const BZIP2_MAX_BLOCK_SIZE = 0x39;
+
 /** Options for streaming a gzip object into a decompressed file. */
 export type DecompressGzipToFileOptions = {
 	/** Stop the transfer and destroy every pipeline stage when aborted. */
@@ -103,20 +109,44 @@ export async function decompressGzipToFile(
  * A file shorter than two bytes is not gzipped.
  */
 export async function isGzipped(path: string): Promise<boolean> {
+	const start = await readStart(path, GZIP_MAGIC.length);
+
+	return (
+		start.length === GZIP_MAGIC.length &&
+		GZIP_MAGIC.every((byte, index) => start[index] === byte)
+	);
+}
+
+/**
+ * Whether the file at `path` starts with a bzip2 stream header.
+ *
+ * Reads four bytes and stops. A file shorter than the header is not bzip2.
+ */
+export async function isBzip2(path: string): Promise<boolean> {
+	const start = await readStart(path, BZIP2_HEADER_LENGTH);
+	const blockSize = start[BZIP2_MAGIC.length];
+
+	return (
+		blockSize !== undefined &&
+		blockSize >= BZIP2_MIN_BLOCK_SIZE &&
+		blockSize <= BZIP2_MAX_BLOCK_SIZE &&
+		BZIP2_MAGIC.every((byte, index) => start[index] === byte)
+	);
+}
+
+/** The first `length` bytes of the file at `path`, or fewer if it is shorter. */
+async function readStart(path: string, length: number): Promise<Buffer> {
 	const handle = await open(path, "r");
 
 	try {
 		const { bytesRead, buffer } = await handle.read(
-			Buffer.alloc(GZIP_MAGIC.length),
+			Buffer.alloc(length),
 			0,
-			GZIP_MAGIC.length,
+			length,
 			0,
 		);
 
-		return (
-			bytesRead === GZIP_MAGIC.length &&
-			GZIP_MAGIC.every((byte, index) => buffer[index] === byte)
-		);
+		return buffer.subarray(0, bytesRead);
 	} finally {
 		await handle.close();
 	}

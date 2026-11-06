@@ -6,8 +6,8 @@ import type { CreateSampleStep } from "./types";
 /**
  * Measure the quality of the uploaded reads.
  *
- * `quality-core` reads gzip natively, so this runs against the uploads as they
- * lie and the run never writes a decompressed FASTQ.
+ * `quality-core` reads gzip natively, so this runs against the normalized reads
+ * and the run never writes a decompressed FASTQ.
  *
  * Each read gets its own invocation and its own results file, which is what
  * makes a blob's read unambiguous — see `quality.ts`. They run in sequence
@@ -36,7 +36,7 @@ export const runFastqcStep: CreateSampleStep = {
 			await mkdir(dirname(read.qualityOutput), { recursive: true });
 
 			const { cancelled } = await runSubprocess({
-				command: buildQualityCommand(read.upload, read.qualityOutput),
+				command: buildQualityCommand(read.normalized, read.qualityOutput),
 			});
 
 			/* The run is being torn down and this process was killed, so whatever

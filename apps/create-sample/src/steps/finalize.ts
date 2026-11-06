@@ -1,17 +1,15 @@
-import { mkdir, rename } from "node:fs/promises";
-import { dirname } from "node:path";
 import type {
 	FinalizeSampleRequest,
 	SampleReadManifest,
 } from "@virtool/contracts";
 import { mintStorageKey } from "@virtool/storage";
-import { gzipFile, uploadFromPath } from "@virtool/workflow";
+import { uploadFromPath } from "@virtool/workflow";
 import { readsFileName } from "../paths";
 import type { CreateSampleStep } from "./types";
 
 /**
- * Normalize the reads, write them to object storage and hand the sample its
- * quality data.
+ * Write the normalized reads to object storage and hand the sample its quality
+ * data.
  *
  * The key is **minted**, not composed: nothing derives a key from row identity
  * on either side, and the route records what it is sent after checking it sits
@@ -22,12 +20,7 @@ import type { CreateSampleStep } from "./types";
  * One call, carrying the quality data and the manifest together, so a run
  * cannot end with the sample flipped ready and its reads rows missing.
  *
- * **An already-gzipped upload is renamed, not recompressed.** Almost every one
- * is, so compressing here would mean decompressing a read file and gzipping it
- * back to produce bytes the user already sent — and these run to several
- * gigabytes each.
- *
- * The uploads are processed in `sample_uploads.index` order and named by
+ * The reads are processed in `sample_uploads.index` order and named by
  * position, which is the only thing linking an upload to the reads file it
  * becomes: `finalizeSample` pairs the rows it writes with the uploads by that
  * same order.
@@ -39,7 +32,7 @@ import type { CreateSampleStep } from "./types";
 export const finalizeStep: CreateSampleStep = {
 	id: "finalize",
 	description: "Upload the normalized reads and finalize the sample.",
-	async run({ client, data, logger, proc, runSubprocess, state, storage }) {
+	async run({ client, data, logger, state, storage }) {
 		const { quality } = state;
 
 		// `run_fastqc` fills this. Reaching finalize without it means the run is
@@ -51,29 +44,6 @@ export const finalizeStep: CreateSampleStep = {
 		const files: SampleReadManifest[] = [];
 
 		for (const [index, read] of data.paths.reads.entries()) {
-			const gzipped = data.uploadsAreGzipped[index];
-
-			// `buildContext` fills one entry per read. Defaulting a missing one to
-			// either branch is silently wrong: compressing an already-gzipped
-			// upload double-gzips it, and renaming a plain one stores a file the
-			// name says is compressed and nothing can read.
-			if (gzipped === undefined) {
-				throw new Error(`No gzip status recorded for read ${index + 1}`);
-			}
-
-			await mkdir(dirname(read.normalized), { recursive: true });
-
-			if (gzipped) {
-				await rename(read.upload, read.normalized);
-			} else {
-				await gzipFile({
-					proc,
-					runSubprocess,
-					source: read.upload,
-					target: read.normalized,
-				});
-			}
-
 			const storageKey = mintStorageKey("samples", data.sampleId);
 
 			const size = await uploadFromPath(storage, storageKey, read.normalized);

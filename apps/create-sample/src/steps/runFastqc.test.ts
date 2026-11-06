@@ -61,7 +61,7 @@ async function setup(uploadNames: readonly string[]) {
 		sampleId: SAMPLE_ID,
 		sampleName: "Test",
 		uploadStorageKeys: uploadNames.map((_, index) => `uploads/${index}`),
-		uploadsAreGzipped: uploadNames.map(() => true),
+		uploadFormats: uploadNames.map(() => "gzip"),
 		paths,
 	};
 
@@ -98,14 +98,14 @@ describe("runFastqcStep", () => {
 			[
 				"quality-core",
 				"--input",
-				paths.reads[0]?.upload,
+				paths.reads[0]?.normalized,
 				"--output",
 				paths.reads[0]?.qualityOutput,
 			],
 			[
 				"quality-core",
 				"--input",
-				paths.reads[1]?.upload,
+				paths.reads[1]?.normalized,
 				"--output",
 				paths.reads[1]?.qualityOutput,
 			],

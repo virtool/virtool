@@ -10,7 +10,7 @@
  * instance.
  */
 
-import { isGzipped } from "@virtool/archive/compression";
+import { isBzip2, isGzipped } from "@virtool/archive/compression";
 import type { WorkflowSampleUpload } from "@virtool/contracts";
 import { WorkflowSample } from "@virtool/contracts";
 import {
@@ -19,6 +19,9 @@ import {
 	readIdArg,
 } from "@virtool/workflow";
 import { type CreateSamplePaths, workPaths } from "./paths";
+
+/** The compression of an upload, as read from its first bytes. */
+export type UploadFormat = "bzip2" | "gzip" | "plain";
 
 /** The eagerly resolved data half of a create_sample run's context. */
 export type CreateSampleData = {
@@ -35,14 +38,13 @@ export type CreateSampleData = {
 	uploadStorageKeys: string[];
 
 	/**
-	 * Whether each upload is actually gzipped, positionally.
+	 * How each upload is actually compressed, positionally.
 	 *
 	 * The name never says: a user may upload `reads.fastq.gz` that is plain
-	 * text, or `reads.fastq` that is not. `finalize` branches on this to decide
-	 * whether a read is renamed or compressed — `quality-core` reads either
-	 * form, so no other step asks.
+	 * text, or `reads.fastq` that is not. `normalize_reads` branches on this to
+	 * decide whether a read is renamed, compressed, or converted.
 	 */
-	uploadsAreGzipped: boolean[];
+	uploadFormats: UploadFormat[];
 
 	paths: CreateSamplePaths;
 };
@@ -91,19 +93,27 @@ export async function buildCreateSampleContext({
 		}),
 	);
 
-	const uploadsAreGzipped = await Promise.all(
-		paths.reads.map((read) => isGzipped(read.upload)),
+	const uploadFormats = await Promise.all(
+		paths.reads.map((read) => getUploadFormat(read.upload)),
 	);
 
-	logger.info({ gzipped: uploadsAreGzipped }, "downloaded uploads");
+	logger.info({ formats: uploadFormats }, "downloaded uploads");
 
 	return {
 		sampleId,
 		sampleName: sample.name,
 		uploadStorageKeys: uploads.map((upload) => upload.storageKey),
-		uploadsAreGzipped,
+		uploadFormats,
 		paths,
 	};
+}
+
+async function getUploadFormat(path: string): Promise<UploadFormat> {
+	if (await isGzipped(path)) {
+		return "gzip";
+	}
+
+	return (await isBzip2(path)) ? "bzip2" : "plain";
 }
 
 /** An upload with the two nullable fields this workflow cannot do without. */
@@ -151,8 +161,8 @@ function resolveUploads(sample: WorkflowSample): ResolvedUpload[] {
  *
  * `uploads.name` is whatever the user called the file, and it is joined onto
  * the work path to decide where the bytes land. A name carrying a separator or
- * a `..` segment would write outside `uploads/` — and the rename `finalize`
- * makes only holds within one directory.
+ * a `..` segment would write outside `uploads/` — and the rename that
+ * `normalize_reads` makes only holds within one directory.
  */
 const PLAIN_FILENAME = /^[^/\\]+$/;
 
