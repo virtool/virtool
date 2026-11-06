@@ -178,9 +178,8 @@ Pathoscope is a workflow that finds known viruses in a sample.
    - Deep, wide coverage of an isolate often occurs with an infection.
    - Shallow, wide, and broken coverage can occur with contamination between samples on
      the same plate. These hits usually have low weights.
-   - High weight with deep coverage in a small area usually comes from low-complexity or
-     host-similar regions of the isolate genome. This pattern usually does not show a
-     true infection.
+   - Deep coverage in a small area usually comes from low-complexity or host-similar
+     regions of the isolate genome. This pattern usually does not show a true infection.
 
 4. To hide low-coverage hits, click **Filter**.
 
@@ -269,30 +268,37 @@ mapped to sequence MZ126530.1, which has a length of 6,495 nt.
 
 #### High quality negative
 
-This analysis is from a healthy sample.
-![Healthy sample analysis](./pathoscope_healthy.png?url)
+This sample comes from a healthy plant. It has 9,850,428 total reads, and only 0.42%
+of them mapped to the reference. Virtool subtracted 4,755 reads that mapped better to
+_Arabidopsis thaliana_. This left 36,158 reads for analysis.
 
-The only virus that's present in the sample is Phaseolus vulgaris endornavirus 1. This
-virus was intentionally introduced into the nucleic acid extraction as a positive internal
-control to verify that the extraction succeeded.
+![Mapping overview of a healthy sample](./pathoscope_negative_overview.png?url)
 
-![Healthy sample filtered results](./pathoscope_healthy_unfiltered.png?url)
+The only virus present is Phaseolus vulgaris endornavirus 1 (PvEV-1). It has a weight
+of 1.000, a depth of 115, and a coverage of 1.000. This virus is a positive internal
+control. It is added to the nucleic acid extraction to show that the extraction
+succeeded.
 
-When the results are filtered, all other viruses have low weight, depth, and
-coverage, indicating that they're not present in the sample. These results indicate
-that this sample is from a healthy plant.
+The list has 16 hits, sorted by coverage. The next three hits each have a weight of
+0, a depth of 0, and a coverage of 0.051 or less. Their charts show reads in only one
+small area. These viruses are not present in the sample.
+
+![Hit list with the internal control and three low hits](./pathoscope_negative_hits.png?url)
 
 #### Contamination
 
-Below is an example of an analysis from a contaminated sample.
-![Contaminated sample analysis](./pathoscope_contaminated.png?url)
+This sample comes from an apple host. It has 10,507,241 total reads, and 11.91% of
+them mapped to the reference.
 
-In this sample, 53.26% of reads map to the reference. Most of these reads belong
-to Phaseolus vulgaris endornavirus 1, the internal control, with a weight of 0.996
-and a depth of 4021.
-Grapevine rupestris stem pitting-associated virus also shows, but it has a low
-weight (8.95E-4) and a low depth (3). Grape viruses are uncommon in tree fruits,
-so this hit is likely contamination.
+![Mapping overview of a sample with contamination](./pathoscope_contamination_overview.png?url)
+
+Foveavirus mali and Apple chlorotic leaf spot virus have high coverage, and both
+viruses infect apple. Grapevine associated ilarvirus does not match the host. It has
+a weight of 1.42E-5, a depth of 0, and a coverage of 0.201. Its chart shows shallow,
+broken coverage. This hit is contamination. The likely source is another sample on
+the same run or plate.
+
+![Hit list with apple viruses and a grapevine virus](./pathoscope_contamination_hits.png?url)
 
 ![Poor quality analysis](./poor_quality_analysis.png?url)
 
