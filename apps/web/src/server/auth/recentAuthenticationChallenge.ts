@@ -122,6 +122,12 @@ function toTransports(value: string | null): string[] {
  * Passkeys use their own ceremony and not Better Auth's
  * `/passkey/verify-authentication`. That endpoint signs in whoever holds the
  * passkey and does not check that it belongs to the user of this session.
+ *
+ * Recovery codes are not accepted. Every TOTP user also has a password, so a
+ * recovery code would only spend a code kept for a lost authenticator.
+ *
+ * Direct `auth.api` calls bypass the rate limit, so verification must enter
+ * through the HTTP handler.
  */
 export function recentAuthenticationPlugin({
 	db,

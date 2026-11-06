@@ -41,12 +41,20 @@ export type EnqueueEmailInput = EnqueueInput & {
 
 /** What {@link enqueueLinkEmail} needs to queue one message with a bearer link. */
 export type EnqueueLinkEmailInput = EnqueueInput & {
-	/** The setup token whose link the message carries. */
+	/**
+	 * The setup token whose link the message carries. Deleting the token deletes
+	 * the message.
+	 */
 	setupTokenId?: number;
 	template: EmailLinkTemplate;
 };
 
-/** What enqueueing returns: a queued row's identity, or a discard. */
+/**
+ * What enqueueing returns: a queued row's identity, or a discard.
+ *
+ * A discard is not an error. A flow that depends on the email offers the user
+ * another route.
+ */
 export type EnqueueEmailResult =
 	| { status: "queued"; created: boolean; outboxId: number }
 	| { status: "discarded" };
@@ -108,6 +116,11 @@ async function insertEmail(
  * Queue one notice.
  *
  * The message is discarded and no row is written while sending is switched off.
+ *
+ * Features queue mail only through this function and {@link enqueueLinkEmail}.
+ * Pass a template, never HTML, and pass a transaction when domain state and its
+ * email must commit together. Template fields stay stored until the row is
+ * pruned, so keep data out of them that cannot tolerate that retention.
  */
 export async function enqueueEmail(
 	db: DbOrTx,

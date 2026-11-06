@@ -54,6 +54,7 @@ export async function gzipFile({
  * The decompressed bytes go through a pipe, so they never reach the disk. The
  * caller's image must install `lbzip2` as well as `pigz`. `lbzip2` decompresses
  * in parallel whichever tool made the file; `pbzip2` does so only for its own.
+ * In a benchmark against `bzip2` and `pbzip2`, `lbzip2` was clearly the fastest.
  */
 export async function recompressBzip2File({
 	proc,

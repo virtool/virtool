@@ -3,7 +3,9 @@ packages:
   - 'packages/*'
 
 # `pnpm deploy` requires injected workspace packages. Record their portable
-# snapshots in the checked-in lockfile for production deployments.
+# snapshots in the checked-in lockfile for production deployments. Regenerate
+# the lockfile only with the pnpm version pinned in the root `package.json`, so
+# that these snapshots stay deterministic.
 injectWorkspacePackages: true
 
 # Reject lockfile entries published less than 24h ago. Guards against

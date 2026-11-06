@@ -1,861 +1,47 @@
 # @virtool/web
 
-The Virtool web app. The app Dockerfile's `dist` target is published as
-`ghcr.io/virtool/web`; see [Images](../../README.md#images).
-
-Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
-[the development guide](../../dev/README.md) to run the app with `vtd`.
+The Virtool web app, published as `ghcr.io/virtool/web`; see
+[Images](../../README.md#images). It listens on port 9900. Run it locally with
+`vtd`; see [the development guide](../../dev/README.md).
 
 ## Key libraries
 
-- **React** with React Compiler for rendering
 - **TanStack Router and Start** for routing, SSR, and server functions
-- **React Query** for server state; **zustand** for client state
-- **react-hook-form** and **zod** for forms and validation
-- **Tailwind CSS**, **Radix UI**, and **CVA** for styling and component variants
-- **Lucide React** for icons
+- **React Query** for server state and **zustand** for client state
+- **Tailwind CSS**, **Radix UI**, and **CVA** for styling
 - **d3** for imperative SVG charts
-- **exceljs** for server-side analysis XLSX exports
-- **Better Auth** with its passkey plugin for human authentication, including
-  the browser passkey ceremonies
-- **react-qr-code** for the TOTP enrollment QR code
-
-## Client development
-
-### Imports and bundles
-
-Use specific path aliases across directories; reserve `@/*` for `src/routes`
-and `src/types`. [tsconfig.json](tsconfig.json) defines the aliases. Follow the
-server-import restrictions in [AGENTS.md](../../AGENTS.md#client).
-
-Route loaders, guards, and search validators are eager exports. Dynamically
-import feature query modules inside loaders so their request dependencies do
-not enter every page's initial bundle. Keep queries needed before sign-in in
-small, separate modules, even when imported dynamically: the login page still
-loads everything its guards need.
-
-Use the dependency-free helpers in [searchParams.ts](src/app/searchParams.ts)
-for synchronous search validation. Keep utilities with heavy dependencies in
-separate modules so importing a lightweight helper doesn't load them too.
-
-Code reachable through `start.ts` belongs to the browser graph as well. Follow
-[auth middleware](src/server/auth/middleware.ts) when a shared entry needs
-server-only code: use `createServerOnlyFn` with a dynamic import. Native
-packages also need to survive both bundling stages; the externalization and
-tracing constraints live beside their settings in [vite.config.js](vite.config.js).
-
-### Rendering
-
-Follow the render-purity rules in [AGENTS.md](../../AGENTS.md#client). Use
-`@app/serverNow` for elapsed time, `useHydrated` for viewer-local absolute times,
-and `ClientOnly` for measured subtrees. Give `<title>` one string child,
-including inside SVG. Turn off SSR only at the route that needs it; descendants
-can't re-enable it.
-
-For React Compiler compatibility, don't spread a `react-hook-form` methods
-object, sync form props with `useForm({ values })`, and use
-`@app/useMatchPartialPath` instead of `useMatchRoute`.
-
-### Routing and data
-
-Use Router `<Link>` and its `search` prop for internal navigation. Resolve
-search defaults in `validateSearch`, strip them from URLs with
-`stripSearchParams`, and use `@app/pagination` for paginated routes.
-
-Call TanStack Start server functions through React Query. Keep query options,
-hooks, mutations, and inline server-function calls in each feature's
-`queries.ts`; don't add a separate `api.ts`. Build keys with `createQueryKeys`
-in a separate `keys.ts` and import them directly. This lets invalidators use
-keys without loading the request layer.
-
-Declare reusable keys and fetchers together with `queryOptions`. Prefetch data
-needed for the first render with `ensureQueryData` in a route loader. Fetch
-interaction-only data at its point of use.
-
-Primary route data uses suspense queries. Route boundaries handle pending and
-error states. Preserve `notFound()` mappings where a route has a
-specific not-found view. Only suspense queries and loader prefetches run during
-SSR; plain `useQuery` starts after hydration.
-
-Secondary data uses `useQuery`. Check `isError && !data` and render `QueryError`
-before checking `isPending`, keeping stale data visible after a failed refetch.
-Don't treat missing data as loading: an initial error has no data either.
-Paginated queries use `placeholderData: keepPreviousData`. Read server-function
-error statuses with `getErrorStatus` from `@app/queryErrors`.
-
-Put invalidation in `useMutation` callbacks so it runs even after the component
-unmounts. Put navigation, toasts, and other view effects in `mutate` callbacks.
-Reserve `setQueryData` for frequent updates where repeated requests are too
-expensive.
-
-A mutation that creates, updates, or deletes a record reports the change to
-`invalidateChange` (or `invalidateChanges` for a batch) in `@app/invalidate`.
-Don't invalidate a record's keys by hand. The SSE handler uses the same
-function, so a local change and a pushed change refresh the same queries:
-
-- A create refreshes the domain's `lists()`.
-- An update refreshes the record's `detail(id)` and the domain's `lists()`.
-- A delete resets the record's `detail(id)` and refreshes the domain's
-  `lists()`. A reset drops the cached data, so a view of the deleted record
-  shows its not-found state instead of stale data.
-- A domain that caches outside those two keys, such as the account or the
-  active banner, refreshes `all()`.
-- Every change also refreshes the other domains that show the record or a
-  value derived from it. For example, a label change refreshes samples, and an
-  OTU change refreshes references and unbuilt index changes.
-
-When a record starts to embed another domain's data, add that domain to the
-dependents in `@app/invalidate`.
-
-### Styling
-
-Read `src/base` before building UI. Reuse its accessibility and interaction
-behavior; if another feature already has the missing component, extract it to
-`@base` for both consumers.
-
-Use Tailwind utilities and `cn()` from `@app/cn`. Reuse or add tokens in
-[src/app/style.css](src/app/style.css) and
-[animations.css](src/app/animations.css), avoiding arbitrary utilities and
-hard-coded colors. Base component colors use the shared `PaletteColor`.
-
-Size text containers in `rem`; reserve pixels for graphics without text. When
-an API requires a numeric size, resolve a rem value with `useRootFontSize` from
-`@app/hooks`.
-
-### Forms
-
-Put each form control in a `Field` from `@base/Field`, with a `FieldLabel`, an
-optional `FieldDescription`, and a `FieldError`. The field connects them: don't
-set `id`, `htmlFor`, `aria-invalid`, or `aria-describedby` by hand. A control
-built on a new primitive gets these props from `useFieldControl`. Use
-`orientation="horizontal"` for a checkbox, switch, or radio row. Put a
-checkbox or radio before its label, and a switch after its label. When a row
-has a description, wrap its `Field` in `FieldLabel variant="row"` (or `"card"`
-for a bordered choice) and name the control with a `FieldTitle`. A click
-anywhere in the row then toggles the control, and the description stays out
-of the control's name. Put two or
-more related controls in a `FieldSet` with a `FieldLegend`, but don't put a
-single `Field` in a `FieldSet`. To put icons, text, or buttons inside an input,
-use `InputGroup` from `@base/InputGroup`.
-
-## Server development
-
-### Layers and boundaries
-
-Follow the server layering and wire contracts in
-[AGENTS.md](../../AGENTS.md#server). Web server functions get dependencies
-from `@server/composition` and build validators from `@server/validation`.
-Inject data dependencies in the order `db`, `storage`, `logger`.
-
-Keep policy logic in framework-free functions so unit tests can import it
-without loading environment configuration or opening a database. Server code
-must not import the browser feature tree. Export explicitly nameable types
-when inference would expose a transitive dependency.
-
-Shape results in `functions.ts`, without repeating that parsing in React Query
-`select` callbacks. Use `JsonObject` or `JsonValue` for opaque JSON results.
-
-### Error handling and request methods
-
-Map expected domain failures in one module-local
-`rethrowAsHttp(err: unknown): never` per `functions.ts`. Each expected branch
-throws `ClientError` with the status that names the failure. Throw unknown
-failures unchanged, preserving upstream error reporting. Local error mappers
-don't need `createServerOnlyFn` wrappers.
-
-Server functions don't set response statuses. Routes call them in-process
-during server rendering, so a status set there becomes the status of the
-rendered page. The client reads the status from the error, and auth rejections
-by error name. A failed server-function call therefore answers 200, with the
-error in its body. Biome rejects `setResponseStatus` in server code.
-
-Don't map a Postgres outage yourself. Global middleware turns it into a 503
-`ClientError`, or a 503 response on a raw route, and the client shows a
-self-retrying unavailable state, or a notice when an action fails.
-
-Use explicit `POST` for free-text searches, structured filters, and batch reads,
-keeping their inputs out of URLs. Use explicit `GET` for simple ID lookups,
-no-input reads, and small bounded filters. Read calls remain React Query
-queries regardless of method. Bound inputs and enforce body limits before
-parsing.
-
-RPC method changes require a coordinated browser/server rollout: old tabs
-calling a changed method receive 405. Keep them on a matching server version or
-require a reload during cutover. Check gateway body limits and forwarding of
-origin and fetch-metadata headers when changing these request shapes.
-
-### Authorization and raw routes
-
-Every exported server function declares exactly one policy from
-`@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`,
-`permission(name)`, `recentlyAuthenticated(operation)`, or
-`setupOnly(purpose)`. Read the
-discriminated principal from `context.principal` and do not perform a second
-lookup. Browser sessions, API keys, and setup sessions have distinct principal
-kinds so a policy cannot silently widen one credential into another.
-Row-dependent authorization remains in the handler. Register
-each new `functions.ts` module in
-[src/server/**tests**/authorization.test.ts](src/server/__tests__/authorization.test.ts).
-Keep `createServerFn` at the definition site so the compiler recognizes it.
-
-Restricted setup credentials may complete only their named transition. Each
-`setupOnly` function must also appear with the matching purpose in
-[setupExceptions.ts](src/server/auth/setupExceptions.ts).
-
-Raw routes handle transports RPC can't provide, such as uploads, streaming
-downloads, avatar images, SSE, probes, metrics, and `/api/auth/*`. They
-enforce their own authorization. `requireAuthenticatedRequest` accepts sessions
-and API keys; server functions are session-only. A valid API key wins over a
-session cookie. Any other `Authorization` header falls back to the cookie,
-because a reverse proxy that uses HTTP Basic forwards its own credentials on
-every browser request. Better Auth owns sign-in, while Virtool owns
-account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
-
-The CSRF middleware checks every server function and every mutating raw-route
-request that has a session cookie or no `Authorization` header. It requires
-`Sec-Fetch-Site: same-origin`, or a same-origin `Origin` when the browser sends
-no Fetch Metadata. Requests with an `Authorization` header and no session cookie
-are not checked, because they cannot authenticate with a cookie that a browser
-attaches to a forged request. `/api/auth/*` is exempt, because Better Auth does
-its own origin check.
-
-Better Auth is mounted at `/api/auth/$` and composed in
-`@server/auth/betterAuth`. It authenticates interactive users; Virtool still
-owns account state, API keys, and authorization. Its raw handler is outside the
-server-function authentication and CSRF middleware, so Better Auth performs its
-own origin check against `VT_PUBLIC_ORIGIN`.
-
-The handler serves only an allow-list of Better Auth endpoints: the passkey
-sign-in and registration ceremonies, the TOTP `enable` and `verify-totp`
-calls, and the two recent-authentication paths. `enable` checks only the
-password, so it is served because Better Auth refuses it once TOTP is on.
-`disableTotpFn` and `regenerateRecoveryCodesFn` call `disable` and
-`generate-backup-codes` through `auth.api`. They require recent authentication
-(`totp.disable` and `recovery_codes.regenerate`) and the password. Every other path, including one that a plugin or an upgrade adds,
-answers 404. Server functions call other endpoints through `auth.api`. To serve
-a new endpoint over HTTP, add it to `HTTP_ALLOWED_ENDPOINTS` in
-[betterAuth.ts](src/server/auth/betterAuth.ts).
-
-Recent-authentication challenges pass through Better Auth's HTTP handler at
-`/api/auth/virtool-session/challenge`. Password, TOTP, and passkey share a limit
-of five attempts per minute per IP. The passkey options path,
-`/api/auth/virtool-session/passkey-options`, has its own limit of five requests
-per minute per IP. An atomic database-backed counter in
-`auth_rate_limits` shares the budget across web instances, including concurrent
-requests. Direct `auth.api` calls bypass this
-limiter; challenge verification must enter through the handler.
-
-Password sign-in calls `auth.api` directly, so it has its own budgets in
-`auth_rate_limits`. Each attempt spends one from the client IP address (three per
-10 seconds), then one from the account handle (10 per 15 minutes), before any
-password check, on the legacy and the Better Auth path. An attempt that the IP
-budget refuses doesn't spend the account budget. A correct password
-resets the account budget, so only failures accumulate. Handles without an
-account get the same budget. An exceeded budget throws a 429 `ClientError`.
-
-A correct password also gives the browser a signed `login_device` cookie for
-that account, valid for 30 days and renewed on each correct sign-in. A browser
-that sends a valid device for the account spends its own budget (five per 15
-minutes) instead of the account budget, so failures from other browsers can't
-lock the owner out. A password change invalidates the account's devices. The
-cookie holds up to five accounts and isn't a credential.
-
-The hourly internal cleanup task deletes `auth_rate_limits` rows whose
-`last_request` is more than an hour old, the longest window of any budget.
-Recovery budgets store the start of their window in that column. A row can stay
-for up to two hours. The web server doesn't prune the table.
-
-Virtool rejects inactive and pending users with the same 401 as bad credentials.
-Virtool signs in by handle; email sign-in is off because
-`users.email` isn't globally unique.
-
-Account email changes queue a verification link and leave the current address
-and verified state in place until the new mailbox proves control. The link is
-single use and checks that the original address is still current. Only the
-account that requested the change can complete it. If the link opens in a
-signed-out tab, the wall keeps the token in session storage, sends the user to
-sign in, and completes the change on return. Repeated
-requests are rate limited. Verification links for an unverified
-current address use the same route. Changing an address supersedes outstanding
-recovery links; an existing browser session remains active.
-
-Public password recovery accepts a handle and always acknowledges requests
-the same way. Only an eligible account with a verified email receives a queued
-link. Requester (five per minute) and target (three per hour) budgets limit
-attempts. Each budget is a fixed window that refused attempts don't extend, and
-a refused requester doesn't spend the target budget. A request also leaves a
-live link less than an hour old in place and sends nothing, unless that link's
-email failed, so a request from someone else can't invalidate a link the owner
-is waiting for. Disabled email delivery does not expose an anonymous recovery
-URL. An administrator with recent
-authentication can issue a one-time recovery URL, including a copy-only URL
-when delivery is unavailable. Consuming either recovery link changes the
-password and revokes browser and setup sessions and tokens; the user signs in
-again. An administrator link also reaches an account that has not completed
-email remediation. It replaces only the legacy password, and the next sign-in
-opens remediation. `/recover` and `/verify-email` consume these links; see
-[The wall](#the-wall).
-
-Administrators create human accounts by email invitation and assign access.
-The invitee chooses a handle and password when accepting. A users administrator
-may invite an ordinary account; only a full administrator may preassign an
-administrator role. The creation response
-contains one copyable setup token only when copy delivery is selected or email
-is unavailable, and the mutation UI shows it once. Emailed generations never
-return the bearer secret to the administrator. Safe administrator metadata reads
-show the recipient address, expiry, consumption, and queued delivery
-state. Regeneration always
-invalidates older links; choosing email creates a fresh generation. Deleting a
-pending user removes the account and every link it holds.
-
-`/account-setup` captures the token from the URL fragment and removes it from
-browser history before inspection. Unusable tokens all render one response.
-Acceptance claims the invitee's chosen handle and the bound email atomically,
-then signs in through Better Auth. A queued invitation verifies its bound
-address; a copied invitation queues ordinary
-email verification when delivery is ready and otherwise follows the disconnected
-policy with recovery disabled until the address is verified.
-
-The first-instance `/setup` path accepts handle, email, and password. A global
-transaction advisory lock makes exactly one concurrent request the first full
-administrator. Bootstrap never depends on email delivery: it signs the user in
-with an unverified address and queues verification only when mail is ready.
-Lifecycle logs contain only numeric invitation/user/issuer identifiers and
-bounded outcomes. `virtool_account_lifecycle_operations_total` reports the same
-bounded invitation, bootstrap, and administrator TOTP reset operations without
-identity labels.
-
-Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
-compatible with existing foreign keys. `auth_sessions` is the only browser
-session store. Purpose-bound setup sessions remain separate.
-
-Normal Better Auth sessions use the library's seven-day rolling lifetime and
-one-day refresh age, with no absolute cap. The authenticated shell calls
-`refreshBrowserSessionFn` once on mount and when the window regains focus.
-That function lets Better Auth extend eligible sessions and propagate its
-cookie through the TanStack Start integration.
-
-Security-sensitive mutations additionally require recent authentication. A
-Better Auth session is fresh for 15 minutes from its immutable `created_at`;
-the inclusive boundary is stale (`now - created_at >= 15 minutes`). Rolling
-expiry updates `updated_at` and `expires_at` but never renews freshness. The
-central inventory in `@server/auth/freshness` covers current-account password
-and email changes; administrator TOTP reset; passkey registration, removal, and
-security changes; API-key creation, permission changes, deletion, and rotation;
-revocation of another or all other browser sessions; administrator changes to
-users, administrator roles, and the MFA policy; and administrator-issued setup
-or recovery links. TOTP enrollment, disablement, and recovery-code regeneration
-use Better Auth's password check instead. See
-[Two-factor authentication](#two-factor-authentication).
-Logout and revocation of the current session remain available without recent
-authentication. Reads require it only when they reveal a one-time secret.
-
-Only a normal Better Auth browser principal can satisfy this policy. API keys,
-restricted setup credentials and MFA-enrollment sessions cannot. A stale
-protected call returns 403 with the
-stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
-insufficient operation-specific authority remains an ordinary 403. The client
-responds only to the code: it opens one shared full-page passkey, password, or
-TOTP challenge, then retries each waiting mutation once. The challenge offers a
-passkey first when the user has one and the browser can use one. It starts the
-ceremony only when the user selects the passkey button. Cancellation leaves the ordinary
-session and form state intact and never navigates to the login wall.
-
-Step-up delegates password and TOTP verification to Better Auth, with trusted
-device disabled and recovery codes excluded. Every TOTP user also has a
-password, so a recovery code would only spend a one-time code that the user
-keeps for a lost authenticator. A TOTP challenge is refused unless a first code
-has confirmed the enrollment, because Better Auth would otherwise finish the
-enrollment and replace the session. A wrong password or code gets a message that
-names only the method the user chose. A rate-limited attempt keeps the
-challenge open with a message to wait. Step-up does not use Better Auth's
-passkey sign-in endpoint, because that endpoint starts a session for the owner
-of any registered passkey. The recent-authentication plugin in
-`@server/auth/recentAuthenticationChallenge` runs its own ceremony instead:
-
-- The options path asks for user verification and allows only the passkeys of
-  the session user. It stores the challenge and the user id as a single-use
-  verification value for five minutes, keyed by a signed cookie of its own.
-- The challenge path consumes that value, refuses it if its user id is not the
-  session user, and finds the passkey by credential id and session user. It
-  verifies the assertion against the configured origin and RP ID with user
-  verification required, then stores the new signature counter. Success creates a new session
-  through Better Auth, atomically retires the old session, installs Better Auth's
-  cookie, and attributes the remainder of the request to the new non-secret
-  session id. Concurrent challenges have one durable winner; losing replacement
-  sessions are removed. The database replacement necessarily commits before the
-  response can install its cookie; if writing that response fails, the new row is
-  deleted, while the retired credential stays retired and the browser must sign
-  in again.
-
-A request in flight during the rotation can answer 401 for the retired session.
-Navigating at that moment would cancel the challenge and lose the new cookie, so
-the tab that runs the challenge defers `endSession()` until the challenge
-settles.
-
-Account session management uses that numeric database session id only as an
-opaque management id. Better Auth authenticates with the separate random
-`token`; its native list and revoke routes are disabled so neither that token nor
-another authentication-capable value can enter the account API. List and revoke
-queries are always scoped by the principal's numeric user id. The list contains
-only live Better Auth sessions and returns the full observed IP address, bounded
-browser/OS labels, creation time, rolling `updated_at` as last activity,
-effective expiry, and a server-derived current marker. Browser, OS, and IP are
-recognition hints from client-provided headers, not device identity or suspicion
-signals. Browser and OS labels are derived from Better Auth's bounded stored
-user agent when the list is published; missing or invalid values use explicit
-unknown fallbacks.
-
-Selected and all-other revocation require recent authentication and never end
-the current session; sign-out remains its termination path. A short-lived
-self-reference protects a replacement created by a concurrent step-up until the
-old row is deleted. Revocation takes effect on the next authoritative RPC check
-and on the next SSE recheck; client query invalidation is only a local display
-refresh and is not part of enforcement.
-
-Ordinary server functions, React Query reads and mutations, raw routes, SSE
-handshakes, revocation checks, reconnects, and HEAD probes use read-only session
-resolution (`disableRefresh: true`). The browser doesn't poll sessions, track
-input activity, send heartbeats, show a countdown, or display a warning dialog.
-An unattended tab can't extend its session through background traffic.
-
-After the authenticated shell arms `endSession()`, definitive session failures
-from refresh, query or mutation HTTP 401 responses, and SSE HTTP 401 responses
-converge on that idempotent path. A rejection proves only that the cookie it
-carried was refused, so the path fetches the account with the current cookie
-first. If the fetch succeeds, nothing happens. If it fails for a network or server
-reason, nothing happens and the next rejection asks again. Otherwise the fetch
-error names the destination. A lost session clears session storage and performs
-full-document navigation to login with “Your session ended” and a return location.
-A restriction that starts mid-session goes to `/mfa-enrollment` or
-`/email-remediation` with a return location. MFA enrollment keeps session storage,
-because the session continues.
-Network and server failures are operational errors, not evidence that a session
-expired.
-
-Uploads and downloads must stream. Resolve a requested file to a database row
-or explicit whitelist first, then use that row's `storage_key`; never construct
-a key from URL parameters. Use the row's display name for
-`Content-Disposition`.
-
-Uploads use a direct Azure Block Blob protocol. The browser adapters and public
-REST routes share the reservation and finalization service in
-`@server/uploads/service`; file bytes never pass through the web server.
-
-API clients reserve an upload, transfer and commit its blocks using the returned
-write-only SAS, then finalize it. See the [upload API guide on the Virtool
-website](../site/src/content/manual/api/uploads.mdx) for request shapes and the
-complete protocol.
-
-The former `POST /uploads` raw-body endpoint has been removed. This is an
-intentional breaking change: there is no proxied upload or supported legacy
-size limit.
-
-When direct uploads are disabled or the storage backend cannot issue an upload
-SAS, initialization returns `503` instead of falling back.
-
-Both browser and API uploads enforce `settings.max_upload_size` through
-`initializeUpload`. A valid declared size above the configured limit returns `413`
-before a reservation or SAS is created. The limit is read on every initialization,
-so changes apply to the next upload without a restart. `getUploadPolicyFn` exposes
-the limit to authenticated users for client validation.
-
-The setting and declared sizes are capped at the application ceiling of
-120,000,000,000 bytes (120 GB), independent of the storage backend.
-
-### Password hashing
-
-New passwords are hashed with Argon2id at the OWASP baseline: 19 MiB of
-memory, two passes, and one lane. Better Auth uses the same hashing as the
-rest of the server. Legacy bcrypt hashes continue to verify. The hash prefix
-selects the algorithm.
-
-After a successful password sign-in, an outdated hash is replaced with a new
-Argon2id hash in `users.password` and in the Better Auth credential account.
-An outdated hash is a bcrypt hash or an Argon2id hash with other parameters.
-No user has to reset a password. If the replacement fails, the failure is
-logged and the sign-in continues.
-
-### The setup boundary
-
-Some accounts are neither anonymous nor fully authenticated: an
-administrator-created account that has not been claimed, and an active legacy
-account with no usable unique email. Each holds a **restricted setup
-credential** that completes exactly one named transition and reaches nothing
-else. A user under the `required` MFA policy is restricted differently; see
-[Two-factor authentication](#two-factor-authentication).
-
-Login checks an unmigrated legacy identity before Better Auth. A matching
-legacy password mints only a purpose-bound `email_remediation` setup
-session, never an application session. An unmigrated user who
-forgets the password needs an administrator-issued recovery link, because
-self-service recovery needs an email. Migrated identities continue
-through Better Auth. A two-factor challenge keeps the login wall open for an authenticator
-or recovery code. After five wrong codes, Better Auth ends
-the challenge, and a run of wrong codes across challenges locks the account for
-a short time. Either one returns the wall to the sign-in form with a notice
-that says why. Unknown, ineligible, and wrong-password attempts keep the same
-generic response and constant-cost behavior. The remediation wall stages a
-normalized unique email as unverified. When delivery is enabled, only the
-emailed one-time link marks it verified; when delivery is unavailable, setup
-completes immediately and leaves `email_verified` false. Online links carry
-their token in the URL fragment, which the client removes before submitting it
-to the open verification function. The token works without the initiating
-browser's cookie and never authenticates a different browser. A matching setup
-session has the same 72-hour expiry as the link and can be claimed once for one
-Better Auth session; otherwise the result screen sends the holder to login.
-Pending state is server-owned, reports terminal outbox failure, and supports a
-server-throttled repeat delivery, address change, and cancellation. Claiming
-promotion revokes the restricted setup sessions.
-
-The credential is its own cookie pair, `setup_session_id` and
-`setup_session_token`, deliberately not the session pair. `@virtool/data` owns
-the rows and the purposes; this app owns the transport and the boundary.
-
-- `@server/auth/restricted` is the **one** authority for what a restricted
-  caller is. `resolveRestrictedSetup` turns the cookies into a credential
-  carrying a user id, a non-secret session id, one purpose and an expiry—
-  no roles, no permissions, no API-key cap. A second reader would be a second
-  chance to widen it.
-- The **global authentication middleware** enforces the restriction, before
-  any policy runs. An application session wins outright; only then is the
-  restricted credential considered, and a restricted caller is refused
-  anything absent from `@server/auth/setupExceptions` with a 403
-  `SetupRequiredError` naming the purpose. That error crosses the boundary
-  through `serverErrorSerializationAdapter`, and is what tells the router
-  which setup surface the caller belongs on—it carries no token and no
-  authorization data.
-- `setupOnly(purpose)` is the other half. The middleware decides whether a
-  restricted caller may reach a function at all; the policy decides whether
-  the purpose they hold is the one it completes, and refuses an ordinary
-  authenticated caller too.
-- A function listed in `setupExceptions` must declare `setupOnly()` and vice
-  versa. `authorization.test.ts` pins both directions, and separately proves
-  every ordinary server function refuses a restricted principal on its own.
-
-`setupExceptions` contains only email-remediation operations that require the
-restricted principal: read resumable state, submit or send an address again,
-change/cancel the pending address, and claim promotion after cross-browser
-verification. Bearer-token verification is open by design and decides only
-mailbox ownership; it does not grant application authority on its own.
-
-Raw routes reject restricted principals and always will:
-`requireAuthenticatedRequest` reads the session cookies or an `Authorization`
-header and never the setup pair, so SSE, uploads, downloads and streamed files
-answer a restricted holder the same 401 they answer anyone else. API-key Basic
-authentication is untouched—a restricted credential can never mint, accept
-or inherit a key, and `verifyApiKey` refuses a key whose owner has not
-completed setup.
-
-`logout` is the abandon path. It deletes the restricted session and clears its
-cookies alongside the application pair, so there is one way to end a browser's
-authority rather than one per kind.
-
-### The wall
-
-The wall is the set of routes that a browser without an ordinary session can
-open. Each route has one job:
-
-| Route                                             | Job                                                                   |
-| ------------------------------------------------- | --------------------------------------------------------------------- |
-| `/login`                                          | Password, passkey, and TOTP or recovery-code sign-in                  |
-| `/setup`                                          | First-instance bootstrap. It redirects to `/login` when a user exists |
-| `/account-setup`                                  | Invitation acceptance from a `#token=` link                           |
-| `/recover`                                        | Recovery request and recovery-link consumption                        |
-| `/verify-email`                                   | Email verification links                                              |
-| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation                                              |
-| `/mfa-enrollment`                                 | TOTP enrollment under the `required` MFA policy                       |
-
-The server decides where a browser goes next. After every sign-in or setup
-transition, `resolveAuthNextStep` ([nextStep.ts](src/wall/nextStep.ts)) removes
-the root and account caches and fetches the account again. A rejection maps to
-one `AuthNextStep`. The `/login`, `/_authenticated`, and `/mfa-enrollment`
-guards use the same mapping, so a restricted principal never renders the
-application shell. Local success in a form is not proof that a restriction
-has lifted.
-
-`safeRedirect` keeps a redirect only if it is a local path outside the wall.
-The client checks each redirect in search params, and the server checks the
-redirect that it puts into a remediation verification link. A redirect is a
-full path with a query and a fragment, so navigate to it with `href`, not `to`.
-Each wall step carries the redirect forward. Bearer tokens never go into a
-redirect, a query key, or router search state: `useCapturedUrlParams` reads them
-from the fragment or query one time and removes them from history before any
-request.
-
-The wall shows only `ClientError` messages, which the server writes for users.
-Other failures show a fixed message. The login form offers passkeys in the
-username autofill (`autocomplete="username webauthn"`) where the browser
-supports conditional mediation, and through an explicit button. An explicit
-ceremony cancels the autofill one.
-
-### Two-factor authentication
-
-TOTP uses Better Auth's `twoFactor` plugin with its defaults: issuer
-`Virtool`, six-digit codes, a 30-second period, and ten encrypted recovery
-codes minted with every enrollment. The plugin's enrollment, recovery-code
-regeneration, and disable endpoints are reachable over HTTP. Each of these
-requires the current password; they don't use the recent-authentication
-policy. Trusted devices are turned off: Better Auth refuses every request
-that asks to trust the device, over HTTP or through `auth.api`, and it
-ignores a trust cookie that a browser sends. `two-factor/get-totp-uri` is refused
-over HTTP, because it returns the secret again for only the password.
-Enrollment shows the secret one time, from the `enable` response.
-
-`/account/security` holds the email, password, TOTP, passkey, and session
-controls. The browser calls the TOTP enrollment endpoints through
-`twoFactorClient` ([twoFactor.ts](src/account/twoFactor.ts)). Turning TOTP off
-and making new recovery codes use server functions, which open the
-recent-authentication challenge when the session is stale. The TOTP secret and recovery codes
-stay in component state only, and the mutations use `gcTime: 0`. The user must
-confirm that they saved new recovery codes before the dialog closes.
-`getAccountSecurityFn` returns the number of unused recovery codes, never the
-codes.
-
-After a correct password, an enrolled user gets Better Auth's login challenge
-instead of a session. The challenge allows five attempts, and ten failures lock
-the factor for 15 minutes.
-
-The instance MFA policy is `settings.mfa_policy`, `optional` or `required`.
-Only a full administrator with a recently authenticated session can set it,
-through `setMfaPolicyFn` on the **Administration › Security** page. It refuses
-`required` until the caller has enrolled, so the policy can't lock out the
-administrator who sets it.
-
-Under `required`, a Better Auth session whose user has no confirmed TOTP
-resolves to an `mfa_enrollment` principal. The restriction is read from the policy and `users.two_factor_enabled` on every
-request, so it applies to live sessions as soon as the policy changes or a user
-disables TOTP. It ends when the first `verify-totp` succeeds.
-
-An `mfa_enrollment` principal reaches no server function or raw route. Server
-functions answer 403 `MfaEnrollmentRequiredError`. In `/api/auth/*`, it can
-reach only `two-factor/enable` and `two-factor/verify-totp`; every other
-allowed path answers 403 `MFA_ENROLLMENT_REQUIRED`. API keys are never challenged or restricted.
-
-The guards send an `mfa_enrollment` principal to `/mfa-enrollment`. The wall
-asks for the password, shows the QR code and setup key from the `enable`
-response, and checks a code with `verify-totp`. It then shows the recovery
-codes one time and continues only after the user confirms that they saved them.
-The secret and the codes stay in component state. A reload after the code check
-does not show the codes again; the user makes new ones on `/account/security`.
-Cancel signs the user out.
-
-`resetUserTotpFn` is the recovery path for a user who has lost both their
-authenticator and their recovery codes. It requires the full administrator role
-and recent authentication, and it refuses the caller's own account. It deletes
-the factor, clears `users.two_factor_enabled`, and deletes every session of the
-target in one transaction, so under `required` the target's next sign-in is
-restricted to enrollment. The reset requires `users.two_factor_enabled`. A
-factor row without the flag is an abandoned enrollment, which does not lock the
-user out: their next `two-factor/enable` replaces it.
-
-### Passkeys
-
-A passkey is an optional primary credential. It does not replace the password,
-which stays available for sign-in and recovery. A passkey sign-in goes through
-the same account gates as a password sign-in: `users.active`, the `normal`
-lifecycle state, and the `required` MFA policy. A passkey
-verifies the user, so a user enrolled in TOTP does not get a second-factor
-challenge after a passkey. A passkey is not a trusted device.
-
-The browser runs both ceremonies through the plugin's client in
-[`@app/authClient`](src/app/authClient.ts). The requests go to the mounted
-handler, so its MFA-enrollment restriction applies to them.
-Better Auth checks recent authentication for registration with the same
-15-minute freshness window, when it issues the options and again when it
-verifies the response. Registration does not use the automatic retry. Before the
-ceremony starts, the client reads the cached freshness deadline. If less than
-five minutes remain, the client opens the challenge first, because the session
-must stay fresh until verification. After a challenge, the user starts the
-ceremony again with a new click. An automatic retry can lose the browser's user
-activation, and a retry after a rejected verification leaves an orphaned
-passkey on the authenticator. The plugin's list, rename, and delete endpoints
-answer 404 over HTTP, because the list returns public keys and counters and the
-mutations skip recent authentication. Server functions call these three through
-`auth.api` and apply Virtool's policies.
-
-The sign-in verify path allows 3 requests per client IP in 10 seconds, the same
-as Better Auth's default rule for `/sign-in/*`. The sign-in options path allows
-10 requests per client IP in 60 seconds, because the sign-in form asks for a
-new challenge each time its autofill request starts again. The limits are
-`rateLimit.customRules` entries. A refused request gets a 429.
-
-The sign-in form keeps a passkey request in the username autofill. It starts
-the request again before the challenge expires, after a refused passkey, after
-an explicit passkey sign-in that does not finish, and after the two-factor
-step. An explicit passkey sign-in first stops the autofill request and waits
-for it to settle, because the two requests share one challenge cookie and the
-browser runs one ceremony at a time. A failure before the user picks a passkey
-from the autofill shows nothing.
-
-| Operation             | Entry point                                             | Policy                                      |
-| --------------------- | ------------------------------------------------------- | ------------------------------------------- |
-| Sign in               | `authClient.signIn.passkey()`, `startPasskeyAutofill()` | Open, rate limited                          |
-| Recent authentication | `verifyRecentAuthenticationWithPasskey()`               | Session user's passkeys only, rate limited  |
-| Register              | `authClient.passkey.addPasskey()`                       | Better Auth fresh session                   |
-| List                  | `findPasskeysFn`                                        | `authenticated()`, Better Auth session only |
-| Rename                | `renamePasskeyFn`                                       | `passkey.security.update`                   |
-| Remove                | `removePasskeyFn`                                       | `passkey.remove`                            |
-
-WebAuthn rules:
-
-- The one Relying Party is the configured public origin and the RP ID derived
-  from it. See [the environment guide](../../docs/env.md). A response signed for
-  another origin or RP ID is refused.
-- Both ceremonies require user verification (a PIN or biometric). The pinned
-  plugin verifies with `requireUserVerification: false`, so `afterVerification`
-  hooks in `createAuth` check the flag again. The plugin asks the browser for
-  `preferred` user verification at sign-in, so the browser can offer an
-  authenticator that the server then refuses.
-- Registration asks for a discoverable credential, so a user can sign in without
-  typing a handle.
-- Challenges are server-generated, bound to a signed cookie, valid for five
-  minutes, and deleted when they are used.
-- `auth_passkeys.credential_id` is unique across all users. Registration refuses
-  a credential that is already registered with `PASSKEY_ALREADY_REGISTERED`. A
-  concurrent registration of the same credential can fail with a server error.
-
-The server sets the user's handle as the account label that the authenticator
-shows, whatever the options request asks for. The server also names the stored
-passkey. It uses the provider name of a known AAGUID, or else the browser and
-operating system of the registration request, such as Firefox on Linux. If it
-has neither, it uses "Passkey" as the name. Registration refuses a request
-that names the passkey with `PASSKEY_NAME_NOT_ACCEPTED`, because the plugin
-applies no limits to that name.
-The user can rename the passkey. Names are whitespace-normalized, 1 to 64
-characters, and contain no control characters.
-
-`findPasskeysFn` returns `PasskeySummary` values, oldest first: a management
-id, the name, the creation time, and whether the credential is synced and
-backed up. It never returns the credential id, public key, counter, or AAGUID.
-These flags describe the credential, not a device. A synced passkey can be on
-many devices.
-
-Removal can remove the final passkey, because the password remains. It does
-not change the password, TOTP, recovery codes, API keys, or sessions, including
-a session that the passkey started. A passkey that is gone, or that belongs to
-another user, is not found (404) and is not changed.
-
-In the browser, `@app/passkeys` loads the auth client only when a ceremony
-starts. It maps the client's errors to fixed messages and never shows a browser
-or server message. A stale session on registration opens the
-recent-authentication challenge, and then the ceremony runs again.
-`usePasskeySupport`, in `@app/passkeySupport`, reads WebAuthn support after
-hydration and reports `pending` during server rendering. The
-recent-authentication form loads `@app/passkeys` only when the user selects a
-passkey. `useSingleCeremony` lets a component run only one
-ceremony at a time, and cancels it when the component is removed. Cancellation,
-timeout, and an unsupported browser leave password sign-in available. The login
-form does not start conditional passkey requests. After a passkey sign-in, the
-route guards send a user who must reset their password to the reset form.
-
-### Server push
-
-Server-pushed cache invalidations arrive through the authenticated `/events`
-SSE stream. Events are published as `{ domain, resource_id, operation }` on the
-Postgres `client_events` channel; the route converts each event to the id-only
-`{ domain, operation, id }` wire shape. The client then refetches through the
-normal API so authorization remains at the request boundary.
-
-Every stream receives every event, except `account` events. An `account` event
-goes only to the streams of the user it names, so a change to one user's
-account refreshes only that user's other sessions.
-
-Adding a domain requires both `SseMessageSchema` and the `domains` record in
-`@app/invalidate`. A frame that fails validation—an
-unknown domain, a bad operation, a wrong id type—is contract drift and is
-reported to Sentry.
-
-The handshake uses `requireAuthenticatedRequest`. While connected, the server
-rechecks the session on each keepalive interval and closes a revoked stream.
-Because an `EventSource` error exposes no HTTP status, the client probes
-`HEAD /events`: only a 401 ends the session; other failures reconnect with
-backoff. A reconnect invalidates active queries to recover events missed while
-the stream was down.
-
-Frames go through `invalidateChange`, the rule that mutations use. `jobs` and
-`tasks` update frames instead go through `createJobRefreshQueue` and
-`createTaskRefreshQueue`, which deduplicate ids, batch reads, and serialize
-waves so an older response cannot overwrite newer progress. Keep the
-active-observer filtering and do not restore per-frame `detail(id)` refetches.
-The jobs queue also invalidates job lists because progress changes their state,
-ordering, and counts; tasks have no collection query to invalidate.
-
-| File                            | Responsibility                                          |
-| ------------------------------- | ------------------------------------------------------- |
-| `packages/contracts/src/sse.ts` | Domain and per-domain message schemas                   |
-| `packages/data/src/events/`     | Postgres channel contract and publisher                 |
-| `src/server/events/`            | Listener, wire-shape conversion, and session revocation |
-| `src/routes/events.ts`          | Authenticated SSE route, keepalive, and framing         |
-| `src/app/sse/`                  | Connection lifecycle, validation, and query routing     |
-| `src/app/invalidate.ts`         | Keys each change refreshes, shared with mutations       |
-| `src/jobs/refresh.ts`           | Batched job refresh queue                               |
-| `src/tasks/refresh.ts`          | Batched task refresh queue                              |
-
-## Testing
-
-[vitest.config.js](vitest.config.js) defines `web` (jsdom), `server` (Node and
-Postgres), and `a11y` (Chromium) projects. Run all web-app projects with
-`pnpm --filter @virtool/web test`, or select one with
-`pnpm --filter @virtool/web exec vitest run --project <name>`. Follow the root
-check policy for deciding which tests to run.
-
-Place component and helper tests in adjacent `__tests__/` directories. Use
-`renderWithProviders` or `renderWithRouter` from
-[src/tests/setup.tsx](src/tests/setup.tsx). Mock server-function modules with
-the typed stubs in `src/tests/server-fn/`, named `mock<ServerFnName>`; keep plain
-data generators in `src/tests/fake/`. For raw transports, mock the module that
-initiates the request. Missing mocks can cause real requests; no HTTP
-interceptor catches them.
-
-Test server-function handlers with
-[callServerFn](src/server/test/serverFn.ts); its documentation explains how to
-import the handler after the compiler transform.
-
-Use `user-event` and accessible queries such as `getByRole` and `getByLabelText`;
-don't disambiguate controls by index. Call `expectNoViolations(baseElement)`
-from [axe.ts](src/tests/axe.ts) explicitly to include portals. For contrast
-checks, use `*.a11y.test.tsx` with real theme classes and explicitly enable the
-`color-contrast` rule. Install Chromium with
-`pnpm --filter @virtool/web exec playwright install chromium`.
-
-Keep test output clean so that a new warning stands out. When a test exercises
-an error path that logs on purpose, call `silenceExpectedLogs` from
-`@tests/silenceExpectedLogs` in that test, or `silenceLogs` in a server test.
-
-Local tests skip React Compiler; CI enables it with `VT_TEST_REACT_COMPILER=1`.
+- **Better Auth** with its passkey plugin for human authentication
 
 ## Configuration
 
-Server variables are validated before the listener starts. See
-[configSchema.ts](src/server/configSchema.ts) for validation and
+The server validates its variables before it starts to listen. Every runtime
+variable accepts a `_FILE` variant, which takes precedence. See
 [the environment guide](../../docs/env.md) for file-backed values and key
-rotation. Every runtime variable accepts a `_FILE` variant, which takes
-precedence. Configure the required storage backend using
-[the shared storage settings](../../packages/data/README.md#configuration).
+rotation. Configure the required storage backend with
+[the shared storage settings](../../docs/storage.md#configuration).
 The table below covers the remaining settings and web-specific storage behavior.
 
-| Variable                         | Type                     | Default  | Use                                                                                                                                                                                                                                                                  |
-| -------------------------------- | ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VT_POSTGRES_URL`                | URL                      | Required | Connect to the Virtool Postgres database.                                                                                                                                                                                                                            |
-| `VT_POSTGRES_POOL_MAX`           | Positive integer         | `10`     | Limit the Postgres connection pool.                                                                                                                                                                                                                                  |
-| `VT_PUBLIC_ORIGIN`               | URL origin               | Required | Public browser origin for authentication and WebAuthn, including behind a proxy. Use an HTTPS hostname (HTTP is allowed for localhost), with no path, query, fragment, or credentials.                                                                               |
-| `VT_AUTH_SECRET`                 | String (32+ characters)  | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session.                                                                           |
-| `VT_METRICS_TOKEN`               | String                   | Unset    | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404.                                                                                                                                                                  |
-| `VT_SENTRY_DSN`                  | URL string               | Unset    | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value can't use `_FILE`.                                                                                                                                          |
-| `VT_ENCRYPTION_KEY`              | Base64 string (32 bytes) | Unset    | Encrypt secrets stored by Virtool: the Resend API key and the NCBI API key. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |
-| `VT_ENCRYPTION_KEY_PREVIOUS`     | Base64 string (32 bytes) | Unset    | Accept encrypted values written under the prior key during rotation.                                                                                                                                                                                                 |
-| `VT_STORAGE_AZURE_DOWNLOAD_URL`  | URL origin               | Unset    | Rehost redirected Azure downloads on a public origin, such as `https://files.virtool.ca`. Applies only in `redirect` download mode.                                                                                                                                  |
-| `VT_STORAGE_AZURE_UPLOAD_URL`    | URL origin               | Unset    | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint.                                                                             |
-| `VT_STORAGE_DOWNLOAD_MODE`       | `stream` \| `redirect`   | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend can't presign.                                                                    |
-| `VT_UPLOADS_CHUNKED`             | Boolean                  | `false`  | Enable direct Azure Block Blob uploads. When off, or when the backend can't presign uploads, initialization returns 503; there is no proxied fallback.                                                                                                               |
-| `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer         | `8`      | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path.                                                                                                                                 |
+| Variable                         | Type                     | Default  | Use                                                                                                                                                                                                                                                                               |
+| -------------------------------- | ------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VT_POSTGRES_URL`                | URL                      | Required | Connect to the Virtool Postgres database.                                                                                                                                                                                                                                         |
+| `VT_POSTGRES_POOL_MAX`           | Positive integer         | `10`     | Limit the Postgres connection pool.                                                                                                                                                                                                                                               |
+| `VT_PUBLIC_ORIGIN`               | URL origin               | Required | Public browser origin for authentication and WebAuthn, including behind a proxy. Use an HTTPS hostname (HTTP is allowed for localhost), with no path, query, fragment, or credentials.                                                                                            |
+| `VT_AUTH_SECRET`                 | String (32+ characters)  | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session.                                                                                        |
+| `VT_METRICS_TOKEN`               | String                   | Unset    | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404.                                                                                                                                                                               |
+| `VT_SENTRY_DSN`                  | URL string               | Unset    | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value can't use `_FILE`.                                                                                                                                                       |
+| `VT_ENCRYPTION_KEY`              | Base64 string (32 bytes) | Unset    | Encrypt values stored by Virtool: the Resend API key, the NCBI API key, and email links. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |
+| `VT_ENCRYPTION_KEY_PREVIOUS`     | Base64 string (32 bytes) | Unset    | Accept encrypted values written under the prior key during rotation.                                                                                                                                                                                                              |
+| `VT_STORAGE_AZURE_DOWNLOAD_URL`  | URL origin               | Unset    | Rehost redirected Azure downloads on a public origin, such as `https://files.virtool.ca`. Applies to `redirect` download mode, and to uploads when `VT_STORAGE_AZURE_UPLOAD_URL` is unset.                                                                                        |
+| `VT_STORAGE_AZURE_UPLOAD_URL`    | URL origin               | Unset    | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint.                                                                                          |
+| `VT_STORAGE_DOWNLOAD_MODE`       | `stream` \| `redirect`   | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend can't presign.                                                                                 |
+| `VT_UPLOADS_CHUNKED`             | `1`, `true`, or `yes`    | `false`  | Enable direct Azure Block Blob uploads. When off, or when the backend can't presign uploads, initialization returns 503; there is no proxied fallback.                                                                                                                            |
+| `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer         | `8`      | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path.                                                                                                                                              |
 
 ## Metrics
 
 `GET /metrics` shares the app's listener on port 9900. Set `VT_METRICS_TOKEN`
 and send `Authorization: Bearer <token>` to scrape it. Without a configured
-token the endpoint returns 404; invalid credentials return 401.
+token the endpoint returns 404. Invalid credentials return 401.
 
 ```yaml
 scrape_configs:
@@ -868,10 +54,229 @@ scrape_configs:
       - targets: ["virtool-web:9900"]
 ```
 
-The [registry](src/server/metrics/registry.ts) defines the `virtool_*` request,
-build, and Postgres pool series alongside standard process metrics. Request
-latency measures time to response headers, including for streams. Pool gauges
-count this replica's database connections, not queries waiting for a pool slot;
-a failed pool probe leaves the previous values in place while the rest of the
-scrape remains available. See [the metrics guide](../../docs/metrics.md) when
-querying across services.
+The app emits `virtool_*` series for requests, the build, the Postgres pool, and
+account lifecycle operations, and standard process metrics. Request latency
+measures the time to response headers, also for streams. Pool gauges count this
+replica's database connections, not queries that wait for a pool slot. A failed
+pool probe keeps the previous values, and the rest of the scrape stays
+available. See [the metrics guide](../../docs/metrics.md) to query across
+services.
+
+## Gateways and rollouts
+
+Gateways must forward `Origin` and the fetch-metadata headers. Mutating browser
+requests must be same-origin, and API keys are exempt. Check gateway body limits
+when you change a request shape.
+
+A Postgres outage answers 503, and the client shows an unavailable state that
+retries.
+
+If a server function changes its HTTP method, old browser tabs receive 405. Keep
+them on a matching server version or require a reload during the cutover.
+
+## Authentication
+
+Better Auth authenticates interactive users. Virtool owns account state, API
+keys, and authorization. Users sign in with a handle, not an email address,
+because `users.email` isn't globally unique. Inactive and pending users get the
+same 401 as bad credentials.
+
+Server functions accept browser sessions only. Raw routes, such as uploads,
+downloads, and server push, also accept API keys. A valid API key wins over a
+session cookie. Any other `Authorization` header falls back to the cookie,
+because a reverse proxy that uses HTTP Basic forwards its own credentials on
+every browser request.
+
+New passwords use Argon2id, and legacy bcrypt hashes still verify. After a
+successful sign-in, Virtool replaces an outdated hash. Users don't have to reset
+their passwords. If the replacement fails, Virtool logs the failure and the
+sign-in continues.
+
+### Rate limits
+
+Budgets are shared across web instances. A refused request gets a 429.
+
+| Action                                | Limit            |
+| ------------------------------------- | ---------------- |
+| Password sign-in, per client IP       | 3 in 10 seconds  |
+| Password sign-in, per handle          | 10 in 15 minutes |
+| Password sign-in, per known browser   | 5 in 15 minutes  |
+| Passkey sign-in, per client IP        | 3 in 10 seconds  |
+| Passkey challenges, per client IP     | 10 in 60 seconds |
+| Recent authentication, per client IP  | 5 in 1 minute    |
+| Recent passkey options, per client IP | 5 in 1 minute    |
+| Password recovery, per requester      | 5 in 1 minute    |
+| Password recovery, per target account | 3 in 1 hour      |
+
+A correct password resets the handle budget, so only failures accumulate. It also
+gives the browser a `login_device` cookie for 30 days. That browser then spends
+its own budget, so failures from other browsers can't lock the owner out. A
+password change invalidates these devices.
+
+The hourly internal cleanup task prunes the budgets. The web server doesn't.
+
+### Sessions
+
+Browser sessions last seven days and roll forward with use, with no absolute
+limit. The authenticated shell refreshes the session when it mounts and when the
+window regains focus. No other traffic extends a session, so an unattended tab
+can't keep itself signed in.
+
+Sensitive actions need a sign-in, or a new password, TOTP, or passkey challenge,
+in the last 15 minutes. Examples are password and email changes, API key changes,
+and administrator changes to users and policy. A stale call returns 403 with the
+code `SESSION_NOT_FRESH`. API keys and restricted credentials can't satisfy this
+requirement. Sign-out and revocation of the current session never need it.
+
+Users can list and revoke their other sessions. Revocation takes effect on the
+next request and on the next server-push recheck. A lost session returns the user
+to sign-in with the message "Your session ended." Network and server errors never
+end a session.
+
+### Accounts
+
+Administrators create accounts by email invitation. The invitee chooses a handle
+and password. Only a full administrator can preassign an administrator role. A
+new link always replaces older links, and a copyable link appears only once.
+
+The first user at `/setup` becomes the first full administrator. Bootstrap
+doesn't need email delivery.
+
+An email change keeps the current address until the new mailbox proves control.
+Links are single use and rate limited. A change supersedes outstanding recovery
+links, and the existing browser session stays active.
+
+Public password recovery always gives the same acknowledgement. Only an eligible
+account with a verified email gets a link, and a link less than an hour old stays
+in place. An administrator with recent authentication can issue a one-time
+recovery URL, also when email delivery is unavailable. A recovery link changes
+the password and ends all of the user's sessions.
+
+### Restricted accounts
+
+Some accounts can complete only one setup step before they reach the
+application. An active legacy account with no usable unique email must add an
+address at the wall. A legacy password never starts an ordinary session, and a
+user in this state who forgets the password needs an administrator recovery link.
+
+With email delivery on, only the emailed link verifies the address. The link
+expires after 72 hours. With delivery off, setup completes immediately and the
+address stays unverified.
+
+The credential is a separate cookie pair. It can't reach raw routes or API keys.
+
+### The wall
+
+The wall is the set of routes that a browser without an ordinary session can
+open:
+
+| Route                                             | Job                                                                   |
+| ------------------------------------------------- | --------------------------------------------------------------------- |
+| `/login`                                          | Password, passkey, and TOTP or recovery-code sign-in                  |
+| `/setup`                                          | First-instance bootstrap. It redirects to `/login` when a user exists |
+| `/account-setup`                                  | Invitation acceptance from a `#token=` link                           |
+| `/recover`                                        | Recovery request and recovery-link consumption                        |
+| `/verify-email`                                   | Email verification links                                              |
+| `/email-remediation`, `/email-remediation-verify` | Legacy email remediation                                              |
+| `/mfa-enrollment`                                 | TOTP enrollment under the `required` MFA policy                       |
+
+### Two-factor authentication
+
+Users enroll in TOTP on `/account/security`. Enrollment shows the secret one time
+and makes ten recovery codes. Trusted devices are off.
+
+The login challenge allows five attempts. Ten failures lock the factor for 15
+minutes.
+
+A full administrator with recent authentication sets the MFA policy to `optional`
+or `required` on the **Administration › Security** page. Virtool refuses
+`required` until that administrator has enrolled. The policy applies to live
+sessions immediately: a user without confirmed TOTP can reach only
+`/mfa-enrollment`. API keys are never challenged or restricted.
+
+A full administrator with recent authentication can reset the TOTP of a user who
+has lost both the authenticator and the recovery codes, but not their own. The
+reset ends the user's sessions.
+
+### Passkeys
+
+A passkey is an optional primary credential. The password stays available for
+sign-in and recovery. A passkey sign-in passes the same account checks as a
+password sign-in, and it requires user verification, such as a PIN or biometric.
+A user enrolled in TOTP therefore gets no second challenge after a passkey.
+
+Users can remove their final passkey, because the password remains. Removal
+doesn't change the password, TOTP, recovery codes, API keys, or sessions.
+
+The Relying Party comes from `VT_PUBLIC_ORIGIN`. A response signed for another
+origin is refused. See [the environment guide](../../docs/env.md).
+
+## Uploads and downloads
+
+Uploads go directly to Azure Block Blob storage. File bytes never pass through
+the web server, and there is no proxied upload. API clients follow
+[the upload API guide](https://www.virtool.ca/docs/api/uploads).
+
+When direct uploads are off, or the storage backend can't issue an upload SAS,
+initialization returns 503.
+
+`settings.max_upload_size` limits browser and API uploads. A declared size above
+the limit returns 413, and changes apply to the next upload without a restart.
+The application ceiling is 120,000,000,000 bytes (120 GB).
+
+## Server push
+
+The authenticated `/events` stream tells browsers which records changed. The
+browser then refetches through the normal API, so authorization stays at the
+request boundary.
+
+## Development
+
+Conventions with no single home in code follow. Follow
+[AGENTS.md](../../AGENTS.md) for repository-wide rules.
+
+### Client
+
+- Use specific path aliases across directories, and keep `@/*` for routes and
+  types.
+- Route loaders, guards, and search validators are eager exports. Import feature
+  query modules dynamically inside loaders, and keep queries needed before
+  sign-in in small, separate modules.
+- Keep query options, hooks, and mutations in each feature's `queries.ts`, and
+  don't add an `api.ts`.
+- Primary route data uses suspense queries, prefetched in the loader. Secondary
+  data uses `useQuery`. Only suspense queries and loader prefetches run during
+  SSR.
+- Put invalidation in `useMutation` callbacks, and put navigation and toasts in
+  `mutate` callbacks.
+- Resolve search defaults in `validateSearch`, and strip them from URLs with
+  `stripSearchParams`.
+- Give `<title>` one string child, also inside SVG. Turn off SSR only at the
+  route that needs it, because descendants can't turn it on again.
+- For React Compiler, don't spread a `react-hook-form` methods object, and sync
+  form props with `useForm({ values })`.
+- Reuse base components, and extract a component to `@base` when a second feature
+  needs it. Use theme tokens, not arbitrary utilities or hard-coded colors. Size
+  text containers in `rem`.
+
+### Server
+
+- Inject data dependencies in the order `db`, `storage`, `logger`.
+- Keep policy logic in framework-free functions, so unit tests don't load
+  environment configuration or open a database.
+- Use explicit `POST` for free-text searches, structured filters, and batch reads,
+  so their inputs stay out of URLs. Use explicit `GET` for simple lookups and
+  small bounded filters.
+- Export explicitly nameable types when inference would expose a transitive
+  dependency.
+
+### Testing
+
+Tests run in three Vitest projects: `web` (jsdom), `server` (Node and Postgres),
+and `a11y` (Chromium). Run them all with `pnpm --filter @virtool/web test`, or
+select one with `pnpm --filter @virtool/web exec vitest run --project <name>`.
+Install Chromium with `pnpm --filter @virtool/web exec playwright install chromium`.
+
+Put tests in adjacent `__tests__/` directories. Use `user-event` and accessible
+queries, and don't disambiguate controls by index. Local tests skip React
+Compiler. CI enables it with `VT_TEST_REACT_COMPILER=1`.

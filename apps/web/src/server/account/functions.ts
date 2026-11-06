@@ -83,7 +83,14 @@ function rethrowSessionManagementError(
 	throw err;
 }
 
-/** List the signed-in user's live Better Auth browser sessions. */
+/**
+ * List the signed-in user's live Better Auth browser sessions.
+ *
+ * The numeric session id is only a management id. The random `token` never
+ * enters the account API, which is why Better Auth's own list and revoke routes
+ * are off. Browser, OS, and IP are hints from client headers, not device
+ * identity.
+ */
 export const findActiveBrowserSessionsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
@@ -236,6 +243,7 @@ function rethrowPasskeyError(err: unknown): never {
 }
 
 // Read the session without rolling its expiry, as every server function does.
+// Background traffic from an unattended tab therefore can't extend a session.
 const READ_ONLY_SESSION = { disableRefresh: true } as const;
 
 async function loadAuth() {

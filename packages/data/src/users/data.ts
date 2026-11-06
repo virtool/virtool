@@ -880,7 +880,9 @@ export async function getAdministratorRole(
  * The administrator role and group memberships are set here. The handle stays
  * empty so the invitee can choose it during acceptance.
  * The credential is also missing: `password` stays null and `lifecycle_state` is `pending`,
- * which the `pending_has_no_password` constraint holds together.
+ * which the `pending_has_no_password` constraint holds together. The Better Auth
+ * credential row exists with a null password, so acceptance fills the credential
+ * and never creates a second identity.
  *
  * No password is generated and none is transmitted. Completing the account is
  * `completeAccountSetup`'s job, authorized by a setup token.

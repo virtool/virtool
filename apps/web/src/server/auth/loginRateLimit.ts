@@ -8,6 +8,11 @@ import { createRateLimitStorage } from "./rateLimitStorage";
 
 const LOGIN_KEY_PREFIX = "virtool:login:";
 
+// An attempt spends from the requester, then from the account or the browser's
+// device, before any password check. An attempt that the requester budget
+// refuses spends nothing else. Handles without an account get the same budget,
+// so a refusal doesn't reveal which handles exist.
+
 // Matches Better Auth's own `/sign-in` rule.
 const REQUESTER_RULE = { window: 10, max: 3 };
 const TARGET_RULE = { window: 900, max: 10 };

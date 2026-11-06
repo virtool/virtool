@@ -150,7 +150,8 @@ jobs:
     strategy:
       fail-fast: false
       # A new app needs an app Dockerfile, a Bake target, and an entry
-      # here. A released image also needs its `package.json` in the
+      # here. `image` must be the Bake target and the app directory name.
+      # A released image also needs its `package.json` in the
       # `versioned_files` of its package in `knope.toml`.
       #
       # `release-ghcr` reuses the cache that these builds write. Nuvs has

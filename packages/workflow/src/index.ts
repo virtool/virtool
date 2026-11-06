@@ -1,3 +1,4 @@
+// Tar and gzip primitives belong to `@virtool/archive`. Don't re-export them.
 export * from "./analysis";
 export * from "./app";
 export * from "./args";

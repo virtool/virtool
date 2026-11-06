@@ -12,6 +12,20 @@ const manual = defineCollection({
 
 const postFields = { title: z.string(), summary: z.string() };
 
+/**
+ * Optional articles on the site. A post with images is a directory with an
+ * `index.mdx` and the images beside it. `summary` is one sentence, because the
+ * post list shows it.
+ *
+ * A `release` post explains a change in more detail than a changelog entry. It
+ * cannot name its version, because Knope calculates the version later. Set `pr`
+ * to the pull request that makes the change. That pull request needs a change
+ * file that names `virtool`, or the changelog will not contain it. The site
+ * hides the post until that release exists, and the build logs a warning for
+ * each hidden post.
+ *
+ * A `research` post tells users about work outside a release, such as a paper.
+ */
 const posts = defineCollection({
   loader: glob({ pattern: "**/*.mdx", base: "./src/content/posts" }),
   schema: z.discriminatedUnion("type", [
