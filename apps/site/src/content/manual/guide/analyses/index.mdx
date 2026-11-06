@@ -7,98 +7,117 @@ import Key from "@components/Key.astro";
 
 ## Overview
 
-Analyses are the results of running a bioinformatic workflow on sample data.
+An analysis is the result of a bioinformatic workflow that runs on sample data.
 
-An analysis runs sample data through a series of bioinformatic tools and makes
-the result available to the user.
+Virtool has two analysis workflows:
+
+- **Pathoscope** finds known viruses.
+- **Nuvs** finds novel viruses.
 
 ### Analysis jobs
 
-Analyzing sample data is the most computationally intensive task Virtool performs. It can take minutes or hours to run analyses for large, complex sample libraries.
+Each analysis runs as a job. An analysis can take minutes or hours. The time
+depends on the size and complexity of the sample library.
 
-Long-running analyses are tracked under the **Jobs** tab.
+To monitor analyses, click **Jobs** in the top navigation bar. The list opens
+with the running jobs.
 
-![Finished and running analysis jobs](./jobs.png?url)
-
-An analysis job links to the sample's analysis list.
-
-<video src="/images/analyses/job_to_analysis.mp4" autoplay />
+The detail page of an analysis job links to the analysis.
 
 ### Caching
 
-Sample data is automatically trimmed during analysis. Later analyses reuse the
-cached trimmed data.
-
-![Sample files with no cache created](./cache.png?url)
+Nuvs trims sample reads before it uses them. Virtool caches the trimmed reads.
+Later Nuvs analyses of the same sample can use the cache. Pathoscope uses
+untrimmed reads.
 
 ### Reference versions
 
-Analyses use [references](/docs/guide/references) composed of pathogen
-sequences. Because references are editable and versioned, each analysis is
-linked to a specific reference version. Create a new analysis to use a newer
-version.
+An analysis uses a [reference](/docs/guide/references) that contains pathogen
+sequences. You can edit a reference, and each index build is a new version of
+it. Each analysis stays linked to the index version that it used.
 
-Here is a sample with analyses from different workflows and reference versions:
-
-![Multi-analysis sample with different workflows and index versions](./list_many.png?url)
+A new analysis uses the latest ready index of the reference. To use a newer
+version, create a new analysis.
 
 ### Subtractions
 
-Subtractions are sets of host or non-pest sequence data used to remove non-pathogen reads from analysis results.
+Subtractions are sets of host or non-pest sequence data. Analyses use them to
+remove non-pathogen reads.
 
-You can read more about creating and managing subtractions from the links below:
-
-- [Subtraction Creation Tutorial](/docs/guide/subtractions)
-- [Subtraction User Guide](/docs/guide/subtractions)
+For more information, see the [subtractions guide](/docs/guide/subtractions).
 
 ## View analyses
 
-1. Navigate to a sample and click the **Analyses** tab
+1. Open a sample and click the **Analyses** tab.
 
-   ![Sample of Interest](./tab.png?url)
+   This tab shows only when the sample is ready.
 
-2. View the list of analyses
+2. View the table of analyses.
 
-   This page lists completed and running analyses for the sample. The following
-   example has one completed analysis.
+   The table shows running and completed analyses. Each page shows 25 analyses.
 
-   ![List of Analysis](./list_one.png?url)
+   | Column           | Description                                                                 |
+   | ---------------- | --------------------------------------------------------------------------- |
+   | **Workflow**     | The workflow name. Click it to open the analysis.                           |
+   | **Version**      | The workflow version. This shows **Pending** until the analysis completes.  |
+   | **Reference**    | The reference and the index version that the analysis used.                 |
+   | **Subtractions** | The subtractions that the analysis used.                                    |
+   | **User**         | The user who started the analysis.                                          |
+   | **Created**      | The time that the analysis started.                                         |
+
+3. To sort the table, click **Workflow**, **User**, or **Created**.
+
+   By default, the newest analysis shows first.
+
+4. To filter the table, use the **Workflows** and **Users** filters.
+
+The dashboard also shows **Recent Analyses**.
 
 ## Create an analysis
 
-1. Navigate to the analyses list for a sample.
+You must have write access to the sample to create an analysis.
 
-   You should see an empty list if you haven't already created an analysis for this sample.
+1. Open a sample and click the **Analyses** tab.
 
-   ![Analyses](./list_empty.png?url)
+2. Click **Create**.
 
-2. Click the <DummyButton icon="plus-square" /> button to open the analyze dialog
+   The **Analyze** dialog opens.
 
-   ![Dialog Box](./create.png?url)
+3. Under **Workflow**, select **Pathoscope** or **Nuvs**.
 
-3. Choose the analysis workflow, subtraction, and reference you want to use.
+   Nuvs needs [HMMs](/docs/guide/hmms). If no HMMs are installed, the dialog does
+   not show **Workflow**, and the analysis uses Pathoscope.
 
-   ![Filled Dialog Box](./create_filled.png?url)
+4. Under **Subtractions**, select the subtractions that you want to use.
 
-4. Click <DummyButton icon="play">Start</DummyButton> to start the analysis
+   The dialog selects the default subtractions of the sample for you. You can
+   remove them.
 
-   The dialog closes and you immediately see your new analysis appear in the list.
+5. Under **Reference**, select one reference.
 
-   ![Pathoscope running](./running.png?url)
+   Each reference shows its latest ready index version. If the list is empty,
+   build a reference index first.
 
-   When the analysis is complete it looks like this:
+6. To create more analyses from the dialog, turn on **Create more**.
 
-   ![Pathoscope complete](./ready.png?url)
+   The dialog then stays open after each analysis.
 
-5. Go to the **Samples** view
+7. Click **Create**.
 
-   The sample item is tagged to show that a Pathoscope analysis has been completed.
+   The new analysis shows in the table. A progress indicator shows until the
+   analysis completes.
 
-   ![Pathoscope workflow tag](./tag.png?url)
+8. Go to the **Samples** list.
+
+   Each ready sample shows a tag for each workflow. The tag shows the state of
+   the workflow for that sample. Click a tag to open the **Analyses** tab of the
+   sample.
 
 <Note>
-  Multiple samples can be analyzed at once using the quick analysis feature.
-  [Read more about quick analyses](/docs/guide/samples).
+  To analyze many samples at once, select them in the **Samples** list and click
+  **Analyze**. The **Quick Analyze** dialog opens. It has the same fields, but it
+  does not select default subtractions for more than one sample. [Read more
+  about quick analyses](/docs/guide/samples).
 </Note>
 
 ## Delete an analysis
@@ -109,54 +128,50 @@ You can read more about creating and managing subtractions from the links below:
 
 </Note>
 
-1. Navigate to the analysis list for the sample whose analysis you want to delete
+1. Open the sample and click the **Analyses** tab.
 
-   ![Analysis](./list_one.png?url)
+2. In the row of the analysis, click the trash icon.
 
-2. Click the <Icon name="trash" color="red" /> icon on the analysis
+   Virtool deletes the analysis immediately. It does not ask you to confirm.
 
-   The analysis record is removed from the list.
+You must have write access to the sample to delete an analysis. The trash icon
+shows only after the job of the analysis stops.
 
-   ![Analyses](./list_empty.png?url)
+A failed or cancelled analysis stays in the table until a user deletes it. Its
+page shows **Analysis failed** or **Analysis cancelled**, with a **View job** link
+to the job.
 
 ## Interpret Pathoscope
 
-Pathoscope is a workflow in Virtool used for determining whether a known virus is
-present in a sample.
+Pathoscope is a workflow that finds known viruses in a sample.
 
 1. View the mapping overview.
 
-   This shows how many sample reads were mapped to the reference (for example, Plant Viruses) and
-   the subtraction (for example, Arabidopsis thaliana).
+   The heading shows the percentage of reads mapped to the reference. This
+   percentage includes reads that Virtool later subtracts.
 
-   ![Mapping overview](./mapping.png?url)
+   | Row                            | Description                                                 |
+   | ------------------------------ | ----------------------------------------------------------- |
+   | **Total reads**                | All reads in the sample.                                    |
+   | **Mapped to**                  | The reads mapped to the reference.                          |
+   | **Subtracted, mapped better to** | The reads removed because they mapped better to a subtraction. |
+   | **Analysed**                   | The reads that remain after subtraction.                    |
 
-2. View the result list
+   The last two rows show only when the analysis uses a subtraction.
 
-   The list shows the viruses Virtool thinks are likely to be in the sample. Each
-   identified OTU can be expanded to show the coverage chart and detailed values for each
-   isolate and sequence.
+2. View the hit list.
 
-   ![Pathoscope result OTU list](./pathoscope_filtered.png?url)
+   The list shows each OTU that Pathoscope found. By default, the list shows all
+   hits. The list header labels the **Acronym**, **Weight**, **Depth**, and
+   **Coverage** columns.
 
-3. Use the mouse or the <Key>w</Key> and <Key>s</Key> keys to select OTUs
+3. Click the name of an OTU to show the coverage charts for its isolates.
 
-   <video
-     src="./pathoscope_select.mp4"
-     alt="Moving through pathoscope result hits."
-     autoplay
-   />
+   Click a panel of an isolate chart to see the accession, definition, length,
+   reads, weight, and coverage of the sequence.
 
-4. Click the <DummyButton icon="filter">Filter OTUs</DummyButton> button to show all OTUs
-
-   By default, OTUs with low coverage or weight (relative abundance) are filtered out.
-   The OTUs shown here would normally be filtered out:
-
-   ![Unfiltered](./pathoscope_unfiltered.png?url)
-
-5. Clicking an OTU shows coverage charts for the isolates
-
-   ![Filtered pathoscope coverage](./pathoscope_filtered.png?url)
+   The dashed line on a chart shows the maximum observed depth. All charts of an
+   OTU use this scale.
 
    - Deep, wide coverage of an isolate is indicative of an infection.
    - Shallow, wide, and broken coverage is suggestive of intra-plate contamination. Hits
@@ -164,17 +179,49 @@ present in a sample.
    - Isolates with high weight, and deep localized coverage are typical of low-complexity
      or host-similar regions in the isolate genome and don't show true infections.
 
+4. To hide low-coverage hits, click **Filter**.
+
+   - Turn on **Hide low-coverage OTUs** to hide OTUs.
+   - Turn on **Hide low-coverage isolates** to hide isolates in an expanded OTU.
+     This switch shows only in the **Charts** view.
+   - Use **Hide when coverage less than** to set the limit. The default limit is
+     0.50.
+
 Approximately 5 million reads is a useful baseline for a dsRNA library, but the
 percentage of mapped reads is more important. For dsRNA, this percentage can
 range from less than 1% to greater than 80%. Greater viral RNA enrichment,
 measured by the percentage of mapped reads, reduces the total number of reads
 required. For example, 100,000 mapped reads—2% of 5 million—may be sufficient.
 
-| Values   | Description                                                                                                                                                                                                        |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Coverage | A measure for how well the mapped reads cover the viral genome. In general, coverage of greater than 0.5 indicates positive detection and coverage of less than 0.2 indicates negative detection.                  |
-| Depth    | A measure of how many times a genome is covered by mapped reads                                                                                                                                                    |
-| Weight   | The calculated proportion of reads mapping to a virus. The weight is roughly proportional to the titre. Higher the titre, higher the weight. A weight greater than 0.001 is a strong indicator of positive detection. |
+| Values   | Description                                                                                                                                                                                                                                                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coverage | The proportion of genome positions with at least one mapped read. The value for an OTU is the highest coverage of its isolates. In general, coverage of greater than 0.5 indicates positive detection and coverage of less than 0.2 indicates negative detection.             |
+| Depth    | The median number of mapped reads at each genome position.                                                                                                                                                                                                                   |
+| Weight   | The calculated proportion of reads mapping to a virus. The weight is roughly proportional to the titre. Higher the titre, higher the weight. A weight greater than 0.001 is a strong indicator of positive detection.                                                          |
+
+### Work with the results
+
+Use the toolbar above the hit list:
+
+- Use the search box to find an OTU by name or acronym.
+- Use the sort menu to sort by **Coverage**, **Depth**, **Weight**, or **Name**.
+  The button next to it changes the sort direction.
+- Click **Charts** or **Table** to change the view. The **Table** view shows the
+  values without coverage charts.
+- Click **Show Reads** to show read pseudo-counts in place of weights.
+- Click **Export** to copy or download results.
+
+The **Export** menu has these options:
+
+- **OTUs** and **Isolates** copy the hits that show on the page, with or without
+  headers. You can paste them into a spreadsheet.
+- **Excel** and **CSV** download the full analysis.
+- **Prefer acronym** names each OTU by its acronym, when it has one.
+
+To copy some hits, select their checkboxes and click **Copy**.
+
+The page address keeps your search, sort, and filter settings. You can share the
+link to show the same view.
 
 ### Examples
 
@@ -186,9 +233,8 @@ sample.
 
 ![Likely Viruses](./pathoscope_filtered.png?url)
 
-By default, pathogens with low coverage or weight (relative abundance) are filtered out.
-These pathogens can be made
-visible by clicking <DummyButton color="grey" icon="filter" />.
+By default, the list shows all hits, including hits with low coverage. To hide
+these hits, click **Filter** and turn on **Hide low-coverage OTUs**.
 
 ![Filtered Out](./pathoscope_unfiltered.png?url)
 
@@ -259,39 +305,25 @@ values in the thousands for a high-quality positive sample.
 
 The Basic Local Alignment Search Tool (BLAST) compares sequences with known sequences.
 
-1. Navigate to the **Analyses** tab for a sample
+1. Open a sample and click the **Analyses** tab.
 
-   ![Analyses list with Nuvs ready](./nuvs_list.png?url)
-
-2. Click the Nuvs analysis item
+2. Click **Nuvs** in the **Workflow** column.
 
    The list shows assembled sequence fragments (contigs) that may be part of a novel virus.
-
-   ![Filtered Nuvs contigs](./nuvs_filtered.png?url)
 
    In the Nuvs workflow, sample libraries are assembled into contigs. Open
    reading frames (ORFs) are predicted from the contigs, and potential protein
    annotations are assigned using profile HMMs.
 
-   ![Expanded Nuvs hit](./nuvs_focus.png?url)
-
-3. Click <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton> to show ORFs
-   with no HMM annotations
+3. Click **Filter ORFs** to show ORFs with no HMM annotations.
 
    ORFs with no significant HMM hits aren't shown by default.
 
-   ![Unfiltered ORFs](./nuvs_unfiltered_orfs.png?url)
-
-4. Click <DummyButton color="grey" icon="filter">Filter Sequences</DummyButton> to toggle
-   the visibility of contigs without HMM annotations.
+4. Click **Filter Sequences** to show contigs without HMM annotations.
 
    Contigs with no significant HMM hits aren't shown by default.
 
-   ![Unfiltered Sequences](./nuvs_unfiltered_sequences.png?url)
-
-5. Click <DummyButton color="grey">BLAST at NCBI</DummyButton> to BLAST the contig at NCBI
-
-   ![BLAST at NCBI](./nuvs_blast_running.png?url)
+5. Click **BLAST at NCBI** to BLAST the contig at NCBI.
 
 6. Wait for the BLAST search to complete.
 
@@ -309,37 +341,46 @@ Nuvs discovers potential novel viral sequences in a sample library. The workflow
 - Scan the translated ORFs for viral protein motifs using a collection of profile hidden
   Markov models (HMMs)
 
-Under the **Analyses** tab, click the Nuvs analysis you want to view. The result
-viewer opens.
-
-![Nuvs analysis page](./nuvs.png?url)
-
 The Nuvs output lists numbered contigs. Each contig has three values:
 
 | Value   | Description                                                                   |
 | ------- | ----------------------------------------------------------------------------- |
 | Length  | Number of base pairs in the sequence                                          |
 | E-value | The probability that an ORF in the contig matches a known viral protein motif |
-| ORFs    | The number of open reading frames predicted in the contig                     |
+| ORFs    | The number of open reading frames in the contig with an HMM match             |
 
-A list of the assembled contigs is shown in the left pane. By default, contigs
-without ORFs that have significant HMM matches aren't shown. Click <DummyButton color="grey" icon="filter">Filter Sequences</DummyButton> to show them.
-In this example, out of the 1072 assembled contigs, only 278 contained ORFs with
-significant HMM matches.
+The left pane lists the assembled contigs. By default, the list does not show
+contigs without ORFs that have significant HMM matches. Click **Filter Sequences**
+to show them. The list header shows the number of contigs shown and the total
+number. Use <Key>w</Key> and <Key>s</Key> to move through the list.
 
 Select a contig in the left pane to view its details in the right pane. The
 contig is shown as a black line with identified ORFs below it. ORFs without
-significant HMM matches are hidden by default; click <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton> to show them.
+significant HMM matches are hidden by default. Click **Filter ORFs** to show them.
 
 For each ORF with a significant HMM match, the graphic shows its size and
-E-value. The view also lists associated taxonomic families. The
-following example shows sequence 37 and its protein motifs.
+E-value. Click the ORF name to open the HMM. **Families** lists the associated
+taxonomic families. The following example shows sequence 37 and its protein
+motifs.
 
 ![Sequence 37](./nuvs_sequence.png?url)
 
-Contigs can be sent to NCBI for a BLAST search by clicking <DummyButton color="grey" icon="cloud">BLAST at NCBI</DummyButton>.
+To send a contig to NCBI for a BLAST search, click **BLAST at NCBI**.
 Many contigs derived from known viruses or non-viral sources are assembled. It's
 necessary to BLAST significant contigs to ensure they're novel.
+
+Virtool checks the search at intervals. If NCBI has no result after 30 minutes,
+the search stops with an error. The result table shows a maximum of 5 hits. To
+search again, click **Retry**. The new search replaces the old result.
+
+Use the toolbar above the contig list:
+
+- Use the **Name or family** box to search the contigs.
+- Use the sort menu to sort by **Length**, **E-Value**, or **ORFs**.
+- Click **Export** to download a FASTA file. The **Contigs** tab exports all
+  contigs. The **ORFs** tab exports the proteins of ORFs with HMM matches.
+
+The page address keeps your search, sort, and filter settings.
 
 ### Good result
 
