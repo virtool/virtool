@@ -286,12 +286,8 @@ describe("enqueueLinkEmail", () => {
 		expect((await readRow(outboxId)).link).toBeNull();
 	});
 
-	it("clears the envelope and a legacy link on failure", async () => {
+	it("clears the envelope on failure", async () => {
 		const outboxId = await queueLink();
-		await db
-			.update(emailOutbox)
-			.set({ template: linkInput.template })
-			.where(eq(emailOutbox.id, outboxId));
 		await claimDueEmails(db, claimOptions);
 
 		await failEmail(
@@ -314,18 +310,7 @@ describe("openEmailTemplate", () => {
 		expect(openEmailTemplate(keyring, template, null)).toEqual(template);
 	});
 
-	it("passes a legacy template with a plaintext link through", () => {
-		const template = {
-			expiresInHours: 72,
-			type: "email_verification",
-			username: "alice",
-			verifyUrl: "https://virtool.example/verify#token=abc",
-		} as const;
-
-		expect(openEmailTemplate(keyring, template, null)).toEqual(template);
-	});
-
-	it("refuses a link template with neither an envelope nor a link", () => {
+	it("refuses a link template with no envelope", () => {
 		expect(
 			openEmailTemplate(
 				keyring,
