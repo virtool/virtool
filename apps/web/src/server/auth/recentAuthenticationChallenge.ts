@@ -9,6 +9,7 @@ import {
 	getUserPasskey,
 	setPasskeyCounter,
 } from "@virtool/data/auth/passkeys";
+import { hasVerifiedTotp } from "@virtool/data/auth/twoFactor";
 import type { Db } from "@virtool/data/db/pg";
 import type { BetterAuthPlugin } from "better-auth";
 import {
@@ -196,12 +197,26 @@ export function recentAuthenticationPlugin({
 					requireHeaders: true,
 				},
 				async (ctx) => {
+					const userId = getSessionUserId(ctx.context.session.user);
+
+					// Better Auth treats a correct code for an unconfirmed factor as
+					// the end of enrollment. That replaces the session in the middle
+					// of the challenge.
+					if (
+						ctx.body.method === "totp" &&
+						!(await hasVerifiedTotp(db, userId))
+					) {
+						throw new APIError("BAD_REQUEST", {
+							code: "TOTP_NOT_ENABLED",
+							message: "TOTP is not enabled",
+						});
+					}
+
 					if (ctx.body.method !== "passkey") {
 						await verify(ctx.headers, ctx.body);
 						return ctx.json({ status: true });
 					}
 
-					const userId = getSessionUserId(ctx.context.session.user);
 					const cookie = ctx.context.createAuthCookie(PASSKEY_CHALLENGE_COOKIE);
 					const token = await ctx.getSignedCookie(
 						cookie.name,
