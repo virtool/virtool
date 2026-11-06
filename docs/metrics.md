@@ -4,7 +4,7 @@
 Prometheus metrics at `GET /metrics`, from their own process-wide registry. See
 [apps/web/README.md](../apps/web/README.md#metrics) and
 [apps/internal/README.md](../apps/internal/README.md#metrics) for what each
-one emits and why. This file documents their shared query contracts.
+one emits. This file documents their shared query contracts.
 
 ## Error status policy
 

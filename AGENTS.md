@@ -142,9 +142,8 @@ repository-wide rules in view:
   body changes what it accepts or writes. Bodies use historical SQL, not the
   moving schema mirror. See [the data migrations guide](apps/internal/README.md#paired-data-migrations).
 - `apps/internal`'s `run` subcommand carries both the periodic spawner and the
-  task runner. Its lease, fencing, shutdown, progress, metrics, and task-body
-  contracts are maintained in [its README](apps/internal/README.md); don't
-  duplicate them here.
+  task runner. Its contracts live in code. Its operator behavior is in
+  [its README](apps/internal/README.md).
 
 ## Data
 
@@ -185,9 +184,8 @@ storage, cache, and configuration contracts, and [the job lifecycle](docs/jobs.m
 for claim, ping, cancellation, failure, and exit behaviour.
 
 Workflow files always stream, and storage keys are recorded or minted rather
-than derived. See [the internal app README](apps/internal/README.md) for
-finalization manifests and key validation, [references](docs/references.md) for the SQLite
-reference artifact, and [workflow testing](packages/workflow/TESTING.md) for
+than derived. See [references](docs/references.md) for the SQLite reference
+artifact and [workflow testing](packages/workflow/TESTING.md) for
 the shared test harness.
 
 ## Code style
@@ -266,9 +264,17 @@ Follow these rules in Markdown:
   behavior or convention, and keep implementation detail in code comments.
 - Don't repeat what a comment, schema, or exported constant states, or what a
   test, type, or lint rule enforces. Give only the consequence for the operator.
-- Don't table source files, functions, or endpoints.
+- Don't list source files, functions, or endpoints, in tables, bullets, or
+  prose.
+- Don't justify a design or describe how a program is built. Keep the reason in
+  a comment beside the code, and give only the consequence for the operator.
+- Don't write how-to guides or checklists for contributors. Put them in comments
+  on the API that the contributor uses.
+- State each fact in one Markdown file, and link to it from the others.
 - Give a number only if operators set it or see it.
 - Don't record history, such as a removed feature. Use a change file.
+- Before you remove developer detail from Markdown, confirm that code states it.
+  If it doesn't, add the comment in the same change.
 
 Don't point to Markdown from code comments.
 

@@ -457,9 +457,7 @@ polls Postgres, so producers send no extra notification.
 
 The data layer also owns claiming, lease renewal, fencing, progress, completion,
 failure, release, and queue metrics reads. Every mutation that changes a task's
-visible state publishes the corresponding `tasks` event. The execution and
-shutdown contracts are documented in
-[`apps/internal/README.md`](../../apps/internal/README.md).
+visible state publishes the corresponding `tasks` event.
 
 ## Data migrations
 
@@ -480,8 +478,7 @@ they do not import the moving domain mirror.
 
 The internal app owns pairing, journal order, segmented application, and the
 operator commands. See [data migrations](../../apps/internal/README.md#paired-data-migrations)
-for authoring, SQL assertions, and retries. The direct `db:migrate` command
-cannot run TypeScript bodies; its SQL assertions stop at unsatisfied pairs.
+for retries and the limits of the direct `db:migrate` command.
 
 ## Testing
 
