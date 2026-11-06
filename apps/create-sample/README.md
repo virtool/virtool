@@ -57,9 +57,9 @@ and gzipping back to produce bytes the user already sent.
 
 **A bzip2 upload is converted to gzip before anything else reads it.**
 `quality-core` reads only gzip and plain text, and every later consumer expects
-`reads_{n}.fq.gz`. So `normalize_reads` runs first. The conversion goes through
-a pipe, so the decompressed FASTQ never reaches the disk. The first bytes of the
-file decide the format, not its name.
+`reads_{n}.fq.gz`. For this reason, `normalize_reads` runs first. The conversion
+goes through a pipe, so the decompressed FASTQ never reaches the disk. The first
+bytes of the file decide the format, not its name.
 
 **`lbzip2` decompresses, not `pbzip2`.** `pbzip2` decompresses in parallel only
 the files that `pbzip2` made. With four threads on a file that `bzip2` made, it
