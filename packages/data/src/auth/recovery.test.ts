@@ -30,6 +30,7 @@ import {
 	issueRecoveryLink,
 	RecoveryNotEligibleError,
 	RecoveryPasswordReuseError,
+	RecoveryRecentlyIssuedError,
 } from "./recovery";
 import { SetupCredentialError } from "./setup";
 import { seedApiKey, seedSession, seedUser } from "./test/fixtures";
@@ -178,6 +179,78 @@ describe("password recovery", () => {
 		expect(issued.expiresAt.getTime() - Date.now()).toBeGreaterThan(
 			EMAIL_DELIVERY_DEADLINE_SECONDS * 1000,
 		);
+	});
+
+	describe("when a self-service link is already live", () => {
+		function issueSelfService(userId: number) {
+			return issueRecoveryLink(db, {
+				userId,
+				purpose: "password_recovery",
+				deliveryAvailable: true,
+				keyring,
+				getRecoveryUrl: () => "https://virtool.test/recover",
+			});
+		}
+
+		it("keeps a recent link usable and sends nothing", async () => {
+			const userId = await seedMigratedUser();
+			const issued = await issueSelfService(userId);
+
+			await expect(issueSelfService(userId)).rejects.toBeInstanceOf(
+				RecoveryRecentlyIssuedError,
+			);
+
+			expect(
+				await inspectRecoveryLink(db, issued.token, "password_recovery"),
+			).toBe("usable");
+			expect(await db.select().from(emailOutbox)).toHaveLength(1);
+		});
+
+		it("replaces a link older than the reissue delay", async () => {
+			const userId = await seedMigratedUser();
+			const first = await issueSelfService(userId);
+			await db
+				.update(setupTokens)
+				.set({ createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) });
+
+			const second = await issueSelfService(userId);
+
+			expect(
+				await inspectRecoveryLink(db, first.token, "password_recovery"),
+			).toBe("unusable");
+			expect(
+				await inspectRecoveryLink(db, second.token, "password_recovery"),
+			).toBe("usable");
+		});
+
+		it("replaces a recent link whose email failed", async () => {
+			const userId = await seedMigratedUser();
+			await issueSelfService(userId);
+			await db.update(emailOutbox).set({ status: "failed" });
+
+			const second = await issueSelfService(userId);
+
+			expect(
+				await inspectRecoveryLink(db, second.token, "password_recovery"),
+			).toBe("usable");
+		});
+
+		it("still lets an administrator issue a link", async () => {
+			const userId = await seedMigratedUser();
+			const selfService = await issueSelfService(userId);
+
+			await issueRecoveryLink(db, {
+				userId,
+				purpose: "administrator_recovery",
+				deliveryAvailable: false,
+				keyring,
+				getRecoveryUrl: () => "unused",
+			});
+
+			expect(
+				await inspectRecoveryLink(db, selfService.token, "password_recovery"),
+			).toBe("usable");
+		});
 	});
 
 	it("invalidates links when another password change wins", async () => {

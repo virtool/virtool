@@ -11,7 +11,6 @@ import {
 	inspectEmailVerificationLink,
 } from "@virtool/data/auth/emailVerification";
 import { EmailInUseError } from "@virtool/data/auth/lifecycle";
-import { TIMING_DUMMY_HASH, verifyPassword } from "@virtool/data/auth/password";
 import {
 	completePasswordRecovery,
 	getSelfServiceRecoveryTarget,
@@ -20,6 +19,7 @@ import {
 	RecoveryDeliveryUnavailableError,
 	RecoveryNotEligibleError,
 	RecoveryPasswordReuseError,
+	RecoveryRecentlyIssuedError,
 	revokeAdministratorRecoveryLinks,
 } from "@virtool/data/auth/recovery";
 import { checkRecoveryRequestBudget } from "@virtool/data/auth/recoveryRateLimit";
@@ -185,7 +185,6 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 			checkRecoveryRequestBudget(db, requesterDigest, targetDigest),
 			isEmailDeliveryAvailable(),
 		]);
-		await verifyPassword(handle, TIMING_DUMMY_HASH);
 		if (allowed && deliveryAvailable) {
 			const userId = await getSelfServiceRecoveryTarget(db, handle);
 			if (userId !== null) {
@@ -204,7 +203,8 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 				} catch (error) {
 					if (
 						!(error instanceof RecoveryNotEligibleError) &&
-						!(error instanceof RecoveryDeliveryUnavailableError)
+						!(error instanceof RecoveryDeliveryUnavailableError) &&
+						!(error instanceof RecoveryRecentlyIssuedError)
 					) {
 						throw error;
 					}

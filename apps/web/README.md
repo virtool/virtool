@@ -256,9 +256,10 @@ minutes) instead of the account budget, so failures from other browsers can't
 lock the owner out. A password change invalidates the account's devices. The
 cookie holds up to five accounts and isn't a credential.
 
-The hourly internal cleanup task deletes `auth_rate_limits` rows whose last
-request is more than an hour old, the longest window of any budget. A row can
-stay for up to two hours. The web server doesn't prune the table.
+The hourly internal cleanup task deletes `auth_rate_limits` rows whose
+`last_request` is more than an hour old, the longest window of any budget.
+Recovery budgets store the start of their window in that column. A row can stay
+for up to two hours. The web server doesn't prune the table.
 
 Virtool rejects inactive and pending users with the same 401 as bad credentials.
 Virtool signs in by handle; email sign-in is off because
@@ -276,8 +277,13 @@ recovery links; an existing browser session remains active.
 
 Public password recovery accepts a handle and always acknowledges requests
 the same way. Only an eligible account with a verified email receives a queued
-link. Requester and target budgets limit attempts, and disabled email delivery
-does not expose an anonymous recovery URL. An administrator with recent
+link. Requester (five per minute) and target (three per hour) budgets limit
+attempts. Each budget is a fixed window that refused attempts don't extend, and
+a refused requester doesn't spend the target budget. A request also leaves a
+live link less than an hour old in place and sends nothing, unless that link's
+email failed, so a request from someone else can't invalidate a link the owner
+is waiting for. Disabled email delivery does not expose an anonymous recovery
+URL. An administrator with recent
 authentication can issue a one-time recovery URL, including a copy-only URL
 when delivery is unavailable. Consuming either recovery link changes the
 password and revokes browser and setup sessions and tokens; the user signs in
