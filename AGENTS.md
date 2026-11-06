@@ -24,7 +24,10 @@ never `npm` or `bun`.
 
 `packages/` holds shared workspace libraries and two Rust crates represented as
 private workspaces so image affected-detection can follow their consumers.
-Apps bundle; packages stay source.
+Apps bundle; packages stay source. Don't give a package a `dist` build, because
+each consumer would then need a rebuild to see a change. Keep
+`moduleResolution: "Bundler"` in the shared TypeScript configurations, because
+`node16` doesn't follow an `exports` map to a `.ts` file.
 
 | Package | Purpose |
 | --- | --- |
@@ -164,12 +167,10 @@ deleting their rows. Pass the storage backend into data functions, log
 failures returned by `deleteKeys`, and use `MemoryStorage` in unit tests.
 Client code must read named `import.meta.env` keys, never the whole object.
 
-See the [`@virtool/data` README](packages/data/README.md#object-storage) for the
-streaming interface, key and cleanup contracts, configuration, backend
-behavior, and testing.
+See [object storage](docs/storage.md) for configuration and operator behavior.
 
 Third-party requests identify themselves with `USER_AGENT` from
-`@virtool/contracts/userAgent`; see [packages/data/README.md](packages/data/README.md).
+`@virtool/contracts/userAgent`.
 
 NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It's the
 only E-utilities client; see [packages/ncbi/README.md](packages/ncbi/README.md).
@@ -179,14 +180,13 @@ NCBI BLAST is a different API and stays in `@virtool/data`.
 
 Every executor uses `@virtool/workflow`; the runtime stays separate from the
 jobs API lifecycle and has no database access. See
-[the package README](packages/workflow/README.md) for runtime, subprocess,
-storage, cache, and configuration contracts, and [the job lifecycle](docs/jobs.md)
-for claim, ping, cancellation, failure, and exit behaviour.
+[the package README](packages/workflow/README.md) for configuration and
+[the job lifecycle](docs/jobs.md) for claim, ping, cancellation, failure, and
+exit behaviour.
 
 Workflow files always stream, and storage keys are recorded or minted rather
 than derived. See [references](docs/references.md) for the SQLite reference
-artifact and [workflow testing](packages/workflow/TESTING.md) for
-the shared test harness.
+artifact.
 
 ## Code style
 
@@ -230,8 +230,11 @@ names unsuffixed.
 
 ### Comments
 
-Default to none. Comment only to explain non-obvious reasons; don't restate
-code, narrate history, reference the current task, or name a caller.
+Default to none. Comment only to explain non-obvious reasons, or to give the
+contract and usage of an API that others call. Don't restate code, narrate
+history, reference the current task, name a caller, or cite an issue or pull
+request. A comment must make sense without its tracker. Don't give benchmark
+results. If an experiment settled a decision, say that it did and what won.
 
 ### Concurrency
 
@@ -245,7 +248,8 @@ outcome is required.
 - Use explicit `expect()` assertions, not snapshots.
 - Keep each test double in one owning harness, beside the boundary it models.
 
-App and package READMEs document their test harnesses and commands.
+App and package READMEs give test commands. Test harnesses document themselves
+in JSDoc.
 
 ## Process
 
@@ -253,30 +257,46 @@ App and package READMEs document their test harnesses and commands.
 
 Documentation lives in code as much as possible. Markdown gives broad strokes
 for operators, and sometimes for developers. Keep repository-wide rules in
-`AGENTS.md`, detailed rationale in `docs/`, and app- or package-specific
+`AGENTS.md`, topics that span apps in `docs/`, and app- or package-specific
 documentation in that directory's `README.md`. Update documentation in the same
 change as the code it describes.
 
-Follow these rules in Markdown:
+In these rules, code is any file that can hold a comment, including Dockerfiles
+and CI workflows. Put a fact about a file that can't hold a comment, such as
+JSON, in the nearest code that reads the file. If no such code exists, put one
+sentence in the owner's `README.md` or in `AGENTS.md`. Put a convention that has
+no API on the module that owns it, or in `AGENTS.md` if it applies to the
+repository.
+
+Follow these rules in all Markdown except `AGENTS.md`, which instructs people who
+edit code and can name symbols and paths:
 
 - Don't point to source code: no links to source files, no source file paths, and
   no module aliases or symbol names that send the reader to a file. Describe the
-  behavior or convention, and keep implementation detail in code comments.
+  behavior or convention, and keep implementation detail in code comments. Names
+  of apps and packages, public entry points, and links to other Markdown are not
+  pointers to source code.
 - Don't repeat what a comment, schema, or exported constant states, or what a
   test, type, or lint rule enforces. Give only the consequence for the operator.
+  This rule doesn't remove an operator fact: keep each variable, command, port,
+  and image that operators set or see, even if a constant also states it.
 - Don't list source files, functions, or endpoints, in tables, bullets, or
   prose.
 - Don't justify a design or describe how a program is built. Keep the reason in
   a comment beside the code, and give only the consequence for the operator.
+  Style rationale is the exception, and it lives in `docs/code-style.md`.
 - Don't write how-to guides or checklists for contributors. Put them in comments
   on the API that the contributor uses.
-- State each fact in one Markdown file, and link to it from the others.
+- State each fact in one Markdown file, and link to it from the others. Put a
+  setting that more than one service reads in `docs/`.
 - Give a number only if operators set it or see it.
-- Don't record history, such as a removed feature. Use a change file.
+- Don't record history, such as a removed feature. Use a change file. If a past
+  event still limits what operators can do, state the limit in the present tense.
 - Before you remove developer detail from Markdown, confirm that code states it.
   If it doesn't, add the comment in the same change.
 
-Don't point to Markdown from code comments.
+Don't point to Markdown from code, including comments, error messages, and test
+messages.
 
 Check the affected documentation when a change:
 
@@ -294,17 +314,11 @@ Write commit and PR titles in sentence case, in the imperative mood, with no
 prefix and no period. Keep them under 72 characters. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for examples.
 
-- Releases are automated with Knope. Each pull request that affects an image
-  app must name that app in a change file, or `Knope / Check` fails.
-  Write one with `knope document-change`. Write it for users: a summary of
-  what they will see, then details when they need more. See
-  [Release notes](CONTRIBUTING.md#release-notes). If users can't see the
-  change, use the `maintenance` type. It releases a patch and stays out of the
-  main GitHub Release notes. It must not contain `**Action required:**`. Use
-  Knope package names (`virtool`, `create-sample`, `create-subtraction`,
-  `pathoscope`, `nuvs`).
-  Do not use empty change files. A pull request that affects no image app
-  needs none. The `no-release` label waives the check. See [Releases](docs/ci.md#releases).
+- Each pull request that affects an image app must name that app in a change
+  file, or `Knope / Check` fails. Write one with `knope document-change`. If users
+  can't see the change, use the `maintenance` type. See
+  [Change files](CONTRIBUTING.md#change-files) and
+  [Release notes](CONTRIBUTING.md#release-notes).
 - Image build inputs (`image-build`, `workflow-tools`, and the Rust crates) are
   production `dependencies` of the apps that use them, with
   `"files": ["package.json"]`. A change to one of them makes the check require

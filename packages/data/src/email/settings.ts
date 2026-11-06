@@ -14,7 +14,12 @@ const RESEND_API_KEY_PURPOSE = "resend_api_key";
 /** Thrown when a write would leave email delivery in an unusable state. */
 export class EmailConfigurationError extends AppError {}
 
-/** The stored email delivery configuration, envelope included. Server-only. */
+/**
+ * The stored email delivery configuration, envelope included. Server-only.
+ *
+ * Neither the plaintext key nor its envelope may cross a transport boundary or
+ * reach a log.
+ */
 export type EmailDeliverySettings = {
 	apiKeyEnvelope: EncryptedValue | null;
 	enabled: boolean;

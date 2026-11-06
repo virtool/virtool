@@ -10,6 +10,39 @@
  * - **Anything needing cleanup returns its disposer**, for the caller to register
  *   with `onTestFinished`. There is no global `beforeEach`.
  * - **Nothing here imports from `apps/web`**.
+ *
+ * Composition is explicit. A test calls each factory it needs and wires them
+ * together, and a key that a seeding helper returns goes on the fake row:
+ *
+ * @example
+ * const sample = createFakeSample();
+ * const { storage, seedSampleReads } = createTestStorage();
+ *
+ * const seeded = await seedSampleReads(sample.id, [
+ * 	{ name: "reads_1.fq.gz", contents: "ACGT" },
+ * ]);
+ *
+ * const state = createJobsApiState({
+ * 	samples: new Map([
+ * 		[
+ * 			sample.id,
+ * 			{
+ * 				...sample,
+ * 				reads: seeded.map((file, id) => ({
+ * 					id,
+ * 					name: file.name,
+ * 					size: file.size,
+ * 					storageKey: file.storageKey,
+ * 				})),
+ * 			},
+ * 		],
+ * 	]),
+ * });
+ *
+ * const client = createFakeJobsApiClient(state);
+ * const { path, cleanup } = await createTestWorkPath(["reads"]);
+ *
+ * onTestFinished(cleanup);
  */
 
 export * from "./builders";

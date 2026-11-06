@@ -157,7 +157,7 @@ See [the metrics guide](../../docs/metrics.md) to query across services.
 Each subcommand reads its variables at startup. Every variable accepts a `_FILE`
 variant, which takes precedence. See [the environment guide](../../docs/env.md)
 for file-backed values and key rotation. `serve` and `run` also need
-[the shared storage settings](../../packages/data/README.md#configuration).
+[the shared storage settings](../../docs/storage.md#configuration).
 
 `migrate` reads only `VT_POSTGRES_URL`, `VT_MIGRATIONS_PATH`, and
 `VT_SENTRY_DSN`. `data-migrations` reads only `VT_POSTGRES_URL` and

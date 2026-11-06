@@ -9,10 +9,9 @@ import { expectNoViolations } from "../axe";
 const withContrast = { rules: { "color-contrast": { enabled: true } } };
 
 describe("colour contrast in a real browser", () => {
-	// Guards the WCAG AA text-contrast fixes from VIR-2693: muted `text-gray-500`
-	// on white, the red `FieldError` message, and white nav text on the teal
-	// `bg-virtool` bar. A regression back to the old, lower-contrast tokens turns
-	// this test red — which the jsdom harness could never catch.
+	// Guards WCAG AA text contrast: muted `text-gray-500` on white, the red
+	// `FieldError` message, and white nav text on the teal `bg-virtool` bar. A
+	// lower-contrast token turns this test red, which the jsdom harness can't do.
 	it("passes the fixed WCAG AA text colours", async () => {
 		const { baseElement } = render(
 			<main className="bg-white p-4">

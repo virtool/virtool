@@ -61,10 +61,9 @@ function isValidationError(error: Error): boolean {
  * Surface a contract-drift validation error to the console and Sentry.
  *
  * React Query swallows a rejected `.parse()` into query state, so without this
- * it reaches neither place and the drift fails silently — which is how the
- * index integer-id cutover broke the analysis dialog in production unseen
- * (VIR-2804). The dev console is the only place a developer sees it locally,
- * where Sentry has no DSN; Sentry carries it in production.
+ * it reaches neither place and the drift fails silently. The dev console is the
+ * only place a developer sees it locally, where Sentry has no DSN; Sentry carries
+ * it in production.
  */
 function reportContractDrift(error: Error): void {
 	if (import.meta.env.DEV) {

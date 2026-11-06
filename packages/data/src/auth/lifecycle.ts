@@ -165,13 +165,11 @@ export type CompletedAccountSetup = {
  * revoked. A failure anywhere rolls the whole transition back, so a spent
  * token never outlives the account change it paid for.
  *
- * The password is written twice on purpose. `users.password` is what
- * `login()` in the web app still reads, and `auth_accounts.password` is what
- * Better Auth reads; both boundaries are live during the migration, and an
- * account completed against only one of them cannot sign in at all under the
- * other. Both hold the same hash, because `@virtool/data/auth/password` is
- * the one place the algorithm is stated and Better Auth is configured to use
- * it.
+ * The password is written twice on purpose. `users.password` stays part of
+ * Virtool's account and password-change transactions, and Better Auth verifies
+ * `auth_accounts.password`. Both hold the same hash, because
+ * `@virtool/data/auth/password` is the one place the algorithm is stated and
+ * Better Auth is configured to use it.
  *
  * No session is minted here. Which session a completed holder gets is the
  * calling flow's decision, and the web app owns cookies.
@@ -702,6 +700,10 @@ export async function cancelEmailRemediation(
  * The existing password hash moves across rather than being re-derived: the
  * holder is proving control of an address, not setting a new credential, and
  * asking them for their password again would make this a reset.
+ *
+ * Other completions revoke setup credentials at once. This one keeps the
+ * restricted session until the initiating browser claims promotion, so a token
+ * verified in another browser does not authenticate that browser.
  */
 export async function completeEmailRemediation(
 	db: Db,

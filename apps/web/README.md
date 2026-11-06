@@ -18,7 +18,7 @@ The server validates its variables before it starts to listen. Every runtime
 variable accepts a `_FILE` variant, which takes precedence. See
 [the environment guide](../../docs/env.md) for file-backed values and key
 rotation. Configure the required storage backend with
-[the shared storage settings](../../packages/data/README.md#configuration).
+[the shared storage settings](../../docs/storage.md#configuration).
 The table below covers the remaining settings and web-specific storage behavior.
 
 | Variable                         | Type                     | Default  | Use                                                                                                                                                                                                                                                                               |

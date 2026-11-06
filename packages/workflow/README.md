@@ -1,142 +1,52 @@
 # @virtool/workflow
 
-The runtime, jobs API client, subprocess runner, file-transfer layer, cache,
-and test harness shared by Virtool workflow executors.
+The runtime that every Virtool workflow image runs, and the shared test harness
+for workflows. A workflow pod claims one job, runs its steps, reports to the
+jobs API, and exits. See [Job lifecycle](../../docs/jobs.md) for the protocol,
+retries, and exit codes.
 
-## Runtime contract
+## Error reporting
 
-- Define workflows with `defineWorkflow()` and an explicit ordered step array.
-  Step IDs use snake case and are stored verbatim by the jobs API.
-- Build the run context once with `buildContext`. Its `data` field must survive
-  a JSON round trip; use `state` for mutable step-to-step data.
-- `runWorkflow()` returns an outcome. It doesn't use the network, install
-  signal handlers, exit the process, run teardown, or provide lifecycle hooks.
-- `runWorkflowApp()` owns configuration, job claiming, pings, cancellation,
-  reporting, Sentry reporting, and process exit.
-- With `VT_SENTRY_DSN` set, the runtime sends a Sentry exception for each
-  failed claim, preparation, step, and finish call. It tags each exception
-  with `workflow` and, after the claim, `jobId`. The default logger also
-  forwards `info`-and-above records to Sentry logs. Cancellation,
-  termination, and a jobs API refusal that names a terminal job state send no
-  exception.
-- Cancellation is cooperative. The runtime abandons the active step when its
-  signal aborts and safely observes any later rejection.
+With `VT_SENTRY_DSN` set, a pod sends a Sentry exception for each failed claim,
+preparation, step, and finish call. It tags each exception with `workflow` and,
+after the claim, `jobId`. The pod also sends log records at `info` and above to
+Sentry logs. Cancellation, termination, and a jobs API refusal that names a
+terminal job state send no exception.
 
-The runtime is deliberately small and explicit:
+## Subprocesses
 
-- No dependency-injection container exists. Each workflow builds one ordinary
-  context before its first step. Metadata resolution is eager, but transfer may
-  remain lazy: `buildContext` records storage keys and work paths and checks
-  required objects with `storage.size()`, while the step that needs an optional
-  input downloads it.
-- No teardown layer exists. Workflow containers are ephemeral, and process
-  exit reclaims their work directory. Don't add `dispose`,
-  `Symbol.asyncDispose`, or an `AsyncExitStack`-style abstraction.
-- No lifecycle-hook registry exists. `RunWorkflowOptions.onStepStart` is the
-  sole optional callback. Successful completion is represented by the returned
-  `RunOutcome`; a failed run leaves a partially built resource for the user to
-  delete.
+A pod runs each external tool in a separate process group and logs its stderr
+line by line. A tool failure includes the last 20 lines of stderr. When a run
+stops, the process group gets `SIGTERM`, then `SIGKILL` after five seconds.
 
-`createWorkflowContext()` verifies on every run that `data` survives a JSON
-round trip. Put storage keys, paths, ids, and other serializable inputs there;
-put live handles and mutable cross-step scratch in `state`.
+## Caches
 
-### Subprocesses
-
-Run every external tool through `context.runSubprocess`:
-
-- stdout goes to `/dev/null` unless a handler consumes it;
-- stderr is logged line by line and the last 20 lines are attached to failures;
-- lines are limited to 128 MiB by default;
-- the child runs in a process group so cancellation terminates descendants;
-- cancellation sends `SIGTERM`, then `SIGKILL` after five seconds.
-
-`createRunSubprocess()` logs `ESRCH` and `EPIPE` from a signal racing process
-exit at debug level. An ordinary tool exit with code 15 is a failure; only a
-cancellation-driven termination resolves with `cancelled: true`.
-
-### Job lifecycle
-
-See [Job lifecycle](../../docs/jobs.md) for the complete protocol and the
-ownership boundary between this package and the jobs API (`@virtool/internal`).
-
-- Claim paths are unprefixed and wire fields are camel case.
-- A pod gets its job ID and credential from the claim response.
-- Transport failures and `503` responses retry at five-second intervals for
-  four minutes of wall-clock time. Other HTTP responses aren't retried.
-- The ping loop treats `401` as cancellation. Four minutes without a successful
-  ping stop the ping loop but don't stop the workflow.
-- A completed or failed workflow exits `0`; the jobs API owns those state
-  transitions. A broken runner exits `1`, and `SIGTERM` exits `124`.
-
-### Files and cache
-
-- Pass one `StorageBackend` into the run context. Tests use `MemoryStorage`.
-- Transfer files with `downloadToPath()` and `uploadFromPath()`; never buffer
-  workflow files in memory.
-- Read storage keys from API records. Mint output keys with `mintStorageKey()`
-  and send them back in the finalization manifest; never derive them from row IDs.
-- `createWorkflowCache()` stores an uncompressed tar containing one top-level
-  directory. Upload the blob before registering the cache row.
-- Build a run's cache with `cacheFor(context)`, which stages archives under the
-  work path. Use `restoreOrBuild()` for every cached artifact; it rejects a
-  blob that restores to a different directory.
-- Analysis workflows resolve their inputs with `fetchAnalysisMetadata()`,
-  `resolveAnalysisInputs()`, and `transferAnalysisInputs()`. Read other job
-  arguments with `readIdArg()`.
-
-`runWorkflowApp()` constructs the storage backend once from configuration and
-passes it through the context. The workflow package never constructs a
-database connection or a module-level storage singleton.
-
-The cache archive's one top-level entry is the cached directory's basename,
-so a workflow's work-path layout is part of its cache contract. Every cache
-key includes the workflow name and version, so each workflow has its own
-namespaces and never restores an artifact another workflow built from
-different input. Registering an already-existing cache
-key is success. `deriveCacheKey()` serialises params as JSON with keys sorted
-by code point, `,` and `:` separators, and every character outside
-`0x20`-`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
-`float()`. Treat committed golden fixtures as independent expected output;
-don't update them merely to match the current implementation.
-
-Tar and gzip operations belong to `@virtool/archive`; this package doesn't
-re-export them.
+Pods keep cached artifacts in object storage and register them with the jobs
+API. Each cache key includes the workflow name and version, so a new workflow
+version builds its artifacts again.
 
 ## Configuration
 
-`parseWorkflowRunConfig()` reads these variables when an app starts. Every
-variable also accepts `<VARIABLE>_FILE`; the file wins, whitespace is trimmed,
-and an empty value is unset. An unreadable file fails startup. The package does
-not read `process.env` at import time.
+A workflow app reads these variables when it starts. Every variable also accepts
+a `<VARIABLE>_FILE` variant. See
+[Environment configuration](../../docs/env.md). An empty value is unset.
 
-| Variable                          | Type                                                              | Default            | Use                                                                    |
-| --------------------------------- | ----------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------- |
-| `VT_JOBS_API_URL`                 | URL                                                               | Required           | Set the cluster-internal jobs API base URL.                            |
-| `VT_WORK_PATH`                    | Path string                                                       | Required           | Set the disposable run directory.                                      |
-| `VT_WORKFLOW`                     | `create_sample` \| `create_subtraction` \| `nuvs` \| `pathoscope` | Required           | Select the job type to claim.                                          |
-| `VT_MEM`                          | Positive integer (GiB)                                            | `4`                | Report available memory and size tool invocations.                     |
-| `VT_PROC`                         | Positive integer                                                  | `2`                | Report and limit available processors.                                 |
-| `VT_TIMEOUT`                      | Positive integer (seconds)                                        | `1000`             | Bound the workflow run.                                                |
-| `VT_IMAGE`                        | String                                                            | `unknown`          | Record the runner image on the job.                                    |
-| `VT_SENTRY_DSN`                   | URL string                                                        | Unset              | Send errors to Sentry.                                                 |
-| `VT_STORAGE_BACKEND`              | `s3` \| `azure`                                                   | Required           | Select object storage.                                                 |
-| `VT_STORAGE_S3_BUCKET`            | String                                                            | Required for S3    | Name the S3 bucket.                                                    |
-| `VT_STORAGE_S3_REGION`            | String                                                            | Unset              | Set the S3 region.                                                     |
-| `VT_STORAGE_S3_ENDPOINT`          | URL string                                                        | Unset              | Override the S3 endpoint; omit for AWS.                                |
-| `VT_STORAGE_S3_ACCESS_KEY_ID`     | String                                                            | Unset              | Set with the S3 secret key, or omit both for the AWS credential chain. |
-| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String                                                            | Unset              | Set with the S3 access key, or omit both for the AWS credential chain. |
-| `VT_STORAGE_AZURE_ACCOUNT`        | String                                                            | Required for Azure | Name the Azure Storage account.                                        |
-| `VT_STORAGE_AZURE_CONTAINER`      | String                                                            | Required for Azure | Name the Azure Blob container.                                         |
-| `VT_STORAGE_AZURE_ACCESS_KEY`     | String                                                            | Unset              | Set an account key; omit for managed identity.                         |
-| `VT_STORAGE_AZURE_ENDPOINT`       | URL string                                                        | Unset              | Override the Azure Blob endpoint.                                      |
+| Variable          | Type                                                              | Default   | Use                                                |
+| ----------------- | ----------------------------------------------------------------- | --------- | -------------------------------------------------- |
+| `VT_JOBS_API_URL` | URL                                                               | Required  | Set the cluster-internal jobs API base URL.        |
+| `VT_WORK_PATH`    | Path string                                                       | Required  | Set the disposable run directory.                  |
+| `VT_WORKFLOW`     | `create_sample` \| `create_subtraction` \| `nuvs` \| `pathoscope` | Required  | Select the job type to claim.                      |
+| `VT_MEM`          | Positive integer (GiB)                                            | `4`       | Report available memory and size tool invocations. |
+| `VT_PROC`         | Positive integer                                                  | `2`       | Report and limit available processors.             |
+| `VT_TIMEOUT`      | Positive integer (seconds)                                        | `1000`    | Limit the time that a pod waits to claim a job.    |
+| `VT_IMAGE`        | String                                                            | `unknown` | Record the runner image on the job.                |
+| `VT_SENTRY_DSN`   | URL string                                                        | Unset     | Send errors to Sentry.                             |
 
-Storage is required because workflow pods transfer their own files. The S3
-access and secret keys must be set together or both omitted.
+Pods read and write their own files, so each pod also needs
+[the storage settings](../../docs/storage.md#configuration).
 
-`VT_JOBS_API_URL` and `VT_WORK_PATH` intentionally have no defaults. A missing
-value fails startup loudly rather than leaving a pod polling nothing or
-deleting whatever a relative work path resolves to.
+A pod deletes the contents of `VT_WORK_PATH` when a run starts. It also stages
+cache archives there, so size that volume for the largest artifact.
 
 ## Commands
 
@@ -150,16 +60,5 @@ Run from the monorepo root.
 
 ## Testing
 
-The package runs its server-shaped tests under Node through its own `test`
-script, which the recursive workspace test command discovers. Keep this project
-out of `apps/web/vitest.config.js`; the workflow harness has no dependency on
-the web app. Place tests beside their source as `*.test.ts`.
-
-Workflow data generators, jobs API fakes, and process fakes live in
-`src/testing/` and are imported through `@virtool/workflow/testing`. Don't
-duplicate them in `apps/web/src/tests/` or a workflow app. Tests that store
-files use `MemoryStorage`.
-
-See [Workflow testing](TESTING.md) for the harness factories, shared jobs API
-state, deterministic builders, subprocess fake, storage helpers, work paths,
-and checksum utilities.
+Tests run under Node, beside their source. Workflow apps get their fixtures and
+fakes from the test harness that this package exports.

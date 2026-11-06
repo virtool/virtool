@@ -99,9 +99,8 @@ describe("recordSpawn", () => {
 			PeriodicTaskName.options.length * 3,
 		);
 
-		// The evidence VIR-2888 gates on is `skipped_locked` being *visible*, so
-		// that "the lock was never contended" can be told from "the counter was
-		// never wired up".
+		// `skipped_locked` must be visible, so that "the lock was never contended"
+		// can be told from "the counter was never wired up".
 		expect(
 			await sample(
 				metrics,

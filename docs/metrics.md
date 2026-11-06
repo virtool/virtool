@@ -1,28 +1,27 @@
 # Metrics
 
-`apps/web` and `apps/internal`'s `serve` and `run` subcommands each expose
+The web app and the `serve` and `run` subcommands of the internal app each expose
 Prometheus metrics at `GET /metrics`, from their own process-wide registry. See
-[apps/web/README.md](../apps/web/README.md#metrics) and
-[apps/internal/README.md](../apps/internal/README.md#metrics) for what each
-one emits. This file documents their shared query contracts.
+[the web guide](../apps/web/README.md#metrics) and
+[the internal guide](../apps/internal/README.md#metrics) for what each one emits.
+This guide gives the rules for queries across them.
 
 ## Error status policy
 
-Both HTTP implementations record an `Error` that escapes request handling as
-`status="500"`, matching their frameworks' unhandled-error responses. They
-reserve `status="error"` for a thrown value that isn't an `Error`, where no
-response status can be reported accurately.
+The web app and `serve` record an `Error` that escapes request handling as
+`status="500"`. They use `status="error"` for a thrown value that isn't an
+`Error`, where no response status is accurate.
 
-A failed `apps/web` server-function call isn't an escaped `Error`. Start
-serializes the error into a 200 response, so `status` doesn't separate
-failed calls from successful ones for `handler_type="serverFn"`.
+A failed server-function call in the web app isn't an escaped `Error`. It
+returns a 200 response that holds the serialized error, so `status` doesn't
+separate failed calls from successful ones for `handler_type="serverFn"`.
 
 ## HTTP label sets
 
-`apps/web` labels `virtool_http_requests_total` /
-`virtool_http_request_duration_seconds` with
-`handler_type, method, status, server_fn`; the `serve` subcommand labels the
-same two series with `route, method, status`. The two sets encode
-different things: a TanStack Start request's handler kind and server-function
-name versus a Hono route's registered pattern. A query spanning both targets
-must restrict itself to their shared `method` and `status` labels.
+The web app labels `virtool_http_requests_total` with
+`handler_type, method, status, server_fn`. `serve` labels the same series with
+`route, method, status`. `virtool_http_request_duration_seconds` has the same
+labels without `status`.
+
+A query across both targets must use only the shared `method` and `status`
+labels.
