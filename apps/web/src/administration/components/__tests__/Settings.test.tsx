@@ -13,6 +13,7 @@ import {
 } from "@tests/server-fn/settings";
 import { mockFindUsers } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
+import { silenceExpectedLogs } from "@tests/silenceExpectedLogs";
 import { describe, expect, it } from "vitest";
 
 describe("<Settings />", () => {
@@ -97,6 +98,7 @@ describe("<Settings />", () => {
 	it.each(settingsPages)(
 		"handles failed settings at the route boundary for $path",
 		async ({ path }) => {
+			silenceExpectedLogs();
 			settingsServerFnMocks.getSettingsFn.mockRejectedValue(
 				new Error("Unavailable"),
 			);

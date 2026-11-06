@@ -28,6 +28,7 @@ import {
 	BrowserSessionEndedError,
 	revokeOtherActiveBrowserSessions,
 } from "../account/service";
+import { silenceLogs } from "../test/silenceLogs";
 import { createAuth, createAuthRequestHandler } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
@@ -209,6 +210,7 @@ describe("legacy bcrypt credentials", () => {
 	});
 
 	it("refuses the wrong password", async () => {
+		silenceLogs();
 		await seedMigratedUser();
 
 		const response = await auth.handler(
@@ -220,6 +222,7 @@ describe("legacy bcrypt credentials", () => {
 	});
 
 	it("refuses a corrupt hash without saying the account exists", async () => {
+		silenceLogs();
 		await seedMigratedUser("not-a-bcrypt-hash");
 
 		const corrupt = await auth.handler(
@@ -482,6 +485,7 @@ describe("the mounted handler", () => {
 	});
 
 	it("refuses a cross-origin request from a cookie-bearing browser", async () => {
+		silenceLogs();
 		await seedMigratedUser();
 
 		const response = await auth.handler(
@@ -868,6 +872,7 @@ describe("step-up session replacement", () => {
 
 describe("virtool account state", () => {
 	it("refuses a deactivated user with the wrong-password response", async () => {
+		silenceLogs();
 		await seedMigratedUser(LEGACY_HASH, { active: false });
 
 		const response = await auth.handler(
@@ -890,6 +895,7 @@ describe("virtool account state", () => {
 	});
 
 	it("refuses a wrong password with the invalid username or password code", async () => {
+		silenceLogs();
 		await seedMigratedUser(LEGACY_HASH);
 
 		const response = await auth.handler(

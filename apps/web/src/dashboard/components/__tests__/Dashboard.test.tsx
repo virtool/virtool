@@ -12,6 +12,7 @@ import {
 	mockFindSamples,
 } from "@tests/server-fn/samples";
 import { renderRoute } from "@tests/setup";
+import { silenceExpectedLogs } from "@tests/silenceExpectedLogs";
 import { beforeEach, describe, expect, it } from "vitest";
 
 type CardTables = [samples: HTMLElement, analyses: HTMLElement];
@@ -259,6 +260,7 @@ describe("<Dashboard />", () => {
 	});
 
 	it("contains a failed card without taking down the rest of the dashboard", async () => {
+		silenceExpectedLogs();
 		mockFindRecentlyViewedAnalyses([]).mockRejectedValue(new Error("boom"));
 		mockFindRecentlyViewedSamples([
 			createFakeSampleMinimal({ name: "Foo sample" }),

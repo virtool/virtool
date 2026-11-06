@@ -21,6 +21,7 @@ import {
 	vi,
 } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+import { silenceLogs } from "../test/silenceLogs";
 
 const getRequest = vi.fn();
 const setCookie = vi.fn();
@@ -249,6 +250,7 @@ describe("resetUserTotpFn", () => {
 	}
 
 	it("removes the target's factor and sessions and keeps the caller's", async () => {
+		silenceLogs();
 		const { session } = await signInAdministrator();
 		const targetId = await seedEnrolledUser();
 
@@ -267,6 +269,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("refuses the caller's own account", async () => {
+		silenceLogs();
 		const { userId } = await signInAdministrator();
 
 		await expect(call("resetUserTotpFn", { userId })).rejects.toMatchObject({
@@ -277,6 +280,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("refuses an administrator without the full role", async () => {
+		silenceLogs();
 		await signInAdministrator("users");
 		const targetId = await seedEnrolledUser();
 
@@ -292,6 +296,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("responds with 404 for an unknown user", async () => {
+		silenceLogs();
 		await signInAdministrator();
 
 		await expect(
@@ -304,6 +309,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("responds with 409 for a user with no factor", async () => {
+		silenceLogs();
 		await signInAdministrator();
 		const targetId = await seedUser(db, { handle: "bob" });
 

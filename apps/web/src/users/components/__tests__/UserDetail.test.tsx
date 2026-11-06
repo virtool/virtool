@@ -414,6 +414,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={self.id} />);
 
+			expect(await screen.findByText(self.handle)).toBeInTheDocument();
 			expect(screen.queryByText("Administrator Role")).not.toBeInTheDocument();
 
 			expect(getUser).toHaveBeenCalled();
