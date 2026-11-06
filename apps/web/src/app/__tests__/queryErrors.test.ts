@@ -8,17 +8,13 @@ import {
 import {
 	CLIENT_ERROR_NAME,
 	FORBIDDEN_ERROR_NAME,
-	SESSION_NOT_FRESH_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { endSession } = vi.hoisted(() => ({ endSession: vi.fn() }));
+const { followAuthError } = vi.hoisted(() => ({ followAuthError: vi.fn() }));
 
-vi.mock("@app/session", () => ({
-	armSessionEnd: vi.fn(),
-	endSession,
-}));
+vi.mock("@app/session", () => ({ followAuthError }));
 
 const { captureException } = vi.hoisted(() => ({ captureException: vi.fn() }));
 
@@ -121,39 +117,16 @@ describe("shouldRetryQuery", () => {
 
 describe("handleQueryError", () => {
 	afterEach(() => {
-		endSession.mockClear();
+		followAuthError.mockClear();
 		captureException.mockClear();
 	});
 
-	it("ends the session when a server function rejects the session", () => {
-		handleQueryError(
-			serializedAuthError(UNAUTHORIZED_ERROR_NAME, "Unauthorized"),
-		);
+	it("hands every error to the auth handler", () => {
+		const error = serializedAuthError(UNAUTHORIZED_ERROR_NAME, "Unauthorized");
 
-		expect(endSession).toHaveBeenCalledTimes(1);
-	});
+		handleQueryError(error);
 
-	it("leaves the session alone when the user merely lacks the role", () => {
-		handleQueryError(serializedAuthError(FORBIDDEN_ERROR_NAME, "Forbidden"));
-
-		expect(endSession).not.toHaveBeenCalled();
-	});
-
-	it("leaves a stale but valid session active for ordinary operations", () => {
-		handleQueryError(
-			serializedAuthError(
-				SESSION_NOT_FRESH_ERROR_NAME,
-				"Recent authentication required",
-			),
-		);
-
-		expect(endSession).not.toHaveBeenCalled();
-	});
-
-	it("leaves the session alone when a query fails for any other reason", () => {
-		handleQueryError(new Error("network down"));
-
-		expect(endSession).not.toHaveBeenCalled();
+		expect(followAuthError).toHaveBeenCalledWith(error);
 	});
 
 	it("reports a drifted contract to Sentry so it fails loudly", () => {

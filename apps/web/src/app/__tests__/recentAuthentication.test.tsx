@@ -261,10 +261,9 @@ describe("recent authentication orchestration", () => {
 		await expect(promise).resolves.toBe("updated");
 		expect(
 			recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn,
-		).toHaveBeenCalledWith(
-			{ data: { method: "password", password: "secret" } },
-			expect.anything(),
-		);
+		).toHaveBeenCalledWith({
+			data: { method: "password", password: "secret" },
+		});
 	});
 
 	it("switches between password and authenticator code", async () => {
@@ -326,10 +325,7 @@ describe("recent authentication orchestration", () => {
 		await expect(promise).resolves.toBe("updated");
 		expect(
 			recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn,
-		).toHaveBeenCalledWith(
-			{ data: { method: "totp", code: "123456" } },
-			expect.anything(),
-		);
+		).toHaveBeenCalledWith({ data: { method: "totp", code: "123456" } });
 	});
 
 	it("shows no switch link when only one method is enrolled", async () => {

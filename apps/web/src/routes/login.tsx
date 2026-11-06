@@ -28,8 +28,15 @@ export const Route = createFileRoute("/login")({
 	validateSearch: validateLoginSearch,
 	beforeLoad: async ({ context, search }) => {
 		const { queryClient } = context;
-		const [{ accountQueryOptions }, { getAuthNextStep, getAuthNextStepRoute }] =
-			await Promise.all([import("@account/account"), import("@wall/nextStep")]);
+		const [
+			{ accountQueryOptions },
+			{ getAuthNextStep },
+			{ getAuthNextStepRoute },
+		] = await Promise.all([
+			import("@account/account"),
+			import("@wall/authStep"),
+			import("@wall/nextStep"),
+		]);
 
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());

@@ -376,6 +376,11 @@ of any registered passkey. The recent-authentication plugin in
   deleted, while the retired credential stays retired and the browser must sign
   in again.
 
+A request in flight during the rotation can answer 401 for the retired session.
+Navigating at that moment would cancel the challenge and lose the new cookie, so
+the tab that runs the challenge defers `endSession()` until the challenge
+settles.
+
 Account session management uses that numeric database session id only as an
 opaque management id. Better Auth authenticates with the separate random
 `token`; its native list and revoke routes are disabled so neither that token nor
@@ -404,8 +409,15 @@ An unattended tab can't extend its session through background traffic.
 
 After the authenticated shell arms `endSession()`, definitive session failures
 from refresh, query or mutation HTTP 401 responses, and SSE HTTP 401 responses
-converge on that idempotent path. It clears session storage and performs
+converge on that idempotent path. A rejection proves only that the cookie it
+carried was refused, so the path fetches the account with the current cookie
+first. If the fetch succeeds, nothing happens. If it fails for a network or server
+reason, nothing happens and the next rejection asks again. Otherwise the fetch
+error names the destination. A lost session clears session storage and performs
 full-document navigation to login with “Your session ended” and a return location.
+A restriction that starts mid-session goes to `/mfa-enrollment` or
+`/email-remediation` with a return location. MFA enrollment keeps session storage,
+because the session continues.
 Network and server failures are operational errors, not evidence that a session
 expired.
 

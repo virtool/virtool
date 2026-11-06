@@ -1,7 +1,6 @@
-import { endSession } from "@app/session";
+import { followAuthError } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { refreshBrowserSessionFn } from "@server/auth/functions";
-import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
 import { useEffect } from "react";
 
 const NETWORK_FAILURE_MESSAGES = [
@@ -44,15 +43,8 @@ export function useBrowserSessionRefresh(enabled: boolean): void {
 			try {
 				await refreshBrowserSessionFn();
 			} catch (error) {
-				if (!disposed) {
-					if (
-						error instanceof Error &&
-						error.name === UNAUTHORIZED_ERROR_NAME
-					) {
-						endSession();
-					} else if (!isNetworkFailure(error)) {
-						Sentry.captureException(error);
-					}
+				if (!disposed && !followAuthError(error) && !isNetworkFailure(error)) {
+					Sentry.captureException(error);
 				}
 			} finally {
 				pending = false;

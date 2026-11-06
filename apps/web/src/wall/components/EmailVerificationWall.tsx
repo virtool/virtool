@@ -9,9 +9,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { getAuthNextStep } from "../authStep";
 import { useCapturedUrlParams } from "../hooks";
 import { rootQueryKeys } from "../keys";
-import { getAuthNextStep } from "../nextStep";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
 

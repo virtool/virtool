@@ -2,6 +2,7 @@ import { accountQueryKeys } from "@account/keys";
 import { cn } from "@app/cn";
 import { usePasskeySupport } from "@app/passkeySupport";
 import type { PasskeyNotice } from "@app/passkeys";
+import { holdSessionEnd } from "@app/session";
 import Button, { LinkButton } from "@base/Button";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import { InputOTP, InputPassword } from "@base/Input";
@@ -296,7 +297,9 @@ export function RecentAuthenticationForm({
 		shouldUnregister: true,
 	});
 	const challengeMutation = useMutation({
-		mutationFn: challengeRecentAuthenticationFn,
+		mutationFn: (
+			challenge: Parameters<typeof challengeRecentAuthenticationFn>[0],
+		) => holdSessionEnd(() => challengeRecentAuthenticationFn(challenge)),
 	});
 	const passkeySupport = usePasskeySupport();
 	const [isPasskeyPending, setPasskeyPending] = useState(false);
