@@ -13,6 +13,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
+import { symmetricDecrypt } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -31,6 +32,8 @@ import { createAuth, createAuthRequestHandler } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
 const ORIGIN = "https://virtool.test";
+
+const AUTH_SECRET = "test-auth-secret-test-auth-secret";
 
 /**
  * A `$2b$12$` hash copied out of a production-shaped `users.password`, of the
@@ -53,7 +56,7 @@ beforeAll(async () => {
 		db,
 		publicOrigin: ORIGIN,
 		webauthnRpId: "virtool.test",
-		secret: "test-auth-secret-test-auth-secret",
+		secret: AUTH_SECRET,
 	});
 }, 60_000);
 
@@ -594,8 +597,73 @@ describe("step-up session replacement", () => {
 		return { cookie, session };
 	}
 
+	async function startTotpEnrollment(cookie: string): Promise<void> {
+		const request = post("/two-factor/enable", { password: LEGACY_PASSWORD });
+		request.headers.set("cookie", cookie);
+		expect((await auth.handler(request)).status).toBe(200);
+	}
+
+	async function getCurrentTotpCode(): Promise<string> {
+		const [factor] = await db.select().from(authTwoFactors);
+		if (!factor) {
+			throw new Error("enrollment did not create a factor");
+		}
+		const { code } = await auth.api.generateTOTP({
+			body: {
+				secret: await symmetricDecrypt({
+					key: AUTH_SECRET,
+					data: factor.secret,
+				}),
+			},
+		});
+		return code;
+	}
+
+	it("refuses a correct code for an unconfirmed TOTP enrollment", async () => {
+		const { cookie, session } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		const totp = vi.spyOn(auth.api, "verifyTOTP");
+		try {
+			const request = post("/virtool-session/challenge", {
+				method: "totp",
+				code: await getCurrentTotpCode(),
+			});
+			request.headers.set("cookie", cookie);
+			const response = await auth.handler(request);
+
+			expect(response.status).toBe(400);
+			expect(await response.json()).toMatchObject({ code: "TOTP_NOT_ENABLED" });
+			expect(totp).not.toHaveBeenCalled();
+		} finally {
+			totp.mockRestore();
+		}
+
+		const [factor] = await db.select().from(authTwoFactors);
+		const [user] = await db.select().from(users);
+		expect(factor?.verified).toBe(false);
+		expect(user?.twoFactorEnabled).not.toBe(true);
+		expect(await db.select().from(authSessions)).toEqual([session]);
+	});
+
+	it("accepts a correct code for a confirmed TOTP enrollment", async () => {
+		const { cookie, session } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+
+		const request = post("/virtool-session/challenge", {
+			method: "totp",
+			code: await getCurrentTotpCode(),
+		});
+		request.headers.set("cookie", cookie);
+
+		expect((await auth.handler(request)).status).toBe(200);
+		expect(await db.select().from(authSessions)).toEqual([session]);
+	});
+
 	it("shares the challenge limit across methods and releases it after expiry", async () => {
 		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
 		const password = vi.spyOn(auth.api, "verifyPassword");
 		const totp = vi.spyOn(auth.api, "verifyTOTP");
 		try {

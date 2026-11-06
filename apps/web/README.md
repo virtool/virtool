@@ -360,7 +360,9 @@ session and form state intact and never navigates to the login wall.
 Step-up delegates password and TOTP verification to Better Auth, with trusted
 device disabled and recovery codes excluded. Every TOTP user also has a
 password, so a recovery code would only spend a one-time code that the user
-keeps for a lost authenticator. A wrong password or code gets a message that
+keeps for a lost authenticator. A TOTP challenge is refused unless a first code
+has confirmed the enrollment, because Better Auth would otherwise finish the
+enrollment and replace the session. A wrong password or code gets a message that
 names only the method the user chose. A rate-limited attempt keeps the
 challenge open with a message to wait. Step-up does not use Better Auth's
 passkey sign-in endpoint, because that endpoint starts a session for the owner

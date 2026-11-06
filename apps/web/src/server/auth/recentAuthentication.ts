@@ -3,7 +3,8 @@ import { getRequest } from "@tanstack/react-start/server";
 import { AUTH_BASE_PATH } from "@virtool/contracts";
 import { hasPasskey } from "@virtool/data/auth/passkeys";
 import { resolveBrowserSession } from "@virtool/data/auth/session";
-import { authAccounts, authTwoFactors } from "@virtool/data/db/schema/auth";
+import { hasVerifiedTotp } from "@virtool/data/auth/twoFactor";
+import { authAccounts } from "@virtool/data/db/schema/auth";
 import { APIError } from "better-auth/api";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "../composition";
@@ -96,7 +97,7 @@ export const getRecentAuthenticationMethodsFn = createServerFn({
 })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		const [passwordAccount, twoFactor, passkey] = await Promise.all([
+		const [passwordAccount, totp, passkey] = await Promise.all([
 			db
 				.select({ id: authAccounts.id })
 				.from(authAccounts)
@@ -108,23 +109,14 @@ export const getRecentAuthenticationMethodsFn = createServerFn({
 					),
 				)
 				.limit(1),
-			db
-				.select({ id: authTwoFactors.id })
-				.from(authTwoFactors)
-				.where(
-					and(
-						eq(authTwoFactors.userId, context.principal.userId),
-						eq(authTwoFactors.verified, true),
-					),
-				)
-				.limit(1),
+			hasVerifiedTotp(db, context.principal.userId),
 			hasPasskey(db, context.principal.userId),
 		]);
 
 		return {
 			passkey,
 			password: passwordAccount.length === 1,
-			totp: twoFactor.length === 1,
+			totp,
 		};
 	});
 
