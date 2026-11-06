@@ -71,16 +71,8 @@ healthy-but-dead instance. The `apps/internal` subcommands parse inside
 is loaded on the first request. Report every invalid key in one message, and
 report key names and reasons only. Never report a configured value.
 
-Current integrations are:
-
-- `apps/web/src/server/configSchema.ts`
-- `apps/internal/src/serve/config.ts`
-- `apps/internal/src/run/config.ts`
-- `apps/internal/src/migrate/main.ts`
-- `apps/dev-tools/src/administrator.ts`
-- `apps/internal/src/data-migrations/main.ts`
-- `apps/internal/src/auth-remediation/main.ts`
-- `packages/workflow/src/config.ts`
+The web server, every `apps/internal` subcommand, the development administrator
+command, and the workflow runtime all follow this pattern.
 
 The resolver and its precedence tests live in the `@virtool/env` package.
 
