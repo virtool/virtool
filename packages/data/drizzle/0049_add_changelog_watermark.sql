@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "last_seen_changelog_at" timestamp DEFAULT timezone('utc', now()) NOT NULL;

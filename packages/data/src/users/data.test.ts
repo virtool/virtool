@@ -39,6 +39,7 @@ import {
 	InvalidPasswordError,
 	listAdministratorRoles,
 	listUsers,
+	markChangelogSeen,
 	PendingAccountError,
 	setAdministratorRole,
 	UserConflictError,
@@ -229,6 +230,67 @@ describe("getAccount", () => {
 	// is signed in", so this must throw rather than resolve undefined.
 	it("throws when the user does not exist", async () => {
 		await expect(getAccount(db, 404)).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+});
+
+describe("markChangelogSeen", () => {
+	const earlier = new Date("2020-01-01T00:00:00.000Z");
+	const later = new Date("2020-02-01T00:00:00.000Z");
+
+	async function setWatermark(userId: number, date: Date) {
+		await db
+			.update(users)
+			.set({ lastSeenChangelogAt: date })
+			.where(eq(users.id, userId));
+	}
+
+	it("gives a new user a watermark at the time of creation", async () => {
+		const before = Date.now();
+		const { id } = await createUser(db, {
+			handle: "alice",
+			password: "a-real-password",
+		});
+
+		const { lastSeenChangelogAt } = await getAccount(db, id);
+
+		expect(lastSeenChangelogAt.getTime()).toBeGreaterThanOrEqual(before - 1000);
+		expect(lastSeenChangelogAt.getTime()).toBeLessThanOrEqual(
+			Date.now() + 1000,
+		);
+	});
+
+	it("moves the watermark forward to the entry date", async () => {
+		const userId = await seedUser(db);
+		await setWatermark(userId, earlier);
+
+		await markChangelogSeen(db, userId, later);
+
+		const account = await getAccount(db, userId);
+		expect(account.lastSeenChangelogAt).toEqual(later);
+	});
+
+	it("leaves the watermark unchanged for an older entry date", async () => {
+		const userId = await seedUser(db);
+		await setWatermark(userId, later);
+
+		await markChangelogSeen(db, userId, earlier);
+
+		const account = await getAccount(db, userId);
+		expect(account.lastSeenChangelogAt).toEqual(later);
+	});
+
+	it("leaves other users unchanged", async () => {
+		const userId = await seedUser(db, { handle: "alice" });
+		const otherId = await seedUser(db, { handle: "bob" });
+		await Promise.all([
+			setWatermark(userId, earlier),
+			setWatermark(otherId, earlier),
+		]);
+
+		await markChangelogSeen(db, userId, later);
+
+		const other = await getAccount(db, otherId);
+		expect(other.lastSeenChangelogAt).toEqual(earlier);
 	});
 });
 

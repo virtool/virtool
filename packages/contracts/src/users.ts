@@ -117,12 +117,14 @@ export type AccountSettings = {
 /**
  * The signed-in user's own view of themselves.
  *
- * A {@link User} plus the two fields only the account holder may read.
+ * A {@link User} plus the fields only the account holder may read.
  * `email` is never absent: the column is `NOT NULL` defaulting to `""`, and
  * clearing an address writes the empty string rather than a null.
  */
 export type Account = User & {
 	email: string;
+	/** A changelog entry is unread when its date is after this watermark. */
+	lastSeenChangelogAt: Date;
 	settings: AccountSettings;
 };
 
