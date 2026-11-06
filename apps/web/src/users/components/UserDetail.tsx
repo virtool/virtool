@@ -17,6 +17,7 @@ import Handle from "./Handle";
 import { InvitationControls } from "./InvitationControls";
 import RecoveryLink from "./RecoveryLink";
 import { ResetUserTotp } from "./ResetUserTotp";
+import { RevokeUserAccess } from "./RevokeUserAccess";
 import { UserActivationBanner } from "./UserActivationBanner";
 import UserAdministratorRole from "./UserAdministratorRole";
 import UserGroups from "./UserGroups";
@@ -50,6 +51,8 @@ export default function UserDetail({ userId }: UserDetailProps) {
 		account !== undefined &&
 		account.id !== userId &&
 		hasSufficientAdminRole("full", account.administratorRole);
+
+	const canRevokeAccess = account !== undefined && account.id !== userId;
 
 	if (!canEdit) {
 		return (
@@ -127,6 +130,9 @@ export default function UserDetail({ userId }: UserDetailProps) {
 				) : (
 					<>
 						{canResetTotp && <ResetUserTotp userId={id} handle={handle} />}
+						{canRevokeAccess && (
+							<RevokeUserAccess userId={id} handle={handle} />
+						)}
 						<UserActivationBanner
 							onClick={() =>
 								mutation.mutate({

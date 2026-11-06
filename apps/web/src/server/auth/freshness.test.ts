@@ -28,6 +28,7 @@ it("keeps the protected-operation inventory explicit", () => {
 			"setup_link.issue",
 			"totp.disable",
 			"totp.reset",
+			"access.revoke",
 			"user.update",
 		].sort(),
 	);

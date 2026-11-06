@@ -2,7 +2,14 @@ import { eq, isNull } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { keyring } from "../crypto/test/fixtures";
 import type { Db } from "../db/pg";
-import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
+import { apiKeys } from "../db/schema/apiKeys";
+import {
+	authAccounts,
+	authPasskeys,
+	authSessions,
+	authTwoFactors,
+	authVerifications,
+} from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { settings } from "../db/schema/settings";
 import { setupSessions, setupTokens } from "../db/schema/setup";
@@ -10,8 +17,9 @@ import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { openEmailTemplate } from "../email/link";
 import { seedSettings } from "../settings/test/fixtures";
-import { UserNotFoundError } from "../users/data";
+import { PendingAccountError, UserNotFoundError } from "../users/data";
 import {
+	AccessRevocationForbiddenError,
 	cancelEmailRemediation,
 	changeEmailRemediation,
 	claimEmailRemediationPromotion,
@@ -23,14 +31,26 @@ import {
 	prepareEmailRemediation,
 	resendEmailRemediation,
 	resetUserTotp,
+	revokeUserAccess,
 	SetupNotEligibleError,
 	startEmailRemediation,
 	TotpNotEnrolledError,
 	verifyEmailRemediationToken,
 } from "./lifecycle";
 import { hashPassword, verifyPassword } from "./password";
+import {
+	completePasswordRecovery,
+	getSelfServiceRecoveryTarget,
+	issueRecoveryLink,
+} from "./recovery";
 import { SetupCredentialError } from "./setup";
-import { seedSetupSession, seedSetupToken, seedUser } from "./test/fixtures";
+import {
+	seedApiKey,
+	seedSession,
+	seedSetupSession,
+	seedSetupToken,
+	seedUser,
+} from "./test/fixtures";
 
 let database: TestDatabase;
 let db: Db;
@@ -44,6 +64,7 @@ beforeEach(async () => {
 	await db.delete(setupTokens);
 	await db.delete(authAccounts);
 	await db.delete(authTwoFactors);
+	await db.delete(authVerifications);
 	await db.delete(users);
 }, 60_000);
 
@@ -964,5 +985,243 @@ describe("resetUserTotp", () => {
 		);
 
 		expect(await db.select().from(authSessions)).toHaveLength(1);
+	});
+});
+
+describe("revokeUserAccess", () => {
+	async function seedAccount(handle: string, email: string): Promise<number> {
+		const userId = await seedUser(db, {
+			authMigratedAt: new Date(),
+			email,
+			handle,
+			password: await hashPassword("original-password"),
+		});
+		const now = new Date();
+		await db
+			.update(users)
+			.set({ emailVerified: true, twoFactorEnabled: true })
+			.where(eq(users.id, userId));
+		await db.insert(authAccounts).values({
+			accountId: String(userId),
+			createdAt: now,
+			password: (await hashPassword("original-password")).toString("utf8"),
+			providerId: "credential",
+			updatedAt: now,
+			userId,
+		});
+		await db.insert(authTwoFactors).values({
+			backupCodes: "encrypted",
+			secret: "secret",
+			userId,
+		});
+		await db.insert(authPasskeys).values({
+			backedUp: false,
+			counter: 0,
+			credentialID: `credential-${userId}`,
+			deviceType: "singleDevice",
+			publicKey: "key",
+			userId,
+		});
+		await seedVerification(`trust-device-${userId}`, String(userId));
+		await seedVerification(`2fa-${userId}`, String(userId));
+		await seedApiKey(db, userId);
+		await seedSession(db, userId);
+		await seedSetupSession(db, userId, "email_remediation");
+		await seedSetupToken(db, userId, "administrator_recovery");
+		return userId;
+	}
+
+	async function seedVerification(identifier: string, value: string) {
+		const now = new Date();
+		await db.insert(authVerifications).values({
+			createdAt: now,
+			expiresAt: new Date(now.getTime() + 60_000),
+			identifier,
+			updatedAt: now,
+			value,
+		});
+	}
+
+	async function readCredentialPassword(userId: number) {
+		const [row] = await db
+			.select({ password: authAccounts.password })
+			.from(authAccounts)
+			.where(eq(authAccounts.userId, userId));
+		return Buffer.from(row?.password ?? "", "utf8");
+	}
+
+	it("removes every credential of the user and no one else's", async () => {
+		const issuerId = await seedUser(db, {
+			administratorRole: "users",
+			handle: "admin",
+		});
+		const userId = await seedAccount("alice", "alice@example.com");
+		const otherId = await seedAccount("bob", "bob@example.com");
+
+		const user = await revokeUserAccess(db, userId, issuerId);
+
+		expect(user).toMatchObject({ id: userId, twoFactorEnabled: false });
+		for (const table of [
+			apiKeys,
+			authPasskeys,
+			authSessions,
+			authTwoFactors,
+			setupSessions,
+			setupTokens,
+		]) {
+			const rows = await db.select({ userId: table.userId }).from(table);
+			expect(rows).toEqual([{ userId: otherId }]);
+		}
+		const verifications = await db.select().from(authVerifications);
+		expect(verifications.map((row) => row.identifier).sort()).toEqual([
+			`2fa-${otherId}`,
+			`trust-device-${otherId}`,
+		]);
+	});
+
+	it("replaces the password on both sides of the migration", async () => {
+		const issuerId = await seedUser(db, { handle: "admin" });
+		const userId = await seedAccount("alice", "alice@example.com");
+
+		await revokeUserAccess(db, userId, issuerId);
+
+		const { password } = await readUser(userId);
+		const credential = await readCredentialPassword(userId);
+		expect(password).toEqual(credential);
+		expect(await verifyPassword("original-password", credential)).toBe(false);
+	});
+
+	it("leaves Better Auth rows that only share a value with the user id", async () => {
+		const issuerId = await seedUser(db, { handle: "admin" });
+		const userId = await seedAccount("alice", "alice@example.com");
+		await seedVerification("2fa-attempts-abc", String(userId));
+		await seedVerification("2fa-otp-abc", String(userId));
+
+		await revokeUserAccess(db, userId, issuerId);
+
+		const verifications = await db.select().from(authVerifications);
+		expect(verifications.map((row) => row.identifier).sort()).toEqual([
+			"2fa-attempts-abc",
+			"2fa-otp-abc",
+		]);
+	});
+
+	it("closes self-service recovery and sends no email", async () => {
+		const issuerId = await seedUser(db, { handle: "admin" });
+		const userId = await seedAccount("alice", "alice@example.com");
+
+		await revokeUserAccess(db, userId, issuerId);
+
+		expect((await readUser(userId)).emailVerified).toBe(false);
+		expect(await getSelfServiceRecoveryTarget(db, "alice")).toBeNull();
+		expect(await db.select().from(emailOutbox)).toHaveLength(0);
+	});
+
+	it("leaves a copy-only administrator link as the way back in", async () => {
+		const issuerId = await seedUser(db, {
+			administratorRole: "users",
+			handle: "admin",
+		});
+		const userId = await seedAccount("alice", "alice@example.com");
+		await revokeUserAccess(db, userId, issuerId);
+
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "administrator_recovery",
+			issuerUserId: issuerId,
+			deliveryAvailable: true,
+			keyring,
+			getRecoveryUrl: (token) => token,
+		});
+		await completePasswordRecovery(
+			db,
+			issued.token,
+			"administrator_recovery",
+			"replacement-password",
+		);
+
+		expect(issued.delivery).toBe("copy_only");
+		expect(
+			await verifyPassword(
+				"replacement-password",
+				await readCredentialPassword(userId),
+			),
+		).toBe(true);
+	});
+
+	it("revokes a deactivated user", async () => {
+		const issuerId = await seedUser(db, { handle: "admin" });
+		const userId = await seedAccount("alice", "alice@example.com");
+		await db.update(users).set({ active: false }).where(eq(users.id, userId));
+
+		await revokeUserAccess(db, userId, issuerId);
+
+		expect(await db.select().from(apiKeys)).toHaveLength(0);
+	});
+
+	it("replaces the password of an account with no credential row", async () => {
+		const issuerId = await seedUser(db, { handle: "admin" });
+		const userId = await seedUser(db, {
+			password: await hashPassword("original-password"),
+		});
+
+		await revokeUserAccess(db, userId, issuerId);
+
+		const { password } = await readUser(userId);
+		expect(
+			await verifyPassword("original-password", password ?? Buffer.alloc(0)),
+		).toBe(false);
+	});
+
+	it("refuses an administrator target without the full role and changes nothing", async () => {
+		const issuerId = await seedUser(db, {
+			administratorRole: "users",
+			handle: "admin",
+		});
+		const userId = await seedAccount("alice", "alice@example.com");
+		await db
+			.update(users)
+			.set({ administratorRole: "base" })
+			.where(eq(users.id, userId));
+
+		await expect(revokeUserAccess(db, userId, issuerId)).rejects.toBeInstanceOf(
+			AccessRevocationForbiddenError,
+		);
+
+		expect(await db.select().from(apiKeys)).toHaveLength(1);
+		expect((await readUser(userId)).emailVerified).toBe(true);
+	});
+
+	it("lets a full administrator revoke an administrator", async () => {
+		const issuerId = await seedUser(db, {
+			administratorRole: "full",
+			handle: "admin",
+		});
+		const userId = await seedAccount("alice", "alice@example.com");
+		await db
+			.update(users)
+			.set({ administratorRole: "full" })
+			.where(eq(users.id, userId));
+
+		await revokeUserAccess(db, userId, issuerId);
+
+		expect(await db.select().from(apiKeys)).toHaveLength(0);
+	});
+
+	it("refuses a pending account", async () => {
+		const issuerId = await seedUser(db, { handle: "admin" });
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+
+		await expect(revokeUserAccess(db, userId, issuerId)).rejects.toBeInstanceOf(
+			PendingAccountError,
+		);
+	});
+
+	it("throws for an unknown user", async () => {
+		const issuerId = await seedUser(db, { handle: "admin" });
+
+		await expect(
+			revokeUserAccess(db, 999_999, issuerId),
+		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
 });
