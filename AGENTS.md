@@ -109,14 +109,13 @@ import. When adding a feature alias, add it to the server
 `noRestrictedImports` list. Keep server-only and native dependencies out of
 the browser graph.
 
-Follow the client conventions in [apps/web/README.md](apps/web/README.md), with
-the detailed bundling rationale in
-[apps/web/README.md#imports-and-bundles](apps/web/README.md#imports-and-bundles).
+Follow the client conventions in
+[apps/web/README.md](apps/web/README.md#client).
 
 ## Server
 
 Web-specific server conventions live in
-[apps/web/README.md](apps/web/README.md#server-development). Keep these
+[apps/web/README.md](apps/web/README.md#server). Keep these
 repository-wide rules in view:
 
 - Server features flow `functions.ts` → optional `service.ts` → `data.ts`.
@@ -254,13 +253,24 @@ App and package READMEs document their test harnesses and commands.
 
 ### Documentation
 
-Keep repository-wide rules in `AGENTS.md`, detailed rationale in `docs/`, and
-app- or package-specific documentation in that directory's `README.md`. Update
-documentation in the same change as the code it describes.
+Documentation lives in code as much as possible. Markdown gives broad strokes
+for operators, and sometimes for developers. Keep repository-wide rules in
+`AGENTS.md`, detailed rationale in `docs/`, and app- or package-specific
+documentation in that directory's `README.md`. Update documentation in the same
+change as the code it describes.
 
-Don't point to source code from Markdown: no links to source files and no
-source file paths. Describe the behavior or convention, and keep
-implementation detail in code comments.
+Follow these rules in Markdown:
+
+- Don't point to source code: no links to source files, no source file paths, and
+  no module aliases or symbol names that send the reader to a file. Describe the
+  behavior or convention, and keep implementation detail in code comments.
+- Don't repeat what a comment, schema, or exported constant states, or what a
+  test, type, or lint rule enforces. Give only the consequence for the operator.
+- Don't table source files, functions, or endpoints.
+- Give a number only if operators set it or see it.
+- Don't record history, such as a removed feature. Use a change file.
+
+Don't point to Markdown from code comments.
 
 Check the affected documentation when a change:
 

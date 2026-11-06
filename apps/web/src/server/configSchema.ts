@@ -48,8 +48,9 @@ export type ServerConfig = {
 	 */
 	uploadsChunked: boolean;
 	/**
-	 * How many blocks a chunked upload PUTs at once. Higher values raise
-	 * throughput on a high-latency path at the cost of more concurrent requests.
+	 * How many block PUTs a browser runs at once across all active uploads.
+	 * Higher values raise throughput on a high-latency path at the cost of more
+	 * concurrent requests.
 	 * The server passes it to the client at upload init.
 	 */
 	uploadsChunkedConcurrency: number;

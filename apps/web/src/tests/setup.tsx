@@ -297,6 +297,12 @@ export function wrapWithProviders(ui: ReactNode) {
 	);
 }
 
+/**
+ * Render `ui` with the application's providers.
+ *
+ * No HTTP interceptor runs in tests. A missing mock of a server function or of
+ * the module that starts a raw request can cause a real request.
+ */
 export function renderWithProviders(ui: ReactNode) {
 	// The client is built once and reused, so `rerender` re-renders the same tree
 	// instead of handing React a new provider on every call.

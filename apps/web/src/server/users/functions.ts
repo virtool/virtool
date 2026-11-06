@@ -493,6 +493,10 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
  * For a user who has lost both their authenticator and their recovery codes.
  * An administrator resets their own factor through the account settings
  * instead, so this refuses the caller's own account.
+ *
+ * A factor row without `users.two_factor_enabled` is an abandoned enrollment.
+ * It doesn't lock the user out, because the next enrollment replaces it, so
+ * there is nothing to reset.
  */
 export const resetUserTotpFn = createServerFn({ method: "POST" })
 	.middleware([

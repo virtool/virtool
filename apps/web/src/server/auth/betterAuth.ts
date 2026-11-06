@@ -248,6 +248,8 @@ export function createAuth({
 				rateLimit: authRateLimits,
 			},
 		}),
+		// Lifetime stays at Better Auth's defaults: seven days, rolling, refreshed
+		// after one day, with no absolute cap.
 		session: {
 			cookieCache: { enabled: false },
 			freshAge: SESSION_FRESH_AGE_SECONDS,
@@ -402,7 +404,9 @@ export function createAuth({
 				},
 				// The plugin verifies both ceremonies with `requireUserVerification:
 				// false` whatever the options above ask the browser for, so the flag
-				// is checked again here, after the signature has been verified.
+				// is checked again here, after the signature has been verified. At
+				// sign-in the plugin asks only for `preferred` verification, so the
+				// browser can offer an authenticator that this check then refuses.
 				registration: {
 					async afterVerification({ ctx, verification }) {
 						const info = verification.registrationInfo;
