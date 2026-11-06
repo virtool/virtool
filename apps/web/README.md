@@ -204,6 +204,15 @@ A full administrator with recent authentication can reset the TOTP of a user who
 has lost both the authenticator and the recovery codes, but not their own. The
 reset ends the user's sessions.
 
+An administrator with recent authentication can revoke the access of a
+compromised account, but not their own. A target that is an administrator needs
+the `full` role. In one transaction, revocation removes the user's sessions, API
+keys, passkeys, TOTP enrollment, recovery codes, and outstanding links, and
+replaces the password with a hash of a secret nobody keeps. It also marks the
+email unverified, because an attacker may have changed it. This closes
+self-service recovery and makes administrator links copy only. The user gets no
+email. An administrator gives the user a recovery link through a trusted channel.
+
 ### Passkeys
 
 A passkey is an optional primary credential. The password stays available for

@@ -5,6 +5,7 @@ export const SESSION_FRESH_AGE_SECONDS = 15 * 60;
 export const PROTECTED_OPERATIONS = {
 	accountPasswordChange: "account.password.change",
 	accountEmailChange: "account.email.change",
+	accessRevoke: "access.revoke",
 	totpReset: "totp.reset",
 	totpDisable: "totp.disable",
 	recoveryCodesRegenerate: "recovery_codes.regenerate",
