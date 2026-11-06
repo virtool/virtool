@@ -99,7 +99,8 @@ check and not all of CI. It skips the Release pull request.
 The check fails a pull request when:
 
 - a change file has incorrect front matter, an unknown package, an unknown
-  change type, or no summary on one line;
+  change type, no summary on one line, or no details for a change that is not
+  `maintenance`;
 - a change file that uses `maintenance` contains `**Action required:**`;
 - an image app that the pull request affects has no change file that names it.
 
