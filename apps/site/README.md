@@ -58,7 +58,7 @@ The `/posts` page lists all posts, newest first, with the type of each post.
 Each post is at `/posts/<slug>`. The slug comes from the file name, and the web
 app links to posts by slug, so do not rename a post after it is published.
 
-There are two types of post:
+Each post has one of two types:
 
 - A `release` post names a pull request. The build gets the version and date
   from the `virtool` release that contains it. The build hides a release post

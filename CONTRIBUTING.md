@@ -131,7 +131,7 @@ summary, such as a `minor` bump for `virtool` with a few paragraphs of prose.
 
 ### Posts
 
-A post is an optional article on the site, at `/posts`. There are two types:
+A post is an optional article on the site, at `/posts`. Each post has one of two types:
 
 | Type | Use |
 | --- | --- |
