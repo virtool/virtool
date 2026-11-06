@@ -1,3 +1,29 @@
+## 42.62.0 (2026-11-06)
+
+### Features
+
+#### Support bzip2 compressed FASTQ uploads ([#4193](https://github.com/virtool/virtool/pull/4193))
+
+Upload `.fastq.bz2` and `.fq.bz2` files to create samples. Virtool converts the files to gzip during sample creation. Sample jobs now show a **Normalize reads** step.
+
+**Action required:** Deploy the new Create Sample image before or with the web image. An older image can't read bzip2 uploads.
+
+### Fixes
+
+#### Fix sign-in interruptions ([#4192](https://github.com/virtool/virtool/pull/4192))
+
+- A malformed browser cookie no longer causes a server error when the user is
+  signed out.
+- When an administrator requires MFA during a session, Virtool now sends the
+  user to MFA enrollment. Email remediation works the same way.
+- Confirming your identity no longer signs you out when another request is in
+  progress.
+
+### Maintenance
+
+- Report user handles with server errors in Sentry ([#4189](https://github.com/virtool/virtool/pull/4189))
+- Stop reporting session refresh network failures to Sentry ([#4189](https://github.com/virtool/virtool/pull/4189))
+
 ## 42.61.4 (2026-11-05)
 
 ### Fixes
