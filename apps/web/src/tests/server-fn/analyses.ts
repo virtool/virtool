@@ -83,6 +83,13 @@ export function mockCreateAnalysis(analysis: AnalysisMinimal): Mock {
 	return analysisServerFnMocks.createAnalysisFn;
 }
 
+/** Sets up deleteAnalysis to resolve. */
+export function mockDeleteAnalysis(): Mock {
+	analysisServerFnMocks.deleteAnalysisFn.mockResolvedValue(null);
+
+	return analysisServerFnMocks.deleteAnalysisFn;
+}
+
 /** Sets up blastNuvs to resolve with a freshly created, unfinished BLAST. */
 export function mockBlastNuvs(sequenceIndex: number): Mock {
 	analysisServerFnMocks.blastNuvsFn.mockResolvedValue({

@@ -1,12 +1,18 @@
 import AnalysisItem from "@analyses/components/AnalysisItem";
-import { screen } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeSample } from "@tests/fake/samples";
+import { mockDeleteAnalysis } from "@tests/server-fn/analyses";
 import { mockGetSample } from "@tests/server-fn/samples";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
-import type { AnalysisMinimal, JobState } from "@virtool/contracts";
+import {
+	type AnalysisMinimal,
+	CLIENT_ERROR_NAME,
+	type JobState,
+} from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<AnalysisItem />", () => {
@@ -121,6 +127,101 @@ describe("<AnalysisItem />", () => {
 			await expectNoRemoveButton();
 		},
 	);
+
+	describe("deletion", () => {
+		async function openDialog(overrides: Partial<AnalysisMinimal> = {}) {
+			renderItem({ id: 42, workflow: "pathoscope", ...overrides });
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Delete" }),
+			);
+
+			return screen.findByRole("alertdialog");
+		}
+
+		it("opens a dialog without deleting", async () => {
+			const deleteAnalysis = mockDeleteAnalysis();
+
+			const dialog = await openDialog({
+				sample: { id: 7, name: "Grapevine 12" },
+			});
+
+			expect(
+				within(dialog).getByRole("heading", { name: "Delete Analysis" }),
+			).toBeInTheDocument();
+			expect(dialog).toHaveTextContent(
+				"Are you sure you want to delete the Pathoscope analysis of Grapevine 12? You can't undo this action.",
+			);
+			expect(deleteAnalysis).not.toHaveBeenCalled();
+		});
+
+		it("leaves out the sample when it has no name", async () => {
+			const dialog = await openDialog({ sample: { id: 7, name: "" } });
+
+			expect(dialog).toHaveTextContent(
+				"Are you sure you want to delete the Pathoscope analysis? You can't undo this action.",
+			);
+		});
+
+		it("deletes the analysis and closes when confirmed", async () => {
+			const deleteAnalysis = mockDeleteAnalysis();
+
+			const dialog = await openDialog();
+			await userEvent.click(
+				within(dialog).getByRole("button", { name: "Confirm" }),
+			);
+
+			await waitFor(() =>
+				expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+			);
+			expect(deleteAnalysis).toHaveBeenCalledOnce();
+			expect(deleteAnalysis).toHaveBeenCalledWith({
+				data: { analysisId: 42 },
+			});
+		});
+
+		it("does not delete when cancelled", async () => {
+			const deleteAnalysis = mockDeleteAnalysis();
+
+			const dialog = await openDialog();
+			await userEvent.click(
+				within(dialog).getByRole("button", { name: "Cancel" }),
+			);
+
+			await waitFor(() =>
+				expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+			);
+			expect(deleteAnalysis).not.toHaveBeenCalled();
+		});
+
+		it("does not delete when closed with the escape key", async () => {
+			const deleteAnalysis = mockDeleteAnalysis();
+
+			await openDialog();
+			await userEvent.keyboard("{Escape}");
+
+			await waitFor(() =>
+				expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+			);
+			expect(deleteAnalysis).not.toHaveBeenCalled();
+		});
+
+		it("shows a refusal from the server and stays open", async () => {
+			const refusal = new Error("Analysis is still running");
+			refusal.name = CLIENT_ERROR_NAME;
+			mockDeleteAnalysis().mockRejectedValue(refusal);
+
+			const dialog = await openDialog();
+			await userEvent.click(
+				within(dialog).getByRole("button", { name: "Confirm" }),
+			);
+
+			expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+				"Analysis is still running",
+			);
+			expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+		});
+	});
 
 	it("labels the version of an unready analysis as pending", async () => {
 		renderItem({ ready: false, workflowVersion: null });
