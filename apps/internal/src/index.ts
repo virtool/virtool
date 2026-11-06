@@ -1,6 +1,7 @@
 import { createLogger } from "@virtool/logger";
 
 // Load only the selected process so migration Jobs do not initialize services.
+// `serve` and `run` stay separate so HTTP replicas add no task-lease contention.
 async function dispatch(command: string | undefined): Promise<void> {
 	switch (command) {
 		case "serve": {

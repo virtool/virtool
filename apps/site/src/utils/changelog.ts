@@ -129,6 +129,14 @@ function getContent(lines: Line[]): { body: string; actions: string[] } {
   };
 }
 
+/**
+ * Read the releases from the Knope changelog, newest first.
+ *
+ * Dependency entries are dropped: `Update ... dependencies` sections and the
+ * bullets that bump a dependency or update a digest. Each `**Action required:**`
+ * paragraph moves out of the body into `actions`. The Maintenance section goes
+ * into `maintenance`.
+ */
 export function parseChangelog(text: string): Release[] {
   const sections: { version: string; date: string; lines: Line[] }[] = [];
 

@@ -132,7 +132,7 @@ function buildRunnerId(): string {
 /**
  * Run one workflow, from claiming a job to reporting how it ended.
  *
- * This is what a workflow app's `main.ts` calls. It owns everything
+ * This is what a workflow app's entry point calls. It owns everything
  * `runWorkflow` deliberately does not: the network, the signal handler, and the
  * process exit code.
  */

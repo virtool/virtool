@@ -8,43 +8,46 @@ never `npm` or `bun`.
 
 ## Apps
 
-| App | Purpose |
-| --- | --- |
-| [`@virtool/web`](apps/web/README.md) | The Virtool web app. |
-| [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
-| [`@virtool/dev`](apps/dev/README.md) | Local worktree environments and workflow scheduling. |
-| [`@virtool/dev-tools`](apps/dev-tools/README.md) | Development commands that act on one environment's data. |
-| [`@virtool/internal`](apps/internal/README.md) | One image for the jobs API, task runner, migrations, data migrations, and authentication remediation. |
-| [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
-| [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA. |
-| [`@virtool/pathoscope`](apps/pathoscope/README.md) | Quantifies known viruses in a sample. |
-| [`@virtool/nuvs`](apps/nuvs/README.md) | Finds viruses absent from the reference. |
+| App                                                                | Purpose                                                                                               |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| [`@virtool/web`](apps/web/README.md)                               | The Virtool web app.                                                                                  |
+| [`@virtool/site`](apps/site/README.md)                             | The product website at [virtool.ca](https://www.virtool.ca).                                          |
+| [`@virtool/dev`](apps/dev/README.md)                               | Local worktree environments and workflow scheduling.                                                  |
+| [`@virtool/dev-tools`](apps/dev-tools/README.md)                   | Development commands that act on one environment's data.                                              |
+| [`@virtool/internal`](apps/internal/README.md)                     | One image for the jobs API, task runner, migrations, data migrations, and authentication remediation. |
+| [`@virtool/create-sample`](apps/create-sample/README.md)           | Creates a sample from uploaded FASTQ files.                                                           |
+| [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA.                                                         |
+| [`@virtool/pathoscope`](apps/pathoscope/README.md)                 | Quantifies known viruses in a sample.                                                                 |
+| [`@virtool/nuvs`](apps/nuvs/README.md)                             | Finds viruses absent from the reference.                                                              |
 
 ## Packages
 
 `packages/` holds shared workspace libraries and two Rust crates represented as
 private workspaces so image affected-detection can follow their consumers.
-Apps bundle; packages stay source.
+Apps bundle; packages stay source. Don't give a package a `dist` build, because
+each consumer would then need a rebuild to see a change. Keep
+`moduleResolution: "Bundler"` in the shared TypeScript configurations, because
+`node16` doesn't follow an `exports` map to a `.ts` file.
 
-| Package | Purpose |
-| --- | --- |
-| [`@virtool/archive`](packages/archive/README.md) | Tar, gzip, and zip utilities. |
-| [`@virtool/bio`](packages/bio/README.md) | Sequence utilities and workflow text parsers. |
-| [`@virtool/contracts`](packages/contracts/README.md) | Shared wire shapes and isolated server-only helpers. |
-| [`@virtool/data`](packages/data/README.md) | Server-only Drizzle schema mirror and Postgres queries. |
-| [`@virtool/env`](packages/env/README.md) | File-backed environment variable resolution. |
-| [`@virtool/logger`](packages/logger/README.md) | Shared pino configuration. |
-| `@virtool/image-build` | `docker buildx bake` graph for shipped images. |
-| [`@virtool/ncbi`](packages/ncbi/README.md) | NCBI Nucleotide and Taxonomy client. |
-| [`@virtool/sentry`](packages/sentry/README.md) | Shared browser and server Sentry wiring. |
-| [`@virtool/service`](packages/service/README.md) | Shared lifecycle utilities for long-lived services. |
-| [`@virtool/sqlite`](packages/sqlite/README.md) | Reference-index SQLite schema, reader, and writer. |
-| [`@virtool/storage`](packages/storage/README.md) | Server-only streaming object storage. |
-| `@virtool/tsconfig` | Shared TypeScript configurations. |
-| [`@virtool/workflow`](packages/workflow/README.md) | Workflow runtime and testing harness. |
-| `@virtool/workflow-tools` | Shared native-tool Docker build stages. |
-| [`pathoscope-core`](packages/pathoscope-core/README.md) | Rust implementation of Pathoscope reassignment. |
-| [`quality-core`](packages/quality-core/README.md) | Rust implementation of sample quality statistics. |
+| Package                                                 | Purpose                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------- |
+| [`@virtool/archive`](packages/archive/README.md)        | Tar, gzip, and zip utilities.                           |
+| [`@virtool/bio`](packages/bio/README.md)                | Sequence utilities and workflow text parsers.           |
+| [`@virtool/contracts`](packages/contracts/README.md)    | Shared wire shapes and isolated server-only helpers.    |
+| [`@virtool/data`](packages/data/README.md)              | Server-only Drizzle schema mirror and Postgres queries. |
+| [`@virtool/env`](packages/env/README.md)                | File-backed environment variable resolution.            |
+| [`@virtool/logger`](packages/logger/README.md)          | Shared pino configuration.                              |
+| `@virtool/image-build`                                  | `docker buildx bake` graph for shipped images.          |
+| [`@virtool/ncbi`](packages/ncbi/README.md)              | NCBI Nucleotide and Taxonomy client.                    |
+| [`@virtool/sentry`](packages/sentry/README.md)          | Shared browser and server Sentry wiring.                |
+| [`@virtool/service`](packages/service/README.md)        | Shared lifecycle utilities for long-lived services.     |
+| [`@virtool/sqlite`](packages/sqlite/README.md)          | Reference-index SQLite schema, reader, and writer.      |
+| [`@virtool/storage`](packages/storage/README.md)        | Server-only streaming object storage.                   |
+| `@virtool/tsconfig`                                     | Shared TypeScript configurations.                       |
+| [`@virtool/workflow`](packages/workflow/README.md)      | Workflow runtime and testing harness.                   |
+| `@virtool/workflow-tools`                               | Shared native-tool Docker build stages.                 |
+| [`pathoscope-core`](packages/pathoscope-core/README.md) | Rust implementation of Pathoscope reassignment.         |
+| [`quality-core`](packages/quality-core/README.md)       | Rust implementation of sample quality statistics.       |
 
 ## Rules
 
@@ -56,18 +59,18 @@ Apps bundle; packages stay source.
 
 ### Commands (from repo root)
 
-| Task | Command |
-| --- | --- |
-| Install | `pnpm install` |
-| Typecheck | `pnpm typecheck` |
-| Lint + format | `pnpm check` |
-| Format only | `pnpm format` |
-| Dead-code scan | `pnpm knip` |
-| Build | `pnpm build` |
-| Test (all packages) | `pnpm test` |
-| Test (watch, web app) | `pnpm --filter @virtool/web test:watch` |
-| Test (one file) | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>` |
-| Rust crates | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
+| Task                  | Command                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| Install               | `pnpm install`                                                                         |
+| Typecheck             | `pnpm typecheck`                                                                       |
+| Lint + format         | `pnpm check`                                                                           |
+| Format only           | `pnpm format`                                                                          |
+| Dead-code scan        | `pnpm knip`                                                                            |
+| Build                 | `pnpm build`                                                                           |
+| Test (all packages)   | `pnpm test`                                                                            |
+| Test (watch, web app) | `pnpm --filter @virtool/web test:watch`                                                |
+| Test (one file)       | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>`                             |
+| Rust crates           | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
 
 Every shipped app owns `apps/<name>/Dockerfile`. Each app builds inside Docker:
 shared stages in `packages/image-build/Dockerfile` install, build, and
@@ -109,14 +112,13 @@ import. When adding a feature alias, add it to the server
 `noRestrictedImports` list. Keep server-only and native dependencies out of
 the browser graph.
 
-Follow the client conventions in [apps/web/README.md](apps/web/README.md), with
-the detailed bundling rationale in
-[apps/web/README.md#imports-and-bundles](apps/web/README.md#imports-and-bundles).
+Follow the client conventions in
+[apps/web/README.md](apps/web/README.md#client).
 
 ## Server
 
 Web-specific server conventions live in
-[apps/web/README.md](apps/web/README.md#server-development). Keep these
+[apps/web/README.md](apps/web/README.md#server). Keep these
 repository-wide rules in view:
 
 - Server features flow `functions.ts` → optional `service.ts` → `data.ts`.
@@ -143,9 +145,8 @@ repository-wide rules in view:
   body changes what it accepts or writes. Bodies use historical SQL, not the
   moving schema mirror. See [the data migrations guide](apps/internal/README.md#paired-data-migrations).
 - `apps/internal`'s `run` subcommand carries both the periodic spawner and the
-  task runner. Its lease, fencing, shutdown, progress, metrics, and task-body
-  contracts are maintained in [its README](apps/internal/README.md); don't
-  duplicate them here.
+  task runner. Its contracts live in code. Its operator behavior is in
+  [its README](apps/internal/README.md).
 
 ## Data
 
@@ -166,12 +167,10 @@ deleting their rows. Pass the storage backend into data functions, log
 failures returned by `deleteKeys`, and use `MemoryStorage` in unit tests.
 Client code must read named `import.meta.env` keys, never the whole object.
 
-See the [`@virtool/data` README](packages/data/README.md#object-storage) for the
-streaming interface, key and cleanup contracts, configuration, backend
-behavior, and testing.
+See [object storage](docs/storage.md) for configuration and operator behavior.
 
 Third-party requests identify themselves with `USER_AGENT` from
-`@virtool/contracts/userAgent`; see [packages/data/README.md](packages/data/README.md).
+`@virtool/contracts/userAgent`.
 
 NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It's the
 only E-utilities client; see [packages/ncbi/README.md](packages/ncbi/README.md).
@@ -181,15 +180,13 @@ NCBI BLAST is a different API and stays in `@virtool/data`.
 
 Every executor uses `@virtool/workflow`; the runtime stays separate from the
 jobs API lifecycle and has no database access. See
-[the package README](packages/workflow/README.md) for runtime, subprocess,
-storage, cache, and configuration contracts, and [the job lifecycle](docs/jobs.md)
-for claim, ping, cancellation, failure, and exit behaviour.
+[the package README](packages/workflow/README.md) for configuration and
+[the job lifecycle](docs/jobs.md) for claim, ping, cancellation, failure, and
+exit behaviour.
 
 Workflow files always stream, and storage keys are recorded or minted rather
-than derived. See [the internal app README](apps/internal/README.md) for
-finalization manifests and key validation, [references](docs/references.md) for the SQLite
-reference artifact, and [workflow testing](packages/workflow/TESTING.md) for
-the shared test harness.
+than derived. See [references](docs/references.md) for the SQLite reference
+artifact.
 
 ## Code style
 
@@ -233,8 +230,11 @@ names unsuffixed.
 
 ### Comments
 
-Default to none. Comment only to explain non-obvious reasons; don't restate
-code, narrate history, reference the current task, or name a caller.
+Default to none. Comment only to explain non-obvious reasons, or to give the
+contract and usage of an API that others call. Don't restate code, narrate
+history, reference the current task, or name a caller. Don't cite an issue or
+pull request. If an experiment settled a decision, say what won, without the
+results.
 
 ### Concurrency
 
@@ -248,19 +248,45 @@ outcome is required.
 - Use explicit `expect()` assertions, not snapshots.
 - Keep each test double in one owning harness, beside the boundary it models.
 
-App and package READMEs document their test harnesses and commands.
+App and package READMEs give test commands. Test harnesses document themselves
+in JSDoc.
 
 ## Process
 
 ### Documentation
 
-Keep repository-wide rules in `AGENTS.md`, detailed rationale in `docs/`, and
-app- or package-specific documentation in that directory's `README.md`. Update
-documentation in the same change as the code it describes.
+Documentation lives in code as much as possible. Code is any file that can hold
+a comment, including Dockerfiles and CI workflows. Markdown gives broad strokes
+for operators, and sometimes for developers. Keep repository-wide rules in
+`AGENTS.md`, topics that span apps in `docs/`, and app- or package-specific
+documentation in that directory's `README.md`. Update documentation in the same
+change as the code it describes.
 
-Don't point to source code from Markdown: no links to source files and no
-source file paths. Describe the behavior or convention, and keep
-implementation detail in code comments.
+Put a fact about a file that can't hold a comment, or a convention that has no
+API, in the nearest code that reads or owns it. If no such code exists, put one
+sentence in the owner's `README.md` or in `AGENTS.md`.
+
+These rules apply to all Markdown except `AGENTS.md`:
+
+- Give what operators set, see, or must do, including variables, commands,
+  ports, images, and numbers. Keep these facts even if a constant also states
+  them.
+- Don't name source code: no source files, paths, module aliases, symbols, or
+  lists of functions or endpoints. You can name apps, packages, and public entry
+  points, and link to other Markdown.
+- Don't repeat what code, a schema, a test, or a lint rule states. Don't justify
+  a design, describe how a program is built, or write contributor how-tos. Put
+  these in comments on the code. Style rationale lives in `docs/code-style.md`.
+- State each fact in one file, and link to it from the others. Put a setting
+  that more than one service reads in `docs/`.
+- Don't record history. Use a change file. If a past event still limits
+  operators, state the limit in the present tense.
+
+Before you remove developer detail from Markdown, confirm that code states it.
+If it doesn't, add the comment in the same change.
+
+Don't point to Markdown from code, including comments, error messages, and test
+messages.
 
 Check the affected documentation when a change:
 
@@ -278,18 +304,12 @@ Write commit and PR titles in sentence case, in the imperative mood, with no
 prefix and no period. Keep them under 72 characters. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for examples.
 
-- Releases are automated with Knope. Each pull request that affects an image
-  app must name that app in a change file, or `Knope / Check` fails.
-  Write one with `knope document-change`. Write it for users: a summary of
-  what they will see, then details. `Knope / Check` fails a change file with
-  no details. See [Release notes](CONTRIBUTING.md#release-notes). If users
-  can't see the change, use the `maintenance` type. It releases a patch and
-  stays out of the main GitHub Release notes. Only this type can have a
-  summary with no details. It must not contain `**Action required:**`. Use
-  Knope package names (`virtool`, `create-sample`, `create-subtraction`,
-  `pathoscope`, `nuvs`).
-  Do not use empty change files. A pull request that affects no image app
-  needs none. The `no-release` label waives the check. See [Releases](docs/ci.md#releases).
+- Each pull request that affects an image app must name that app in a change
+  file, or `Knope / Check` fails. Write one with `knope document-change`. Give a
+  summary and details, or the check fails. If users can't see the change, use
+  the `maintenance` type, which can have only a summary. See
+  [Change files](CONTRIBUTING.md#change-files) and
+  [Release notes](CONTRIBUTING.md#release-notes).
 - Image build inputs (`image-build`, `workflow-tools`, and the Rust crates) are
   production `dependencies` of the apps that use them, with
   `"files": ["package.json"]`. A change to one of them makes the check require

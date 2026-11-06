@@ -53,7 +53,13 @@ export type CacheParamValue =
 	| readonly CacheParamValue[]
 	| { readonly [key: string]: CacheParamValue };
 
-/** The params a cache key is derived from. */
+/**
+ * The params a cache key is derived from.
+ *
+ * Include the workflow name and version in every set. Each workflow then owns
+ * its namespaces and can't restore an artifact that another workflow built from
+ * different input.
+ */
 export type CacheParams = { readonly [key: string]: CacheParamValue };
 
 /**

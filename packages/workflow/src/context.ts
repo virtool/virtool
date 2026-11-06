@@ -46,6 +46,10 @@ export type BuildContextInput = {
  * One of these per workflow, and it is the *only* producer of `data`. It is
  * eager and plain rather than resolving each step's dependencies lazily, so a
  * storage read that fails surfaces before step 1 rather than forty minutes in.
+ *
+ * Only resolution must be eager. For an optional input, record its storage key
+ * and work path, check a required object with `storage.size()`, and let the step
+ * that needs the input download it.
  */
 export type BuildContext<TData> = (input: BuildContextInput) => Promise<TData>;
 
@@ -53,10 +57,10 @@ export type BuildContext<TData> = (input: BuildContextInput) => Promise<TData>;
 export type WorkflowContext<TData, TState> = {
 	/**
 	 * Eagerly built, serializable domain data. The only member `buildContext`
-	 * produces.
+	 * produces. Put storage keys, paths, ids, and other JSON-safe inputs here.
 	 */
 	readonly data: TData;
-	/** Mutable cross-step scratch. */
+	/** Mutable cross-step scratch. Put live handles here, not in `data`. */
 	state: TState;
 	readonly job: RunJob;
 	/** Absolute path to the emptied per-run work directory. */
@@ -71,8 +75,8 @@ export type WorkflowContext<TData, TState> = {
 	/** The run's authenticated jobs API client. */
 	readonly client: JobsApiClient;
 	/**
-	 * Runs a bioinformatics tool. Already bound to `signal`, so a step does not
-	 * forward cancellation itself.
+	 * Runs an external tool. Use it for every tool. It is already bound to
+	 * `signal`, so a step does not forward cancellation itself.
 	 */
 	readonly runSubprocess: RunSubprocess;
 	/** Object storage, reached directly. The jobs API serves records, never bytes. */

@@ -78,6 +78,10 @@ function readSeq(seq: unknown): NcbiGenbank {
  * same batch. ref-builder does the same, logging the validation errors and
  * continuing. The rejection is reported through `onReject` so the caller can
  * log it.
+ *
+ * NCBI answers an unknown accession with a 200 and a `GBSet` that holds an
+ * error string instead of a `GBSeq`, so it yields no record rather than an
+ * error.
  */
 export function parseGenbankSet(
 	text: string,

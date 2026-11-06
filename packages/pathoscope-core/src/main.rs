@@ -5,7 +5,18 @@
 //!
 //! Results are written to the file named by `--output`, never to stdout, so a
 //! stray `println!` cannot corrupt a result. stdout carries nothing at all;
-//! diagnostics go to stderr as JSON lines.
+//! diagnostics go to stderr as JSON lines: `{"level","target","msg"}`.
+//!
+//! Exit status is 0 on success and non-zero on failure, with a readable message
+//! on stderr. The Node side treats any non-zero exit as a workflow failure and
+//! does not parse stderr.
+//!
+//! `--output` always names the JSON results file. `--output-alignments` and
+//! `--output-fastq` name data files. The alignment flags are format-neutral
+//! (`--alignment`, not `--sam`) because the workflow passes BAM at every one
+//! of those positions and `rust-htslib` reads and writes both.
+//!
+//! Each `proc` flag is a `u32` that clap rejects below 1, so no code clamps it.
 
 use std::fs::File;
 use std::io::{BufWriter, Write};

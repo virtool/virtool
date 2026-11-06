@@ -219,3 +219,4 @@ SDK('s|s)?
 [Ww]orktrees?('s)?
 Worktrunk('s)?
 Knope
+[Rr]ollouts?

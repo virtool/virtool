@@ -90,7 +90,7 @@ export default defineConfig({
 					// computed layout or visibility — needs a real layout engine, which
 					// jsdom does not have. This project runs the opt-in `*.a11y.test.tsx`
 					// files in headless Chromium through Playwright so those rules can
-					// actually run (VIR-2693 / VIR-2746).
+					// actually run.
 					name: "a11y",
 					// `setup.tsx` wires in the global server-function mocks and
 					// jsdom-oriented providers these tests never need, so the browser

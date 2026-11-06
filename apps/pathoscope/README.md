@@ -7,62 +7,28 @@ carrying every isolate of just those OTUs, maps again, drops reads that belong
 to the host, and reassigns the reads that matched more than one isolate.
 
 Image: `ghcr.io/virtool/pathoscope`. Eight steps, four external
-tools: `bowtie2`, `cd-hit-est`, `pigz`, and `samtools`. It also uses `pathoscope-core`,
-which it runs **as a subprocess** rather than through FFI.
+tools: `bowtie2`, `cd-hit-est`, `pigz`, and `samtools`. It also runs
+`pathoscope-core` as a subprocess.
 
-## Two rules it carries
+## Behavior
 
-- **It writes no result file.** Every figure a `report.tsv` would carry is
-  already in the `results` blob, so the finalization manifest is empty and
-  `FinalizeAnalysisRequest.files` allows that for this workflow's sake.
-- **Nothing deletes an analysis on failure.** A failed run leaves its half-built
-  analysis for the user to delete, and the jobs API has no delete route.
+The workflow writes no result file, and nothing deletes an analysis when a run
+fails. A failed run leaves its half-built analysis for the user to delete.
 
 ## Building the image
 
-The shared workflow-tools Dockerfile builds `packages/pathoscope-core`,
-Bowtie 2, CD-HIT, and samtools. The app Dockerfile layers them into the runtime, with
+The shared workflow-tools Dockerfile builds `pathoscope-core`, Bowtie 2,
+CD-HIT, and samtools. The app Dockerfile layers them into the runtime, with
 `pigz` from apt:
 
 ```
 docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```
 
-### The runtime stage installs interpreters, not just libraries
-
-Two of the four tools are scripts, not ELF binaries, and `node:24-bookworm-slim`
-carries neither interpreter in full:
-
-| Tool            | Shebang                  | Needs                                                                                                |
-| --------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `bowtie2`       | `#!/usr/bin/env perl`    | full `perl`. The slim base ships `perl-base`, which omits `Sys::Hostname`                            |
-| `bowtie2-build` | `#!/usr/bin/env python3` | `python3` with the standard library. `python3-minimal` omits it and the script dies on `import gzip` |
-
-`bowtie2-build` is the wrapper that picks between the real `bowtie2-build-s` and
-`bowtie2-build-l` by index size, so the image includes Python 3 and its standard
-library.
-
-The shared libraries each back a specific `ldd ... => not found`: `libgomp1` for
-bowtie2's OpenMP, `libcurl4` and `libncursesw6` for samtools. `pathoscope-core`
-needs none of them. `hts-sys` links htslib statically.
-
-A missing interpreter doesn't fail the build; it fails the first time the step
-runs in a pod. Verify a shebang against the version the `Dockerfile` pins, never
-upstream's current source:
-
-```
-docker buildx bake -f packages/image-build/docker-bake.hcl bowtie2 --set bowtie2.tags=vt-tool-bowtie2 --load
-docker run --rm vt-tool-bowtie2 head -1 /tools/bowtie2/2.5.4/bowtie2-build
-```
-
 ### Publishing
 
-`Pathoscope / Build` compiles the image on every run and `release-ghcr`
-publishes it to `ghcr.io/virtool/pathoscope` on release.
-
-Its release-matrix image name is also the `pathoscope` cache scope used by the
-build job. This lets the release reuse the Rust crate and tool stages instead
-of rebuilding them from scratch inside a 20-minute timeout.
+`Pathoscope / Build` compiles the image on every run. `release-ghcr` publishes
+it to `ghcr.io/virtool/pathoscope` on release.
 
 ## Configuration
 
@@ -82,17 +48,11 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/pathoscope test:watch` | Vitest in watch mode       |
 | `pnpm --filter @virtool/pathoscope typecheck`  | `tsc --noEmit`             |
 
-`pnpm` doesn't run the Rust crate's tests. Run `cargo test` in
-`packages/pathoscope-core`, or the `pathoscope-core-test` Bake target to run
-them as CI does. See the crate README.
+`pnpm` does not run the Rust crate's tests. See the crate README.
 
 ## Documentation
 
-[`packages/workflow/README.md`](../../packages/workflow/README.md) covers the
-runtime every executor runs on,
-[`packages/pathoscope-core/README.md`](../../packages/pathoscope-core/README.md)
-the Rust crate,
-[`packages/sqlite/README.md`](../../packages/sqlite/README.md) the SQLite
-reference index it reads, `docs/apps.md` the bundling and `pnpm deploy`
-pipeline every non-Vite app shares, and
-[Images](../../README.md#images) the shared image pipeline.
+See the [workflow package README](../../packages/workflow/README.md) for the
+runtime every executor uses, the
+[`pathoscope-core` README](../../packages/pathoscope-core/README.md) for the
+Rust crate, and [Images](../../README.md#images) for the shared image pipeline.

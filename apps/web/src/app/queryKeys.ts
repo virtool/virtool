@@ -34,6 +34,9 @@ export type QueryKeys = {
  * Give custom variants their own segment; an empty filter list aliases the
  * invalidation prefix instead of distinguishing a cache entry.
  *
+ * Define a feature's keys in a `keys.ts` module apart from its `queries.ts`, so
+ * that invalidators can use the keys without loading the request layer.
+ *
  * @param domain - The namespace the keys are rooted at, usually the plural resource name
  * @returns The query keys for the domain
  */

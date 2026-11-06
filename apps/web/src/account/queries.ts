@@ -292,6 +292,9 @@ export function passkeysQueryOptions() {
 // Better Auth checks freshness again when the ceremony is verified, and the
 // registration challenge it issues lives for 5 minutes. With this much left,
 // the session cannot go stale while the authenticator creates the passkey.
+// Registration doesn't retry on its own after a challenge: a retry can lose the
+// browser's user activation, and a retry after a rejected verification leaves
+// an orphaned passkey on the authenticator.
 const PASSKEY_REGISTRATION_FRESHNESS_MS = 5 * 60 * 1000;
 
 /** The result of one request to add a passkey. */

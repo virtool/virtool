@@ -61,9 +61,6 @@ describe("<Nav />", () => {
 			screen.getByRole("heading", { name: "Documentation" }),
 		).toBeInTheDocument();
 		const docLink = screen.getByRole("link", { name: "virtool.ca/docs" });
-		expect(docLink).toHaveAttribute(
-			"href",
-			"https://virtool.ca/docs/start/installation",
-		);
+		expect(docLink).toHaveAttribute("href", "https://www.virtool.ca/docs");
 	});
 });

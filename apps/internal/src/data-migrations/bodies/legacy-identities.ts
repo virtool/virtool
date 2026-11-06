@@ -182,7 +182,12 @@ async function migrate({ client, signal, report }: DataMigrationArgs) {
 	}
 }
 
-/** Frozen identity migration paired with the 0029 authentication gate. */
+/**
+ * Frozen identity migration paired with the 0029 authentication gate.
+ *
+ * Blank, malformed, and duplicate emails are only summarized. Findings carry no
+ * password material.
+ */
 export const legacyIdentities = defineAudit({
 	key: "legacy_identities",
 	version: 2,

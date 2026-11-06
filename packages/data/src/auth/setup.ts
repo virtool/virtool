@@ -129,6 +129,9 @@ export async function issueSetupTokenInTransaction(
 
 /**
  * Supersede every live setup token a user holds for `purpose`.
+ *
+ * The rows stay, so a holder of an old link gets a bounded result that exposes
+ * no account data.
  */
 export async function supersedeSetupTokens(
 	db: DbOrTx,

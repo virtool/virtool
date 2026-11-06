@@ -110,9 +110,9 @@ function readNumber(
  *
  * `@virtool/storage` owns the shape but reads no environment of its own, so
  * each host application resolves it. This is a hand-rolled counterpart to the
- * zod schema in `apps/web/src/server/config.ts` rather than a shared parser:
- * this service deliberately carries no zod, and the two only have to agree on
- * the variable names, which are the deployment's contract either way.
+ * zod schema in `apps/web/src/server/configSchema.ts` rather than a shared
+ * parser: this service deliberately carries no zod, and the two only have to
+ * agree on the variable names, which are the deployment's contract either way.
  */
 function buildStorage(resolved: NodeJS.ProcessEnv): StorageConfig {
 	const backend = present(resolved.VT_STORAGE_BACKEND);

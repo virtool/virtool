@@ -55,6 +55,10 @@ export const users = pgTable(
 		// A real database default rather than a `$defaultFn`, because the
 		// migration that adds the column has to backfill every existing row and
 		// because an account is pending only when something says so.
+		//
+		// This is not `active`. Activation is the administrator's switch: a
+		// deactivated account is unusable in any state, and completing setup
+		// activates nobody. A reader that assumes a usable account checks both.
 		lifecycleState: text("lifecycle_state")
 			.$type<AccountLifecycleState>()
 			.notNull()
@@ -78,6 +82,9 @@ export const users = pgTable(
 		uniqueIndex("users_handle_lower_unique")
 			.on(lower(table.handle))
 			.where(sql`${table.handle} <> ''`),
+		// Better Auth declares its email field unique, but this column is not
+		// globally unique.
+		//
 		// Normalized email is unique among migrated identities only. A plain
 		// unique index could not be created: legacy rows share the empty string
 		// and hold duplicate addresses, which is the population the audit exists

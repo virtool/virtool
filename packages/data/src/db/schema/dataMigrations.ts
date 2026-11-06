@@ -27,6 +27,8 @@ function statusCheck(): SQL {
 	return sql.raw("status in ('running', 'passed', 'failed', 'errored')");
 }
 
+// Only TypeScript writes these records. Paired SQL asserts that the exact key
+// and version passed before it changes the schema.
 export const dataMigrations = pgTable(
 	"data_migrations",
 	{

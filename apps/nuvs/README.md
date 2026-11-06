@@ -1,6 +1,6 @@
 # @virtool/nuvs
 
-Nuvs finds viruses the reference doesn't
+Nuvs finds viruses the reference does not
 describe: it discards every read that maps to a known OTU or to a
 subtraction, assembles what's left with SPAdes, and searches the contigs for
 viral motifs with HMMER.
@@ -10,24 +10,12 @@ Image: `ghcr.io/virtool/nuvs`. Ten steps use six external tools: `skewer`,
 
 ## Building the image
 
-The shared workflow-tools Dockerfile builds each external tool independently. SPAdes
-4.2.0 is compiled from source because it has no binary release suitable for
-the runtime base. The runtime installs Perl for the Bowtie 2 wrapper, Python
-for `bowtie2-build` and `spades.py`, `pigz`, and the shared libraries required
-by the copied binaries.
+The shared workflow-tools Dockerfile builds each external tool independently.
+The app Dockerfile layers them into the runtime.
 
 ```console
 docker buildx bake -f packages/image-build/docker-bake.hcl nuvs
 ```
-
-## Result shape
-
-- **The raw `results` shape is pinned by `formatNuvs`**
-  (`packages/data/src/analyses/format.ts`), _not_ by
-  `packages/contracts/src/nuvs.ts`, which describes the **formatted**
-  envelope. The workflow writes each ORF hit's `hit` (an annotation id) and
-  never `cluster`, `families` or `names`, which the server merges in from the
-  `hmms` table.
 
 ## Configuration
 

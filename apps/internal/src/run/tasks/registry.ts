@@ -45,6 +45,8 @@ export type TaskContext = {
  * set of names this process claims is greppable in one place. A key that
  * disagrees with its body's `type` would claim under one name and dispatch
  * another; `registry.test.ts` fails on any that do.
+ *
+ * A body's file takes its `type` in kebab-case.
  */
 export const taskRegistry: CompleteTaskRegistry<TaskContext> = {
 	cleanup_auth_verifications: cleanupAuthVerificationsTask,
