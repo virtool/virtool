@@ -5,6 +5,7 @@ import {
 } from "@virtool/contracts";
 import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
+import { createRateLimitStorage } from "@virtool/data/auth/rateLimits";
 import { mfaEnrollmentRequired } from "@virtool/data/auth/session";
 import type { Db } from "@virtool/data/db/pg";
 import {
@@ -32,7 +33,6 @@ import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 import { getNewPasskeyName, passkeyNamePlugin } from "./passkeyName";
 import { assertDatabaseReachable } from "./probe";
-import { createRateLimitStorage } from "./rateLimitStorage";
 import {
 	RECENT_AUTHENTICATION_PATH,
 	recentAuthenticationPlugin,

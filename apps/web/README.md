@@ -96,22 +96,28 @@ sign-in continues.
 
 Budgets are shared across web instances. A refused request gets a 429.
 
-| Action                                | Limit            |
-| ------------------------------------- | ---------------- |
-| Password sign-in, per client IP       | 3 in 10 seconds  |
-| Password sign-in, per handle          | 10 in 15 minutes |
-| Password sign-in, per known browser   | 5 in 15 minutes  |
-| Passkey sign-in, per client IP        | 3 in 10 seconds  |
-| Passkey challenges, per client IP     | 10 in 60 seconds |
-| Recent authentication, per client IP  | 5 in 1 minute    |
-| Recent passkey options, per client IP | 5 in 1 minute    |
-| Password recovery, per requester      | 5 in 1 minute    |
-| Password recovery, per target account | 3 in 1 hour      |
+| Action                                      | Limit            |
+| ------------------------------------------- | ---------------- |
+| Password sign-in, per client IP             | 3 in 10 seconds  |
+| Password sign-in, per handle                | 10 in 15 minutes |
+| Password sign-in, per known browser         | 5 in 15 minutes  |
+| Passkey sign-in, per client IP              | 3 in 10 seconds  |
+| Passkey challenges, per client IP           | 10 in 60 seconds |
+| Recent authentication, per client IP        | 5 in 1 minute    |
+| Recent passkey options, per client IP       | 5 in 1 minute    |
+| Recent authentication failures, per account | 10 in 15 minutes |
+| Password recovery, per requester            | 5 in 1 minute    |
+| Password recovery, per target account       | 3 in 1 hour      |
 
 A correct password resets the handle budget, so only failures accumulate. It also
 gives the browser a `login_device` cookie for 30 days. That browser then spends
 its own budget, so failures from other browsers can't lock the owner out. A
 password change invalidates these devices.
+
+A failed password or authenticator code at a recent-authentication challenge
+spends the account budget. A correct one gives it back, and a passkey works
+while the budget is spent. An authenticator code that a challenge already
+accepted is refused for two minutes.
 
 The hourly internal cleanup task prunes the budgets. The web server doesn't.
 
