@@ -1,3 +1,19 @@
+## 42.63.0 (2026-11-06)
+
+### Features
+
+- Add a changelog link to the About dialog ([#4191](https://github.com/virtool/virtool/pull/4191))
+
+### Fixes
+
+- Fix live updates, downloads, avatars, and uploads behind a reverse proxy that uses HTTP Basic authentication ([#4197](https://github.com/virtool/virtool/pull/4197))
+- Stop a security check from signing users out when their authenticator setup is incomplete ([#4198](https://github.com/virtool/virtool/pull/4198))
+- Stop password recovery requests from locking out or invalidating another user's recovery link ([#4195](https://github.com/virtool/virtool/pull/4195))
+
+### Maintenance
+
+- Store the newest changelog entry date each user has seen ([#4196](https://github.com/virtool/virtool/pull/4196))
+
 ## 42.62.0 (2026-11-06)
 
 ### Features
