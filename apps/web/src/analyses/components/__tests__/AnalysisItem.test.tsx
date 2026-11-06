@@ -2,6 +2,8 @@ import AnalysisItem from "@analyses/components/AnalysisItem";
 import { screen } from "@testing-library/react";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
+import { createFakeSample } from "@tests/fake/samples";
+import { mockGetSample } from "@tests/server-fn/samples";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
 import type { AnalysisMinimal, JobState } from "@virtool/contracts";
@@ -10,6 +12,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 describe("<AnalysisItem />", () => {
 	beforeEach(() => {
 		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+		mockGetSample(createFakeSample());
 	});
 
 	function renderItem(overrides: Partial<AnalysisMinimal>) {
@@ -90,13 +93,34 @@ describe("<AnalysisItem />", () => {
 		).toBeInTheDocument();
 	});
 
-	it("withholds removal from a user without the users role", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: null }));
+	it("offers removal to a sample owner with no administrator role", async () => {
+		const sample = createFakeSample({ allWrite: false, groupWrite: false });
+		mockGetSample(sample);
+		mockGetAccount(
+			createFakeAccount({ administratorRole: null, id: sample.user.id }),
+		);
 
 		renderItem(withJob("succeeded", true));
 
-		await expectNoRemoveButton();
+		expect(
+			await screen.findByRole("button", { name: "Delete" }),
+		).toBeInTheDocument();
 	});
+
+	it.each([null, "users"] as const)(
+		"withholds removal from a user who cannot write to the sample with role %s",
+		async (administratorRole) => {
+			const sample = createFakeSample({ allWrite: false, groupWrite: false });
+			mockGetSample(sample);
+			mockGetAccount(
+				createFakeAccount({ administratorRole, id: sample.user.id + 1 }),
+			);
+
+			renderItem(withJob("succeeded", true));
+
+			await expectNoRemoveButton();
+		},
+	);
 
 	it("labels the version of an unready analysis as pending", async () => {
 		renderItem({ ready: false, workflowVersion: null });

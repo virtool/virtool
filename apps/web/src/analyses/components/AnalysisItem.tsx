@@ -1,4 +1,3 @@
-import { useCheckAdminRole } from "@administration/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
 import { IconButton } from "@base/Icon";
 import Link from "@base/Link";
@@ -8,6 +7,7 @@ import SlashList from "@base/SlashList";
 import { TableActionsCell } from "@base/Table";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
+import { useCheckCanEditSample } from "@samples/hooks";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
@@ -29,7 +29,9 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 		subtractions,
 		createdAt,
 	} = analysis;
-	const { hasPermission: canModify } = useCheckAdminRole("users");
+	const { hasPermission: canModify } = useCheckCanEditSample(
+		analysis.sample.id,
+	);
 	const onDelete = useDeleteAnalysis(id);
 
 	const { data: job } = useFetchJob(

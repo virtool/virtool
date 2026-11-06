@@ -19,7 +19,7 @@ export default function AnalysisHmmAlert({ installed }: AnalysisHmmAlertProps) {
 				<span>
 					<strong>HMM data is not installed. </strong>
 					<Link to="/hmms">Install HMMs</Link>
-					<span> to run NuV analyses.</span>
+					<span> to run Nuvs analyses.</span>
 				</span>
 			</div>
 		</Alert>
