@@ -1,6 +1,6 @@
 import { useCheckAdminRole } from "@administration/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
-import { IconButton } from "@base/Icon";
+import Icon, { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import RelativeTime from "@base/RelativeTime";
@@ -8,8 +8,9 @@ import SlashList from "@base/SlashList";
 import { TableActionsCell } from "@base/Table";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
+import { BaseSampleLabel } from "@samples/components/Label/BaseSampleLabel";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
-import { Trash } from "lucide-react";
+import { BadgeMinus, Trash, Virus } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
 import { checkSupportedWorkflow, getWorkflowVersionLabel } from "../utils";
 
@@ -66,11 +67,39 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 						</span>
 					</>
 				)}
+				<div className="mt-1 flex flex-wrap items-center gap-1 2xl:hidden">
+					<Link
+						to="/refs/$refId/indexes/$indexId"
+						params={{
+							refId: String(reference.id),
+							indexId: String(index.id),
+						}}
+					>
+						<BaseSampleLabel size="sm">
+							<Icon className="size-4" icon={Virus} strokeWidth={1.5} />
+							<span>
+								{reference.name} v{index.version}
+							</span>
+						</BaseSampleLabel>
+					</Link>
+					{subtractions.map((subtraction) => (
+						<Link
+							key={subtraction.id}
+							to="/subtractions/$subtractionId"
+							params={{ subtractionId: String(subtraction.id) }}
+						>
+							<BaseSampleLabel size="sm">
+								<Icon className="size-4" icon={BadgeMinus} strokeWidth={1.5} />
+								<span>{subtraction.name}</span>
+							</BaseSampleLabel>
+						</Link>
+					))}
+				</div>
 			</td>
 			<td className="text-gray-600 text-sm">
 				{getWorkflowVersionLabel(analysis)}
 			</td>
-			<td>
+			<td className="hidden 2xl:table-cell">
 				<SlashList className="m-0">
 					<li>
 						<Link to="/refs/$refId" params={{ refId: String(reference.id) }}>
@@ -90,7 +119,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 					</li>
 				</SlashList>
 			</td>
-			<td>
+			<td className="hidden 2xl:table-cell">
 				{subtractions.map((subtraction, subtractionIndex) => (
 					<span key={subtraction.id}>
 						{subtractionIndex > 0 && ", "}

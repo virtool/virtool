@@ -210,7 +210,9 @@ describe("<AnalysesList /> table", () => {
 
 		expect(await screen.findByText("Plant Viruses")).toBeInTheDocument();
 		expect(screen.getByText("Index 3")).toBeInTheDocument();
-		expect(screen.getByText("Arabidopsis")).toBeInTheDocument();
+		expect(screen.getByText("Plant Viruses v3")).toBeInTheDocument();
+		// Once in the column and once in the badge. CSS picks one by viewport.
+		expect(screen.getAllByText("Arabidopsis")).toHaveLength(2);
 	});
 
 	it("sorts by an unsorted column ascending", async () => {

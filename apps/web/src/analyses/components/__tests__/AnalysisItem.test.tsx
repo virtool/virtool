@@ -98,6 +98,23 @@ describe("<AnalysisItem />", () => {
 		await expectNoRemoveButton();
 	});
 
+	it("links the reference and subtraction badges", async () => {
+		renderItem({
+			index: { id: 7, version: 2 },
+			reference: { id: 3, name: "Plant Viruses" },
+			subtractions: [{ id: 5, name: "Arabidopsis thaliana", ready: true }],
+		});
+
+		expect(
+			await screen.findByRole("link", { name: "Plant Viruses v2" }),
+		).toHaveAttribute("href", "/refs/3/indexes/7");
+		expect(
+			screen
+				.getAllByRole("link", { name: "Arabidopsis thaliana" })
+				.map((link) => link.getAttribute("href")),
+		).toEqual(["/subtractions/5", "/subtractions/5"]);
+	});
+
 	it("labels the version of an unready analysis as pending", async () => {
 		renderItem({ ready: false, workflowVersion: null });
 
