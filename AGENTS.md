@@ -8,17 +8,17 @@ never `npm` or `bun`.
 
 ## Apps
 
-| App | Purpose |
-| --- | --- |
-| [`@virtool/web`](apps/web/README.md) | The Virtool web app. |
-| [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
-| [`@virtool/dev`](apps/dev/README.md) | Local worktree environments and workflow scheduling. |
-| [`@virtool/dev-tools`](apps/dev-tools/README.md) | Development commands that act on one environment's data. |
-| [`@virtool/internal`](apps/internal/README.md) | One image for the jobs API, task runner, migrations, data migrations, and authentication remediation. |
-| [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
-| [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA. |
-| [`@virtool/pathoscope`](apps/pathoscope/README.md) | Quantifies known viruses in a sample. |
-| [`@virtool/nuvs`](apps/nuvs/README.md) | Finds viruses absent from the reference. |
+| App                                                                | Purpose                                                                                               |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| [`@virtool/web`](apps/web/README.md)                               | The Virtool web app.                                                                                  |
+| [`@virtool/site`](apps/site/README.md)                             | The product website at [virtool.ca](https://www.virtool.ca).                                          |
+| [`@virtool/dev`](apps/dev/README.md)                               | Local worktree environments and workflow scheduling.                                                  |
+| [`@virtool/dev-tools`](apps/dev-tools/README.md)                   | Development commands that act on one environment's data.                                              |
+| [`@virtool/internal`](apps/internal/README.md)                     | One image for the jobs API, task runner, migrations, data migrations, and authentication remediation. |
+| [`@virtool/create-sample`](apps/create-sample/README.md)           | Creates a sample from uploaded FASTQ files.                                                           |
+| [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA.                                                         |
+| [`@virtool/pathoscope`](apps/pathoscope/README.md)                 | Quantifies known viruses in a sample.                                                                 |
+| [`@virtool/nuvs`](apps/nuvs/README.md)                             | Finds viruses absent from the reference.                                                              |
 
 ## Packages
 
@@ -29,25 +29,25 @@ each consumer would then need a rebuild to see a change. Keep
 `moduleResolution: "Bundler"` in the shared TypeScript configurations, because
 `node16` doesn't follow an `exports` map to a `.ts` file.
 
-| Package | Purpose |
-| --- | --- |
-| [`@virtool/archive`](packages/archive/README.md) | Tar, gzip, and zip utilities. |
-| [`@virtool/bio`](packages/bio/README.md) | Sequence utilities and workflow text parsers. |
-| [`@virtool/contracts`](packages/contracts/README.md) | Shared wire shapes and isolated server-only helpers. |
-| [`@virtool/data`](packages/data/README.md) | Server-only Drizzle schema mirror and Postgres queries. |
-| [`@virtool/env`](packages/env/README.md) | File-backed environment variable resolution. |
-| [`@virtool/logger`](packages/logger/README.md) | Shared pino configuration. |
-| `@virtool/image-build` | `docker buildx bake` graph for shipped images. |
-| [`@virtool/ncbi`](packages/ncbi/README.md) | NCBI Nucleotide and Taxonomy client. |
-| [`@virtool/sentry`](packages/sentry/README.md) | Shared browser and server Sentry wiring. |
-| [`@virtool/service`](packages/service/README.md) | Shared lifecycle utilities for long-lived services. |
-| [`@virtool/sqlite`](packages/sqlite/README.md) | Reference-index SQLite schema, reader, and writer. |
-| [`@virtool/storage`](packages/storage/README.md) | Server-only streaming object storage. |
-| `@virtool/tsconfig` | Shared TypeScript configurations. |
-| [`@virtool/workflow`](packages/workflow/README.md) | Workflow runtime and testing harness. |
-| `@virtool/workflow-tools` | Shared native-tool Docker build stages. |
-| [`pathoscope-core`](packages/pathoscope-core/README.md) | Rust implementation of Pathoscope reassignment. |
-| [`quality-core`](packages/quality-core/README.md) | Rust implementation of sample quality statistics. |
+| Package                                                 | Purpose                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------- |
+| [`@virtool/archive`](packages/archive/README.md)        | Tar, gzip, and zip utilities.                           |
+| [`@virtool/bio`](packages/bio/README.md)                | Sequence utilities and workflow text parsers.           |
+| [`@virtool/contracts`](packages/contracts/README.md)    | Shared wire shapes and isolated server-only helpers.    |
+| [`@virtool/data`](packages/data/README.md)              | Server-only Drizzle schema mirror and Postgres queries. |
+| [`@virtool/env`](packages/env/README.md)                | File-backed environment variable resolution.            |
+| [`@virtool/logger`](packages/logger/README.md)          | Shared pino configuration.                              |
+| `@virtool/image-build`                                  | `docker buildx bake` graph for shipped images.          |
+| [`@virtool/ncbi`](packages/ncbi/README.md)              | NCBI Nucleotide and Taxonomy client.                    |
+| [`@virtool/sentry`](packages/sentry/README.md)          | Shared browser and server Sentry wiring.                |
+| [`@virtool/service`](packages/service/README.md)        | Shared lifecycle utilities for long-lived services.     |
+| [`@virtool/sqlite`](packages/sqlite/README.md)          | Reference-index SQLite schema, reader, and writer.      |
+| [`@virtool/storage`](packages/storage/README.md)        | Server-only streaming object storage.                   |
+| `@virtool/tsconfig`                                     | Shared TypeScript configurations.                       |
+| [`@virtool/workflow`](packages/workflow/README.md)      | Workflow runtime and testing harness.                   |
+| `@virtool/workflow-tools`                               | Shared native-tool Docker build stages.                 |
+| [`pathoscope-core`](packages/pathoscope-core/README.md) | Rust implementation of Pathoscope reassignment.         |
+| [`quality-core`](packages/quality-core/README.md)       | Rust implementation of sample quality statistics.       |
 
 ## Rules
 
@@ -59,18 +59,18 @@ each consumer would then need a rebuild to see a change. Keep
 
 ### Commands (from repo root)
 
-| Task | Command |
-| --- | --- |
-| Install | `pnpm install` |
-| Typecheck | `pnpm typecheck` |
-| Lint + format | `pnpm check` |
-| Format only | `pnpm format` |
-| Dead-code scan | `pnpm knip` |
-| Build | `pnpm build` |
-| Test (all packages) | `pnpm test` |
-| Test (watch, web app) | `pnpm --filter @virtool/web test:watch` |
-| Test (one file) | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>` |
-| Rust crates | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
+| Task                  | Command                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| Install               | `pnpm install`                                                                         |
+| Typecheck             | `pnpm typecheck`                                                                       |
+| Lint + format         | `pnpm check`                                                                           |
+| Format only           | `pnpm format`                                                                          |
+| Dead-code scan        | `pnpm knip`                                                                            |
+| Build                 | `pnpm build`                                                                           |
+| Test (all packages)   | `pnpm test`                                                                            |
+| Test (watch, web app) | `pnpm --filter @virtool/web test:watch`                                                |
+| Test (one file)       | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>`                             |
+| Rust crates           | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
 
 Every shipped app owns `apps/<name>/Dockerfile`. Each app builds inside Docker:
 shared stages in `packages/image-build/Dockerfile` install, build, and
@@ -232,9 +232,9 @@ names unsuffixed.
 
 Default to none. Comment only to explain non-obvious reasons, or to give the
 contract and usage of an API that others call. Don't restate code, narrate
-history, reference the current task, name a caller, or cite an issue or pull
-request. A comment must make sense without its tracker. Don't give benchmark
-results. If an experiment settled a decision, say that it did and what won.
+history, reference the current task, or name a caller. Don't cite an issue or
+pull request. If an experiment settled a decision, say what won, without the
+results.
 
 ### Concurrency
 
@@ -255,45 +255,35 @@ in JSDoc.
 
 ### Documentation
 
-Documentation lives in code as much as possible. Markdown gives broad strokes
+Documentation lives in code as much as possible. Code is any file that can hold
+a comment, including Dockerfiles and CI workflows. Markdown gives broad strokes
 for operators, and sometimes for developers. Keep repository-wide rules in
 `AGENTS.md`, topics that span apps in `docs/`, and app- or package-specific
 documentation in that directory's `README.md`. Update documentation in the same
 change as the code it describes.
 
-In these rules, code is any file that can hold a comment, including Dockerfiles
-and CI workflows. Put a fact about a file that can't hold a comment, such as
-JSON, in the nearest code that reads the file. If no such code exists, put one
-sentence in the owner's `README.md` or in `AGENTS.md`. Put a convention that has
-no API on the module that owns it, or in `AGENTS.md` if it applies to the
-repository.
+Put a fact about a file that can't hold a comment, or a convention that has no
+API, in the nearest code that reads or owns it. If no such code exists, put one
+sentence in the owner's `README.md` or in `AGENTS.md`.
 
-Follow these rules in all Markdown except `AGENTS.md`, which instructs people who
-edit code and can name symbols and paths:
+These rules apply to all Markdown except `AGENTS.md`:
 
-- Don't point to source code: no links to source files, no source file paths, and
-  no module aliases or symbol names that send the reader to a file. Describe the
-  behavior or convention, and keep implementation detail in code comments. Names
-  of apps and packages, public entry points, and links to other Markdown are not
-  pointers to source code.
-- Don't repeat what a comment, schema, or exported constant states, or what a
-  test, type, or lint rule enforces. Give only the consequence for the operator.
-  This rule doesn't remove an operator fact: keep each variable, command, port,
-  and image that operators set or see, even if a constant also states it.
-- Don't list source files, functions, or endpoints, in tables, bullets, or
-  prose.
-- Don't justify a design or describe how a program is built. Keep the reason in
-  a comment beside the code, and give only the consequence for the operator.
-  Style rationale is the exception, and it lives in `docs/code-style.md`.
-- Don't write how-to guides or checklists for contributors. Put them in comments
-  on the API that the contributor uses.
-- State each fact in one Markdown file, and link to it from the others. Put a
-  setting that more than one service reads in `docs/`.
-- Give a number only if operators set it or see it.
-- Don't record history, such as a removed feature. Use a change file. If a past
-  event still limits what operators can do, state the limit in the present tense.
-- Before you remove developer detail from Markdown, confirm that code states it.
-  If it doesn't, add the comment in the same change.
+- Give what operators set, see, or must do, including variables, commands,
+  ports, images, and numbers. Keep these facts even if a constant also states
+  them.
+- Don't name source code: no source files, paths, module aliases, symbols, or
+  lists of functions or endpoints. You can name apps, packages, and public entry
+  points, and link to other Markdown.
+- Don't repeat what code, a schema, a test, or a lint rule states. Don't justify
+  a design, describe how a program is built, or write contributor how-tos. Put
+  these in comments on the code. Style rationale lives in `docs/code-style.md`.
+- State each fact in one file, and link to it from the others. Put a setting
+  that more than one service reads in `docs/`.
+- Don't record history. Use a change file. If a past event still limits
+  operators, state the limit in the present tense.
+
+Before you remove developer detail from Markdown, confirm that code states it.
+If it doesn't, add the comment in the same change.
 
 Don't point to Markdown from code, including comments, error messages, and test
 messages.
