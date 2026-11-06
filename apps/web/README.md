@@ -819,6 +819,10 @@ checks, use `*.a11y.test.tsx` with real theme classes and explicitly enable the
 `color-contrast` rule. Install Chromium with
 `pnpm --filter @virtool/web exec playwright install chromium`.
 
+Keep test output clean so that a new warning stands out. When a test exercises
+an error path that logs on purpose, call `silenceExpectedLogs` from
+`@tests/silenceExpectedLogs` in that test, or `silenceLogs` in a server test.
+
 Local tests skip React Compiler; CI enables it with `VT_TEST_REACT_COMPILER=1`.
 
 ## Configuration

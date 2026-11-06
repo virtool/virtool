@@ -266,4 +266,9 @@ it("follows the server into two-factor enrollment after remediation", async () =
 		expect(router.state.location.pathname).toBe("/mfa-enrollment"),
 	);
 	expect(router.state.location.search).toEqual({ redirect: "/samples" });
+	expect(
+		await screen.findByRole("heading", {
+			name: "Set up two-factor authentication",
+		}),
+	).toBeInTheDocument();
 });

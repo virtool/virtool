@@ -482,8 +482,10 @@ describe("recent authentication with a passkey", () => {
 		).toBeDisabled();
 		expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
 
-		authentication.resolve(ASSERTION);
-		await expect(promise).resolves.toBe("updated");
+		await act(async () => {
+			authentication.resolve(ASSERTION);
+			await expect(promise).resolves.toBe("updated");
+		});
 	});
 
 	it("cancels a running ceremony when the challenge is cancelled", async () => {

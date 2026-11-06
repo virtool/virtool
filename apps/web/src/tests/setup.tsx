@@ -14,6 +14,7 @@ import type { Account } from "@virtool/contracts";
 import { rootQueryKeys } from "@wall/keys";
 import "@testing-library/jest-dom/vitest";
 import {
+	act,
 	fireEvent,
 	renderHook,
 	render as rtlRender,
@@ -140,10 +141,17 @@ vi.mock("@server/indexes/functions", async () => {
 });
 
 beforeEach(() => {
-	for (const fn of Object.values(groupServerFnMocks)) {
+	for (const fn of [
+		groupServerFnMocks.createGroupFn,
+		groupServerFnMocks.updateGroupFn,
+		groupServerFnMocks.deleteGroupFn,
+	]) {
 		fn.mockReset();
 	}
 	for (const fn of [
+		groupServerFnMocks.listGroupsFn,
+		groupServerFnMocks.findGroupsFn,
+		groupServerFnMocks.getGroupFn,
 		...Object.values(userServerFnMocks),
 		...Object.values(accountServerFnMocks),
 		...Object.values(jobServerFnMocks),
@@ -339,7 +347,11 @@ export async function renderWithRouter(ui: ReactNode, path?: string) {
 
 	await router.load();
 
-	const result = renderWithProviders(<RouterProvider router={router} />);
+	// Async `act` also covers effects that fetch on mount, whose updates would
+	// otherwise land after this function returns.
+	const result = await act(async () =>
+		renderWithProviders(<RouterProvider router={router} />),
+	);
 	return { ...result, router };
 }
 
@@ -414,7 +426,14 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 	// Imported lazily so the ~1,449-line route tree — and the route modules it
 	// pulls in — only loads for the handful of tests that render a real route,
 	// not every test file that imports this shared setup.
-	const { routeTree } = await import("@/routeTree.gen");
+	const [{ routeTree }, { default: ShellErrorBoundary }] = await Promise.all([
+		import("@/routeTree.gen"),
+		import("@base/ShellErrorBoundary"),
+	]);
+
+	// The real shell renders `<html>`, which can only sit at the document root.
+	// Testing Library mounts into a `<div>`.
+	Object.assign(routeTree.options, { shellComponent: ShellErrorBoundary });
 
 	const queryClient = createTestQueryClient();
 
@@ -439,10 +458,14 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 
 	await router.load();
 
-	const result = rtlRender(
-		<QueryClientProvider client={queryClient}>
-			<RouterProvider router={router} />
-		</QueryClientProvider>,
+	// `RouterProvider` loads again on mount, and that load's state updates land
+	// after `render` returns. Async `act` keeps them inside the test's scope.
+	const result = await act(async () =>
+		rtlRender(
+			<QueryClientProvider client={queryClient}>
+				<RouterProvider router={router} />
+			</QueryClientProvider>,
+		),
 	);
 
 	return { ...result, router, queryClient };

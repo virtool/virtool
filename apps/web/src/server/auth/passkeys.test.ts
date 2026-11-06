@@ -20,6 +20,7 @@ import {
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { silenceLogs } from "../test/silenceLogs";
 import { createAuth, createAuthRequestHandler } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { sessionCookie } from "./test/fixtures";
@@ -274,6 +275,7 @@ describe("registration", () => {
 		["another origin", { origin: "https://evil.test" }],
 		["another RP ID", { rpId: "evil.test" }],
 	])("refuses a response bound to %s", async (_, ceremony) => {
+		silenceLogs();
 		const userId = await seedUser(db);
 
 		const response = await register(userId, authenticator(), ceremony);
@@ -399,6 +401,7 @@ describe("sign-in", () => {
 		["from another origin", { origin: "https://evil.test" }],
 		["for another RP ID", { rpId: "evil.test" }],
 	])("refuses an assertion %s", async (_, ceremony) => {
+		silenceLogs();
 		const { key } = await enroll();
 
 		const { response } = await signIn(key, ceremony);

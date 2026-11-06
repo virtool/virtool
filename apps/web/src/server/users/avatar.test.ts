@@ -15,6 +15,7 @@ import {
 	it,
 	vi,
 } from "vitest";
+import { silenceLogs } from "../test/silenceLogs";
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -143,6 +144,7 @@ describe("handleAvatar", () => {
 	});
 
 	it("answers 502 when Gravatar does not return an image", async () => {
+		silenceLogs();
 		await seedGravatarUser();
 		fetchMock.mockResolvedValue(new Response("down", { status: 500 }));
 
