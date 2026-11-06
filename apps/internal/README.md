@@ -132,6 +132,9 @@ administrator recovery link. Before deploy, list them:
 SELECT id, handle FROM public.users WHERE force_reset = true ORDER BY id;
 ```
 
+This query works only on a database that hasn't reached the migration that drops
+the `force_reset` column.
+
 ## Metrics
 
 `serve` exposes `GET /metrics` on port 9950 and `run` on port 9900. Set

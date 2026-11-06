@@ -202,7 +202,7 @@ It builds faster.
 
 	test("reads the packages with the maintenance type", () => {
 		const { errors, packages, maintenance } = parseChangeFile(
-			"---\nvirtool: maintenance\nnuvs: minor\n---\n\nPrepare the schema\n",
+			"---\nvirtool: maintenance\nnuvs: minor\n---\n\nPrepare the schema\n\nDetails.\n",
 			new Set(["virtool", "nuvs"]),
 		);
 

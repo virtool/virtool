@@ -2,13 +2,38 @@
 
 ### Features
 
-- Add a changelog link to the About dialog ([#4191](https://github.com/virtool/virtool/pull/4191))
+#### Add a changelog link to the About dialog ([#4191](https://github.com/virtool/virtool/pull/4191))
+
+The About dialog now has a **Changelog** link. It opens the changelog page for
+the version of Virtool that you use.
 
 ### Fixes
 
-- Fix live updates, downloads, avatars, and uploads behind a reverse proxy that uses HTTP Basic authentication ([#4197](https://github.com/virtool/virtool/pull/4197))
-- Stop a security check from signing users out when their authenticator setup is incomplete ([#4198](https://github.com/virtool/virtool/pull/4198))
-- Stop password recovery requests from locking out or invalidating another user's recovery link ([#4195](https://github.com/virtool/virtool/pull/4195))
+#### Fix live updates, downloads, avatars, and uploads behind a reverse proxy that uses HTTP Basic authentication ([#4197](https://github.com/virtool/virtool/pull/4197))
+
+A reverse proxy that uses HTTP Basic authentication sends its credentials with
+each browser request. Virtool treated these credentials as an API key and
+refused the request, so live updates, downloads, avatars, and uploads failed.
+
+Virtool now uses your session when the credentials are not a valid API key. A
+valid API key still takes priority.
+
+#### Stop a security check from signing users out when their authenticator setup is incomplete ([#4198](https://github.com/virtool/virtool/pull/4198))
+
+If your authenticator setup was not complete, a correct code at a security
+check completed the setup and signed you out. Virtool now refuses the code at
+the security check until the setup is complete.
+
+#### Stop password recovery requests from locking out or invalidating another user's recovery link ([#4195](https://github.com/virtool/virtool/pull/4195))
+
+Another person could send repeated recovery requests for your account. These
+requests could block your own requests or make your recovery link stop
+working.
+
+Refused requests no longer extend the limit, and a blocked address can't use
+up the limit of your account. A public request now leaves a recovery link that
+is less than one hour old in place and sends no email, unless the email for
+that link failed. Links from administrators are not affected.
 
 ### Maintenance
 
@@ -552,7 +577,10 @@ challenge with no session.
 
 ### Fixes
 
-- Stop the main content area from showing a stray focus outline ([#4024](https://github.com/virtool/virtool/pull/4024))
+#### Stop the main content area from showing a stray focus outline ([#4024](https://github.com/virtool/virtool/pull/4024))
+
+A click on blank space in the main content area no longer draws an outline
+around the area. The skip link still moves focus to the main content.
 
 ## 42.53.0 (2026-10-01)
 
@@ -752,7 +780,10 @@ shows only for ready analyses that finished before Virtool recorded versions.
 
 ### Fixes
 
-- Keep concurrent group permission changes from overwriting each other ([#3992](https://github.com/virtool/virtool/pull/3992))
+#### Keep concurrent group permission changes from overwriting each other ([#3992](https://github.com/virtool/virtool/pull/3992))
+
+When two people changed the permissions of one group at the same time, one
+change could undo the other. Virtool now saves both changes.
 
 ## 42.47.11 (2026-09-25)
 
@@ -839,8 +870,15 @@ at launch. This affected versions 42.47.4 to 42.47.5.
 
 ### Fixes
 
-- Keep new characters when a search box updates ([#3968](https://github.com/virtool/virtool/pull/3968))
-- Return to the first page of samples when you change a search or filter ([#3969](https://github.com/virtool/virtool/pull/3969))
+#### Keep new characters when a search box updates ([#3968](https://github.com/virtool/virtool/pull/3968))
+
+When you typed in a search box, a delayed update could remove the characters
+that you had just typed. Virtool now keeps them.
+
+#### Return to the first page of samples when you change a search or filter ([#3969](https://github.com/virtool/virtool/pull/3969))
+
+You no longer stay on a later page of the samples list when you clear search
+terms or a filter.
 
 ### Maintenance
 
@@ -857,7 +895,11 @@ at launch. This affected versions 42.47.4 to 42.47.5.
 
 ### Fixes
 
-- Ignore spaces before and after search terms ([#3970](https://github.com/virtool/virtool/pull/3970))
+#### Ignore spaces before and after search terms ([#3970](https://github.com/virtool/virtool/pull/3970))
+
+A search term with spaces before or after it now gives the same results as the
+term without them. Spaces inside a term do not change. This includes analysis,
+sequence, and read file searches.
 
 ## 42.47.2 (2026-09-24)
 
@@ -1030,7 +1072,9 @@ image to count the users who must still do this.
 
 ### Fixes
 
-- Spell the workflow name as Nuvs in the web app ([#3939](https://github.com/virtool/virtool/pull/3939))
+#### Spell the workflow name as Nuvs in the web app ([#3939](https://github.com/virtool/virtool/pull/3939))
+
+The workflow name now has the same spelling everywhere in the web app.
 
 ## 42.39.2 (2026-09-17)
 
@@ -1094,7 +1138,11 @@ workflows that you can see.
 
 ### Fixes
 
-- Make the administration pages consistent ([#3931](https://github.com/virtool/virtool/pull/3931))
+#### Make the administration pages consistent ([#3931](https://github.com/virtool/virtool/pull/3931))
+
+Administration pages now use the same headers, empty states, and settings
+layout. The caching and uploads titles now agree with their names in the
+navigation.
 
 ### Maintenance
 
@@ -1125,7 +1173,9 @@ can try them again.
 
 ### Fixes
 
-- Redirect the old home page link to the dashboard ([#3918](https://github.com/virtool/virtool/pull/3918))
+#### Redirect the old home page link to the dashboard ([#3918](https://github.com/virtool/virtool/pull/3918))
+
+When you are signed in, links and bookmarks to `/home` now open the dashboard.
 
 ### Maintenance
 
@@ -1161,13 +1211,19 @@ through any gateway or web application firewall to confirm that it accepts them.
 
 ### Fixes
 
-- Show the not found page for items that do not exist ([#3914](https://github.com/virtool/virtool/pull/3914))
+#### Show the not found page for items that do not exist ([#3914](https://github.com/virtool/virtool/pull/3914))
+
+When you open a link to an item that does not exist, Virtool now shows the not
+found page. Before this change, Virtool could lose the reason for the error.
 
 ## 42.34.1 (2026-09-08)
 
 ### Fixes
 
-- Reduce layout shifts in the quick analyze dialog ([#3912](https://github.com/virtool/virtool/pull/3912))
+#### Reduce layout shifts in the quick analyze dialog ([#3912](https://github.com/virtool/virtool/pull/3912))
+
+The quick analyze dialog now requests its HMM and analysis options at the same
+time and keeps space for them while they load, so the dialog moves less.
 
 ## 42.34.0 (2026-09-04)
 
@@ -1232,7 +1288,10 @@ clients that use `POST /uploads` to the new `/api/v1/uploads` routes.
 
 ### Fixes
 
-- Make the tooltip background opaque ([#3895](https://github.com/virtool/virtool/pull/3895))
+#### Make the tooltip background opaque ([#3895](https://github.com/virtool/virtool/pull/3895))
+
+Tooltips now have an opaque dark grey background, so the content behind a
+tooltip no longer shows through.
 
 ## 42.31.1 (2026-09-03)
 
@@ -1275,7 +1334,10 @@ rand -base64 32`. The web server cannot serve requests without these values.
 
 ### Fixes
 
-- Fix the user handle form in administration ([#3893](https://github.com/virtool/virtool/pull/3893))
+#### Fix the user handle form in administration ([#3893](https://github.com/virtool/virtool/pull/3893))
+
+The handle field on the user administration page now stays up to date with the
+saved handle.
 
 ## 42.29.0 (2026-09-02)
 
@@ -1299,7 +1361,11 @@ To use email, set `VT_ENCRYPTION_KEY` on the web app and the task runner.
 
 ### Features
 
-- Move section headers out of their boxes across the app ([#3885](https://github.com/virtool/virtool/pull/3885))
+#### Move section headers out of their boxes across the app ([#3885](https://github.com/virtool/virtool/pull/3885))
+
+Section headers now sit above their boxes, not inside them. Badges and buttons
+moved with the headers. The source type views no longer repeat the section
+header.
 
 ## 42.26.0 (2026-09-01)
 
@@ -1345,7 +1411,10 @@ follow the order of the table columns, and the Date filter is now Created.
 
 ### Fixes
 
-- Keep the installed HMM record when a later install fails ([#3876](https://github.com/virtool/virtool/pull/3876))
+#### Keep the installed HMM record when a later install fails ([#3876](https://github.com/virtool/virtool/pull/3876))
+
+A failed HMM install no longer removes the record of the last good install.
+The installed HMM data does not change, and you can start another install.
 
 ## 42.22.1 (2026-08-28)
 
@@ -1414,7 +1483,10 @@ Set `VT_STORAGE_AZURE_UPLOAD_URL` to use a public host for these requests.
 
 ### Fixes
 
-- Align the samples list with the sidebar ([#3858](https://github.com/virtool/virtool/pull/3858))
+#### Align the samples list with the sidebar ([#3858](https://github.com/virtool/virtool/pull/3858))
+
+The samples list now sits against the sidebar, like the other lists. It is no
+longer centered with a gap.
 
 ## 42.19.0 (2026-08-26)
 
@@ -1636,7 +1708,10 @@ set, and you can replace or clear the key.
 
 ### Fixes
 
-- Align progress circles in analysis and reference lists ([#3810](https://github.com/virtool/virtool/pull/3810))
+#### Align progress circles in analysis and reference lists ([#3810](https://github.com/virtool/virtool/pull/3810))
+
+Progress circles in analysis lists now align with the end icons in job lists.
+Progress circles in reference lists now use the same centered position.
 
 ### Maintenance
 
@@ -1656,7 +1731,12 @@ created more than one item.
 
 ### Fixes
 
-- Stop a database migration from failing on a legacy trigger ([#3808](https://github.com/virtool/virtool/pull/3808))
+#### Stop a database migration from failing on a legacy trigger ([#3808](https://github.com/virtool/virtool/pull/3808))
+
+A migration changed the `instance_messages.user` column while a legacy trigger
+still depended on it, and this could stop an upgrade. Virtool no longer makes
+this unnecessary change, so the next migration can remove the trigger and the
+column.
 
 #### Show a BLAST result error at once instead of a timeout ([#3806](https://github.com/virtool/virtool/pull/3806))
 

@@ -5,7 +5,7 @@ import {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
-import type { Db } from "../db/pg";
+import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
@@ -273,7 +273,7 @@ async function findDuplicateEmails(
 ): Promise<Map<string, number[]>> {
 	const seen = new Map<string, number[]>();
 
-	for await (const batch of scanUsers(db, batchSize)) {
+	for await (const { batch } of scanUsers(db, batchSize)) {
 		signal?.throwIfAborted();
 		for (const user of batch) {
 			if (!isValidEmail(user.email)) {
@@ -301,43 +301,59 @@ async function findDuplicateEmails(
 }
 
 /**
- * Read the user table in id order, one batch at a time.
+ * Read the user table in id order, one batch at a time, with the credential
+ * accounts each batch holds.
  *
  * Keyset rather than offset: a run is restartable and rows change under it, and
  * an offset would skip or repeat users when they do.
+ *
+ * A batch and its credentials share one snapshot. A competing run commits the
+ * user row and the credential together, so reading them apart can see the
+ * credential without `auth_migrated_at` and report a conflict that is not there.
  */
 async function* scanUsers(
 	db: Db,
 	batchSize: number,
-): AsyncGenerator<UserRecord[]> {
+): AsyncGenerator<{
+	batch: UserRecord[];
+	byUser: Map<number, CredentialRecord[]>;
+}> {
 	let cursor = 0;
 
 	while (true) {
-		const batch = await db
-			.select({
-				id: users.id,
-				handle: users.handle,
-				active: users.active,
-				email: users.email,
-				password: users.password,
-				authMigratedAt: users.authMigratedAt,
-			})
-			.from(users)
-			.where(gt(users.id, cursor))
-			.orderBy(asc(users.id))
-			.limit(batchSize);
+		const scanned = await db.transaction(
+			async (tx) => {
+				const batch = await tx
+					.select({
+						id: users.id,
+						handle: users.handle,
+						active: users.active,
+						email: users.email,
+						password: users.password,
+						authMigratedAt: users.authMigratedAt,
+					})
+					.from(users)
+					.where(gt(users.id, cursor))
+					.orderBy(asc(users.id))
+					.limit(batchSize);
 
-		if (batch.length === 0) {
-			return;
-		}
+				const byUser = await readCredentials(
+					tx,
+					batch.map((user) => user.id),
+				);
 
-		yield batch;
+				return { batch, byUser };
+			},
+			{ isolationLevel: "repeatable read", accessMode: "read only" },
+		);
 
-		const last = batch.at(-1);
+		const last = scanned.batch.at(-1);
 
 		if (last === undefined) {
 			return;
 		}
+
+		yield scanned;
 
 		cursor = last.id;
 	}
@@ -345,7 +361,7 @@ async function* scanUsers(
 
 /** Read the credential accounts held by a batch of users. */
 async function readCredentials(
-	db: Db,
+	db: DbOrTx,
 	userIds: number[],
 ): Promise<Map<number, CredentialRecord[]>> {
 	const rows = await db
@@ -549,12 +565,8 @@ export async function runIdentityMigration(
 
 	let scanned = 0;
 
-	for await (const batch of scanUsers(db, batchSize)) {
+	for await (const { batch, byUser } of scanUsers(db, batchSize)) {
 		signal?.throwIfAborted();
-		const byUser = await readCredentials(
-			db,
-			batch.map((user) => user.id),
-		);
 
 		for (const user of batch) {
 			signal?.throwIfAborted();

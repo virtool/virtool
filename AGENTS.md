@@ -305,8 +305,9 @@ prefix and no period. Keep them under 72 characters. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for examples.
 
 - Each pull request that affects an image app must name that app in a change
-  file, or `Knope / Check` fails. Write one with `knope document-change`. If users
-  can't see the change, use the `maintenance` type. See
+  file, or `Knope / Check` fails. Write one with `knope document-change`. Give a
+  summary and details, or the check fails. If users can't see the change, use
+  the `maintenance` type, which can have only a summary. See
   [Change files](CONTRIBUTING.md#change-files) and
   [Release notes](CONTRIBUTING.md#release-notes).
 - Image build inputs (`image-build`, `workflow-tools`, and the Rust crates) are
