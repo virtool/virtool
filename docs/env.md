@@ -18,14 +18,16 @@ read secrets directly from a secrets-store CSI mount:
 VT_POSTGRES_URL_FILE=/mnt/secrets-store/postgres-url
 ```
 
-Plain variables remain useful for local development.
+Plain variables remain useful for local development. Operators can find how to
+use these variables in the
+[configuration guide](https://www.virtool.ca/docs/start/configuration#file-backed-variables).
 
 ## Resolution rules
 
 `resolveFileBacked(keys, env)` copies the supplied environment and resolves only
 the keys listed by the caller:
 
-1. If `<KEY>_FILE` is absent or blank, `<KEY>` is unchanged.
+1. If `<KEY>_FILE` is absent or empty, `<KEY>` is unchanged.
 2. Otherwise, the referenced file is read as UTF-8 and trimmed.
 3. The file value replaces `<KEY>`, even when the plain variable is also set.
 4. An unreadable file throws during startup; there is no fallback to a possibly
@@ -112,40 +114,13 @@ recovery codes undecryptable, so rotate it deliberately.
 
 Secrets managed by Virtool are stored in Postgres in purpose-bound AES-256-GCM
 envelopes. The Resend API key, the NCBI API key, and the links in queued email
-are the consumers today. The process-wide encryption key is supplied through
-the environment:
+are the consumers today. `apps/web` and the `apps/internal` `run` subcommand
+each build a keyring from `VT_ENCRYPTION_KEY` and `VT_ENCRYPTION_KEY_PREVIOUS`.
 
-| Variable | Value |
-| --- | --- |
-| `VT_ENCRYPTION_KEY` | 32 random bytes, standard base64 (44 characters). |
-| `VT_ENCRYPTION_KEY_PREVIOUS` | The prior encryption key, set only during rotation. |
+See the [operator guide](https://www.virtool.ca/docs/start/configuration#encryption-key)
+for key generation, failure behavior, and rotation.
 
-Both accept `_FILE` variants. Configure them identically for `apps/web` and the
-`apps/internal` `run` subcommand. Generate a key with:
-
-```sh
-openssl rand -base64 32
-```
-
-An invalid or mismatched key makes encrypted secrets unavailable without
-preventing either service from starting. Stored values aren't changed on
-decryption failure.
-
-### Rotation
-
-1. Set `VT_ENCRYPTION_KEY` to the new key and
-   `VT_ENCRYPTION_KEY_PREVIOUS` to the old key, then roll out both services.
-2. Confirm email is available and the NCBI API key doesn't report a
-   configuration error.
-3. Keep both keys configured.
-
-Nothing re-encrypts stored secrets on its own yet, so they stay readable only
-through `VT_ENCRYPTION_KEY_PREVIOUS`. Unsetting it stops email delivery and
-drops GenBank lookups to the rate limit NCBI applies without a key. Saving a
-replacement API key rewrites that one secret under the active key;
-`reencryptNcbiApiKey` does the same without the plaintext, and is idempotent.
-Doing it for every secret in the background is tracked in
+Nothing re-encrypts stored secrets. `reencryptNcbiApiKey` does this for one
+secret, but nothing calls it yet. Doing it for every secret in the background
+is tracked in
 [VIR-3114](https://linear.app/virtool/issue/VIR-3114/handle-encryption-key-rotation-automatically).
-
-Queued email is not re-encrypted. A queued message whose link can't be decrypted
-fails, so keep the previous key for at least the six-hour delivery deadline.
