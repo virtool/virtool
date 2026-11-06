@@ -83,13 +83,13 @@ const presignUpload = vi.fn();
 	presignUpload;
 
 // Mutable so a test can flip the chunked-upload flag; reset in `beforeEach`.
-const testConfig = {
+const testConfig = vi.hoisted(() => ({
 	authSecret: "test-auth-secret-test-auth-secret",
 	publicOrigin: "https://virtool.test",
 	uploadsChunked: false,
 	uploadsChunkedConcurrency: 8,
 	webauthnRpId: "virtool.test",
-};
+}));
 
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"

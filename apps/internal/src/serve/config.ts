@@ -39,10 +39,6 @@ export type Config = {
  * Named explicitly rather than derived, because the `<KEY>_FILE` resolution
  * below walks this list: a key missing from it silently loses its file variant
  * and reads only the plain environment.
- *
- * `VT_SENTRY_DSN` is here even though `@virtool/sentry` can read it itself.
- * `readDsn` goes straight to `process.env` and so would skip the file variant;
- * the DSN is resolved here and passed to `Sentry.init` explicitly instead.
  */
 const KEYS = [
 	"VT_JOBS_API_HOST",
