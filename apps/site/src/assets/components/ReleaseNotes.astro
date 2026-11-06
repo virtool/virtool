@@ -1,0 +1,19 @@
+---
+import PullRequestLink from "@components/PullRequestLink.astro";
+import { splitPullRequestLinks } from "@utils/changelog";
+import { renderMarkdown } from "@utils/markdown";
+
+const { markdown }: { markdown: string } = Astro.props;
+
+const parts = splitPullRequestLinks(renderMarkdown(markdown));
+---
+
+{
+  parts.map((part) =>
+    typeof part === "number" ? (
+      <PullRequestLink number={part} />
+    ) : (
+      <Fragment set:html={part} />
+    ),
+  )
+}

@@ -45,6 +45,12 @@ export default function AboutDialog({ open, setOpen }: AboutDialogProps) {
 							</dd>
 						</div>
 					</dl>
+					<ExternalLink
+						className="block pt-3 text-blue-600 hover:underline"
+						href={`https://www.virtool.ca/changelog/${__APP_VERSION__}`}
+					>
+						Changelog
+					</ExternalLink>
 				</section>
 
 				<section className="border-t border-gray-200 pt-6">

@@ -1,0 +1,69 @@
+---
+import Menu from "@components/menu/Menu.astro";
+import Switch from "@components/Switch.astro";
+import SidebarLayout from "@layouts/SidebarLayout.astro";
+import type { ReleaseSection } from "@utils/changelog";
+
+type Props = {
+  title: string;
+  heading: string;
+  sections: ReleaseSection[];
+};
+
+const { title, heading, sections } = Astro.props;
+---
+
+<SidebarLayout title={title}>
+  <div slot="sidebar" class="tabular-nums">
+    <Menu sections={sections} />
+  </div>
+  <div class="mb-8 flex items-center justify-between gap-4">
+    <h1 class="mb-0">{heading}</h1>
+    <label class="not-prose flex shrink-0 items-center gap-2 text-stone-600">
+      <Switch id="show-maintenance" autocomplete="off" />
+      Show maintenance
+    </label>
+  </div>
+  <script is:inline>
+    document.getElementById("show-maintenance").checked =
+      localStorage.getItem("show-maintenance") === "true";
+  </script>
+  <slot />
+</SidebarLayout>
+
+<style is:global>
+  body:not(:has(#show-maintenance:checked)) {
+    [data-maintenance]:not(:has([aria-current])),
+    [data-sidebar]
+      li:has(> ul):not(:has(li:not([data-maintenance]))):not(
+        :has([aria-current])
+      ) {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const menu = document.querySelector<HTMLElement>("[data-sidebar]");
+  const current = menu?.querySelector<HTMLElement>("[aria-current]");
+  const toggle = document.querySelector<HTMLInputElement>("#show-maintenance");
+
+  function revealLink(link: HTMLElement, container: HTMLElement) {
+    const bottom = link.offsetTop + link.offsetHeight;
+
+    if (
+      link.offsetTop < container.scrollTop ||
+      bottom > container.scrollTop + container.clientHeight
+    ) {
+      container.scrollTop = link.offsetTop - container.clientHeight / 2;
+    }
+  }
+
+  if (menu && current) {
+    revealLink(current, menu);
+  }
+
+  toggle?.addEventListener("change", () => {
+    localStorage.setItem("show-maintenance", String(toggle.checked));
+  });
+</script>

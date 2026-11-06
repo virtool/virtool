@@ -108,6 +108,8 @@ page after you sign in. It keeps the search terms and filters in the link.
 When administrators must do something after they upgrade, start that paragraph
 of the details with `**Action required:**`. The Release pull request body
 copies each of these paragraphs into an "Action required" section at the top.
+The site changelog shows them in an "Action required" box at the top of the
+release.
 
 If users can't see the change, use `maintenance`. Examples are a schema
 preparation, a change to how images build, and a dependency update. This type
@@ -126,6 +128,64 @@ it directly are lost when anything else merges first.
 
 For a bigger release, add a change file that holds only the user-facing
 summary, such as a `minor` bump for `virtool` with a few paragraphs of prose.
+
+### Posts
+
+A post is an optional article on the site, at `/posts`. The two types of post are:
+
+| Type | Use |
+| --- | --- |
+| `release` | Explains a change in more detail than a changelog entry. The release in the changelog links to the post. |
+| `research` | Tells users about work that is not part of a release, such as a paper. |
+
+Add an MDX file to the `posts` content collection of the site. If the post has
+images, put the post in its own directory as `index.mdx`, with the images beside
+it. The file or directory name is the slug, and the post URL is `/posts/<slug>`.
+Do not change the slug after the post is published, because links use it.
+
+Each post needs `type`, `title`, and `summary`. Write `summary` as one sentence,
+because it shows in the post list. The build fails if a field is missing.
+
+A `release` post also needs `pr`:
+
+```mdx
+---
+type: release
+title: Recover access with a one-time link
+summary: Administrators now send recovery links instead of setting passwords.
+pr: 4175
+---
+
+Write the post here.
+```
+
+A post cannot name its version, because Knope calculates the version later.
+Set `pr` to the number of the pull request that makes the change. The build
+finds that pull request in the `virtool` changelog, and gets the version and
+date from that release. The pull request must have a change file that names
+`virtool`, or the changelog will not contain it.
+
+Until that release exists, the site hides the post. The build logs a warning
+for each hidden post. If a post stays hidden after its release, make sure that
+`pr` is correct.
+
+A `research` post also needs `date`:
+
+```mdx
+---
+type: research
+title: A new method to find novel viruses
+summary: Our paper describes how Virtool finds viruses absent from references.
+date: 2026-12-01
+---
+
+Write the post here.
+```
+
+Merge a post through a normal pull request, not the Release pull request. A
+release post can be in the same pull request as the change, or in a different
+one. The site builds from the latest release, so a post goes live with the next
+release, not on a date that you choose.
 
 ### Upgrade Knope
 

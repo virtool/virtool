@@ -1,0 +1,15 @@
+---
+import Badge from "@components/Badge.astro";
+import { GitPullRequest } from "@lucide/astro";
+
+const { number }: { number: number } = Astro.props;
+---
+
+<Badge
+  class="ml-2 tabular-nums"
+  href={`https://github.com/virtool/virtool/pull/${number}`}
+  target="_blank"
+>
+  <GitPullRequest aria-hidden="true" />
+  {number}
+</Badge>

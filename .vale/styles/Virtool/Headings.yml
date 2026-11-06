@@ -5,6 +5,7 @@ level: warning
 scope: heading
 match: $sentence
 exceptions:
+  - Azure Blob Storage
   - E-utilities
   - FASTQ
   - HTTP

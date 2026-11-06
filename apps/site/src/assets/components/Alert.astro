@@ -1,0 +1,24 @@
+---
+// The root uses `role="note"`, because `role="alert"` would announce static page
+// content as urgent.
+type Props = { title: string; variant?: "default" | "warning" };
+
+const { title, variant = "default" } = Astro.props;
+
+const variantClass = {
+  default: "border-stone-300 bg-white text-stone-800",
+  warning:
+    "border-amber-200 bg-amber-50 text-amber-950 [&>svg]:text-amber-600",
+}[variant];
+---
+
+<div
+  role="note"
+  class={`my-5 grid grid-cols-[0_1fr] items-start gap-y-1.5 rounded-lg border px-5 py-4 text-base has-[>svg]:grid-cols-[calc(var(--spacing)*5)_1fr] has-[>svg]:gap-x-3 [&>svg]:size-5 [&>svg]:translate-y-1 ${variantClass}`}
+>
+  <slot name="icon" />
+  <div class="col-start-2 font-semibold tracking-tight">{title}</div>
+  <div class="col-start-2 [&_li]:my-0 [&_p]:my-0 [&_p]:leading-relaxed [&_ul]:my-0">
+    <slot />
+  </div>
+</div>

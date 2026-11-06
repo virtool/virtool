@@ -1,0 +1,17 @@
+---
+import { formatDate } from "@utils/date";
+
+const { post, releaseHref } = Astro.props;
+---
+
+<p class="text-stone-600">
+  <span class="capitalize">{post.type}</span> ·
+  {
+    post.type === "release" && (
+      <>
+        {releaseHref ? <a href={releaseHref}>{post.version}</a> : post.version} ·
+      </>
+    )
+  }
+  <time datetime={post.date}>{formatDate(post.date)}</time>
+</p>

@@ -8,7 +8,7 @@ import Key from "@components/Key.astro";
 import MdxImage from "@components/MdxImage.astro";
 import Note from "@components/Note.astro";
 import Menu from "@components/menu/Menu.astro";
-import Layout from "@layouts/Layout.astro";
+import SidebarLayout from "@layouts/SidebarLayout.astro";
 import { getMenuSectionsFromCollection } from "@utils/menu";
 import { getCollection, render } from "astro:content";
 
@@ -26,28 +26,22 @@ const sections = getMenuSectionsFromCollection(
 );
 ---
 
-<Layout title={entry.data.title}>
-  <div class="flex gap-16">
-    <div class="col-span-2 self-start sticky top-24">
-        <Menu sections={sections} baseUrl="/docs" />
-    </div>
-    <div class="col-span-10 prose max-w-4xl">
-      <h1>{entry.data.title}</h1>
-      <div class="prose max-w-4xl">
-        <Content
-          components={{
-            ...components,
-            Aside: Aside,
-            DummyButton: DummyButton,
-            DummyLink: DummyLink,
-            DummySaveButton: DummySaveButton,
-            Icon: Icon,
-            Key: Key,
-            Note: Note,
-            img: MdxImage,
-          }}
-        />
-      </div>
-    </div>
+<SidebarLayout title={entry.data.title}>
+  <Menu slot="sidebar" sections={sections} baseUrl="/docs" current={`/docs/${entry.id}`} />
+  <h1>{entry.data.title}</h1>
+  <div class="prose max-w-4xl">
+    <Content
+      components={{
+        ...components,
+        Aside: Aside,
+        DummyButton: DummyButton,
+        DummyLink: DummyLink,
+        DummySaveButton: DummySaveButton,
+        Icon: Icon,
+        Key: Key,
+        Note: Note,
+        img: MdxImage,
+      }}
+    />
   </div>
-</Layout>
+</SidebarLayout>

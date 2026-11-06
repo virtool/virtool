@@ -1,13 +1,14 @@
 ---
-const { title, baseUrl, slug } = Astro.props;
+const { title, baseUrl, slug, current, maintenance } = Astro.props;
 const href = baseUrl ? `${baseUrl}/${slug}` : `${slug}`;
 ---
 
-<li class="mt-1 capitalize">
+<li data-maintenance={maintenance || undefined}>
   <a
-    class="text-stone-600 hover:text-stone-900 hover:font-medium pl-1"
+    class="-ml-px block border-l-2 border-transparent py-1 pl-3 text-sm text-stone-600 hover:text-stone-900 [&[aria-current]]:border-sky-700 [&[aria-current]]:text-sky-700"
     href={href}
     rel="prefetch"
+    aria-current={href === current ? "page" : undefined}
   >
     {title}
   </a>
