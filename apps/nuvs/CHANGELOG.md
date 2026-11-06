@@ -1,3 +1,9 @@
+## 42.61.4 (2026-11-06)
+
+### Maintenance
+
+- Return the subprocess result from the shared gzip helper ([#4193](https://github.com/virtool/virtool/pull/4193))
+
 ## 42.61.3 (2026-11-04)
 
 ### Fixes

@@ -1,3 +1,13 @@
+## 42.62.0 (2026-11-06)
+
+### Features
+
+#### Support bzip2 compressed FASTQ uploads ([#4193](https://github.com/virtool/virtool/pull/4193))
+
+Upload `.fastq.bz2` and `.fq.bz2` files to create samples. Virtool converts the files to gzip during sample creation. Sample jobs now show a **Normalize reads** step.
+
+**Action required:** Deploy the new Create Sample image before or with the web image. An older image can't read bzip2 uploads.
+
 ## 42.61.3 (2026-11-04)
 
 ### Fixes
