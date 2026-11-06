@@ -1,6 +1,6 @@
 {
 	"name": "@virtool/create-sample",
-	"version": "42.62.0",
+	"version": "42.62.1",
 	"private": true,
 	"type": "module",
 	"files": [
