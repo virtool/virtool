@@ -88,11 +88,14 @@ GitHub Release. Write it for users, not reviewers. Tell users what they will
 see that is different, not how the code changed.
 
 The first line is the summary. Keep it on one line, and leave a blank line
-before any details: `Knope / Check` fails a summary that wraps. A change file
-with only a summary becomes a bullet. Text after the summary becomes the
-details: the summary becomes a heading, and the details go below it. Add
-details when users must know more,
-for example what was wrong before, what to do now, or which pages changed:
+before any details: `Knope / Check` fails a summary that wraps. Text after the
+summary becomes the details: the summary becomes a heading, and the details go
+below it.
+
+Every change file needs details, or `Knope / Check` fails. The only exception
+is a `maintenance` change, which can have only a summary and becomes a bullet.
+Tell users what was wrong before, what to do now, or which pages changed. For a
+small change, one sentence is sufficient:
 
 ```md
 ---

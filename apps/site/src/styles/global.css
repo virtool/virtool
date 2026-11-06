@@ -5,3 +5,7 @@
 .prose code::after {
   content: none;
 }
+
+.prose :not(pre) > code {
+  @apply rounded bg-zinc-200 px-1 py-0.5 font-normal;
+}
