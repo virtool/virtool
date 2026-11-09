@@ -29,21 +29,23 @@ const { entry } = Astro.props;
 const { Content, components, headings } = await render(entry);
 ---
 
-<SidebarLayout title={entry.data.title}>
+<SidebarLayout title={entry.data.title} search="docs">
   <Menu slot="sidebar" sections={sections} baseUrl="/docs" />
   <TableOfContents slot="toc" headings={headings} />
-  <h1>{entry.data.title}</h1>
-  <div class="prose max-w-4xl">
-    <Content
-      components={{
-        ...components,
-        Aside: Aside,
-        DummyButton: DummyButton,
-        Icon: Icon,
-        Key: Key,
-        Note: Note,
-        img: MdxImage,
-      }}
-    />
+  <div data-pagefind-body>
+    <h1>{entry.data.title}</h1>
+    <div class="prose max-w-4xl">
+      <Content
+        components={{
+          ...components,
+          Aside: Aside,
+          DummyButton: DummyButton,
+          Icon: Icon,
+          Key: Key,
+          Note: Note,
+          img: MdxImage,
+        }}
+      />
+    </div>
   </div>
 </SidebarLayout>

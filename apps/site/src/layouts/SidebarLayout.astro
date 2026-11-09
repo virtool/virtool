@@ -1,7 +1,10 @@
 ---
+import Search, { type SearchSection } from "@components/Search.astro";
 import Layout from "./Layout.astro";
 
-const { title }: { title: string } = Astro.props;
+type Props = { title: string; search: SearchSection };
+
+const { title, search } = Astro.props;
 const hasToc = Astro.slots.has("toc");
 ---
 
@@ -12,11 +15,13 @@ const hasToc = Astro.slots.has("toc");
       { "xl:grid-cols-[13rem_minmax(0,56rem)_13rem]": hasToc },
     ]}
   >
-    <div
-      class="sticky top-24 max-h-[calc(100vh-7rem)] self-start overflow-y-auto pl-12 pr-4"
-      data-sidebar
-    >
-      <slot name="sidebar" />
+    <div class="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col self-start">
+      <div class="mb-6 pl-12 pr-4">
+        <Search section={search} />
+      </div>
+      <div class="relative min-h-0 overflow-y-auto pl-12 pr-4" data-sidebar>
+        <slot name="sidebar" />
+      </div>
     </div>
     <div class="prose max-w-none">
       <slot />

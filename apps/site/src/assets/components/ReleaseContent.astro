@@ -29,7 +29,7 @@ const { date, actions, body, maintenance } = release;
 <ReleaseNotes markdown={body} />
 {
   maintenance && (
-    <div data-maintenance={!alwaysShowMaintenance || undefined}>
+    <div data-maintenance={!alwaysShowMaintenance || undefined} data-pagefind-ignore="all">
       <ReleaseNotes markdown={maintenance} />
     </div>
   )

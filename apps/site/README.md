@@ -34,6 +34,13 @@ has a page at `/changelog/<version>`. This link does not change, so the web app
 uses it. The build reads the releases from the web app changelog, which Knope
 generates, so the pages need no separate content.
 
+## Search
+
+The docs and the changelog each have a search at the top of their sidebar. The
+docs search finds only docs pages. The changelog search finds only release
+pages, and it does not find maintenance notes. The build makes the search index after Astro
+finishes, so the dev server has no search. Use `preview` to test it.
+
 ## Posts
 
 The `/posts` page lists all posts, newest first. Each post is at

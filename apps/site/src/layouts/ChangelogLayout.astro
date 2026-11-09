@@ -13,7 +13,7 @@ type Props = {
 const { title, heading, sections } = Astro.props;
 ---
 
-<SidebarLayout title={title}>
+<SidebarLayout title={title} search="changelog">
   <div slot="sidebar" class="tabular-nums">
     <Menu sections={sections} />
   </div>
