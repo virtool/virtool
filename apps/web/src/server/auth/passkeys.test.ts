@@ -266,7 +266,7 @@ describe("registration", () => {
 
 		expect(response.status).toBe(400);
 		expect(await response.json()).toMatchObject({
-			code: "USER_VERIFICATION_REQUIRED",
+			code: "FAILED_TO_VERIFY_REGISTRATION",
 		});
 		expect(await passkeyRows()).toEqual([]);
 	});
@@ -392,7 +392,7 @@ describe("sign-in", () => {
 
 		expect(await response.json()).toMatchObject({
 			rpId: RP_ID,
-			userVerification: "preferred",
+			userVerification: "required",
 		});
 	});
 

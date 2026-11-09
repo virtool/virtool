@@ -203,8 +203,8 @@ function rejectRegisteredPasskey(): never {
  * only authority for what a caller may do.
  *
  * `@simplewebauthn/server` is a direct dependency so the passkey plugin's inferred
- * types are nameable across the server/browser TypeScript project boundary. A
- * pnpm override keeps the plugin on the same version, so there is one copy.
+ * types are nameable across the server/browser TypeScript project boundary. Its
+ * range must stay inside the plugin's, so there is one copy.
  *
  * Takes its dependencies as arguments so tests can build an instance against a
  * throwaway database.
@@ -402,11 +402,9 @@ export function createAuth({
 					// possession of an unlocked device.
 					userVerification: "required",
 				},
-				// The plugin verifies both ceremonies with `requireUserVerification:
-				// false` whatever the options above ask the browser for, so the flag
-				// is checked again here, after the signature has been verified. At
-				// sign-in the plugin asks only for `preferred` verification, so the
-				// browser can offer an authenticator that this check then refuses.
+				// The plugin already requires user verification because of the
+				// setting above. These checks keep that guarantee if the plugin's
+				// defaults change.
 				registration: {
 					async afterVerification({ ctx, verification }) {
 						const info = verification.registrationInfo;

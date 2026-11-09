@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+	type AuthenticatorTransportFuture,
 	generateAuthenticationOptions,
 	verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
@@ -49,7 +50,7 @@ const TRANSPORTS = new Set<string>([
 	"nfc",
 	"smart-card",
 	"usb",
-]);
+] satisfies AuthenticatorTransportFuture[]);
 
 const base64Url = z.string().min(1).max(4096);
 
@@ -131,9 +132,10 @@ function getUsedCodeKey(userId: number, code: string): string {
 	return getRateLimitKey("step-up", "code", String(userId), digest);
 }
 
-function toTransports(value: string | null): string[] {
-	return (value?.split(",") ?? []).filter((transport) =>
-		TRANSPORTS.has(transport),
+function toTransports(value: string | null): AuthenticatorTransportFuture[] {
+	return (value?.split(",") ?? []).filter(
+		(transport): transport is AuthenticatorTransportFuture =>
+			TRANSPORTS.has(transport),
 	);
 }
 
