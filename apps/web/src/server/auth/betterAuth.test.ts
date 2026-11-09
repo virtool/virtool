@@ -17,7 +17,6 @@ import { symmetricDecrypt } from "better-auth/crypto";
 import { eq, like } from "drizzle-orm";
 import {
 	afterAll,
-	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -137,10 +136,6 @@ async function seedMigratedUser(
 }
 
 describe("configuration", () => {
-	afterEach(() => {
-		vi.unstubAllEnvs();
-	});
-
 	function build(publicOrigin = ORIGIN) {
 		return createAuth({
 			db,
@@ -158,15 +153,6 @@ describe("configuration", () => {
 		expect(auth.options.session?.expiresIn).toBe(7 * 24 * 60 * 60);
 		expect(auth.options.session?.updateAge).toBe(24 * 60 * 60);
 	});
-
-	it.each(["BETTER_AUTH_SECRETS", "BETTER_AUTH_TRUSTED_ORIGINS"])(
-		"refuses to build while %s is set",
-		(name) => {
-			vi.stubEnv(name, "1:value");
-
-			expect(build).toThrow(name);
-		},
-	);
 
 	it("leaves cookies insecure for an http origin", async () => {
 		await seedMigratedUser();

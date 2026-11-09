@@ -95,28 +95,6 @@ const SESSION_EXPIRES_IN_SECONDS = 7 * 24 * 60 * 60;
 /** How often use of a session extends its expiry. */
 const SESSION_UPDATE_AGE_SECONDS = 24 * 60 * 60;
 
-/**
- * Better Auth environment variables that explicit options can't override.
- * `BETTER_AUTH_SECRETS` replaces `secret`, and `BETTER_AUTH_TRUSTED_ORIGINS`
- * adds to `trustedOrigins`. The other variables it reads only fill options that
- * Virtool always sets.
- */
-const OVERRIDING_ENVIRONMENT_VARIABLES = [
-	"BETTER_AUTH_SECRETS",
-	"BETTER_AUTH_TRUSTED_ORIGINS",
-] as const;
-
-function assertNoOverridingEnvironment(): void {
-	const set = OVERRIDING_ENVIRONMENT_VARIABLES.filter(
-		(name) => process.env[name],
-	);
-	if (set.length > 0) {
-		throw new Error(
-			`Unset ${set.join(" and ")}. Virtool configures Better Auth from VT_AUTH_SECRET and VT_PUBLIC_ORIGIN only.`,
-		);
-	}
-}
-
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
 	db: Db;
@@ -244,7 +222,6 @@ export function createAuth({
 	webauthnRpId,
 	secret,
 }: AuthOptions) {
-	assertNoOverridingEnvironment();
 	const auth = betterAuth({
 		appName: "Virtool",
 		baseURL: publicOrigin,
