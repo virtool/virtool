@@ -98,13 +98,17 @@ export function useUpdateAccount() {
  */
 export function useUpdateHandle() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ handle }: { handle: string }) =>
+			updateAccountHandleFn({ data: { handle } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof updateAccountHandleFn>>,
 		Error,
 		{ handle: string }
 	>({
-		mutationFn: ({ handle }) => updateAccountHandleFn({ data: { handle } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},

@@ -422,8 +422,14 @@ export const updateUserFn = createServerFn({ method: "POST" })
 		}
 	});
 
+/**
+ * Change the signed-in user's handle.
+ *
+ * The handle is the password sign-in identifier, so the change needs a recent
+ * authentication.
+ */
 export const updateAccountHandleFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.accountHandleChange)])
 	.validator(accountHandleSchema)
 	.handler(async ({ context, data }) => {
 		checkHandle(data.handle);
