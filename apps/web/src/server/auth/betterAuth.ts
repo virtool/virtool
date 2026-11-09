@@ -29,6 +29,7 @@ import { twoFactor, USERNAME_ERROR_CODES, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { isSecureOrigin } from "./cookies";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 import { getNewPasskeyName, passkeyNamePlugin } from "./passkeyName";
@@ -87,6 +88,34 @@ const PASSKEY_SIGN_IN_RATE_LIMIT = { window: 10, max: 3 };
  * stops a caller who fills the verification table.
  */
 const PASSKEY_OPTIONS_RATE_LIMIT = { window: 60, max: 10 };
+
+/** Seven days, rolling, with no absolute cap. */
+const SESSION_EXPIRES_IN_SECONDS = 7 * 24 * 60 * 60;
+
+/** How often use of a session extends its expiry. */
+const SESSION_UPDATE_AGE_SECONDS = 24 * 60 * 60;
+
+/**
+ * Better Auth environment variables that explicit options can't override.
+ * `BETTER_AUTH_SECRETS` replaces `secret`, and `BETTER_AUTH_TRUSTED_ORIGINS`
+ * adds to `trustedOrigins`. The other variables it reads only fill options that
+ * Virtool always sets.
+ */
+const OVERRIDING_ENVIRONMENT_VARIABLES = [
+	"BETTER_AUTH_SECRETS",
+	"BETTER_AUTH_TRUSTED_ORIGINS",
+] as const;
+
+function assertNoOverridingEnvironment(): void {
+	const set = OVERRIDING_ENVIRONMENT_VARIABLES.filter(
+		(name) => process.env[name],
+	);
+	if (set.length > 0) {
+		throw new Error(
+			`Unset ${set.join(" and ")}. Virtool configures Better Auth from VT_AUTH_SECRET and VT_PUBLIC_ORIGIN only.`,
+		);
+	}
+}
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -215,6 +244,7 @@ export function createAuth({
 	webauthnRpId,
 	secret,
 }: AuthOptions) {
+	assertNoOverridingEnvironment();
 	const auth = betterAuth({
 		appName: "Virtool",
 		baseURL: publicOrigin,
@@ -248,9 +278,9 @@ export function createAuth({
 				rateLimit: authRateLimits,
 			},
 		}),
-		// Lifetime stays at Better Auth's defaults: seven days, rolling, refreshed
-		// after one day, with no absolute cap.
 		session: {
+			expiresIn: SESSION_EXPIRES_IN_SECONDS,
+			updateAge: SESSION_UPDATE_AGE_SECONDS,
 			cookieCache: { enabled: false },
 			freshAge: SESSION_FRESH_AGE_SECONDS,
 			additionalFields: {
@@ -263,6 +293,7 @@ export function createAuth({
 		},
 		advanced: {
 			ipAddress: AUTH_IP_ADDRESS_OPTIONS,
+			useSecureCookies: isSecureOrigin(publicOrigin),
 			// Stated rather than left to default. Better Auth turns its origin check
 			// off whenever `NODE_ENV` is `test`, so without this the suite would
 			// exercise a configuration production never runs and prove nothing about

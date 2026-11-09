@@ -4,6 +4,7 @@ import {
 	getCookie,
 	setCookie,
 } from "@tanstack/react-start/server";
+import { config } from "../config";
 
 /**
  * The opaque identifier of a restricted setup session. Names the row and
@@ -55,8 +56,16 @@ function cookieOptions(secure: Bool, maxAge: number) {
 	};
 }
 
+/**
+ * Whether cookies set for `origin` are `Secure`. Virtool's own cookies and
+ * Better Auth's follow this one rule.
+ */
+export function isSecureOrigin(origin: string): boolean {
+	return new URL(origin).protocol === "https:";
+}
+
 function isSecure(): boolean {
-	return process.env.NODE_ENV === "production";
+	return isSecureOrigin(config.publicOrigin);
 }
 
 /** Read the browser's login devices. */

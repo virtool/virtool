@@ -17,6 +17,7 @@ import { symmetricDecrypt } from "better-auth/crypto";
 import { eq, like } from "drizzle-orm";
 import {
 	afterAll,
+	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -135,11 +136,63 @@ async function seedMigratedUser(
 	return userId;
 }
 
-describe("legacy bcrypt credentials", () => {
+describe("configuration", () => {
+	afterEach(() => {
+		vi.unstubAllEnvs();
+	});
+
+	function build(publicOrigin = ORIGIN) {
+		return createAuth({
+			db,
+			publicOrigin,
+			webauthnRpId: "virtool.test",
+			secret: AUTH_SECRET,
+		});
+	}
+
 	it("configures the explicit recent-authentication window", () => {
 		expect(auth.options.session?.freshAge).toBe(SESSION_FRESH_AGE_SECONDS);
 	});
 
+	it("states the session lifetime", () => {
+		expect(auth.options.session?.expiresIn).toBe(7 * 24 * 60 * 60);
+		expect(auth.options.session?.updateAge).toBe(24 * 60 * 60);
+	});
+
+	it.each(["BETTER_AUTH_SECRETS", "BETTER_AUTH_TRUSTED_ORIGINS"])(
+		"refuses to build while %s is set",
+		(name) => {
+			vi.stubEnv(name, "1:value");
+
+			expect(build).toThrow(name);
+		},
+	);
+
+	it("leaves cookies insecure for an http origin", async () => {
+		await seedMigratedUser();
+
+		const response = await build("http://localhost:5173").handler(
+			new Request(`http://localhost:5173${AUTH_BASE_PATH}/sign-in/username`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					origin: "http://localhost:5173",
+				},
+				body: JSON.stringify({
+					username: "alice",
+					password: LEGACY_PASSWORD,
+				}),
+			}),
+		);
+
+		const cookie = response.headers.get("set-cookie");
+
+		expect(cookie).toContain("HttpOnly");
+		expect(cookie).not.toContain("Secure");
+	});
+});
+
+describe("legacy bcrypt credentials", () => {
 	it("authenticates a copied production hash without rehashing it", async () => {
 		const userId = await seedMigratedUser();
 
