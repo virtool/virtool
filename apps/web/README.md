@@ -129,7 +129,7 @@ window regains focus. No other traffic extends a session, so an unattended tab
 can't keep itself signed in.
 
 Sensitive actions need a sign-in, or a new password, TOTP, or passkey challenge,
-in the last 15 minutes. Examples are password and email changes, API key changes,
+in the last 15 minutes. Examples are handle, password, and email changes, API key changes,
 and administrator changes to users and policy. A stale call returns 403 with the
 code `SESSION_NOT_FRESH`. API keys and restricted credentials can't satisfy this
 requirement. Sign-out and revocation of the current session never need it.

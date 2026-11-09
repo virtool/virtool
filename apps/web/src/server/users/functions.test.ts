@@ -86,6 +86,8 @@ const { hashPassword, verifyPassword } = await import(
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
+const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
+const { SessionNotFreshError } = await import("../auth/policy");
 
 let database: TestDatabase;
 
@@ -144,6 +146,29 @@ async function readUser(userId: number) {
 	const [row] = await db.select().from(users).where(eq(users.id, userId));
 	return row;
 }
+
+describe("updateAccountHandleFn", () => {
+	it("changes the handle for a fresh session", async () => {
+		const { userId } = await signIn();
+
+		await call("updateAccountHandleFn", { handle: "renamed" });
+
+		expect((await readUser(userId))?.handle).toBe("renamed");
+	});
+
+	it("refuses to change the handle for a stale session", async () => {
+		const { userId } = await signIn();
+		const { handle } = (await readUser(userId)) ?? {};
+		await db.update(authSessions).set({
+			createdAt: new Date(Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1)),
+		});
+
+		await expect(
+			call("updateAccountHandleFn", { handle: "renamed" }),
+		).rejects.toBeInstanceOf(SessionNotFreshError);
+		expect((await readUser(userId))?.handle).toBe(handle);
+	});
+});
 
 describe("changePassword", () => {
 	it("hands the browser the session that replaces the revoked one", async () => {

@@ -1,3 +1,4 @@
+import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Field, { FieldError } from "@base/Field";
 import { UserAvatar } from "@base/Icon";
@@ -69,7 +70,8 @@ export default function AccountHandle({ avatarSource, handle }: HandleProps) {
 									className="empty:my-0 empty:min-h-0"
 									errors={[
 										errors.handle,
-										mutation.isError
+										mutation.isError &&
+										!isRecentAuthenticationCancelled(mutation.error)
 											? { message: mutation.error.message }
 											: undefined,
 									]}
