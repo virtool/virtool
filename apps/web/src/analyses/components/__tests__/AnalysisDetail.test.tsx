@@ -145,4 +145,35 @@ describe("<AnalysisDetail />", () => {
 
 		expect(await screen.findByText("Analysis failed")).toBeInTheDocument();
 	});
+
+	it("refetches an unready analysis when the job query shows success", async () => {
+		const job = createJob("running");
+		mockUnreadyAnalysis(job);
+
+		renderWithCachedJob(job, "succeeded");
+
+		expect(await screen.findByText("Analysis in progress")).toBeInTheDocument();
+		expect(
+			screen.queryByText("Analysis did not finish"),
+		).not.toBeInTheDocument();
+
+		await vi.waitFor(() =>
+			expect(analysisServerFnMocks.getAnalysisFn).toHaveBeenCalledTimes(2),
+		);
+	});
+
+	it("shows an analysis as unfinished once its refetch confirms success", async () => {
+		const job = createJob("running");
+		mockUnreadyAnalysis({ ...job, state: "succeeded" });
+		analysisServerFnMocks.getAnalysisFn.mockResolvedValueOnce({
+			...createFakeAnalysisMinimal({ job, ready: false }),
+			files: [],
+		});
+
+		renderWithCachedJob(job, "succeeded");
+
+		expect(
+			await screen.findByText("Analysis did not finish"),
+		).toBeInTheDocument();
+	});
 });

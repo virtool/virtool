@@ -1,4 +1,5 @@
 import NuvsViewer from "@analyses/components/Nuvs/NuvsViewer";
+import { analysesQueryKeys } from "@analyses/keys";
 import { formatDate, formatTime } from "@app/date";
 import { getWorkflowDisplayName } from "@app/utils";
 import Box from "@base/Box";
@@ -14,10 +15,11 @@ import {
 } from "@base/Subview";
 import { useFetchJob } from "@jobs/queries";
 import { useFetchSample } from "@samples/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import type { Analysis, JobState, Sample } from "@virtool/contracts";
 import { CircleAlert } from "lucide-react";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useGetAnalysis, useSuspenseAnalysisResults } from "../queries";
 import type {
 	FormattedNuvsAnalysis,
@@ -26,10 +28,9 @@ import type {
 import { getWorkflowVersionLabel } from "../utils";
 import { PathoscopeViewer } from "./Pathoscope/PathoscopeViewer";
 
-const endStateMessages: Partial<Record<JobState, string>> = {
+const unsuccessfulMessages: Partial<Record<JobState, string>> = {
 	cancelled: "Analysis cancelled",
 	failed: "Analysis failed",
-	succeeded: "Analysis did not finish",
 };
 
 const routeApi = getRouteApi(
@@ -39,6 +40,7 @@ const routeApi = getRouteApi(
 /** Base component viewing all supported analysis */
 export default function AnalysisDetail() {
 	const { analysisId, sampleId } = routeApi.useParams();
+	const queryClient = useQueryClient();
 	const {
 		data: analysis,
 		isPending,
@@ -54,6 +56,23 @@ export default function AnalysisDetail() {
 		analysis?.job ?? undefined,
 	);
 
+	// The analysis and job queries refetch independently, so the job can show
+	// success while the cached analysis is still unready from before it was
+	// finalized. Refetch the analysis to learn whether it is truly unfinished.
+	const isAnalysisBehindJob =
+		analysis !== undefined &&
+		!analysis.ready &&
+		job?.state === "succeeded" &&
+		analysis.job?.state !== "succeeded";
+
+	useEffect(() => {
+		if (isAnalysisBehindJob) {
+			queryClient.invalidateQueries({
+				queryKey: analysesQueryKeys.detail(Number(analysisId)),
+			});
+		}
+	}, [analysisId, isAnalysisBehindJob, queryClient]);
+
 	if ((isError && !analysis) || (isSampleError && !sample)) {
 		return <QueryError noun="analysis" />;
 	}
@@ -64,13 +83,18 @@ export default function AnalysisDetail() {
 
 	if (!analysis.ready) {
 		// Neither source is reliably fresher. A cached job can stay pinned at
-		// `running` by its seed, and no job event invalidates the analysis. A
-		// terminal state is permanent, so either source can settle it. The pod
-		// finalizes the analysis before it finishes the job, so a succeeded job
-		// leaves an unready analysis unready for good.
-		const endMessage = [job?.state, analysis.job?.state]
-			.map((state) => (state ? endStateMessages[state] : undefined))
-			.find(Boolean);
+		// `running` by its seed, and no job event invalidates the analysis. An
+		// unsuccessful state is permanent, so either source can settle it.
+		// Success settles it only when read with `ready` in the same record:
+		// the pod finalizes the analysis before it finishes the job, so that
+		// record cannot show a succeeded job beside a stale `ready`.
+		const endMessage =
+			[job?.state, analysis.job?.state]
+				.map((state) => (state ? unsuccessfulMessages[state] : undefined))
+				.find(Boolean) ??
+			(analysis.job?.state === "succeeded"
+				? "Analysis did not finish"
+				: undefined);
 
 		if (analysis.job && endMessage) {
 			return (
