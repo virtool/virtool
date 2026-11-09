@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import {
 	accountServerFnMocks,
 	mockFindPasskeys,
+	mockGetAccountSecurity,
 } from "@tests/server-fn/account";
 import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthentication";
 import { renderWithProviders } from "@tests/setup";
@@ -12,10 +13,18 @@ import {
 } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { addPasskey } = vi.hoisted(() => ({ addPasskey: vi.fn() }));
+const { addPasskey, resetClient } = vi.hoisted(() => ({
+	addPasskey: vi.fn(),
+	resetClient: vi.fn(),
+}));
 
 vi.mock("@app/authClient", () => ({
 	authClient: { passkey: { addPasskey } },
+}));
+
+vi.mock("@app/utils", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@app/utils")>()),
+	resetClient,
 }));
 
 vi.mock("@simplewebauthn/browser", () => ({
@@ -53,6 +62,8 @@ function stubPasskeySupport(available: boolean) {
 describe("<AccountPasskeys />", () => {
 	beforeEach(() => {
 		stubPasskeySupport(true);
+		resetClient.mockClear();
+		mockGetAccountSecurity();
 		recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
 			10 * 60 * 1000,
 		);
@@ -253,6 +264,50 @@ describe("<AccountPasskeys />", () => {
 			}),
 		);
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+	});
+
+	it("removes a passkey without reloading the app", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({ mfaRequired: true, twoFactorEnabled: true });
+		mockFindPasskeys([passkey()]);
+		accountServerFnMocks.removePasskeyFn.mockResolvedValue(null);
+
+		renderWithProviders(<AccountPasskeys />);
+		await user.click(
+			await screen.findByRole("button", { name: "Remove Work laptop" }),
+		);
+		const dialog = screen.getByRole("alertdialog");
+		expect(dialog).toHaveTextContent("current session are not affected");
+		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
+
+		await waitFor(() =>
+			expect(accountServerFnMocks.removePasskeyFn).toHaveBeenCalledWith({
+				data: { managementId: 1 },
+			}),
+		);
+		await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+		expect(resetClient).not.toHaveBeenCalled();
+	});
+
+	it("warns and reloads the app after removing the last passkey that satisfies the policy", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({ mfaRequired: true });
+		mockFindPasskeys([passkey()]);
+		accountServerFnMocks.removePasskeyFn.mockResolvedValue(null);
+
+		renderWithProviders(<AccountPasskeys />);
+		await user.click(
+			await screen.findByRole("button", { name: "Remove Work laptop" }),
+		);
+		const dialog = screen.getByRole("alertdialog");
+		await waitFor(() =>
+			expect(dialog).toHaveTextContent(
+				"You must set up two-factor authentication before you can use Virtool again.",
+			),
+		);
+		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
+
+		await waitFor(() => expect(resetClient).toHaveBeenCalled());
 	});
 
 	it("keeps the dialog open with the server's refusal to remove a passkey", async () => {

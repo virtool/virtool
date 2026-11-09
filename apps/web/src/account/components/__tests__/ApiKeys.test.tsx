@@ -43,6 +43,10 @@ describe("<ApiKeys />", () => {
 		const dialog = screen.getByRole("dialog", { name: "Create API Key" });
 		const input = within(dialog).getByLabelText("Name");
 
+		expect(
+			within(dialog).getByText(/The key can read all the data that you can/),
+		).toBeInTheDocument();
+
 		// Check that submission without a name fails.
 		await user.click(screen.getByRole("button", { name: "Save" }));
 		expect(
@@ -139,6 +143,9 @@ describe("<ApiKeys />", () => {
 			name: "upload_file",
 		});
 
+		expect(
+			within(dialog).getByText(/Permissions limit what the key can change/),
+		).toBeInTheDocument();
 		expect(createRefCheckbox).toBeChecked();
 		expect(uploadFileCheckbox).not.toBeChecked();
 

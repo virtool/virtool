@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
 	accountServerFnMocks,
+	mockFindPasskeys,
 	mockGetAccountSecurity,
 } from "@tests/server-fn/account";
 import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthentication";
@@ -10,7 +11,7 @@ import {
 	CLIENT_ERROR_NAME,
 	SESSION_NOT_FRESH_ERROR_NAME,
 } from "@virtool/contracts";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { twoFactor, resetClient } = vi.hoisted(() => ({
 	twoFactor: {
@@ -61,6 +62,10 @@ async function startSetup(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("<AccountTwoFactor />", () => {
+	beforeEach(() => {
+		resetClient.mockClear();
+	});
+
 	it("shows a loading state", () => {
 		accountServerFnMocks.getAccountSecurityFn.mockReturnValue(
 			new Promise(() => {}),
@@ -105,7 +110,7 @@ describe("<AccountTwoFactor />", () => {
 		expect(await screen.findByText("On")).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				"This Virtool instance requires two-factor authentication.",
+				"This Virtool instance requires two-factor authentication or a passkey.",
 			),
 		).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Set up" })).toBeNull();
@@ -334,12 +339,44 @@ describe("<AccountTwoFactor />", () => {
 		const dialog = await enterPassword(user);
 
 		expect(
-			within(dialog).getByText(/You must set it up again/),
+			within(dialog).getByText(
+				/You must set up two-factor authentication again/,
+			),
 		).toBeInTheDocument();
 
 		await user.click(within(dialog).getByRole("button", { name: "Turn off" }));
 
 		await waitFor(() => expect(resetClient).toHaveBeenCalled());
+	});
+
+	it("does not reload the app after turning TOTP off when a passkey satisfies the policy", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({
+			mfaRequired: true,
+			recoveryCodesRemaining: 8,
+			twoFactorEnabled: true,
+		});
+		mockFindPasskeys([
+			{
+				managementId: 1,
+				name: "Work laptop",
+				createdAt: new Date("2026-01-01T00:00:00Z"),
+				multiDevice: true,
+				backedUp: true,
+			},
+		]);
+		accountServerFnMocks.disableTotpFn.mockResolvedValue(null);
+
+		renderWithProviders(<AccountTwoFactor />);
+		await user.click(await screen.findByRole("button", { name: "Turn off" }));
+		const dialog = await enterPassword(user);
+
+		expect(within(dialog).queryByText(/You must set up/)).toBeNull();
+
+		await user.click(within(dialog).getByRole("button", { name: "Turn off" }));
+
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		expect(resetClient).not.toHaveBeenCalled();
 	});
 
 	it("confirms the user's identity before turning TOTP off on a stale session", async () => {

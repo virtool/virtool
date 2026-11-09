@@ -7,6 +7,12 @@ import type { ClientEvent } from "@virtool/data/events/channel";
  * An `account` event concerns only the user it names. The client refreshes its
  * whole account cache for any `account` frame, so sending one to every stream
  * would make every signed-in browser refetch its account.
+ *
+ * Other events go to every stream without a read-rights check. A message holds
+ * only a domain, an operation, and an id, and gives no access to the record:
+ * the client refetches through server functions that check read rights. A
+ * rights lookup for each event would add cost to every delivery for almost no
+ * gain.
  */
 export function isEventForUser(event: ClientEvent, userId: number): boolean {
 	return event.domain !== "account" || event.resource_id === userId;

@@ -7,6 +7,7 @@ import {
 	type Settings,
 	sampleGroups,
 } from "@virtool/contracts";
+import { hasPasskey } from "@virtool/data/auth/passkeys";
 import { listCacheUsage } from "@virtool/data/caches/usage";
 import {
 	getSettings,
@@ -168,8 +169,9 @@ export const clearNcbiApiKeyFn = createServerFn({ method: "POST" })
  * {@link updateSettingsFn}: `required` restricts every unenrolled user's
  * session, which is more than the `settings` role may decide.
  *
- * `required` is refused until the caller has enrolled, because the policy
- * would otherwise restrict the administrator who set it.
+ * `required` is refused until the caller has confirmed TOTP or registered a
+ * passkey, because the policy would otherwise restrict the administrator who
+ * set it.
  */
 export const setMfaPolicyFn = createServerFn({ method: "POST" })
 	.middleware([
@@ -179,11 +181,14 @@ export const setMfaPolicyFn = createServerFn({ method: "POST" })
 	.validator(z.object({ mfaPolicy: z.enum(mfaPolicies) }))
 	.handler(async ({ context, data }): Promise<Settings> => {
 		if (data.mfaPolicy === "required") {
-			const caller = await getUser(db, context.principal.userId);
+			const [caller, callerHasPasskey] = await Promise.all([
+				getUser(db, context.principal.userId),
+				hasPasskey(db, context.principal.userId),
+			]);
 
-			if (!caller.twoFactorEnabled) {
+			if (!caller.twoFactorEnabled && !callerHasPasskey) {
 				throw new ClientError(
-					"Set up two-factor authentication before requiring it.",
+					"Set up two-factor authentication or add a passkey before requiring two-factor authentication.",
 					409,
 				);
 			}

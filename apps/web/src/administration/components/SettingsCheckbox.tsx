@@ -12,6 +12,9 @@ type SettingsCheckboxProps = {
 	/** Text that explains what the setting does */
 	description: ReactNode;
 
+	/** Whether the checkbox ignores clicks, such as while a change saves */
+	disabled?: boolean;
+
 	/** Whether the setting is enabled */
 	enabled: boolean;
 
@@ -27,6 +30,7 @@ type SettingsCheckboxProps = {
  */
 export default function SettingsCheckbox({
 	description,
+	disabled = false,
 	enabled,
 	onToggle,
 	title,
@@ -39,7 +43,7 @@ export default function SettingsCheckbox({
 						<FieldTitle>{title}</FieldTitle>
 						<FieldDescription>{description}</FieldDescription>
 					</FieldContent>
-					<Checkbox checked={enabled} onClick={onToggle} />
+					<Checkbox checked={enabled} disabled={disabled} onClick={onToggle} />
 				</Field>
 			</FieldLabel>
 		</Box>
