@@ -196,13 +196,17 @@ minutes.
 
 A full administrator with recent authentication sets the MFA policy to `optional`
 or `required` on the **Administration › Security** page. Virtool refuses
-`required` until that administrator has enrolled. The policy applies to live
-sessions immediately: a user without confirmed TOTP can reach only
-`/mfa-enrollment`. API keys are never challenged or restricted.
+`required` until that administrator has confirmed TOTP or added a passkey. The
+policy applies to live sessions immediately: a user with no confirmed TOTP and no
+passkey can reach only `/mfa-enrollment`, which enrolls TOTP only. A user without
+a passkey who turns off TOTP, or a user without TOTP who removes their last
+passkey, goes back to `/mfa-enrollment`. API keys are never challenged or
+restricted.
 
 A full administrator with recent authentication can reset the TOTP of a user who
 has lost both the authenticator and the recovery codes, but not their own. The
-reset ends the user's sessions.
+reset ends the user's sessions. Under `required`, a user without a passkey must
+then enroll TOTP again.
 
 An administrator with recent authentication can revoke the access of a
 compromised account, but not their own. A target that is an administrator needs
@@ -218,7 +222,8 @@ email. An administrator gives the user a recovery link through a trusted channel
 A passkey is an optional primary credential. The password stays available for
 sign-in and recovery. A passkey sign-in passes the same account checks as a
 password sign-in, and it requires user verification, such as a PIN or biometric.
-A user enrolled in TOTP therefore gets no second challenge after a passkey.
+A user enrolled in TOTP therefore gets no second challenge after a passkey, and
+a passkey satisfies the `required` MFA policy.
 
 Users can remove their final passkey, because the password remains. Removal
 doesn't change the password, TOTP, recovery codes, API keys, or sessions.

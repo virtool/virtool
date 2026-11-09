@@ -132,7 +132,7 @@ export type Account = User & {
 export type AccountSecurity = {
 	/** Whether the current address is verified */
 	emailVerified: boolean;
-	/** Whether the instance requires every user to use TOTP */
+	/** Whether the instance requires every user to use TOTP or a passkey */
 	mfaRequired: boolean;
 	/** An address waiting for verification; the current address stays active */
 	pendingEmail: string | null;
