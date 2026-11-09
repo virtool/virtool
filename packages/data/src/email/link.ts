@@ -8,7 +8,7 @@ import type { EncryptedValue, Keyring } from "../crypto/keyring";
 const EMAIL_LINK_PURPOSE = "email_link";
 
 /** The template field that holds the bearer link, by template type. */
-export const LINK_FIELDS = {
+const LINK_FIELDS = {
 	account_setup: "setupUrl",
 	email_verification: "verifyUrl",
 	password_recovery: "recoveryUrl",
@@ -16,17 +16,9 @@ export const LINK_FIELDS = {
 
 type LinkField = (typeof LINK_FIELDS)[keyof typeof LINK_FIELDS];
 
-type WithoutLink<T> = T extends EmailLinkTemplate
-	? Omit<T, LinkField> & Partial<Pick<T, Extract<keyof T, LinkField>>>
-	: never;
+type WithoutLink<T> = T extends EmailLinkTemplate ? Omit<T, LinkField> : never;
 
-/**
- * A template as the outbox stores it.
- *
- * The link field is absent from every row written since links were encrypted.
- * It stays optional for rows queued before that, until they reach a terminal
- * state.
- */
+/** A template as the outbox stores it, with any bearer link removed. */
 export type StoredEmailTemplate =
 	| EmailNoticeTemplate
 	| WithoutLink<EmailLinkTemplate>;
@@ -57,9 +49,8 @@ export function sealEmailLink(
 /**
  * Rebuild a renderable template, or return `null` if its link is unreadable.
  *
- * A row with no envelope is a notice or was queued before links were
- * encrypted. A link template that has neither an envelope nor a URL is
- * unreadable, because rendering it would send a message with no link.
+ * A link template with no envelope is unreadable, because rendering it would
+ * send a message with no link.
  */
 export function openEmailTemplate(
 	keyring: Keyring,
@@ -70,15 +61,16 @@ export function openEmailTemplate(
 		return template as EmailTemplate;
 	}
 
-	const field = LINK_FIELDS[template.type];
-
 	if (link === null) {
-		return field in template ? (template as EmailTemplate) : null;
+		return null;
 	}
 
 	const opened = keyring.decrypt(EMAIL_LINK_PURPOSE, link);
 
 	return opened.ok
-		? ({ ...template, [field]: opened.plaintext } as EmailTemplate)
+		? ({
+				...template,
+				[LINK_FIELDS[template.type]]: opened.plaintext,
+			} as EmailTemplate)
 		: null;
 }
