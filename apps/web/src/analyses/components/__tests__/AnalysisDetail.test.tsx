@@ -88,7 +88,23 @@ describe("<AnalysisDetail />", () => {
 		);
 	});
 
-	it.each<JobState>(["pending", "running", "succeeded"])(
+	it("shows a succeeded job's unready analysis as unfinished", async () => {
+		const job = createJob("succeeded");
+		mockUnreadyAnalysis(job);
+
+		renderDetail();
+
+		expect(
+			await screen.findByText("Analysis did not finish"),
+		).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "View job" })).toHaveAttribute(
+			"href",
+			`/jobs/${job.id}`,
+		);
+		expect(screen.queryByText("Analysis in progress")).not.toBeInTheDocument();
+	});
+
+	it.each<JobState>(["pending", "running"])(
 		"shows an unready analysis as in progress while its job is %s",
 		async (state) => {
 			mockUnreadyAnalysis(createJob(state));
@@ -128,5 +144,36 @@ describe("<AnalysisDetail />", () => {
 		renderWithCachedJob(job, "running");
 
 		expect(await screen.findByText("Analysis failed")).toBeInTheDocument();
+	});
+
+	it("refetches an unready analysis when the job query shows success", async () => {
+		const job = createJob("running");
+		mockUnreadyAnalysis(job);
+
+		renderWithCachedJob(job, "succeeded");
+
+		expect(await screen.findByText("Analysis in progress")).toBeInTheDocument();
+		expect(
+			screen.queryByText("Analysis did not finish"),
+		).not.toBeInTheDocument();
+
+		await vi.waitFor(() =>
+			expect(analysisServerFnMocks.getAnalysisFn).toHaveBeenCalledTimes(2),
+		);
+	});
+
+	it("shows an analysis as unfinished once its refetch confirms success", async () => {
+		const job = createJob("running");
+		mockUnreadyAnalysis({ ...job, state: "succeeded" });
+		analysisServerFnMocks.getAnalysisFn.mockResolvedValueOnce({
+			...createFakeAnalysisMinimal({ job, ready: false }),
+			files: [],
+		});
+
+		renderWithCachedJob(job, "succeeded");
+
+		expect(
+			await screen.findByText("Analysis did not finish"),
+		).toBeInTheDocument();
 	});
 });
