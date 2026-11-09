@@ -17,10 +17,11 @@ Virtool has two analysis workflows:
 ### Analysis jobs
 
 Each analysis runs as a job. An analysis can take minutes or hours. The time
-depends on the size and complexity of the sample library.
+is longer for a large or complex sample library.
 
-To monitor analyses, click **Jobs** in the top navigation bar. The list opens
-with the running jobs.
+To monitor analyses, click **Jobs** in the top navigation bar. By default, the
+list shows only pending and running jobs. To show other jobs, use the **State**
+filter.
 
 The detail page of an analysis job links to the analysis.
 
@@ -41,8 +42,8 @@ version, create a new analysis.
 
 ### Subtractions
 
-Subtractions are sets of host or non-pest sequence data. Analyses use them to
-remove non-pathogen reads.
+Subtractions are sets of host or non-pathogen sequence data. Analyses use them
+to remove reads that are not from a pathogen.
 
 For more information, see the [subtractions guide](/docs/guide/subtractions).
 
@@ -50,24 +51,24 @@ For more information, see the [subtractions guide](/docs/guide/subtractions).
 
 1. Open a sample and click the **Analyses** tab.
 
-   This tab shows only when the sample is ready.
+   Virtool shows this tab only when the sample is ready.
 
 2. View the table of analyses.
 
-   The table shows running and completed analyses. Each page shows 25 analyses.
+   The table shows running and complete analyses. Each page shows 25 analyses.
 
-   | Column           | Description                                                                 |
-   | ---------------- | --------------------------------------------------------------------------- |
-   | **Workflow**     | The workflow name. Click it to open the analysis.                           |
-   | **Version**      | The workflow version. This shows **Pending** until the analysis completes.  |
-   | **Reference**    | The reference and the index version that the analysis used.                 |
-   | **Subtractions** | The subtractions that the analysis used.                                    |
-   | **User**         | The user who started the analysis.                                          |
-   | **Created**      | The time that the analysis started.                                         |
+   | Column           | Description                                                                  |
+   | ---------------- | ---------------------------------------------------------------------------- |
+   | **Workflow**     | The workflow name. Click it to open the analysis.                            |
+   | **Version**      | The workflow version. This shows **Pending** until the analysis is complete. |
+   | **Reference**    | The reference and the index version that the analysis used.                  |
+   | **Subtractions** | The subtractions that the analysis used.                                     |
+   | **User**         | The user who started the analysis.                                           |
+   | **Created**      | The time that the analysis started.                                          |
 
 3. To sort the table, click **Workflow**, **User**, or **Created**.
 
-   By default, the newest analysis shows first.
+   By default, the table shows the newest analysis first.
 
 4. To filter the table, use the **Workflows** and **Users** filters.
 
@@ -85,8 +86,8 @@ You must have write access to the sample to create an analysis.
 
 3. Under **Workflow**, select **Pathoscope** or **Nuvs**.
 
-   Nuvs needs [HMMs](/docs/guide/hmms). If no HMMs are installed, the dialog does
-   not show **Workflow**, and the analysis uses Pathoscope.
+   Nuvs cannot run without [HMMs](/docs/guide/hmms). If Virtool has no HMMs, the
+   dialog does not show **Workflow**, and the analysis uses Pathoscope.
 
 4. Under **Subtractions**, select the subtractions that you want to use.
 
@@ -98,16 +99,12 @@ You must have write access to the sample to create an analysis.
    Each reference shows its latest ready index version. If the list is empty,
    build a reference index first.
 
-6. To create more analyses from the dialog, turn on **Create more**.
+6. Click **Create**.
 
-   The dialog then stays open after each analysis.
+   The table shows the new analysis. The table shows a progress indicator until
+   the analysis is complete.
 
-7. Click **Create**.
-
-   The new analysis shows in the table. A progress indicator shows until the
-   analysis completes.
-
-8. Go to the **Samples** list.
+7. Go to the **Samples** list.
 
    Each ready sample shows a tag for each workflow. The tag shows the state of
    the workflow for that sample. Click a tag to open the **Analyses** tab of the
@@ -124,9 +121,12 @@ You must have write access to the sample to create an analysis.
 
 <Note color="red">
 
-**Analysis deletion is permanent**. A deleted analysis can't be recovered.
+**You cannot recover a deleted analysis.**
 
 </Note>
+
+You must have write access to the sample to delete an analysis. Virtool shows
+the trash icon only after the job of the analysis stops.
 
 1. Open the sample and click the **Analyses** tab.
 
@@ -135,9 +135,6 @@ You must have write access to the sample to create an analysis.
    The **Delete Analysis** dialog opens.
 
 3. Click **Confirm**.
-
-You must have write access to the sample to delete an analysis. The trash icon
-shows only after the job of the analysis stops.
 
 A failed or cancelled analysis stays in the table until a user deletes it. Its
 page shows **Analysis failed** or **Analysis cancelled**, with a **View job** link
@@ -161,13 +158,12 @@ percentage includes reads that Virtool later subtracts.
 | **Subtracted, mapped better to** | The reads removed because they mapped better to a subtraction. |
 | **Analysed**                     | The reads that remain after subtraction.                       |
 
-The last two rows show only when the analysis uses a subtraction.
+The table shows the last two rows only when the analysis uses a subtraction.
 
 ### Hit list
 
 The list shows each OTU that Pathoscope found. By default, the list shows all
-hits. The list header labels the **Acronym**, **Weight**, **Depth**, and
-**Coverage** columns.
+hits.
 
 | Value    | Description                                                                                                                       |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -179,18 +175,14 @@ Click the name of an OTU to show the coverage charts for its isolates. Click a
 panel of an isolate chart to see the accession, definition, length, reads,
 weight, and coverage of the sequence.
 
-The dashed line on a chart shows the maximum observed depth. All charts of an
-OTU use this scale.
+The dashed line on a chart shows the maximum depth of the OTU. All charts of the
+OTU use this depth as the top of their scale.
 
 ### Filter, sort, and export
 
-To hide low-coverage hits, click **Filter**.
-
-- Turn on **Hide low-coverage OTUs** to hide OTUs.
-- Turn on **Hide low-coverage isolates** to hide isolates in an expanded OTU.
-  This switch shows only in the **Charts** view.
-- Use **Hide when coverage less than** to set the limit. The default limit is
-  0.50.
+To hide low-coverage hits, click **Filter**. By default, the filter hides hits
+with coverage less than 0.50. You can see the **Hide low-coverage isolates**
+switch only in the **Charts** view.
 
 Use the toolbar above the hit list:
 
@@ -204,10 +196,11 @@ Use the toolbar above the hit list:
 
 The **Export** menu has these options:
 
-- **OTUs** and **Isolates** copy the hits that show on the page, with or without
+- **OTUs** and **Isolates** copy the hits that the page shows, with or without
   headers. You can paste them into a spreadsheet.
 - **Excel** and **CSV** download the full analysis.
-- **Prefer acronym** names each OTU by its acronym, when it has one.
+- **Prefer acronym** puts the acronym of an OTU in the export in place of its
+  name, if the OTU has an acronym. Virtool keeps this setting for your account.
 
 To copy some hits, select their checkboxes and click **Copy**.
 
@@ -223,9 +216,9 @@ to make a decision.
 
 As a guide, a dsRNA library can have approximately 5 million reads, but the
 percentage of mapped reads is more important. For dsRNA, this percentage can
-range from less than 1% to greater than 80%. Greater viral RNA enrichment,
-measured by the percentage of mapped reads, reduces the total number of reads
-required. For example, 100,000 mapped reads—2% of 5 million—may be sufficient.
+be less than 1% or more than 80%. The percentage of mapped reads shows the
+enrichment of viral RNA. When the enrichment is high, fewer total reads are
+necessary. For example, 100,000 mapped reads (2% of 5 million) can be enough.
 
 ### Hit values
 
@@ -241,7 +234,7 @@ charts to make a decision.
 
 - Deep, wide coverage of an isolate often occurs with an infection.
 - Shallow, wide, and broken coverage can occur with contamination between
-  samples on the same plate. These hits usually have low weights.
+  samples on the same plate. Hits with this pattern usually have low weights.
 - Deep coverage in a small area is usually non-specific mapping. Reads can map
   to low-complexity or host-similar regions of the isolate genome. This pattern
   usually does not show a true infection. **Depth** is a median, so it can be 0
@@ -251,10 +244,10 @@ charts to make a decision.
 
 #### High quality positive
 
-This sample comes from a _Malus_ host. It has 9,225,241 total reads, and 46.40% of
-them mapped to the reference. This shows good enrichment of viral RNA. Virtool
-subtracted 16,908 reads that mapped better to _Malus domestica_. This left
-4,263,751 reads for analysis.
+This sample comes from an apple host. It has 9,225,241 total reads, and 46.40% of
+them mapped to the reference. This percentage shows good enrichment of viral RNA.
+Virtool subtracted 16,908 reads that mapped better to _Malus domestica_. After
+the subtraction, 4,263,751 reads remained for analysis.
 
 ![Mapping overview and hit list toolbar](./pathoscope_overview.png?url)
 
@@ -278,7 +271,7 @@ sample.
 Capillovirus mali has two isolates.
 Isolate 13TF142 has a weight of 0.078, a depth of 309, and a coverage of 0.998.
 Isolate A16 has a weight of 0, a depth of 0, and a coverage of 0.019. The reads
-support isolate 13TF142.
+show that isolate 13TF142 is the better match.
 
 For isolate 13TF142, 21,285 reads mapped to sequence MZ126530.1, which has a
 length of 6,495 nt.
@@ -289,18 +282,19 @@ length of 6,495 nt.
 
 This sample comes from a healthy plant. It has 9,850,428 total reads, and only 0.42%
 of them mapped to the reference. Virtool subtracted 4,755 reads that mapped better to
-_Arabidopsis thaliana_. This left 36,158 reads for analysis.
+_Arabidopsis thaliana_. After the subtraction, 36,158 reads remained for
+analysis.
 
 ![Mapping overview of a healthy sample](./pathoscope_negative_overview.png?url)
 
 The only virus present is Phaseolus vulgaris endornavirus 1 (PvEV-1). It has a weight
 of 1.000, a depth of 115, and a coverage of 1.000. This virus is a positive internal
-control. It is added to the nucleic acid extraction to show that the extraction
-succeeded.
+control. The laboratory adds it to the nucleic acid extraction. It shows that the
+extraction was successful.
 
 The list has 16 hits, sorted by coverage. The next three hits each have a weight of
 0, a depth of 0, and a coverage of 0.051 or less. Their charts show reads in only one
-small area. This is non-specific mapping. These viruses are not present in the
+small area. This pattern is non-specific mapping. These viruses are not present in the
 sample.
 
 ![Hit list with the internal control and three low hits](./pathoscope_negative_hits.png?url)
@@ -322,13 +316,16 @@ the same run or plate.
 
 ## View Nuvs results
 
-Nuvs discovers potential novel viral sequences in a sample library. The workflow:
+Nuvs finds possible novel viral sequences in a sample library. The workflow does
+these steps:
 
-- Remove known viral and subtraction reads
-- Assemble sample reads into long sequences called _contigs_
-- Predict open reading frames (ORFs) in the contigs
-- Scan the translated ORFs for viral protein motifs using a collection of profile hidden
-  Markov models (HMMs)
+1. It removes known viral reads and subtraction reads.
+2. It assembles sample reads into long sequences called _contigs_.
+3. It predicts open reading frames (ORFs) in the contigs.
+4. It scans the translated ORFs for viral protein motifs. It uses a collection of
+   profile hidden Markov models (HMMs) for this scan.
+
+To view the Nuvs results of a sample:
 
 1. Open a sample and click the **Analyses** tab.
 
@@ -336,28 +333,30 @@ Nuvs discovers potential novel viral sequences in a sample library. The workflow
 
 ### Contig list
 
-The left pane lists the assembled contigs that may be part of a novel virus.
+The left pane shows a list of the assembled contigs that can be part of a novel
+virus.
 
 Each contig has three values:
 
 | Value   | Description                                                                   |
 | ------- | ----------------------------------------------------------------------------- |
-| Length  | Number of base pairs in the sequence                                          |
+| Length  | The number of base pairs in the sequence.                                     |
 | E-value | The lowest E-value of the HMM matches in the contig. An E-value is the number of matches of this quality that you can expect by chance. A lower value shows a stronger match. |
-| ORFs    | The number of open reading frames in the contig with an HMM match             |
+| ORFs    | The number of open reading frames in the contig that have an HMM match.       |
 
-By default, the list does not show contigs without ORFs that have significant
-HMM matches. Click **Filter Sequences** to show them. The list header shows the
-number of contigs shown and the total number. Use <Key>w</Key> and <Key>s</Key>
+By default, the list shows only contigs that have an HMM match. To show all
+contigs, set **Filter Sequences** to off. The list header shows the number of
+visible contigs and the total number of contigs. Use <Key>w</Key> and <Key>s</Key>
 to move through the list.
 
 ### Contig detail
 
-Select a contig in the left pane to view its details in the right pane. The
-contig is shown as a black line with identified ORFs below it. ORFs without
-significant HMM matches are hidden by default. Click **Filter ORFs** to show them.
+Select a contig in the left pane to see its details in the right pane. The pane
+shows the contig as a black line, with the identified ORFs below it. By default,
+the pane shows only ORFs that have an HMM match. To show all ORFs, set **Filter
+ORFs** to off.
 
-For each ORF with a significant HMM match, the pane shows the HMM name, the
+For each ORF with an HMM match, the pane shows the HMM name, the
 length of the ORF in base pairs, and the E-value. Click the HMM name to open
 the HMM. **Families** shows the virus families of all HMMs that match the
 contig.
@@ -378,15 +377,15 @@ sequences.
 
 2. Click **BLAST at NCBI**.
 
-3. Wait for the BLAST search to complete.
+3. Wait until the BLAST search is complete.
 
 Virtool checks the search at intervals. If NCBI has no result after 30 minutes,
 the search stops with an error. To search again, click **Retry**. The new search
 replaces the old result.
 
-When the BLAST search completes, the **NCBI BLAST** table shows below the
-contig. For each hit, the table shows the **Accession**, **Name**, **E-value**,
-**Score**, and **Identity**. The table shows a maximum of 5 hits.
+When the BLAST search is complete, the page shows the **NCBI BLAST** table
+below the contig. For each hit, the table shows the **Accession**, **Name**,
+**E-value**, **Score**, and **Identity**. The table shows a maximum of 5 hits.
 
 ### Filter, sort, and export
 
@@ -401,8 +400,8 @@ The page address keeps your search, sort, and filter settings.
 
 ## Interpret Nuvs
 
-Virtool assembles many contigs from known viruses or non-viral sources. Use
-BLAST to check whether a significant contig is novel.
+Nuvs assembles many contigs from known viruses or non-viral sources. Use BLAST
+to find if a contig with an HMM match is novel.
 
 ### BLAST results
 
