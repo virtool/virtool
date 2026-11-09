@@ -22,6 +22,7 @@ import type {
 	FormattedPathoscopeAnalysis,
 } from "../types";
 import { getWorkflowVersionLabel } from "../utils";
+import AnalysisNotReady from "./AnalysisNotReady";
 import { PathoscopeViewer } from "./Pathoscope/PathoscopeViewer";
 
 const routeApi = getRouteApi(
@@ -51,11 +52,7 @@ export default function AnalysisDetail() {
 	}
 
 	if (!analysis.ready) {
-		return (
-			<Box>
-				<LoadingPlaceholder className="mt-5" message="Analysis in progress" />
-			</Box>
-		);
+		return <AnalysisNotReady job={analysis.job} />;
 	}
 
 	if (analysis.workflow !== "pathoscope" && analysis.workflow !== "nuvs") {
