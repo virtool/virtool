@@ -28,13 +28,11 @@ from the groups they are members of. You can't set permissions for one user.
 
 | Permission           | Description                    |
 | -------------------- | ------------------------------ |
-| `cancel_job`         | Cancel running jobs            |
 | `create_ref`         | Create new references          |
 | `create_sample`      | Create new samples             |
 | `modify_hmm`         | Install and manage HMM data    |
 | `modify_subtraction` | Create and modify subtractions |
 | `remove_file`        | Delete uploaded files          |
-| `remove_job`         | Delete job records             |
 | `upload_file`        | Upload files                   |
 
 ### Groups
@@ -46,17 +44,17 @@ rights and permissions of the group.
 
 A user can have one administrator role. A user without a role is a limited user.
 
-| Role     | What the role can do                                        |
-| -------- | ----------------------------------------------------------- |
-| Full     | Manage who is an administrator and what they can do.        |
-| Settings | Manage [instance settings](/docs/guide/administration).     |
-| Users    | Create user accounts. Control activation of user accounts.  |
-| Base     | Manage HMMs and common references. View and cancel any job. |
+| Role     | What the role can do                                       |
+| -------- | ---------------------------------------------------------- |
+| Full     | Manage who is an administrator and what they can do.       |
+| Settings | Manage [instance settings](/docs/guide/administration).    |
+| Users    | Create user accounts. Control activation of user accounts. |
+| Base     | Manage HMMs and common references.                         |
 
 Each role can also do everything that the roles below it can do.
 
-Administrator roles also give permissions. All administrators have the `cancel_job`,
-`create_ref`, `modify_hmm`, and `remove_job` permissions. Full administrators have all
+Administrator roles also give permissions. All administrators have the `create_ref` and
+`modify_hmm` permissions. Full administrators have all
 permissions.
 
 Only a full administrator can assign or remove an administrator role, or change a user
