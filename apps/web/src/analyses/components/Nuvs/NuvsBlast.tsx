@@ -13,8 +13,7 @@ import SectionHeader from "@base/SectionHeader";
 import { ExternalLink as ExternalLinkIcon, Info, Redo2 } from "lucide-react";
 
 const ridRoot =
-	"https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
-    CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
+	"https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
 
 const identityFormatter = new Intl.NumberFormat("en-US", {
 	minimumFractionDigits: 2,

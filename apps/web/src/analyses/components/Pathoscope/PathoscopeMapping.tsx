@@ -17,8 +17,22 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 2,
 });
 
+const SMALLEST_PERCENT = 0.0001;
+
+const BELOW_SMALLEST_PERCENT = `<${percentFormatter.format(SMALLEST_PERCENT)}`;
+
 function formatPercent(count: number, total: number): string | undefined {
-	return total > 0 ? percentFormatter.format(count / total) : undefined;
+	if (total <= 0) {
+		return undefined;
+	}
+
+	const share = count / total;
+
+	if (count > 0 && share < SMALLEST_PERCENT / 2) {
+		return BELOW_SMALLEST_PERCENT;
+	}
+
+	return percentFormatter.format(share);
 }
 
 type MappingRowProps = {
@@ -42,6 +56,9 @@ function MappingRow({
 	percent,
 	title,
 }: MappingRowProps) {
+	const countMinus = negative && count > 0;
+	const percentMinus = countMinus && percent !== BELOW_SMALLEST_PERCENT;
+
 	return (
 		<tr>
 			<th className="font-normal text-gray-700 text-left py-0.5" scope="row">
@@ -59,13 +76,13 @@ function MappingRow({
 				</span>
 			</th>
 			<td className="font-medium pl-8 text-gray-700 text-right tabular-nums whitespace-nowrap">
-				{negative && MINUS}
+				{countMinus && MINUS}
 				{toThousand(count)}
 			</td>
 			<td className="pl-6 text-right tabular-nums whitespace-nowrap text-gray-500">
 				{percent && (
 					<>
-						{negative && MINUS}
+						{percentMinus && MINUS}
 						{percent}
 					</>
 				)}

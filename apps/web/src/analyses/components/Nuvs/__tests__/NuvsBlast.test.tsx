@@ -71,7 +71,7 @@ describe("<NuvsBlast />", () => {
 		expect(screen.getByText("BLAST in progress")).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /ABC123/ })).toHaveAttribute(
 			"href",
-			expect.stringContaining("RID=ABC123"),
+			"https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=ABC123",
 		);
 	});
 

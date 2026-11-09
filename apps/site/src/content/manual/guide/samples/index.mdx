@@ -52,26 +52,38 @@ management view.
 
 ## Start quick analysis
 
-Quick analysis lets you start analysis jobs for multiple samples at once.
+Quick analysis starts the same analysis on one or more samples at the same time.
 
-1. Select the samples of interest and click <Icon name="chart-area" color="green" />.
+1. Open the **Quick Analyze** dialog. Do one of these steps:
 
-   An **Analyze** dialog box appears.
-   ![Samples Selected](./selected.png?url)
+   - In the **Samples** list, select the samples and click **Analyze**.
+   - Click <Icon name="chart-area" color="blue" /> at the end of the row of a
+     ready sample.
 
-2. Choose the workflows (PathoscopeBowtie or Nuvs), subtraction, and references you
-   want to use to analyze your samples.
+   ![Four samples selected in the Samples list](./selected.png?url)
 
-   Selecting multiple references starts a separate job for each sample-reference
-   combination.
+2. Under **Selected Samples**, make sure that the list is correct.
 
-3. Click <DummyButton icon="play">Start</DummyButton> to start the analysis jobs.
-   ![Analyze](./analyze.png?url)
+3. Under **Workflow**, select **Pathoscope** or **Nuvs**.
 
-4. Wait for the analysis to complete.
+4. Under **Subtractions**, select the subtractions that you want to use.
 
-   Once the analysis is running, you can view its progress under the **Jobs** tab.
-   ![Analysis in progress](./progress.png?url)
+   If you analyze one sample, the dialog selects the default subtractions of
+   that sample for you. If you analyze more than one sample, the dialog does not
+   select subtractions.
+
+5. Under **Reference**, select one reference.
+
+   The dialog shows the number of jobs that will start. Virtool starts one job
+   for each sample.
+
+6. Click **Create**.
+
+   ![The Quick Analyze dialog with four samples selected](./analyze.png?url)
+
+7. In the **Samples** list, each sample shows a tag for each workflow. The tag
+   shows the state of the workflow for that sample. Click a tag to open the
+   **Analyses** tab of the sample.
 
 ## Create a sample
 
