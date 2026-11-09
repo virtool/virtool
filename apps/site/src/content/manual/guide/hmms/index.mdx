@@ -5,80 +5,41 @@ description: "Install, manage, and understand HMM data in Virtool."
 
 ## Overview
 
-Profile hidden Markov models (HMM) are used in Virtool to discover potential novel
-viruses using the [Nuvs workflow](/docs/science/nuvs).
+The [Nuvs workflow](/docs/science/nuvs) uses profile hidden Markov models (HMMs) to find
+possible new viruses. The HMM profiles and their annotations let Nuvs identify and
+annotate sequences from your sample that can be part of a new viral genome.
 
-To use the Nuvs workflow to predict novel viruses, you must first install HMM
-profiles and annotations. Together these data allow Nuvs to identify and annotate
-sequences assembled from your sample that might comprise part of a novel viral genome.
+You must install the HMM profiles before you can run Nuvs.
 
-## Install official data
+## Install the official HMMs
 
-1. Navigate to the _HMMs_ view in the main navigation bar.
+1. Click **HMMs** in the main navigation bar.
+2. Click **Install**.
 
-   You should see something like this if no HMM data have already been installed:
+The page shows **Installing** and the current step while Virtool downloads and installs
+the profiles. This can take some time. When the installation is complete, the page shows
+the list of HMMs.
 
-   ![No HMM data found](./empty.png?url)
+You must have the `modify_hmm` [permission](/docs/guide/users#permissions) to install
+HMMs. If you don't have it, ask an administrator to install them.
 
-2. Click <DummyButton color="grey" icon="download">Install Official</DummyButton> to start
-   the installation.
+## Browse HMMs
 
-   It could take some time to download and install the data.
+Click **HMMs** in the main navigation bar to see the installed HMMs. Each item shows
+the cluster number, the most common name, and up to three taxonomic families.
 
-   ![Installing Official HMM Data](./installing.png?url)
+To find an HMM, type a name in the search bar (for example, `replicase`).
 
-3. Wait for the installation to complete.
+Click an HMM to see its details:
 
-   When installation is complete, the HMM data loads. You can then browse the
-   annotations and use the Nuvs workflow.
+| Field               | Description                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Cluster**         | The unique number of the profile.                                                                                              |
+| **Names**           | Common names from the cluster members.                                                                                         |
+| **Length**          | The number of consensus positions in the model.                                                                                |
+| **Mean Entropy**    | The mean variability of each position. A lower value shows a more conserved profile.                                           |
+| **Cluster Members** | The protein sequences in the cluster. Each one shows its accession, name, and organism. Click an accession to open it at NCBI. |
+| **Taxonomy**        | The families and genera of the cluster member organisms, with a count for each.                                                |
 
-   ![Installed Official HMM Data](./list.png?url)
-
-## Explore annotations
-
-1. After HMM data has been installed, go to **HMM** in the main navigation bar.
-
-   ![Browse HMMs](./list.png?url)
-
-2. Use the search bar to find HMMs by annotative name (for example, RNA replicase).
-
-   <video src="./search.mp4" alt="Search HMMs for 'replicase'" autoplay />
-
-3. Click an HMM item to view its details.
-
-   The fields in the HMM detail view describe the profile and the protein sequences that
-   were used for its creation.
-
-   ![Browse HMMs](./detail.png?url)
-
-   | Field                | Description                                                                                                                            |
-   | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-   | **Cluster**          | A unique integer identifier for the cluster                                                                                            |
-   | **Best Definitions** | The three most common protein definitions found in the cluster member protein annotations.                                             |
-   | **Length**           | The length of the motif identified in the profile.                                                                                     |
-   | **Mean Entropy**     |                                                                                                                                        |
-   | **Total Entropy**    |                                                                                                                                        |
-   | **Cluster Members**  | A list of the proteins included in the cluster used to construct the profile HMM.                                                      |
-   | **Families**         | The taxonomic families represented in the cluster and their cluster member counts. Cluster members without families are tagged _None_. |
-
-## Purge HMM data
-
-It's possible to delete all HMM data from the disk and database. This is used primarily
-during testing and development.
-
-You can reinstall the HMM data once the deletion process is complete.
-
-1. Go to **HMM** in the main navigation bar.
-
-   ![HMM List View](./list_with_side.png?url)
-
-2. Click **Settings** in the left sidebar.
-
-   ![Purge in Settings](./settings.png?url)
-
-3. Click <DummyButton color="red" icon="trash">Purge</DummyButton> to purge the HMM data.
-
-   You are redirected to the HMM list view. The installation message is now
-   shown again because all HMM data has been deleted.
-
-   ![No HMM Data Found](./empty.png?url)
+You can also open an HMM from a Nuvs result. Click the HMM name above an open reading
+frame (ORF).

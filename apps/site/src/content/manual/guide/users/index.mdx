@@ -3,175 +3,260 @@ title: "Users"
 description: "Administer users and user groups."
 ---
 
-User accounts are used to control access to Virtool. They allow fine control of what
-actions users are allowed to perform and what resources they're allowed to access.
+User accounts control access to Virtool. They control which actions users can do and
+which data they can access.
 
 ## Concepts
 
 ### Ownership
 
-When users create new data items (such as samples, references, and jobs), they're automatically
-assigned as the owner of that item.
-
-For references and samples, owners have perpetual full rights on their samples and
-references.
+When a user creates a sample or a reference, that user becomes its owner. The owner of
+a sample or reference always has all rights on it.
 
 ### Rights
 
-Rights are properties of samples and references that control what actions specific users
-or user groups are allowed to
-perform on them.
+Rights are properties of samples and references. They control what specific users or
+groups can do with a sample or reference.
 
-Administrators automatically pass all rights checks.
+Full administrators have all rights on all samples and references.
 
 ### Permissions
 
-Permissions control which app-wide actions users can perform. Permissions are
-inherited through group membership.
+Permissions control which instance-wide actions users can do. Users get permissions
+from the groups they are members of. You can't set permissions for one user.
 
-Administrators automatically pass all permission checks.
-
-| Permission           | Description                                  |
-| -------------------- | -------------------------------------------- |
-| `cancel_job`         | can cancel running jobs                      |
-| `create_ref`         | can create references                        |
-| `create_sample`      | can create samples                           |
-| `modify_hmm`         | can add and remove HMM annotations and files |
-| `modify_subtraction` | can add, change, and remove subtractions     |
-| `remove_file`        | can remove uploaded files                    |
-| `remove_job`         | can remove cancelled and finished jobs       |
-| `upload_file`        | can upload files                             |
+| Permission           | Description                    |
+| -------------------- | ------------------------------ |
+| `cancel_job`         | Cancel running jobs            |
+| `create_ref`         | Create new references          |
+| `create_sample`      | Create new samples             |
+| `modify_hmm`         | Install and manage HMM data    |
+| `modify_subtraction` | Create and modify subtractions |
+| `remove_file`        | Delete uploaded files          |
+| `remove_job`         | Delete job records             |
+| `upload_file`        | Upload files                   |
 
 ### Groups
 
-Groups allow setting rights and permissions for more than one user. Users that are
-members of a group inherit rights and permissions from the group.
+A group gives rights and permissions to more than one user. Members of a group get the
+rights and permissions of the group.
 
-It's not possible to set permissions on a per-user basis.
+### Administrator roles
 
-### Administrators
+A user can have one administrator role. A user without a role is a limited user.
 
-User accounts can either be administrative or limited.
+| Role     | What the role can do                                        |
+| -------- | ----------------------------------------------------------- |
+| Full     | Manage who is an administrator and what they can do.        |
+| Settings | Manage instance settings.                                   |
+| Users    | Create user accounts. Control activation of user accounts.  |
+| Base     | Manage HMMs and common references. View and cancel any job. |
 
-Administrators automatically pass all permission and right checks.
+Each role can also do everything that the roles below it can do.
+
+Administrator roles also give permissions. All administrators have the `cancel_job`,
+`create_ref`, `modify_hmm`, and `remove_job` permissions. Full administrators have all
+permissions.
+
+Only a full administrator can assign or remove an administrator role, or change a user
+who has an administrator role. You can't change your own role.
+
+## Open user administration
+
+1. Click your avatar at the right of the main navigation bar.
+2. Click **Administration**.
+3. In the sidebar, click **Users**.
+
+You must have the Users, Settings, or Full administrator role to see **Administration**.
+
+The users list shows the handle, email, role, primary group, and status of each user. The
+status is **Active**, **Invited**, or **Deactivated**.
+
+To find users, type a handle or email address in the search field. To filter the list,
+use the **Role** and **Status** filters. Click a column heading to sort the list by that
+column.
+
+Click a handle to open the user's details.
 
 ## Create a user
 
-1. Navigate to the **Users** tab under **Administration**.
+When you create a user, Virtool makes an invited account and an invitation link. The user
+opens the link and chooses a handle and a password.
 
-   You need to be an administrator to access this view.
+1. Click **Create**.
+2. Type the email address of the user under **Email**.
+3. Optional: under **Groups**, add the user to groups. Click **Primary** beside a group to
+   make it the user's primary group.
+4. Optional: select an **Administrator role**. Only full administrators see this field.
+5. Under **Invitation delivery**, select one option:
+   - **Email invitation**: Virtool sends the link to the email address. This option is
+     available only if email delivery is set up.
+   - **Create shareable link**: you send the link to the user yourself.
+6. Click **Save**.
+7. If you selected **Create shareable link**, copy the link and send it to the user.
+   Virtool shows the link only one time.
+8. Click **Done**.
 
-   ![User management toolbar and header](./toolbar.png?url)
+An invitation link expires after 72 hours.
 
-2. Click <DummyButton icon="user-plus" /> to open the user creation dialog.
+## Manage an invitation
 
-3. Fill out the user creation form.
+Open the details of an invited user to see the status of the invitation. The
+**Invitation** section shows:
 
-   Enter the user's email address. You can also assign groups and choose a primary
-   group. A full administrator can assign an administrator role. Choose email
-   delivery or a link that you will share with the user.
+- **Status**: **Pending**, **Expired**, **Replaced**, or **Accepted**.
+- **Delivery**: **Shared link**, **Email queued**, **Email sent**, or **Email failed**.
+- When the invitation was sent, and when it expires.
 
-4. Click <DummyButton icon="save">Save</DummyButton>
+### Reissue an invitation
 
-   This creates a pending account and sends or displays the invitation link.
-   The user chooses a handle and password when they accept the invitation.
+Reissue an invitation if it expired, if the email failed, or if the user lost the link.
+
+1. Click **Reissue**.
+2. Select **Email invitation** or **Create shareable link**.
+3. Click **Reissue**.
+
+The old link stops working.
+
+### Delete an invited user
+
+You can delete a user who did not accept the invitation.
+
+1. Under **Danger Zone**, click **Delete**.
+2. Click **Confirm**.
+
+The invitation link stops working.
+
+## Change a user's handle
+
+1. Open the user's details.
+2. Under **Change Handle**, type the new handle.
+3. Click **Save**.
+
+The handle is the name that the user signs in with. Tell the user about the change.
+
+Virtool can ask you to confirm your identity before it changes a user.
 
 ## Help a user recover access
 
-Open the user's details and create a password reset link. The user chooses a new
-password with this one-time link. It expires after one hour. If email delivery is
-unavailable, copy the link and send it to the user yourself.
+If a user forgets their password, create a password reset link for them.
 
-## Change a user's group membership
+1. Open the user's details.
+2. Under **Password reset link**, click **Create reset link**.
+3. If email delivery is set up, Virtool sends the link to the user. If it is not set up,
+   copy the link and send it to the user yourself.
 
-You can change a user's group membership.
+The link works one time and expires after one hour. When you create a new link, the
+previous link stops working. Virtool shows the link only one time.
 
-This may affect what rights the user has on certain samples and references. It can also
-affect their app permissions.
+To stop all of the user's reset links, click **Revoke links**.
 
-Locate the **Groups** panel in the **Users** tab.
+## Change a user's groups
 
-![Groups Panel](./groups.png?url)
+The groups of a user change which permissions the user has. They can also change which
+rights the user has on samples and references.
 
-Click one of the group items to toggle membership in it.
+1. Open the user's details.
+2. Under **Groups**, select a group in the **Add group** field.
 
-![Toggle Group Membership](./toggle_group.png?url)
+To remove the user from a group, click **Remove** (the X) beside the group.
 
-Notice that the user's permissions are changed when group membership is toggled.
-
-<video
-  src="./toggle_group.mp4"
-  alt="Toggle a user's membership in a group."
-  autoplay
-/>
+The **Permissions** list shows the permissions that the user has now. It updates when you
+change the groups.
 
 ## Change a user's primary group
 
-Samples that a user creates can automatically be assigned to the creating user's primary
-user group.
+When a user creates a sample, Virtool can give the sample to the user's primary group.
+You can [configure](/docs/guide/samples/#settings) how Virtool assigns a group to new
+samples.
 
-How samples are assigned their initial user group is [configurable](/docs/guide/samples/#settings).
+The primary group must be one of the user's groups.
 
-Locate the **Primary Group** panel under the _Users_ tab.
+1. Open the user's details.
+2. Under **Groups**, click **Primary** beside the group.
 
-![Primary Group Panel](./primary_group.png?url)
+To remove the primary group, click **Primary** beside the current primary group.
 
-Select a primary group for the user from the dropdown list of the user's member groups.
+## Change a user's administrator role
 
-![Primary group dropdown](./primary_group_focus.png?url)
+You must be a full administrator.
 
-The display group is the user's primary group.
+1. Open the user's details.
+2. Under **Administrator Role**, select a role.
 
-![Primary group changed](./primary_group_done.png?url)
+To remove the role, click **Remove administrator role** (the trash icon) beside the role.
+
+## Deactivate a user
+
+A deactivated user can't use Virtool.
+
+1. Open the user's details.
+2. Under **Danger Zone**, click **Deactivate**.
+
+To restore access, click **Activate**.
+
+## Reset two-factor authentication
+
+Reset two-factor authentication for a user who lost their authenticator app and their
+recovery codes. You must be a full administrator. You can't reset your own two-factor
+authentication here.
+
+1. Open the user's details.
+2. Under **Danger Zone**, click **Reset**.
+3. Click **Confirm**.
+
+Virtool removes the authenticator and recovery codes of the user and signs the user out
+everywhere. If your instance requires two-factor authentication and the user has no
+passkey, the user must set it up again at the next sign-in.
+
+## Revoke a user's access
+
+Revoke access if a user's account is compromised. You can't revoke your own access.
+
+1. Open the user's details.
+2. Under **Danger Zone**, click **Revoke**.
+3. Click **Confirm**.
+
+Virtool signs the user out everywhere. The password, API keys, passkeys, two-factor
+authentication, and links of the user stop working. The email address of the user is no
+longer verified. Virtool does not tell the user.
+
+To restore access, create a [password reset link](#help-a-user-recover-access) and send
+it to the user through a channel that you trust.
 
 ## Manage groups
 
-The group management interface can be accessed by clicking <DummyButton color="grey" icon="users" /> to the
-right of the search bar in **Users** tab.
+To open groups, go to **Administration**, then click **Groups** in the sidebar.
 
-![Manage groups button](./groups_button.png?url)
+The groups are in a list at the left. Click a group to see its permissions and members.
 
-The group management interface looks like this:
+### Create a group
 
-![Group management interface](./groups_management.png?url)
+1. Click **Create**.
+2. Type a name for the group.
+3. Click **Save**.
 
-## Create a group
+### Rename a group
 
-Open the group management interface. Enter a name for the new group in the input at the
-top of dialog and click <DummyButton color="blue" icon="plus-square" />.
+1. Select the group.
+2. Click the group name at the top of the page.
+3. Type the new name, then press <kbd>Enter</kbd>.
 
-![New group input filled](./groups_add_filled.png?url)
+### Change a group's permissions
 
-The new group appears in the groups list.
+1. Select the group.
+2. Under **Permissions**, select or clear each permission.
 
-![New group added](./groups_added.png?url)
+Virtool saves each change immediately. All members of the group get the new permissions.
 
-## Change a group's permissions
+The **Members** list shows the users in the group. To add or remove members, change the
+[groups of each user](#change-a-users-groups).
 
-Open the group management interface and select the group you want to change permissions
-for.
+### Delete a group
 
-![Managers selected in groups interface](./groups_selected.png?url)
+1. Select the group.
+2. Click **Delete**.
+3. Click **Confirm**.
 
-Toggle permission by clicking them.
-
-<video src="./groups_permissions.mp4" alt="Toggling a permission." autoplay />
-
-Users added to the **Managers** group inherit the toggled permissions.
-
-<video
-  src="./groups_permissions_demo.mp4"
-  alt="Group permissions demonstration."
-  autoplay
-/>
-
-## Remove a group
-
-Open the group management interface and select the group you want to remove.
-
-![Managers selected in groups interface](./groups_selected.png?url)
-
-Click <DummyButton color="red" icon="trash">Remove Group</DummyButton> to
-remove the group.
-
-![Managers removed](./groups_management.png?url)
+Samples that belonged to the group have no group after you delete it. Virtool removes the
+rights that the group had on references.

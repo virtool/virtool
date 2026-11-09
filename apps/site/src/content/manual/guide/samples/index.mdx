@@ -5,50 +5,69 @@ description: "Create, assess, and manage samples."
 
 ## Overview
 
-Selecting **Samples** on the top menu brings up the main sample management view. Here,
-samples can be created, viewed, edited, analyzed, and removed.
+A sample holds the sequencing reads from one library. You use samples to start
+analyses.
 
-![The samples view](./samples.png?url)
+To open samples, click **Samples** in the main navigation bar. The sidebar has these
+pages:
+
+- **Browse**: the list of samples.
+- **Files**: the read files that are uploaded to Virtool.
+- **Labels**: the labels that you can give to samples.
+- **Settings**: the default rights for new samples. Only full administrators see this
+  page.
 
 ### What happens during sample creation?
 
-Sample FASTQ files are normalized and stored as compressed reads. Files associated
-with the sample can be viewed and downloaded from the sample detail page.
+When you create a sample, Virtool starts a Create Sample job. The job keeps the read
+files with the sample and calculates quality data from the reads.
 
-Virtool calculates quality information from the reads and saves it with the sample.
-
-The FASTQ files and quality data support further analyses triggered by the user.
+The sample shows **Creating** in the samples list until the job is complete. When the
+sample is ready, you can see its files and quality data, and you can start analyses.
 
 ## Browse samples
 
-Once you have imported one or more samples, they can be browsed in the main sample
-management view.
+The samples list shows 25 samples on each page. Each row shows the name, library type,
+labels, workflow status, creation time, and the user that created the sample.
 
-1. Navigate to the **Samples** view
+To find samples:
 
-   ![The samples view](./samples.png?url)
+1. Type part of a sample name in the search box.
+2. Use the filters below the search box to make the list smaller:
 
-2. Enter a search term in the search input
+   - **Labels**: samples that have the selected labels.
+   - **Workflows**: samples with a Pathoscope or Nuvs status of **Not analyzed**,
+     **In progress**, or **Complete**.
+   - **Created**: samples created in a month, a year, or a range of dates.
+   - **Users**: samples created by the selected users.
+   - **Groups**: samples owned by the selected groups.
 
-   <video src="./search.mp4" alt="Search for samples" autoplay />
+3. To remove a filter, click the remove control on its chip.
 
-3. Use the status filters to further narrow the list of samples
+If no samples match, click **Clear filters** to remove all the filters.
 
-   For each workflow (Pathoscope, Nuvs), the sample can have:
+To sort the list, click the **Name**, **Created**, or **User** column header. Click the
+header again to change the sort direction. By default, the newest samples are at the
+top.
 
-   - no analysis available
-   - analysis in progress
-   - at least one completed analysis
+The workflow tags in each row show the status of each workflow for the sample. Click a
+tag to open the **Analyses** tab of the sample.
 
-   This searches for samples with names containing _q10_ that have **a completed Nuvs analysis**:
+Click a sample name to open the sample.
 
-   <video src="./filter.mp4" alt="Filter samples" autoplay />
+### Select samples
 
-4. Click a sample to navigate to its detail view
+Select the checkbox at the start of a row to select a sample. Hold Shift and click a
+second checkbox to select all the samples between the two. Select the checkbox in the
+header to select all the samples on the page.
 
-   Here is the detail view for the sample named _Q10A_2_.
+Your selection stays when you go to a different page of the list. It clears when you
+change the search or the filters.
 
-   ![The sample detail view for Q10A_2](./detail.png?url)
+When you select samples, these actions show above the list:
+
+- **Labels**: add labels to the selected samples, or remove labels from them.
+- **Analyze**: start an analysis on the selected samples.
 
 ## Start quick analysis
 
@@ -56,340 +75,295 @@ Quick analysis starts the same analysis on one or more samples at the same time.
 
 1. Open the **Quick Analyze** dialog. Do one of these steps:
 
-   - In the **Samples** list, select the samples and click **Analyze**.
-   - Click <Icon name="chart-area" color="blue" /> at the end of the row of a
-     ready sample.
+   - In the samples list, select the samples and click **Analyze**.
+   - Click **Quick analyze** at the end of the row of a ready sample.
 
-   ![Four samples selected in the Samples list](./selected.png?url)
-
-2. Under **Selected Samples**, make sure that the list is correct.
+2. Make sure that the list of samples is correct.
 
 3. Under **Workflow**, select **Pathoscope** or **Nuvs**.
 
+   Nuvs is available only when HMM data is installed. See [HMMs](/docs/guide/hmms).
+
 4. Under **Subtractions**, select the subtractions that you want to use.
 
-   If you analyze one sample, the dialog selects the default subtractions of
-   that sample for you. If you analyze more than one sample, the dialog does not
-   select subtractions.
+   If you analyze one sample, the dialog selects the default subtractions of that
+   sample. If you analyze more than one sample, the dialog does not select
+   subtractions.
 
 5. Under **Reference**, select one reference.
 
-   The dialog shows the number of jobs that will start. Virtool starts one job
-   for each sample.
+   The dialog shows the number of jobs that will start. Virtool starts one job for
+   each sample.
 
 6. Click **Create**.
 
-   ![The Quick Analyze dialog with four samples selected](./analyze.png?url)
+To start more analyses from the same dialog, turn on **Create more** before you click
+**Create**. The dialog then stays open.
 
-7. In the **Samples** list, each sample shows a tag for each workflow. The tag
-   shows the state of the workflow for that sample. Click a tag to open the
-   **Analyses** tab of the sample.
+## Upload read files
+
+You must upload read files before you can create a sample.
+
+1. In the sidebar, click **Files**.
+2. Drag the files to the upload area, or click **Browse Files** and select them.
+
+Virtool accepts FASTQ files that are plain, gzip compressed, or bzip2 compressed. A file
+name must end in `.fq` or `.fastq`, optionally followed by `.gz` or `.bz2`.
+
+Files that are larger than the maximum upload size of your Virtool instance are
+rejected. Virtool shows the maximum size when it rejects a file.
+
+You must have the `upload_file` permission to upload files. To delete files, select them
+and click **Delete**. You must have the `remove_file` permission to delete files.
+
+### Paired reads
+
+A sample is unpaired if it has one read file. A sample is paired if it has two read
+files: one for each mate. Interleaved FASTQ files are not supported.
+
+Virtool finds the two files of a pair from their names. The names must be the same
+except for a mate token, for example `_R1` and `_R2`, `_1` and `_2`, or `.1.` and `.2.`.
+The file with `1` is the LEFT read and the file with `2` is the RIGHT read.
 
 ## Create a sample
 
-1. Go to **Samples** view via the main navigation bar
+You must have the `create_sample` permission to create a sample.
 
-   ![Empty Sample Manager](./samples.png?url)
+1. In the samples list, click **Create**.
+2. Under **Read files**, select the read files for the sample.
 
-2. Click **Files** in the left sidebar and upload a FASTQ file. Files can be
-   plain, gzip compressed, or bzip2 compressed.
+   The selector has two modes:
 
-   <video
-     src="./upload.mp4"
-     alt="Uplading a FASTQ file in the browser"
-     autoplay
-   />
+   - **Auto-pair**: each pair of files shows as one row. Click a row to select the
+     pair or the file.
+   - **Manual**: each file shows on its own row. Click up to two files. To change the
+     order of the LEFT and RIGHT files, click **Swap reads**.
 
-3. Return to the **Samples** view and click <DummyButton icon="plus-square" /> to open the
-   sample creation dialog
+   Virtool shows a warning if the name of a selected file looks like it belongs in the
+   other slot.
 
-   The uploaded file appears in the file list.
+3. Type a unique **Name** for the sample. To use the name of the read files, click
+   **Auto Fill**.
+4. Select a **User Group**.
 
-   ![Sample creation dialog](./create.png?url)
+   The group is used only when an administrator sets the sample group to
+   **Force choice**. See [Settings](#settings).
 
-4. Populate the sample creation form.
+5. Optional: click **Show Metadata Fields** and type the **Locale**, **Isolate**, and
+   **Host**.
+6. Select the **Library Type**: **Normal** or **sRNA**.
+7. Optional: select **Labels** for the sample.
+8. Select the **Default Subtractions**.
 
-   You **must** set a unique sample _name_ and _read size_. _Read size_ can be set to
-   either _normal_, _sRNA_, or amplicon. Later analysis workflows run using
-   different parameters based on the _read size_ setting.
+   Use the [subtractions](/docs/guide/subtractions) that are most closely related to
+   the host of the sample. Virtool selects them for you when you start an analysis of
+   only this sample.
 
-   The sample creation dialog allows you to set optional metadata including _isolate_,
-   _locale_, and _true host_.
+9. Click **Save**.
 
-   An default _subtraction_ must be selected. This should be the
-   [subtraction genome](/docs/guide/subtractions) most closely related to the
-   _true host_ for your sample.
+Virtool starts the sample creation job and opens the samples list. The new sample
+shows **Creating** until the job is complete.
 
-   ![Create sample dialog with non-file fields populated](./create_filled.png?url)
+To create more samples from the same page, turn on **Create more** before you click
+**Save**. To clear the form, click **Reset Form**.
 
-   <Aside title="Paired and Unpaired FASTQ Data">
+Sample names must be unique. Virtool shows an error if the name is already in use.
 
-   Paired or unpaired FASTQ data can be used to create a sample.
+### Create samples from files
 
-   Samples created from only one file are assumed to be unpaired. Paired samples must
-   comprise two paired FASTQ files. **Interleaved FASTQ files aren't currently supported**.
+You can also create samples on the **Files** page.
 
-   For paired data, check that the file orientation labels (left and right) are correct
-   before you create a sample. You can use the <DummyButton color="grey" icon="retweet" />
-   button to swap orientations.
+To create one sample from one file, click **Create sample** in the row of the file. If
+Virtool finds the mate of the file, the sample uses both files.
 
-   <video
-     src="./create_orientation.mp4"
-     alt="Swap sample read orientation"
-     autoplay
-   />
+To create many samples at the same time:
 
-   </Aside>
+1. Select the read files.
+2. Click **Create Samples**.
 
-   <Aside title="Default Subtraction">
+   Virtool makes one sample for each file or pair of files. Each sample gets a name
+   from its files.
 
-   The default subtraction is preselected whenever you create an analysis for the sample.
-   You can find the default subtraction for a given sample at
-   the bottom of its detail view.
+3. Change the sample names if necessary. To change many names at the same time, use
+   the rename tools above the list:
 
-   For Banana bunchy top virus below, the default subtraction is **Banana**. This was
-   the same subtraction that was selected when first creating this sample. Once a
-   default subtraction has been made for a sample, you can't change it.
+   1. Type the text to find in **Match**.
+   2. Type the new text in **Replacement**. Leave it empty to remove the matching text.
+   3. Click **Replace in** followed by the number of names.
 
-   ![Default Subtraction](./default_subtraction.png?url)
+   Matching is case-sensitive. Use `*` to match any number of characters. To use a
+   regular expression, click **Use regular expression**. Click **Undo rename** to undo
+   the last rename.
 
-   When you open an analysis creation dialog for the sample, the default subtraction
-   (**Banana**) is already pre-selected.
+4. To remove a sample from the batch, click **Remove** in its row.
+5. Set the fields that apply to every sample: **User Group**, metadata, **Library
+   Type**, **Labels**, and **Default Subtractions**.
+6. Click **Create** followed by the number of samples, for example **Create 4 samples**.
 
-   ![Default Subtraction Dialog](./default_subtraction_dialog.png?url)
+You can't create the samples while two samples have the same name or a name is empty.
 
-   </Aside>
+## Sample details
 
-5. Click <DummySaveButton /> to create the sample and start the sample creation job.
+A sample has these tabs:
 
-   You should immediately see a placeholder for your sample in the **Samples** view. The spinner indicates that the sample is still being created.
+- **General**: the metadata, library information, and notes of the sample.
+- **Files**: the read files of the sample.
+- **Quality**: charts of the read quality.
+- **Analyses**: the analyses of the sample. See [Analyses](/docs/guide/analyses).
+- The tab with the key icon: who can read and change the sample. Only users with write
+  rights on the sample see this tab.
 
-   ![Sample Creator Filled](./creating.png?url)
+Only the **General** tab is available while the sample is being created.
 
-6. Wait for job to complete.
+The **General** tab shows these library values: **Encoding**, **Read Count**, **Library
+Type**, **Length Range**, **GC Content**, and **Paired**.
 
-   Your sample looks something like this when it's ready.
+Virtool shows a warning if a read file of the sample is smaller than 10 MB. Make sure
+that you used the correct files.
 
-   ![Sample Creation Complete](./ready.png?url)
+### Labels and default subtractions
 
-## Interpreting sample quality
-
-Quality metrics are calculated from the uploaded reads during sample creation.
-
-The quality information can be viewed under the **Quality** tab:
-
-![Quality](./quality.png?url)
-
-The page shows three graphs.
-
-### Quality distribution at read positions
-
-![Quality Distribution at Read Positions](./quality_dist_at_read_positions.png?url)
-
-This graph shows the quality of your sample library. The Y-axis shows the quality score, the higher the better. The quality tends to decrease as the run progresses.
-
-A median below 25 or a lower quartile below 10 is cause for concern. The sample shown
-here has sufficient quality for further analysis.
-
-### Nucleotide composition at read positions
-
-![Nucleotide Composition at Read Positions](./nuc_comp_at_read_positions.png?url)
-
-This plot shows the proportion of each nucleotide at every read position. In a
-diverse library, nucleotide proportions shouldn't vary systematically by read
-position, so the lines should be roughly parallel. Overall nucleotide
-composition depends on the library; viral genomes may, for example, be
-A/T-rich.
-
-### Read-wise quality occurrence
-
-![Read-wise Quality Occurrence](./read_wise_quality_occurrence.png?url)
-
-In this case, every sequence is evaluated by looking at the mean score across all the bases in that particular sequence. The distribution of those means is then plotted as shown previously. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
+The sidebar of the **General** tab shows the **Labels** and **Default Subtractions** of
+the sample. To change them, click the edit control beside the heading and select or
+clear items in the list. Click **Manage** to open the labels or subtractions page.
 
 ## Edit a sample
 
-1. Click **Samples** in the top navigation bar to see the sample listing.
+1. Open the sample and go to the **General** tab.
+2. Click **Modify** beside the sample name.
+3. Change the **Name**, **Isolate**, **Host**, **Locale**, or **Notes**.
+4. Click **Save**.
 
-   ![Samples List Overview](./edit_sample_overview.png?url)
+Notes support Markdown. The notes show on the **General** tab.
 
-2. Click the sample to edit. In this example, select
-   **Apple Stem Pitting Virus**.
-
-   ![Apple Stem Pitting Virus](./apple_stem.png?url)
-
-3. Click <Icon name="pencil-alt" color="orange" /> to open the sample editing dialog.
-
-   ![Apple stem pitting virus dialog box](./apple_stem_dialog.png?url)
-
-4. Make your changes and click <DummySaveButton /> to save them.
-
-   ![Apple stem pitting virus dialog box](./apple_stem_dialog_edited.png?url)
-
-5. The changes are reflected in the sample detail view.
-
-   ![Apple stem pitting virus edited](./apple_stem_edited.png?url)
+You must have write rights on the sample to edit it.
 
 ## Delete a sample
 
-1. Click **Samples** in the top navigation bar to see a list of available samples.
-   ![Samples List Overview](./samples_overview.png?url)
+1. Open the sample and go to the **General** tab.
+2. Click **Delete** beside the sample name.
+3. Click **Confirm**.
 
-Click the sample to delete. In this example, delete **Test A**.
-![Test A](./Test_A.png?url)
+You can delete a sample when it is ready, or when its creation job failed or was
+cancelled. You must have write rights on the sample to delete it.
 
-Click the <Icon name="trash" color="red"/> to delete the sample. A dialog box such as the one below shows up to confirm the deletion of the sample.
-![Test A Deletion](./test_A_deletion.png?url)
+## Download a read file
 
-Click <Icon name="check" color="green" /> **Confirm**. The sample is now removed from the samples list.
-![Samples List Overview](./samples_overview2.png?url)
+1. Open the sample and go to the **Files** tab.
+2. Under **Reads**, click the name of the file.
 
-## Download a FASTQ file
+The download is the read file that was used to create the sample.
 
-You can download the original FASTQ files used to create a sample. To do so, click the sample of interest. Then click **Files**.
-![Sample of Interest](./files2.png?url)
+Some older samples keep only trimmed reads. For these samples, Virtool shows a message.
+To analyze untrimmed reads, create the sample again.
 
-Click the link under **Raw Data** to download the FASTQ file that was originally used to create the sample.
-![Downloaded File](./downloaded_file.png?url)
+## Interpreting sample quality
 
-## Trim caches
+Virtool calculates quality data from the reads when it creates the sample. Go to the
+**Quality** tab to see three charts.
 
-Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data is cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
+### Quality distribution at read positions
 
-A sample that hasn't yet been analyzed has no caches associated with it.
-![No Cache](./no_cache.png?url)
+This chart shows the quality score at each read position. A higher score is better.
+The chart shows the mean, the median, the quartiles, and the deciles. Quality usually
+decreases near the end of the reads.
 
-Running an analysis for this sample creates an analysis job. During the job the raw sample reads are trimmed and cached for future analyses. As soon as trimming is complete the cache is created.
-Caches are always smaller than the raw data. This library was reduced from 220.8 MB to 153.9 MB. This is due to removal of low quality reads and localized shortening of reads with low quality ends.
-![Cache](./cache.png?url)
+A median below 25 or a lower quartile below 10 is a cause for concern.
 
-When you click the link under **Cached Trims** you see all the parameters used by the trimming program as well as the name of the trimming command (`skewer-0.2.2`). The _hash_ is a unique identifier for the program-parameters combination used to trim this cache.
-![Trimming Parameters](./cache_parameters.png?url)
+### Nucleotide composition at read positions
 
-Additionally, below the parameters you see the quality of the data that has been trimmed and cached.
-![Quality of Trimmed Data](./quality2.png?url)
+This chart shows the percentage of guanine, adenine, thymine, and cytosine at each read
+position. In a diverse library, the percentages do not change much between positions,
+so the lines are almost parallel. The overall composition depends on the library. For
+example, viral genomes can be rich in A and T.
 
-### Trim cache quality
+### Read-wise quality occurrence
 
-Quality metrics are recalculated for reads trimmed during an analysis. The quality information is associated with the generated trim cache. Since low quality reads are discarded and low quality ends are removed, the trim cache quality metrics are expected to improve over those for the raw data.
+This chart shows the number of reads for each mean read quality. Virtool calculates
+the mean quality of all the bases in each read.
 
-#### Quality distribution at read positions - raw
+A good library shows one sharp peak at a high quality, with few reads of low quality. A
+mean quality below 27 is a cause for concern.
 
-![Quality of Sample](./quality3.png?url)
+## Labels
 
-#### Quality distribution at read positions - trimmed
+Labels help you sort and find samples. Each label has a name, a color, and an optional
+description.
 
-![Quality after Trimming](./quality5.png?url)
+To manage labels, click **Labels** in the sidebar.
 
-In the **Quality Distribution at Read Positions - Raw** chart, the mean base quality degrades closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts, low quality ends were removed. As a result, both quality measures increased.
+- To create a label, click **Create**. Type a **Name**, an optional **Description**, and
+  select a **Color**. Click **Save**.
+- To change a label, click **Edit label** in its row.
+- To delete a label, click **Delete** in its row and confirm.
 
-#### Read-wise quality occurrence - raw
-
-![Read-wise Quality of Sample](./quality4.png?url)
-
-#### Read-wise quality occurrence - trimmed
-
-![Read-wise Quality after Trimming](./quality6.png?url)
-
-The **Read-wise Quality Occurrence - Raw** image shows one small curve before a sharp peak. This is due to a significant number of reads with low mean quality being present in the library. The trimming process discards reads with low mean qualities. This is reflected in the **Trimmed** chart where the smaller peak is no longer present.
+You can give labels to a sample when you create it, on its **General** tab, or to many
+samples from the samples list.
 
 ## Rights
 
-### Concepts
+Rights control who can read and change a sample.
 
-Virtool allows for fine control of the rights users have to view or change samples.
+### Levels
 
-#### Management levels
+Rights apply at four levels:
 
-Rights can apply at four different levels.
+| Level          | Rights                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| Administrators | Full administrators can read and change all samples, and can change the rights of all samples. |
+| Owner          | The user that created the sample can always read and change it, and can change its rights.     |
+| Group          | Members of the group that owns the sample get the group rights.                                |
+| All users      | All users of the Virtool instance get the all users' rights.                                   |
 
-|                  |                                                                                                                                                                   |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _administrators_ | Members of the special administrator group. These users have full read and write access to all samples as well as the ability to manage the rights on any sample. |
-| _owner_          | The original sample creator. This user always has full read and write access to the sample as well as the ability to manage the rights on the sample.             |
-| _group_          | The group that owns the sample. Read and write privileges can be independently set at this level.                                                                 |
-| _all users_      | All users registered on the Virtool instance. Read and write privileges can be independently set at this level.                                                   |
+A sample can have no owner group. Then the group rights have no effect.
 
-#### Group ownership
+Owner groups let more than one team keep their samples private on one Virtool instance.
 
-Each sample can be owned by a user group. This lets multiple groups of
-diagnosticians or researchers keep their data private while sharing one Virtool
-instance.
+### Rights values
 
-Samples aren't required to have an owner group. The group can be set to `None`. In this case, group rights settings have no effect.
+| Value            | Effect                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| **None**         | Users can't see the sample in the samples list or open it.                                     |
+| **Read**         | Users can see the sample, its files, its quality data, and its analyses. They can't change it. |
+| **Read & write** | Users can also edit and delete the sample and start analyses.                                  |
 
-#### Privileges
+### Change the rights of a sample
 
-##### None
+Only the owner of the sample or a full administrator can change its rights.
 
-The management level (such as group or all users) can't read or write the sample. Included users never see the sample in the sample management interface.
+1. Open the sample.
+2. Click the tab with the key icon.
+3. Select the **Group** that owns the sample, or **None**.
+4. Select the **Group Rights**.
+5. Select the **All Users' Rights**.
 
-This privilege is useful for isolating samples between separate groups of users.
-
-##### Read
-
-The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
-
-They can't edit or remove the sample or create new analyses. The elements in the user interface associated with these actions are hidden.
-
-##### Read & write
-
-The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
-
-They can also edit and remove the sample and create new analyses.
-
-### Management
-
-The sample owner or an administrator can change an existing sample's access
-rights.
-
-Access the rights management controls by clicking the <Icon name="key" /> tab in the sample detail view.
-
-![The sample rights view](./sample_rights_view.png?url)
+Virtool saves each change immediately.
 
 ## Settings
 
-### Unique sample names
+Full administrators can set the default rights for new samples. Click **Settings** in
+the sidebar of the samples pages. Virtool saves each change immediately.
 
-By default, sample names must be unique to the sample manager. This prevents
-confusion between identically named samples. Administrators can change this in
-**Settings** on the Samples page.
-![Samples Overview](./samples_overview3.png?url)
+The settings do not change samples that already exist.
 
-Check the **Unique Sample Names** box to ensure that every created sample has a unique name.
+### Sample group
 
-!["Unique Sample Names Off"](./unique_sample_names.png?url)
+This setting controls which group owns a new sample.
 
-### Default sample rights
+| Option                   | Effect                                                           |
+| ------------------------ | ---------------------------------------------------------------- |
+| **None**                 | The sample has no owner group. Only the all users' rights apply. |
+| **Force choice**         | The user selects the owner group when they create the sample.    |
+| **User's primary group** | The sample gets the primary group of the user that creates it.   |
 
-These settings determine how rights are assigned to newly created samples. Sample rights in Virtool are reminiscent of UNIX permissions.
+### Group rights
 
-#### Sample group
+This setting is the default rights of the owner group: **None**, **Read**, or **Read &
+write**. It has no effect when the sample has no owner group.
 
-This determines how an owner group is applied to the sample when it's created.
+### All users' rights
 
-!["Sample Group Options"](./sample_group.png?url)
+This setting is the default rights of all users: **None**, **Read**, or **Read & write**.
 
-|                 |                                                                                 |
-| --------------- | ------------------------------------------------------------------------------- |
-| _None_          | No group owner is assigned. Group rights don't apply                           |
-| _Force Choice_  | The sample creator is forced to choose the owner group from their member groups |
-| _Primary Group_ | The sample is automatically assigned the creator's primary group                |
-
-#### Group rights
-
-This setting determines how members of the owner group can interact with the sample. If the owner group is _None_, this setting has no effect. Rights can be changed by sample owners and administrators at any time.
-
-!["Group Rights"](./sample_rights_view.png?url)
-
-|                |                                                                                                                     |
-| -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| _None_         | Sample isn't returned in searches and isn't accessible by URL.                                                    |
-| _Read_         | Sample appears in searches. Users can view it but can't edit it or start analyses. |
-| _Read & Write_ | Includes _Read_ rights. Users can also edit the sample and run analyses.                               |
-
-#### All users' rights
-
-This setting determines how any Virtool user can interact with the sample. These
-rights behave like group rights and can be changed by sample owners and
-administrators at any time.
+The owner of a sample and full administrators can change the rights of one sample at
+any time.
