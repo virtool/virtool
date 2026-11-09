@@ -1,6 +1,7 @@
 ---
 title: "Analyses"
 description: "Create, view, and manage analyses."
+order: 2
 ---
 
 import Key from "@components/Key.astro";
@@ -30,6 +31,9 @@ The detail page of an analysis job links to the analysis.
 Nuvs trims sample reads before it uses them. Virtool caches the trimmed reads.
 Later Nuvs analyses of the same sample can use the cache. Pathoscope uses
 untrimmed reads.
+
+An administrator sets the maximum size of the cache. See
+[Caching](/docs/guide/administration#caching).
 
 ### Reference versions
 

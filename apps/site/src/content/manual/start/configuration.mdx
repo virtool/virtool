@@ -81,8 +81,8 @@ Without a usable key:
 - GenBank lookups continue at the rate limit that NCBI applies to requests that
   have no API key.
 
-A valid key can be the wrong key for a stored value. The administration settings
-then show a configuration error for that value. Email delivery stops if Virtool
+A valid key can be the wrong key for a stored value. The
+[administration settings](/docs/guide/administration) then show a configuration error for that value. Email delivery stops if Virtool
 cannot read the Resend API key. GenBank lookups drop to the lower rate limit if
 Virtool cannot read the NCBI API key.
 
@@ -100,7 +100,7 @@ To start the rotation:
 2. On the task runner, set `VT_ENCRYPTION_KEY` to the new key and
    `VT_ENCRYPTION_KEY_PREVIOUS` to the old key. Roll out the change.
 3. Set the same values on the web server. Roll out the change.
-4. In the administration settings, make sure that the email settings and the
+4. In the [administration settings](/docs/guide/administration), make sure that the email settings and the
    NCBI API key do not show a configuration error.
 
 <Note color="red">
@@ -111,8 +111,8 @@ To start the rotation:
 
 To finish the rotation:
 
-1. Save the Resend API key and the NCBI API key again in the administration
-   settings. Virtool encrypts the saved values with the new key.
+1. Save the Resend API key and the NCBI API key again in the
+   [administration settings](/docs/guide/administration). Virtool encrypts the saved values with the new key.
 2. Wait at least six hours. Virtool does not encrypt queued email again, and it
    stops email delivery attempts after this time.
 3. Remove `VT_ENCRYPTION_KEY_PREVIOUS` from the task runner and the web server.

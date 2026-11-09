@@ -1,6 +1,7 @@
 ---
 title: "Samples"
 description: "Create, assess, and manage samples."
+order: 7
 ---
 
 ## Overview
@@ -114,8 +115,9 @@ You must upload read files before you can create a sample.
 Virtool accepts FASTQ files that are plain, gzip compressed, or bzip2 compressed. A file
 name must end in `.fq` or `.fastq`, optionally followed by `.gz` or `.bz2`.
 
-Files that are larger than the maximum upload size of your Virtool instance are
-rejected. Virtool shows the maximum size when it rejects a file.
+Files that are larger than the
+[maximum upload size](/docs/guide/administration#uploads) of your Virtool instance
+are rejected. Virtool shows the maximum size when it rejects a file.
 
 You must have the `upload_file` permission to upload files. To delete files, select them
 and click **Delete**. You must have the `remove_file` permission to delete files.

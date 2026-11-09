@@ -1,0 +1,298 @@
+---
+title: "Administration"
+description: "Manage instance settings for banners, security, storage, email, and NCBI."
+order: 10
+---
+
+## Overview
+
+The administration pages control settings that apply to all users of your Virtool
+instance.
+
+To open the administration pages:
+
+1. Click your avatar at the right of the main navigation bar.
+2. Click **Administration**.
+
+Virtool can ask you to confirm your identity before it opens the administration pages.
+
+The sidebar shows only the pages that your
+[administrator role](/docs/guide/users#administrator-roles) can open:
+
+| Sidebar group     | Page           | Minimum role |
+| ----------------- | -------------- | ------------ |
+| General           | Banners        | Settings     |
+| Access            | Users          | Users        |
+| Access            | Groups         | Users        |
+| Access            | Security       | Full         |
+| Storage           | Caching        | Settings     |
+| Storage           | Uploads        | Settings     |
+| Communication     | Email Delivery | Full         |
+| External Services | NCBI           | Settings     |
+
+To manage users and groups, see the [users guide](/docs/guide/users).
+
+## Banners
+
+A banner is a message that all users see above the main navigation bar. Virtool shows
+one banner at a time.
+
+You must have the Settings or Full administrator role.
+
+### Create a banner
+
+1. In the sidebar, click **Banners**.
+2. Click **Create**.
+3. Type the text of the banner under **Message**.
+4. Under **Color**, select red, orange, yellow, blue, purple, or grey.
+5. Click **Save**.
+
+Users do not see a new banner until you show it.
+
+### Show or hide a banner
+
+To show a banner, select it in the banner list. Users see the banner above the main
+navigation bar. If a different banner was shown, Virtool hides it.
+
+To hide the banner, select **Off — no banner displayed**.
+
+### Edit a banner
+
+1. Click **Edit** (the pen icon) beside the banner.
+2. Change the **Message** or the **Color**.
+3. Click **Save**.
+
+If the banner is shown, users see the change.
+
+### Delete a banner
+
+1. Click **Delete** (the trash icon) beside the banner.
+2. Click **Confirm**.
+
+## Security
+
+Use the **Security** page to make two-factor authentication necessary for all users.
+You must be a full administrator.
+
+By default, two-factor authentication is optional.
+
+### Require two-factor authentication
+
+1. Turn on two-factor authentication or add a passkey for your own account. See
+   [your account](/docs/guide/account#two-factor-authentication).
+2. In the sidebar, click **Security**.
+3. Select **Require two-factor authentication**.
+
+Virtool can ask you to confirm your identity before it changes the setting.
+
+If your account has no two-factor authentication and no passkey, Virtool does not change
+the setting. It shows the message **Set up two-factor authentication or add a passkey
+before requiring two-factor authentication.**
+
+To make two-factor authentication optional again, clear **Require two-factor
+authentication**.
+
+### What users see
+
+A passkey or two-factor authentication satisfies the requirement. Users who have
+neither must set up two-factor authentication before they can use Virtool. Virtool
+shows them the **Set up two-factor authentication** screen.
+
+This applies to users who are signed in now, at their next action. It also applies to a
+user who turns off two-factor authentication or removes their last passkey.
+
+## Caching
+
+Analysis workflows keep some of the files that they make, such as trimmed reads and
+mapping indexes, in a cache. A later analysis that needs the same files uses the cache
+and does not make the files again.
+
+You must have the Settings or Full administrator role.
+
+### Usage
+
+The **Usage over 30 days** chart shows the total size of the cache for each hour. A
+dashed line shows the storage budget. Above the chart, Virtool shows the latest total
+size and the number of caches.
+
+Virtool records the usage one time each hour. On a new instance, the chart shows **Usage
+history will appear after the next hourly cache task.**
+
+### Set the storage budget
+
+The storage budget is the maximum size of the cache. The default is 100 GB. The minimum
+is 1 GB. Virtool uses decimal units: 1 GB is 1,000,000,000 bytes.
+
+1. In the sidebar, click **Caching**.
+2. Type the budget under **Budget (GB)**.
+3. Click **Save**.
+
+### When the cache is larger than the budget
+
+One time each hour, Virtool removes the least recently used caches until the cache is
+smaller than the budget. Thus, the cache can be larger than the budget for up to one
+hour. Virtool can also remove caches that were used recently.
+
+If an analysis needs a cache that Virtool removed, the analysis makes the files again.
+The analysis then takes more time.
+
+## Uploads
+
+The maximum upload size is the size of the largest file that a user can upload. It
+applies to all uploads, from the web interface and from the
+[API](/docs/api/uploads).
+
+You must have the Settings or Full administrator role.
+
+The default is 5 GB. The minimum is 1 GB, and the maximum is 120 GB. Virtool uses decimal
+units: 1 GB is 1,000,000,000 bytes.
+
+1. In the sidebar, click **Uploads**.
+2. Type the size under **Maximum (GB)**.
+3. Click **Save**.
+
+The new size applies to the next upload. It does not change files that are already
+uploaded.
+
+Virtool refuses a file that is larger than the maximum before the transfer starts. The
+**Files** page shows the maximum size and the names of the files that it refused.
+
+## Email delivery
+
+Virtool sends email through [Resend](https://resend.com). You must be a full
+administrator to open **Email Delivery**.
+
+These features need email delivery:
+
+- Email invitations for new users. See [Create a user](/docs/guide/users#create-a-user).
+- Email verification, when a user adds or changes an email address.
+- Password recovery email.
+
+If email delivery is off, an administrator must send invitation and password reset links
+to users. Users can't add or change their email address.
+
+You need these items from Resend:
+
+- An API key.
+- A sender address on a domain that is verified in Resend.
+
+<Note>
+  Virtool encrypts the Resend API key. Set an [encryption
+  key](/docs/start/configuration#encryption-key) before you save the API key. If
+  no encryption key is set, Virtool does not save the API key.
+</Note>
+
+### Status
+
+The status at the top of the page tells you if email delivery works.
+
+| Status                  | Meaning                                                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Needs Configuration** | The API key, the sender address, or both are missing. The status names the missing items.                                                                                            |
+| **Disabled**            | The configuration is complete, but sending is off.                                                                                                                                   |
+| **Active**              | The configuration is complete, and sending is on.                                                                                                                                    |
+| **Configuration Error** | Virtool can't read the stored API key with its encryption key. See [Unset or invalid keys](/docs/start/configuration#unset-or-invalid-keys). Virtool does not change the stored key. |
+
+You can also save a new API key to correct a configuration error. You can't then get
+the old key back.
+
+### Set up email delivery
+
+1. In the sidebar, click **Email Delivery**.
+2. Under **Resend API Key**, type your API key. Then click **Save Key**.
+3. Under **Sender**, type a **Sender Name** and a **Sender Address**.
+4. Optional: type a **Reply-To Address**. If you leave it empty, replies go to the
+   sender address.
+5. Click **Save**.
+6. Under **Sending**, turn on **Enable**.
+7. Send a test email. See [Send a test email](#send-a-test-email).
+
+You can turn on **Enable** only when the status is **Disabled**.
+
+The API key field is always empty. Below the field, Virtool shows **A key is
+configured** or **No key is configured**. An API key can contain up to 256 characters.
+
+### Replace or remove the API key
+
+To replace the API key, type a new key and click **Replace Key**.
+
+To remove the API key:
+
+1. Click **Remove**.
+2. Click **Confirm**.
+
+When you remove the API key, Virtool turns off sending. You can't get the key back.
+
+### Turn off sending
+
+Under **Sending**, turn off **Enable**.
+
+When sending is off, Virtool does not queue new email. Virtool continues to send email
+that is already in the queue.
+
+### Send a test email
+
+A test email shows if Resend accepts email from your configuration. The test does not
+change the configuration. You can send a test only when the status is **Active** or
+**Disabled**.
+
+1. Under **Test**, type an address under **Email Address**.
+2. Click **Send**.
+
+If Resend accepts the message, Virtool shows **Resend accepted the test message**. Make
+sure that the message arrives in the mailbox.
+
+If the test fails, Virtool shows one of these messages:
+
+| Message starts with                       | What to do                                                                         |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| **The stored API key could not be used.** | Save a valid API key. Make sure that the encryption key is correct.                |
+| **Resend rejected the message.**          | Make sure that the sender address is correct and its domain is verified in Resend. |
+| **Resend rejected the sender address.**   | Make sure that the sender address is correct and its domain is verified in Resend. |
+| **Resend is unavailable.**                | Try again later.                                                                   |
+| **Resend is rate limiting this account.** | Try again later.                                                                   |
+| **Resend did not answer in time.**        | Try again later.                                                                   |
+| **Email delivery is not usable yet.**     | Complete the configuration.                                                        |
+| **Resend refused the message.**           | Make sure that the configuration is correct.                                       |
+
+## NCBI
+
+Virtool gets GenBank records from NCBI when a user clicks **Auto Fill** for a sequence.
+See [Add a sequence](/docs/guide/otus#add-a-sequence).
+
+Without an NCBI API key, NCBI lets Virtool send 3 requests each second. With a key,
+NCBI lets Virtool send 10 requests each second. Virtool sends requests slowly enough to
+stay in the limit.
+
+You must have the Settings or Full administrator role.
+
+<Note>
+  Virtool encrypts the NCBI API key. Set an [encryption
+  key](/docs/start/configuration#encryption-key) before you save the API key. If
+  no encryption key is set, Virtool does not save the API key.
+</Note>
+
+### Set the API key
+
+1. Get an API key from your NCBI account.
+2. In the sidebar, click **NCBI**.
+3. Type the key under **API Key**.
+4. Click **Save**.
+
+The **API Key** field is always empty. It shows **A key is configured** or **No key
+configured** in gray text. An API key can contain up to 128 characters.
+
+If the field shows **No key configured** after you save, make sure that the encryption
+key is set.
+
+To remove the API key, click **Remove**. Virtool removes the key immediately and does
+not ask you to confirm.
+
+### Configuration error
+
+If Virtool can't read the stored API key with its encryption key, the page shows
+**Configuration Error**. Virtool does not change the stored key. GenBank lookups
+continue at the lower rate limit. See
+[Unset or invalid keys](/docs/start/configuration#unset-or-invalid-keys).
+
+To correct the error, set the correct encryption key, or save the API key again.

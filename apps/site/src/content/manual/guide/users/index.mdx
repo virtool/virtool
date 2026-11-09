@@ -1,6 +1,7 @@
 ---
 title: "Users"
 description: "Administer users and user groups."
+order: 9
 ---
 
 User accounts control access to Virtool. They control which actions users can do and
@@ -48,7 +49,7 @@ A user can have one administrator role. A user without a role is a limited user.
 | Role     | What the role can do                                        |
 | -------- | ----------------------------------------------------------- |
 | Full     | Manage who is an administrator and what they can do.        |
-| Settings | Manage instance settings.                                   |
+| Settings | Manage [instance settings](/docs/guide/administration).     |
 | Users    | Create user accounts. Control activation of user accounts.  |
 | Base     | Manage HMMs and common references. View and cancel any job. |
 
@@ -90,7 +91,8 @@ opens the link and chooses a handle and a password.
 4. Optional: select an **Administrator role**. Only full administrators see this field.
 5. Under **Invitation delivery**, select one option:
    - **Email invitation**: Virtool sends the link to the email address. This option is
-     available only if email delivery is set up.
+     available only if [email delivery](/docs/guide/administration#email-delivery)
+     is set up.
    - **Create shareable link**: you send the link to the user yourself.
 6. Click **Save**.
 7. If you selected **Create shareable link**, copy the link and send it to the user.
@@ -143,7 +145,8 @@ If a user forgets their password, create a password reset link for them.
 
 1. Open the user's details.
 2. Under **Password reset link**, click **Create reset link**.
-3. If email delivery is set up, Virtool sends the link to the user. If it is not set up,
+3. If [email delivery](/docs/guide/administration#email-delivery) is set up, Virtool
+   sends the link to the user. If it is not set up,
    copy the link and send it to the user yourself.
 
 The link works one time and expires after one hour. When you create a new link, the
@@ -206,7 +209,8 @@ authentication here.
 3. Click **Confirm**.
 
 Virtool removes the authenticator and recovery codes of the user and signs the user out
-everywhere. If your instance requires two-factor authentication and the user has no
+everywhere. If your instance [requires two-factor
+authentication](/docs/guide/administration#security) and the user has no
 passkey, the user must set it up again at the next sign-in.
 
 ## Revoke a user's access

@@ -52,7 +52,7 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 | `type` | string | One of `reference`, `reads`, or `subtraction`. |
 | `size` | integer | Exact file size in bytes, from 0 to the configured maximum upload size. |
 
-An administrator sets the maximum upload size. It defaults to 5,000,000,000
+An administrator sets the [maximum upload size](/docs/guide/administration#uploads). It defaults to 5,000,000,000
 bytes and can be raised to the hard upload limit of 120,000,000,000 bytes (120
 GB). A `size` that exceeds the configured maximum returns `413`; one that
 exceeds the hard upload limit fails validation with `422`. Check the
