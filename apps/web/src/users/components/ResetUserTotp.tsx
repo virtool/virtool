@@ -32,8 +32,8 @@ export function ResetUserTotp({ userId, handle }: ResetUserTotpProps) {
 					<>
 						Remove the authenticator and recovery codes for{" "}
 						<strong>{handle}</strong>? They are signed out everywhere. If the
-						instance requires two-factor authentication, they must set it up
-						again at their next sign-in.
+						instance requires two-factor authentication and they have no
+						passkey, they must set it up again at their next sign-in.
 					</>
 				}
 				onConfirm={() => mutation.mutateAsync(userId)}

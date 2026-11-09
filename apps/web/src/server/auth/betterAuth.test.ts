@@ -2,6 +2,7 @@ import { type AccountLifecycleState, AUTH_BASE_PATH } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
+	authPasskeys,
 	authRateLimits,
 	authSessions,
 	authTwoFactors,
@@ -514,6 +515,29 @@ describe("the mounted handler", () => {
 				}),
 			);
 			await db.update(users).set({ twoFactorEnabled: true });
+
+			const response = await handler(
+				authRequest("/passkey/verify-registration", cookie, {}),
+			);
+
+			expect(response.status).not.toBe(403);
+		});
+
+		it("lifts the restriction for a user with a passkey", async () => {
+			const cookie = await signInUnenrolled();
+			const handler = createAuthRequestHandler(db, auth);
+			const [user] = await db.select({ id: users.id }).from(users);
+			if (!user) {
+				throw new Error("no seeded user");
+			}
+			await db.insert(authPasskeys).values({
+				userId: user.id,
+				publicKey: "public-key",
+				credentialID: "credential-1",
+				counter: 0,
+				deviceType: "singleDevice",
+				backedUp: false,
+			});
 
 			const response = await handler(
 				authRequest("/passkey/verify-registration", cookie, {}),

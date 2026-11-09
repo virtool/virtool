@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
 
 import type { DbOrTx } from "../db/pg";
-import { authSessions } from "../db/schema/auth";
+import { authPasskeys, authSessions } from "../db/schema/auth";
 import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { nowUtc } from "../db/time";
@@ -19,12 +19,24 @@ export type ResolvedBrowserSession = {
 /**
  * Whether the live MFA policy restricts the joined `users` row to TOTP
  * enrollment. Read with the session rather than from a cached policy, so a
- * policy change or a TOTP disable restricts every live session on its next
- * request. A missing settings row means the `optional` default.
+ * policy change, a TOTP disable, or the removal of the last passkey restricts
+ * every live session on its next request. A missing settings row means the
+ * `optional` default.
+ *
+ * Confirmed TOTP or any passkey satisfies the policy, because every passkey
+ * ceremony requires user verification.
+ *
+ * Drizzle leaves column names unqualified in a single-table select, where a
+ * bare `id` in the subquery would resolve to `auth_passkeys.id`, so the
+ * correlation names both tables.
  */
 export const mfaEnrollmentRequired = sql<boolean>`(
 	coalesce((select ${settings.mfaPolicy} from ${settings} where ${settings.id} = 1), 'optional') = 'required'
 	and not coalesce(${users.twoFactorEnabled}, false)
+	and not exists (
+		select 1 from ${authPasskeys}
+		where ${authPasskeys}.${sql.identifier(authPasskeys.userId.name)} = ${users}.${sql.identifier(users.id.name)}
+	)
 )`;
 
 /** A live Better Auth session row safe for account-session display shaping. */

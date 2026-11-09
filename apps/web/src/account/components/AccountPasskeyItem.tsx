@@ -1,4 +1,5 @@
 import { getPasskeyNotice } from "@app/passkeys";
+import { resetClient } from "@app/utils";
 import { BoxGroupSection } from "@base/Box";
 import DeleteDialog from "@base/DeleteDialog";
 import {
@@ -26,13 +27,15 @@ import { useRemovePasskey, useRenamePasskey } from "../queries";
 
 type AccountPasskeyItemProps = {
 	passkey: PasskeySummary;
+	/** Whether removing the passkey restricts the session to TOTP enrollment */
+	removeRestrictsSession: boolean;
 };
 
 type FormValues = {
 	name: string;
 };
 
-function PasskeyRename({ passkey }: AccountPasskeyItemProps) {
+function PasskeyRename({ passkey }: { passkey: PasskeySummary }) {
 	const [open, setOpen] = useState(false);
 	const mutation = useRenamePasskey();
 	const {
@@ -99,8 +102,19 @@ function PasskeyRename({ passkey }: AccountPasskeyItemProps) {
 /** One of the account's passkeys, with controls to rename or remove it. */
 export default function AccountPasskeyItem({
 	passkey,
+	removeRestrictsSession,
 }: AccountPasskeyItemProps) {
 	const removeMutation = useRemovePasskey();
+
+	async function handleRemove() {
+		await removeMutation.mutateAsync({ managementId: passkey.managementId });
+
+		// The required policy now restricts this session to enrollment, which
+		// only a full page load routes to.
+		if (removeRestrictsSession) {
+			resetClient();
+		}
+	}
 
 	return (
 		<BoxGroupSection className="flex items-center justify-between gap-4">
@@ -125,16 +139,24 @@ export default function AccountPasskeyItem({
 					name={passkey.name}
 					noun="passkey"
 					message={
-						<>
-							Remove <strong>{passkey.name}</strong>? You will no longer be able
-							to sign in with it. Your password, two-factor authentication, and
-							current session are not affected. Also remove the passkey from
-							your device or password manager.
-						</>
+						removeRestrictsSession ? (
+							<>
+								Remove <strong>{passkey.name}</strong>? You will no longer be
+								able to sign in with it. This Virtool instance requires
+								two-factor authentication or a passkey. You must set up
+								two-factor authentication before you can use Virtool again. Also
+								remove the passkey from your device or password manager.
+							</>
+						) : (
+							<>
+								Remove <strong>{passkey.name}</strong>? You will no longer be
+								able to sign in with it. Your password, two-factor
+								authentication, and current session are not affected. Also
+								remove the passkey from your device or password manager.
+							</>
+						)
 					}
-					onConfirm={() =>
-						removeMutation.mutateAsync({ managementId: passkey.managementId })
-					}
+					onConfirm={handleRemove}
 					trigger={
 						<IconButton
 							color="red"

@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { AccountSecurity } from "@virtool/contracts";
 import { TriangleAlert } from "lucide-react";
 import { useState } from "react";
-import { accountSecurityQueryOptions } from "../queries";
+import { accountSecurityQueryOptions, passkeysQueryOptions } from "../queries";
 import TwoFactorDisable from "./TwoFactorDisable";
 import TwoFactorRegenerate from "./TwoFactorRegenerate";
 import TwoFactorSetup from "./TwoFactorSetup";
@@ -31,6 +31,11 @@ type TwoFactorStatusProps = {
 
 function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 	const { mfaRequired, recoveryCodesRemaining, twoFactorEnabled } = security;
+	const { data: passkeys } = useQuery(passkeysQueryOptions());
+
+	// A passkey also satisfies the required policy. While the list is unknown,
+	// assume that turning TOTP off restricts the session.
+	const disableRestrictsSession = mfaRequired && !passkeys?.length;
 
 	return (
 		<>
@@ -52,7 +57,8 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 						</div>
 						{mfaRequired && (
 							<span className="text-gray-600 text-sm">
-								This Virtool instance requires two-factor authentication.
+								This Virtool instance requires two-factor authentication or a
+								passkey.
 							</span>
 						)}
 					</div>
@@ -60,7 +66,7 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 						{twoFactorEnabled ? (
 							<>
 								<TwoFactorRegenerate />
-								<TwoFactorDisable mfaRequired={mfaRequired} />
+								<TwoFactorDisable restrictsSession={disableRestrictsSession} />
 							</>
 						) : (
 							<Button color="blue" size="medium" onClick={onSetUp}>

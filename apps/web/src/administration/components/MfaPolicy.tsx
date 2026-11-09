@@ -13,7 +13,7 @@ function getErrorMessage(error: Error | null): string | null {
 		: "The policy could not be changed. Try again.";
 }
 
-/** The instance setting that makes every user turn on TOTP. */
+/** The instance setting that makes every user turn on TOTP or add a passkey. */
 export default function MfaPolicy() {
 	const { data } = useSuspenseSettings();
 	const mutation = useSetMfaPolicy();
@@ -34,7 +34,7 @@ export default function MfaPolicy() {
 					<h3>Two-Factor Authentication</h3>
 				</SectionHeader>
 				<SettingsCheckbox
-					description="Users without two-factor authentication must set it up before they can use Virtool. You must turn it on for your own account first."
+					description="Users without two-factor authentication or a passkey must set up two-factor authentication before they can use Virtool. You must turn on two-factor authentication or add a passkey for your own account first."
 					disabled={mutation.isPending}
 					enabled={required}
 					onToggle={onToggle}

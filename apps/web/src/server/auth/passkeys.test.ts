@@ -481,21 +481,18 @@ describe("sign-in", () => {
 		expect(browser.has("__Secure-better-auth.two_factor")).toBe(false);
 	});
 
-	it("restricts a user the MFA policy requires to enroll, as a password sign-in would", async () => {
+	it("does not restrict a passkey user without TOTP under the required MFA policy", async () => {
 		const { key } = await enroll();
 		await seedSettings(db, { mfaPolicy: "required" });
 
 		const { browser } = await signIn(key);
-		const restricted = await browser.send(
+		const response = await browser.send(
 			"POST",
 			"/passkey/verify-registration",
 			{},
 		);
 
-		expect(restricted.status).toBe(403);
-		expect(await restricted.json()).toMatchObject({
-			code: "MFA_ENROLLMENT_REQUIRED",
-		});
+		expect(response.status).not.toBe(403);
 	});
 
 	it.each([

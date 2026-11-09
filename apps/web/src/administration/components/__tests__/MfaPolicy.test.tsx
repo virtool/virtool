@@ -80,7 +80,7 @@ describe("<MfaPolicy>", () => {
 		mockSettingsStore(createFakeSettings({ mfaPolicy: "optional" }));
 		settingsServerFnMocks.setMfaPolicyFn.mockRejectedValue(
 			createClientError(
-				"Set up two-factor authentication before requiring it.",
+				"Set up two-factor authentication or add a passkey before requiring two-factor authentication.",
 				409,
 			),
 		);
@@ -94,7 +94,7 @@ describe("<MfaPolicy>", () => {
 		);
 
 		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"Set up two-factor authentication before requiring it.",
+			"Set up two-factor authentication or add a passkey before requiring two-factor authentication.",
 		);
 	});
 });
