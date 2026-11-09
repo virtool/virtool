@@ -34,47 +34,7 @@ assumption that source sequences with high numbers of **uniquely mapped**
 (not multi-mapped) reads are most likely to be real source sequences. Read counts are
 fractionally reassigned when a read maps to multiple genomes.
 
-## Quality
+## Interpret results
 
-Analysis quality is determined by running Pathoscope and/or Nuvs on your sample of
-interest. These analyses can be found under the **Analyses** tab.
-
-![Cache quality analysis](./list.png?url)
-
-Click the **PathoscopeBowtie**.
-![PathoscopeBowtie](./header.png?url)
-
-Pathoscope uses mapped-read percentage, coverage, depth, and weight to determine
-whether a known virus is present in a sample.
-
-Generally, approximately 5 million reads is a good base line for a dsRNA library,
-but the percentage of mapped reads is of greater importance. For dsRNA, percentages
-can range from less than 1% to greater than 80%. Greater viral RNA enrichment, measured
-by the percentage of mapped reads, reduces the total number of reads required.
-For example, 2% of 5 million reads or 100 000 mapped reads is good.
-
-Other statistics include:
-
-**Coverage:** a measure for how well the mapped reads cover the viral genome. In general,
-coverage of greater than 0.5 indicates positive detection and coverage less than 0.2
-indicates negative detection.
-
-**Depth:** a measure of how many times a genome is covered by mapped reads.
-
-**Weight:** the calculated proportion of reads mapping to a virus. The weight is roughly
-proportional to the titre. Higher the titre, higher the weight. A weight greater than
-0.001 is a strong indicator of positive detection.
-
-![Pathoscope Analyses](./analysis.png?url)
-
-Three pathogens are likely to be in the sample. Although the total number of mapped reads
-is less than 5 million, the percentage of mapped reads is 8.12%, which is a good indicator
-of enrichment of viral RNA.
-
-Additionally, all three pathogens have high weight, depth, and coverage values, so
-the pathogens can be confidently identified as present in the sample.
-
-Further analysis with Nuvs isn't necessary for this sample. High weight and depth
-combined with low coverage would instead suggest that the virus sequence differs from
-the database reference. This may represent a new genotype or a new, closely related
-virus.
+To read and interpret Pathoscope results, see
+[Interpret Pathoscope](/docs/guide/analyses#interpret-pathoscope) in the analyses guide.
