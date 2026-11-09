@@ -305,6 +305,29 @@ function buildStorage(env: NodeJS.ProcessEnv): StorageResult {
 	};
 }
 
+/**
+ * Better Auth environment variables that explicit options can't override.
+ * `BETTER_AUTH_SECRETS` replaces `secret`, and `BETTER_AUTH_TRUSTED_ORIGINS`
+ * adds to `trustedOrigins`. The other variables it reads only fill options that
+ * Virtool always sets.
+ *
+ * Better Auth reads these from the plain environment, so a `_FILE` variant
+ * has no effect and is not checked.
+ */
+const OVERRIDING_AUTH_VARIABLES = [
+	"BETTER_AUTH_SECRETS",
+	"BETTER_AUTH_TRUSTED_ORIGINS",
+] as const;
+
+function getOverridingAuthIssues(env: NodeJS.ProcessEnv): z.core.$ZodIssue[] {
+	return OVERRIDING_AUTH_VARIABLES.filter((key) => env[key]).map((key) => ({
+		code: "custom",
+		path: [key],
+		message: `Unset ${key}. Virtool configures Better Auth from VT_AUTH_SECRET and VT_PUBLIC_ORIGIN only.`,
+		input: undefined,
+	}));
+}
+
 // Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
 // from. The resolver is shared with `apps/internal` through
 // `@virtool/env` rather than copied, so the precedence rule — the
@@ -321,12 +344,19 @@ export function parseServerConfig(
 	const parsed = ServerEnv.safeParse(resolved);
 	const storage = buildStorage(resolved);
 	const publicOrigin = parsePublicOrigin(resolved);
+	const overridingAuth = getOverridingAuthIssues(env);
 
-	if (!parsed.success || !storage.config || !publicOrigin.url) {
+	if (
+		!parsed.success ||
+		!storage.config ||
+		!publicOrigin.url ||
+		overridingAuth.length > 0
+	) {
 		throw new z.ZodError([
 			...(parsed.success ? [] : parsed.error.issues),
 			...storage.issues,
 			...publicOrigin.issues,
+			...overridingAuth,
 		]);
 	}
 

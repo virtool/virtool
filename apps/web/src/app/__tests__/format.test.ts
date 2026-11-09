@@ -58,6 +58,10 @@ describe("toThousand()", () => {
 });
 
 describe("toScientificNotation()", () => {
+	it("should render zero as a plain 0", () => {
+		expect(toScientificNotation(0)).toEqual("0");
+	});
+
 	it("should use scientific notation for values below 0.01", () => {
 		expect(toScientificNotation(0.001)).toEqual("1.00E-3");
 	});

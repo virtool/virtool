@@ -6,6 +6,7 @@ scope: heading
 match: $sentence
 exceptions:
   - Azure Blob Storage
+  - BLAST
   - E-utilities
   - FASTQ
   - FastQC

@@ -127,11 +127,7 @@ export default function AnalysesList({
 
 	return (
 		<ContainerNarrow>
-			<AnalysisHmmAlert
-				installed={Boolean(
-					hmms.status.installed?.ready ?? hmms.status.task?.complete,
-				)}
-			/>
+			<AnalysisHmmAlert status={hmms.status} />
 			<div className="mb-3 flex min-h-9 flex-wrap items-center gap-4">
 				<FilterBar
 					isUsersError={isErrorAnalysisUsers}

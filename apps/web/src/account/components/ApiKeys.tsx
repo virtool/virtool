@@ -35,7 +35,7 @@ export default function ApiKeys() {
 						<h2>API Keys</h2>
 						<p>
 							Manage API keys for accessing the{" "}
-							<ExternalLink href="https://www.virtool.ca/docs/developer/api_account/">
+							<ExternalLink href="https://www.virtool.ca/docs/api/uploads">
 								Virtool API
 							</ExternalLink>
 							.

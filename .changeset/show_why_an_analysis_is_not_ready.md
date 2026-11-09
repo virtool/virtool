@@ -2,8 +2,8 @@
 virtool: patch
 ---
 
-Show why an analysis is not ready
+Show when an analysis job succeeded but the analysis did not finish
 
-The analysis page now shows when the analysis job failed or was cancelled, or
-when the job succeeded but the analysis did not finish. Before, the page showed
-"Analysis in progress" for each of these analyses. Each state links to the job.
+The analysis page now shows **Analysis did not finish** and a link to the job
+when the job succeeded but the analysis is not ready. Before this change, the
+page showed **Analysis in progress** forever.

@@ -65,6 +65,36 @@ describe("<AnalysisMapping />", () => {
 		expect(row("Analysed")).toHaveTextContent("28,5260.89%");
 	});
 
+	it("should not sign the subtracted row when nothing was subtracted", async () => {
+		await renderWithRouter(
+			<AnalysisMapping
+				detail={createAnalysis({
+					results: { hits: [], readCount: READ_COUNT, subtractedCount: 0 },
+				})}
+				totalReads={TOTAL_READS}
+			/>,
+		);
+
+		expect(row(/Subtracted, mapped better to/)).toHaveTextContent(
+			"Arabidopsis thaliana00.00%",
+		);
+	});
+
+	it("should show a share below 0.01% as <0.01%", async () => {
+		await renderWithRouter(
+			<AnalysisMapping
+				detail={createAnalysis({
+					results: { hits: [], readCount: READ_COUNT, subtractedCount: 12 },
+				})}
+				totalReads={TOTAL_READS}
+			/>,
+		);
+
+		expect(row(/Subtracted, mapped better to/)).toHaveTextContent(
+			"Arabidopsis thaliana−12<0.01%",
+		);
+	});
+
 	it("should associate every figure with its row and column", async () => {
 		const { container } = await renderWithRouter(
 			<AnalysisMapping detail={createAnalysis()} totalReads={TOTAL_READS} />,

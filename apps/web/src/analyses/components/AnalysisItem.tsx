@@ -1,5 +1,5 @@
-import { useCheckAdminRole } from "@administration/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
+import DeleteDialog from "@base/DeleteDialog";
 import { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
@@ -8,6 +8,7 @@ import SlashList from "@base/SlashList";
 import { TableActionsCell } from "@base/Table";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
+import { useCheckCanEditSample } from "@samples/hooks";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
@@ -29,8 +30,10 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 		subtractions,
 		createdAt,
 	} = analysis;
-	const { hasPermission: canModify } = useCheckAdminRole("users");
-	const onDelete = useDeleteAnalysis(id);
+	const { hasPermission: canModify } = useCheckCanEditSample(
+		analysis.sample.id,
+	);
+	const mutation = useDeleteAnalysis();
 
 	const { data: job } = useFetchJob(
 		analysis.job?.id ?? Number.NaN,
@@ -45,6 +48,9 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 	const state = job?.state ?? analysis.job?.state;
 	const canDelete = state === undefined || isJobStateTerminal(state);
 
+	const workflowName = getWorkflowDisplayName(workflow);
+	const sampleName = analysis.sample.name;
+
 	return (
 		<tr>
 			<td className="font-medium">
@@ -56,11 +62,11 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 							analysisId: String(id),
 						}}
 					>
-						{getWorkflowDisplayName(workflow)}
+						{workflowName}
 					</Link>
 				) : (
 					<>
-						{getWorkflowDisplayName(workflow)}
+						{workflowName}
 						<span className="block text-gray-500 text-sm font-normal">
 							Workflow unavailable
 						</span>
@@ -119,11 +125,26 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 					</span>
 				)}
 				{canDelete && canModify && (
-					<IconButton
-						IconComponent={Trash}
-						color="red"
-						tip="Delete"
-						onClick={onDelete}
+					<DeleteDialog
+						name={workflowName}
+						noun="Analysis"
+						message={
+							<>
+								Are you sure you want to delete the{" "}
+								<strong>{workflowName}</strong> analysis
+								{sampleName && (
+									<>
+										{" "}
+										of <strong>{sampleName}</strong>
+									</>
+								)}
+								? You can't undo this action.
+							</>
+						}
+						onConfirm={() => mutation.mutateAsync({ analysisId: id })}
+						trigger={
+							<IconButton IconComponent={Trash} color="red" tip="Delete" />
+						}
 					/>
 				)}
 			</TableActionsCell>

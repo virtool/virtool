@@ -3,6 +3,7 @@ import { formatDate, formatTime } from "@app/date";
 import { getWorkflowDisplayName } from "@app/utils";
 import Box from "@base/Box";
 import CopyText from "@base/CopyText";
+import Link from "@base/Link";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import { useRelativeTime } from "@base/RelativeTime";
@@ -11,9 +12,10 @@ import {
 	SubviewHeaderAttribution,
 	SubviewHeaderTitle,
 } from "@base/Subview";
+import { useFetchJob } from "@jobs/queries";
 import { useFetchSample } from "@samples/queries";
 import { getRouteApi } from "@tanstack/react-router";
-import type { Analysis, Sample } from "@virtool/contracts";
+import type { Analysis, JobState, Sample } from "@virtool/contracts";
 import { CircleAlert } from "lucide-react";
 import { Suspense } from "react";
 import { useGetAnalysis, useSuspenseAnalysisResults } from "../queries";
@@ -22,8 +24,13 @@ import type {
 	FormattedPathoscopeAnalysis,
 } from "../types";
 import { getWorkflowVersionLabel } from "../utils";
-import AnalysisNotReady from "./AnalysisNotReady";
 import { PathoscopeViewer } from "./Pathoscope/PathoscopeViewer";
+
+const endStateMessages: Partial<Record<JobState, string>> = {
+	cancelled: "Analysis cancelled",
+	failed: "Analysis failed",
+	succeeded: "Analysis did not finish",
+};
 
 const routeApi = getRouteApi(
 	"/_authenticated/samples/$sampleId/analyses/$analysisId",
@@ -42,6 +49,10 @@ export default function AnalysisDetail() {
 		isPending: isPendingSample,
 		isError: isSampleError,
 	} = useFetchSample(Number(sampleId));
+	const { data: job } = useFetchJob(
+		analysis?.job?.id ?? Number.NaN,
+		analysis?.job ?? undefined,
+	);
 
 	if ((isError && !analysis) || (isSampleError && !sample)) {
 		return <QueryError noun="analysis" />;
@@ -52,7 +63,36 @@ export default function AnalysisDetail() {
 	}
 
 	if (!analysis.ready) {
-		return <AnalysisNotReady job={analysis.job} />;
+		// Neither source is reliably fresher. A cached job can stay pinned at
+		// `running` by its seed, and no job event invalidates the analysis. A
+		// terminal state is permanent, so either source can settle it. The pod
+		// finalizes the analysis before it finishes the job, so a succeeded job
+		// leaves an unready analysis unready for good.
+		const endMessage = [job?.state, analysis.job?.state]
+			.map((state) => (state ? endStateMessages[state] : undefined))
+			.find(Boolean);
+
+		if (analysis.job && endMessage) {
+			return (
+				<Box className="flex justify-center items-center">
+					<CircleAlert className="mr-1" />
+					<span>{endMessage}</span>
+					<Link
+						className="ml-2"
+						to="/jobs/$jobId"
+						params={{ jobId: String(analysis.job.id) }}
+					>
+						View job
+					</Link>
+				</Box>
+			);
+		}
+
+		return (
+			<Box>
+				<LoadingPlaceholder className="mt-5" message="Analysis in progress" />
+			</Box>
+		);
 	}
 
 	if (analysis.workflow !== "pathoscope" && analysis.workflow !== "nuvs") {

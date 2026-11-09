@@ -67,6 +67,17 @@ describe("<NuvsExport />", () => {
 		expect(decodeURIComponent(anchor.href)).toContain(">sequence_");
 	});
 
+	it("replaces every space in the sample name in the filename", async () => {
+		props.sampleName = "Test Sample Two";
+		await openDialog();
+
+		await userEvent.click(screen.getByRole("button", { name: "Download" }));
+
+		await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
+		const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
+		expect(anchor.download).toBe("nuvs.Test_Sample_Two.42.contigs.fa");
+	});
+
 	it("downloads orf data with an orfs filename when ORFs is selected", async () => {
 		await openDialog();
 

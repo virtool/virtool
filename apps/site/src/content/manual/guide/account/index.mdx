@@ -5,60 +5,164 @@ description: "Manage your user account."
 
 ## Overview
 
-You can view your account details by navigating to **Username | Account** in the main
-navigation bar.
+To open your account, click your avatar at the right of the main navigation bar, then
+click **Account**.
 
-![Account Dropdown](./nav.png?url)
+The account pages are in the sidebar:
 
-You land on this page, where you can make changes to your account. Here, you can see
-your username and user groups to which you belong.
+- **Profile**: your handle, avatar, administrator role, and groups.
+- **Security**: your email address, password, two-factor authentication, passkeys, and
+  sessions.
+- **Settings**: your preferences for Pathoscope and reference exports.
+- **API Keys**: keys for access to the Virtool API.
 
-![Account General](./general.png?url)
+## Change your handle and avatar
 
-This user is an administrator and a member of the **Laboratory** group.
+Your handle is the name that other users see. To change it, go to **Profile**, type a
+new handle, and click **Change**.
+
+Your avatar shows your initials in a circle. To show your Gravatar, turn on **Use
+Gravatar**.
 
 ## Change email
 
-You can set or change your email address.
+To change your email address:
 
-![email](./email.png?url)
+1. Go to **Security**.
+2. Type the new address under **Email**, then click **Send verification**.
+3. Open the verification link that Virtool sends to the new address.
+
+Your current address stays active until you open the link.
+
+If email delivery is not set up for your Virtool instance, you can't add or change your
+address. Ask an administrator to set it up.
 
 ## Change password
 
-You can change your password under the **General** tab. By default, new passwords must
-contain at least 8 characters. Your administrator can change this setting.
+To change your password:
 
-![Change Password](./password.png?url)
+1. Go to **Security**.
+2. Under **Password**, click **Change**.
+3. Type your current password and your new password, then click **Change**.
+
+Virtool can ask you to confirm your identity before it changes the password.
+
+Other browsers are signed out when your password changes.
+
+By default, new passwords must contain at least 8 characters.
+
+## Two-factor authentication
+
+With two-factor authentication, you enter a code from an authenticator app when you sign
+in with your password.
+
+### Set up two-factor authentication
+
+1. Go to **Security**.
+2. Under **Two-factor authentication**, click **Set up**.
+3. Enter your password.
+4. Scan the QR code with your authenticator app, or enter the setup key.
+5. Enter the code that the app shows.
+6. Save your recovery codes. Click **Copy all** or **Download**.
+7. Select **I have saved these codes**, then click **Done**.
+
+You see the recovery codes only once. Each code signs you in one time if you can't use
+your authenticator app.
+
+### Make new recovery codes
+
+Click **Make new recovery codes** and enter your password. Your old recovery codes stop
+working.
+
+Virtool shows a warning when you have 3 or fewer recovery codes left.
+
+### Turn off two-factor authentication
+
+Click **Turn off** and enter your password. Your authenticator app and recovery codes
+stop working.
+
+If your Virtool instance requires two-factor authentication, you must set it up again
+before you can use Virtool.
+
+## Passkeys
+
+A passkey lets you sign in with your fingerprint, face, or device PIN. You can always
+sign in with your password too.
+
+To add a passkey:
+
+1. Go to **Security**.
+2. Under **Passkeys**, click **Add**.
+3. Follow the instructions from your browser or device.
+
+Virtool can ask you to confirm your identity first. If it does, click **Add** again
+after you confirm.
+
+Passkeys need a supported browser and a secure (HTTPS) connection.
+
+You can rename or remove a passkey in your passkey list.
+
+## Sessions
+
+Go to **Security** to see the browsers that are signed in to your account. Each session
+shows the browser, operating system, IP address, sign-in time, and last activity.
+
+To sign out one browser, click **Sign out** beside its session. To sign out every
+browser except the one you are using, click **Sign out other sessions**.
+
+A browser that is signed out must sign in again to use Virtool.
+
+## Settings
+
+Go to **Settings** to change how Virtool behaves for your account.
+
+### Pathoscope export
+
+These settings change how Pathoscope results are copied and downloaded.
+
+- **Prefer acronym**: name OTUs by their acronym when they have one.
+- **Column order**: drag columns to change their order. Drag a column below the **Hidden
+  columns** line to leave it out.
+
+### Reference exports
+
+These settings are the defaults for OTU and isolate exports. You can change them in the
+export menu for one export.
+
+- **FASTA header**: **Accession**, or **Accession, OTU, and isolate**.
+- **Table download format**: **CSV** or **TSV**.
 
 ## API keys
 
-Virtool exposes a complete JSON API. Access to the API is managed using API keys.
+Use an API key to access the [Virtool API](/docs/api/uploads). The API currently
+supports file uploads.
 
-API keys are account-specific and are generated under the **API** tab in the **Account**
-view.
-
-![API Key List](./empty.png?url)
+Each API key belongs to one account. Go to **API Keys** to manage your keys.
 
 ### Create an API key
 
-1. Click the <DummyButton icon="key">Create</DummyButton> button to open the creation
-   dialog
+1. Click **Create**.
+2. Type a name for the key and select its permissions.
 
-   Give the API key a name and select permissions you want the key to have.
+   You can't grant the key permissions that your account doesn't have. If permissions
+   are removed from your account after the key is created, they're also removed from
+   the key.
 
-   You can't grant the key permissions that your account doesn't have. If permissions are removed from your account after the key is created, they're also removed from the key.
+3. Click **Save**.
+4. Copy the key, then click **Done**.
 
-   ![Create API Key](./filled.png?url)
+   The key is shown only once. You **can't** view the key value after you close the
+   dialog. Keep it somewhere safe.
 
-2. Click the <DummyButton icon="save">Save</DummyButton> button to create the key
+### Use an API key
 
-   The key is shown only once. Make sure you keep it somewhere safe.
+Use HTTP Basic authentication. Your handle is the username, and the API key is the
+password. See [Uploads](/docs/api/uploads) for an example.
 
-   ![Newly Created API Key](./new.png?url)
+### Change or delete an API key
 
-   The key is added to your API key list and can be removed or edited later. You
-   **can't** view the key value after creation.
+In your key list, click the edit icon to change the permissions of a key. You can't
+change its name.
 
-   ![New Key in List](./list.png?url)
-
-3. Use the key to access the API
+Click the delete icon to delete a key. Virtool deletes the key immediately and does not
+ask you to confirm.
