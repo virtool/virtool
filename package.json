@@ -2,7 +2,7 @@
 	"name": "virtool-ui",
 	"private": true,
 	"type": "module",
-	"packageManager": "pnpm@12.16.1",
+	"packageManager": "pnpm@12.18.0",
 	"scripts": {
 		"build": "pnpm -r --filter \"./apps/*\" --filter \"!@virtool/site\" build",
 		"check": "biome check --error-on-warnings apps packages scripts",
@@ -15,9 +15,9 @@
 		"typecheck": "pnpm -r typecheck"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.6.4",
+		"@biomejs/biome": "^2.6.6",
 		"@types/node": "^26.6.6",
-		"knip": "^6.44.1",
+		"knip": "^6.44.2",
 		"typescript": "^7.0.2"
 	}
 }
