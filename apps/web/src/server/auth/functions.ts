@@ -363,7 +363,8 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
  * caller whose session has already expired still needs its stale cookies
  * cleared, and refusing them with a 401 would strand the browser holding
  * credentials it cannot use. `logout` invalidates the session only if the
- * cookie names one, then clears the cookies either way.
+ * cookie names one, then clears the cookies either way. It also ends a
+ * restricted setup session, so one call ends all of a browser's authority.
  */
 export const logoutFn = createServerFn({ method: "POST" })
 	.middleware([open()])

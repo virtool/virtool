@@ -23,6 +23,7 @@ import {
 	vi,
 } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+import { silenceLogs } from "../test/silenceLogs";
 
 const getRequest = vi.fn();
 
@@ -316,6 +317,7 @@ describe("sendTestEmailFn", () => {
 	});
 
 	it("reports a bounded code and no provider text when Resend refuses", async () => {
+		silenceLogs();
 		await signIn(db, getRequest, { administratorRole: "full" });
 		await seedConfigured();
 
@@ -339,6 +341,7 @@ describe("sendTestEmailFn", () => {
 	});
 
 	it("reports an authentication failure when the provider rejects the key", async () => {
+		silenceLogs();
 		await signIn(db, getRequest, { administratorRole: "full" });
 		await seedConfigured();
 

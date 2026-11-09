@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import {
 	type AccountSetupInspection,
 	EMAIL_REMEDIATION_RESEND_DELAY_SECONDS,
@@ -9,11 +11,18 @@ import {
 	normalizeEmail,
 	type User,
 } from "@virtool/contracts";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, like, notLike, or, sql } from "drizzle-orm";
 import type { Keyring } from "../crypto/keyring";
 import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
-import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
+import { apiKeys } from "../db/schema/apiKeys";
+import {
+	authAccounts,
+	authPasskeys,
+	authSessions,
+	authTwoFactors,
+	authVerifications,
+} from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
@@ -21,7 +30,7 @@ import { nowUtc } from "../db/time";
 import { enqueueLinkEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-import { getUser, UserNotFoundError } from "../users/data";
+import { getUser, PendingAccountError, UserNotFoundError } from "../users/data";
 import { claimEmail, EmailInUseError } from "./email";
 import { queueEmailVerificationInTransaction } from "./emailVerification";
 import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
@@ -29,6 +38,7 @@ import { hashPassword } from "./password";
 import {
 	consumeSetupToken,
 	invalidateUserSetupSessions,
+	invalidateUserSetupTokens,
 	issueSetupTokenInTransaction,
 	lockUserSetupCredentials,
 	SetupCredentialError,
@@ -49,6 +59,9 @@ export class EmailRemediationRateLimitedError extends AppError {}
 
 /** Thrown when a user has no TOTP enrollment to act on. */
 export class TotpNotEnrolledError extends AppError {}
+
+/** Thrown when an issuer lacks the role to revoke an administrator's access. */
+export class AccessRevocationForbiddenError extends AppError {}
 
 /**
  * Give a user the Better Auth credential identity that lets the interactive
@@ -165,13 +178,11 @@ export type CompletedAccountSetup = {
  * revoked. A failure anywhere rolls the whole transition back, so a spent
  * token never outlives the account change it paid for.
  *
- * The password is written twice on purpose. `users.password` is what
- * `login()` in the web app still reads, and `auth_accounts.password` is what
- * Better Auth reads; both boundaries are live during the migration, and an
- * account completed against only one of them cannot sign in at all under the
- * other. Both hold the same hash, because `@virtool/data/auth/password` is
- * the one place the algorithm is stated and Better Auth is configured to use
- * it.
+ * The password is written twice on purpose. `users.password` stays part of
+ * Virtool's account and password-change transactions, and Better Auth verifies
+ * `auth_accounts.password`. Both hold the same hash, because
+ * `@virtool/data/auth/password` is the one place the algorithm is stated and
+ * Better Auth is configured to use it.
  *
  * No session is minted here. Which session a completed holder gets is the
  * calling flow's decision, and the web app owns cookies.
@@ -702,6 +713,10 @@ export async function cancelEmailRemediation(
  * The existing password hash moves across rather than being re-derived: the
  * holder is proving control of an address, not setting a new credential, and
  * asking them for their password again would make this a reset.
+ *
+ * Other completions revoke setup credentials at once. This one keeps the
+ * restricted session until the initiating browser claims promotion, so a token
+ * verified in another browser does not authenticate that browser.
  */
 export async function completeEmailRemediation(
 	db: Db,
@@ -951,6 +966,118 @@ export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 				.set({ twoFactorEnabled: false })
 				.where(eq(users.id, userId)),
 			tx.delete(authSessions).where(eq(authSessions.userId, userId)),
+		]);
+	});
+
+	await emit("users", userId, "update");
+
+	return getUser(db, userId);
+}
+
+/**
+ * Remove every credential and session a user holds, in one transaction.
+ *
+ * The administrator response to a compromised account. Afterward only an
+ * administrator recovery link restores access, and the user then enrolls their
+ * second factors again.
+ *
+ * The password becomes a hash of a secret nobody keeps, because a null password
+ * makes an account ineligible for recovery. The address stops being verified
+ * because an attacker may have changed it, and a verified address is what
+ * self-service recovery and emailed administrator links trust. No notice is
+ * mailed to that address for the same reason.
+ *
+ * `issuerUserId` is checked here as well as at the boundary, so a target
+ * promoted to administrator after that check can't be revoked by an issuer
+ * without the `full` role.
+ *
+ * A deactivated user is eligible, because their API keys and passkeys remain
+ * until an administrator removes them. Throws {@link UserNotFoundError} for an
+ * unknown user, {@link PendingAccountError} for an account that has not
+ * completed setup, and {@link AccessRevocationForbiddenError} for an issuer
+ * without the required role.
+ */
+export async function revokeUserAccess(
+	db: Db,
+	userId: number,
+	issuerUserId: number,
+): Promise<User> {
+	// Hashing is CPU-bound and slow by design, so it happens before the
+	// transaction opens rather than holding one idle for the duration.
+	const hashed = await hashPassword(randomBytes(32).toString("base64url"));
+
+	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
+
+		const [user] = await tx
+			.select({
+				administratorRole: users.administratorRole,
+				lifecycleState: users.lifecycleState,
+			})
+			.from(users)
+			.where(eq(users.id, userId))
+			.for("update");
+
+		if (!user) {
+			throw new UserNotFoundError();
+		}
+		if (user.lifecycleState === "pending") {
+			throw new PendingAccountError();
+		}
+		if (user.administratorRole !== null) {
+			const [issuer] = await tx
+				.select({ administratorRole: users.administratorRole })
+				.from(users)
+				.where(eq(users.id, issuerUserId))
+				.limit(1);
+			if (issuer?.administratorRole !== "full") {
+				throw new AccessRevocationForbiddenError();
+			}
+		}
+
+		await Promise.all([
+			tx.delete(authSessions).where(eq(authSessions.userId, userId)),
+			invalidateUserSetupSessions(tx, userId),
+			invalidateUserSetupTokens(tx, userId),
+			tx.delete(apiKeys).where(eq(apiKeys.userId, userId)),
+			tx.delete(authPasskeys).where(eq(authPasskeys.userId, userId)),
+			tx.delete(authTwoFactors).where(eq(authTwoFactors.userId, userId)),
+			// Better Auth holds trusted devices and pending two-factor sign-ins here
+			// with the user id as the value. Its attempt and OTP rows share the
+			// `2fa-` prefix but hold a count or a code, which can equal a user id.
+			tx
+				.delete(authVerifications)
+				.where(
+					and(
+						eq(authVerifications.value, String(userId)),
+						or(
+							like(authVerifications.identifier, "trust-device-%"),
+							and(
+								like(authVerifications.identifier, "2fa-%"),
+								notLike(authVerifications.identifier, "2fa-attempts-%"),
+								notLike(authVerifications.identifier, "2fa-otp-%"),
+							),
+						),
+					),
+				),
+			tx
+				.update(authAccounts)
+				.set({ password: hashed.toString("utf8"), updatedAt: new Date() })
+				.where(
+					and(
+						eq(authAccounts.userId, userId),
+						eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
+					),
+				),
+			tx
+				.update(users)
+				.set({
+					emailVerified: false,
+					lastPasswordChange: new Date(),
+					password: hashed,
+					twoFactorEnabled: false,
+				})
+				.where(eq(users.id, userId)),
 		]);
 	});
 

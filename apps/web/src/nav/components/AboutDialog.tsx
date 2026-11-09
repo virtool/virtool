@@ -60,7 +60,7 @@ export default function AboutDialog({ open, setOpen }: AboutDialogProps) {
 					</p>
 					<ExternalLink
 						className="text-blue-600 hover:underline"
-						href="https://virtool.ca/docs/start/installation"
+						href="https://www.virtool.ca/docs"
 					>
 						virtool.ca/docs
 					</ExternalLink>

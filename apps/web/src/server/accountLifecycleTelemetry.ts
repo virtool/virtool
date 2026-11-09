@@ -1,7 +1,7 @@
 import { logger } from "./logger";
 import { recordAccountLifecycleOperation } from "./metrics/registry";
 
-/** Bounded, secret-free invitation, bootstrap, and TOTP reset telemetry. */
+/** Bounded, secret-free telemetry for account lifecycle operations. */
 export function recordAccountLifecycle(input: {
 	operation:
 		| "invitation_create"
@@ -9,7 +9,8 @@ export function recordAccountLifecycle(input: {
 		| "invitation_delete"
 		| "invitation_accept"
 		| "bootstrap"
-		| "totp_reset";
+		| "totp_reset"
+		| "access_revoke";
 	outcome: "success" | "failure" | "copy_only" | "queued";
 	message: string;
 	invitationId?: number;

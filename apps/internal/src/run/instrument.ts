@@ -41,13 +41,13 @@ export type SentryStatus = {
  * records to Sentry. There is no logger to call at this point.
  */
 export function initSentry(dsn: string | undefined): SentryStatus {
-	const options = getCommonOptions(SERVICE);
+	const options = getCommonOptions(SERVICE, dsn);
 
 	if (!dsn) {
 		return { enabled: false, environment: options.environment };
 	}
 
-	Sentry.init({ ...options, dsn });
+	Sentry.init(options);
 
 	return { enabled: true, environment: options.environment };
 }

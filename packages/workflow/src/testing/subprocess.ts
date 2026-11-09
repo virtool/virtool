@@ -26,6 +26,22 @@
  * `stderrTail`**. The runner does not return success for it and must not be
  * taught to. If the runner ever grows an `okExitCodes` option this changes, and
  * it changes there rather than here.
+ *
+ * @example
+ * run.register(["cd-hit-est", "-h"], {
+ * 	exitCode: 1,
+ * 	stderr: ["CD-HIT version 4.8.1 (built on Jan 1 2024)"],
+ * });
+ *
+ * try {
+ * 	await run({ command: ["cd-hit-est", "-h"] });
+ * } catch (err) {
+ * 	if (err instanceof SubprocessFailedError) {
+ * 		return err.stderrTail[0];
+ * 	}
+ *
+ * 	throw err;
+ * }
  */
 
 import {

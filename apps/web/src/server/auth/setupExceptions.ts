@@ -28,6 +28,9 @@ export type SetupEndpoint = {
  * purpose, and one declaring `setupOnly()` must appear here.
  * `authorization.test.ts` pins both directions, so the two cannot drift.
  *
+ * Bearer-token email verification is open and absent from here. It decides only
+ * mailbox ownership and grants no application authority.
+ *
  * @public
  */
 export const setupEndpoints: ReadonlyArray<SetupEndpoint> = [

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const ENCRYPTION_KEY_DOCS =
-	"https://github.com/virtool/virtool/blob/main/docs/env.md#encryption-key";
+	"https://www.virtool.ca/docs/start/configuration#encryption-key";
 
 type StatusPresentation = {
 	color: PaletteColor;

@@ -17,7 +17,13 @@
 //! FastQC groups base positions once a read is longer than 75bp, reporting one
 //! averaged row per group and repeating it across the group's members, so a
 //! stored blob from a 301bp run holds runs of identical rows. The output here
-//! is finer and the shape is unchanged. See `README.md`.
+//! is finer and the shape is unchanged, so no backfill or chart change is
+//! needed. For reads of 75bp or less there is no divergence.
+//!
+//! The binary links only glibc. Its `needletail` dependency is limited to
+//! gzip for that reason, and `flate2` resolves to the pure-Rust `miniz_oxide`.
+//! The `create-sample` runtime image therefore installs no extra libraries for
+//! it.
 
 mod encoding;
 mod profile;

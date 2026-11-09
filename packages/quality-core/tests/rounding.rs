@@ -5,6 +5,9 @@
 //! output.** That converts a caught divergence into a permanent one, and the
 //! whole point of the fixture is that the rounding is right on every value the
 //! stored blob can hold.
+//!
+//! The TypeScript `roundHalfEven` in `@virtool/bio` must give the same results
+//! on this corpus. Do not derive an expected value from either implementation.
 
 use std::fs::read_to_string;
 

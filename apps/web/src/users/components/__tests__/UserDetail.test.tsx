@@ -10,6 +10,7 @@ import {
 	mockGetUser,
 	mockListAdministratorRoles,
 	mockResetUserTotp,
+	mockRevokeUserAccess,
 	mockSetAdministratorRole,
 	mockUpdateUser,
 } from "@tests/server-fn/users";
@@ -146,6 +147,44 @@ describe("<UserDetail />", () => {
 			);
 
 			expect(updateUser).toHaveBeenCalled();
+		});
+	});
+
+	describe("<RevokeUserAccess />", () => {
+		it("lets an administrator revoke a user's access", async () => {
+			mockListGroups(groups);
+			mockGetUser(user.id, user);
+			const revokeUserAccess = mockRevokeUserAccess(user);
+
+			renderWithProviders(<UserDetail userId={user.id} />);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Revoke" }),
+			);
+			await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+			await waitFor(() =>
+				expect(revokeUserAccess).toHaveBeenCalledWith({
+					data: { userId: user.id },
+				}),
+			);
+		});
+
+		it("is hidden on the administrator's own user page", async () => {
+			const account = createFakeAccount({ administratorRole: "full" });
+			mockGetAccount(account);
+			mockListGroups(groups);
+			const self = createFakeUser({ id: account.id });
+			mockGetUser(self.id, self);
+
+			renderWithProviders(<UserDetail userId={self.id} />);
+
+			expect(
+				await screen.findByRole("button", { name: "Deactivate" }),
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: "Revoke" }),
+			).not.toBeInTheDocument();
 		});
 	});
 
@@ -414,6 +453,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={self.id} />);
 
+			expect(await screen.findByText(self.handle)).toBeInTheDocument();
 			expect(screen.queryByText("Administrator Role")).not.toBeInTheDocument();
 
 			expect(getUser).toHaveBeenCalled();

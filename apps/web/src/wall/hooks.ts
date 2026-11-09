@@ -11,7 +11,8 @@ import { getAuthNextStepRoute, resolveAuthNextStep } from "./nextStep";
  *
  * The parameters are removed before any request can send the URL as a
  * referrer. The guard keeps a repeated effect, such as the StrictMode
- * remount, from reading the already stripped URL.
+ * remount, from reading the already stripped URL. Never put a captured token
+ * in a redirect, a query key, or router search state.
  */
 export function useCapturedUrlParams<K extends string>(
 	names: readonly K[],
@@ -75,8 +76,9 @@ type PasskeyAutofillOptions = {
  * Keep a passkey request in the autofill of the username field while
  * `enabled` is true.
  *
- * The request starts again before its challenge expires and after a refused
- * passkey. The returned function stops the request and resolves `true` if a
+ * The request starts again before its challenge expires, after a refused
+ * passkey, and after the two-factor step. A failure before the user picks a
+ * passkey shows nothing. The returned function stops the request and resolves `true` if a
  * passkey signed the user in first. Call it before an explicit passkey
  * sign-in, and set `enabled` to false while that sign-in runs, because two
  * ceremonies at a time make the browser and the server drop one.

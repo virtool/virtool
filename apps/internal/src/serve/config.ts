@@ -39,10 +39,6 @@ export type Config = {
  * Named explicitly rather than derived, because the `<KEY>_FILE` resolution
  * below walks this list: a key missing from it silently loses its file variant
  * and reads only the plain environment.
- *
- * `VT_SENTRY_DSN` is here even though `@virtool/sentry` can read it itself.
- * `readDsn` goes straight to `process.env` and so would skip the file variant;
- * the DSN is resolved here and passed to `Sentry.init` explicitly instead.
  */
 const KEYS = [
 	"VT_JOBS_API_HOST",
@@ -110,9 +106,9 @@ function readNumber(
  *
  * `@virtool/storage` owns the shape but reads no environment of its own, so
  * each host application resolves it. This is a hand-rolled counterpart to the
- * zod schema in `apps/web/src/server/config.ts` rather than a shared parser:
- * this service deliberately carries no zod, and the two only have to agree on
- * the variable names, which are the deployment's contract either way.
+ * zod schema in `apps/web/src/server/configSchema.ts` rather than a shared
+ * parser: this service deliberately carries no zod, and the two only have to
+ * agree on the variable names, which are the deployment's contract either way.
  */
 function buildStorage(resolved: NodeJS.ProcessEnv): StorageConfig {
 	const backend = present(resolved.VT_STORAGE_BACKEND);

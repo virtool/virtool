@@ -1,6 +1,6 @@
 {
 	"name": "@virtool/create-sample",
-	"version": "42.62.0",
+	"version": "42.62.1",
 	"private": true,
 	"type": "module",
 	"files": [
@@ -35,7 +35,7 @@
 	"devDependencies": {
 		"@virtool/tsconfig": "workspace:*",
 		"@types/node": "^26.6.6",
-		"tsdown": "^0.23.4",
-		"vitest": "^5.0.5"
+		"tsdown": "^0.23.7",
+		"vitest": "^5.1.0"
 	}
 }

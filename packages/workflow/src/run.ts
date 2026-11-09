@@ -11,7 +11,7 @@ export type RunSignals = {
 	signal: AbortSignal;
 	isCancelled: () => boolean;
 	isTerminated: () => boolean;
-	/** Ping response reported `cancelled: true`. */
+	/** The jobs API refused a ping, so the job has reached a terminal state. */
 	cancel: () => void;
 	/** SIGTERM received. */
 	terminate: () => void;
@@ -173,6 +173,11 @@ async function runStep<TData, TState>(
  * than throwing, and never touches the network, `process.exit`, or signal
  * handlers — the job lifecycle loop owns all of that, driven by the returned
  * {@link RunOutcome} and by `onStepStart`.
+ *
+ * A run has no teardown stage, and `onStepStart` is its only hook. Workflow
+ * containers are ephemeral, so process exit reclaims the work directory, and a
+ * failed run leaves its partially built resource for the user to delete. Don't
+ * add `dispose`, `Symbol.asyncDispose`, or an exit-stack abstraction.
  */
 export async function runWorkflow<TData, TState>({
 	workflow,

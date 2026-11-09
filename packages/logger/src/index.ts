@@ -45,6 +45,21 @@ export type CreateLoggerOptions = {
 	streams?: readonly StreamEntry<LogLevel>[];
 };
 
+/**
+ * Build a pino logger.
+ *
+ * Pass structured fields as the first argument and a stable message as the
+ * second. Do not interpolate values into the message: that defeats redaction
+ * and makes records hard to search.
+ *
+ * Each process builds one logger at its composition root and passes it down.
+ * Data functions take a `Logger` argument instead of importing one, because
+ * the app that built it owns its Sentry forwarding stream. Tests pass a silent
+ * logger.
+ *
+ * Add a destination, such as the Sentry stream, with `streams`. Redaction runs
+ * before any destination sees the record.
+ */
 export function createLogger(options: CreateLoggerOptions): Logger {
 	const env = options.env ?? process.env;
 	const level = options.level ?? resolveLevel(env);

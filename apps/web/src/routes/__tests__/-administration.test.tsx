@@ -1,6 +1,6 @@
 import { bannerQueryKeys } from "@banner/keys";
 import type { QueryClient } from "@tanstack/react-query";
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeSettings } from "@tests/fake/administrator";
@@ -27,7 +27,7 @@ describe("administration recent-authentication gate", () => {
 			await screen.findByRole("heading", { name: "Banners" }),
 		).toBeInTheDocument();
 
-		await router.navigate({ to: "/administration/uploads" });
+		await act(() => router.navigate({ to: "/administration/uploads" }));
 
 		expect(
 			await screen.findByRole("heading", { name: "Uploads" }),

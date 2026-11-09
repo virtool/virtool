@@ -113,6 +113,9 @@ export type TaskDef<S extends z.ZodType, C = unknown> = {
 	 *
 	 * **May execute more than once for the same `taskId`** — see this module's
 	 * documentation. Make every step idempotent.
+	 *
+	 * Forward `signal` into subprocesses and other waits. Yield during CPU-heavy
+	 * loops so the heartbeat can renew the lease.
 	 */
 	run: (args: TaskHandlerArgs<z.infer<S>, C>) => Promise<void>;
 };

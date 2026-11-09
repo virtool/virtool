@@ -6,7 +6,12 @@ import { sampleNameUniqueness } from "./bodies/sample-name-uniqueness";
 import { totpEnrollmentSetupState } from "./bodies/totp-enrollment-setup-state";
 import type { DataMigrationRegistry } from "./define";
 
-/** Registered data migrations, indexed by their stable key. */
+/**
+ * Registered data migrations, indexed by their stable key.
+ *
+ * Keep a body after it ships: databases that have not reached its pair still
+ * run it.
+ */
 export const DATA_MIGRATIONS: DataMigrationRegistry = {
 	[legacyIdentities.key]: legacyIdentities,
 	[forcedPasswordReset.key]: forcedPasswordReset,

@@ -116,7 +116,8 @@ export function recordAccountLifecycleOperation(
 		| "invitation_delete"
 		| "invitation_accept"
 		| "bootstrap"
-		| "totp_reset",
+		| "totp_reset"
+		| "access_revoke",
 	outcome: "success" | "failure" | "copy_only" | "queued",
 ): void {
 	accountLifecycleOperations.inc({ operation, outcome });

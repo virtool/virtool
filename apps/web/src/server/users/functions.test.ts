@@ -21,6 +21,7 @@ import {
 	vi,
 } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+import { silenceLogs } from "../test/silenceLogs";
 
 const getRequest = vi.fn();
 const setCookie = vi.fn();
@@ -249,6 +250,7 @@ describe("resetUserTotpFn", () => {
 	}
 
 	it("removes the target's factor and sessions and keeps the caller's", async () => {
+		silenceLogs();
 		const { session } = await signInAdministrator();
 		const targetId = await seedEnrolledUser();
 
@@ -267,6 +269,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("refuses the caller's own account", async () => {
+		silenceLogs();
 		const { userId } = await signInAdministrator();
 
 		await expect(call("resetUserTotpFn", { userId })).rejects.toMatchObject({
@@ -277,6 +280,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("refuses an administrator without the full role", async () => {
+		silenceLogs();
 		await signInAdministrator("users");
 		const targetId = await seedEnrolledUser();
 
@@ -292,6 +296,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("responds with 404 for an unknown user", async () => {
+		silenceLogs();
 		await signInAdministrator();
 
 		await expect(
@@ -304,6 +309,7 @@ describe("resetUserTotpFn", () => {
 	});
 
 	it("responds with 409 for a user with no factor", async () => {
+		silenceLogs();
 		await signInAdministrator();
 		const targetId = await seedUser(db, { handle: "bob" });
 
@@ -312,6 +318,107 @@ describe("resetUserTotpFn", () => {
 		).rejects.toMatchObject({
 			name: CLIENT_ERROR_NAME,
 			message: "User has no two-factor authentication.",
+			status: 409,
+		});
+	});
+});
+
+describe("revokeUserAccessFn", () => {
+	async function signInAdministrator(role: "full" | "users") {
+		const { session, userId } = await signIn();
+		await db
+			.update(users)
+			.set({ administratorRole: role })
+			.where(eq(users.id, userId));
+		return { session, userId };
+	}
+
+	async function seedTarget(administratorRole: "base" | null = null) {
+		const userId = await seedUser(db, { administratorRole, handle: "bob" });
+		await seedSession(db, userId);
+		return userId;
+	}
+
+	it("ends the target's sessions and keeps the caller's", async () => {
+		silenceLogs();
+		const { session } = await signInAdministrator("users");
+		const targetId = await seedTarget();
+
+		const user = await call("revokeUserAccessFn", { userId: targetId });
+
+		expect(user).toMatchObject({ id: targetId, twoFactorEnabled: false });
+		const remaining = await db.select().from(authSessions);
+		expect(remaining.map((row) => row.id)).toEqual([session.sessionId]);
+		expect(emit).toHaveBeenCalledWith("users", targetId, "update");
+	});
+
+	it("refuses the caller's own account", async () => {
+		silenceLogs();
+		const { userId } = await signInAdministrator("full");
+
+		await expect(call("revokeUserAccessFn", { userId })).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "Cannot revoke own access",
+			status: 400,
+		});
+	});
+
+	it("refuses an administrator target without the full role", async () => {
+		silenceLogs();
+		await signInAdministrator("users");
+		const targetId = await seedTarget("base");
+
+		await expect(
+			call("revokeUserAccessFn", { userId: targetId }),
+		).rejects.toThrow("Forbidden");
+		expect(
+			await db
+				.select()
+				.from(authSessions)
+				.where(eq(authSessions.userId, targetId)),
+		).toHaveLength(1);
+	});
+
+	it("lets a full administrator revoke an administrator", async () => {
+		silenceLogs();
+		await signInAdministrator("full");
+		const targetId = await seedTarget("base");
+
+		await call("revokeUserAccessFn", { userId: targetId });
+
+		expect(
+			await db
+				.select()
+				.from(authSessions)
+				.where(eq(authSessions.userId, targetId)),
+		).toHaveLength(0);
+	});
+
+	it("responds with 404 for an unknown user", async () => {
+		silenceLogs();
+		await signInAdministrator("full");
+
+		await expect(
+			call("revokeUserAccessFn", { userId: 999_999 }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
+			message: "User not found.",
+			status: 404,
+		});
+	});
+
+	it("responds with 409 for a pending account", async () => {
+		silenceLogs();
+		await signInAdministrator("full");
+		const targetId = await seedUser(db, {
+			handle: "bob",
+			lifecycleState: "pending",
+		});
+
+		await expect(
+			call("revokeUserAccessFn", { userId: targetId }),
+		).rejects.toMatchObject({
+			name: CLIENT_ERROR_NAME,
 			status: 409,
 		});
 	});
