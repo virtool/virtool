@@ -1,0 +1,73 @@
+---
+title: First-time setup
+description: "Create the first administrator of a new Virtool instance."
+order: 2
+---
+
+## Overview
+
+A new Virtool instance has no users. The first person to open it creates the first
+administrator. Do this step immediately after you install Virtool.
+
+## When you see the setup screen
+
+Open the address of your Virtool instance in a browser. If the instance has no users,
+Virtool shows the **Set up Virtool** screen.
+
+After the first user exists, the setup screen goes away. If a person opens the setup
+address after that, Virtool shows the sign-in screen.
+
+<Note>
+  Any person who can open the instance before you can create the first
+  administrator. Create the first administrator before you give other people the
+  address.
+</Note>
+
+## Create the first administrator
+
+1. Type a username in **Username**.
+2. Type your email address in **Email**.
+3. Type a password in **Password**.
+4. Type the same password again in **Confirm password**.
+5. Click **Create administrator**.
+
+### Rules for the fields
+
+All of the fields are required.
+
+- **Username**: 3 to 30 characters. Use only letters, numbers, `_`, and `.`. You
+  cannot use the username `virtool`. You sign in with this username.
+- **Email**: a valid email address.
+- **Password**: at least 8 characters. This is the default minimum password length.
+- **Confirm password**: the same value as **Password**.
+
+If two people use the setup screen at the same time, Virtool creates only one
+administrator. The other person sees the sign-in screen with the message **Virtool is
+already set up. Sign in to continue.**
+
+## After you create the administrator
+
+Virtool signs you in and opens the app.
+
+You do not need email delivery to finish setup. On a new instance, email delivery is
+off, so Virtool does not send email. If email delivery is set up, Virtool sends a link to
+verify your email address. It then shows **Check your email**. Click **Continue to
+Virtool** to open the app.
+
+## What the first administrator can do
+
+The first user is a full administrator. A full administrator has all permissions, and
+all rights on all samples and references. It is the only role that can give administrator roles
+to other users. See [Administrator roles](/docs/guide/users#administrator-roles).
+
+## Next steps
+
+1. Set the encryption key and the other environment variables. See
+   [Configuration](/docs/start/configuration).
+2. Set up email delivery, the NCBI API key, the two-factor authentication policy, the
+   maximum upload size, and the other instance settings. See
+   [Administration](/docs/guide/administration).
+3. Create groups and invite users. See [Users](/docs/guide/users).
+4. Install the HMMs. See [HMMs](/docs/guide/hmms).
+5. Create a reference. See [References](/docs/guide/references).
+6. Create subtractions. See [Subtractions](/docs/guide/subtractions).
