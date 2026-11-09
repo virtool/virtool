@@ -143,68 +143,54 @@ A failed or cancelled analysis stays in the table until a user deletes it. Its
 page shows **Analysis failed** or **Analysis cancelled**, with a **View job** link
 to the job.
 
-## Interpret Pathoscope
+## View Pathoscope results
 
-Pathoscope is a workflow that finds known viruses in a sample.
+1. Open a sample and click the **Analyses** tab.
 
-1. View the mapping overview.
+2. Click **Pathoscope** in the **Workflow** column.
 
-   The heading shows the percentage of reads mapped to the reference. This
-   percentage includes reads that Virtool later subtracts.
+### Mapping overview
 
-   | Row                            | Description                                                 |
-   | ------------------------------ | ----------------------------------------------------------- |
-   | **Total reads**                | All reads in the sample.                                    |
-   | **Mapped to**                  | The reads mapped to the reference.                          |
-   | **Subtracted, mapped better to** | The reads removed because they mapped better to a subtraction. |
-   | **Analysed**                   | The reads that remain after subtraction.                    |
+The heading shows the percentage of reads mapped to the reference. This
+percentage includes reads that Virtool later subtracts.
 
-   The last two rows show only when the analysis uses a subtraction.
+| Row                              | Description                                                    |
+| -------------------------------- | -------------------------------------------------------------- |
+| **Total reads**                  | All reads in the sample.                                       |
+| **Mapped to**                    | The reads mapped to the reference.                             |
+| **Subtracted, mapped better to** | The reads removed because they mapped better to a subtraction. |
+| **Analysed**                     | The reads that remain after subtraction.                       |
 
-2. View the hit list.
+The last two rows show only when the analysis uses a subtraction.
 
-   The list shows each OTU that Pathoscope found. By default, the list shows all
-   hits. The list header labels the **Acronym**, **Weight**, **Depth**, and
-   **Coverage** columns.
+### Hit list
 
-3. Click the name of an OTU to show the coverage charts for its isolates.
+The list shows each OTU that Pathoscope found. By default, the list shows all
+hits. The list header labels the **Acronym**, **Weight**, **Depth**, and
+**Coverage** columns.
 
-   Click a panel of an isolate chart to see the accession, definition, length,
-   reads, weight, and coverage of the sequence.
+| Value    | Description                                                                                                                       |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Weight   | The calculated proportion of reads that map to a virus. The weight is approximately proportional to the titre.                     |
+| Depth    | The median number of mapped reads at each genome position.                                                                        |
+| Coverage | The proportion of genome positions with at least one mapped read. The value for an OTU is the highest coverage of its isolates.   |
 
-   The dashed line on a chart shows the maximum observed depth. All charts of an
-   OTU use this scale.
+Click the name of an OTU to show the coverage charts for its isolates. Click a
+panel of an isolate chart to see the accession, definition, length, reads,
+weight, and coverage of the sequence.
 
-   - Deep, wide coverage of an isolate often occurs with an infection.
-   - Shallow, wide, and broken coverage can occur with contamination between samples on
-     the same plate. These hits usually have low weights.
-   - Deep coverage in a small area usually comes from low-complexity or host-similar
-     regions of the isolate genome. This pattern usually does not show a true infection.
+The dashed line on a chart shows the maximum observed depth. All charts of an
+OTU use this scale.
 
-4. To hide low-coverage hits, click **Filter**.
+### Filter, sort, and export
 
-   - Turn on **Hide low-coverage OTUs** to hide OTUs.
-   - Turn on **Hide low-coverage isolates** to hide isolates in an expanded OTU.
-     This switch shows only in the **Charts** view.
-   - Use **Hide when coverage less than** to set the limit. The default limit is
-     0.50.
+To hide low-coverage hits, click **Filter**.
 
-As a guide, a dsRNA library can have approximately 5 million reads, but the
-percentage of mapped reads is more important. For dsRNA, this percentage can
-range from less than 1% to greater than 80%. Greater viral RNA enrichment,
-measured by the percentage of mapped reads, reduces the total number of reads
-required. For example, 100,000 mapped reads—2% of 5 million—may be sufficient.
-
-| Values   | Description                                                                                                                                                                                                                                                                  |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Coverage | The proportion of genome positions with at least one mapped read. The value for an OTU is the highest coverage of its isolates. As a guide, coverage above 0.5 often occurs with a positive detection, and coverage below 0.2 often occurs with a negative detection.             |
-| Depth    | The median number of mapped reads at each genome position.                                                                                                                                                                                                                   |
-| Weight   | The calculated proportion of reads mapping to a virus. The weight is roughly proportional to the titre. Higher the titre, higher the weight. As a guide, a weight above 0.001 often occurs with a positive detection.                                                          |
-
-These values are guides, not fixed limits. Use them together with the coverage
-charts to make a decision.
-
-### Work with the results
+- Turn on **Hide low-coverage OTUs** to hide OTUs.
+- Turn on **Hide low-coverage isolates** to hide isolates in an expanded OTU.
+  This switch shows only in the **Charts** view.
+- Use **Hide when coverage less than** to set the limit. The default limit is
+  0.50.
 
 Use the toolbar above the hit list:
 
@@ -227,6 +213,38 @@ To copy some hits, select their checkboxes and click **Copy**.
 
 The page address keeps your search, sort, and filter settings. You can share the
 link to show the same view.
+
+## Interpret Pathoscope
+
+Use the mapped reads, the values of each hit, and the coverage charts together
+to make a decision.
+
+### Mapped reads
+
+As a guide, a dsRNA library can have approximately 5 million reads, but the
+percentage of mapped reads is more important. For dsRNA, this percentage can
+range from less than 1% to greater than 80%. Greater viral RNA enrichment,
+measured by the percentage of mapped reads, reduces the total number of reads
+required. For example, 100,000 mapped reads—2% of 5 million—may be sufficient.
+
+### Hit values
+
+- A coverage above 0.5 often occurs with a positive detection. A coverage below
+  0.2 often occurs with a negative detection.
+- A weight above 0.001 often occurs with a positive detection. A higher titre
+  gives a higher weight.
+
+These values are guides, not fixed limits. Use them together with the coverage
+charts to make a decision.
+
+### Coverage patterns
+
+- Deep, wide coverage of an isolate often occurs with an infection.
+- Shallow, wide, and broken coverage can occur with contamination between
+  samples on the same plate. These hits usually have low weights.
+- Deep coverage in a small area usually comes from low-complexity or
+  host-similar regions of the isolate genome. This pattern usually does not show
+  a true infection.
 
 ### Examples
 
@@ -256,13 +274,13 @@ a weight of 1.50E-4, a depth of 16, and a coverage of 1.000. Coguvirus eburi has
 weight of 1.48E-4, a depth of 10, and a coverage of 0.958. Both are present in this
 sample.
 
-Click the name of an OTU to see its isolates. Capillovirus mali has two isolates.
+Capillovirus mali has two isolates.
 Isolate 13TF142 has a weight of 0.078, a depth of 309, and a coverage of 0.998.
 Isolate A16 has a weight of 0, a depth of 0, and a coverage of 0.019. The reads
 support isolate 13TF142.
 
-Click a chart panel to see its sequence details. For isolate 13TF142, 21,285 reads
-mapped to sequence MZ126530.1, which has a length of 6,495 nt.
+For isolate 13TF142, 21,285 reads mapped to sequence MZ126530.1, which has a
+length of 6,495 nt.
 
 ![Expanded OTU with isolate charts and sequence details](./pathoscope_isolates.png?url)
 
@@ -366,12 +384,17 @@ Select a contig in the left pane to view its details in the right pane. The
 contig is shown as a black line with identified ORFs below it. ORFs without
 significant HMM matches are hidden by default. Click **Filter ORFs** to show them.
 
-For each ORF with a significant HMM match, the graphic shows its size and
-E-value. Click the ORF name to open the HMM. **Families** lists the associated
-taxonomic families. The following example shows sequence 37 and its protein
-motifs.
+For each ORF with a significant HMM match, the pane shows the HMM name, the
+length of the ORF in base pairs, and the E-value. Click the HMM name to open
+the HMM. **Families** shows the virus families of all HMMs that match the
+contig.
 
-![Sequence 37](./nuvs_sequence.png?url)
+The example shows Sequence 8. The contig is 5,460 bp long. Four ORFs match
+HMMs: **Replicase**, **Triple Gene Block Protein 1**, **Triple Gene Block
+Protein 2**, and **Unknown Similar To AMEVITR04**. The E-value of the replicase
+match is 0, so the E-value of the contig is also 0.
+
+![Sequence 8, with four ORFs that match HMMs](./nuvs_sequence.png?url)
 
 To send a contig to NCBI for a BLAST search, click **BLAST at NCBI**.
 Many contigs derived from known viruses or non-viral sources are assembled. It's
