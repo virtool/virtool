@@ -7,6 +7,7 @@ import Icon from "@components/Icon.astro";
 import Key from "@components/Key.astro";
 import MdxImage from "@components/MdxImage.astro";
 import Note from "@components/Note.astro";
+import TableOfContents from "@components/TableOfContents.astro";
 import Menu from "@components/menu/Menu.astro";
 import SidebarLayout from "@layouts/SidebarLayout.astro";
 import { getMenuSectionsFromCollection } from "@utils/menu";
@@ -27,11 +28,12 @@ const sections = getMenuSectionsFromCollection(
 );
 
 const { entry } = Astro.props;
-const { Content, components } = await render(entry);
+const { Content, components, headings } = await render(entry);
 ---
 
 <SidebarLayout title={entry.data.title}>
   <Menu slot="sidebar" sections={sections} baseUrl="/docs" />
+  <TableOfContents slot="toc" headings={headings} />
   <h1>{entry.data.title}</h1>
   <div class="prose max-w-4xl">
     <Content

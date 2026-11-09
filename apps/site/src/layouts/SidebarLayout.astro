@@ -2,10 +2,16 @@
 import Layout from "./Layout.astro";
 
 const { title }: { title: string } = Astro.props;
+const hasToc = Astro.slots.has("toc");
 ---
 
 <Layout title={title} fullWidth>
-  <div class="grid grid-cols-[13rem_minmax(0,56rem)] gap-x-8 pr-6">
+  <div
+    class:list={[
+      "grid grid-cols-[13rem_minmax(0,56rem)] gap-x-8 pr-6",
+      { "xl:grid-cols-[13rem_minmax(0,56rem)_13rem]": hasToc },
+    ]}
+  >
     <div
       class="sticky top-24 max-h-[calc(100vh-7rem)] self-start overflow-y-auto pl-12 pr-4"
       data-sidebar
@@ -15,5 +21,12 @@ const { title }: { title: string } = Astro.props;
     <div class="prose max-w-none">
       <slot />
     </div>
+    {
+      hasToc && (
+        <div class="sticky top-24 hidden max-h-[calc(100vh-7rem)] self-start overflow-y-auto xl:block">
+          <slot name="toc" />
+        </div>
+      )
+    }
   </div>
 </Layout>

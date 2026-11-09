@@ -9,3 +9,7 @@
 .prose :not(pre) > code {
   @apply rounded bg-zinc-200 px-1 py-0.5 font-normal;
 }
+
+.prose :is(h2, h3)[id] {
+  scroll-margin-top: 6.25rem;
+}
