@@ -242,9 +242,9 @@ charts to make a decision.
 - Deep, wide coverage of an isolate often occurs with an infection.
 - Shallow, wide, and broken coverage can occur with contamination between
   samples on the same plate. These hits usually have low weights.
-- Deep coverage in a small area usually comes from low-complexity or
-  host-similar regions of the isolate genome. This pattern usually does not show
-  a true infection.
+- Deep coverage in a small area is usually non-specific mapping. Reads can map
+  to low-complexity or host-similar regions of the isolate genome. This pattern
+  usually does not show a true infection.
 
 ### Examples
 
@@ -299,7 +299,8 @@ succeeded.
 
 The list has 16 hits, sorted by coverage. The next three hits each have a weight of
 0, a depth of 0, and a coverage of 0.051 or less. Their charts show reads in only one
-small area. These viruses are not present in the sample.
+small area. This is non-specific mapping. These viruses are not present in the
+sample.
 
 ![Hit list with the internal control and three low hits](./pathoscope_negative_hits.png?url)
 
