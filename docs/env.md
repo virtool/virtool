@@ -38,6 +38,12 @@ never register a passkey, so use `http://localhost` in development.
 When you change `VT_AUTH_SECRET`, every Better Auth session stops working, and
 Virtool cannot decrypt stored recovery codes. Plan each rotation.
 
+Authentication cookies are `Secure` when `VT_PUBLIC_ORIGIN` uses `https`.
+
+The web server does not start when `BETTER_AUTH_SECRETS` or
+`BETTER_AUTH_TRUSTED_ORIGINS` is set. Better Auth would use these in place of,
+or in addition to, `VT_AUTH_SECRET` and `VT_PUBLIC_ORIGIN`.
+
 ## Encryption key
 
 `VT_ENCRYPTION_KEY` and `VT_ENCRYPTION_KEY_PREVIOUS` protect the secrets that

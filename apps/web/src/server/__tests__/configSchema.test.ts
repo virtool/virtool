@@ -51,6 +51,15 @@ describe("parseServerConfig", () => {
 		).toThrow(/VT_STORAGE_BACKEND/);
 	});
 
+	it.each(["BETTER_AUTH_SECRETS", "BETTER_AUTH_TRUSTED_ORIGINS"])(
+		"errors when %s is set",
+		(key) => {
+			expect(() =>
+				parseServerConfig({ ...minimalS3, [key]: "1:value" }),
+			).toThrow(key);
+		},
+	);
+
 	it("defaults the postgres pool max when unset", () => {
 		expect(parseServerConfig(minimalS3).postgresPoolMax).toBe(10);
 	});

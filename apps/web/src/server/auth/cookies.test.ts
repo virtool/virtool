@@ -10,6 +10,16 @@ vi.mock("@tanstack/react-start/server", () => ({
 	setCookie,
 }));
 
+let publicOrigin = "http://localhost:5173";
+
+vi.mock("../config", () => ({
+	config: {
+		get publicOrigin() {
+			return publicOrigin;
+		},
+	},
+}));
+
 const { realCookies, SETUP_SESSION_ID_COOKIE, SETUP_SESSION_TOKEN_COOKIE } =
 	await import("./cookies");
 
@@ -22,7 +32,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	vi.unstubAllEnvs();
+	publicOrigin = "http://localhost:5173";
 });
 
 describe("realCookies", () => {
@@ -61,8 +71,8 @@ describe("realCookies", () => {
 		);
 	});
 
-	it("marks the setup cookies secure in production", () => {
-		vi.stubEnv("NODE_ENV", "production");
+	it("marks the setup cookies secure for an https origin", () => {
+		publicOrigin = "https://virtool.example";
 
 		realCookies.setSetupSession("setup_abc", "token_abc");
 
