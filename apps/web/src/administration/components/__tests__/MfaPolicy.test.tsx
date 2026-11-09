@@ -7,6 +7,7 @@ import {
 	settingsServerFnMocks,
 } from "@tests/server-fn/settings";
 import { renderWithProviders } from "@tests/setup";
+import type { Settings } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
 
 const { default: MfaPolicy } = await import("../MfaPolicy");
@@ -51,6 +52,28 @@ describe("<MfaPolicy>", () => {
 				data: { mfaPolicy: "optional" },
 			}),
 		);
+	});
+
+	it("disables the checkbox while the change saves", async () => {
+		const settings = createFakeSettings({ mfaPolicy: "optional" });
+		mockSettingsStore(settings);
+		const { promise, resolve } = Promise.withResolvers<Settings>();
+		settingsServerFnMocks.setMfaPolicyFn.mockReturnValue(promise);
+
+		renderWithProviders(<MfaPolicy />);
+
+		const checkbox = await screen.findByRole("checkbox", {
+			name: /Require two-factor authentication/,
+		});
+		expect(checkbox).toBeEnabled();
+		await userEvent.click(checkbox);
+
+		await waitFor(() => expect(checkbox).toBeDisabled());
+		await userEvent.click(checkbox);
+		expect(settingsServerFnMocks.setMfaPolicyFn).toHaveBeenCalledTimes(1);
+
+		resolve({ ...settings, mfaPolicy: "required" });
+		await waitFor(() => expect(checkbox).toBeEnabled());
 	});
 
 	it("explains why the server refused the policy", async () => {

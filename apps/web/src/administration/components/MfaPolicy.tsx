@@ -21,9 +21,6 @@ export default function MfaPolicy() {
 	const errorMessage = getErrorMessage(mutation.error);
 
 	function onToggle() {
-		if (mutation.isPending) {
-			return;
-		}
 		mutation.mutate(required ? "optional" : "required");
 	}
 
@@ -38,6 +35,7 @@ export default function MfaPolicy() {
 				</SectionHeader>
 				<SettingsCheckbox
 					description="Users without two-factor authentication must set it up before they can use Virtool. You must turn it on for your own account first."
+					disabled={mutation.isPending}
 					enabled={required}
 					onToggle={onToggle}
 					title="Require two-factor authentication"
