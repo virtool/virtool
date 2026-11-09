@@ -1,3 +1,114 @@
+## 42.64.0 (2026-11-09)
+
+### Features
+
+#### Let administrators revoke all of a user's access ([#4207](https://github.com/virtool/virtool/pull/4207))
+
+A **Revoke** action in the Danger Zone of the user page signs a compromised user
+out everywhere and removes their password, API keys, passkeys, two-factor
+authentication, and outstanding links. It also marks their email address as not
+verified, so the user can't recover the account by themselves and Virtool doesn't
+email them. To restore access, issue a recovery link and give it to the user
+through a channel you trust. Revoking an administrator requires the full
+administrator role.
+
+#### Let a passkey satisfy the required two-factor authentication policy ([#4214](https://github.com/virtool/virtool/pull/4214))
+
+When an instance requires two-factor authentication, a user who has a passkey can now use Virtool without an authenticator app. An administrator who has a passkey can now turn on the requirement. A user who has no authenticator app and removes their last passkey must set up an authenticator app before they can use Virtool again. The account security page warns before this happens.
+
+### Fixes
+
+#### Ask for confirmation before deleting an analysis ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+A confirmation dialog now appears when you choose to delete an analysis. Before this change, the analysis was deleted immediately.
+
+#### Disable the two-factor authentication policy checkbox while the change saves ([#4214](https://github.com/virtool/virtool/pull/4214))
+
+On the security administration page, the "Require two-factor authentication"
+checkbox is now disabled and dimmed until Virtool saves the change. Before,
+the checkbox did not change and ignored clicks, with no sign that Virtool was
+saving.
+
+#### Explain that API key permissions do not limit reads ([#4214](https://github.com/virtool/virtool/pull/4214))
+
+The forms that create and edit API keys now tell you that permissions limit
+only what a key can change. A key can read all the data that your account can
+read.
+
+#### Fix small problems in the Nuvs analysis view ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+The link to a running BLAST search now has the correct address. Sequences show
+1 ORF in place of 1 ORFs, and sequences with no HMM hits no longer show an
+empty E-value. Exported Nuvs files now have an underscore in place of every
+space in the sample name. The HMM alert now uses the name Nuvs.
+
+#### Fix the Virtool API link on the API Keys page ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+The link now opens the current Virtool API documentation. Before this change, the link pointed to a page that no longer exists.
+
+#### Do not show the HMM alert in the analyze dialog boxes when HMM data is installed ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+The alert no longer appears when HMM data is installed. Before this change, the alert could appear even when the data was present.
+
+#### Configure authentication only from Virtool's own variables ([#4211](https://github.com/virtool/virtool/pull/4211))
+
+The web server does not start when `BETTER_AUTH_SECRETS` or
+`BETTER_AUTH_TRUSTED_ORIGINS` is set, because Better Auth would use them in
+place of, or in addition to, `VT_AUTH_SECRET` and `VT_PUBLIC_ORIGIN`. Unset them
+before you upgrade. The setup and login device cookies are now `Secure` when
+`VT_PUBLIC_ORIGIN` uses `https`, the same as the session cookies.
+
+#### Require recent authentication to change the account handle ([#4215](https://github.com/virtool/virtool/pull/4215))
+
+The handle is the name that you sign in with. If you have not signed in or
+confirmed your identity in the last 15 minutes, Virtool now asks you to confirm
+your identity before it changes your handle.
+
+#### Show small read shares correctly in the Pathoscope mapping overview ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+The **Subtracted** row no longer shows `−0.00%` when no reads were subtracted.
+A share that is more than zero but less than 0.01% now shows as `<0.01%`.
+
+#### Show a weight of zero as 0 ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+A weight of zero now appears as 0. Before this change, it appeared in scientific notation as 0E0.
+
+#### Show the analysis delete button to users with write access to the sample ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+Sample owners and other users with write access can now delete analyses from
+the **Analyses** tab. Administrators without write access no longer see a button
+that the server refuses.
+
+#### Show when an analysis failed or was cancelled ([#4212](https://github.com/virtool/virtool/pull/4212))
+
+The analysis page now shows **Analysis failed** or **Analysis cancelled** when
+the job stops before the analysis is complete. The page also shows a link to the
+job. Before this change, the page showed **Analysis in progress** forever.
+
+#### Show when an analysis job succeeded but the analysis did not finish ([#4213](https://github.com/virtool/virtool/pull/4213))
+
+The analysis page now shows **Analysis did not finish** and a link to the job
+when the job succeeded but the analysis is not ready. Before this change, the
+page showed **Analysis in progress** forever.
+
+### Maintenance
+
+- Remove the fallback for email links queued in plaintext ([#4203](https://github.com/virtool/virtool/pull/4203))
+
+#### Update auth dependencies ([#4209](https://github.com/virtool/virtool/pull/4209))
+
+- Bump `@better-auth/passkey` from 1.7.15 to 1.7.18.
+- Bump `better-auth` from 1.7.15 to 1.7.18.
+- Move `@simplewebauthn/server` and `@simplewebauthn/browser` to the passkey plugin's 13.x range and remove their overrides.
+
+#### Update development dependencies ([#4210](https://github.com/virtool/virtool/pull/4210))
+
+- Bump `@babel/core` from ^8.0.10 to ^8.1.0.
+- Bump `@tailwindcss/vite` from ^4.3.3 to ^4.3.5.
+- Bump `tailwindcss` from ^4.3.3 to ^4.3.5.
+- Bump `tsdown` from ^0.23.4 to ^0.23.7.
+- Bump `vite` from ^8.3.5 to ^8.3.6.
+
 ## 42.63.1 (2026-11-06)
 
 ### Fixes
