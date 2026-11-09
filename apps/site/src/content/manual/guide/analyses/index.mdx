@@ -290,6 +290,8 @@ them mapped to the reference. This percentage shows good enrichment of viral RNA
 Virtool subtracted 16,908 reads that mapped better to _Malus domestica_. After
 the subtraction, 4,263,751 reads remained for analysis.
 
+![Mapping overview and hit list toolbar](./pathoscope_overview.png?url)
+
 The hit list shows 31 hits. These two viruses have high weight, depth, and coverage:
 
 | OTU                      | Weight | Depth | Coverage |
@@ -299,6 +301,8 @@ The hit list shows 31 hits. These two viruses have high weight, depth, and cover
 
 Alphaendornavirus phaseoli is the internal control. It has a weight of 0.148, a
 depth of 289, and a coverage of 1.000.
+
+![Hit list with three OTUs and their coverage charts](./pathoscope_hits.png?url)
 
 A virus or viroid can be present with a low weight. Apscaviroid cicatricimali has
 a weight of 1.50E-4, a depth of 16, and a coverage of 1.000. Coguvirus eburi has a
@@ -313,12 +317,16 @@ show that isolate 13TF142 is the better match.
 For isolate 13TF142, 21,285 reads mapped to sequence MZ126530.1, which has a
 length of 6,495 nt.
 
+![Expanded OTU with isolate charts and sequence details](./pathoscope_isolates.png?url)
+
 #### High quality negative
 
 This sample comes from a healthy plant. It has 9,850,428 total reads, and only 0.42%
 of them mapped to the reference. Virtool subtracted 4,755 reads that mapped better to
 _Arabidopsis thaliana_. After the subtraction, 36,158 reads remained for
 analysis.
+
+![Mapping overview of a healthy sample](./pathoscope_negative_overview.png?url)
 
 The only virus present is Phaseolus vulgaris endornavirus 1 (PvEV-1). It has a weight
 of 1.000, a depth of 115, and a coverage of 1.000. This virus is a positive internal
@@ -330,16 +338,22 @@ The list has 16 hits, sorted by coverage. The next three hits each have a weight
 small area. This pattern is non-specific mapping. These viruses are not present in the
 sample.
 
+![Hit list with the internal control and three low hits](./pathoscope_negative_hits.png?url)
+
 #### Contamination
 
 This sample comes from an apple host. It has 10,507,241 total reads, and 11.91% of
 them mapped to the reference.
+
+![Mapping overview of a sample with contamination](./pathoscope_contamination_overview.png?url)
 
 Foveavirus mali and Apple chlorotic leaf spot virus have high coverage, and both
 viruses infect apple. Grapevine associated ilarvirus does not match the host. It has
 a weight of 1.42E-5, a depth of 0, and a coverage of 0.201. Its chart shows shallow,
 broken coverage. This hit is contamination. The likely source is another sample on
 the same run or plate.
+
+![Hit list with apple viruses and a grapevine virus](./pathoscope_contamination_hits.png?url)
 
 ## View Nuvs results
 
@@ -388,8 +402,12 @@ ORF in base pairs, and the E-value. Click the HMM name to open the HMM. An ORF
 with no HMM match shows **Unannotated**. **Families** shows the virus families
 of all HMMs that match the contig.
 
-For example, a contig can have four ORFs that match HMMs, and one of these is a
-replicase match with an E-value of 0. The E-value of the contig is then also 0.
+The example shows Sequence 8. The contig is 5,460 bp long. Four ORFs match
+HMMs: **Replicase**, **Triple Gene Block Protein 1**, **Triple Gene Block
+Protein 2**, and **Unknown Similar To AMEVITR04**. The E-value of the replicase
+match is 0, so the E-value of the contig is also 0.
+
+![Sequence 8, with four ORFs that match HMMs](./nuvs_sequence.png?url)
 
 ### BLAST
 
