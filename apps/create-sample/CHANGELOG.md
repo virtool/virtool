@@ -1,3 +1,11 @@
+## 42.62.2 (2026-11-09)
+
+### Maintenance
+
+#### Update development dependencies ([#4210](https://github.com/virtool/virtool/pull/4210))
+
+The `virtool` release lists each bump.
+
 ## 42.62.1 (2026-11-06)
 
 ### Maintenance
