@@ -122,6 +122,28 @@ are rejected. Virtool shows the maximum size when it rejects a file.
 You must have the `upload_file` permission to upload files. To delete files, select them
 and click **Delete**. You must have the `remove_file` permission to delete files.
 
+### Track uploads
+
+When an upload starts, the **Uploads** panel opens in the bottom-right corner. The nav
+bar shows an upload icon and the total progress as a percentage. Click the icon to show
+or hide the panel. The panel does not close by itself.
+
+The top of the panel shows the status of all the uploads:
+
+- The time remaining and the upload speed.
+- **Finishing uploads** when all the data is sent and Virtool is processing the files.
+- **Uploads complete** when all the uploads are complete.
+
+Each file in the panel shows its own status:
+
+- **In progress**: a progress bar. Click **Cancel** to stop the upload.
+- **Finishing**: a spinner. All the data is sent and Virtool is processing the file.
+- **Complete**: a green check.
+- **Failed**: the error in red. Click **Retry** to upload the file again, or click
+  **Remove** to remove it from the panel.
+
+Completed uploads stay in the panel until you start a new upload.
+
 ### Paired reads
 
 A sample is unpaired if it has one read file. A sample is paired if it has two read
