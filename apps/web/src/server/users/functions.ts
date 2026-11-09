@@ -16,7 +16,9 @@ import {
 } from "@virtool/contracts";
 import { EmailInUseError } from "@virtool/data/auth/email";
 import {
+	AccessRevocationForbiddenError,
 	resetUserTotp,
+	revokeUserAccess,
 	TotpNotEnrolledError,
 } from "@virtool/data/auth/lifecycle";
 import {
@@ -177,6 +179,9 @@ function rethrowAsHttp(err: unknown): never {
 	}
 	if (err instanceof PendingAccountError) {
 		throw new ClientError("User has not completed account setup.", 409);
+	}
+	if (err instanceof AccessRevocationForbiddenError) {
+		throw new ClientError("Forbidden", 403);
 	}
 	if (err instanceof TotpNotEnrolledError) {
 		throw new ClientError("User has no two-factor authentication.", 409);
@@ -493,6 +498,10 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
  * For a user who has lost both their authenticator and their recovery codes.
  * An administrator resets their own factor through the account settings
  * instead, so this refuses the caller's own account.
+ *
+ * A factor row without `users.two_factor_enabled` is an abandoned enrollment.
+ * It doesn't lock the user out, because the next enrollment replaces it, so
+ * there is nothing to reset.
  */
 export const resetUserTotpFn = createServerFn({ method: "POST" })
 	.middleware([
@@ -521,6 +530,53 @@ export const resetUserTotpFn = createServerFn({ method: "POST" })
 				outcome: "failure",
 				message: "user totp reset failed",
 				userId: data.userId,
+			});
+			throw rethrowAsHttp(err);
+		}
+	});
+
+/**
+ * Remove every credential and session a user holds.
+ *
+ * For a compromised account. An administrator target needs the `full` role.
+ * This refuses the caller's own account.
+ */
+export const revokeUserAccessFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.accessRevoke),
+	])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		if (context.principal.userId === data.userId) {
+			throw new ClientError("Cannot revoke own access", 400);
+		}
+
+		if (await getAdministratorRole(db, data.userId)) {
+			await requireAdminRole(context.principal, "full");
+		}
+
+		try {
+			const user = await revokeUserAccess(
+				db,
+				data.userId,
+				context.principal.userId,
+			);
+			recordAccountLifecycle({
+				operation: "access_revoke",
+				outcome: "success",
+				message: "user access revoked",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return user;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "access_revoke",
+				outcome: "failure",
+				message: "user access revocation failed",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
 			});
 			throw rethrowAsHttp(err);
 		}

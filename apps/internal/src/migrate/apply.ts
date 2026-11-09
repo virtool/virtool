@@ -58,7 +58,12 @@ export type ApplyGatedMigrationsResult = {
 	};
 };
 
-/** Apply SQL prefixes and their paired bodies while the caller holds the session lock. */
+/**
+ * Apply SQL prefixes and their paired bodies while the caller holds the session lock.
+ *
+ * A recorded pass at the exact version is reused. Any other recorded status,
+ * including an abandoned `running` attempt, gets one new attempt.
+ */
 export async function applyGatedMigrations(
 	options: ApplyGatedMigrationsOptions,
 ): Promise<ApplyGatedMigrationsResult> {

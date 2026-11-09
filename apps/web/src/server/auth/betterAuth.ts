@@ -5,6 +5,7 @@ import {
 } from "@virtool/contracts";
 import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
+import { createRateLimitStorage } from "@virtool/data/auth/rateLimits";
 import { mfaEnrollmentRequired } from "@virtool/data/auth/session";
 import type { Db } from "@virtool/data/db/pg";
 import {
@@ -32,7 +33,6 @@ import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 import { getNewPasskeyName, passkeyNamePlugin } from "./passkeyName";
 import { assertDatabaseReachable } from "./probe";
-import { createRateLimitStorage } from "./rateLimitStorage";
 import {
 	RECENT_AUTHENTICATION_PATH,
 	recentAuthenticationPlugin,
@@ -203,8 +203,8 @@ function rejectRegisteredPasskey(): never {
  * only authority for what a caller may do.
  *
  * `@simplewebauthn/server` is a direct dependency so the passkey plugin's inferred
- * types are nameable across the server/browser TypeScript project boundary. A
- * pnpm override keeps the plugin on the same version, so there is one copy.
+ * types are nameable across the server/browser TypeScript project boundary. Its
+ * range must stay inside the plugin's, so there is one copy.
  *
  * Takes its dependencies as arguments so tests can build an instance against a
  * throwaway database.
@@ -248,6 +248,8 @@ export function createAuth({
 				rateLimit: authRateLimits,
 			},
 		}),
+		// Lifetime stays at Better Auth's defaults: seven days, rolling, refreshed
+		// after one day, with no absolute cap.
 		session: {
 			cookieCache: { enabled: false },
 			freshAge: SESSION_FRESH_AGE_SECONDS,
@@ -400,9 +402,9 @@ export function createAuth({
 					// possession of an unlocked device.
 					userVerification: "required",
 				},
-				// The plugin verifies both ceremonies with `requireUserVerification:
-				// false` whatever the options above ask the browser for, so the flag
-				// is checked again here, after the signature has been verified.
+				// The plugin already requires user verification because of the
+				// setting above. These checks keep that guarantee if the plugin's
+				// defaults change.
 				registration: {
 					async afterVerification({ ctx, verification }) {
 						const info = verification.registrationInfo;

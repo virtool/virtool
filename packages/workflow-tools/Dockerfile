@@ -50,10 +50,21 @@ RUN wget -q --tries=3 --timeout=30 https://github.com/relipmoc/skewer/archive/0.
 WORKDIR /build/skewer-0.2.2
 RUN make
 
+# The Rust crates build on Debian, like every other stage here, so the output is
+# an ordinary glibc build. The tool stages copy into a glibc runtime.
+#
+# Builds are cargo-chef layered: dependencies cook in their own layer before the
+# source is copied. `hts-sys` compiles htslib's C source, the slowest step, and
+# it rarely changes. Without the split every source edit recompiles htslib.
+# To check the split, edit a `.rs` file and confirm `cargo chef cook` reports
+# `CACHED`.
 FROM rust:1.97-bookworm AS chef
 RUN cargo install cargo-chef --locked
 WORKDIR /build
 
+# `hts-sys` runs bindgen against htslib's headers and does not fall back to
+# pre-generated bindings, so without libclang the build fails with
+# `Unable to find libclang`.
 FROM chef AS pathoscope-chef
 RUN apt-get update && apt-get install -y --no-install-recommends libclang-dev && rm -rf /var/lib/apt/lists/*
 
@@ -88,6 +99,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY packages/quality-core .
 RUN cargo build --release --bin quality-core
 
+# SPAdes has no binary release suited to the runtime base, so it builds from source.
 FROM python:3.13-bookworm AS spades
 WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential cmake libbz2-dev wget zlib1g-dev && rm -rf /var/lib/apt/lists/* && apt-get clean

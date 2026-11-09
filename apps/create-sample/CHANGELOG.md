@@ -1,3 +1,12 @@
+## 42.62.1 (2026-11-06)
+
+### Maintenance
+
+- Move internal service developer documentation into code ([#4201](https://github.com/virtool/virtool/pull/4201))
+- Move package and repository developer documentation into code ([#4201](https://github.com/virtool/virtool/pull/4201))
+- Move web developer documentation into code and link the administration pages to the configuration manual ([#4201](https://github.com/virtool/virtool/pull/4201))
+- Pass the resolved Sentry DSN to the shared Sentry options ([#4206](https://github.com/virtool/virtool/pull/4206))
+
 ## 42.62.0 (2026-11-06)
 
 ### Features

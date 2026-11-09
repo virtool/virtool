@@ -131,7 +131,13 @@ const invitationSelection = {
 	outboxStatus: emailOutbox.status,
 };
 
-/** Create a pending account, identity, invitation, and optional mail atomically. */
+/**
+ * Create a pending account, identity, invitation, and optional mail atomically.
+ *
+ * The plaintext token comes back only for a copy-only invitation. An emailed
+ * invitation exposes metadata only, so acceptance proves control of the mailbox.
+ * A copied invitation leaves the assigned address unverified.
+ */
 export async function createPendingInvitation(
 	db: Db,
 	input: CreatePendingInvitationInput,
@@ -195,7 +201,12 @@ export async function getInvitation(
 	return toInvitation(row);
 }
 
-/** Revoke the current link and mint a new one, returning its secret once. */
+/**
+ * Revoke the current link and mint a new one, returning its secret once.
+ *
+ * This holds the user's setup lock, as deletion does, so a regeneration cannot
+ * race either deletion or acceptance.
+ */
 export async function regenerateInvitation(
 	db: Db,
 	userId: number,

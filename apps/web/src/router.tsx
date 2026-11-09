@@ -4,7 +4,7 @@ import {
 	isServiceUnavailable,
 	shouldRetryQuery,
 } from "@app/queryErrors";
-import { readSentryDsn } from "@app/sentryDsn";
+import { readDsnFromMeta } from "@app/sentryDsn";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import RouteError from "@base/RouteError";
 import * as Sentry from "@sentry/tanstackstart-react";
@@ -128,14 +128,14 @@ export function getRouter() {
 	// reference in the SSR build would warn about an undefined import.
 	if (!import.meta.env.SSR) {
 		// The DSN comes from a `<meta>` tag the server renders from its runtime
-		// env (see `@app/sentryDsn` and the root route's `head`), not from a
+		// configuration (see `@app/sentryDsn` and the root route's `head`), not from a
 		// build-time `import.meta.env.VT_SENTRY_DSN` inline that would freeze in
 		// whatever DSN (usually none) was present when the image was built.
 		// `MODE` is read from `import.meta.env.MODE`: it is the build mode and
 		// only drives sample rates.
 		const options = getCommonOptions({
 			MODE: import.meta.env.MODE,
-			VT_SENTRY_DSN: readSentryDsn(),
+			VT_SENTRY_DSN: readDsnFromMeta(),
 		});
 		if (options.dsn) {
 			Sentry.init({

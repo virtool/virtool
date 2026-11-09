@@ -1,41 +1,8 @@
-import { sql } from "drizzle-orm";
-
 import type { Db } from "../db/pg";
-import { authRateLimits } from "../db/schema/auth";
+import { getRateLimitKey, spendRateLimit } from "./rateLimits";
 
-const RECOVERY_KEY_PREFIX = "virtool:recovery:";
-const REQUESTER_WINDOW_MS = 60_000;
-const TARGET_WINDOW_MS = 60 * 60_000;
-
-/**
- * Spend one attempt from a fixed window, and report whether it was allowed.
- *
- * `last_request` holds the start of the window. A refused attempt writes
- * nothing, so repeated requests can't extend a window past its end.
- */
-async function spendAttempt(
-	db: Db,
-	key: string,
-	windowMs: number,
-	limit: number,
-): Promise<boolean> {
-	// One value per statement, so both columns agree on whether the window ended.
-	const nowMs = sql<number>`floor(extract(epoch from statement_timestamp()) * 1000)`;
-	const windowEnded = sql`${authRateLimits.lastRequest} <= ${nowMs} - ${windowMs}`;
-	const [row] = await db
-		.insert(authRateLimits)
-		.values({ key, count: 1, lastRequest: nowMs })
-		.onConflictDoUpdate({
-			target: authRateLimits.key,
-			set: {
-				count: sql`case when ${windowEnded} then 1 else ${authRateLimits.count} + 1 end`,
-				lastRequest: sql`case when ${windowEnded} then ${nowMs} else ${authRateLimits.lastRequest} end`,
-			},
-			setWhere: sql`${windowEnded} or ${authRateLimits.count} < ${limit}`,
-		})
-		.returning({ id: authRateLimits.id });
-	return row !== undefined;
-}
+const REQUESTER_RULE = { window: 60, max: 5 };
+const TARGET_RULE = { window: 60 * 60, max: 3 };
 
 /**
  * Spend one attempt from the requester budget, then the target budget.
@@ -48,19 +15,17 @@ export async function checkRecoveryRequestBudget(
 	requesterDigest: string,
 	targetDigest: string,
 ): Promise<boolean> {
-	const requesterAllowed = await spendAttempt(
+	const requesterAllowed = await spendRateLimit(
 		db,
-		`${RECOVERY_KEY_PREFIX}requester:${requesterDigest}`,
-		REQUESTER_WINDOW_MS,
-		5,
+		getRateLimitKey("recovery", "requester", requesterDigest),
+		REQUESTER_RULE,
 	);
 	if (!requesterAllowed) {
 		return false;
 	}
-	return spendAttempt(
+	return spendRateLimit(
 		db,
-		`${RECOVERY_KEY_PREFIX}target:${targetDigest}`,
-		TARGET_WINDOW_MS,
-		3,
+		getRateLimitKey("recovery", "target", targetDigest),
+		TARGET_RULE,
 	);
 }

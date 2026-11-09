@@ -23,10 +23,10 @@ let db: Db;
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
-	// Flagged users predate this constraint, which stays unvalidated until the
-	// body passes.
+	// The body runs against the schema of its paired migration, which still has
+	// this column.
 	await database.client`
-		ALTER TABLE public.users DROP CONSTRAINT force_reset_unset
+		ALTER TABLE public.users ADD COLUMN force_reset boolean DEFAULT false NOT NULL
 	`;
 }, 60_000);
 

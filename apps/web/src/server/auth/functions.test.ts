@@ -26,6 +26,7 @@ import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+import { silenceLogs } from "../test/silenceLogs";
 
 const cookies = new Map<string, string>();
 let clientIp: string | undefined;
@@ -152,6 +153,7 @@ it("signs in with a persistent seven-day rolling session", async () => {
 });
 
 it("replaces a bcrypt hash with Argon2id after a successful sign-in", async () => {
+	silenceLogs();
 	const userId = await seedUser(db, {
 		password: Buffer.from(hash),
 		email: "alice@virtool.test",

@@ -8,6 +8,7 @@ exceptions:
   - Azure Blob Storage
   - E-utilities
   - FASTQ
+  - FastQC
   - HTTP
   - React
   - SQLite

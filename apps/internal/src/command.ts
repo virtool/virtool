@@ -56,11 +56,11 @@ export async function runCommand<Env extends CommandEnv>(
 		return;
 	}
 
-	const sentryOptions = getCommonOptions(options.service);
 	const dsn = env.VT_SENTRY_DSN;
+	const sentryOptions = getCommonOptions(options.service, dsn);
 
 	if (dsn) {
-		Sentry.init({ ...sentryOptions, dsn });
+		Sentry.init(sentryOptions);
 	}
 
 	const logger = createLogger({

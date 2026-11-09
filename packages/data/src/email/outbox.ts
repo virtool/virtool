@@ -19,7 +19,7 @@ import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupTokens } from "../db/schema/setup";
 import { nowUtc, secondsAgo } from "../db/time";
-import { LINK_FIELDS, type StoredEmailTemplate, sealEmailLink } from "./link";
+import { type StoredEmailTemplate, sealEmailLink } from "./link";
 import { isEmailEnabled } from "./settings";
 import { EMAIL_TEMPLATE_VERSION } from "./templates";
 
@@ -41,12 +41,20 @@ export type EnqueueEmailInput = EnqueueInput & {
 
 /** What {@link enqueueLinkEmail} needs to queue one message with a bearer link. */
 export type EnqueueLinkEmailInput = EnqueueInput & {
-	/** The setup token whose link the message carries. */
+	/**
+	 * The setup token whose link the message carries. Deleting the token deletes
+	 * the message.
+	 */
 	setupTokenId?: number;
 	template: EmailLinkTemplate;
 };
 
-/** What enqueueing returns: a queued row's identity, or a discard. */
+/**
+ * What enqueueing returns: a queued row's identity, or a discard.
+ *
+ * A discard is not an error. A flow that depends on the email offers the user
+ * another route.
+ */
 export type EnqueueEmailResult =
 	| { status: "queued"; created: boolean; outboxId: number }
 	| { status: "discarded" };
@@ -108,6 +116,11 @@ async function insertEmail(
  * Queue one notice.
  *
  * The message is discarded and no row is written while sending is switched off.
+ *
+ * Features queue mail only through this function and {@link enqueueLinkEmail}.
+ * Pass a template, never HTML, and pass a transaction when domain state and its
+ * email must commit together. Template fields stay stored until the row is
+ * pruned, so keep data out of them that cannot tolerate that retention.
  */
 export async function enqueueEmail(
 	db: DbOrTx,
@@ -281,22 +294,6 @@ export type EmailResultTarget = {
 	outboxId: number;
 };
 
-/**
- * The columns that clear a row's bearer link once it can no longer be sent.
- *
- * The template fields cover rows queued before links were encrypted.
- */
-function clearedLinkColumns() {
-	const fields = Object.values(LINK_FIELDS).map(
-		(field) => sql`- ${sql.raw(`'${field}'::text`)}`,
-	);
-
-	return {
-		link: null,
-		template: sql`${emailOutbox.template} ${sql.join(fields, sql` `)}`,
-	};
-}
-
 /** Record provider acceptance, or return `false` if the claim was lost. */
 export async function markEmailAccepted(
 	db: Db,
@@ -306,7 +303,7 @@ export async function markEmailAccepted(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
-			...clearedLinkColumns(),
+			link: null,
 			accepted_at: nowUtc(),
 			claim_expires_at: null,
 			claim_token: null,
@@ -351,7 +348,7 @@ export async function failEmail(
 	const rows = await db
 		.update(emailOutbox)
 		.set({
-			...clearedLinkColumns(),
+			link: null,
 			claim_expires_at: null,
 			claim_token: null,
 			last_error: error,

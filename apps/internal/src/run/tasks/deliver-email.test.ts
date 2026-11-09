@@ -399,8 +399,7 @@ describe("deliverEmailTask", () => {
 		await db
 			.update(emailOutbox)
 			.set({
-				link: null,
-				template: sql`'{"type":"email_verification","username":"alice","verifyUrl":"https://virtool.example/verify?token=abc"}'::jsonb`,
+				template: sql`'{"type":"email_verification","username":"alice"}'::jsonb`,
 				template_version: 1,
 			})
 			.where(eq(emailOutbox.id, outboxId));

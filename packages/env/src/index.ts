@@ -28,6 +28,12 @@ const FILE_SUFFIX = "_FILE";
  * path, which an operator can set to the secret itself by mistake. An empty
  * file is an unset value: the trimmed empty string is what the caller's schema
  * then sees.
+ *
+ * Call this before the service parses its schema, and pass every key that the
+ * schema reads. A missing key leaves the plain variable working and silently
+ * disables its `_FILE` variant. Parse once, before the process serves, and pass
+ * the result down: a direct `process.env` read skips validation and `_FILE`
+ * resolution. Report key names and reasons, never a configured value.
  */
 export function resolveFileBacked(
 	keys: Iterable<string>,

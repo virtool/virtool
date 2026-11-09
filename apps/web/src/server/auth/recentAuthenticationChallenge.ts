@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import {
+	type AuthenticatorTransportFuture,
 	generateAuthenticationOptions,
 	verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
@@ -9,6 +11,11 @@ import {
 	getUserPasskey,
 	setPasskeyCounter,
 } from "@virtool/data/auth/passkeys";
+import {
+	clearRateLimit,
+	getRateLimitKey,
+	spendRateLimit,
+} from "@virtool/data/auth/rateLimits";
 import { hasVerifiedTotp } from "@virtool/data/auth/twoFactor";
 import type { Db } from "@virtool/data/db/pg";
 import type { BetterAuthPlugin } from "better-auth";
@@ -28,6 +35,13 @@ const PASSKEY_CHALLENGE_MAX_AGE_SECONDS = 300;
 
 const PASSKEY_CHALLENGE_TYPE = "step-up";
 
+// Matches the lockout that Better Auth applies to TOTP at sign-in.
+const FAILURE_RULE = { window: 900, max: 10 };
+
+// A code stays valid for about 90 seconds on the clock of the web instance
+// that checks it. The margin covers an instance whose clock runs behind.
+const USED_CODE_RULE = { window: 120, max: 1 };
+
 const TRANSPORTS = new Set<string>([
 	"ble",
 	"cable",
@@ -36,7 +50,7 @@ const TRANSPORTS = new Set<string>([
 	"nfc",
 	"smart-card",
 	"usb",
-]);
+] satisfies AuthenticatorTransportFuture[]);
 
 const base64Url = z.string().min(1).max(4096);
 
@@ -109,9 +123,19 @@ function getSessionUserId(user: { id: string | number }): number {
 	return userId;
 }
 
-function toTransports(value: string | null): string[] {
-	return (value?.split(",") ?? []).filter((transport) =>
-		TRANSPORTS.has(transport),
+function getFailureKey(userId: number): string {
+	return getRateLimitKey("step-up", "user", String(userId));
+}
+
+function getUsedCodeKey(userId: number, code: string): string {
+	const digest = createHash("sha256").update(code).digest("hex");
+	return getRateLimitKey("step-up", "code", String(userId), digest);
+}
+
+function toTransports(value: string | null): AuthenticatorTransportFuture[] {
+	return (value?.split(",") ?? []).filter(
+		(transport): transport is AuthenticatorTransportFuture =>
+			TRANSPORTS.has(transport),
 	);
 }
 
@@ -122,6 +146,18 @@ function toTransports(value: string | null): string[] {
  * Passkeys use their own ceremony and not Better Auth's
  * `/passkey/verify-authentication`. That endpoint signs in whoever holds the
  * passkey and does not check that it belongs to the user of this session.
+ *
+ * Recovery codes are not accepted. Every TOTP user also has a password, so a
+ * recovery code would only spend a code kept for a lost authenticator.
+ *
+ * Better Auth counts TOTP failures only at sign-in, so password and TOTP
+ * attempts spend from a per-user budget here. An attempt spends before its
+ * check, so concurrent guesses can't overrun the budget, and a correct proof
+ * gives the budget back. Passkeys spend nothing: an assertion can't be guessed,
+ * and a passkey lets the user through while the budget is spent.
+ *
+ * Direct `auth.api` calls bypass the rate limit, so verification must enter
+ * through the HTTP handler.
  */
 export function recentAuthenticationPlugin({
 	db,
@@ -213,7 +249,31 @@ export function recentAuthenticationPlugin({
 					}
 
 					if (ctx.body.method !== "passkey") {
+						const failureKey = getFailureKey(userId);
+						if (!(await spendRateLimit(db, failureKey, FAILURE_RULE))) {
+							throw new APIError("TOO_MANY_REQUESTS", {
+								code: "STEP_UP_LOCKED",
+								message: "Too many failed attempts",
+							});
+						}
+
 						await verify(ctx.headers, ctx.body);
+
+						if (ctx.body.method === "totp") {
+							const unused = await spendRateLimit(
+								db,
+								getUsedCodeKey(userId, ctx.body.code),
+								USED_CODE_RULE,
+							);
+							if (!unused) {
+								throw new APIError("UNAUTHORIZED", {
+									code: "INVALID_CODE",
+									message: "Invalid code",
+								});
+							}
+						}
+
+						await clearRateLimit(db, failureKey);
 						return ctx.json({ status: true });
 					}
 

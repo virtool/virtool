@@ -6,7 +6,13 @@ export const BOOTSTRAP_MIGRATION_TAG = "0026_add_data_migrations";
 /** A journaled SQL migration and its statements. */
 export type MigrationFile = { tag: string; sql: string[] };
 
-/** The required first statement of a SQL migration paired with a body. */
+/**
+ * The required first statement of a SQL migration paired with a body.
+ *
+ * Schema changes follow a statement breakpoint. An audit with no schema changes
+ * still gets a SQL file that holds only this assertion. Only TypeScript writes
+ * attempt rows; SQL reads them as preconditions.
+ */
 export function getDataMigrationAssertion(
 	key: string,
 	version: number,

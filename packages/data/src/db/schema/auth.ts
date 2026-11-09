@@ -3,7 +3,8 @@
 // Better Auth owns interactive human authentication: credential accounts,
 // browser sessions, verification challenges, TOTP enrollment, and passkeys.
 // `auth_sessions` is the only interactive application-session table.
-// Restricted setup credentials remain in their purpose-bound tables.
+// Restricted setup credentials remain in their purpose-bound tables. `users` is
+// shared: Better Auth uses it as its user model.
 //
 // Every table is keyed by an `integer ... generated always as identity` primary
 // key rather than the string ids Better Auth mints by default. Better Auth 1.6
@@ -74,13 +75,19 @@ export type AuthAccountRow = typeof authAccounts.$inferSelect;
 export const authSessions = pgTable(
 	"auth_sessions",
 	{
+		// A management id that session lists may show. It does not authenticate.
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		// Better Auth owns this rolling value. Application code only reads it, and
+		// compares it with the Postgres UTC clock.
 		expiresAt: timestamp("expires_at").notNull(),
+		// The random secret. It is the only column that authenticates.
 		token: text("token").notNull(),
 		createdAt: timestamp("created_at").notNull(),
 		updatedAt: timestamp("updated_at").notNull(),
 		ipAddress: varchar("ip_address", { length: 45 }),
 		userAgent: varchar("user_agent", { length: 512 }),
+		// Internal and self-clearing. It only keeps a concurrent recent-auth
+		// replacement out of an all-other-session deletion.
 		replacementForSessionId: integer("replacement_for_session_id"),
 		userId: integer("user_id").notNull(),
 	},

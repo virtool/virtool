@@ -103,6 +103,8 @@ function getDeletedKey(domain: DomainCache, change: Change): QueryKey | null {
  * count, a subtraction's sample count, a reference's OTU count, the changes a
  * reference's next index build would include, and the read files a sample holds
  * until it is deleted.
+ *
+ * Add a case when a record starts to embed another domain's data.
  */
 function getDependentKeys(change: Change): QueryKey[] {
 	const created = change.operation === "insert";
@@ -165,7 +167,13 @@ function getChangeKeys(change: Change): QueryKey[] {
 	];
 }
 
-/** Refresh every cached query that shows the changed record. */
+/**
+ * Refresh every cached query that shows the changed record.
+ *
+ * A mutation reports its change here instead of invalidating keys by hand. The
+ * server-push handler uses the same function, so a local change and a pushed
+ * change refresh the same queries.
+ */
 export function invalidateChange(
 	queryClient: QueryClient,
 	change: Change,

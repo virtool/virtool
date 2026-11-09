@@ -1,11 +1,8 @@
 /**
  * Object storage backend configuration.
  *
- * The package owns the shape; resolving it from the environment is the host
- * application's job. `apps/web`'s zod schema parses `VT_STORAGE_*` into a value
- * assignable to this type, so the package never reads `process.env` itself and
- * a second consumer — the jobs API, a workflow port — can supply the same shape
- * from wherever it keeps configuration.
+ * The package owns the shape and never reads `process.env`. Each service
+ * resolves `VT_STORAGE_*` into this type from its own configuration.
  */
 export type StorageConfig =
 	| {

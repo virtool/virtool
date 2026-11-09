@@ -69,13 +69,23 @@ name the affected apps in the change file. Knope does not cascade bumps.
 A bundled app that is affected only through a shared package needs no change
 file when its built code and its production dependencies do not change. For
 example, a change to a web-only module in `@virtool/contracts` does not need a
-change file for the workflows. See [Releases](docs/ci.md#releases).
+change file for the workflows.
 
-A pull request that affects no image app needs no change file. Empty change files are not allowed.
-Changes to tests, test data, and Markdown affect no app. When a pull request
-affects an app but needs no release, such as a refactor, add the `no-release`
-label. The label waives the check. To release a change that users can't see,
-use `maintenance`.
+A pull request that affects no image app needs no change file. Empty change
+files are not allowed. Changes to tests, test data, Markdown, and dependencies
+that ship nothing affect no app. To release a change that users can't see, use
+`maintenance`.
+
+`Knope / Check` fails a pull request when:
+
+- a change file has incorrect front matter, an unknown package, an unknown
+  change type, no summary on one line, or no details for a change that is not
+  `maintenance`;
+- a change file that uses `maintenance` contains `**Action required:**`;
+- an image app that the pull request affects has no change file that names it.
+
+When a pull request affects an app but needs no release, such as a refactor, add
+the `no-release` label. The label waives only the last rule.
 
 Merging to `main` opens or updates a **Release** pull request that applies the
 pending bumps and updates the changelogs. Merging it publishes the images and
@@ -88,11 +98,14 @@ GitHub Release. Write it for users, not reviewers. Tell users what they will
 see that is different, not how the code changed.
 
 The first line is the summary. Keep it on one line, and leave a blank line
-before any details: `Knope / Check` fails a summary that wraps. A change file
-with only a summary becomes a bullet. Text after the summary becomes the
-details: the summary becomes a heading, and the details go below it. Add
-details when users must know more,
-for example what was wrong before, what to do now, or which pages changed:
+before any details: `Knope / Check` fails a summary that wraps. Text after the
+summary becomes the details: the summary becomes a heading, and the details go
+below it.
+
+Every change file needs details, or `Knope / Check` fails. The only exception
+is a `maintenance` change, which can have only a summary and becomes a bullet.
+Tell users what was wrong before, what to do now, or which pages changed. For a
+small change, one sentence is sufficient:
 
 ```md
 ---
@@ -116,9 +129,8 @@ preparation, a change to how images build, and a dependency update. This type
 releases a patch. `CHANGELOG.md` lists the change in a Maintenance section. The
 GitHub Release and the Release pull request show that section collapsed.
 
-A change that uses `maintenance` must not contain `**Action required:**`, or
-`Knope / Check` fails. Use `patch`, `minor`, or `major` for that change, so that
-the action stays in the main notes.
+A change with an action for administrators must use `patch`, `minor`, or
+`major`, so that the action stays in the main notes.
 
 Run `knope prepare-release --dry-run` to see the changelog entry.
 
@@ -131,61 +143,13 @@ summary, such as a `minor` bump for `virtool` with a few paragraphs of prose.
 
 ### Posts
 
-A post is an optional article on the site, at `/posts`. The two types of post are:
+A post is an optional article on the site. Add an MDX file to the `posts` content
+collection of the site. The build fails if a required field is missing.
 
-| Type | Use |
-| --- | --- |
-| `release` | Explains a change in more detail than a changelog entry. The release in the changelog links to the post. |
-| `research` | Tells users about work that is not part of a release, such as a paper. |
-
-Add an MDX file to the `posts` content collection of the site. If the post has
-images, put the post in its own directory as `index.mdx`, with the images beside
-it. The file or directory name is the slug, and the post URL is `/posts/<slug>`.
-Do not change the slug after the post is published, because links use it.
-
-Each post needs `type`, `title`, and `summary`. Write `summary` as one sentence,
-because it shows in the post list. The build fails if a field is missing.
-
-A `release` post also needs `pr`:
-
-```mdx
----
-type: release
-title: Recover access with a one-time link
-summary: Administrators now send recovery links instead of setting passwords.
-pr: 4175
----
-
-Write the post here.
-```
-
-A post cannot name its version, because Knope calculates the version later.
-Set `pr` to the number of the pull request that makes the change. The build
-finds that pull request in the `virtool` changelog, and gets the version and
-date from that release. The pull request must have a change file that names
-`virtool`, or the changelog will not contain it.
-
-Until that release exists, the site hides the post. The build logs a warning
-for each hidden post. If a post stays hidden after its release, make sure that
-`pr` is correct.
-
-A `research` post also needs `date`:
-
-```mdx
----
-type: research
-title: A new method to find novel viruses
-summary: Our paper describes how Virtool finds viruses absent from references.
-date: 2026-12-01
----
-
-Write the post here.
-```
-
-Merge a post through a normal pull request, not the Release pull request. A
-release post can be in the same pull request as the change, or in a different
-one. The site builds from the latest release, so a post goes live with the next
-release, not on a date that you choose.
+A `release` post can merge in the same pull request as its change, or in a
+different one. Merge each post through a normal pull request, not the Release
+pull request. The site builds from the latest release, so a post goes live with
+the next release, not on a date that you choose.
 
 ### Upgrade Knope
 

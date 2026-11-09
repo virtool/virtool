@@ -298,7 +298,7 @@ describe("createIndexFn", () => {
 		expect(index.version).toBe(0);
 		expect(index.ready).toBe(false);
 		// The integer id, not a stringified one — the client's `SseMessageSchema`
-		// rejects a string here and would drop the invalidation (VIR-2794).
+		// rejects a string here and would drop the invalidation.
 		expect(emit).toHaveBeenCalledWith("indexes", index.id, "create");
 	});
 

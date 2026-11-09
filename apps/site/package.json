@@ -34,7 +34,7 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "vitest": "^5.0.5",
-    "wrangler": "^4.156.1"
+    "vitest": "^5.1.0",
+    "wrangler": "^4.158.0"
   }
 }

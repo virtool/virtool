@@ -2,11 +2,13 @@ import { accountQueryKeys } from "@account/keys";
 import { screen, waitFor } from "@testing-library/react";
 import { userServerFnMocks } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
+import { silenceExpectedLogs } from "@tests/silenceExpectedLogs";
 import { CLIENT_ERROR_NAME, UNAVAILABLE_MESSAGE } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
 
 describe("/login", () => {
 	it("shows the outage rather than the sign-in form while the database is down", async () => {
+		silenceExpectedLogs();
 		userServerFnMocks.getAccountFn.mockRejectedValue(
 			Object.assign(new Error(UNAVAILABLE_MESSAGE), {
 				name: CLIENT_ERROR_NAME,

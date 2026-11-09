@@ -5,6 +5,7 @@ export const SESSION_FRESH_AGE_SECONDS = 15 * 60;
 export const PROTECTED_OPERATIONS = {
 	accountPasswordChange: "account.password.change",
 	accountEmailChange: "account.email.change",
+	accessRevoke: "access.revoke",
 	totpReset: "totp.reset",
 	totpDisable: "totp.disable",
 	recoveryCodesRegenerate: "recovery_codes.regenerate",
@@ -29,7 +30,11 @@ export const PROTECTED_OPERATIONS = {
 export type ProtectedOperation =
 	(typeof PROTECTED_OPERATIONS)[keyof typeof PROTECTED_OPERATIONS];
 
-/** Whether `createdAt` is inside Better Auth's inclusive freshness boundary. */
+/**
+ * Whether a session is fresh. A session is stale at exactly the fresh age.
+ *
+ * `createdAt` never changes, so rolling expiry doesn't renew freshness.
+ */
 export function isSessionFresh(createdAt: Date, now = Date.now()): boolean {
 	return now - createdAt.getTime() < SESSION_FRESH_AGE_SECONDS * 1000;
 }
