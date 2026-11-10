@@ -43,10 +43,11 @@ docs search finds only docs pages. The changelog search finds only release
 pages, and it does not find maintenance notes. The build makes the search index after Astro
 finishes, so the dev server has no search. Use `preview` to test it.
 
-## Posts
+## Blog
 
-The `/posts` page lists all posts, newest first. Each post is at
-`/posts/<slug>`. The slug comes from the file name, and the web app links to
+The `/blog` page lists all posts, newest first, and its sidebar lists them by
+year with their dates. Each post is at `/blog/<slug>`. Old `/posts` URLs
+redirect to `/blog`. The slug comes from the file name, and the web app links to
 posts by slug, so do not rename a post after it is published.
 
 A `release` post names a pull request. The build gets the version and date from

@@ -1,0 +1,23 @@
+---
+import PostMeta from "@components/PostMeta.astro";
+import BlogLayout from "@layouts/BlogLayout.astro";
+import { loadPosts } from "@utils/loadPosts";
+
+const { listed } = await loadPosts();
+---
+
+<BlogLayout title="Blog">
+  <h1>Blog</h1>
+  {listed.length === 0 && <p>There are no posts yet.</p>}
+  {
+    listed.map((post) => (
+      <section>
+        <h2>
+          <a href={`/blog/${post.slug}`}>{post.title}</a>
+        </h2>
+        <PostMeta post={post} />
+        <p>{post.summary}</p>
+      </section>
+    ))
+  }
+</BlogLayout>

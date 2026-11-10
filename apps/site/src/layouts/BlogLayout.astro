@@ -1,0 +1,53 @@
+---
+import SidebarLayout from "@layouts/SidebarLayout.astro";
+import { formatDate } from "@utils/date";
+import { loadPosts } from "@utils/loadPosts";
+import { getPostSections } from "@utils/posts";
+
+type Props = { title: string };
+
+const { title } = Astro.props;
+const { listed } = await loadPosts();
+const current = Astro.url.pathname.replace(/\/$/, "");
+---
+
+<SidebarLayout title={title}>
+  <ul slot="sidebar">
+    {
+      getPostSections(listed).map((section) => (
+        <li class="mb-6">
+          <h5 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
+            {section.title}
+          </h5>
+          <ul class="border-l border-solid border-stone-300">
+            {section.posts.map((post) => {
+              const href = `/blog/${post.slug}`;
+
+              return (
+                <li>
+                  <a
+                    class="group -ml-px block border-l-2 border-transparent py-1 pl-3 text-sm text-stone-600 hover:text-stone-900 [&[aria-current]]:border-sky-700 [&[aria-current]]:text-sky-700"
+                    href={href}
+                    rel="prefetch"
+                    aria-current={href === current ? "page" : undefined}
+                  >
+                    {"date" in post && (
+                      <time
+                        class="block text-xs text-stone-500 group-[[aria-current]]:text-sky-700"
+                        datetime={post.date}
+                      >
+                        {formatDate(post.date)}
+                      </time>
+                    )}
+                    {post.title}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </li>
+      ))
+    }
+  </ul>
+  <slot />
+</SidebarLayout>

@@ -2,7 +2,7 @@
 import Search, { type SearchSection } from "@components/Search.astro";
 import Layout from "./Layout.astro";
 
-type Props = { title: string; search: SearchSection };
+type Props = { title: string; search?: SearchSection };
 
 const { title, search } = Astro.props;
 ---
@@ -13,7 +13,7 @@ const { title, search } = Astro.props;
       <input id="sidebar-toggle" type="checkbox" class="peer sr-only" />
       <div class="mb-6 flex items-center gap-3 peer-focus-visible:[&>label]:outline-2">
         <div class="min-w-0 flex-1">
-          <Search section={search} />
+          {search && <Search section={search} />}
         </div>
         <label
           for="sidebar-toggle"
