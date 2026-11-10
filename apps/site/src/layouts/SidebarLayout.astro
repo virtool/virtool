@@ -11,13 +11,13 @@ const { title, search } = Astro.props;
   <div class="lg:flex lg:gap-12">
     <div class="mb-8 flex flex-col lg:sticky lg:top-sticky lg:mb-0 lg:max-h-[calc(100dvh-var(--spacing-sticky)-1rem)] lg:w-40 lg:shrink-0 lg:self-start">
       <input id="sidebar-toggle" type="checkbox" class="peer sr-only" />
-      <div class="mb-6 flex items-center gap-3">
+      <div class="mb-6 flex items-center gap-3 peer-focus-visible:[&>label]:outline-2">
         <div class="min-w-0 flex-1">
           <Search section={search} />
         </div>
         <label
           for="sidebar-toggle"
-          class="cursor-pointer rounded border border-zinc-300 px-3 py-1.5 font-medium text-stone-600 select-none hover:text-stone-900 peer-focus-visible:outline-2 lg:hidden"
+          class="cursor-pointer rounded border border-zinc-300 px-3 py-1.5 font-medium text-stone-600 select-none hover:text-stone-900 lg:hidden"
         >
           Menu
         </label>
