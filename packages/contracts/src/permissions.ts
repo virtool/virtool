@@ -1,12 +1,10 @@
 /** The names of every legacy group permission, in a stable order. */
 export const PERMISSION_NAMES = [
-	"cancel_job",
 	"create_ref",
 	"create_sample",
 	"modify_hmm",
 	"modify_subtraction",
 	"remove_file",
-	"remove_job",
 	"upload_file",
 ] as const;
 

@@ -7,7 +7,11 @@ import {
 	mockGetAccountMfaEnrollmentRequired,
 	userServerFnMocks,
 } from "@tests/server-fn/users";
-import { MemoryRouter, renderWithProviders } from "@tests/setup";
+import {
+	MemoryRouter,
+	renderWithProviders,
+	renderWithRouter,
+} from "@tests/setup";
 import { SETUP_REQUIRED_ERROR_NAME } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -118,6 +122,21 @@ describe("<LoginForm />", () => {
 		startAuthenticationMock.mockReset();
 		verifyMock.mockReset();
 		vi.unstubAllGlobals();
+	});
+
+	it("carries the typed username to account recovery", async () => {
+		const { router } = await renderWithRouter(<LoginForm />, "/login");
+
+		await userEvent.type(await screen.findByLabelText("Username"), " ada ");
+		await userEvent.click(
+			screen.getByRole("link", { name: "Forgot your password?" }),
+		);
+
+		await waitFor(() =>
+			expect(router.state.location.pathname).toBe("/recover"),
+		);
+		expect(router.state.location.search).toEqual({});
+		expect(router.state.location.state.recoveryHandle).toBe("ada");
 	});
 
 	it("carries the redirect into email remediation", async () => {

@@ -79,7 +79,7 @@ describe("<UserDetail />", () => {
 			expect(
 				screen.getByText("Change group membership to modify permissions"),
 			).toBeInTheDocument();
-			expect(screen.getByText("cancel_job")).toBeInTheDocument();
+			expect(screen.getByText("create_ref")).toBeInTheDocument();
 			expect(screen.getByText("create_sample")).toBeInTheDocument();
 
 			expect(getUser).toHaveBeenCalled();
@@ -383,13 +383,11 @@ describe("<UserDetail />", () => {
 			mockListGroups(groups);
 
 			const permissions = {
-				cancel_job: true,
 				create_ref: true,
 				create_sample: true,
 				modify_hmm: true,
 				modify_subtraction: true,
 				remove_file: false,
-				remove_job: false,
 				upload_file: false,
 			};
 
@@ -405,7 +403,7 @@ describe("<UserDetail />", () => {
 					"Change group membership to modify permissions",
 				),
 			).toBeInTheDocument();
-			expect(screen.getByLabelText("cancel_job:true")).toBeInTheDocument();
+			expect(screen.getByLabelText("create_ref:true")).toBeInTheDocument();
 			expect(screen.getByLabelText("create_sample:true")).toBeInTheDocument();
 			expect(screen.getByLabelText("remove_file:false")).toBeInTheDocument();
 			expect(screen.getByLabelText("upload_file:false")).toBeInTheDocument();

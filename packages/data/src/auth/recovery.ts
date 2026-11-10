@@ -223,6 +223,7 @@ export async function issueRecoveryLink(
 				type: "password_recovery",
 				username: user.handle,
 				recoveryUrl: input.getRecoveryUrl(issued.token),
+				expiresInHours: EMAILED_RECOVERY_LIFETIME_MS / (60 * 60 * 1000),
 			},
 		});
 		if (queued.status !== "queued") {
@@ -286,18 +287,50 @@ export async function revokeAdministratorRecoveryLinks(
 	});
 }
 
-/** Change a password and revoke all browser and setup authority atomically. */
+/** The account a recovery changed, and what the change cancelled. */
+export type CompletedPasswordRecovery = {
+	userId: number;
+	/** Whether the change cancelled a live email verification link. */
+	emailVerificationCancelled: boolean;
+};
+
+async function hasLiveEmailVerification(
+	db: DbOrTx,
+	userId: number,
+): Promise<boolean> {
+	const [live] = await db
+		.select({ id: setupTokens.id })
+		.from(setupTokens)
+		.where(
+			and(
+				eq(setupTokens.userId, userId),
+				eq(setupTokens.purpose, "email_verification"),
+				isNull(setupTokens.consumedAt),
+				isNull(setupTokens.supersededAt),
+				sql`${setupTokens.expiresAt} > timezone('utc', clock_timestamp())`,
+			),
+		)
+		.limit(1);
+	return live !== undefined;
+}
+
+/**
+ * Change a password and revoke all browser and setup authority atomically.
+ *
+ * The result can name a cancelled email verification because the caller holds
+ * a recovery link, which already proves control of the account.
+ */
 export async function completePasswordRecovery(
 	db: Db,
 	token: string,
 	purpose: RecoveryPurpose,
 	password: string,
-): Promise<number> {
+): Promise<CompletedPasswordRecovery> {
 	if ((await inspectRecoveryLink(db, token, purpose)) === "unusable") {
 		throw new SetupCredentialError();
 	}
 	const hashed = await hashPassword(password);
-	const userId = await db.transaction(async (tx) => {
+	const completed = await db.transaction(async (tx) => {
 		const [target] = await tx
 			.select({ userId: setupTokens.userId })
 			.from(setupTokens)
@@ -370,10 +403,14 @@ export async function completePasswordRecovery(
 		await tx
 			.delete(setupSessions)
 			.where(eq(setupSessions.userId, consumed.userId));
+		const emailVerificationCancelled = await hasLiveEmailVerification(
+			tx,
+			consumed.userId,
+		);
 		await invalidateUserSetupTokens(tx, consumed.userId);
 		await queuePasswordChangedEmail(tx, consumed.userId);
-		return consumed.userId;
+		return { userId: consumed.userId, emailVerificationCancelled };
 	});
-	await emit("users", userId, "update");
-	return userId;
+	await emit("users", completed.userId, "update");
+	return completed;
 }

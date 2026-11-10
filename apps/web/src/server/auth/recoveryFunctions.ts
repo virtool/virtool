@@ -221,13 +221,17 @@ export const completePasswordRecoveryFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
-			await completePasswordRecovery(
+			const { emailVerificationCancelled } = await completePasswordRecovery(
 				db,
 				data.token,
 				data.purpose,
 				data.password,
 			);
-			return { status: "password_changed" as const, next: "login" as const };
+			return {
+				status: "password_changed" as const,
+				next: "login" as const,
+				emailVerificationCancelled,
+			};
 		} catch (error) {
 			if (error instanceof PasswordTooShortError) {
 				throw new ClientError(error.message, 400);

@@ -30,7 +30,7 @@ describe("<ApiKeys />", () => {
 		);
 		mockFindApiKeys([]);
 
-		mockCreateApiKey("testKey", createFakePermissions({ remove_job: true }));
+		mockCreateApiKey("testKey", createFakePermissions({ modify_hmm: true }));
 
 		await renderWithRouter(<ApiKeys />, "/account/api");
 
@@ -57,7 +57,7 @@ describe("<ApiKeys />", () => {
 		expect(input).toHaveValue("Key A");
 
 		const checkbox = screen.getByRole("checkbox", {
-			name: "remove_job",
+			name: "modify_hmm",
 		});
 		await user.click(checkbox);
 		expect(checkbox).toBeChecked();
@@ -67,7 +67,7 @@ describe("<ApiKeys />", () => {
 		mockFindApiKeys([
 			createFakeApiKey({
 				name: "Key A",
-				permissions: createFakePermissions({ remove_job: true }),
+				permissions: createFakePermissions({ modify_hmm: true }),
 			}),
 		]);
 
@@ -120,7 +120,6 @@ describe("<ApiKeys />", () => {
 		mockGetAccount(
 			createFakeAccount({
 				permissions: createFakePermissions({
-					cancel_job: true,
 					create_ref: true,
 					upload_file: true,
 				}),

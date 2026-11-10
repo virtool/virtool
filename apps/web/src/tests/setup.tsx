@@ -7,6 +7,7 @@ import {
 	createRootRoute,
 	createRoute,
 	createRouter,
+	type HistoryState,
 	Outlet,
 	RouterProvider,
 } from "@tanstack/react-router";
@@ -332,7 +333,11 @@ export function renderWithProviders(ui: ReactNode) {
 	return { ...rest, rerender: (node: ReactNode) => rerender(wrap(node)) };
 }
 
-export async function renderWithRouter(ui: ReactNode, path?: string) {
+export async function renderWithRouter(
+	ui: ReactNode,
+	path?: string,
+	state?: HistoryState,
+) {
 	const rootRoute = createRootRoute();
 	const catchAllRoute = createRoute({
 		getParentRoute: () => rootRoute,
@@ -344,6 +349,9 @@ export async function renderWithRouter(ui: ReactNode, path?: string) {
 	const memoryHistory = createMemoryHistory({
 		initialEntries: [path || "/"],
 	});
+	if (state) {
+		memoryHistory.replace(path || "/", state);
+	}
 
 	const router = createRouter({
 		routeTree: rootRoute,
