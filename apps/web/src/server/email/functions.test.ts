@@ -216,7 +216,28 @@ describe("updateEmailSettingsFn", () => {
 
 		await expect(
 			call("updateEmailSettingsFn", { enabled: true }),
-		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 400 });
+		).rejects.toMatchObject({
+			message:
+				"Save an API key and a sender address before you enable email delivery.",
+			name: CLIENT_ERROR_NAME,
+			status: 400,
+		});
+	});
+
+	it("refuses to enable when the stored key cannot be decrypted", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await seedConfigured();
+
+		keyring = createKeyring(randomBytes(32).toString("base64"), undefined);
+
+		await expect(
+			call("updateEmailSettingsFn", { enabled: true }),
+		).rejects.toMatchObject({
+			message:
+				"The stored API key cannot be read with the encryption key of this instance. Restore the encryption key or save a new API key.",
+			name: CLIENT_ERROR_NAME,
+			status: 400,
+		});
 	});
 
 	it("enables a configured instance and disabling preserves the key", async () => {
@@ -263,7 +284,12 @@ describe("setEmailApiKeyFn and clearEmailApiKeyFn", () => {
 
 		await expect(
 			call("setEmailApiKeyFn", { apiKey: "re_secret" }),
-		).rejects.toMatchObject({ name: CLIENT_ERROR_NAME, status: 400 });
+		).rejects.toMatchObject({
+			message:
+				"This instance has no usable encryption key. Configure one before you save an API key.",
+			name: CLIENT_ERROR_NAME,
+			status: 400,
+		});
 	});
 
 	it("clearing removes the key and disables delivery", async () => {

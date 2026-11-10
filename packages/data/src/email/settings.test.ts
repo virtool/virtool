@@ -152,7 +152,10 @@ describe("updateEmailDelivery", () => {
 
 		await expect(
 			updateEmailDelivery(db, keyring, { enabled: true }),
-		).rejects.toBeInstanceOf(EmailConfigurationError);
+		).rejects.toMatchObject({
+			name: EmailConfigurationError.name,
+			reason: "unconfigured",
+		});
 	});
 
 	it("refuses to enable without a sender address", async () => {
@@ -162,7 +165,10 @@ describe("updateEmailDelivery", () => {
 
 		await expect(
 			updateEmailDelivery(db, keyring, { enabled: true }),
-		).rejects.toBeInstanceOf(EmailConfigurationError);
+		).rejects.toMatchObject({
+			name: EmailConfigurationError.name,
+			reason: "unconfigured",
+		});
 	});
 
 	it("refuses to enable when the stored key cannot be decrypted", async () => {
@@ -172,7 +178,10 @@ describe("updateEmailDelivery", () => {
 			updateEmailDelivery(db, createKeyring(key(), undefined), {
 				enabled: true,
 			}),
-		).rejects.toBeInstanceOf(EmailConfigurationError);
+		).rejects.toMatchObject({
+			name: EmailConfigurationError.name,
+			reason: "undecryptable_api_key",
+		});
 	});
 
 	it("enables when a sender address arrives in the same update", async () => {
@@ -241,10 +250,16 @@ describe("setEmailApiKey and clearEmailApiKey", () => {
 
 		await expect(
 			setEmailApiKey(db, createKeyring(undefined, undefined), "re_secret"),
-		).rejects.toBeInstanceOf(EmailConfigurationError);
+		).rejects.toMatchObject({
+			name: EmailConfigurationError.name,
+			reason: "missing_encryption_key",
+		});
 		await expect(
 			setEmailApiKey(db, createKeyring("short", undefined), "re_secret"),
-		).rejects.toBeInstanceOf(EmailConfigurationError);
+		).rejects.toMatchObject({
+			name: EmailConfigurationError.name,
+			reason: "missing_encryption_key",
+		});
 	});
 
 	it("clearing removes the key and disables delivery", async () => {
