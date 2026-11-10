@@ -574,7 +574,7 @@ it("warns that the default administrator password is plain text", async () => {
 
 it("shows why the daemon rejects a default administrator", async () => {
 	vi.mocked(fetch).mockResolvedValueOnce(
-		new Response("Reserved user name: virtool", { status: 422 }),
+		new Response("Reserved username: virtool", { status: 422 }),
 	);
 	const user = userEvent.setup();
 	await renderApp();
@@ -585,7 +585,7 @@ it("shows why the daemon rejects a default administrator", async () => {
 	await user.click(screen.getByRole("button", { name: "Save" }));
 
 	expect(await screen.findByRole("alert")).toHaveTextContent(
-		"Reserved user name: virtool",
+		"Reserved username: virtool",
 	);
 });
 

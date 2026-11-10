@@ -23,7 +23,7 @@ export class PasswordTooShortError extends Error {
 
 /** Build the message shown when a password is too short. */
 export function formatMinimumPasswordLengthMessage(minimum: number): string {
-	return `Password does not meet minimum length requirement (${minimum})`;
+	return `Password must have at least ${minimum} characters.`;
 }
 
 /**

@@ -194,7 +194,7 @@ describe("<AccountProfile />", () => {
 		const account = createFakeAccount({ handle: "old_handle" });
 
 		mockGetAccount(account);
-		mockUpdateAccountHandle(undefined, 400, "Reserved user name: virtool");
+		mockUpdateAccountHandle(undefined, 400, "Reserved username: virtool");
 		renderWithProviders(<AccountProfile />);
 
 		await screen.findByText("Handle and avatar");
@@ -207,7 +207,7 @@ describe("<AccountProfile />", () => {
 
 		await waitFor(() =>
 			expect(
-				screen.getByText("Reserved user name: virtool"),
+				screen.getByText("Reserved username: virtool"),
 			).toBeInTheDocument(),
 		);
 	});

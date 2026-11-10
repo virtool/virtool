@@ -64,7 +64,7 @@ describe("createAdministrator", () => {
 	it("rejects a reserved handle", async () => {
 		await expect(
 			createAdministrator(db, { ...input, handle: "virtool" }),
-		).rejects.toThrow("Reserved user name: virtool");
+		).rejects.toThrow("Reserved username: virtool");
 	});
 
 	it("rejects an invalid email", async () => {
@@ -76,7 +76,7 @@ describe("createAdministrator", () => {
 	it("rejects a password shorter than the configured minimum", async () => {
 		await expect(
 			createAdministrator(db, { ...input, password: "short" }),
-		).rejects.toThrow("Password does not meet minimum length requirement (8)");
+		).rejects.toThrow("Password must have at least 8 characters.");
 	});
 
 	it("does not check the credentials when users exist", async () => {

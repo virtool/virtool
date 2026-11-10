@@ -113,7 +113,7 @@ export default function FirstUser() {
 					/>
 					<FieldDescription>
 						If email delivery is set up, Virtool sends a link to verify this
-						address. You do not need email to finish setup.
+						address. You can finish setup without email delivery.
 					</FieldDescription>
 					<FieldError errors={[errors.email]} />
 				</Field>
