@@ -5,6 +5,8 @@ description:
   map to more than one location."
 ---
 
+import WorkflowSteps from "@components/WorkflowSteps.astro";
+
 Pathoscope is a workflow that finds known reference OTUs in an Illumina sample library.
 
 ## How does it work?
@@ -12,6 +14,25 @@ Pathoscope is a workflow that finds known reference OTUs in an Illumina sample l
 Pathoscope maps sample reads to a Virtool reference. It counts the reads that match each
 OTU and uses these counts to get a detection result. To understand this section, you
 must know about [references](/docs/guide/references) and [OTUs](/docs/guide/otus).
+
+<WorkflowSteps
+  caption="The Pathoscope workflow"
+  steps={[
+    { title: "Collapse the reference", tool: "CD-HIT-EST" },
+    {
+      title: "Map reads to default isolates",
+      tool: "Bowtie 2",
+      removed: "OTUs with no matching reads",
+    },
+    { title: "Make an index of candidate OTU isolates", tool: "Bowtie 2" },
+    { title: "Map reads to candidate OTU isolates", tool: "Bowtie 2" },
+    {
+      title: "Remove host reads",
+      removed: "Reads that align equally well or better to a subtraction",
+    },
+    { title: "Reassign multi-mapped reads" },
+  ]}
+/>
 
 Before Pathoscope maps the reads, it collapses redundant isolates in the reference.
 Isolates of an OTU frequently have only a small number of different bases. Pathoscope
@@ -27,8 +48,9 @@ step is a prescreen. It finds the OTUs that are possibly in the sample. Pathosco
 each OTU that has one or more matching reads as a candidate hit for the second step.
 
 In the second step, Pathoscope makes a Bowtie 2 mapping index. This index contains all
-isolates of the OTUs that the _default_ isolate mapping found. Thus, each virus has more
-different mapping targets, and Pathoscope can find viruses at the isolate level.
+isolates of the OTUs that the _default_ isolate mapping found. Then Pathoscope maps the
+sample reads to this index. Thus, each virus has more different mapping targets, and
+Pathoscope can find viruses at the isolate level.
 
 Next, Pathoscope removes reads that come from the host. It maps the remaining reads to
 each [subtraction](/docs/guide/subtractions) that you select for the analysis. If a read

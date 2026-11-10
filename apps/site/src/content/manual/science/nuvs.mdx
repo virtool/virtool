@@ -3,6 +3,8 @@ title: "Nuvs"
 description: "Learn how Nuvs finds possible novel viral sequences in your sample."
 ---
 
+import WorkflowSteps from "@components/WorkflowSteps.astro";
+
 Nuvs is a workflow that finds possible novel viral sequences in a sample library.
 
 ## How does it work?
@@ -12,6 +14,33 @@ different method. It assembles the reads that do not match the reference. Then i
 profile hidden Markov models (HMMs) to find viral domains in the assembled sequences.
 Thus, Nuvs can find divergent viral sequences that mapping or the Basic Local Alignment
 Search Tool (BLAST) possibly cannot find.
+
+<WorkflowSteps
+  caption="The Nuvs workflow"
+  steps={[
+    {
+      title: "Trim reads",
+      tool: "Skewer",
+      removed: "Low-quality reads and bases, adapters, and short reads",
+    },
+    {
+      title: "Remove reference reads",
+      tool: "Bowtie 2",
+      removed: "Reads that match the reference",
+    },
+    {
+      title: "Remove host reads",
+      tool: "Bowtie 2",
+      removed: "Reads that match a subtraction",
+    },
+    { title: "Assemble contigs", tool: "SPAdes" },
+    {
+      title: "Find ORFs",
+      removed: "Contigs shorter than 300 bases or with no ORFs",
+    },
+    { title: "Compare ORFs with HMMs", tool: "HMMER" },
+  ]}
+/>
 
 First, Nuvs uses [Skewer](https://github.com/relipmoc/skewer) to trim the sample reads
 (Jiang et al., 2014). Skewer removes reads with an average quality score of less
@@ -33,10 +62,11 @@ longest read in the sample:
 
 Pathoscope does not trim reads.
 
-Next, Nuvs removes reads that match known OTUs or a host genome. First, it maps the
-reads to a Virtool reference and removes all reads that match. Then it maps the
-remaining reads to each host subtraction genome and removes the reads that match. For
-paired libraries, Nuvs keeps a read only if it also keeps the mate of that read.
+Next, Nuvs removes reads that match known OTUs or a host genome. First, it uses Bowtie 2
+to map the reads to a Virtool reference and removes all reads that match. Then it uses
+Bowtie 2 to map the remaining reads to each host subtraction genome and removes the
+reads that match. For paired libraries, Nuvs keeps a read only if it also keeps the mate
+of that read.
 
 Nuvs then uses [SPAdes](https://ablab.github.io/spades) to assemble the remaining reads
 into contigs (Bankevich et al., 2012).
