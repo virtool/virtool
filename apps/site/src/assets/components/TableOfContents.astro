@@ -40,8 +40,10 @@ const items = headings.filter((heading) => heading.depth <= 3 && heading.depth >
     .map((link) => document.getElementById(link.hash.slice(1)))
     .filter((target) => target !== null);
 
-  // Matches the scroll margin on headings, so a clicked link is current.
-  const offset = 100;
+  // Uses the heading scroll margin, so a clicked link is current.
+  const offset = targets.length
+    ? Number.parseFloat(getComputedStyle(targets[0]).scrollMarginTop)
+    : 0;
 
   function updateCurrent() {
     let current = targets[0];

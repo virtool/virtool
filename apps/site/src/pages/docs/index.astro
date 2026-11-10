@@ -27,17 +27,15 @@ const sections = getMenuSectionsFromCollection(
 <SidebarLayout title={entry.data.title} search="docs">
   <Menu slot="sidebar" sections={sections} baseUrl="/docs" current={`/docs/${entry.id}`} />
   <h1>{entry.data.title}</h1>
-  <div class="prose max-w-4xl">
-    <Content
-      components={{
-        ...components,
-        Aside: Aside,
-        DummyButton: DummyButton,
-        Icon: Icon,
-        Key: Key,
-        Note: Note,
-        img: MdxImage,
-      }}
-    />
-  </div>
+  <Content
+    components={{
+      ...components,
+      Aside: Aside,
+      DummyButton: DummyButton,
+      Icon: Icon,
+      Key: Key,
+      Note: Note,
+      img: MdxImage,
+    }}
+  />
 </SidebarLayout>

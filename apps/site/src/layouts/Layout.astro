@@ -5,10 +5,9 @@ import "../styles/global.css";
 
 export interface Props {
   title: string;
-  fullWidth?: boolean;
 }
 
-const { title, fullWidth = false } = Astro.props;
+const { title } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -22,25 +21,25 @@ const { title, fullWidth = false } = Astro.props;
     <link href="/prism.css" rel="stylesheet" />
     <link rel="sitemap" href="/sitemap-index.xml" />
   </head>
-  <body style="overflow-y: scroll; background-color: #f7fafc">
-    <nav class="py-3 fixed top-0 left-0 right-0 z-20 bg-zinc-200">
-      <div class="lg:container mx-auto flex items-center gap-11 lg z-10">
+  <body class="overflow-y-scroll bg-[#f7fafc]">
+    <nav class="sticky top-0 z-20 h-header bg-zinc-200">
+      <div class="mx-auto flex h-full max-w-6xl items-center gap-6 px-6 sm:gap-11">
         <a
           class="inline-flex gap-2 font-medium items-center no-underline text-stone-600 hover:text-stone-900 fill-stone-600 hover:fill-stone-900 text-xl"
           href="/"
         >
           <Logo />
-          Virtool
+          <span class="sr-only sm:not-sr-only">Virtool</span>
         </a>
 
-        <div class="flex items-center gap-6">
+        <div class="flex items-center gap-4 sm:gap-6">
           <NavLink href="/docs">Docs</NavLink>
           <NavLink href="/changelog">Changelog</NavLink>
           <NavLink href="/posts">Posts</NavLink>
         </div>
       </div>
     </nav>
-    <main class:list={["mt-24 pb-20 mx-auto", { "lg:container": !fullWidth }]}>
+    <main class="mx-auto max-w-6xl px-6 pt-8 pb-20">
       <slot />
     </main>
   </body>

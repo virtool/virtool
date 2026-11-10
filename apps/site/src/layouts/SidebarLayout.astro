@@ -5,33 +5,36 @@ import Layout from "./Layout.astro";
 type Props = { title: string; search: SearchSection };
 
 const { title, search } = Astro.props;
-const hasToc = Astro.slots.has("toc");
 ---
 
-<Layout title={title} fullWidth>
-  <div
-    class:list={[
-      "grid grid-cols-[13rem_minmax(0,56rem)] gap-x-8 pr-6",
-      { "xl:grid-cols-[13rem_minmax(0,56rem)_13rem]": hasToc },
-    ]}
-  >
-    <div class="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col self-start">
-      <div class="mb-6 pl-12 pr-4">
-        <Search section={search} />
+<Layout title={title}>
+  <div class="lg:flex lg:gap-12">
+    <div class="mb-8 flex flex-col lg:sticky lg:top-sticky lg:mb-0 lg:max-h-[calc(100dvh-var(--spacing-sticky)-1rem)] lg:w-40 lg:shrink-0 lg:self-start">
+      <input id="sidebar-toggle" type="checkbox" class="peer sr-only" />
+      <div class="mb-6 flex items-center gap-3">
+        <div class="min-w-0 flex-1">
+          <Search section={search} />
+        </div>
+        <label
+          for="sidebar-toggle"
+          class="cursor-pointer rounded border border-zinc-300 px-3 py-1.5 font-medium text-stone-600 select-none hover:text-stone-900 peer-focus-visible:outline-2 lg:hidden"
+        >
+          Menu
+        </label>
       </div>
-      <div class="relative min-h-0 overflow-y-auto pl-12 pr-4" data-sidebar>
+      <div
+        class="relative hidden min-h-0 overflow-y-auto peer-checked:block lg:block"
+        data-sidebar
+      >
         <slot name="sidebar" />
       </div>
     </div>
-    <div class="prose max-w-none">
+    <div class="prose max-w-none min-w-0 flex-1">
       <slot />
     </div>
-    {
-      hasToc && (
-        <div class="sticky top-24 hidden max-h-[calc(100vh-7rem)] self-start overflow-y-auto xl:block">
-          <slot name="toc" />
-        </div>
-      )
-    }
+    <!-- Always present, so the body has the same width with or without a table of contents. -->
+    <div class="sticky top-sticky hidden max-h-[calc(100dvh-var(--spacing-sticky)-1rem)] w-64 shrink-0 self-start overflow-y-auto xl:block">
+      <slot name="toc" />
+    </div>
   </div>
 </Layout>
