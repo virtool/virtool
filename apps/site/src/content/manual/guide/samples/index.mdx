@@ -6,8 +6,7 @@ order: 8
 
 ## Overview
 
-A sample holds the sequencing reads from one library. You use samples to start
-analyses.
+A sample holds the sequencing reads from one library. You use samples to start analyses.
 
 To open samples, click **Samples** in the main navigation bar. The sidebar has these
 pages:
@@ -37,8 +36,8 @@ To find samples:
 2. Use the filters below the search box to make the list smaller:
 
    - **Labels**: samples that have the selected labels.
-   - **Workflows**: samples with a Pathoscope or Nuvs status of **Not analyzed**,
-     **In progress**, or **Complete**.
+   - **Workflows**: samples with a Pathoscope or Nuvs status of **Not analyzed**, **In
+     progress**, or **Complete**.
    - **Created**: samples created in a month, a year, or a range of dates.
    - **Users**: samples created by the selected users.
    - **Groups**: samples owned by the selected groups.
@@ -90,13 +89,12 @@ Quick analysis starts the same analysis on one or more samples at the same time.
 4. Under **Subtractions**, select the subtractions that you want to use.
 
    If you analyze one sample, the dialog selects the default subtractions of that
-   sample. If you analyze more than one sample, the dialog does not select
-   subtractions.
+   sample. If you analyze more than one sample, the dialog does not select subtractions.
 
 5. Under **Reference**, select one reference.
 
-   The dialog shows the number of jobs that will start. Virtool starts one job for
-   each sample.
+   The dialog shows the number of jobs that will start. Virtool starts one job for each
+   sample.
 
 6. Click **Create**.
 
@@ -115,9 +113,9 @@ You must upload read files before you can create a sample.
 Virtool accepts FASTQ files that are plain, gzip compressed, or bzip2 compressed. A file
 name must end in `.fq` or `.fastq`, optionally followed by `.gz` or `.bz2`.
 
-Files that are larger than the
-[maximum upload size](/docs/guide/administration#uploads) of your Virtool instance
-are rejected. Virtool shows the maximum size when it rejects a file.
+Files that are larger than the [maximum upload size](/docs/guide/administration#uploads)
+of your Virtool instance are rejected. Virtool shows the maximum size when it rejects a
+file.
 
 You must have the `upload_file` permission to upload files. To delete files, select them
 and click **Delete**. You must have the `remove_file` permission to delete files.
@@ -162,8 +160,8 @@ You must have the `create_sample` permission to create a sample.
 
    The selector has two modes:
 
-   - **Auto-pair**: each pair of files shows as one row. Click a row to select the
-     pair or the file.
+   - **Auto-pair**: each pair of files shows as one row. Click a row to select the pair
+     or the file.
    - **Manual**: each file shows on its own row. Click up to two files. To change the
      order of the LEFT and RIGHT files, click **Swap reads**.
 
@@ -174,8 +172,8 @@ You must have the `create_sample` permission to create a sample.
    **Auto Fill**.
 4. Select a **User Group**.
 
-   The group is used only when an administrator sets the sample group to
-   **Force choice**. See [Settings](#settings).
+   The group is used only when an administrator sets the sample group to **Force
+   choice**. See [Settings](#settings).
 
 5. Optional: click **Show Metadata Fields** and type the **Locale**, **Isolate**, and
    **Host**.
@@ -183,14 +181,14 @@ You must have the `create_sample` permission to create a sample.
 7. Optional: select **Labels** for the sample.
 8. Select the **Default Subtractions**.
 
-   Use the [subtractions](/docs/guide/subtractions) that are most closely related to
-   the host of the sample. Virtool selects them for you when you start an analysis of
-   only this sample.
+   Use the [subtractions](/docs/guide/subtractions) that are most closely related to the
+   host of the sample. Virtool selects them for you when you start an analysis of only
+   this sample.
 
 9. Click **Save**.
 
-Virtool starts the sample creation job and opens the samples list. The new sample
-shows **Creating** until the job is complete.
+Virtool starts the sample creation job and opens the samples list. The new sample shows
+**Creating** until the job is complete.
 
 To create more samples from the same page, turn on **Create more** before you click
 **Save**. To clear the form, click **Reset Form**.
@@ -209,11 +207,11 @@ To create many samples at the same time:
 1. Select the read files.
 2. Click **Create Samples**.
 
-   Virtool makes one sample for each file or pair of files. Each sample gets a name
-   from its files.
+   Virtool makes one sample for each file or pair of files. Each sample gets a name from
+   its files.
 
-3. Change the sample names if necessary. To change many names at the same time, use
-   the rename tools above the list:
+3. Change the sample names if necessary. To change many names at the same time, use the
+   rename tools above the list:
 
    1. Type the text to find in **Match**.
    2. Type the new text in **Replacement**. Leave it empty to remove the matching text.
@@ -294,8 +292,8 @@ Virtool calculates quality data from the reads when it creates the sample. Go to
 
 ### Quality distribution at read positions
 
-This chart shows the quality score at each read position. A higher score is better.
-The chart shows the mean, the median, the quartiles, and the deciles. Quality usually
+This chart shows the quality score at each read position. A higher score is better. The
+chart shows the mean, the median, the quartiles, and the deciles. Quality usually
 decreases near the end of the reads.
 
 A median below 25 or a lower quartile below 10 is a cause for concern.
@@ -303,14 +301,14 @@ A median below 25 or a lower quartile below 10 is a cause for concern.
 ### Nucleotide composition at read positions
 
 This chart shows the percentage of guanine, adenine, thymine, and cytosine at each read
-position. In a diverse library, the percentages do not change much between positions,
-so the lines are almost parallel. The overall composition depends on the library. For
+position. In a diverse library, the percentages do not change much between positions, so
+the lines are almost parallel. The overall composition depends on the library. For
 example, viral genomes can be rich in A and T.
 
 ### Read-wise quality occurrence
 
-This chart shows the number of reads for each mean read quality. Virtool calculates
-the mean quality of all the bases in each read.
+This chart shows the number of reads for each mean read quality. Virtool calculates the
+mean quality of all the bases in each read.
 
 A good library shows one sharp peak at a high quality, with few reads of low quality. A
 mean quality below 27 is a cause for concern.
@@ -393,7 +391,8 @@ write**. It has no effect when the sample has no owner group.
 
 ### All users' rights
 
-This setting is the default rights of all users: **None**, **Read**, or **Read & write**.
+This setting is the default rights of all users: **None**, **Read**, or **Read &
+write**.
 
-The owner of a sample and full administrators can change the rights of one sample at
-any time.
+The owner of a sample and full administrators can change the rights of one sample at any
+time.

@@ -1,6 +1,8 @@
 ---
 title: "Pathoscope"
-description: "Learn how Pathoscope finds known viruses in your sample and how it assigns reads that map to more than one location."
+description:
+  "Learn how Pathoscope finds known viruses in your sample and how it assigns reads that
+  map to more than one location."
 ---
 
 Pathoscope is a workflow that finds known reference OTUs in an Illumina sample library.
@@ -8,8 +10,8 @@ Pathoscope is a workflow that finds known reference OTUs in an Illumina sample l
 ## How does it work?
 
 Pathoscope maps sample reads to a Virtool reference. It counts the reads that match each
-OTU and uses these counts to get a detection result. To understand this section, you must
-know about [references](/docs/guide/references) and [OTUs](/docs/guide/otus).
+OTU and uses these counts to get a detection result. To understand this section, you
+must know about [references](/docs/guide/references) and [OTUs](/docs/guide/otus).
 
 Before Pathoscope maps the reads, it collapses redundant isolates in the reference.
 Isolates of an OTU frequently have only a small number of different bases. Pathoscope
@@ -18,11 +20,11 @@ clusters at 99% identity (Li & Godzik, 2006; Fu et al., 2012). When two isolates
 OTU have the same cluster representatives, Pathoscope keeps only the first isolate. All
 of the mapping steps use this collapsed reference.
 
-In the first mapping step, Pathoscope uses [Bowtie 2](https://bowtie-bio.sourceforge.net/bowtie2)
-to map sample reads to the _default_ isolates of all OTUs in the target reference
-(Langmead & Salzberg, 2012). This step is a prescreen. It finds the OTUs that are
-possibly in the sample. Pathoscope keeps each OTU that has one or more matching reads as
-a candidate hit for the second step.
+In the first mapping step, Pathoscope uses
+[Bowtie 2](https://bowtie-bio.sourceforge.net/bowtie2) to map sample reads to the
+_default_ isolates of all OTUs in the target reference (Langmead & Salzberg, 2012). This
+step is a prescreen. It finds the OTUs that are possibly in the sample. Pathoscope keeps
+each OTU that has one or more matching reads as a candidate hit for the second step.
 
 In the second step, Pathoscope makes a Bowtie 2 mapping index. This index contains all
 isolates of the OTUs that the _default_ isolate mapping found. Thus, each virus has more
@@ -30,9 +32,9 @@ different mapping targets, and Pathoscope can find viruses at the isolate level.
 
 Next, Pathoscope removes reads that come from the host. It maps the remaining reads to
 each [subtraction](/docs/guide/subtractions) that you select for the analysis. If a read
-aligns to a subtraction as well as or better than it aligns to an OTU, Pathoscope removes
-that read. Thus, host sequences that are similar to viral sequences do not cause false
-detection results.
+aligns to a subtraction as well as or better than it aligns to an OTU, Pathoscope
+removes that read. Thus, host sequences that are similar to viral sequences do not cause
+false detection results.
 
 A major problem with this diagnostic method is multi-mapping. Multi-mapping occurs when
 one read aligns to more than one position in the reference sequences. A sample can
@@ -54,16 +56,17 @@ To read and understand Pathoscope results, see
 ## References
 
 - Francis OE, Bendall M, Manimaran S, et al. (2013). Pathoscope: species identification
-  and strain attribution with unassembled sequencing data. *Genome Research*, 23(10),
+  and strain attribution with unassembled sequencing data. _Genome Research_, 23(10),
   1721–1729. [doi:10.1101/gr.150151.112](https://doi.org/10.1101/gr.150151.112)
 - Fu L, Niu B, Zhu Z, et al. (2012). CD-HIT: accelerated for clustering the
-  next-generation sequencing data. *Bioinformatics*, 28(23), 3150–3152.
+  next-generation sequencing data. _Bioinformatics_, 28(23), 3150–3152.
   [doi:10.1093/bioinformatics/bts565](https://doi.org/10.1093/bioinformatics/bts565)
 - Hong C, Manimaran S, Shen Y, et al. (2014). PathoScope 2.0: a complete computational
   framework for strain identification in environmental or clinical sequencing samples.
-  *Microbiome*, 2(1), 33. [doi:10.1186/2049-2618-2-33](https://doi.org/10.1186/2049-2618-2-33)
-- Langmead B, Salzberg SL. (2012). Fast gapped-read alignment with Bowtie 2. *Nature
-  Methods*, 9(4), 357–359. [doi:10.1038/nmeth.1923](https://doi.org/10.1038/nmeth.1923)
+  _Microbiome_, 2(1), 33.
+  [doi:10.1186/2049-2618-2-33](https://doi.org/10.1186/2049-2618-2-33)
+- Langmead B, Salzberg SL. (2012). Fast gapped-read alignment with Bowtie 2. _Nature
+  Methods_, 9(4), 357–359. [doi:10.1038/nmeth.1923](https://doi.org/10.1038/nmeth.1923)
 - Li W, Godzik A. (2006). Cd-hit: a fast program for clustering and comparing large sets
-  of protein or nucleotide sequences. *Bioinformatics*, 22(13), 1658–1659.
+  of protein or nucleotide sequences. _Bioinformatics_, 22(13), 1658–1659.
   [doi:10.1093/bioinformatics/btl158](https://doi.org/10.1093/bioinformatics/btl158)

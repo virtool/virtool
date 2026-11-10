@@ -71,8 +71,8 @@ If the banner is shown, users see the change.
 
 ## Security
 
-Use the **Security** page to make two-factor authentication necessary for all users.
-You must be a full administrator.
+Use the **Security** page to make two-factor authentication necessary for all users. You
+must be a full administrator.
 
 By default, two-factor authentication is optional.
 
@@ -94,9 +94,10 @@ authentication**.
 
 ### What users see
 
-A passkey or two-factor authentication satisfies the requirement. Users who have
-neither must set up two-factor authentication before they can use Virtool. Virtool
-shows them the [**Set up two-factor authentication**](/docs/guide/sign-in#set-up-two-factor-authentication)
+A passkey or two-factor authentication satisfies the requirement. Users who have neither
+must set up two-factor authentication before they can use Virtool. Virtool shows them
+the
+[**Set up two-factor authentication**](/docs/guide/sign-in#set-up-two-factor-authentication)
 screen.
 
 This applies to users who are signed in now, at their next action. It also applies to a
@@ -140,13 +141,12 @@ The analysis then takes more time.
 ## Uploads
 
 The maximum upload size is the size of the largest file that a user can upload. It
-applies to all uploads, from the web interface and from the
-[API](/docs/api/uploads).
+applies to all uploads, from the web interface and from the [API](/docs/api/uploads).
 
 You must have the Settings or Full administrator role.
 
-The default is 5 GB. The minimum is 1 GB, and the maximum is 120 GB. Virtool uses decimal
-units: 1 GB is 1,000,000,000 bytes.
+The default is 5 GB. The minimum is 1 GB, and the maximum is 120 GB. Virtool uses
+decimal units: 1 GB is 1,000,000,000 bytes.
 
 1. In the sidebar, click **Uploads**.
 2. Type the size under **Maximum (GB)**.
@@ -179,8 +179,8 @@ You need these items from Resend:
 
 <Note>
   Virtool encrypts the Resend API key. Set an [encryption
-  key](/docs/start/configuration#encryption-key) before you save the API key. If
-  no encryption key is set, Virtool does not save the API key.
+  key](/docs/start/configuration#encryption-key) before you save the API key. If no
+  encryption key is set, Virtool does not save the API key.
 </Note>
 
 ### Status
@@ -194,8 +194,8 @@ The status at the top of the page tells you if email delivery works.
 | **Active**              | The configuration is complete, and sending is on.                                                                                                                                    |
 | **Configuration Error** | Virtool can't read the stored API key with its encryption key. See [Unset or invalid keys](/docs/start/configuration#unset-or-invalid-keys). Virtool does not change the stored key. |
 
-You can also save a new API key to correct a configuration error. You can't then get
-the old key back.
+You can also save a new API key to correct a configuration error. You can't then get the
+old key back.
 
 ### Set up email delivery
 
@@ -208,8 +208,8 @@ the old key back.
 6. Under **Sending**, turn on **Enable**.
 7. Send a test email. See [Send a test email](#send-a-test-email).
 8. If your own address shows **Not verified**, verify it. See
-   [Change email](/docs/guide/account#change-email). You can't recover your password
-   by email until your address is verified.
+   [Change email](/docs/guide/account#change-email). You can't recover your password by
+   email until your address is verified.
 
 You can turn on **Enable** only when the status is **Disabled**.
 
@@ -264,16 +264,16 @@ If the test fails, Virtool shows one of these messages:
 Virtool gets GenBank records from NCBI when a user clicks **Auto Fill** for a sequence.
 See [Add a sequence](/docs/guide/otus#add-a-sequence).
 
-Without an NCBI API key, NCBI lets Virtool send 3 requests each second. With a key,
-NCBI lets Virtool send 10 requests each second. Virtool sends requests slowly enough to
-stay in the limit.
+Without an NCBI API key, NCBI lets Virtool send 3 requests each second. With a key, NCBI
+lets Virtool send 10 requests each second. Virtool sends requests slowly enough to stay
+in the limit.
 
 You must have the Settings or Full administrator role.
 
 <Note>
   Virtool encrypts the NCBI API key. Set an [encryption
-  key](/docs/start/configuration#encryption-key) before you save the API key. If
-  no encryption key is set, Virtool does not save the API key.
+  key](/docs/start/configuration#encryption-key) before you save the API key. If no
+  encryption key is set, Virtool does not save the API key.
 </Note>
 
 ### Set the API key

@@ -17,37 +17,35 @@ Virtool has two analysis workflows:
 
 ### Analysis jobs
 
-Each analysis runs as a job. An analysis can take minutes or hours. The time
-is longer for a large or complex sample library.
+Each analysis runs as a job. An analysis can take minutes or hours. The time is longer
+for a large or complex sample library.
 
-To monitor analyses, click **Jobs** in the top navigation bar. By default, the
-list shows only pending and running jobs. To show other jobs, use the **State**
-filter.
+To monitor analyses, click **Jobs** in the top navigation bar. By default, the list
+shows only pending and running jobs. To show other jobs, use the **State** filter.
 
 The detail page of an analysis job links to the analysis.
 
 ### Caching
 
-Nuvs trims sample reads before it uses them. Virtool caches the trimmed reads.
-Later Nuvs analyses of the same sample can use the cache. Pathoscope uses
-untrimmed reads.
+Nuvs trims sample reads before it uses them. Virtool caches the trimmed reads. Later
+Nuvs analyses of the same sample can use the cache. Pathoscope uses untrimmed reads.
 
 An administrator sets the maximum size of the cache. See
 [Caching](/docs/guide/administration#caching).
 
 ### Reference versions
 
-An analysis uses a [reference](/docs/guide/references) that contains pathogen
-sequences. You can edit a reference, and each index build is a new version of
-it. Each analysis stays linked to the index version that it used.
+An analysis uses a [reference](/docs/guide/references) that contains pathogen sequences.
+You can edit a reference, and each index build is a new version of it. Each analysis
+stays linked to the index version that it used.
 
-A new analysis uses the latest ready index of the reference. To use a newer
-version, create a new analysis.
+A new analysis uses the latest ready index of the reference. To use a newer version,
+create a new analysis.
 
 ### Subtractions
 
-Subtractions are sets of host or non-pathogen sequence data. Analyses use them
-to remove reads that are not from a pathogen.
+Subtractions are sets of host or non-pathogen sequence data. Analyses use them to remove
+reads that are not from a pathogen.
 
 For more information, see the [subtractions guide](/docs/guide/subtractions).
 
@@ -59,8 +57,8 @@ For more information, see the [subtractions guide](/docs/guide/subtractions).
 
 2. View the table of analyses.
 
-   The table shows running and complete analyses. Each page shows 25 analyses.
-   The count above the table shows how many analyses match your filters.
+   The table shows running and complete analyses. Each page shows 25 analyses. The count
+   above the table shows how many analyses match your filters.
 
    | Column           | Description                                                                  |
    | ---------------- | ---------------------------------------------------------------------------- |
@@ -93,39 +91,37 @@ You must have write access to the sample to create an analysis.
 
 3. Under **Workflow**, select **Pathoscope** or **Nuvs**.
 
-   Nuvs cannot run without [HMMs](/docs/guide/hmms). If Virtool has no HMMs, the
-   dialog does not show **Workflow**, and the analysis uses Pathoscope. The
-   **Analyses** tab then shows **HMM data is not installed**, with an **Install
-   HMMs** link.
+   Nuvs cannot run without [HMMs](/docs/guide/hmms). If Virtool has no HMMs, the dialog
+   does not show **Workflow**, and the analysis uses Pathoscope. The **Analyses** tab
+   then shows **HMM data is not installed**, with an **Install HMMs** link.
 
 4. Under **Subtractions**, select the subtractions that you want to use.
 
-   The dialog selects the default subtractions of the sample for you. You can
-   remove them.
+   The dialog selects the default subtractions of the sample for you. You can remove
+   them.
 
 5. Under **Reference**, select one reference.
 
-   Each reference shows its latest ready index version. If no reference has a
-   ready index, the dialog shows **No references found**. Build a reference
-   index first.
+   Each reference shows its latest ready index version. If no reference has a ready
+   index, the dialog shows **No references found**. Build a reference index first.
 
 6. Click **Create**.
 
-   The dialog shows the number of jobs that Virtool will start. The table shows
-   the new analysis, with a progress indicator until the analysis is complete.
+   The dialog shows the number of jobs that Virtool will start. The table shows the new
+   analysis, with a progress indicator until the analysis is complete.
 
-To create more analyses without closing the dialog, turn on **Create more**
-before you click **Create**.
+To create more analyses without closing the dialog, turn on **Create more** before you
+click **Create**.
 
-After the analysis is created, go to the **Samples** list. Each ready sample
-shows a tag for each workflow. The tag shows the state of the workflow for that
-sample. Click a tag to open the **Analyses** tab of the sample.
+After the analysis is created, go to the **Samples** list. Each ready sample shows a tag
+for each workflow. The tag shows the state of the workflow for that sample. Click a tag
+to open the **Analyses** tab of the sample.
 
 <Note>
   To analyze many samples at once, select them in the **Samples** list and click
-  **Analyze**. To analyze one sample, click **quick analyze** in its row. The
-  **Quick Analyze** dialog opens. It has the same fields, but it does not select
-  default subtractions for more than one sample. [Read more about quick
+  **Analyze**. To analyze one sample, click **quick analyze** in its row. The **Quick
+  Analyze** dialog opens. It has the same fields, but it does not select default
+  subtractions for more than one sample. [Read more about quick
   analyses](/docs/guide/samples).
 </Note>
 
@@ -137,8 +133,8 @@ sample. Click a tag to open the **Analyses** tab of the sample.
 
 </Note>
 
-You must have write access to the sample to delete an analysis. Virtool shows
-the **Delete** button only after the job of the analysis stops.
+You must have write access to the sample to delete an analysis. Virtool shows the
+**Delete** button only after the job of the analysis stops.
 
 1. Open the sample and click the **Analyses** tab.
 
@@ -148,9 +144,9 @@ the **Delete** button only after the job of the analysis stops.
 
 3. Click **Confirm**.
 
-A failed or cancelled analysis stays in the table until a user deletes it. Its
-page shows **Analysis failed** or **Analysis cancelled**, with a **View job** link
-to the job.
+A failed or cancelled analysis stays in the table until a user deletes it. Its page
+shows **Analysis failed** or **Analysis cancelled**, with a **View job** link to the
+job.
 
 ## View Pathoscope results
 
@@ -158,141 +154,140 @@ to the job.
 
 2. Click **Pathoscope** in the **Workflow** column.
 
-The page heading shows the workflow and the sample name. Below it, Virtool shows
-the user who started the analysis, the start time, and the workflow version.
-Click the start time or the version to copy it.
+The page heading shows the workflow and the sample name. Below it, Virtool shows the
+user who started the analysis, the start time, and the workflow version. Click the start
+time or the version to copy it.
 
 An analysis that is not complete shows **Analysis in progress**.
 
 ### Mapping overview
 
-The heading shows the percentage of reads mapped to the reference. This
-percentage includes reads that Virtool later subtracts. A bar shows the mapped
-reads as a part of all reads. Blue shows the analysed reads. Orange shows the
-subtracted reads.
+The heading shows the percentage of reads mapped to the reference. This percentage
+includes reads that Virtool later subtracts. A bar shows the mapped reads as a part of
+all reads. Blue shows the analysed reads. Orange shows the subtracted reads.
 
-| Row                              | Description                                                    |
-| -------------------------------- | -------------------------------------------------------------- |
-| **Total reads**                  | All reads in the sample.                                       |
+| Row                              | Description                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------- |
+| **Total reads**                  | All reads in the sample.                                                              |
 | **Mapped to**                    | The reads mapped to the reference. The row names the reference and its index version. |
-| **Subtracted, mapped better to** | The reads removed because they mapped better to a subtraction. |
-| **Analysed**                     | The reads that remain after subtraction.                       |
+| **Subtracted, mapped better to** | The reads removed because they mapped better to a subtraction.                        |
+| **Analysed**                     | The reads that remain after subtraction.                                              |
 
 The table shows the last two rows only when the analysis uses a subtraction.
 
 ### Hit list
 
-The list shows each OTU that Pathoscope found. By default, the list shows all
-hits. The list header shows the number of hits. When a search or filter hides
-hits, the header shows the number of visible hits and the total.
+The list shows each OTU that Pathoscope found. By default, the list shows all hits. The
+list header shows the number of hits. When a search or filter hides hits, the header
+shows the number of visible hits and the total.
 
-Each hit shows its values in columns. The **Acronym** column shows only when an
-OTU has an acronym.
+Each hit shows its values in columns. The **Acronym** column shows only when an OTU has
+an acronym.
 
-| Value    | Description                                                                                                                       |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Weight   | The calculated proportion of reads that map to a virus. The weight is approximately proportional to the titre.                     |
-| Depth    | The median number of mapped reads at each genome position.                                                                        |
-| Coverage | The proportion of genome positions with at least one mapped read. The value for an OTU is the highest coverage of its isolates.   |
+| Value    | Description                                                                                                                     |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Weight   | The calculated proportion of reads that map to a virus. The weight is approximately proportional to the titre.                  |
+| Depth    | The median number of mapped reads at each genome position.                                                                      |
+| Coverage | The proportion of genome positions with at least one mapped read. The value for an OTU is the highest coverage of its isolates. |
 
-Each hit shows a coverage chart for the OTU. The chart shows the read depth
-across the genome. A segmented genome has one panel for each segment.
+Each hit shows a coverage chart for the OTU. The chart shows the read depth across the
+genome. A segmented genome has one panel for each segment.
 
-Click the name of an OTU to show the coverage charts for its isolates. Each
-isolate shows its own weight, depth, and coverage. Click a panel of an isolate
-chart to see the sequence details: the accession, definition, length, reads,
-weight, and coverage. The accession links to NCBI.
+Click the name of an OTU to show the coverage charts for its isolates. Each isolate
+shows its own weight, depth, and coverage. Click a panel of an isolate chart to see the
+sequence details: the accession, definition, length, reads, weight, and coverage. The
+accession links to NCBI.
 
-A panel with no reads shows **no reads**. A panel for a segment that the isolate
-does not have shows **not in this isolate**.
+A panel with no reads shows **no reads**. A panel for a segment that the isolate does
+not have shows **not in this isolate**.
 
-The dashed line on a chart shows the maximum depth of the OTU. The number at the
-top left of the chart shows this depth. All charts of the OTU use this depth as
-the top of their scale.
+The dashed line on a chart shows the maximum depth of the OTU. The number at the top
+left of the chart shows this depth. All charts of the OTU use this depth as the top of
+their scale.
 
 ### Filter, sort, and export
 
 To hide low-coverage hits, click **Filter**. The filter has these settings:
 
 - **Hide low-coverage OTUs**: hides OTUs with coverage less than the limit.
-- **Hide low-coverage isolates**: hides isolates with coverage less than the
-  limit. This switch shows only in the **Charts** view.
-- **Hide when coverage less than**: sets the limit. The default is 0.50. You can
-  change the limit only when a switch is on.
+- **Hide low-coverage isolates**: hides isolates with coverage less than the limit. This
+  switch shows only in the **Charts** view.
+- **Hide when coverage less than**: sets the limit. The default is 0.50. You can change
+  the limit only when a switch is on.
 
 When a filter is on, the **Filter** button shows a blue dot.
 
 Use the toolbar above the hit list:
 
 - Use the search box to find an OTU by name or acronym.
-- Use the sort menu to sort by **Coverage**, **Depth**, **Weight**, or **Name**.
-  By default, the list is sorted by coverage. Click **Sort ascending** or **Sort
+- Use the sort menu to sort by **Coverage**, **Depth**, **Weight**, or **Name**. By
+  default, the list is sorted by coverage. Click **Sort ascending** or **Sort
   descending** next to the menu to change the sort direction.
-- Click **Charts** or **Table** to change the view. The **Table** view shows the
-  values without coverage charts.
+- Click **Charts** or **Table** to change the view. The **Table** view shows the values
+  without coverage charts.
 - Click **Show Reads** to show read pseudo-counts in place of weights.
 - Click **Export** to copy or download results.
 
 The **Export** menu has these options:
 
-- Under **Copy**, **OTUs** and **Isolates** copy the hits that the page shows,
-  with or without headers. You can paste them into a spreadsheet.
+- Under **Copy**, **OTUs** and **Isolates** copy the hits that the page shows, with or
+  without headers. You can paste them into a spreadsheet.
 - Under **Download**, **Excel** and **CSV** download the full analysis.
-- **Prefer acronym** puts the acronym of an OTU in the export in place of its
-  name, if the OTU has an acronym. Virtool keeps this setting for your account.
-- **Settings** opens your [Pathoscope export
-  settings](/docs/guide/account#pathoscope-export). These settings set the
-  columns and their order in copies and downloads.
+- **Prefer acronym** puts the acronym of an OTU in the export in place of its name, if
+  the OTU has an acronym. Virtool keeps this setting for your account.
+- **Settings** opens your
+  [Pathoscope export settings](/docs/guide/account#pathoscope-export). These settings
+  set the columns and their order in copies and downloads.
 
-To copy some hits, select their checkboxes and click **Copy**. To select all
-visible hits, select the checkbox in the list header.
+To copy some hits, select their checkboxes and click **Copy**. To select all visible
+hits, select the checkbox in the list header.
 
 The copy options show only on a secure (HTTPS) connection.
 
-The page address keeps your search, sort, and filter settings. You can share the
-link to show the same view.
+The page address keeps your search, sort, and filter settings. You can share the link to
+show the same view.
 
 ## Interpret Pathoscope
 
-Use the mapped reads, the values of each hit, and the coverage charts together
-to make a decision.
+Use the mapped reads, the values of each hit, and the coverage charts together to make a
+decision.
 
 ### Mapped reads
 
-As a guide, a dsRNA library can have approximately 5 million reads, but the
-percentage of mapped reads is more important. For dsRNA, this percentage can
-be less than 1% or more than 80%. The percentage of mapped reads shows the
-enrichment of viral RNA. When the enrichment is high, fewer total reads are
-necessary. For example, 100,000 mapped reads (2% of 5 million) can be enough.
+As a guide, a dsRNA library can have approximately 5 million reads, but the percentage
+of mapped reads is more important. For dsRNA, this percentage can be less than 1% or
+more than 80%. The percentage of mapped reads shows the enrichment of viral RNA. When
+the enrichment is high, fewer total reads are necessary. For example, 100,000 mapped
+reads (2% of 5 million) can be enough.
 
 ### Hit values
 
-- A coverage above 0.5 often occurs with a positive detection. A coverage below
-  0.2 often occurs with a negative detection.
-- A weight above 0.001 often occurs with a positive detection. A higher titre
-  gives a higher weight.
+- A coverage above 0.5 often occurs with a positive detection. A coverage below 0.2
+  often occurs with a negative detection.
+- A weight above 0.001 often occurs with a positive detection. A higher titre gives a
+  higher weight.
 
-These values are guides, not fixed limits. Use them together with the coverage
-charts to make a decision.
+These values are guides, not fixed limits. Use them together with the coverage charts to
+make a decision.
 
 ### Coverage patterns
 
 - Deep, wide coverage of an isolate often occurs with an infection.
-- Shallow, wide, and broken coverage can occur with contamination between
-  samples on the same plate. Hits with this pattern usually have low weights.
-- Deep coverage in a small area is usually non-specific mapping. Reads can map
-  to low-complexity or host-similar regions of the isolate genome. This pattern
-  usually does not show a true infection. **Depth** is a median, so it can be 0
-  when the chart shows a high peak.
+- Shallow, wide, and broken coverage can occur with contamination between samples on the
+  same plate. Hits with this pattern usually have low weights.
+- Deep coverage in a small area is usually non-specific mapping. Reads can map to
+  low-complexity or host-similar regions of the isolate genome. This pattern usually
+  does not show a true infection. **Depth** is a median, so it can be 0 when the chart
+  shows a high peak.
 
 ### Examples
 
 #### High quality positive
 
-This sample comes from an apple host. It has 9,225,241 total reads, and 46.40% of
-them mapped to the reference. This percentage shows good enrichment of viral RNA.
-Virtool subtracted 16,908 reads that mapped better to _Malus domestica_. After
-the subtraction, 4,263,751 reads remained for analysis.
+This sample comes from an apple host. It has 9,225,241 total reads, and 46.40% of them
+mapped to the reference. This percentage shows good enrichment of viral RNA. Virtool
+subtracted 16,908 reads that mapped better to _Malus domestica_. After the subtraction,
+4,263,751 reads remained for analysis.
 
 ![Mapping overview and hit list toolbar](./pathoscope_overview.png?url)
 
@@ -303,66 +298,62 @@ The hit list shows 31 hits. These two viruses have high weight, depth, and cover
 | Foveavirus mali (ASPV)   | 0.716  | 22604 | 1.000    |
 | Capillovirus mali (ASGV) | 0.078  | 309   | 0.998    |
 
-Alphaendornavirus phaseoli is the internal control. It has a weight of 0.148, a
-depth of 289, and a coverage of 1.000.
+Alphaendornavirus phaseoli is the internal control. It has a weight of 0.148, a depth of
+289, and a coverage of 1.000.
 
 ![Hit list with three OTUs and their coverage charts](./pathoscope_hits.png?url)
 
-A virus or viroid can be present with a low weight. Apscaviroid cicatricimali has
-a weight of 1.50E-4, a depth of 16, and a coverage of 1.000. Coguvirus eburi has a
-weight of 1.48E-4, a depth of 10, and a coverage of 0.958. Both are present in this
-sample.
+A virus or viroid can be present with a low weight. Apscaviroid cicatricimali has a
+weight of 1.50E-4, a depth of 16, and a coverage of 1.000. Coguvirus eburi has a weight
+of 1.48E-4, a depth of 10, and a coverage of 0.958. Both are present in this sample.
 
-Capillovirus mali has two isolates.
-Isolate 13TF142 has a weight of 0.078, a depth of 309, and a coverage of 0.998.
-Isolate A16 has a weight of 0, a depth of 0, and a coverage of 0.019. The reads
-show that isolate 13TF142 is the better match.
+Capillovirus mali has two isolates. Isolate 13TF142 has a weight of 0.078, a depth of
+309, and a coverage of 0.998. Isolate A16 has a weight of 0, a depth of 0, and a
+coverage of 0.019. The reads show that isolate 13TF142 is the better match.
 
-For isolate 13TF142, 21,285 reads mapped to sequence MZ126530.1, which has a
-length of 6,495 nt.
+For isolate 13TF142, 21,285 reads mapped to sequence MZ126530.1, which has a length of
+6,495 nt.
 
 ![Expanded OTU with isolate charts and sequence details](./pathoscope_isolates.png?url)
 
 #### High quality negative
 
-This sample comes from a healthy plant. It has 9,850,428 total reads, and only 0.42%
-of them mapped to the reference. Virtool subtracted 4,755 reads that mapped better to
-_Arabidopsis thaliana_. After the subtraction, 36,158 reads remained for
-analysis.
+This sample comes from a healthy plant. It has 9,850,428 total reads, and only 0.42% of
+them mapped to the reference. Virtool subtracted 4,755 reads that mapped better to
+_Arabidopsis thaliana_. After the subtraction, 36,158 reads remained for analysis.
 
 ![Mapping overview of a healthy sample](./pathoscope_negative_overview.png?url)
 
-The only virus present is Phaseolus vulgaris endornavirus 1 (PvEV-1). It has a weight
-of 1.000, a depth of 115, and a coverage of 1.000. This virus is a positive internal
+The only virus present is Phaseolus vulgaris endornavirus 1 (PvEV-1). It has a weight of
+1.000, a depth of 115, and a coverage of 1.000. This virus is a positive internal
 control. The laboratory adds it to the nucleic acid extraction. It shows that the
 extraction was successful.
 
-The list has 16 hits, sorted by coverage. The next three hits each have a weight of
-0, a depth of 0, and a coverage of 0.051 or less. Their charts show reads in only one
-small area. This pattern is non-specific mapping. These viruses are not present in the
-sample.
+The list has 16 hits, sorted by coverage. The next three hits each have a weight of 0, a
+depth of 0, and a coverage of 0.051 or less. Their charts show reads in only one small
+area. This pattern is non-specific mapping. These viruses are not present in the sample.
 
 ![Hit list with the internal control and three low hits](./pathoscope_negative_hits.png?url)
 
 #### Contamination
 
-This sample comes from an apple host. It has 10,507,241 total reads, and 11.91% of
-them mapped to the reference.
+This sample comes from an apple host. It has 10,507,241 total reads, and 11.91% of them
+mapped to the reference.
 
 ![Mapping overview of a sample with contamination](./pathoscope_contamination_overview.png?url)
 
-Foveavirus mali and Apple chlorotic leaf spot virus have high coverage, and both
-viruses infect apple. Grapevine associated ilarvirus does not match the host. It has
-a weight of 1.42E-5, a depth of 0, and a coverage of 0.201. Its chart shows shallow,
-broken coverage. This hit is contamination. The likely source is another sample on
-the same run or plate.
+Foveavirus mali and Apple chlorotic leaf spot virus have high coverage, and both viruses
+infect apple. Grapevine associated ilarvirus does not match the host. It has a weight of
+1.42E-5, a depth of 0, and a coverage of 0.201. Its chart shows shallow, broken
+coverage. This hit is contamination. The likely source is another sample on the same run
+or plate.
 
 ![Hit list with apple viruses and a grapevine virus](./pathoscope_contamination_hits.png?url)
 
 ## View Nuvs results
 
-Nuvs finds possible novel viral sequences in a sample library. The workflow does
-these steps:
+Nuvs finds possible novel viral sequences in a sample library. The workflow does these
+steps:
 
 1. It removes known viral reads and subtraction reads.
 2. It assembles sample reads into long sequences called _contigs_.
@@ -378,45 +369,42 @@ To view the Nuvs results of a sample:
 
 ### Contig list
 
-The left pane shows a list of the assembled contigs that can be part of a novel
-virus. Each contig has a name, such as **Sequence 8**, and three values:
+The left pane shows a list of the assembled contigs that can be part of a novel virus.
+Each contig has a name, such as **Sequence 8**, and three values:
 
-| Value   | Description                                                                   |
-| ------- | ----------------------------------------------------------------------------- |
-| Length  | The number of base pairs in the sequence.                                     |
+| Value   | Description                                                                                                                                                                   |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Length  | The number of base pairs in the sequence.                                                                                                                                     |
 | E-value | The lowest E-value of the HMM matches in the contig. An E-value is the number of matches of this quality that you can expect by chance. A lower value shows a stronger match. |
-| ORFs    | The number of open reading frames in the contig that have an HMM match.       |
+| ORFs    | The number of open reading frames in the contig that have an HMM match.                                                                                                       |
 
-By default, the list shows only contigs that have an HMM match. To show all
-contigs, set **Filter Sequences** to off. The list header shows the number of
-visible contigs and the total number of contigs. Use <Key>w</Key> and <Key>s</Key>
-to move through the list.
+By default, the list shows only contigs that have an HMM match. To show all contigs, set
+**Filter Sequences** to off. The list header shows the number of visible contigs and the
+total number of contigs. Use <Key>w</Key> and <Key>s</Key> to move through the list.
 
 ### Contig detail
 
-Select a contig in the left pane to see its details in the right pane. The pane
-shows the contig length, the number of ORFs with an HMM match, and the E-value
-of the contig. Below these values, it shows the contig as a line, with the
-identified ORFs below it. Each ORF is an arrow that shows its position and
-strand. By default, the pane shows only ORFs that have an HMM match. To show
-all ORFs, set **Filter ORFs** to off.
+Select a contig in the left pane to see its details in the right pane. The pane shows
+the contig length, the number of ORFs with an HMM match, and the E-value of the contig.
+Below these values, it shows the contig as a line, with the identified ORFs below it.
+Each ORF is an arrow that shows its position and strand. By default, the pane shows only
+ORFs that have an HMM match. To show all ORFs, set **Filter ORFs** to off.
 
-For each ORF with an HMM match, the pane shows the HMM name, the length of the
-ORF in base pairs, and the E-value. Click the HMM name to open the HMM. An ORF
-with no HMM match shows **Unannotated**. **Families** shows the virus families
-of all HMMs that match the contig.
+For each ORF with an HMM match, the pane shows the HMM name, the length of the ORF in
+base pairs, and the E-value. Click the HMM name to open the HMM. An ORF with no HMM
+match shows **Unannotated**. **Families** shows the virus families of all HMMs that
+match the contig.
 
-The example shows Sequence 8. The contig is 5,460 bp long. Four ORFs match
-HMMs: **Replicase**, **Triple Gene Block Protein 1**, **Triple Gene Block
-Protein 2**, and **Unknown Similar To AMEVITR04**. The E-value of the replicase
-match is 0, so the E-value of the contig is also 0.
+The example shows Sequence 8. The contig is 5,460 bp long. Four ORFs match HMMs:
+**Replicase**, **Triple Gene Block Protein 1**, **Triple Gene Block Protein 2**, and
+**Unknown Similar To AMEVITR04**. The E-value of the replicase match is 0, so the
+E-value of the contig is also 0.
 
 ![Sequence 8, with four ORFs that match HMMs](./nuvs_sequence.png?url)
 
 ### BLAST
 
-The Basic Local Alignment Search Tool (BLAST) compares sequences with known
-sequences.
+The Basic Local Alignment Search Tool (BLAST) compares sequences with known sequences.
 
 1. Select a contig.
 
@@ -424,18 +412,17 @@ sequences.
 
 3. Wait until the BLAST search is complete.
 
-While the search runs, the page shows **BLAST in progress**, with the request ID
-(RID) of the search. The RID links to the search at NCBI. Virtool checks the
-search at intervals, and shows the time of the last and the next check.
+While the search runs, the page shows **BLAST in progress**, with the request ID (RID)
+of the search. The RID links to the search at NCBI. Virtool checks the search at
+intervals, and shows the time of the last and the next check.
 
-If NCBI has no result after 30 minutes, the search stops with an error. To
-search again, click **Retry**. The new search replaces the old result.
+If NCBI has no result after 30 minutes, the search stops with an error. To search again,
+click **Retry**. The new search replaces the old result.
 
-When the BLAST search is complete, the page shows the **NCBI BLAST** table
-below the contig. For each hit, the table shows the **Accession**, **Name**,
-**E-value**, **Score**, and **Identity**. The accession links to NCBI. The table
-shows a maximum of 5 hits. If NCBI finds no hits, the page shows **No BLAST hits
-found**.
+When the BLAST search is complete, the page shows the **NCBI BLAST** table below the
+contig. For each hit, the table shows the **Accession**, **Name**, **E-value**,
+**Score**, and **Identity**. The accession links to NCBI. The table shows a maximum of 5
+hits. If NCBI finds no hits, the page shows **No BLAST hits found**.
 
 ### Filter, sort, and export
 
@@ -443,22 +430,22 @@ Use the toolbar above the contig list:
 
 - Use the **Name or family** box to search the contigs.
 - Use the sort menu to sort by **Length**, **E-Value**, or **ORFs**.
-- Click **Export** to download a FASTA file. In the **Export Analysis** dialog,
-  select **Contigs** or **ORFs**, then click **Download**. **Contigs** exports
-  all contigs. **ORFs** exports the proteins of ORFs with HMM matches. The dialog
-  shows an example of the FASTA header for each option.
+- Click **Export** to download a FASTA file. In the **Export Analysis** dialog, select
+  **Contigs** or **ORFs**, then click **Download**. **Contigs** exports all contigs.
+  **ORFs** exports the proteins of ORFs with HMM matches. The dialog shows an example of
+  the FASTA header for each option.
 
 The page address keeps your search, sort, and filter settings.
 
 ## Interpret Nuvs
 
-Nuvs assembles many contigs from known viruses or non-viral sources. Use BLAST
-to find if a contig with an HMM match is novel.
+Nuvs assembles many contigs from known viruses or non-viral sources. Use BLAST to find
+if a contig with an HMM match is novel.
 
 ### BLAST results
 
-Most contigs do not come from novel viruses. Use the BLAST hits to find the
-source of a contig:
+Most contigs do not come from novel viruses. Use the BLAST hits to find the source of a
+contig:
 
 | BLAST hits                                             | Likely source                                                                                                                              |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -467,14 +454,14 @@ source of a contig:
 | Low identity to known viruses, with a strong HMM match | A possible novel virus.                                                                                                                    |
 | High identity to bacteria, humans, or other non-hosts  | Contamination from the field or the laboratory.                                                                                            |
 
-Public databases can contain sequences with incorrect annotations. For example,
-a viral sequence can have a host annotation.
+Public databases can contain sequences with incorrect annotations. For example, a viral
+sequence can have a host annotation.
 
 ### Next steps
 
-Nuvs finds only possible novel viral sequences. To confirm a possible novel
-virus, examine the contig with other bioinformatic tools. A bioinformatician can
-help. Usually, you must do more work to get a full-length genome sequence.
+Nuvs finds only possible novel viral sequences. To confirm a possible novel virus,
+examine the contig with other bioinformatic tools. A bioinformatician can help. Usually,
+you must do more work to get a full-length genome sequence.
 
-If you find a new variant of a known virus, add it to a reference. Pathoscope
-can then find it in later analyses.
+If you find a new variant of a known virus, add it to a reference. Pathoscope can then
+find it in later analyses.

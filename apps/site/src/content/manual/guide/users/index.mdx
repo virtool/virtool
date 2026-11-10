@@ -11,8 +11,8 @@ which data they can access.
 
 ### Ownership
 
-When a user creates a sample or a reference, that user becomes its owner. The owner of
-a sample or reference always has all rights on it.
+When a user creates a sample or a reference, that user becomes its owner. The owner of a
+sample or reference always has all rights on it.
 
 ### Rights
 
@@ -23,8 +23,8 @@ Full administrators have all rights on all samples and references.
 
 ### Permissions
 
-Permissions control which instance-wide actions users can do. Users get permissions
-from the groups they are members of. You can't set permissions for one user.
+Permissions control which instance-wide actions users can do. Users get permissions from
+the groups they are members of. You can't set permissions for one user.
 
 | Permission           | Description                    |
 | -------------------- | ------------------------------ |
@@ -54,8 +54,7 @@ A user can have one administrator role. A user without a role is a limited user.
 Each role can also do everything that the roles below it can do.
 
 Administrator roles also give permissions. All administrators have the `create_ref` and
-`modify_hmm` permissions. Full administrators have all
-permissions.
+`modify_hmm` permissions. Full administrators have all permissions.
 
 Only a full administrator can assign or remove an administrator role, or change a user
 who has an administrator role. You can't change your own role.
@@ -68,8 +67,8 @@ who has an administrator role. You can't change your own role.
 
 You must have the Users, Settings, or Full administrator role to see **Administration**.
 
-The users list shows the handle, email, role, primary group, and status of each user. The
-status is **Active**, **Invited**, or **Deactivated**.
+The users list shows the handle, email, role, primary group, and status of each user.
+The status is **Active**, **Invited**, or **Deactivated**.
 
 To find users, type a handle or email address in the search field. To filter the list,
 use the **Role** and **Status** filters. Click a column heading to sort the list by that
@@ -79,18 +78,19 @@ Click a handle to open the user's details.
 
 ## Create a user
 
-When you create a user, Virtool makes an invited account and an invitation link. The user
-opens the link and [chooses a handle and a password](/docs/guide/sign-in#accept-an-invitation).
+When you create a user, Virtool makes an invited account and an invitation link. The
+user opens the link and
+[chooses a handle and a password](/docs/guide/sign-in#accept-an-invitation).
 
 1. Click **Create**.
 2. Type the email address of the user under **Email**.
-3. Optional: under **Groups**, add the user to groups. Click **Primary** beside a group to
-   make it the user's primary group.
+3. Optional: under **Groups**, add the user to groups. Click **Primary** beside a group
+   to make it the user's primary group.
 4. Optional: select an **Administrator role**. Only full administrators see this field.
 5. Under **Invitation delivery**, select one option:
    - **Email invitation**: Virtool sends the link to the email address. This option is
-     available only if [email delivery](/docs/guide/administration#email-delivery)
-     is set up.
+     available only if [email delivery](/docs/guide/administration#email-delivery) is
+     set up.
    - **Create shareable link**: you send the link to the user yourself.
 6. Click **Save**.
 7. If you selected **Create shareable link**, copy the link and send it to the user.
@@ -144,8 +144,8 @@ If a user forgets their password, create a password reset link for them.
 1. Open the user's details.
 2. Under **Password reset link**, click **Create reset link**.
 3. If [email delivery](/docs/guide/administration#email-delivery) is set up, Virtool
-   sends the link to the user. If it is not set up,
-   copy the link and send it to the user yourself.
+   sends the link to the user. If it is not set up, copy the link and send it to the
+   user yourself.
 
 The link works one time. A link that you copy expires after one hour. A link that
 Virtool sends by email expires after 7 hours. When you create a new link, the previous
@@ -165,8 +165,8 @@ rights the user has on samples and references.
 
 To remove the user from a group, click **Remove** (the X) beside the group.
 
-The **Permissions** list shows the permissions that the user has now. It updates when you
-change the groups.
+The **Permissions** list shows the permissions that the user has now. It updates when
+you change the groups.
 
 ## Change a user's primary group
 
@@ -188,7 +188,8 @@ You must be a full administrator.
 1. Open the user's details.
 2. Under **Administrator Role**, select a role.
 
-To remove the role, click **Remove administrator role** (the trash icon) beside the role.
+To remove the role, click **Remove administrator role** (the trash icon) beside the
+role.
 
 ## Deactivate a user
 
@@ -210,9 +211,9 @@ authentication here.
 3. Click **Confirm**.
 
 Virtool removes the authenticator and recovery codes of the user and signs the user out
-everywhere. If your instance [requires two-factor
-authentication](/docs/guide/administration#security) and the user has no
-passkey, the user must set it up again at the next sign-in.
+everywhere. If your instance
+[requires two-factor authentication](/docs/guide/administration#security) and the user
+has no passkey, the user must set it up again at the next sign-in.
 
 ## Revoke a user's access
 
@@ -263,5 +264,5 @@ The **Members** list shows the users in the group. To add or remove members, cha
 2. Click **Delete**.
 3. Click **Confirm**.
 
-Samples that belonged to the group have no group after you delete it. Virtool removes the
-rights that the group had on references.
+Samples that belonged to the group have no group after you delete it. Virtool removes
+the rights that the group had on references.

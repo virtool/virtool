@@ -16,10 +16,10 @@ An OTU usually represents one pathogen species.
 Each OTU contains one or more _isolates_. An isolate is a strain, genotype, or variant
 of the OTU. Each isolate contains one or more genome sequences.
 
-An OTU must have at least one isolate, and each isolate must have at least one
-sequence. If an OTU does not meet these conditions, Virtool shows a warning on the OTU.
-Virtool does not include the OTU in the next index build until you correct the
-problems. In the OTU list, these OTUs show **Unverified**.
+An OTU must have at least one isolate, and each isolate must have at least one sequence.
+If an OTU does not meet these conditions, Virtool shows a warning on the OTU. Virtool
+does not include the OTU in the next index build until you correct the problems. In the
+OTU list, these OTUs show **Unverified**.
 
 ### Isolate naming
 
@@ -53,22 +53,21 @@ isolate, another isolate becomes the default.
 
 ### Schemas
 
-A schema defines the genome segments that each isolate of the OTU contains. For
-example, a virus with two genome segments has two segments in its schema.
+A schema defines the genome segments that each isolate of the OTU contains. For example,
+a virus with two genome segments has two segments in its schema.
 
 When an OTU has a schema, you can assign a segment to each sequence. This has these
 effects:
 
 - Sequences show in schema order in the sequence list.
 - The sequence list shows the segment name of each sequence.
-- Pathoscope labels coverage charts with the segment name, and shows the segments in
-  the same layout for each isolate.
+- Pathoscope labels coverage charts with the segment name, and shows the segments in the
+  same layout for each isolate.
 
 ### Permissions
 
-To change OTUs in a reference, you must have the **modifyOtu** right on that
-reference. Without this right, you can view OTUs but the edit and delete buttons do not
-show.
+To change OTUs in a reference, you must have the **modifyOtu** right on that reference.
+Without this right, you can view OTUs but the edit and delete buttons do not show.
 
 You cannot change OTUs in an archived reference. The reference shows **Archived**.
 
@@ -169,14 +168,13 @@ This button does not show on the isolate that is already the default.
 2. Click **Create Sequence**.
 3. Complete the fields:
 
-   - **Segment**: the schema segment that the sequence represents. This field shows
-     only when the OTU has a schema. Each segment can be assigned to only one sequence
-     in an isolate.
+   - **Segment**: the schema segment that the sequence represents. This field shows only
+     when the OTU has a schema. Each segment can be assigned to only one sequence in an
+     isolate.
    - **Accession (ID)**: required.
    - **Host**: optional.
    - **Definition**: required.
-   - **Sequence**: required. The sequence can contain only the characters
-     `ATCGNRYKM`.
+   - **Sequence**: required. The sequence can contain only the characters `ATCGNRYKM`.
 
 4. Click **Save**.
 
@@ -228,8 +226,8 @@ they paste into a spreadsheet as columns. Under **Download**, click an item to d
 it as a file.
 
 You can also select the **FASTA header** and the **Table download format** in the menu.
-These choices apply until you leave the page. To change the defaults, click
-**Settings** in the menu, or see [Account](/docs/guide/account).
+These choices apply until you leave the page. To change the defaults, click **Settings**
+in the menu, or see [Account](/docs/guide/account).
 
 ## Add a segment
 
