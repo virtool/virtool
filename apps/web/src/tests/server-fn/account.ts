@@ -10,7 +10,7 @@ import { createFakeAccountSecurity, createFakeApiKey } from "../fake/account";
 
 /**
  * Mock handles for the `@server/account/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test rendering the API-key management
+ * globally from `tests/serverFnMocks.ts` so any test rendering the API-key management
  * view can stub them without per-file `vi.mock` boilerplate.
  */
 export const accountServerFnMocks = {

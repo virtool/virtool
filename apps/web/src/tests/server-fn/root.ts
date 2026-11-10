@@ -2,7 +2,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/root/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so route-level tests can stub the
+ * globally from `tests/serverFnMocks.ts` so route-level tests can stub the
  * unauthenticated root document without per-file `vi.mock` boilerplate.
  */
 export const rootServerFnMocks = {

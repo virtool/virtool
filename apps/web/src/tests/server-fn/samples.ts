@@ -4,7 +4,7 @@ import { createFakeSample } from "../fake/samples";
 
 /**
  * Mock handles for the `@server/samples/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test importing this helper can stub the
+ * globally from `tests/serverFnMocks.ts` so any test importing this helper can stub the
  * sample server functions without per-file `vi.mock` boilerplate.
  */
 export const sampleServerFnMocks = {

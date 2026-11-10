@@ -292,10 +292,18 @@ Conventions with no single home in code follow. Follow
 
 ### Testing
 
-Tests run in three Vitest projects: `web` (jsdom), `server` (Node and Postgres),
-and `a11y` (Chromium). Run them all with `pnpm --filter @virtool/web test`, or
-select one with `pnpm --filter @virtool/web exec vitest run --project <name>`.
-Install Chromium with `pnpm --filter @virtool/web exec playwright install chromium`.
+Tests run in four Vitest projects: `web` (jsdom), `server` (Node and Postgres),
+`a11y` (Chromium), and `shots` (Chromium). Run them all with
+`pnpm --filter @virtool/web test`, or select one with
+`pnpm --filter @virtool/web exec vitest run --project <name>`. Install Chromium
+with `pnpm --filter @virtool/web exec playwright install chromium`.
+
+#### Screenshots
+
+A `*.shot.tsx` file renders a route or component with fake data and saves a
+PNG. It needs no Postgres, vtd environment, or development server. Take every
+shot with `pnpm --filter @virtool/web shots`. Add a file path to take only the
+shots in that file. PNGs go to `apps/web/screenshots/`, which Git ignores.
 
 Put tests in adjacent `__tests__/` directories. Use `user-event` and accessible
 queries, and don't disambiguate controls by index. Local tests skip React

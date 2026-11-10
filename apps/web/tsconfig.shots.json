@@ -1,0 +1,16 @@
+{
+	// Shots run in browser mode, where Vitest registers its own DOM matchers.
+	// Importing `vitest/browser` declares those matchers on every `expect`, and
+	// they conflict with jest-dom's, which the jsdom tests use. So shots are
+	// checked in their own program, and nothing a shot imports may import
+	// `@testing-library/jest-dom`.
+	"extends": "./tsconfig.app.json",
+	"include": [
+		"src/**/*.shot.tsx",
+		"src/tests/setupShots.ts",
+		"src/tests/shot.ts",
+		"src/types/*.d.ts",
+		"src/vite-env.d.ts"
+	],
+	"exclude": []
+}

@@ -34,5 +34,12 @@
 		}
 	},
 	"include": ["src/**/*"],
-	"exclude": ["src/server/**", "src/server.ts", "src/instrument.server.ts"]
+	"exclude": [
+		"src/server/**",
+		"src/server.ts",
+		"src/instrument.server.ts",
+		"src/**/*.shot.tsx",
+		"src/tests/setupShots.ts",
+		"src/tests/shot.ts"
+	]
 }

@@ -9,7 +9,8 @@
 		"start": "node .output/server/index.mjs",
 		"test": "TZ=UTC vitest run",
 		"test:watch": "TZ=UTC vitest",
-		"typecheck": "tsc -p tsconfig.server.json && tsc -p tsconfig.app.json"
+		"shots": "vitest run --project shots",
+		"typecheck": "tsc -p tsconfig.server.json && tsc -p tsconfig.app.json && tsc -p tsconfig.shots.json"
 	},
 	"dependencies": {
 		"@better-auth/passkey": "1.7.18",

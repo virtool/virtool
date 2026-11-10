@@ -8,6 +8,19 @@ import viteConfigFn from "./vite.config.js";
 // ever constructed here and the plugin list needs no further filtering.
 const viteConfig = viteConfigFn({ command: "serve", mode: "test" });
 
+// Pins the assumption that client tests never reach Postgres.
+// `@server/composition` is where the pool is opened, and `@server/config` is
+// what it reads to do so; if either survives the client transform into the
+// browser program, the guard throws instead of quietly making Docker a
+// prerequisite again. `@virtool/data/db/pg` is listed too — it opens nothing at
+// import any more, but a browser module reaching the data layer's pool
+// constructor is the same bug one step earlier. Listed before the `@server`
+// prefix alias so they win.
+const postgresGuardAlias = {
+	find: /^(@server\/(config|composition)|@virtool\/data\/db\/pg)$/,
+	replacement: path.resolve("src/tests/postgresGuard.ts"),
+};
+
 export default defineConfig({
 	...viteConfig,
 	test: {
@@ -34,27 +47,14 @@ export default defineConfig({
 					// these past the 5s default and they time out — masquerading as a
 					// flake. Give them headroom while still failing a genuine hang fast.
 					testTimeout: 15_000,
-					setupFiles: ["./src/tests/setup.tsx"],
+					setupFiles: ["./src/tests/setupJsdom.tsx"],
 					include: ["src/**/*.test.{ts,tsx}"],
 					// `*.a11y.test.tsx` files run in the browser `a11y` project below,
 					// under a real layout engine. The glob here would otherwise also
 					// match them and run them a second time under jsdom, where the
 					// colour-contrast checks they exist for cannot run.
 					exclude: ["src/server/**", "src/**/*.a11y.test.{ts,tsx}"],
-					// Pin the assumption above. `@server/composition` is where the pool
-					// is opened, and `@server/config` is what it reads to do so; if
-					// either survives the client transform into the browser program, the
-					// guard throws instead of quietly making Docker a prerequisite
-					// again. `@virtool/data/db/pg` is listed too — it opens nothing at
-					// import any more, but a browser module reaching the data layer's
-					// pool constructor is the same bug one step earlier. Listed before
-					// the `@server` prefix alias so they win.
-					alias: [
-						{
-							find: /^(@server\/(config|composition)|@virtool\/data\/db\/pg)$/,
-							replacement: path.resolve("src/tests/postgresGuard.ts"),
-						},
-					],
+					alias: [postgresGuardAlias],
 				},
 			},
 			{
@@ -107,6 +107,28 @@ export default defineConfig({
 						// A failing axe assertion already reports the rule, the offending
 						// node, and the exact contrast ratio; a screenshot adds nothing and
 						// writes a PNG into the source tree on every failure.
+						screenshotFailures: false,
+					},
+				},
+			},
+			{
+				extends: true,
+				test: {
+					// `*.shot.tsx` files render a route or component against the same
+					// fakes and server-function mocks as the jsdom tests, then save a
+					// PNG. They need no Postgres, vtd environment, or dev server.
+					name: "shots",
+					setupFiles: ["./src/tests/setupShots.ts"],
+					include: ["src/**/*.shot.tsx"],
+					alias: [postgresGuardAlias],
+					browser: {
+						enabled: true,
+						provider: playwright(),
+						headless: true,
+						instances: [
+							{ browser: "chromium", viewport: { width: 1280, height: 800 } },
+						],
+						screenshotDirectory: path.resolve("screenshots"),
 						screenshotFailures: false,
 					},
 				},
