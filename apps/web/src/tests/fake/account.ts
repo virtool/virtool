@@ -59,7 +59,6 @@ export function createFakeApiKey(overrides?: Partial<ApiKey>): ApiKey {
 		id: faker.number.int({ min: 1, max: 100000 }),
 		name: faker.word.noun({ strategy: "any-length" }),
 		permissions: createFakePermissions({
-			cancel_job: true,
 			create_ref: true,
 		}),
 		...overrides,
