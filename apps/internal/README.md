@@ -90,6 +90,8 @@ migrations pass.
 
 Only one `migrate` run can work at a time. A second run exits non-zero without
 doing work. SIGTERM and SIGINT stop a run at the next batch or SQL boundary.
+`migrate` then logs that the run was interrupted and exits non-zero. Rerun
+`migrate` to continue. An interruption needs no remediation.
 
 Don't deploy with the `@virtool/data` `db:migrate` command. It can't run
 TypeScript data migrations, and when an assertion stops it, its single
@@ -98,7 +100,8 @@ transaction can roll back the preceding SQL too.
 ## `data-migrations`: inspection
 
 A data migration is an audit or a backfill. An attempt that reports a finding is
-`failed`, and an attempt that throws is `errored`. Outcomes are stored in
+`failed`, and an attempt that throws is `errored`. An interrupted attempt is
+also `errored`, with the error `interrupted before the data migration finished`. Outcomes are stored in
 `data_migrations`, with finding details in `data_migration_findings`. An attempt
 with many findings counts all of them but keeps only some of the details.
 
