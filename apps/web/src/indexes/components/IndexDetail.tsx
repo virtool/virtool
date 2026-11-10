@@ -1,12 +1,12 @@
 import { ContainerNarrow } from "@base/Container";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
-import RelativeTime from "@base/RelativeTime";
 import {
 	SubviewHeader,
 	SubviewHeaderAttribution,
 	SubviewHeaderTitle,
 } from "@base/Subview";
+import Time from "@base/Time";
 import { useFetchReference } from "@references/queries";
 import { getRouteApi } from "@tanstack/react-router";
 import { useFetchIndex } from "../queries";
@@ -47,7 +47,7 @@ export default function IndexDetail() {
 				<SubviewHeaderTitle>Index {version}</SubviewHeaderTitle>
 				<div className="flex items-center">
 					<SubviewHeaderAttribution>
-						{user.handle} built <RelativeTime time={createdAt} />
+						{user.handle} built <Time sentence time={createdAt} />
 					</SubviewHeaderAttribution>
 				</div>
 			</SubviewHeader>

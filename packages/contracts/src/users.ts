@@ -85,6 +85,12 @@ export const REFERENCE_EXPORT_TABLE_FORMATS = ["csv", "tsv"] as const;
 export type ReferenceExportTableFormat =
 	(typeof REFERENCE_EXPORT_TABLE_FORMATS)[number];
 
+/** The ways a time can be shown: "3 days ago", or "2026-09-26 14:03". */
+export const TIME_FORMATS = ["relative", "absolute"] as const;
+
+/** A way of showing a time. */
+export type TimeFormat = (typeof TIME_FORMATS)[number];
+
 /** The sources an avatar can come from, in the order the UI lists them. */
 export const AVATAR_SOURCES = ["initials", "gravatar"] as const;
 
@@ -110,6 +116,8 @@ export type AccountSettings = {
 	showIds: boolean;
 	showVersions: boolean;
 	skipQuickAnalyzeDialog: boolean;
+	/** Whether times show relative to now or as a date and time */
+	timeFormat: TimeFormat;
 	/** Where the image that represents the user comes from */
 	avatarSource: AvatarSource;
 };

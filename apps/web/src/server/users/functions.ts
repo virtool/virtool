@@ -10,6 +10,7 @@ import {
 	REFERENCE_EXPORT_FASTA_HEADERS,
 	REFERENCE_EXPORT_TABLE_FORMATS,
 	SORT_DIRECTIONS,
+	TIME_FORMATS,
 	USER_ROLE_FILTERS,
 	USER_SORT_FIELDS,
 	USER_STATUSES,
@@ -118,6 +119,7 @@ const accountSettingsSchema = z
 		showIds: z.boolean(),
 		showVersions: z.boolean(),
 		skipQuickAnalyzeDialog: z.boolean(),
+		timeFormat: z.enum(TIME_FORMATS),
 		avatarSource: z.enum(AVATAR_SOURCES),
 	})
 	.partial();

@@ -134,6 +134,81 @@ export function formatDate(date: Date): string {
 	return `${year}-${month}-${day}`;
 }
 
+/**
+ * Format a date as `yyyy-MM-dd HH:mm` in the local time zone.
+ *
+ * @param date - the date to format
+ * @returns a date and 24-hour time string
+ */
+export function formatDateTime(date: Date): string {
+	return `${formatDate(date)} ${formatTime(date).slice(0, 5)}`;
+}
+
+const monthDayFormatter = new Intl.DateTimeFormat("en", {
+	day: "numeric",
+	month: "short",
+});
+
+const monthDayYearFormatter = new Intl.DateTimeFormat("en", {
+	day: "numeric",
+	month: "short",
+	year: "numeric",
+});
+
+/** A date described relative to the calendar day it is read on. */
+type CalendarTime = {
+	/** The name of the day, if the date is today or yesterday. */
+	day: "today" | "yesterday" | null;
+
+	/** The date as text, such as "Today at 11:12" or "Sep 26, 2023". */
+	text: string;
+};
+
+function isSameDay(a: Date, b: Date): boolean {
+	return (
+		a.getFullYear() === b.getFullYear() &&
+		a.getMonth() === b.getMonth() &&
+		a.getDate() === b.getDate()
+	);
+}
+
+/**
+ * Describe a date by the calendar day it falls on, in the local time zone.
+ *
+ * The detail falls as the date gets older: today and yesterday give the day
+ * name and the time, a date earlier in the current year gives the month, day,
+ * and time, and a date in an earlier year gives the month, day, and year only.
+ * A date after `now`, from a browser clock that lags the server's, reads as
+ * today.
+ *
+ * @param date - the date to describe
+ * @param now - the instant to describe it from
+ */
+export function formatCalendarTime(date: Date, now: number): CalendarTime {
+	const today = new Date(now);
+	const time = formatTime(date).slice(0, 5);
+
+	if (isSameDay(date, today) || date.getTime() > now) {
+		return { day: "today", text: `Today at ${time}` };
+	}
+
+	const yesterday = new Date(
+		today.getFullYear(),
+		today.getMonth(),
+		today.getDate() - 1,
+	);
+
+	if (isSameDay(date, yesterday)) {
+		return { day: "yesterday", text: `Yesterday at ${time}` };
+	}
+
+	if (date.getFullYear() === today.getFullYear()) {
+		return { day: null, text: `${monthDayFormatter.format(date)} at ${time}` };
+	}
+
+	return { day: null, text: monthDayYearFormatter.format(date) };
+}
+
 const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**

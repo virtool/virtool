@@ -50,6 +50,34 @@ describe("<AccountSettings />", () => {
 		expect(toggle).toBeChecked();
 	});
 
+	it("should save the time format when one is chosen", async () => {
+		const account = createFakeAccount();
+		mockGetAccount(account);
+		const saved = { ...account.settings, timeFormat: "absolute" as const };
+		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(saved);
+
+		renderWithProviders(<AccountSettings />);
+
+		const group = await screen.findByRole("group", {
+			name: "Time format",
+		});
+		expect(within(group).getByRole("radio", { checked: true })).toHaveValue(
+			"relative",
+		);
+
+		mockGetAccount({ ...account, settings: saved });
+
+		await userEvent.click(
+			within(group).getByRole("radio", { name: /Date and time/ }),
+		);
+
+		await waitFor(() =>
+			expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
+				data: { timeFormat: "absolute" },
+			}),
+		);
+	});
+
 	it("should list the copied columns in order and the hidden ones apart", async () => {
 		const account = createFakeAccount();
 		mockGetAccount({

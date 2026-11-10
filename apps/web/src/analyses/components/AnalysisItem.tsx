@@ -3,9 +3,9 @@ import DeleteDialog from "@base/DeleteDialog";
 import { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
-import RelativeTime from "@base/RelativeTime";
 import SlashList from "@base/SlashList";
 import { TableActionsCell } from "@base/Table";
+import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { useCheckCanEditSample } from "@samples/hooks";
@@ -113,7 +113,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 				<UserLabel handle={user.handle} />
 			</td>
 			<td className="whitespace-nowrap">
-				<RelativeTime time={createdAt} />
+				<Time time={createdAt} />
 			</td>
 			<TableActionsCell>
 				{!ready && (

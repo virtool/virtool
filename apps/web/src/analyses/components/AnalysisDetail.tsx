@@ -7,12 +7,12 @@ import CopyText from "@base/CopyText";
 import Link from "@base/Link";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
-import { useRelativeTime } from "@base/RelativeTime";
 import {
 	SubviewHeader,
 	SubviewHeaderAttribution,
 	SubviewHeaderTitle,
 } from "@base/Subview";
+import { useTimeText } from "@base/Time";
 import { useFetchJob } from "@jobs/queries";
 import { useFetchSample } from "@samples/queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -153,17 +153,32 @@ type CreatedAtProps = {
 };
 
 /**
- * The relative start time, clickable to copy the exact instant in a form Excel
- * reads as a date — `yyyy-MM-dd HH:mm:ss` in the reader's own time zone.
+ * The start time in the format the user prefers, clickable to copy the exact
+ * instant in a form Excel reads as a date — `yyyy-MM-dd HH:mm:ss` in the
+ * reader's own time zone.
+ *
+ * The copy button takes the place of the tooltip that other times have.
  */
 function CreatedAt({ time }: CreatedAtProps) {
-	const label = useRelativeTime(time);
+	const text = useTimeText(time, { sentence: true });
 	const value = `${formatDate(time)} ${formatTime(time)}`;
 
+	if (text === null) {
+		return null;
+	}
+
 	return (
-		<CopyText tag="analysis-created-at" value={value}>
-			<time dateTime={time.toISOString()}>{label}</time>
-		</CopyText>
+		<>
+			{text.prefix}
+			<CopyText tag="analysis-created-at" value={value}>
+				<time
+					className={text.placeholder ? "invisible" : undefined}
+					dateTime={time.toISOString()}
+				>
+					{text.primary}
+				</time>
+			</CopyText>
+		</>
 	);
 }
 

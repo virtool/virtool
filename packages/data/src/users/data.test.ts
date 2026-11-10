@@ -181,6 +181,7 @@ describe("getAccount", () => {
 			showIds: false,
 			showVersions: true,
 			skipQuickAnalyzeDialog: false,
+			timeFormat: "relative",
 		});
 	});
 
@@ -205,6 +206,7 @@ describe("getAccount", () => {
 			showIds: false,
 			showVersions: true,
 			skipQuickAnalyzeDialog: true,
+			timeFormat: "relative",
 		});
 	});
 
@@ -368,6 +370,7 @@ describe("updateAccountSettings", () => {
 			showIds: false,
 			showVersions: true,
 			skipQuickAnalyzeDialog: false,
+			timeFormat: "relative",
 		});
 
 		const [row] = await db.select().from(users).where(eq(users.id, userId));
@@ -389,6 +392,26 @@ describe("updateAccountSettings", () => {
 			referenceExportFastaHeader: "accession",
 			referenceExportTableFormat: "tsv",
 		});
+	});
+
+	it("reads back the time format it writes", async () => {
+		const userId = await seedUser(db, { handle: "dave" });
+
+		await updateAccountSettings(db, userId, { timeFormat: "absolute" });
+
+		expect((await getAccount(db, userId)).settings.timeFormat).toBe("absolute");
+
+		const [row] = await db.select().from(users).where(eq(users.id, userId));
+		expect(row?.settings).toMatchObject({ time_format: "absolute" });
+	});
+
+	it("falls back to relative times for an unknown stored time format", async () => {
+		const userId = await seedUser(db, {
+			handle: "erin",
+			settings: { time_format: "sundial" },
+		});
+
+		expect((await getAccount(db, userId)).settings.timeFormat).toBe("relative");
 	});
 
 	it("reads back the Pathoscope columns it writes", async () => {
@@ -1054,6 +1077,7 @@ describe("createUser", () => {
 			quick_analyze_workflow: "pathoscope",
 			reference_export_fasta_header: "full",
 			reference_export_table_format: "csv",
+			time_format: "relative",
 		});
 		// The password is hashed, not stored verbatim.
 		expect(
