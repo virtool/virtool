@@ -11,8 +11,26 @@ const SETTINGS_ID = 1;
 
 const RESEND_API_KEY_PURPOSE = "resend_api_key";
 
-/** Thrown when a write would leave email delivery in an unusable state. */
-export class EmailConfigurationError extends AppError {}
+/** A reason a write to the email delivery configuration is refused. */
+export type EmailConfigurationErrorReason =
+	| "missing_encryption_key"
+	| "undecryptable_api_key"
+	| "unconfigured";
+
+/**
+ * Thrown when a write would leave email delivery in an unusable state.
+ *
+ * The message is a diagnostic. Callers that show the refusal to a person
+ * write their own text from `reason`.
+ */
+export class EmailConfigurationError extends AppError {
+	readonly reason: EmailConfigurationErrorReason;
+
+	constructor(reason: EmailConfigurationErrorReason, message: string) {
+		super(message);
+		this.reason = reason;
+	}
+}
 
 /**
  * The stored email delivery configuration, envelope included. Server-only.
@@ -139,12 +157,14 @@ export async function updateEmailDelivery(
 
 			if (state.availability === "unconfigured") {
 				throw new EmailConfigurationError(
+					"unconfigured",
 					"email delivery needs a stored API key and a sender address before it can be enabled",
 				);
 			}
 
 			if (state.availability === "configuration_error") {
 				throw new EmailConfigurationError(
+					"undecryptable_api_key",
 					"the stored API key cannot be decrypted with the configured encryption key",
 				);
 			}
@@ -174,6 +194,7 @@ export async function setEmailApiKey(
 
 	if (!encrypted.ok) {
 		throw new EmailConfigurationError(
+			"missing_encryption_key",
 			"an encryption key must be configured before an API key can be stored",
 		);
 	}
