@@ -4,11 +4,7 @@ import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import {
-	CREDENTIAL_PROVIDER_ID,
-	credentialAccountId,
-	upgradePasswordHash,
-} from "./credential";
+import { CREDENTIAL_PROVIDER_ID, upgradePasswordHash } from "./credential";
 import { hashPassword, needsRehash, verifyPassword } from "./password";
 import { seedUser } from "./test/fixtures";
 
@@ -42,7 +38,7 @@ async function seedMigratedUser(password: Buffer): Promise<number> {
 	});
 
 	await db.insert(authAccounts).values({
-		accountId: credentialAccountId(userId),
+		accountId: String(userId),
 		providerId: CREDENTIAL_PROVIDER_ID,
 		userId,
 		password: password.toString("utf8"),
