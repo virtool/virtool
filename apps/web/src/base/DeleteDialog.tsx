@@ -3,7 +3,7 @@ import { isRecentAuthenticationCancelled } from "@app/recentAuthentication";
 import Button from "@base/Button";
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 
 /**
  * Pull a server-provided message off a rejected deletion, if there is one.
@@ -44,6 +44,7 @@ type DeleteDialogProps = {
 	 * Performs the deletion. Its result is awaited: a rejection renders inline
 	 * and keeps the dialog open, while success closes it. A cancelled
 	 * recent-authentication challenge keeps the dialog open without an error.
+	 * The dialog cannot be confirmed again or dismissed until it settles.
 	 */
 	onConfirm: () => unknown;
 	/** A trigger that opens the dialog (e.g. a delete IconButton). Omit when controlling `open`. */
@@ -72,6 +73,9 @@ export default function DeleteDialog({
 }: DeleteDialogProps) {
 	const [openState, setOpenState] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [pending, setPending] = useState(false);
+	const pendingRef = useRef(false);
+	const openerRef = useRef<HTMLElement | null>(null);
 
 	const isControlled = openProp !== undefined;
 	const open = isControlled ? openProp : openState;
@@ -87,12 +91,50 @@ export default function DeleteDialog({
 	}
 
 	async function handleConfirm() {
+		// The ref catches a second click that lands before the disabled button
+		// re-renders.
+		if (pendingRef.current) {
+			return;
+		}
+
+		pendingRef.current = true;
+		setPending(true);
+		setError(null);
+
 		try {
-			setError(null);
 			await onConfirm();
 			handleOpenChange(false);
 		} catch (caught) {
 			setError(getDeleteErrorMessage(caught));
+		} finally {
+			pendingRef.current = false;
+			setPending(false);
+		}
+	}
+
+	function handleOpenAutoFocus() {
+		openerRef.current =
+			document.activeElement instanceof HTMLElement
+				? document.activeElement
+				: null;
+	}
+
+	// Radix returns focus only to its own trigger ref. That ref is empty for a
+	// controlled dialog and for a trigger that does not forward `ref`, so focus
+	// would fall to the document body.
+	function handleCloseAutoFocus(event: Event) {
+		const opener = openerRef.current;
+		openerRef.current = null;
+
+		if (opener?.isConnected) {
+			event.preventDefault();
+			opener.focus();
+		}
+	}
+
+	function handleEscapeKeyDown(event: KeyboardEvent) {
+		if (pendingRef.current) {
+			event.preventDefault();
 		}
 	}
 
@@ -115,6 +157,9 @@ export default function DeleteDialog({
 					)}
 				/>
 				<AlertDialogPrimitive.Content
+					onCloseAutoFocus={handleCloseAutoFocus}
+					onEscapeKeyDown={handleEscapeKeyDown}
+					onOpenAutoFocus={handleOpenAutoFocus}
 					className={cn(
 						"data-[state=open]:animate-contentShow",
 						"data-[state=closed]:animate-contentHide",
@@ -152,9 +197,11 @@ export default function DeleteDialog({
 					)}
 					<div className="flex justify-end gap-2 pt-4 pb-1">
 						<AlertDialogPrimitive.Cancel asChild>
-							<Button color="gray">Cancel</Button>
+							<Button color="gray" disabled={pending}>
+								Cancel
+							</Button>
 						</AlertDialogPrimitive.Cancel>
-						<Button color="red" onClick={handleConfirm}>
+						<Button color="red" disabled={pending} onClick={handleConfirm}>
 							{confirmLabel}
 						</Button>
 					</div>

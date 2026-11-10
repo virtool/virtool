@@ -1,7 +1,10 @@
+import { IconButton } from "@base/Icon";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@tests/setup";
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
+import { Trash } from "lucide-react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import DeleteDialog from "../DeleteDialog";
 
@@ -168,5 +171,108 @@ describe("<DeleteDialog />", () => {
 
 		expect(onConfirm).not.toHaveBeenCalled();
 		expect(onOpenChange).toHaveBeenCalledWith(false);
+	});
+
+	it("runs onConfirm once and blocks dismissal while it is pending", async () => {
+		const user = userEvent.setup();
+		const deletion = Promise.withResolvers<void>();
+		const onConfirm = vi.fn().mockReturnValue(deletion.promise);
+		const onOpenChange = vi.fn();
+		renderWithProviders(
+			<DeleteDialog
+				name="Foo"
+				noun="Sample"
+				onConfirm={onConfirm}
+				onOpenChange={onOpenChange}
+				open
+			/>,
+		);
+
+		const confirm = screen.getByRole("button", { name: "Confirm" });
+
+		await user.dblClick(confirm);
+		await user.keyboard("{Escape}");
+
+		expect(onConfirm).toHaveBeenCalledOnce();
+		expect(confirm).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+		expect(onOpenChange).not.toHaveBeenCalled();
+
+		deletion.resolve();
+
+		await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+	});
+
+	it("allows another confirm after onConfirm rejects", async () => {
+		const user = userEvent.setup();
+		const onConfirm = vi
+			.fn()
+			.mockRejectedValueOnce(clientError("Cannot delete this."))
+			.mockResolvedValueOnce(undefined);
+		renderWithProviders(
+			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
+		);
+
+		await user.click(screen.getByRole("button", { name: "Confirm" }));
+		await screen.findByRole("alert");
+
+		const confirm = screen.getByRole("button", { name: "Confirm" });
+
+		expect(confirm).toBeEnabled();
+
+		await user.click(confirm);
+
+		expect(onConfirm).toHaveBeenCalledTimes(2);
+	});
+
+	it("returns focus to its trigger when closed", async () => {
+		const user = userEvent.setup();
+		renderWithProviders(
+			<DeleteDialog
+				name="Foo"
+				noun="Sample"
+				onConfirm={vi.fn()}
+				trigger={<IconButton IconComponent={Trash} color="red" tip="Delete" />}
+			/>,
+		);
+
+		const trigger = screen.getByRole("button", { name: "Delete" });
+
+		await user.click(trigger);
+		await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+		await waitFor(() => expect(trigger).toHaveFocus());
+	});
+
+	it("returns focus to the opener of a controlled dialog when closed", async () => {
+		const user = userEvent.setup();
+
+		function Controlled() {
+			const [open, setOpen] = useState(false);
+
+			return (
+				<>
+					<button type="button" onClick={() => setOpen(true)}>
+						Remove
+					</button>
+					<DeleteDialog
+						name="Foo"
+						noun="Sample"
+						onConfirm={vi.fn()}
+						onOpenChange={setOpen}
+						open={open}
+					/>
+				</>
+			);
+		}
+
+		renderWithProviders(<Controlled />);
+
+		const opener = screen.getByRole("button", { name: "Remove" });
+
+		await user.click(opener);
+		await user.keyboard("{Escape}");
+
+		await waitFor(() => expect(opener).toHaveFocus());
 	});
 });
