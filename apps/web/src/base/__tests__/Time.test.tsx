@@ -1,15 +1,19 @@
-import { act, screen } from "@testing-library/react";
-import { renderWithProviders } from "@tests/setup";
-import { useState } from "react";
+import { accountQueryKeys } from "@account/keys";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { createFakeAccount } from "@tests/fake/account";
+import { createTestQueryClient, renderWithProviders } from "@tests/setup";
+import type { TimeFormat } from "@virtool/contracts";
+import { type ReactNode, useState } from "react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import RelativeTime from "../RelativeTime";
+import Time from "../Time";
 
 const fakeTime = new Date("2019-02-10T17:11:00.000000Z");
 
 let forceDateHarnessRender: () => void;
 
 /**
- * Re-renders in place, handing `RelativeTime` a fresh `Date` instance each time,
+ * Re-renders in place, handing `Time` a fresh `Date` instance each time,
  * the way a refetched server function does — every response is deserialized on
  * its own, so an unchanged timestamp still arrives as a new `Date`.
  * `rerender()` cannot stand in for this: it re-renders the unwrapped element,
@@ -19,26 +23,41 @@ function DateHarness() {
 	const [, setRenderCount] = useState(0);
 	forceDateHarnessRender = () => setRenderCount((count) => count + 1);
 
-	return <RelativeTime time={new Date("2019-04-22T10:20:20Z")} />;
+	return <Time time={new Date("2019-04-22T10:20:20Z")} />;
 }
 
-describe("<RelativeTime />", () => {
+/** Render with a signed-in account that prefers `timeFormat`. */
+function renderWithTimeFormat(ui: ReactNode, timeFormat: TimeFormat) {
+	const queryClient = createTestQueryClient();
+	const account = createFakeAccount();
+
+	queryClient.setQueryData(accountQueryKeys.all(), {
+		...account,
+		settings: { ...account.settings, timeFormat },
+	});
+
+	return render(
+		<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+	);
+}
+
+describe("<Time />", () => {
 	beforeAll(() => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2019-04-22T10:20:30Z"));
 	});
 
 	it("should render 2 months ago", () => {
-		renderWithProviders(<RelativeTime time={fakeTime} />);
+		renderWithProviders(<Time time={fakeTime} />);
 		expect(screen.getByText("2 months ago")).toHaveTextContent("2 months ago");
 	});
 
 	it("should re-render when time prop changes", () => {
-		const { rerender } = renderWithProviders(<RelativeTime time={fakeTime} />);
+		const { rerender } = renderWithProviders(<Time time={fakeTime} />);
 		expect(screen.getByText("2 months ago")).toBeInTheDocument();
 
 		// Add one month to the time prop.
-		rerender(<RelativeTime time={new Date("2019-01-10T12:21:00.000000Z")} />);
+		rerender(<Time time={new Date("2019-01-10T12:21:00.000000Z")} />);
 
 		expect(screen.queryByText("2 months ago")).toBeNull();
 		expect(screen.getByText("3 months ago")).toBeInTheDocument();
@@ -48,9 +67,7 @@ describe("<RelativeTime />", () => {
 		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
 
 		// Render with time that is only 10 seconds before the current (mocked) time.
-		renderWithProviders(
-			<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />,
-		);
+		renderWithProviders(<Time time={new Date("2019-04-22T10:20:20Z")} />);
 		expect(screen.getByText("10 seconds ago")).toBeInTheDocument();
 
 		act(() => {
@@ -94,9 +111,9 @@ describe("<RelativeTime />", () => {
 
 		const { unmount } = renderWithProviders(
 			<>
-				<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />
-				<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />
-				<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />
+				<Time time={new Date("2019-04-22T10:20:20Z")} />
+				<Time time={new Date("2019-04-22T10:20:20Z")} />
+				<Time time={new Date("2019-04-22T10:20:20Z")} />
 			</>,
 		);
 
@@ -116,13 +133,78 @@ describe("<RelativeTime />", () => {
 
 		// And starts again for a later mount. Navigating away from a list and back
 		// must not leave the page with a clock that never ticks.
-		renderWithProviders(
-			<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />,
-		);
+		renderWithProviders(<Time time={new Date("2019-04-22T10:20:20Z")} />);
 		expect(setInterval).toHaveBeenCalledTimes(2);
 
 		setInterval.mockRestore();
 		clearInterval.mockRestore();
+	});
+
+	it("should show the date and time when the account prefers absolute times", () => {
+		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
+
+		renderWithTimeFormat(<Time time={fakeTime} />, "absolute");
+
+		expect(screen.getByText("Feb 10 at 17:11")).toBeInTheDocument();
+	});
+
+	it("should show the absolute time in a tooltip on focus", () => {
+		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
+
+		renderWithTimeFormat(<Time time={fakeTime} />, "relative");
+
+		act(() => {
+			screen.getByRole("button", { name: "2 months ago" }).focus();
+		});
+
+		expect(screen.getByRole("tooltip")).toHaveTextContent("2019-02-10 17:11");
+	});
+
+	it("should show the relative time in a tooltip on tap", () => {
+		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
+
+		renderWithTimeFormat(<Time time={fakeTime} />, "absolute");
+
+		fireEvent.click(screen.getByRole("button", { name: "Feb 10 at 17:11" }));
+
+		expect(screen.getByRole("tooltip")).toHaveTextContent("2 months ago");
+	});
+
+	it("should read 'on' before an absolute time in a sentence", () => {
+		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
+
+		const { container, unmount } = renderWithTimeFormat(
+			<p>
+				Added <Time sentence time={fakeTime} />
+			</p>,
+			"absolute",
+		);
+
+		expect(container).toHaveTextContent("Added on Feb 10 at 17:11");
+
+		unmount();
+
+		const relative = renderWithTimeFormat(
+			<p>
+				Added <Time sentence time={fakeTime} />
+			</p>,
+			"relative",
+		);
+
+		expect(relative.container).toHaveTextContent("Added 2 months ago");
+	});
+
+	it("should name the day for an absolute time in a sentence", () => {
+		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
+
+		const { container } = renderWithTimeFormat(
+			<p>
+				Added <Time sentence time={new Date("2019-04-22T08:05:00Z")} />
+			</p>,
+			"absolute",
+		);
+
+		expect(container).toHaveTextContent("Added today at 08:05");
 	});
 
 	afterAll(() => {

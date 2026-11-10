@@ -1,7 +1,7 @@
 import { BoxGroupSection } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import Link from "@base/Link";
-import RelativeTime from "@base/RelativeTime";
+import Time from "@base/Time";
 import type { ReferenceBuild } from "@virtool/contracts";
 import { Boxes } from "lucide-react";
 
@@ -28,7 +28,7 @@ export function LatestBuild({ id, latestBuild }: LatestBuildProps) {
 						</Link>
 					</strong>
 					<span>
-						&nbsp;/ Created <RelativeTime time={latestBuild.createdAt} /> by{" "}
+						&nbsp;/ Created <Time sentence time={latestBuild.createdAt} /> by{" "}
 						{latestBuild.user.handle}
 					</span>
 				</div>

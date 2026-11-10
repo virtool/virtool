@@ -19,6 +19,7 @@ const defaultSettings: AccountSettings = {
 	showIds: true,
 	showVersions: true,
 	skipQuickAnalyzeDialog: true,
+	timeFormat: "relative",
 };
 
 /** Creates the security state of an account with a verified address and no TOTP. */

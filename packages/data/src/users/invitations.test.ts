@@ -115,6 +115,7 @@ describe("account invitations", () => {
 			quick_analyze_workflow: "pathoscope",
 			reference_export_fasta_header: "full",
 			reference_export_table_format: "csv",
+			time_format: "relative",
 		});
 	});
 

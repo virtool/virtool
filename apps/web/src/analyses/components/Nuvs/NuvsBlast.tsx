@@ -8,8 +8,8 @@ import Button from "@base/Button";
 import ExternalLink from "@base/ExternalLink";
 import Icon from "@base/Icon";
 import Loader from "@base/Loader";
-import RelativeTime from "@base/RelativeTime";
 import SectionHeader from "@base/SectionHeader";
+import Time from "@base/Time";
 import { ExternalLink as ExternalLinkIcon, Info, Redo2 } from "lucide-react";
 
 const ridRoot =
@@ -52,7 +52,7 @@ function RidTiming({ interval, lastCheckedAt }: RidTimingProps) {
 
 		return (
 			<div className="ml-auto text-gray-700">
-				Last checked <RelativeTime time={lastCheckedAt} />. Checking again in{" "}
+				Last checked <Time sentence time={lastCheckedAt} />. Checking again in{" "}
 				{relativeNext}
 			</div>
 		);

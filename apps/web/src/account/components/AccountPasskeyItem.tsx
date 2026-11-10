@@ -13,8 +13,8 @@ import Field, { FieldError, FieldLabel } from "@base/Field";
 import { IconButton } from "@base/Icon";
 import Input from "@base/Input";
 import Label from "@base/Label";
-import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
+import Time from "@base/Time";
 import {
 	PASSKEY_NAME_MAX_LENGTH,
 	type PasskeySummary,
@@ -126,7 +126,7 @@ export default function AccountPasskeyItem({
 				<span className="text-gray-600 text-sm">
 					{passkey.createdAt ? (
 						<>
-							Added <RelativeTime time={passkey.createdAt} />
+							Added <Time sentence time={passkey.createdAt} />
 						</>
 					) : (
 						"Date added unknown"
