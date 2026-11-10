@@ -5,10 +5,10 @@
 	"packageManager": "pnpm@12.18.0",
 	"scripts": {
 		"build": "pnpm -r --filter \"./apps/*\" --filter \"!@virtool/site\" build",
-		"check": "biome check --error-on-warnings apps packages scripts",
+		"check": "biome check --error-on-warnings apps packages scripts && pnpm --filter @virtool/site format:check",
 		"develop": "pnpm --filter @virtool/web develop",
 		"docs:lint": "vale sync && git ls-files -z '*.md' '*.mdx' | xargs -0 vale",
-		"format": "biome check --write apps packages scripts",
+		"format": "biome check --write apps packages scripts && pnpm --filter @virtool/site format",
 		"knip": "knip",
 		"test": "pnpm -r test",
 		"test:scripts": "node --test 'scripts/*.test.mjs'",
