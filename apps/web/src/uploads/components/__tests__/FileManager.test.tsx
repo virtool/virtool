@@ -64,13 +64,11 @@ describe("<FileManager>", () => {
 			createFakeAccount({
 				administratorRole: null,
 				permissions: {
-					cancel_job: false,
 					create_ref: false,
 					create_sample: false,
 					modify_hmm: false,
 					modify_subtraction: false,
 					remove_file: false,
-					remove_job: false,
 					upload_file: true,
 				},
 			}),
@@ -243,13 +241,11 @@ describe("<FileManager>", () => {
 
 	describe("selection", () => {
 		const noDeletePermissions = {
-			cancel_job: false,
 			create_ref: false,
 			create_sample: true,
 			modify_hmm: false,
 			modify_subtraction: false,
 			remove_file: false,
-			remove_job: false,
 			upload_file: true,
 		};
 

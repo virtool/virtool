@@ -16,7 +16,7 @@ describe("Groups", () => {
 		await renderWithRouter(<Groups />);
 
 		expect(screen.queryByText("No groups found")).not.toBeInTheDocument();
-		expect(screen.queryByText("cancel_job")).not.toBeInTheDocument();
+		expect(screen.queryByText("create_ref")).not.toBeInTheDocument();
 		expect(screen.queryByText("No Group Members")).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole("button", { name: "Delete" }),
@@ -53,7 +53,7 @@ describe("Groups", () => {
 			await screen.findByRole("button", { name: "Delete" }),
 		).toBeInTheDocument();
 		expect(screen.queryByText("No groups found")).not.toBeInTheDocument();
-		expect(screen.getByText("cancel_job")).toBeInTheDocument();
+		expect(screen.getByText("create_ref")).toBeInTheDocument();
 		expect(screen.getByText("No Group Members")).toBeInTheDocument();
 		expect(screen.getAllByText(group.name)).toHaveLength(1);
 		expect(screen.getByRole("textbox", { name: "name" })).toHaveValue(
@@ -117,7 +117,6 @@ describe("Groups", () => {
 			permissions: createFakePermissions({
 				create_sample: true,
 				modify_hmm: true,
-				remove_job: true,
 			}),
 			name: "Group 2",
 		});
