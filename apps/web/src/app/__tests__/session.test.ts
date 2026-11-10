@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { userServerFnMocks } from "@tests/server-fn/users";
 import {
 	FORBIDDEN_ERROR_NAME,
@@ -7,6 +8,10 @@ import {
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// `loadSession` resets the module registry, so the factory must return the
+// instance this file holds, not a fresh import of it.
+vi.mock("@server/users/functions", () => userServerFnMocks);
 
 const assign = vi.fn();
 

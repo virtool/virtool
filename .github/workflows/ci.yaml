@@ -238,7 +238,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Test
-        run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project web
+        run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project web --project unit
         env:
           TZ: UTC
           VT_TEST_REACT_COMPILER: "1"

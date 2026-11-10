@@ -292,8 +292,10 @@ Conventions with no single home in code follow. Follow
 
 ### Testing
 
-Tests run in four Vitest projects: `web` (jsdom), `server` (Node and Postgres),
-`a11y` (Chromium), and `shots` (Chromium). Run them all with
+Tests run in five Vitest projects: `unit` (Node), `web` (jsdom), `server`
+(Node and Postgres), `a11y` (Chromium), and `shots` (Chromium). A client
+`.test.ts` file runs in `unit`, and a `.test.tsx` file runs in `web`. Run them
+all with
 `pnpm --filter @virtool/web test`, or select one with
 `pnpm --filter @virtool/web exec vitest run --project <name>`. Install Chromium
 with `pnpm --filter @virtool/web exec playwright install chromium`.

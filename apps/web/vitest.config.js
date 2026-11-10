@@ -36,6 +36,21 @@ export default defineConfig({
 			{
 				extends: true,
 				test: {
+					// The file extension picks the project: a client `.test.ts` file
+					// runs here on Node and must not touch a DOM or browser global. A
+					// test that needs one is a `.test.tsx` file. There is no setup
+					// file, so a test that needs a server-function mock calls
+					// `vi.mock` itself.
+					name: "unit",
+					environment: "./src/tests/nodeClientEnvironment.ts",
+					include: ["src/**/*.test.ts"],
+					exclude: ["src/server/**"],
+					alias: [postgresGuardAlias],
+				},
+			},
+			{
+				extends: true,
+				test: {
 					// No globalSetup: the client transform strips server function bodies
 					// and the server-only imports behind them, so nothing here reaches
 					// Postgres. Component tests must not need Docker.
@@ -48,12 +63,12 @@ export default defineConfig({
 					// flake. Give them headroom while still failing a genuine hang fast.
 					testTimeout: 15_000,
 					setupFiles: ["./src/tests/setupJsdom.tsx"],
-					include: ["src/**/*.test.{ts,tsx}"],
+					include: ["src/**/*.test.tsx"],
 					// `*.a11y.test.tsx` files run in the browser `a11y` project below,
 					// under a real layout engine. The glob here would otherwise also
 					// match them and run them a second time under jsdom, where the
 					// colour-contrast checks they exist for cannot run.
-					exclude: ["src/server/**", "src/**/*.a11y.test.{ts,tsx}"],
+					exclude: ["src/**/*.a11y.test.tsx"],
 					alias: [postgresGuardAlias],
 				},
 			},
