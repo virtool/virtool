@@ -108,7 +108,12 @@ describe("<SamplesList />", () => {
 
 	beforeEach(() => {
 		samples = [createFakeSampleMinimal(), createFakeSampleMinimal()];
-		labels = [createFakeLabel()];
+		// Names are fixed so neither is a substring of the other, keeping the
+		// search-input assertions unambiguous.
+		labels = [
+			{ ...createFakeLabel(), name: "Fungus" },
+			{ ...createFakeLabel(), name: "Pest" },
+		];
 		// Handles are fixed so neither is a substring of the other, keeping the
 		// search-input assertions unambiguous.
 		users = [
@@ -216,47 +221,104 @@ describe("<SamplesList />", () => {
 	});
 
 	describe("label filtering", () => {
-		it("should show a chip for a label selected in the dropdown", async () => {
+		it("should show a chip for a label selected in the popover", async () => {
 			mockFindSamples(samples);
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			const label = at(labels, 0);
-
 			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
-					name: new RegExp(label.name),
-				}),
+				await screen.findByRole("option", { name: at(labels, 0).name }),
 			);
 
 			expect(
 				await screen.findByRole("button", {
-					name: `Remove ${label.name} label filter`,
+					name: `Remove ${at(labels, 0).name} label filter`,
 				}),
 			).toBeInTheDocument();
 		});
 
-		it("should remove every chip when the dropdown is cleared", async () => {
+		it("should narrow the labels to those matching the search", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
+			await userEvent.type(
+				await screen.findByLabelText("Filter labels"),
+				at(labels, 1).name,
+			);
+
+			expect(
+				screen.queryByRole("option", { name: at(labels, 0).name }),
+			).not.toBeInTheDocument();
+			expect(
+				screen.getByRole("option", { name: at(labels, 1).name }),
+			).toBeInTheDocument();
+		});
+
+		it("should focus the search input when the popover opens", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
+
+			expect(await screen.findByLabelText("Filter labels")).toHaveFocus();
+		});
+
+		it("should toggle the highlighted label with the keyboard", async () => {
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
+			const input = await screen.findByLabelText("Filter labels");
+			await userEvent.type(input, at(labels, 1).name);
+			await userEvent.keyboard("{Enter}");
+
+			expect(
+				await screen.findByRole("button", {
+					name: `Remove ${at(labels, 1).name} label filter`,
+				}),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("option", { name: at(labels, 1).name }),
+			).toHaveAttribute("aria-selected", "true");
+			expect(input).toHaveFocus();
+		});
+
+		it("should clear the search on the first Escape and close on the next", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
+			const input = await screen.findByLabelText("Filter labels");
+			await userEvent.type(input, "zzz");
+
+			await userEvent.keyboard("{Escape}");
+			expect(input).toHaveValue("");
+			expect(input).toBeInTheDocument();
+
+			await userEvent.keyboard("{Escape}");
+			expect(screen.queryByLabelText("Filter labels")).not.toBeInTheDocument();
+		});
+
+		it("should remove every chip when the popover is cleared", async () => {
 			mockFindSamples(samples);
 			mockFindSamples(samples);
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			const label = at(labels, 0);
-			const removeChipName = `Remove ${label.name} label filter`;
+			const removeChipName = `Remove ${at(labels, 0).name} label filter`;
 
 			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
-					name: new RegExp(label.name),
-				}),
+				await screen.findByRole("option", { name: at(labels, 0).name }),
 			);
 			expect(
 				await screen.findByRole("button", { name: removeChipName }),
 			).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
+			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
 
 			expect(
 				screen.queryByRole("button", { name: removeChipName }),
@@ -921,9 +983,7 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
-					name: new RegExp(label.name),
-				}),
+				await screen.findByRole("option", { name: label.name }),
 			);
 
 			expect(await screen.findByText("2 samples")).toBeInTheDocument();

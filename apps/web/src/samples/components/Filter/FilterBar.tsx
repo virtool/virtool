@@ -18,7 +18,7 @@ import type { GroupMinimal, Label } from "@virtool/contracts";
 import { CalendarDays, Search, Tag, Users, Workflow } from "lucide-react";
 import { lazy, Suspense } from "react";
 import GroupFilterPopover from "./GroupFilterPopover";
-import LabelFilterMenu from "./LabelFilterMenu";
+import LabelFilterPopover from "./LabelFilterPopover";
 import WorkflowFilterMenu from "./WorkflowFilterMenu";
 import { workflowStateIcons } from "./workflowStateIcons";
 
@@ -123,8 +123,8 @@ export default function FilterBar({
 			)}
 			<FilterGroup
 				icon={<Tag size={14} />}
-				menu={
-					<LabelFilterMenu
+				popover={
+					<LabelFilterPopover
 						labels={labels}
 						onClear={onClearLabels}
 						onToggle={onToggleLabel}
