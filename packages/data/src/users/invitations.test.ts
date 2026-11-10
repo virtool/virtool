@@ -47,6 +47,7 @@ beforeEach(async () => {
 async function createInvitation() {
 	const issuerUserId = await seedUser(db, { handle: "admin" });
 	const created = await createPendingInvitation(db, {
+		lastSeenChangelogAt: new Date(),
 		email: " ADA@Example.com ",
 		issuerUserId,
 		deliveryIntent: "copy_only",
@@ -82,6 +83,7 @@ describe("account invitations", () => {
 		const group = await seedGroup(db, { name: "researchers" });
 
 		const created = await createPendingInvitation(db, {
+			lastSeenChangelogAt: new Date(),
 			email: "ada@example.com",
 			administratorRole: "users",
 			groups: [group],
@@ -123,6 +125,7 @@ describe("account invitations", () => {
 		await db.update(settings).set({ emailEnabled: true });
 		const issuerUserId = await seedUser(db, { handle: "admin" });
 		const created = await createPendingInvitation(db, {
+			lastSeenChangelogAt: new Date(),
 			email: "ada@example.com",
 			issuerUserId,
 			deliveryIntent: "email",
@@ -140,6 +143,7 @@ describe("account invitations", () => {
 		await db.update(settings).set({ emailEnabled: true });
 		const issuerUserId = await seedUser(db, { handle: "admin" });
 		const created = await createPendingInvitation(db, {
+			lastSeenChangelogAt: new Date(),
 			email: "ada@example.com",
 			issuerUserId,
 			deliveryIntent: "email",
@@ -164,6 +168,7 @@ describe("account invitations", () => {
 				`https://virtool.test/account-setup#token=${token}`,
 		};
 		const created = await createPendingInvitation(db, {
+			lastSeenChangelogAt: new Date(),
 			...options,
 			email: "ada@example.com",
 		});
@@ -183,6 +188,7 @@ describe("account invitations", () => {
 	it("allows multiple invitations before recipients choose handles", async () => {
 		const first = await createInvitation();
 		const second = await createPendingInvitation(db, {
+			lastSeenChangelogAt: new Date(),
 			email: "other@example.com",
 			issuerUserId: first.invitation.issuerUserId,
 			deliveryIntent: "copy_only",
@@ -214,6 +220,7 @@ describe("account invitations", () => {
 		const issuerUserId = await seedUser(db, { handle: "admin" });
 		await expect(
 			createPendingInvitation(db, {
+				lastSeenChangelogAt: new Date(),
 				email: "ada@example.com",
 				issuerUserId,
 				groups: [999_999],

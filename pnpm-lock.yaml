@@ -764,6 +764,9 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.14.25
         version: 3.14.25(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@virtool/changelog':
+        specifier: workspace:*
+        version: link:../../packages/changelog
       '@virtool/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

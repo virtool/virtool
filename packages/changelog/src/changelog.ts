@@ -65,10 +65,10 @@ function getContent(lines: Line[]): { body: string; actions: string[] } {
 	}
 
 	for (const { text, fenced } of lines) {
-		const heading = fenced ? null : text.match(ENTRY_HEADING);
+		const marks = fenced ? undefined : text.match(ENTRY_HEADING)?.[1];
 
-		if (heading) {
-			const level = heading[1].length;
+		if (marks) {
+			const level = marks.length;
 
 			inAction = false;
 
@@ -136,10 +136,11 @@ export function parseChangelog(text: string): Release[] {
 	const sections: { version: string; date: string; lines: Line[] }[] = [];
 
 	for (const line of getLines(text)) {
-		const heading = line.fenced ? null : line.text.match(RELEASE_HEADING);
+		const [, version, date] =
+			(line.fenced ? null : line.text.match(RELEASE_HEADING)) ?? [];
 
-		if (heading) {
-			sections.push({ version: heading[1], date: heading[2], lines: [] });
+		if (version && date) {
+			sections.push({ version, date, lines: [] });
 		} else {
 			sections.at(-1)?.lines.push(line);
 		}
