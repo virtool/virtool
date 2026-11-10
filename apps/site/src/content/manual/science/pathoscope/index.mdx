@@ -5,6 +5,7 @@ description:
   map to more than one location."
 ---
 
+import WorkflowStep from "@components/WorkflowStep.astro";
 import WorkflowSteps from "@components/WorkflowSteps.astro";
 
 Pathoscope is a workflow that finds known reference OTUs in an Illumina sample library.
@@ -15,24 +16,21 @@ Pathoscope maps sample reads to a Virtool reference. It counts the reads that ma
 OTU and uses these counts to get a detection result. To understand this section, you
 must know about [references](/docs/guide/references) and [OTUs](/docs/guide/otus).
 
-<WorkflowSteps
-  caption="The Pathoscope workflow"
-  steps={[
-    { title: "Collapse the reference", tool: "CD-HIT-EST" },
-    {
-      title: "Map reads to default isolates",
-      tool: "Bowtie 2",
-      removed: "OTUs with no matching reads",
-    },
-    { title: "Make an index of candidate OTU isolates", tool: "Bowtie 2" },
-    { title: "Map reads to candidate OTU isolates", tool: "Bowtie 2" },
-    {
-      title: "Remove host reads",
-      removed: "Reads that align equally well or better to a subtraction",
-    },
-    { title: "Reassign multi-mapped reads" },
-  ]}
-/>
+<WorkflowSteps caption="The Pathoscope workflow">
+  <WorkflowStep title="Collapse the reference" tool="CD-HIT-EST" />
+  <WorkflowStep
+    title="Map reads to default isolates"
+    tool="Bowtie 2"
+    removed="OTUs with no matching reads"
+  />
+  <WorkflowStep title="Make an index of candidate OTU isolates" tool="Bowtie 2" />
+  <WorkflowStep title="Map reads to candidate OTU isolates" tool="Bowtie 2" />
+  <WorkflowStep
+    title="Remove host reads"
+    removed="Reads that align equally well or better to a subtraction"
+  />
+  <WorkflowStep title="Reassign multi-mapped reads" />
+</WorkflowSteps>
 
 Before Pathoscope maps the reads, it collapses redundant isolates in the reference.
 Isolates of an OTU frequently have only a small number of different bases. Pathoscope

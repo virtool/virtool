@@ -3,6 +3,7 @@ title: "Nuvs"
 description: "Learn how Nuvs finds possible novel viral sequences in your sample."
 ---
 
+import WorkflowStep from "@components/WorkflowStep.astro";
 import WorkflowSteps from "@components/WorkflowSteps.astro";
 
 Nuvs is a workflow that finds possible novel viral sequences in a sample library.
@@ -15,32 +16,29 @@ profile hidden Markov models (HMMs) to find viral domains in the assembled seque
 Thus, Nuvs can find divergent viral sequences that mapping or the Basic Local Alignment
 Search Tool (BLAST) possibly cannot find.
 
-<WorkflowSteps
-  caption="The Nuvs workflow"
-  steps={[
-    {
-      title: "Trim reads",
-      tool: "Skewer",
-      removed: "Low-quality reads and bases, adapters, and short reads",
-    },
-    {
-      title: "Remove reference reads",
-      tool: "Bowtie 2",
-      removed: "Reads that match the reference",
-    },
-    {
-      title: "Remove host reads",
-      tool: "Bowtie 2",
-      removed: "Reads that match a subtraction",
-    },
-    { title: "Assemble contigs", tool: "SPAdes" },
-    {
-      title: "Find ORFs",
-      removed: "Contigs shorter than 300 bases or with no ORFs",
-    },
-    { title: "Compare ORFs with HMMs", tool: "HMMER" },
-  ]}
-/>
+<WorkflowSteps caption="The Nuvs workflow">
+  <WorkflowStep
+    title="Trim reads"
+    tool="Skewer"
+    removed="Low-quality reads and bases, adapters, and short reads"
+  />
+  <WorkflowStep
+    title="Remove reference reads"
+    tool="Bowtie 2"
+    removed="Reads that match the reference"
+  />
+  <WorkflowStep
+    title="Remove host reads"
+    tool="Bowtie 2"
+    removed="Reads that match a subtraction"
+  />
+  <WorkflowStep title="Assemble contigs" tool="SPAdes" />
+  <WorkflowStep
+    title="Find ORFs"
+    removed="Contigs shorter than 300 bases or with no ORFs"
+  />
+  <WorkflowStep title="Compare ORFs with HMMs" tool="HMMER" />
+</WorkflowSteps>
 
 First, Nuvs uses [Skewer](https://github.com/relipmoc/skewer) to trim the sample reads
 (Jiang et al., 2014). Skewer removes reads with an average quality score of less
