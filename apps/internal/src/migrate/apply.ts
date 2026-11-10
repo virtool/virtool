@@ -49,6 +49,8 @@ export type ApplyGatedMigrationsOptions = {
 /** The final committed boundary and the attempt that prevented further migration. */
 export type ApplyGatedMigrationsResult = {
 	appliedThrough: string | undefined;
+	/** Set when the signal stopped the run, which needs only a rerun to continue. */
+	interrupted?: true;
 	blockedAt?: string;
 	outcome?: {
 		key: string;
@@ -63,6 +65,8 @@ export type ApplyGatedMigrationsResult = {
  *
  * A recorded pass at the exact version is reused. Any other recorded status,
  * including an abandoned `running` attempt, gets one new attempt.
+ *
+ * An abort of `signal` returns an `interrupted` result, not an error.
  */
 export async function applyGatedMigrations(
 	options: ApplyGatedMigrationsOptions,
@@ -92,55 +96,69 @@ export async function applyGatedMigrations(
 		signal.throwIfAborted();
 		await dialect.migrate(migrations.slice(0, count), session, config);
 	}
-	// Let Drizzle create its own metadata before reading the applied position.
-	await applyThrough(0);
-	const applied = await db.execute<{ created_at: string }>(
-		sql`select created_at from ${sql.identifier(config.migrationsSchema)}.${sql.identifier(config.migrationsTable)} order by created_at desc limit 1`,
-	);
-	const lastApplied =
-		applied[0] === undefined ? -1 : Number(applied[0].created_at);
-	let appliedThrough = entries.findLast(
-		(entry) => entry.when <= lastApplied,
-	)?.tag;
-	for (const [index, entry] of entries.entries()) {
-		if (entry.when <= lastApplied) {
-			continue;
-		}
-		const definition = pairs.get(entry.tag);
-		if (definition === undefined) {
-			continue;
-		}
-		await applyThrough(index);
-		appliedThrough = entries[index - 1]?.tag;
-		signal.throwIfAborted();
-		const previous = await getDataMigration(
-			db,
-			definition.key,
-			definition.version,
+	// Advanced only after a boundary commits, so it is accurate wherever an abort lands.
+	let appliedThrough: string | undefined;
+	async function applyPending(): Promise<ApplyGatedMigrationsResult> {
+		// Let Drizzle create its own metadata before reading the applied position.
+		// Unguarded, so even an interrupted run reports where the chain stands.
+		await dialect.migrate([], session, config);
+		const applied = await db.execute<{ created_at: string }>(
+			sql`select created_at from ${sql.identifier(config.migrationsSchema)}.${sql.identifier(config.migrationsTable)} order by created_at desc limit 1`,
 		);
-		if (previous?.status === "passed") {
-			continue;
-		}
-		const outcome = await executeDataMigration(
-			{ db, client, logger, signal },
-			definition,
-		);
-		if (outcome.status !== "passed") {
-			if (outcome.status === "running") {
-				throw new Error("data migration returned an unfinished attempt");
+		const lastApplied =
+			applied[0] === undefined ? -1 : Number(applied[0].created_at);
+		appliedThrough = entries.findLast(
+			(entry) => entry.when <= lastApplied,
+		)?.tag;
+		for (const [index, entry] of entries.entries()) {
+			if (entry.when <= lastApplied) {
+				continue;
 			}
-			return {
-				appliedThrough,
-				blockedAt: entry.tag,
-				outcome: {
-					key: outcome.key,
-					version: outcome.version,
-					status: outcome.status,
-					error: outcome.error,
-				},
-			};
+			const definition = pairs.get(entry.tag);
+			if (definition === undefined) {
+				continue;
+			}
+			await applyThrough(index);
+			appliedThrough = entries[index - 1]?.tag;
+			signal.throwIfAborted();
+			const previous = await getDataMigration(
+				db,
+				definition.key,
+				definition.version,
+			);
+			if (previous?.status === "passed") {
+				continue;
+			}
+			const outcome = await executeDataMigration(
+				{ db, client, logger, signal },
+				definition,
+			);
+			if (outcome.status !== "passed") {
+				if (outcome.status === "running") {
+					throw new Error("data migration returned an unfinished attempt");
+				}
+				return {
+					appliedThrough,
+					...(signal.aborted && { interrupted: true }),
+					blockedAt: entry.tag,
+					outcome: {
+						key: outcome.key,
+						version: outcome.version,
+						status: outcome.status,
+						error: outcome.error,
+					},
+				};
+			}
 		}
+		await applyThrough(entries.length);
+		return { appliedThrough: entries.at(-1)?.tag ?? appliedThrough };
 	}
-	await applyThrough(entries.length);
-	return { appliedThrough: entries.at(-1)?.tag ?? appliedThrough };
+	try {
+		return await applyPending();
+	} catch (err) {
+		if (signal.aborted) {
+			return { appliedThrough, interrupted: true };
+		}
+		throw err;
+	}
 }
