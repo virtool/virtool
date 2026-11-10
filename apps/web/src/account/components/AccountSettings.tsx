@@ -42,9 +42,10 @@ const TIME_FORMAT_LABELS: Record<TimeFormat, string> = {
 	relative: "Relative",
 };
 
+// The examples in each position give the same instant in the two formats.
 const TIME_FORMAT_EXAMPLES: Record<TimeFormat, string> = {
-	absolute: "Today at 11:12",
-	relative: "3 days ago",
+	absolute: "Today at 11:12 · Sep 26, 2023",
+	relative: "2 hours ago · 3 years ago",
 };
 
 type SettingOptionProps = {
