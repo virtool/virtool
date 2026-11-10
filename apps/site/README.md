@@ -51,7 +51,7 @@ posts by slug, so do not rename a post after it is published.
 
 A `release` post names a pull request. The build gets the version and date from
 the `virtool` release that contains it, and hides the post if no release
-contains it. A `research` post has no release, and its author gives the date.
+contains it. The dev server shows these posts first, marked "Unreleased". A `research` post has no release, and its author gives the date.
 
 See [Posts](../../CONTRIBUTING.md#posts) for how to write a post.
 
