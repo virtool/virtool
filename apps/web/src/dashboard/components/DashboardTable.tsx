@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import { BoxGroup } from "@base/Box";
-import RelativeTime from "@base/RelativeTime";
+import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import { createContext, type ReactNode, use } from "react";
 import { useDashboardCardHeadingId } from "./DashboardCard";
@@ -109,7 +109,7 @@ export function DashboardTableCreatedCell({
 	return (
 		<DashboardTableCell align="end">
 			<span className="text-gray-600 text-sm">
-				<RelativeTime time={time} />
+				<Time time={time} />
 			</span>
 		</DashboardTableCell>
 	);

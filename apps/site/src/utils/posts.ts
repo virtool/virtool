@@ -29,6 +29,9 @@ export type ReleasedPost = ReleasePostFrontmatter & {
   date: string;
 };
 
+/** A release post that no release contains yet. */
+export type UnreleasedPost = ReleasePostFrontmatter & { slug: string };
+
 /** A post that the site shows. */
 export type PublishedPost =
   | ReleasedPost
@@ -66,7 +69,7 @@ export function getReleasedPosts(
 export function getHiddenPosts(
   posts: Post[],
   releases: Release[],
-): (ReleasePostFrontmatter & { slug: string })[] {
+): UnreleasedPost[] {
   return posts.flatMap((post) =>
     post.type === "release" && !findRelease(post.pr, releases) ? [post] : [],
   );

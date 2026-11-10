@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import { UserAvatar } from "@base/Icon";
-import RelativeTime from "@base/RelativeTime";
+import Time from "@base/Time";
 import { capitalize } from "es-toolkit";
 
 type AttributionProps = {
@@ -34,7 +34,7 @@ export default function Attribution({
 				{time === null ? null : (
 					<>
 						{" "}
-						<RelativeTime time={time} />
+						<Time sentence time={time} />
 					</>
 				)}
 			</span>

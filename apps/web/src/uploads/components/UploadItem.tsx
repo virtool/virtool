@@ -1,8 +1,8 @@
 import { byteSize } from "@app/format";
 import Checkbox from "@base/Checkbox";
 import { IconButton, IconLink } from "@base/Icon";
-import RelativeTime from "@base/RelativeTime";
 import { TableActionsCell } from "@base/Table";
+import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import type { UserNested } from "@virtool/contracts";
 import { Download, Trash } from "lucide-react";
@@ -64,7 +64,7 @@ export default function UploadItem({
 				{user === null ? "Retrieved" : <UserLabel handle={user.handle} />}
 			</td>
 			<td className="whitespace-nowrap">
-				<RelativeTime time={createdAt} />
+				<Time time={createdAt} />
 			</td>
 			<td className="whitespace-nowrap">{byteSize(size, true)}</td>
 			<TableActionsCell>

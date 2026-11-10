@@ -11,19 +11,19 @@ import { loadPosts } from "@utils/loadPosts";
 import { render } from "astro:content";
 
 export async function getStaticPaths() {
-  const { entries, hidden, published } = await loadPosts();
+  const { entries, hidden, listed } = await loadPosts();
 
   for (const { slug, pr } of hidden) {
     console.warn(`Hiding post "${slug}": no release contains #${pr}`);
   }
 
-  return published.map((post) => ({
+  return listed.map((post) => ({
     params: { slug: post.slug },
     props: {
       entry: entries.find(({ id }) => id === post.slug),
       post,
       releaseHref:
-        post.type === "release" ? getReleaseHref(post.version) : undefined,
+        "version" in post ? getReleaseHref(post.version) : undefined,
     },
   }));
 }

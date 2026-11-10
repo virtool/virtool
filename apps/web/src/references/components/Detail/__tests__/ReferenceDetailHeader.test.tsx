@@ -51,7 +51,10 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		await renderWithRouter(<ReferenceDetailHeader {...props} />, path);
 
-		expect(screen.queryByRole("button")).toBeNull();
+		// The creation time is the only button: it opens its own tooltip.
+		const buttons = screen.getAllByRole("button");
+		expect(buttons).toHaveLength(1);
+		expect(buttons[0]?.querySelector("time")).not.toBeNull();
 	});
 
 	it("should render the archive button when [canModify=true]", async () => {

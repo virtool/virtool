@@ -21,6 +21,8 @@ import {
 	type ReferenceExportFastaHeader,
 	type ReferenceExportTableFormat,
 	type SortDirection,
+	TIME_FORMATS,
+	type TimeFormat,
 	type User,
 	type UserNested,
 	type UserRoleFilter,
@@ -106,6 +108,7 @@ type StoredAccountSettings = {
 	show_ids: boolean;
 	show_versions: boolean;
 	skip_quick_analyze_dialog: boolean;
+	time_format: TimeFormat;
 	avatar_source: AvatarSource;
 };
 
@@ -142,6 +145,9 @@ function fromStoredAccountSettings(stored: unknown): AccountSettings {
 		skipQuickAnalyzeDialog:
 			blob.skip_quick_analyze_dialog ??
 			DEFAULT_USER_SETTINGS.skipQuickAnalyzeDialog,
+		timeFormat: TIME_FORMATS.includes(blob.time_format as TimeFormat)
+			? (blob.time_format as TimeFormat)
+			: DEFAULT_USER_SETTINGS.timeFormat,
 		avatarSource: AVATAR_SOURCES.includes(blob.avatar_source as AvatarSource)
 			? (blob.avatar_source as AvatarSource)
 			: DEFAULT_USER_SETTINGS.avatarSource,
@@ -161,6 +167,7 @@ function toStoredAccountSettings(
 		show_ids: settings.showIds,
 		show_versions: settings.showVersions,
 		skip_quick_analyze_dialog: settings.skipQuickAnalyzeDialog,
+		time_format: settings.timeFormat,
 		avatar_source: settings.avatarSource,
 	};
 }
@@ -253,6 +260,7 @@ const DEFAULT_USER_SETTINGS: AccountSettings = {
 	quickAnalyzeWorkflow: "pathoscope",
 	referenceExportFastaHeader: "full",
 	referenceExportTableFormat: "csv",
+	timeFormat: "relative",
 	avatarSource: "initials",
 };
 
@@ -739,6 +747,7 @@ const STORED_ACCOUNT_SETTINGS_KEYS: {
 	showIds: "show_ids",
 	showVersions: "show_versions",
 	skipQuickAnalyzeDialog: "skip_quick_analyze_dialog",
+	timeFormat: "time_format",
 	avatarSource: "avatar_source",
 };
 
