@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+@theme {
+  --spacing-header: 4rem;
+  --spacing-sticky: calc(var(--spacing-header) + 2rem);
+}
+
 .prose code::before,
 .prose code::after {
   content: none;
@@ -11,7 +16,7 @@
 }
 
 .prose :is(h2, h3)[id] {
-  scroll-margin-top: 6.25rem;
+  scroll-margin-top: var(--spacing-sticky);
 }
 
 :root {

@@ -34,18 +34,16 @@ const { Content, components, headings } = await render(entry);
   <TableOfContents slot="toc" headings={headings} />
   <div data-pagefind-body>
     <h1>{entry.data.title}</h1>
-    <div class="prose max-w-4xl">
-      <Content
-        components={{
-          ...components,
-          Aside: Aside,
-          DummyButton: DummyButton,
-          Icon: Icon,
-          Key: Key,
-          Note: Note,
-          img: MdxImage,
-        }}
-      />
-    </div>
+    <Content
+      components={{
+        ...components,
+        Aside: Aside,
+        DummyButton: DummyButton,
+        Icon: Icon,
+        Key: Key,
+        Note: Note,
+        img: MdxImage,
+      }}
+    />
   </div>
 </SidebarLayout>
