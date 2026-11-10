@@ -1,6 +1,6 @@
 {
 	"name": "@virtool/internal",
-	"version": "42.65.0",
+	"version": "42.65.1",
 	"private": true,
 	"type": "module",
 	"files": [
