@@ -45,7 +45,7 @@ describe("<SubtractionItem />", () => {
 	});
 
 	it.each(["pending", "running", "failed"] as const)(
-		"should render progress bar for ",
+		"should render progress bar for %s",
 		async (state) => {
 			if (props.job) {
 				props.job.state = state;
@@ -100,5 +100,8 @@ describe("<SubtractionItem />", () => {
 		props.ready = false;
 
 		await renderWithRouter(<SubtractionItem {...props} />);
+
+		expect(screen.getByText("Arabidopsis thaliana")).toBeInTheDocument();
+		expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 	});
 });

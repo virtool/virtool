@@ -41,7 +41,7 @@ describe("<ReferenceManager />", () => {
 		await renderRoute(path);
 
 		expect(await screen.findByText("Clone Reference")).toBeInTheDocument();
-		expect(screen.getByText("Source Reference"));
+		expect(screen.getByText("Source Reference")).toBeInTheDocument();
 		expect(screen.getByText("Source Reference Name")).toBeInTheDocument();
 	});
 });

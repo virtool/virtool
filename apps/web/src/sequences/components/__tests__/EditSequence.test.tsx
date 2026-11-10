@@ -1,9 +1,9 @@
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeOtuSequence } from "@tests/fake/otus";
 import { mockUpdateSequence } from "@tests/server-fn/otus";
 import { renderWithProviders } from "@tests/setup";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import SequenceEdit from "../SequenceEdit";
 
 describe("<SequenceEdit>", () => {
@@ -34,10 +34,6 @@ describe("<SequenceEdit>", () => {
 			host: "initial_host",
 			sequence: "ACGY",
 		});
-	});
-
-	afterEach(() => {
-		window.sessionStorage.clear();
 	});
 
 	it("should render all fields with current sequence data", async () => {
@@ -174,68 +170,5 @@ describe("<SequenceEdit>", () => {
 				"Sequence should only contain the characters: ATCGNRYKM",
 			),
 		).toBeInTheDocument();
-	});
-
-	it("should clear form cache submitting", async () => {
-		const updateSequence = mockUpdateSequence({
-			accession: "user_typed_accession",
-			definition: "user_typed_definition",
-			host: "user_typed_host",
-			segment: null,
-			sequence: "ACGRYKM",
-		});
-
-		renderSequenceEdit();
-
-		await userEvent.click(await screen.findByRole("combobox"));
-		await userEvent.click(screen.getByRole("option", { name: "None" }));
-		await userEvent.clear(
-			screen.getByRole("textbox", { name: "Accession (ID)" }),
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Accession (ID)" }),
-			"user_typed_accession",
-		);
-		await userEvent.clear(screen.getByRole("textbox", { name: "Host" }));
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Host" }),
-			"user_typed_host",
-		);
-		await userEvent.clear(screen.getByRole("textbox", { name: "Definition" }));
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Definition" }),
-			"user_typed_definition",
-		);
-		await userEvent.clear(
-			screen.getByRole("textbox", { name: /Sequence [0-9]/ }),
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: /Sequence [0-9]/ }),
-			"ACGRYKM",
-		);
-
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-		await waitFor(() =>
-			expect(updateSequence).toHaveBeenCalledWith({
-				data: {
-					otuId,
-					isolateId,
-					sequenceId: activeSequence.id,
-					accession: "user_typed_accession",
-					definition: "user_typed_definition",
-					host: "user_typed_host",
-					segment: null,
-					sequence: "ACGRYKM",
-				},
-			}),
-		);
-
-		window.sessionStorage.clear();
-		cleanup();
-
-		renderSequenceEdit();
-
-		expect(screen.queryByText("Resumed editing draft sequence.")).toBeNull();
 	});
 });

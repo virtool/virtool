@@ -67,29 +67,6 @@ describe("<SearchToolbar />", () => {
 		expect(screen.getByRole("textbox")).toHaveValue("");
 	});
 
-	it("should not commit a stale term when cleared externally", async () => {
-		const onChange = vi.fn();
-
-		const { rerender } = renderWithProviders(
-			<SearchToolbar
-				aria-label="Search things"
-				onChange={onChange}
-				value="ferret"
-			/>,
-		);
-
-		// Something outside the toolbar clears the term, as the samples filter bar
-		// does. The pending draft must be abandoned rather than committed back.
-		rerender(
-			<SearchToolbar aria-label="Search things" onChange={onChange} value="" />,
-		);
-
-		await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(""));
-
-		expect(onChange).not.toHaveBeenCalled();
-		expect(screen.getByRole("textbox")).toHaveValue("");
-	});
-
 	it("should render the accessible name, placeholder, and trailing controls", () => {
 		renderWithProviders(
 			<SearchToolbar

@@ -74,3 +74,9 @@ export function mockCreateApiKey(
 	});
 	return accountServerFnMocks.createApiKeyFn;
 }
+
+/** Sets up updateApiKey to resolve with the given updated API key. */
+export function mockUpdateApiKey(apiKey: ApiKey): Mock {
+	accountServerFnMocks.updateApiKeyFn.mockResolvedValue(apiKey);
+	return accountServerFnMocks.updateApiKeyFn;
+}

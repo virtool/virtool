@@ -42,7 +42,7 @@ it("submits an address and persists the mailbox challenge state", async () => {
 	});
 });
 
-it("resumes pending verification with resend, change, and cancel actions", async () => {
+it("resumes pending verification and resends the link", async () => {
 	authServerFnMocks.getEmailRemediationFn.mockResolvedValue(pendingState);
 	authServerFnMocks.resendEmailRemediationFn.mockResolvedValue({
 		complete: false,

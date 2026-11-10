@@ -50,17 +50,18 @@ describe("<Pagination />", () => {
 		expect(screen.queryByRole("button", { name: "6" })).not.toBeInTheDocument();
 	});
 
-	it("should render correctly when pageCount=0", async () => {
+	it("should render no pagination controls when pageCount=0", async () => {
 		props.pageCount = 0;
-		renderWithProviders(<Pagination {...props} />);
+		renderWithProviders(
+			<Pagination {...props}>
+				<p>Rows</p>
+			</Pagination>,
+		);
+		expect(screen.getByText("Rows")).toBeInTheDocument();
 		expect(
-			screen.queryByRole("button", { name: "Previous" }),
+			screen.queryByRole("navigation", { name: "pagination" }),
 		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole("button", { name: "Go to next page" }),
-		).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "1" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "3" })).not.toBeInTheDocument();
+		expect(screen.queryByRole("button")).not.toBeInTheDocument();
 	});
 
 	it("should render correctly when pageCount=3", async () => {

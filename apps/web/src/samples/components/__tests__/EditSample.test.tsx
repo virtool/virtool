@@ -34,7 +34,7 @@ describe("<Editsample />", () => {
 	});
 
 	it.each(["Name", "Isolate", "Host", "Locale", "Notes"])(
-		"should render changed data for",
+		"should render and change the %s field",
 		async (inputLabel) => {
 			await renderWithRouter(<EditSample {...props} />);
 
@@ -87,6 +87,17 @@ describe("<Editsample />", () => {
 		await userEvent.type(notesInput, "newNotes");
 
 		await userEvent.click(screen.getByText("Save"));
-		await waitFor(() => expect(updateSample).toHaveBeenCalled());
+		await waitFor(() =>
+			expect(updateSample).toHaveBeenCalledWith({
+				data: {
+					sampleId: sample.id,
+					name: "newName",
+					isolate: "newIsolate",
+					host: "newHost",
+					locale: "newLocale",
+					notes: "newNotes",
+				},
+			}),
+		);
 	});
 });

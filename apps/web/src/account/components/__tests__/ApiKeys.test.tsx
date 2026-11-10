@@ -1,8 +1,12 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount, createFakeApiKey } from "@tests/fake/account";
 import { createFakePermissions } from "@tests/fake/permissions";
-import { mockCreateApiKey, mockFindApiKeys } from "@tests/server-fn/account";
+import {
+	mockCreateApiKey,
+	mockFindApiKeys,
+	mockUpdateApiKey,
+} from "@tests/server-fn/account";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
@@ -114,8 +118,14 @@ describe("<ApiKeys />", () => {
 		).toBeInTheDocument();
 	});
 
-	it("should be able to edit keys", async () => {
+	it("should save edited key permissions", async () => {
 		const key = createFakeApiKey();
+		const permissions = {
+			...key.permissions,
+			create_ref: false,
+			upload_file: true,
+		};
+		const updateApiKey = mockUpdateApiKey({ ...key, permissions });
 
 		mockGetAccount(
 			createFakeAccount({
@@ -152,5 +162,13 @@ describe("<ApiKeys />", () => {
 		await userEvent.click(uploadFileCheckbox);
 
 		expect(uploadFileCheckbox).toBeChecked();
+
+		await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+		await waitFor(() =>
+			expect(updateApiKey).toHaveBeenCalledWith({
+				data: { keyId: key.id, permissions },
+			}),
+		);
 	});
 });
