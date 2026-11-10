@@ -1,0 +1,258 @@
+---
+title: "Sign in"
+description: "Accept an invitation, sign in, and recover access to your account."
+order: 0
+---
+
+## Overview
+
+You must sign in before you can use Virtool. This page tells you about the screens that
+you see before you are in the app:
+
+- The invitation page, where you set up a new account.
+- The sign-in page.
+- The steps that your Virtool instance can ask you to complete after you sign in.
+- The pages that open when you click a recovery or verification link.
+
+To change your account settings after you sign in, see [Account](/docs/guide/account).
+
+## Accept an invitation
+
+An administrator creates your account and gives you an invitation link. You get the link
+in an email with the subject **Set up your Virtool account**, or the administrator sends
+it to you.
+
+1. Open the invitation link.
+2. Under **Username**, type a username.
+3. Under **Password**, type a password.
+4. Under **Confirm password**, type the password again.
+5. Click **Create account**.
+
+The page shows the email address of the invitation and the date when the link expires.
+The link works one time. It expires 72 hours after the administrator creates it.
+
+Your username is also your handle. It must have 3 to 30 characters. It can contain only
+letters, numbers, underscores (`_`), and periods (`.`). You can't use the username
+`virtool` or a username that another account uses.
+
+By default, your password must contain at least 8 characters. An administrator can set a
+different minimum.
+
+When you click **Create account**, Virtool signs you in. Then it does one of these
+actions:
+
+- It opens Virtool.
+- It shows a required step. See
+  [Required steps after sign-in](#required-steps-after-sign-in).
+- It shows **Check your email**. Virtool sends a verification link to your address.
+  Click **Continue to Virtool**. You can open the link later. See
+  [Verify or change an email address](#verify-or-change-an-email-address).
+
+### If the invitation link does not work
+
+If the link expired, was replaced, or was used, the page shows **Invitation
+unavailable**. Ask an administrator to
+[reissue the invitation](/docs/guide/users#reissue-an-invitation). Use the new link. The
+old link does not work again.
+
+## Sign in
+
+You can sign in with your password or with a passkey.
+
+### Sign in with your password
+
+1. Under **Username**, type your username.
+2. Under **Password**, type your password.
+3. Click **Sign in**.
+
+If your account uses an authenticator app, Virtool asks for a code. See
+[Enter an authenticator code](#enter-an-authenticator-code).
+
+If you type an incorrect password too many times, Virtool shows **Too many sign-in
+attempts. Wait a moment and try again.** Wait, then try again.
+
+### Sign in with a passkey
+
+1. Click **Sign in with a passkey**.
+2. Follow the instructions from your browser or device.
+
+You can also click the **Username** field. Your browser can show your passkeys there.
+
+When you sign in with a passkey, Virtool does not ask for an authenticator code.
+
+Passkeys need a supported browser and a secure (HTTPS) connection. If your browser can't
+use passkeys, the page shows **Passkey sign-in is not available in this browser.** Sign
+in with your password.
+
+To add a passkey to your account, see [Passkeys](/docs/guide/account#passkeys).
+
+### Enter an authenticator code
+
+If you set up
+[two-factor authentication](/docs/guide/account#two-factor-authentication), Virtool
+shows **Two-factor authentication** after you enter your password.
+
+1. Open your authenticator app.
+2. Type the 6-digit code that the app shows for Virtool.
+3. Click **Verify**.
+
+If you can't use your authenticator app, use a recovery code:
+
+1. Click **Use recovery code**.
+2. Type one of your recovery codes.
+3. Click **Verify**.
+
+Each recovery code works one time. To go back to the code from your app, click **Use
+authenticator code**. To start again, click **Back to sign in**.
+
+You have 10 minutes to enter a code. After 5 incorrect codes, you must sign in again. If
+you enter too many incorrect codes, Virtool locks the code step for 15 minutes and shows
+**Too many incorrect codes. Wait a few minutes, then sign in again.**
+
+If you lost your authenticator app and your recovery codes, ask a full administrator to
+[reset your two-factor authentication](/docs/guide/users#reset-two-factor-authentication).
+
+### When your session ends
+
+A session ends after 7 days without use. An administrator or a password change can also
+end it. Then Virtool shows **Your session ended. Sign in again.** Sign in again to
+continue.
+
+## Required steps after sign-in
+
+Virtool can ask you to complete a step before you can use the app. You see these steps
+in this order:
+
+1. **Add your email**, if your account does not have a unique email address.
+2. **Set up two-factor authentication**, if your Virtool instance requires it.
+
+If you do not need to complete a step, Virtool does not show it.
+
+### Add your email
+
+Some accounts do not have a unique email address. When you sign in to one of these
+accounts, Virtool shows **Add your email**.
+
+1. Under **Email address**, type your email address.
+2. Click **Continue**.
+
+If email delivery is not set up for your Virtool instance, Virtool accepts the address
+and continues. It does not send a verification link.
+
+If email delivery is set up, Virtool shows **Check your email** and sends a verification
+link to the address. The link is valid for 72 hours. Open it in any browser.
+
+- If you open the link in the same browser, Virtool shows **Email verified**. Click
+  **Continue**.
+- If you open the link in a different browser, Virtool shows **Email verified** and
+  **Log in**. In the first browser, the page changes to **Email verified**. Click
+  **Continue** there.
+
+On the **Check your email** page, you can also do these actions:
+
+- Click **Resend** to send a new link. You must wait 60 seconds between messages. The
+  old link stops working.
+- Click **Change email** to type a different address. The old link stops working.
+- Click **Cancel** to sign out.
+
+Another account can't use the same address. If it does, Virtool shows **Another account
+uses this email address.**
+
+You must add your address within 30 minutes after you sign in. If you do not, Virtool
+shows **Your email setup expired. Sign in again to continue.**
+
+### Set up two-factor authentication
+
+If your Virtool instance requires two-factor authentication, you must set it up before
+you can use Virtool. Virtool shows this step if your account has no authenticator app
+and no passkey.
+
+1. Type your password, then click **Continue**.
+2. Scan the QR code with your authenticator app, or enter the setup key.
+3. Under **Code**, type the code that the app shows, then click **Turn on**.
+4. Save your recovery codes. Click **Copy all** or **Download**.
+5. Select **I have saved these codes**, then click **Done**.
+
+You see the recovery codes only once. To leave before you turn on two-factor
+authentication, click **Cancel and sign out**.
+
+A passkey also meets this requirement. If you add a passkey, you do not need an
+authenticator app.
+
+Virtool shows this step again if you turn off two-factor authentication and you have no
+passkey. It also shows this step if you remove your last passkey and you have no
+authenticator app.
+
+## Forgot your password?
+
+If email delivery is set up and your email address is verified, you can request a link
+to choose a new password.
+
+1. On the sign-in page, click **Forgot your password?**.
+2. Under **Username**, type your username.
+3. Click **Send recovery link**.
+
+Virtool shows **If this account can receive recovery email, a link has been queued.**
+Virtool shows this message for all usernames. It does not tell you if the account exists
+or if it sent an email.
+
+Look for an email with the subject **Reset your Virtool password**. If you requested a
+link in the last hour, Virtool does not send a new link. Use the link that you have.
+
+If you do not get an email, ask an administrator to
+[create a reset link](/docs/guide/users#help-a-user-recover-access).
+
+### Choose a new password
+
+1. Open the recovery link.
+2. Under **New password**, type your new password.
+3. Under **Confirm new password**, type the password again.
+4. Click **Change password**.
+
+The link works one time. A link that Virtool sends by email expires 7 hours after
+Virtool creates it. Your new password must be different from your current password.
+
+When your password changes, Virtool signs out all your browsers. Your other recovery and
+verification links stop working. If email delivery is set up, Virtool sends an email
+with the subject **Your Virtool password was changed**.
+
+Virtool shows **Password changed**. Click **Sign in**, then sign in with your new
+password. Virtool can show a [required step](#required-steps-after-sign-in) after you
+sign in.
+
+## Verify or change an email address
+
+Virtool sends a verification link when you
+[change your email](/docs/guide/account#change-email). It can also send one when you
+accept an invitation. The email has the subject **Verify your email address**.
+
+A verification link is valid for 24 hours. It works one time. When Virtool sends a new
+link, the previous link stops working.
+
+### Verify your current address
+
+Open the link. You do not need to sign in. Virtool shows **Email verified**. Click
+**Continue to login**.
+
+### Change your address
+
+The link completes the change only for the account that requested it.
+
+- If you are signed in to that account, open the link. Virtool shows **Email verified**.
+- If you are not signed in, Virtool shows **Sign in to change your email**. Click **Sign
+  in**, then sign in to the account that requested the change. The change completes
+  after you sign in. Use the same browser tab.
+
+When the change completes, Virtool sends a notice to your old address. Your recovery
+links stop working.
+
+## When a link does not work
+
+| Message                                                                                                                 | What to do                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Invitation unavailable**                                                                                              | Ask an administrator to [reissue the invitation](/docs/guide/users#reissue-an-invitation).                                      |
+| **Recovery link unavailable**                                                                                           | Click **Request another link**, or ask an administrator to [create a reset link](/docs/guide/users#help-a-user-recover-access). |
+| **Verification link unavailable** after you change your email                                                           | Go to **Security** in your [account](/docs/guide/account#change-email) and send a new link.                                     |
+| **This verification link has expired.** or **A newer verification link has replaced this one.** when you add your email | Click **Return to email setup** or **Log in**, then send a new link.                                                            |
+| **Verification interrupted**                                                                                            | Click **Try again**. If you are changing your address, sign in to that account first, then open the link again.                 |
+| **Virtool is temporarily unavailable**                                                                                  | Your link is not used. Wait one minute, then click **Try again**.                                                               |

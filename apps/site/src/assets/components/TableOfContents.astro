@@ -1,0 +1,77 @@
+---
+import type { MarkdownHeading } from "astro";
+
+const { headings }: { headings: MarkdownHeading[] } = Astro.props;
+
+const items = headings.filter((heading) => heading.depth <= 3 && heading.depth >= 2);
+---
+
+{
+  items.length > 1 && (
+    <nav aria-label="On this page" data-toc>
+      <h5 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
+        On this page
+      </h5>
+      <ul class="border-l border-solid border-stone-300">
+        {items.map((heading) => (
+          <li>
+            <a
+              class:list={[
+                "-ml-px block border-l-2 border-transparent py-1 text-sm text-stone-600 hover:text-stone-900 [&[aria-current]]:border-sky-700 [&[aria-current]]:text-sky-700",
+                heading.depth === 2 ? "pl-3" : "pl-6",
+              ]}
+              href={`#${heading.slug}`}
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<script>
+  const links = [
+    ...document.querySelectorAll<HTMLAnchorElement>("[data-toc] a"),
+  ];
+
+  const targets = links
+    .map((link) => document.getElementById(link.hash.slice(1)))
+    .filter((target) => target !== null);
+
+  // Matches the scroll margin on headings, so a clicked link is current.
+  const offset = 100;
+
+  function updateCurrent() {
+    let current = targets[0];
+
+    for (const target of targets) {
+      if (target.getBoundingClientRect().top <= offset) {
+        current = target;
+      }
+    }
+
+    for (const link of links) {
+      if (link.hash === `#${current?.id}`) {
+        link.setAttribute("aria-current", "location");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    }
+  }
+
+  let frame = 0;
+
+  if (targets.length) {
+    updateCurrent();
+    window.addEventListener(
+      "scroll",
+      () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(updateCurrent);
+      },
+      { passive: true },
+    );
+  }
+</script>

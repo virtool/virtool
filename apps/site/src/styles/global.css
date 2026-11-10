@@ -9,3 +9,17 @@
 .prose :not(pre) > code {
   @apply rounded bg-zinc-200 px-1 py-0.5 font-normal;
 }
+
+.prose :is(h2, h3)[id] {
+  scroll-margin-top: 6.25rem;
+}
+
+:root {
+  --pf-font: inherit;
+  --pf-text: var(--color-stone-900);
+  --pf-text-secondary: var(--color-stone-600);
+  --pf-text-muted: var(--color-stone-500);
+  --pf-border: var(--color-zinc-300);
+  --pf-hover: var(--color-zinc-100);
+  --pf-modal-max-width: 40rem;
+}

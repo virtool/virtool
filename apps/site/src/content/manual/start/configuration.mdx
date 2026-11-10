@@ -6,15 +6,15 @@ order: 7
 
 ## Overview
 
-Virtool services read their configuration from environment variables. The names
-of these variables start with `VT_`. A service reads its variables when it
-starts, so restart the service after you change a value.
+Virtool services read their configuration from environment variables. The names of these
+variables start with `VT_`. A service reads its variables when it starts, so restart the
+service after you change a value.
 
 ## File-backed variables
 
-Each `VT_` variable has a `_FILE` variant. Set the variant to the path of a file
-that contains the value. Use this method for secrets that your platform mounts
-as files, for example from a Kubernetes secrets store:
+Each `VT_` variable has a `_FILE` variant. Set the variant to the path of a file that
+contains the value. Use this method for secrets that your platform mounts as files, for
+example from a Kubernetes secrets store:
 
 ```text
 VT_POSTGRES_URL_FILE=/mnt/secrets-store/postgres-url
@@ -22,12 +22,12 @@ VT_POSTGRES_URL_FILE=/mnt/secrets-store/postgres-url
 
 Virtool removes whitespace from the start and the end of the file contents.
 
-- If you set both `VT_POSTGRES_URL` and `VT_POSTGRES_URL_FILE`, the value in the
-  file applies.
-- If a service cannot read the file, the service does not start. It does not use
-  the plain variable. The error gives the variable name, but not the path.
-- If the file is empty, the value is empty. A service does not start if a
-  required value is empty.
+- If you set both `VT_POSTGRES_URL` and `VT_POSTGRES_URL_FILE`, the value in the file
+  applies.
+- If a service cannot read the file, the service does not start. It does not use the
+  plain variable. The error gives the variable name, but not the path.
+- If the file is empty, the value is empty. A service does not start if a required value
+  is empty.
 
 ## Encryption key
 
@@ -35,15 +35,14 @@ Virtool encrypts these values before it stores them in the database:
 
 - The Resend API key
 - The NCBI API key
-- The links in queued email for account setup, email verification, and password
-  recovery
+- The links in queued email for account setup, email verification, and password recovery
 
 Two variables supply the encryption keys:
 
-| Variable | Value |
-| --- | --- |
-| `VT_ENCRYPTION_KEY` | The active key. Virtool encrypts new values with this key. |
-| `VT_ENCRYPTION_KEY_PREVIOUS` | The old key. Set this variable during a rotation. |
+| Variable                     | Value                                                      |
+| ---------------------------- | ---------------------------------------------------------- |
+| `VT_ENCRYPTION_KEY`          | The active key. Virtool encrypts new values with this key. |
+| `VT_ENCRYPTION_KEY_PREVIOUS` | The old key. Set this variable during a rotation.          |
 
 Set the same values on the web server and on the task runner.
 
@@ -58,19 +57,19 @@ openssl rand -base64 32
 A key must be exactly 32 bytes in standard base64, which is 44 characters.
 
 <Note>
-  Keep a copy of the key in a safe location. Virtool cannot read its encrypted
-  values without the key.
+  Keep a copy of the key in a safe location. Virtool cannot read its encrypted values
+  without the key.
 </Note>
 
 ### Unset or invalid keys
 
-The web server and the task runner start without a usable key. A service writes
-a warning to its log if the key is unset, and an error if the key is invalid.
+The web server and the task runner start without a usable key. A service writes a
+warning to its log if the key is unset, and an error if the key is invalid.
 
 The configuration is invalid in these conditions:
 
-- A key is not exactly 32 bytes in standard base64. This applies to both
-  variables. An invalid previous key also stops the active key from working.
+- A key is not exactly 32 bytes in standard base64. This applies to both variables. An
+  invalid previous key also stops the active key from working.
 - `VT_ENCRYPTION_KEY_PREVIOUS` is set and `VT_ENCRYPTION_KEY` is not set.
 
 Without a usable key:
@@ -78,21 +77,21 @@ Without a usable key:
 - Virtool does not deliver email.
 - Virtool discards email that contains a link, and does not queue it.
 - You cannot save a Resend API key or an NCBI API key.
-- GenBank lookups continue at the rate limit that NCBI applies to requests that
-  have no API key.
+- GenBank lookups continue at the rate limit that NCBI applies to requests that have no
+  API key.
 
-A valid key can be the wrong key for a stored value. The administration settings
-then show a configuration error for that value. Email delivery stops if Virtool
-cannot read the Resend API key. GenBank lookups drop to the lower rate limit if
-Virtool cannot read the NCBI API key.
+A valid key can be the wrong key for a stored value. The
+[administration settings](/docs/guide/administration) then show a configuration error
+for that value. Email delivery stops if Virtool cannot read the Resend API key. GenBank
+lookups drop to the lower rate limit if Virtool cannot read the NCBI API key.
 
-In all of these conditions, Virtool does not change the stored API keys. Set the
-correct key and restart the services to recover them.
+In all of these conditions, Virtool does not change the stored API keys. Set the correct
+key and restart the services to recover them.
 
 ### Rotate the key
 
-Virtool does not encrypt stored values again when you change the key. The old
-key must stay available until you replace these values.
+Virtool does not encrypt stored values again when you change the key. The old key must
+stay available until you replace these values.
 
 To start the rotation:
 
@@ -100,25 +99,26 @@ To start the rotation:
 2. On the task runner, set `VT_ENCRYPTION_KEY` to the new key and
    `VT_ENCRYPTION_KEY_PREVIOUS` to the old key. Roll out the change.
 3. Set the same values on the web server. Roll out the change.
-4. In the administration settings, make sure that the email settings and the
-   NCBI API key do not show a configuration error.
+4. In the [administration settings](/docs/guide/administration), make sure that the
+   email settings and the NCBI API key do not show a configuration error.
 
 <Note color="red">
-  Update the task runner first. The web server encrypts new email links with its
-  active key. If the task runner does not have that key, the email fails and
-  Virtool does not try again.
+  Update the task runner first. The web server encrypts new email links with its active
+  key. If the task runner does not have that key, the email fails and Virtool does not
+  try again.
 </Note>
 
 To finish the rotation:
 
-1. Save the Resend API key and the NCBI API key again in the administration
-   settings. Virtool encrypts the saved values with the new key.
-2. Wait at least six hours. Virtool does not encrypt queued email again, and it
-   stops email delivery attempts after this time.
+1. Save the Resend API key and the NCBI API key again in the
+   [administration settings](/docs/guide/administration). Virtool encrypts the saved
+   values with the new key.
+2. Wait at least six hours. Virtool does not encrypt queued email again, and it stops
+   email delivery attempts after this time.
 3. Remove `VT_ENCRYPTION_KEY_PREVIOUS` from the task runner and the web server.
 
-If you remove the old key before you save an API key, email delivery stops or
-GenBank lookups drop to the lower rate limit. If you remove the old key while
-email is in the queue, the email fails.
+If you remove the old key before you save an API key, email delivery stops or GenBank
+lookups drop to the lower rate limit. If you remove the old key while email is in the
+queue, the email fails.
 
 Virtool holds only one previous key. Finish a rotation before you start another.

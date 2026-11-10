@@ -1,12 +1,11 @@
 ---
 import Aside from "@components/Aside.astro";
 import DummyButton from "@components/DummyButton.astro";
-import DummyLink from "@components/DummyLink.astro";
-import DummySaveButton from "@components/DummySaveButton.astro";
 import Icon from "@components/Icon.astro";
 import Key from "@components/Key.astro";
 import MdxImage from "@components/MdxImage.astro";
 import Note from "@components/Note.astro";
+import TableOfContents from "@components/TableOfContents.astro";
 import Menu from "@components/menu/Menu.astro";
 import SidebarLayout from "@layouts/SidebarLayout.astro";
 import { getMenuSectionsFromCollection } from "@utils/menu";
@@ -27,25 +26,26 @@ const sections = getMenuSectionsFromCollection(
 );
 
 const { entry } = Astro.props;
-const { Content, components } = await render(entry);
+const { Content, components, headings } = await render(entry);
 ---
 
-<SidebarLayout title={entry.data.title}>
+<SidebarLayout title={entry.data.title} search="docs">
   <Menu slot="sidebar" sections={sections} baseUrl="/docs" />
-  <h1>{entry.data.title}</h1>
-  <div class="prose max-w-4xl">
-    <Content
-      components={{
-        ...components,
-        Aside: Aside,
-        DummyButton: DummyButton,
-        DummyLink: DummyLink,
-        DummySaveButton: DummySaveButton,
-        Icon: Icon,
-        Key: Key,
-        Note: Note,
-        img: MdxImage,
-      }}
-    />
+  <TableOfContents slot="toc" headings={headings} />
+  <div data-pagefind-body>
+    <h1>{entry.data.title}</h1>
+    <div class="prose max-w-4xl">
+      <Content
+        components={{
+          ...components,
+          Aside: Aside,
+          DummyButton: DummyButton,
+          Icon: Icon,
+          Key: Key,
+          Note: Note,
+          img: MdxImage,
+        }}
+      />
+    </div>
   </div>
 </SidebarLayout>

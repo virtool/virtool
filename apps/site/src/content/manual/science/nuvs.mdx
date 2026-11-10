@@ -1,53 +1,114 @@
 ---
 title: "Nuvs"
-description: "Learn how Nuvs predicts novel viral sequences in your sample."
+description: "Learn how Nuvs finds possible novel viral sequences in your sample."
 ---
 
-Nuvs is a novel workflow used for discovering potential novel viral sequences in a sample
-library.
+import WorkflowStep from "@components/WorkflowStep.astro";
+import WorkflowSteps from "@components/WorkflowSteps.astro";
 
-## Prerequisites
-
-This tutorial assumes you have already done the following:
-
-- [created a sample](/docs/guide/samples)
-- [created and built a reference](/docs/guide/references)
-- [created a subtraction](/docs/guide/subtractions)
-- [installed HMM profiles and annotations](/docs/guide/hmms)
-
-You use these data sources to run a workflow for discovering potential novel virus
-sequences in a sample.
+Nuvs is a workflow that finds possible novel viral sequences in a sample library.
 
 ## How does it work?
 
-Pathoscope detects known viruses by mapping reads to reference sequences. Instead,
-Nuvs uses profile HMMs to find divergent viral sequences that may not be
-detected by mapping or the Basic Local Alignment Search Tool (BLAST).
+Pathoscope finds known viruses when it maps reads to reference sequences. Nuvs uses a
+different method. It assembles the reads that do not match the reference. Then it uses
+profile hidden Markov models (HMMs) to find viral domains in the assembled sequences.
+Thus, Nuvs can find divergent viral sequences that mapping or the Basic Local Alignment
+Search Tool (BLAST) possibly cannot find.
 
-Nuvs relies on profile hidden Markov models (pHMMs) to predict viral domains in sequences
-assembled from sample libraries.
+<WorkflowSteps caption="The Nuvs workflow">
+  <WorkflowStep
+    title="Trim reads"
+    tool="Skewer"
+    removed="Low-quality reads and bases, adapters, and short reads"
+  />
+  <WorkflowStep
+    title="Remove reference reads"
+    tool="Bowtie 2"
+    removed="Reads that match the reference"
+  />
+  <WorkflowStep
+    title="Remove host reads"
+    tool="Bowtie 2"
+    removed="Reads that match a subtraction"
+  />
+  <WorkflowStep title="Assemble contigs" tool="SPAdes" />
+  <WorkflowStep
+    title="Find ORFs"
+    removed="Contigs shorter than 300 bases or with no ORFs"
+  />
+  <WorkflowStep title="Compare ORFs with HMMs" tool="HMMER" />
+</WorkflowSteps>
 
-The first step of the Nuvs workflow is eliminating reads associated with known OTUs or a
-host genome. First, reads are mapped against a Virtool reference and any matching reads
-are discarded. The remaining reads are mapped against a host subtraction genome and
-similarly removed.
+First, Nuvs uses [Skewer](https://github.com/relipmoc/skewer) to trim the sample reads
+(Jiang et al., 2014). Skewer removes reads with an average quality score of less
+than 25. For paired libraries, it removes a pair only if the two reads both have an
+average quality score of less than 25.
 
-The next step is assembly of the remaining, undiscarded reads using
-[SPAdes](http://cab.spbu.ru/software/spades).
+Then Skewer removes Illumina adapter sequences from the reads. It also removes bases
+from the 3' end of each read until it finds a base with a quality score of 20 or more.
+
+Then Skewer removes reads that are too short. For paired libraries, if one read is too
+short, Skewer removes the two reads. The minimum length changes with the length of the
+longest read in the sample:
+
+| Longest read | Minimum length |
+| ------------ | -------------- |
+| Less than 80 | 35             |
+| 80 to 159    | 100            |
+| 160 or more  | 160            |
+
+Pathoscope does not trim reads.
+
+Next, Nuvs removes reads that match known OTUs or a host genome. First, it uses Bowtie 2
+to map the reads to a Virtool reference and removes all reads that match. Then it uses
+Bowtie 2 to map the remaining reads to each host subtraction genome and removes the
+reads that match. For paired libraries, Nuvs keeps a read only if it also keeps the mate
+of that read.
+
+Nuvs then uses [SPAdes](https://ablab.github.io/spades) to assemble the remaining reads
+into contigs (Bankevich et al., 2012).
+
+Next, Nuvs finds open reading frames (ORFs) in the contigs. It keeps only ORFs of 100 or
+more amino acids. It removes contigs shorter than 300 bases and contigs that have no
+ORFs. These contigs do not show in the results.
+
+Finally, Nuvs compares the translated ORFs with the installed profile HMMs.
 
 ## HMMs
 
-Profile hidden Markov models (HMM) are used in Virtool to discover potential novel viruses
-in sequencing data. The models are used to identify known viral motifs in translated open
-reading frames derived from sequencing data.
+Virtool uses profile HMMs to find possible novel viruses in sequencing data. The models
+find known viral motifs in translated open reading frames from sequencing data.
 
-Virtool stores installed profile HMMs in a single `profiles.hmm` artifact.
-[HMMER](http://hmmer.org) searches these models against translated ORFs. The
-models are generated from clustered amino acid sequences sourced from GenBank.
+[HMMER](https://hmmer.org) compares these models with translated ORFs (Eddy, 2011). The
+models come from clustered amino acid sequences in GenBank.
 
-Virtool distributes an official set of models derived from the
-[vFam](http://derisilab.ucsf.edu/software/vFam/) project. Because these models lack
-biological annotations, Virtool also provides annotations calculated from metadata
-associated with the amino acid sequences used to build the models.
+Virtool supplies an official set of models that come from the
+[vFam](https://derisilab.ucsf.edu/software/vFam/) project (Skewes-Cox et al., 2014).
+These models do not have biological annotations. Thus, Virtool also supplies
+annotations. Virtool calculates these annotations from the metadata of the amino acid
+sequences that are the source of the models.
 
-[Exploring and Managing HMMs in Virtool](/docs/guide/hmms)
+To install and manage HMMs, see the [HMMs guide](/docs/guide/hmms).
+
+## Interpret results
+
+An HMM match does not prove that a contig comes from a novel virus. To compare a contig
+with known sequences, use [BLAST](/docs/guide/analyses#blast). To read and understand
+Nuvs results, see [Interpret Nuvs](/docs/guide/analyses#interpret-nuvs) in the analyses
+guide.
+
+## References
+
+- Bankevich A, Nurk S, Antipov D, et al. (2012). SPAdes: a new genome assembly algorithm
+  and its applications to single-cell sequencing. _Journal of Computational Biology_,
+  19(5), 455–477. [doi:10.1089/cmb.2012.0021](https://doi.org/10.1089/cmb.2012.0021)
+- Eddy SR. (2011). Accelerated profile HMM searches. _PLoS Computational Biology_,
+  7(10), e1002195.
+  [doi:10.1371/journal.pcbi.1002195](https://doi.org/10.1371/journal.pcbi.1002195)
+- Jiang H, Lei R, Ding SW, et al. (2014). Skewer: a fast and accurate adapter trimmer
+  for next-generation sequencing paired-end reads. _BMC Bioinformatics_, 15(1), 182.
+  [doi:10.1186/1471-2105-15-182](https://doi.org/10.1186/1471-2105-15-182)
+- Skewes-Cox P, Sharpton TJ, Pollard KS, et al. (2014). Profile hidden Markov models for
+  the detection of viruses within metagenomic sequence data. _PLoS ONE_, 9(8), e105067.
+  [doi:10.1371/journal.pone.0105067](https://doi.org/10.1371/journal.pone.0105067)

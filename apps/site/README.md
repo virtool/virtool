@@ -24,6 +24,8 @@ Run all commands from the monorepo root.
 | `pnpm --filter @virtool/site build`           | Build the production site to `apps/site/dist/` |
 | `pnpm --filter @virtool/site preview`         | Build, then preview locally with Wrangler      |
 | `pnpm --filter @virtool/site test`            | Run the Vitest suite                           |
+| `pnpm --filter @virtool/site format`          | Format the Markdown and MDX content            |
+| `pnpm --filter @virtool/site format:check`    | Find content that is not formatted             |
 | `pnpm --filter @virtool/site run deploy`      | Build and deploy to Cloudflare Workers         |
 | `pnpm --filter @virtool/site astro -- --help` | Run the Astro command-line tool                |
 
@@ -33,6 +35,13 @@ The `/changelog` page lists all `virtool` releases, newest first. Each release
 has a page at `/changelog/<version>`. This link does not change, so the web app
 uses it. The build reads the releases from the web app changelog, which Knope
 generates, so the pages need no separate content.
+
+## Search
+
+The docs and the changelog each have a search at the top of their sidebar. The
+docs search finds only docs pages. The changelog search finds only release
+pages, and it does not find maintenance notes. The build makes the search index after Astro
+finishes, so the dev server has no search. Use `preview` to test it.
 
 ## Posts
 

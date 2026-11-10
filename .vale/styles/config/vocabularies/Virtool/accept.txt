@@ -232,3 +232,22 @@ eburi
 chlorotic
 ilarvirus
 nt
+[Mm]etagenomic
+[Mm]icrobiome
+[Uu]nassembled
+
+# Cited authors
+Antipov
+Bankevich
+Bendall
+Fu
+Godzik
+Jiang
+Langmead
+Manimaran
+Niu
+Nurk
+Salzberg
+Sharpton
+Shen
+Zhu

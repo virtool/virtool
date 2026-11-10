@@ -1,71 +1,52 @@
 ---
 title: "Jobs"
 description: "Manage long-running bioinformatic tasks in Virtool."
+order: 5
 ---
 
-## Introduction
+## Overview
 
-Jobs represent long-running, resource-intensive processing tasks. All job types are related to analyzing and handling
-bioinformatic data.
+A job is a long-running task that processes bioinformatic data.
 
-| Type               | Description                                                      |
-| ------------------ | ---------------------------------------------------------------- |
-| Build Index        | Build a new index for a reference                                |
-| Create Sample      | Create a sample from uploaded FASTQ data                         |
-| Create Subtraction | Create a new subtraction from an uploaded genome FASTA           |
-| Nuvs               | Run a Nuvs analysis for a sample and reference combination       |
-| Pathoscope         | Run a Pathoscope analysis for a sample and reference combination |
+| Type               | Description                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| Create Sample      | Creates a sample from uploaded FASTQ files.                                           |
+| Create Subtraction | Creates a subtraction from an uploaded FASTA file.                                    |
+| Nuvs               | Runs a Nuvs analysis for a sample and a reference.                                    |
+| Pathoscope         | Runs a Pathoscope analysis for a sample and a reference.                              |
+| Build Index        | An older job type that built a reference index. Virtool doesn't start these jobs now. |
 
-Jobs are started when a task is started in another view (for example, the sample creation dialog). New jobs are appended to the job
-queue and start as resources become available.
+Virtool starts a job when you start a task in a different part of the app, for example
+when you create a sample. A new job waits in a queue until a runner is available.
+
+A job has one of these states:
+
+- **Pending**: the job waits for a runner.
+- **Running**: a runner does the job.
+- **Succeeded**: the job is complete.
+- **Failed**: the job stopped because of an error. Virtool also marks a running job as
+  failed when its runner stops responding for more than five minutes.
+- **Cancelled**: the job stopped before it was complete.
 
 ## List jobs
 
-1. Navigate to **Jobs** in the top navigation bar
+Click **Jobs** in the main navigation bar. The list shows the running jobs.
 
-   ![Jobs Navigation](./nav.png?url)
+Each job shows its type, the user who created it, when it was created, its state, and
+its progress.
 
-2. View the jobs list
+To show jobs in other states, select or clear the states under **State**. Each state
+shows the number of jobs in that state.
 
-   The jobs list shows all waiting, running, and finished jobs. Jobs can be [cancelled](#cancel) and [deleted](#delete)
-   from the list view.
+## View a job
 
-   ![Jobs List](./list.png?url)
+Click a job in the list to see its details.
 
-## View detail
+For a Create Sample, Create Subtraction, Nuvs, or Pathoscope job, the page shows the
+sample, subtraction, or analysis that the job makes. Click its name to open it.
 
-1. Click a job in the jobs list
+The page also shows the steps of the job. Each step shows its name, a description, when
+it started, and how long it took. The current step shows a spinning icon.
 
-   ![Jobs List](./list.png?url)
-
-2. View detail information for the job
-
-   This view shows the computing resources used by the job, the arguments used for the job, and the progression of
-   steps in the job or workflow.
-
-   ![Jobs Navigation](./detail.png?url)
-
-## Cancel a job
-
-Running and waiting jobs can be cancelled. Cancellation entails forcibly stopping the job process and cleaning up any
-partial job data from the database and file system.
-
-1. Click the <Icon name="ban" color="red" /> icon on the job item
-
-   The job switches to a cancelled state.
-
-## Delete a job
-
-Once a job is finished, either by completing, encountering an error, or being cancelled, its record can be deleted.
-
-1. Click the <Icon name="trash" color="red" /> icon on a job item to delete a job
-
-   <video src="./delete.mp4" alt="Delete job from list" autoplay />
-
-2. Jobs can also be deleted via their detail page by clicking the <Icon name="trash" color="red" /> icon
-
-   <video
-     src="./delete_detail.mp4"
-     alt="Delete job from detail page"
-     autoplay
-   />
+If no step has started, the page shows the state of the job. A pending job shows
+**Waiting for a runner**.

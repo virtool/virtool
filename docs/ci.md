@@ -67,7 +67,8 @@ The `CLOUDFLARE_API_TOKEN` secret and the `CLOUDFLARE_ACCOUNT_ID` Actions
 variable identify the Cloudflare account. The token needs permission to edit
 Workers. Only the deploy step can read it.
 
-`pnpm build`, `pnpm check`, and `pnpm knip` skip the site.
+`pnpm build` and `pnpm knip` skip the site. `pnpm check` uses Prettier to check
+only the site Markdown and MDX content.
 
 ## Change-file check
 

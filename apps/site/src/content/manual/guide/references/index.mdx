@@ -1,405 +1,244 @@
 ---
 title: "References"
 description: "Create and manage Virtool references."
+order: 7
 ---
 
 ## Overview
 
-Virtool is built for detecting viruses and is capable of detecting other pathogens.
-Managing collections of pathogen sequences used for this purpose is a key feature of
-Virtool.
+A reference is a collection of pathogens, their isolates, and their genome sequences.
+Virtool uses a reference to find pathogens in the reads from your samples.
 
-At least one non-empty reference must be created to start analyzing samples. One
-quick way to do this is to install the
-[official plant virus reference](https://github.com/virtool/ref-plant-viruses).
+You must have at least one reference with OTUs and a built index before you can analyze
+samples.
 
 ### OTUs
 
-The reference is a fully editable and tracked collection of pathogens, pathogen isolates, and their genome sequences.
-The data in the virus reference is used to identify potential viral infections in Illumina libraries derived from
-your samples.
+In Virtool, pathogen records are called OTUs (operational taxonomic units). Usually, one
+OTU is one pathogen species. You decide how to organize the OTUs in your reference.
 
-In Virtool, pathogen records are called OTUs (organizational taxonomic unit). This leaves the organization of the
-reference up to the user. Generally, OTU is synonymous with pathogen species.
-
-See the [OTUs documentation](/docs/guide/otus) for more information.
+Virtool records each change to an OTU. See [OTUs](/docs/guide/otus).
 
 ### Indexes
 
-Indexes are versioned snapshots of all the OTUs in a reference at points in time. In the background, indexes are
-associated with optimized read mapping indices managed by Virtool.
+An index is a versioned snapshot of all the OTUs in a reference. Each analysis uses one
+index of its reference.
 
-When changes are made to OTUs, the index is rebuilt to include those changes in future analysis jobs. Each analysis is
-tied to a specific index (version) of its target reference.
+When you change OTUs, you must build a new index before analyses can use the changes.
 
-See the [Indexes documentation](/docs/guide/indexes) for more information.
+### Access
 
-### Rights
+These users can see a reference:
 
-Access to references can be controlled by user and group.
+- The user who created the reference.
+- Users and groups that are added to the reference.
+- Full administrators.
 
-Users or groups must be assigned to a reference to gain access to it. The actions a user or group can perform on the
-reference can be tightly controlled.
+To create a reference, you must be an administrator or have the **create_ref**
+permission.
 
 ## Find a reference
 
-1. Click <DummyLink>References</DummyLink> in the main navigation bar.
+1. Click **References** in the main navigation bar.
+2. Type a name in the **Reference name** search field.
+3. Click a reference to open it.
 
-   A list of available references appears.
+The list shows active references. To see archived references, click **Archived**.
 
-   ![Reference Overview Page](./list.png?url)
+## Reference detail
 
-2. Type a search term in the search bar.
+A reference has these tabs:
 
-   The list is narrowed to references that contain the search term in their names.
-
-   ![Search](./search.png?url)
-
-3. Click a reference to view detailed information about it.
-   ![Detailed Information](./detail.png?url)
-
-## Install the official reference
-
-Instead of starting a virus database from scratch, you can use the
-[official plant virus reference](https://www.virtool.ca/downloads). Doing this sets
-up **_a remote_** connection to the reference on GitHub.
-
-1. Go to the **References** view
-
-   A message with a button for installing the official reference is visible if you
-   haven't already installed it.
-
-   ![Official Reference Placeholder](./placeholder.png?url)
-
-2. Click <DummyButton>Install</DummyButton> to begin the installation process.
-
-   A new card should appear representing the official reference on your system. It
-   displays a progress bar while the reference is being created locally.
-
-   ![Official Reference Installing](./installing.png?url)
-
-   Once the installation process is complete, the reference card should look something
-   like this:
-
-   ![Reference Installation Complete](./installed.png?url)
-
-3. Click the reference card to view a detail page for the reference.
-
-   ![Installed Official Reference Detail Page](./detail.png?url)
+- **Manage**: the description, the organism, the source reference of a clone, the latest
+  index build, and the contributors.
+- **OTUs**: the OTUs in the reference. See [OTUs](/docs/guide/otus).
+- **Indexes**: the index builds of the reference.
+- **Settings**: source types, users, and groups.
 
 ## Create an empty reference
 
-1. Navigate to the **References** view
+1. Go to **References**.
+2. Click **Create**.
+3. Under **Method**, select **Empty**.
+4. Type a **Name**.
+5. Optionally, type an **Organism** (for example, virus) and a **Description**.
+6. Click **Create**.
 
-   ![Reference Overview Page](./list.png?url)
-
-2. Click <DummyButton icon="plus-square" /> to open the reference creation dialog.
-
-   ![Empty Reference Box](./empty.png?url)
-
-3. Give your new reference a name, the kind of organism the OTUs are from (for example, viruses),
-   and an optional description.
-
-   ![Filled Reference Dialog](./empty_filled.png?url)
-
-4. Click <DummyButton icon="save">Save</DummyButton>.
-
-   Your new reference now appears in the References Overview page.
-
-   ![Reference Overview Page](./empty_done.png?url)
-
-## Clone a reference
-
-Existing references can be cloned to create a new reference that can be modified without affecting the original.
-
-1. Navigate to the **References** view
-   ![Reference Overview Page](./list.png?url)
-
-2. Click <DummyButton icon="plus-square" /> to open the reference creation dialog.
-
-   ![Empty Reference Box](./empty.png?url)
-
-3. Click the <DummyLink>Clone</DummyLink> tab
-
-   The clone form has a list of existing source references to choose from. The _organism_ and _data type_ are derived
-   from the source reference and can't be changed.
-
-   ![The clone reference form](./clone.png?url)
-
-4. Fill the clone reference form
-
-   Selecting a source reference automatically generates a name for the reference, but this can be changed. Filling
-   out the **Description** field is optional.
-
-   ![A filled clone reference form](./clone_filled.png?url)
-
-5. Click <DummyButton icon="save">Clone</DummyButton>
-
-   The reference is created and appears in the list. Cloning the source data takes time. The progress of this
-   process is shown on the reference card.
-
-   ![Clone in progress](./clone_progress.png?url)
-
-6. Wait for the clone to finish
-
-   The reference card looks like this when the reference is ready:
-
-   ![Clone process complete](./clone_done.png?url)
-
-## Quick clone a reference
-
-An alternative way to clone a particular reference is by using the quick clone function.
-
-1. Find the quick clone icon in the top-right of a reference card
-
-   ![Quick clone icon](./clone_quick.png?url)
-
-2. Click the <Icon name="clone" color="blue" /> icon
-
-   The **Add Reference** dialog appears with the clone tab active. The form has the reference you clicked
-   pre-selected and a name is auto-generated.
-
-   ![Cloning shortcut tab](./clone_quick_dialog.png?url)
-
-3. Continue with [cloning as normal](#clone-a-reference)
+The new reference has no OTUs. You become a member of the reference with all rights.
 
 ## Import a reference
 
-It's possible to [export a reference](#export-a-reference) from one Virtool instance and import it into another. This
-allows you to share your reference with other people.
+You can import a reference file from another Virtool instance. The file name must end in
+`.json.gz` or `.v1.sqlite.gz`.
 
-1. Navigate to the **References** view
-   ![Reference Overview Page](./list.png?url)
+1. Go to **References**.
+2. Click **Create**.
+3. Under **Method**, select **Import**.
+4. Drag the reference file to the upload area, or click **Browse Files** to select it.
+5. Type a **Name** and, optionally, a **Description**.
+6. Wait for the upload to finish. Refer to
+   [Track uploads](/docs/guide/samples#track-uploads).
+7. Click **Create**.
 
-2. Click <DummyButton icon="plus-square" />
+The reference appears in the list. A progress circle shows the progress of the import.
+The upload size limit of your Virtool instance applies to the file.
 
-   ![Empty Reference Box](./empty.png?url)
+## Clone a reference
 
-3. Click the **Import** tab
+A clone is a copy of a reference. You can change the clone and the original does not
+change.
 
-   ![Import Tab](./import.png?url)
+1. Go to **References**.
+2. Click **clone** beside the reference that you want to copy.
+3. Change the **Name** if necessary. The default name is "Clone of" followed by the name
+   of the source reference.
+4. Click **Clone**.
 
-4. Fill the import form
+The clone appears in the list. A progress circle shows the progress of the copy.
 
-   Upload a `.json.gz` file containing a reference and give it and name and optional description.
+The clone gets the organism of the source reference. Its **Manage** tab shows a link to
+the source reference.
 
-   ![Import Filled](./import_filled.png?url)
-
-5. Click <DummyButton icon="save">Import</DummyButton>
-
-   The reference is created and the import process begins. You can see the progress on the reference card.
-
-   ![Import in progress](./import_progress.png?url)
-
-6. Wait for the import to finish
-
-   The reference card looks like this when it's complete:
-
-   ![Import complete](./import_complete.png?url)
-
-## Export a reference
-
-1.  Navigate to the **References** view
-
-    ![References list](./list_with_clone.png?url)
-
-2.  Click the reference you want to export
-
-    The detail view for the reference appears.
-
-    ![Reference header with export button](./export_header.png?url)
-
-3.  Click the <Icon name="download" color="blue" /> icon at the top-right
-
-    The **Export Reference** dialog appears.
-
-    ![Export dialog](./export_dialog.png?url)
-
-4.  Click <DummyButton icon="download" color="grey">Export</DummyButton>
-
-    A file called `reference.json.gz` is downloaded. It may take some time for the download to start as the
-    reference file is prepared.
-
-    ![Download of export complete](./export_download.png?url)
+You can't clone an archived reference.
 
 ## Edit a reference
 
-After a reference is created, its _name_ and _description_ can be changed. Its
-_data type_ and _organism_ can't be changed.
+You must have the **modify** right on the reference.
 
-1. Navigate to the detail view for a reference
+1. Open the reference.
+2. Go to the **Manage** tab.
+3. Click **modify**.
+4. Change the **Name**, **Organism**, or **Description**.
+5. Click **Save**.
 
-   ![Clone of Plant Viruses detail view](./detail.png?url)
+You can't edit an archived reference.
 
-2. Click the <Icon name="pencil-alt" color="orange" /> icon in the top-right
+## Archive a reference
 
-   The **Reference Edit** dialog appears. The current information for the reference is in the form fields.
+Archive a reference that you no longer use. You must have the **modify** right on the
+reference.
 
-   ![The reference edit dialog](./edit.png?url)
+1. Open the reference.
+2. Go to the **Manage** tab.
+3. Click **archive**.
+4. Click **Archive** to confirm.
 
-3. Make your changes to reference
+An archived reference:
 
-   Here, the name changes and a description is added.
+- Does not show in the default reference list.
+- Can't be edited, and its OTUs can't be changed.
+- Can't be used for new analyses.
 
-   ![The reference edit dialog with changes](./edit_changed.png?url)
+Existing analyses that use the reference stay available.
 
-4. Click <DummyButton icon="save">Save</DummyButton>
+To make an archived reference active again, open it, click **unarchive**, and then click
+**Unarchive**.
 
-   Your changes are applied to the reference.
+## Indexes
 
-   ![The reference edit dialog with changes](./edit_complete.png?url)
+### View indexes
 
-## Delete a reference
+Go to the **Indexes** tab of a reference. The list shows the version of each index and
+the number of changes and OTUs that each build includes.
 
-1. Navigate to the references view
+The index that analyses use is marked **Active**. An index that is still being built is
+marked **Building**.
 
-   Notice that **Clone of Plant Viruses** is in the list of references.
+The **Manage** tab shows the latest index build.
 
-   ![References list](./list_with_clone.png?url)
+### View an index
 
-2. Click the reference you want to delete
+Click an index in the list. The index page shows:
 
-   You are taken to the detail view for the reference.
+- **Contributors**: the users that made the changes in the index.
+- **Files**: the data files of the index. Click a file name to download the file.
+- **OTUs**: the OTUs in the index.
 
-   ![Delete Reference](./detail.png?url)
+### Build an index
 
-3. Navigate to the **Settings** tab
+You must build a new index before analyses can use changes to OTUs. You must have the
+**build** right on the reference.
 
-   ![Reference settings](./settings_initial.png?url)
+When the reference has unbuilt changes, the **OTUs** tab shows an alert.
 
-4. Click <DummyButton icon="trash" color="grey" >Delete</DummyButton> on the bottom
+1. Go to the **Indexes** tab.
+2. Click **Create**.
 
-   **Deleting a reference is permanent.** Make sure you want to delete the reference.
+   The **Rebuild Index** dialog shows the changes that the new index includes.
 
-   You are redirected to the references list when you delete a reference. It should be gone from the references
-   list.
+3. Click **Start**.
 
-   ![Reference list with Clone of Plant Viruses deleted](./list.png?url)
+Virtool starts a job that builds the index. When the job is complete, the new index is
+marked **Active**.
 
-## Update the official reference
+The **Create** button shows only when the reference has unbuilt changes. You can't build
+an index for an archived reference.
 
-The official reference is a collection of plant viruses that lets you get started using Virtool right away. It can be
-automatically updated from the repository on GitHub. When changes are made to the reference on GitHub, the official
-reference on Virtool also needs to be updated.
+## Source types
 
-1. Go to the detail view for the official reference
+An isolate name has a source type and a source name, for example _isolate A_. You can
+limit the source types that users can select for isolates in a reference.
 
-   To check for updates, click the official reference. The **Remote Reference**
-   box indicates whether an update is available.
+You must have the **modify** right on the reference.
 
-   ![Update Official Reference](./remote.png?url)
+1. Open the reference.
+2. Go to the **Settings** tab.
+3. Select **Restrict Source Types**.
 
-2. Click <DummyButton icon="download">Install</DummyButton> to install the update
+When this setting is off, users can type any source type.
 
-   The update process begins. The progress is shown in the **Remote Reference** box.
+### Add a source type
 
-   ![Remote reference update progress](./remote_updating.png?url)
+1. Type the source type under **Add Source Type**.
+2. Click **Add**.
 
-3. Wait for the update to complete
+A source type can't contain spaces. Virtool changes it to lowercase.
 
-   Once installation is complete, the **Remote Reference** box shows an
-   <Icon name="check" color="green" /> **Up-to-date** status.
+### Remove a source type
 
-   ![Remote reference is up to date](./remote_updated.png?url)
+Click **Remove** beside the source type. To add it again, click **undo**.
 
-## Build an index
+### Default source types
 
-After updating the official reference there are unbuilt changes that need to be included in an index before they can
-be used in analyses. [Learn more about building indexes](/docs/guide/indexes/#rebuild-index).
+A new reference gets the default source types. To change the defaults, you must be a
+full administrator.
 
-## Manage source types
+1. Go to **References**.
+2. In the sidebar, click **Settings**.
+3. Add or remove source types under **Default Source Types**.
 
-Isolate names comprise a _source type_ and _source name_. Users can be forced to use certain allowed source type values
-when creating isolates.
+A change to the defaults does not change existing references.
 
-Source type restrictions don't affect OTUs from import, remote, or clone sources.
+## Users and groups
 
-1. Go to the detail view for the reference of interest
-   ![Reference detail](./detail.png?url)
+Users and groups that you add to a reference can see the reference and use it in
+analyses. You can give them more rights.
 
-2. Go to the **Settings** tab
-   ![Reference](./settings_initial.png?url)
+To manage users and groups, you must have the **modify** right on the reference. Go to
+the **Settings** tab of the reference.
 
-3. Click the **Enable** checkbox
+### Add a user or group
 
-   This turns on source type restrictions for the reference. Users can use only the source types listed
-   here when creating isolates.
+1. Click **Add user** or **Add group**.
+2. Type in the search field to find the user or group.
+3. Click the user or group.
 
-   ![Source type control enabled](./source_types.png?url)
+A new user or group has no rights.
 
-4. Enter a new source type in the input and click the <Icon name="circle-check" /> icon
+### Change rights
 
-   This adds the entered source type to the allowed source types for the reference. It's available as a choice
-   for users when they add isolates.
+1. Click **edit member** beside the user or group.
+2. Select the rights that you want to give:
 
-5. Click the <Icon name="trash" color="red" /> icon on a source type to remove it
+   - **modifyOtu**: change the OTUs in the reference.
+   - **build**: build new indexes for the reference.
+   - **modify**: change the reference properties and settings.
 
-## Rights
+Virtool saves each change immediately.
 
-Reference rights control what users can do with a reference.
-
-Access to references can be configured for individual users and user groups. Users and groups added to the reference
-can read the reference and use it in analyses. Additional protected actions can be enabled for users and
-groups after they have been added.
-
-### Add a user
-
-Adding a user to a reference gives them the right to browse the reference.
-
-1. Go to the settings tabs for a reference
-
-   ![Reference](./settings_initial.png?url)
-
-2. Click the <DummyLink>Add User</DummyLink> link
-
-   The **Add User** dialog appears. You can use the search input to filter the users on your Virtool instance.
-
-   ![Add User dialog](./user_add.png?url)
-
-3. Click a user to add them to the reference
-
-   Check that the user is now in the users list.
-
-   ![User Added](./user_added.png?url)
-
-### Add a group
-
-1. Go to the settings tabs for a reference
-
-   ![Reference](./settings_initial.png?url)
-
-2. Click the <DummyLink>Add Group</DummyLink> link
-
-   The **Add Group** dialog appears
-
-   ![Add User dialog](./group_add.png?url)
-
-3. Click a group to add it to the reference
-
-   Check that the group is now in the groups list.
-
-   ![Group added](./group_added.png?url)
+A user gets the rights of all their groups in addition to their own rights.
 
 ### Remove a user or group
 
-1. Click the <Icon name="trash" color="red" /> icon on the user or group you want to remove
-
-   <video src="./user_group_delete.mp4" alt="Remove a user or group." autoplay />
-
-### Modifying rights
-
-This procedure is the same for users and groups.
-
-1. Go to the settings tabs for a reference
-
-   ![Reference](./settings_initial.png?url)
-
-2. Click the <Icon name="edit" color="orange" /> icon on the user or group you want to change
-
-   The modification dialog appears.
-
-   ![Change rights](./rights_modify.png?url)
-
-3. Click the checkbox next to the permissions you would like to assign the user or group
-
-   ![Modified Permissions](./rights_modified.png?url)
+Click **Remove member** beside the user or group. Virtool removes the user or group
+immediately and does not ask you to confirm.
