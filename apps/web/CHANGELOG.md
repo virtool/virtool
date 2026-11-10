@@ -1,3 +1,33 @@
+## 42.65.0 (2026-11-10)
+
+### Features
+
+#### Choose relative or absolute times ([#4220](https://github.com/virtool/virtool/pull/4220))
+
+You can now show times as a date and time, such as "Today at 11:12" or "Sep 26 at 14:03," instead of a relative time, such as "3 days ago." Times from an earlier year show the date only, such as "Sep 26, 2023." Go to **Account** > **Settings** and set **Time format**. Hover over a time or click it to see the exact date and time, or how long ago it was.
+
+### Fixes
+
+#### Prevent a second delete from a confirmation dialog ([#4223](https://github.com/virtool/virtool/pull/4223))
+
+When you click **Confirm** in a delete or remove dialog, Virtool now disables the dialog until the action is complete. A double click no longer sends the action two times. When the dialog closes, focus goes back to the button that opened it, if that button is still on the page.
+
+#### Report interrupted migrations as needing only a rerun ([#4219](https://github.com/virtool/virtool/pull/4219))
+
+When SIGTERM or SIGINT stopped `migrate`, it told the operator to inspect findings and remediate data, or it failed with `failed to apply migrations`. It now logs that the run was interrupted and that the operator must rerun `migrate`, and it exits non-zero. An interrupted data migration is recorded as `errored`, with the error `interrupted before the data migration finished`. It isn't reported to Sentry.
+
+#### Show one version in the About dialog ([#4221](https://github.com/virtool/virtool/pull/4221))
+
+Virtool is released as one version. The About dialog now shows that version and links to its changelog. It no longer lists separate server and web app versions.
+
+#### Show readable messages on the email delivery page ([#4222](https://github.com/virtool/virtool/pull/4222))
+
+When **Administration** > **Email** refuses a change, it now tells you what to do. For example, if you enable sending before you save an API key and a sender address, the page tells you to save them first.
+
+#### Show the current job state when you return to a page ([#4217](https://github.com/virtool/virtool/pull/4217))
+
+If a job finished while you were on a different page, Virtool sometimes showed the job as still running when you went back. On the analyses table, this kept the delete button hidden until you reloaded the page. Virtool now gets the current job state when you go back to the page.
+
 ## 42.64.0 (2026-11-09)
 
 ### Features
