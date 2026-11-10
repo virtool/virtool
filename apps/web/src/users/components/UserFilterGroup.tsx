@@ -1,7 +1,7 @@
 import { FilterChip, FilterGroup } from "@base/Filter";
 import type { UserNested } from "@virtool/contracts";
 import { Users } from "lucide-react";
-import UserFilterMenu from "./UserFilterMenu";
+import UserFilterPopover from "./UserFilterPopover";
 
 type UserFilterGroupProps = {
 	/** Whether loading the available users failed. */
@@ -39,8 +39,8 @@ export default function UserFilterGroup({
 	return (
 		<FilterGroup
 			icon={<Users size={14} />}
-			menu={
-				<UserFilterMenu
+			popover={
+				<UserFilterPopover
 					isError={isError}
 					isPending={isPending}
 					onClear={onClear}

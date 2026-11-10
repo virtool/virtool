@@ -506,7 +506,7 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
+				await screen.findByRole("option", {
 					name: at(users, 0).handle,
 				}),
 			);
@@ -525,13 +525,13 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
+				await screen.findByRole("option", {
 					name: at(users, 0).handle,
 				}),
 			);
 			// The menu stays open, so the second user is toggled without reopening it.
 			await userEvent.click(
-				screen.getByRole("menuitemcheckbox", { name: at(users, 1).handle }),
+				screen.getByRole("option", { name: at(users, 1).handle }),
 			);
 
 			expect(
@@ -554,7 +554,7 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 
-			const items = await screen.findAllByRole("menuitemcheckbox");
+			const items = await screen.findAllByRole("option");
 			expect(items.map((item) => item.textContent)).toEqual([
 				`${self.handle}You`,
 				at(users, 0).handle,
@@ -581,11 +581,57 @@ describe("<SamplesList />", () => {
 			);
 
 			expect(
-				screen.queryByRole("menuitemcheckbox", { name: at(users, 0).handle }),
+				screen.queryByRole("option", { name: at(users, 0).handle }),
 			).not.toBeInTheDocument();
 			expect(
-				screen.getByRole("menuitemcheckbox", { name: at(users, 1).handle }),
+				screen.getByRole("option", { name: at(users, 1).handle }),
 			).toBeInTheDocument();
+		});
+
+		it("should focus the search input when the popover opens", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Users" }));
+
+			expect(await screen.findByLabelText("Filter users")).toHaveFocus();
+		});
+
+		it("should toggle the highlighted user with the keyboard", async () => {
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Users" }));
+			const input = await screen.findByLabelText("Filter users");
+			await userEvent.type(input, at(users, 1).handle);
+			await userEvent.keyboard("{Enter}");
+
+			expect(
+				await screen.findByRole("button", {
+					name: `Remove ${at(users, 1).handle} user filter`,
+				}),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("option", { name: at(users, 1).handle }),
+			).toHaveAttribute("aria-selected", "true");
+			expect(input).toHaveFocus();
+		});
+
+		it("should clear the search on the first Escape and close on the next", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Users" }));
+			const input = await screen.findByLabelText("Filter users");
+			await userEvent.type(input, "zzz");
+
+			await userEvent.keyboard("{Escape}");
+			expect(input).toHaveValue("");
+			expect(input).toBeInTheDocument();
+
+			await userEvent.keyboard("{Escape}");
+			expect(screen.queryByLabelText("Filter users")).not.toBeInTheDocument();
 		});
 
 		it("should remove every chip when the dropdown is cleared", async () => {
@@ -598,7 +644,7 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
+				await screen.findByRole("option", {
 					name: at(users, 0).handle,
 				}),
 			);
@@ -606,7 +652,7 @@ describe("<SamplesList />", () => {
 				await screen.findByRole("button", { name: removeChipName }),
 			).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
+			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
 
 			expect(
 				screen.queryByRole("button", { name: removeChipName }),
