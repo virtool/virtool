@@ -22,7 +22,12 @@ export type EmailTemplate =
 			expiresInHours: number;
 	  }
 	| { type: "password_changed"; username: string }
-	| { type: "password_recovery"; username: string; recoveryUrl: string }
+	| {
+			type: "password_recovery";
+			username: string;
+			recoveryUrl: string;
+			expiresInHours: number;
+	  }
 	| { type: "test" };
 
 /** A transactional email template that carries a bearer link. */

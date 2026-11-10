@@ -8,7 +8,7 @@ import Input from "@base/Input";
 import { Link } from "@tanstack/react-router";
 import { CircleAlert, Info, KeyRound, TriangleAlert } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { getWallErrorMessage } from "../errors";
 import { useFollowAuthNextStep, usePasskeyAutofill } from "../hooks";
 import {
@@ -39,7 +39,8 @@ export default function LoginForm({
 	onChallenge,
 	redirect,
 }: LoginFormProps) {
-	const { handleSubmit, register } = useForm<FormValues>();
+	const { control, handleSubmit, register } = useForm<FormValues>();
+	const handle = useWatch({ control, name: "handle" });
 	const loginMutation = useLoginMutation();
 	const passkeyMutation = usePasskeySignInMutation();
 	const passkeySupport = usePasskeySupport();
@@ -181,7 +182,12 @@ export default function LoginForm({
 					)}
 				</div>
 				<div className="flex items-center justify-between">
-					<Link to="/recover">Forgot your password?</Link>
+					<Link
+						to="/recover"
+						state={{ recoveryHandle: handle?.trim() || undefined }}
+					>
+						Forgot your password?
+					</Link>
 					<Button type="submit" color="blue" disabled={isSigningIn}>
 						Sign in
 					</Button>

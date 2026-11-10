@@ -314,7 +314,7 @@ describe("openEmailTemplate", () => {
 		expect(
 			openEmailTemplate(
 				keyring,
-				{ type: "password_recovery", username: "alice" },
+				{ expiresInHours: 7, type: "password_recovery", username: "alice" },
 				null,
 			),
 		).toBeNull();

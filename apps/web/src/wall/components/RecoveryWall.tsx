@@ -10,7 +10,7 @@ import {
 	requestPasswordRecoveryFn,
 } from "@server/auth/recoveryFunctions";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { getWallErrorMessage } from "../errors";
 import { useCapturedUrlParams } from "../hooks";
@@ -29,10 +29,20 @@ type RecoveryState =
 	| { status: "unusable" }
 	| { status: "unavailable"; token: string; purpose: RecoveryPurpose };
 
+// Every request gets this text, so the screen does not show which accounts
+// can receive recovery email.
+const ADMINISTRATOR_HELP =
+	"If you forgot your username, or your account has no verified email address, ask an administrator for a reset link.";
+
 /** Minimal recovery entry and bearer-link completion screen. */
 export default function RecoveryWall() {
 	const [state, setState] = useState<RecoveryState>({ status: "loading" });
-	const [handle, setHandle] = useState("");
+	const recoveryHandle = useLocation({
+		select: (location) => location.state.recoveryHandle ?? "",
+	});
+	const [handle, setHandle] = useState(recoveryHandle);
+	const [emailVerificationCancelled, setEmailVerificationCancelled] =
+		useState(false);
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const passwordRules = usePasswordRules();
@@ -133,6 +143,7 @@ export default function RecoveryWall() {
 			}
 			queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
 			queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+			setEmailVerificationCancelled(result.emailVerificationCancelled);
 			setState({ status: "changed" });
 		} catch (cause) {
 			setPassword("");
@@ -158,7 +169,7 @@ export default function RecoveryWall() {
 				<>
 					<WallTitle
 						title="Recover your account"
-						subtitle="Enter your username. If the account can receive email, Virtool sends it a link to choose a new password."
+						subtitle="Enter your username. Virtool sends a link to choose a new password to the verified email address of the account."
 					/>
 					<form onSubmit={requestRecovery}>
 						<Field>
@@ -179,14 +190,20 @@ export default function RecoveryWall() {
 							Send recovery link
 						</Button>
 					</form>
+					<p className="mt-6 text-gray-600">{ADMINISTRATOR_HELP}</p>
 				</>
 			)}
 			{state.status === "acknowledged" && (
 				<>
 					<WallTitle
 						title="Check your email"
-						subtitle="If this account can receive recovery email, a link has been queued."
+						subtitle="If the account has a verified email address, Virtool sends a recovery link to it."
 					/>
+					<p className="mb-4 text-gray-600">
+						If you asked for a link in the last hour, use that link. Virtool
+						does not send a new one.
+					</p>
+					<p className="mb-6 text-gray-600">{ADMINISTRATOR_HELP}</p>
 					<Link to="/login">Return to sign in</Link>
 				</>
 			)}
@@ -234,6 +251,13 @@ export default function RecoveryWall() {
 						title="Password changed"
 						subtitle="Sign in with your new password. If your account needs more setup, Virtool asks for it after you sign in."
 					/>
+					{emailVerificationCancelled && (
+						<p role="status" className="mb-6 text-gray-600">
+							The password change cancelled a pending email verification. After
+							you sign in, start the verification again in your account
+							settings.
+						</p>
+					)}
 					<Link to="/login">Sign in</Link>
 				</>
 			)}
