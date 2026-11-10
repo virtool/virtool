@@ -76,12 +76,22 @@ export function createJobRefreshQueue(
 		// reading them here would be a fan-out the old path did not have. It is
 		// also what keeps the jobs list page, whose rows render from the list
 		// query and mount no details, from reading one job per row.
+		//
+		// Skipping them must still mark them stale. Seeded details are pinned
+		// fresh, so a row that remounts would otherwise keep showing a job as
+		// running after it finished, until the page reloads.
 		const cache = queryClient.getQueryCache();
-		const watched = ids.filter(
-			(id) =>
-				cache.find({ queryKey: jobQueryKeys.detail(id), type: "active" }) !==
-				undefined,
-		);
+		const watched: number[] = [];
+
+		for (const id of ids) {
+			const queryKey = jobQueryKeys.detail(id);
+
+			if (cache.find({ queryKey, type: "active" })) {
+				watched.push(id);
+			} else {
+				queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+			}
+		}
 
 		if (watched.length === 0) {
 			return;
