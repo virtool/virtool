@@ -17,7 +17,7 @@ import { useListUsers } from "@users/queries";
 import type { GroupMinimal, Label } from "@virtool/contracts";
 import { CalendarDays, Search, Tag, Users, Workflow } from "lucide-react";
 import { lazy, Suspense } from "react";
-import GroupFilterMenu from "./GroupFilterMenu";
+import GroupFilterPopover from "./GroupFilterPopover";
 import LabelFilterMenu from "./LabelFilterMenu";
 import WorkflowFilterMenu from "./WorkflowFilterMenu";
 import { workflowStateIcons } from "./workflowStateIcons";
@@ -211,8 +211,8 @@ export default function FilterBar({
 			/>
 			<FilterGroup
 				icon={<Users size={14} />}
-				menu={
-					<GroupFilterMenu
+				popover={
+					<GroupFilterPopover
 						groups={groups}
 						onClear={onClearGroups}
 						onToggle={onToggleGroup}

@@ -2,6 +2,7 @@ import { getDateFilter } from "@samples/dateFilter";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
+import { createFakeGroupMinimal } from "@tests/fake/groups";
 import { createFakeHmmSearchResults } from "@tests/fake/hmm";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
 import { createFakeLabel } from "@tests/fake/labels";
@@ -27,6 +28,7 @@ import SamplesList from "../SamplesList";
 type SamplesListSearch = {
 	createdAfter?: string;
 	createdBefore?: string;
+	groups?: number[];
 	labels?: number[];
 	page?: number;
 	term?: string;
@@ -49,6 +51,7 @@ function SamplesListHarness({
 	return (
 		<SamplesList
 			dateFilter={getDateFilter(search.createdAfter, search.createdBefore)}
+			filterGroups={search.groups}
 			filterLabels={search.labels}
 			page={search.page}
 			setSearch={handleSetSearch}
@@ -647,6 +650,124 @@ describe("<SamplesList />", () => {
 				await screen.findByRole("option", {
 					name: at(users, 0).handle,
 				}),
+			);
+			expect(
+				await screen.findByRole("button", { name: removeChipName }),
+			).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+
+			expect(
+				screen.queryByRole("button", { name: removeChipName }),
+			).not.toBeInTheDocument();
+		});
+	});
+
+	describe("group filtering", () => {
+		let groups: ReturnType<typeof createFakeGroupMinimal>[];
+
+		beforeEach(() => {
+			// Names are fixed so neither is a substring of the other, keeping the
+			// search-input assertions unambiguous.
+			groups = [
+				createFakeGroupMinimal({ name: "Botany" }),
+				createFakeGroupMinimal({ name: "Virology" }),
+			];
+			mockListSampleGroups(groups);
+		});
+
+		it("should show a chip for a group selected in the popover", async () => {
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+			await userEvent.click(
+				await screen.findByRole("option", { name: at(groups, 0).name }),
+			);
+
+			expect(
+				await screen.findByRole("button", {
+					name: `Remove ${at(groups, 0).name} group filter`,
+				}),
+			).toBeInTheDocument();
+		});
+
+		it("should narrow the groups to those matching the search", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+			await userEvent.type(
+				await screen.findByLabelText("Filter groups"),
+				at(groups, 1).name,
+			);
+
+			expect(
+				screen.queryByRole("option", { name: at(groups, 0).name }),
+			).not.toBeInTheDocument();
+			expect(
+				screen.getByRole("option", { name: at(groups, 1).name }),
+			).toBeInTheDocument();
+		});
+
+		it("should focus the search input when the popover opens", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+
+			expect(await screen.findByLabelText("Filter groups")).toHaveFocus();
+		});
+
+		it("should toggle the highlighted group with the keyboard", async () => {
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+			const input = await screen.findByLabelText("Filter groups");
+			await userEvent.type(input, at(groups, 1).name);
+			await userEvent.keyboard("{Enter}");
+
+			expect(
+				await screen.findByRole("button", {
+					name: `Remove ${at(groups, 1).name} group filter`,
+				}),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("option", { name: at(groups, 1).name }),
+			).toHaveAttribute("aria-selected", "true");
+			expect(input).toHaveFocus();
+		});
+
+		it("should clear the search on the first Escape and close on the next", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+			const input = await screen.findByLabelText("Filter groups");
+			await userEvent.type(input, "zzz");
+
+			await userEvent.keyboard("{Escape}");
+			expect(input).toHaveValue("");
+			expect(input).toBeInTheDocument();
+
+			await userEvent.keyboard("{Escape}");
+			expect(screen.queryByLabelText("Filter groups")).not.toBeInTheDocument();
+		});
+
+		it("should remove every chip when the popover is cleared", async () => {
+			mockFindSamples(samples);
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			const removeChipName = `Remove ${at(groups, 0).name} group filter`;
+
+			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+			await userEvent.click(
+				await screen.findByRole("option", { name: at(groups, 0).name }),
 			);
 			expect(
 				await screen.findByRole("button", { name: removeChipName }),
