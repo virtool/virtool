@@ -100,7 +100,10 @@ type TimeText = {
 	/** The time in the format the user prefers. */
 	primary: string;
 
-	/** The time in the other format. */
+	/**
+	 * The tooltip text: the exact date and time of a relative time, or the
+	 * relative time of an absolute time.
+	 */
 	secondary: string;
 
 	/**
@@ -207,7 +210,9 @@ type TimeProps = {
 
 /**
  * Shows a time in the format the signed-in user prefers, relative ("3 days
- * ago") or absolute ("Today at 11:12"). A tooltip shows the other format.
+ * ago") or absolute ("Today at 11:12"). The tooltip of a relative time shows
+ * the exact date and time, and the tooltip of an absolute time shows the
+ * relative time.
  *
  * The tooltip opens on hover, on keyboard focus, and on tap.
  */
