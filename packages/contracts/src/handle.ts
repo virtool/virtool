@@ -11,10 +11,10 @@ export const HANDLE_MAX_LENGTH = 30;
 const RESERVED_HANDLE = "virtool";
 
 /** The message shown when a handle does not have a valid shape. */
-export const INVALID_HANDLE_MESSAGE = `User name must have ${HANDLE_MIN_LENGTH} to ${HANDLE_MAX_LENGTH} characters, and use only letters, numbers, and _ .`;
+export const INVALID_HANDLE_MESSAGE = `Username must have ${HANDLE_MIN_LENGTH} to ${HANDLE_MAX_LENGTH} characters, and use only letters, numbers, and _ .`;
 
 /** The message shown when a user tries to take the reserved handle. */
-export const RESERVED_HANDLE_MESSAGE = `Reserved user name: ${RESERVED_HANDLE}`;
+export const RESERVED_HANDLE_MESSAGE = `Reserved username: ${RESERVED_HANDLE}`;
 
 /** Report whether a handle has a shape Better Auth can authenticate. */
 export function isValidHandle(handle: string): boolean {

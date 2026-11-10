@@ -640,7 +640,7 @@ async function expectRateLimited(handle: string, attempt: string) {
 async function failLogin(handle: string) {
 	await expect(
 		callServerFn(handlers, "loginFn", { handle, password: "wrong-password" }),
-	).rejects.toThrow("Invalid handle or password.");
+	).rejects.toThrow("Incorrect username or password.");
 }
 
 it("limits password sign-in attempts from one address", async () => {
