@@ -33,6 +33,7 @@ each consumer would then need a rebuild to see a change. Keep
 | ------------------------------------------------------- | ------------------------------------------------------- |
 | [`@virtool/archive`](packages/archive/README.md)        | Tar, gzip, and zip utilities.                           |
 | [`@virtool/bio`](packages/bio/README.md)                | Sequence utilities and workflow text parsers.           |
+| [`@virtool/changelog`](packages/changelog/README.md)    | Release posts, post schema, and changelog parser.       |
 | [`@virtool/contracts`](packages/contracts/README.md)    | Shared wire shapes and isolated server-only helpers.    |
 | [`@virtool/data`](packages/data/README.md)              | Server-only Drizzle schema mirror and Postgres queries. |
 | [`@virtool/env`](packages/env/README.md)                | File-backed environment variable resolution.            |
