@@ -1,9 +1,9 @@
-import { parseChangelog } from "@utils/changelog";
 import {
   getHiddenPosts,
   getPublishedPosts,
   getReleasedPosts,
-} from "@utils/posts";
+  parseChangelog,
+} from "@virtool/changelog";
 import { getCollection } from "astro:content";
 import changelog from "../../../web/CHANGELOG.md?raw";
 
