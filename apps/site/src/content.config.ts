@@ -17,12 +17,13 @@ const postFields = { title: z.string(), summary: z.string() };
  * `index.mdx` and the images beside it. `summary` is one sentence, because the
  * post list shows it.
  *
- * A `release` post explains a change in more detail than a changelog entry. It
+ * A `release` post shows users a new feature and why it is useful. It links to
+ * the manual for instructions and does not repeat them. It
  * cannot name its version, because Knope calculates the version later. Set `pr`
  * to the pull request that makes the change. That pull request needs a change
- * file that names `virtool`, or the changelog will not contain it. The site
- * hides the post until that release exists, and the build logs a warning for
- * each hidden post.
+ * file that names `virtool`, or the changelog will not contain it. The build
+ * hides the post until that release exists and logs a warning for each hidden
+ * post. The dev server shows it as unreleased.
  *
  * A `research` post tells users about work outside a release, such as a paper.
  */
