@@ -23,10 +23,12 @@ import {
 import userEvent from "@testing-library/user-event";
 import { createContext, type ReactNode, useContext, useState } from "react";
 import { beforeEach, vi } from "vitest";
+import { blogIndexMocks } from "./blogIndex";
 import { createFakeAccount } from "./fake/account";
 import { accountServerFnMocks } from "./server-fn/account";
 import { analysisServerFnMocks } from "./server-fn/analyses";
 import { authServerFnMocks } from "./server-fn/auth";
+import { changelogServerFnMocks } from "./server-fn/changelog";
 import { emailServerFnMocks } from "./server-fn/email";
 import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
@@ -56,6 +58,14 @@ vi.mock("@server/analyses/functions", async () => {
 vi.mock("@server/account/functions", async () => {
 	const { accountServerFnMocks } = await import("./server-fn/account");
 	return accountServerFnMocks;
+});
+vi.mock("@nav/blogIndex", async () => {
+	const { blogIndexMocks } = await import("./blogIndex");
+	return blogIndexMocks;
+});
+vi.mock("@server/changelog/functions", async () => {
+	const { changelogServerFnMocks } = await import("./server-fn/changelog");
+	return changelogServerFnMocks;
 });
 // See the users mock below for why this resolves the mock via dynamic import.
 vi.mock("@server/auth/functions", async () => {
@@ -159,6 +169,8 @@ beforeEach(() => {
 		...Object.values(taskServerFnMocks),
 		...Object.values(hmmServerFnMocks),
 		...Object.values(authServerFnMocks),
+		...Object.values(changelogServerFnMocks),
+		...Object.values(blogIndexMocks),
 		...Object.values(recoveryServerFnMocks),
 		...Object.values(recentAuthenticationServerFnMocks),
 		...Object.values(labelServerFnMocks),

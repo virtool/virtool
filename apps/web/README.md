@@ -74,6 +74,10 @@ retries.
 If a server function changes its HTTP method, old browser tabs receive 405. Keep
 them on a matching server version or require a reload during the cutover.
 
+Browsers get the **What's new** posts and their images from
+`https://www.virtool.ca`. The content security policy allows that origin. If a
+network blocks it, the list is empty and the rest of the app works.
+
 ## Authentication
 
 Better Auth authenticates interactive users. Virtool owns account state, API

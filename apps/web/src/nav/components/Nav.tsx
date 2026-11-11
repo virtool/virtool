@@ -14,6 +14,7 @@ import { hasSufficientAdminRole } from "@virtool/contracts";
 import { Info } from "lucide-react";
 import { useState } from "react";
 import AboutDialog from "./AboutDialog";
+import ChangelogPopover from "./ChangelogPopover";
 import { NavLink } from "./NavLink";
 
 type NavBarProps = {
@@ -54,6 +55,8 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 
 			<div className="flex gap-2 items-center pr-4">
 				<UploadIndicator />
+
+				<ChangelogPopover />
 
 				<IconButton
 					onClick={() => setAboutOpen(true)}

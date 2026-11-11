@@ -26,3 +26,32 @@ export function getPostSections(
 
   return sections;
 }
+
+/** The first image in a post's MDX body. */
+export type PostImage = { alt: string; src: string };
+
+const IMAGE = /!\[([^\]]*)\]\(\s*([^\s)]+)(?:\s+"[^"]*")?\s*\)/;
+
+/** Get the first Markdown image in a post's MDX body. */
+export function getFirstImage(body: string): PostImage | undefined {
+  const match = body.match(IMAGE);
+
+  if (!match) {
+    return undefined;
+  }
+
+  const [, alt = "", src = ""] = match;
+
+  return { alt, src };
+}
+
+/**
+ * Get the path of an image that a post links to, from the path of the post
+ * file. Both paths are relative to the site root, and the result starts with
+ * `/` as `import.meta.glob` keys do.
+ */
+export function getImagePath(postPath: string, src: string): string {
+  const directory = postPath.slice(0, postPath.lastIndexOf("/") + 1);
+
+  return new URL(src.split("?")[0] ?? "", `file:///${directory}`).pathname;
+}

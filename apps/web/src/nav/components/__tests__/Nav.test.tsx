@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { mockFetchBlogIndex } from "@tests/blogIndex";
 import { renderWithRouter } from "@tests/setup";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
@@ -62,5 +63,25 @@ describe("<Nav />", () => {
 		).toBeInTheDocument();
 		const docLink = screen.getByRole("link", { name: "virtool.ca/docs" });
 		expect(docLink).toHaveAttribute("href", "https://www.virtool.ca/docs");
+	});
+
+	it("stays usable when the changelog has no posts", async () => {
+		mockFetchBlogIndex([]);
+
+		await renderWithRouter(<Nav {...props} />);
+
+		await userEvent.click(screen.getByRole("button", { name: "What's new" }));
+
+		expect(
+			await screen.findByText("There are no posts for this version."),
+		).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "Samples" })).toBeInTheDocument();
+
+		await userEvent.keyboard("{Escape}");
+		await userEvent.click(screen.getByRole("button", { name: "User menu" }));
+
+		expect(
+			screen.getByRole("menuitem", { name: "Logout" }),
+		).toBeInTheDocument();
 	});
 });

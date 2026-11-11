@@ -26,6 +26,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.6",
     "@virtool/changelog": "workspace:*",
+    "@virtool/contracts": "workspace:*",
     "astro": "^7.4.4",
     "micromark": "^4.0.3",
     "micromark-extension-gfm": "^3.0.0",
