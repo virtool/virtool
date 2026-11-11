@@ -12,3 +12,6 @@ pnpm --filter @virtool/dev test
 pnpm --filter @virtool/dev typecheck
 pnpm --filter @virtool/dev build
 ```
+
+The management UI tests run in Chromium. Install it with
+`pnpm --filter @virtool/dev exec playwright install chromium`.

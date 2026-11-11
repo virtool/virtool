@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -77,7 +75,6 @@ async function renderApp() {
 
 beforeEach(() => {
 	window.history.replaceState(null, "", "/");
-	vi.stubGlobal("scrollTo", vi.fn());
 	Object.assign(snapshot, structuredClone(initial));
 	connection = "live";
 	vi.stubGlobal(
@@ -160,7 +157,7 @@ it("shows actions for ready, stopped, and failed environments", async () => {
 		.click(screen.getByRole("link", { name: "← Back to worktrees" }));
 	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
-	expect(screen.getByRole("alert")).toHaveTextContent("Build failed");
+	expect(screen.getByRole("alert")).toMatchTextContent("Build failed");
 	expect(screen.getByRole("link", { name: "View logs" })).toHaveAttribute(
 		"href",
 		"/logs?environment=worktree",
@@ -205,8 +202,8 @@ it("retains the failed startup stage and final elapsed time", async () => {
 	await renderApp();
 	await openEnvironmentDetails();
 	const timeline = screen.getByRole("region", { name: "Startup timeline" });
-	expect(timeline).toHaveTextContent("5s elapsed");
-	expect(timeline).toHaveTextContent("Run migrations (failed)");
+	expect(timeline).toMatchTextContent("5s elapsed");
+	expect(timeline).toMatchTextContent("Run migrations (failed)");
 });
 
 it("marks disconnected snapshots and disables mutations until reconnected", async () => {
@@ -347,7 +344,7 @@ it("loads environment detail URLs directly", async () => {
 it("shows a not-found message for unknown URLs", async () => {
 	window.history.replaceState(null, "", "/unknown");
 	await renderApp();
-	expect(screen.getByRole("alert")).toHaveTextContent("Page not found.");
+	expect(screen.getByRole("alert")).toMatchTextContent("Page not found.");
 });
 
 it("keeps the shared tab compatible with older daemon snapshots", async () => {
@@ -368,11 +365,11 @@ it("shows infrastructure failures even after initialization", async () => {
 	expect(screen.getByText("Needs attention")).toBeVisible();
 	expect(
 		screen.getByRole("article", { name: "postgres service" }),
-	).toHaveTextContent("postgresVolume usage: 1.5 MBunhealthy");
+	).toMatchTextContent("postgresVolume usage: 1.5 MBunhealthy");
 	expect(
 		screen.getByRole("article", { name: "caddy service" }),
-	).toHaveTextContent("caddyhealthy");
-	expect(screen.getByRole("alert")).toHaveTextContent("Postgres unavailable");
+	).toMatchTextContent("caddyhealthy");
+	expect(screen.getByRole("alert")).toMatchTextContent("Postgres unavailable");
 });
 
 it("reports rejected mutations", async () => {
@@ -387,7 +384,7 @@ it("reports rejected mutations", async () => {
 		screen.getByRole("link", { name: "View details for feature/test" }),
 	);
 	await user.click(screen.getByRole("button", { name: "Stop" }));
-	expect(await screen.findByRole("alert")).toHaveTextContent("Unable to stop");
+	expect(await screen.findByRole("alert")).toMatchTextContent("Unable to stop");
 	expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled();
 });
 
@@ -584,22 +581,13 @@ it("shows why the daemon rejects a default administrator", async () => {
 	await user.type(screen.getByLabelText("Password"), "hello world");
 	await user.click(screen.getByRole("button", { name: "Save" }));
 
-	expect(await screen.findByRole("alert")).toHaveTextContent(
+	expect(await screen.findByRole("alert")).toMatchTextContent(
 		"Reserved user name: virtool",
 	);
 });
 
 describe("create options", () => {
 	beforeEach(() => {
-		Object.assign(HTMLDialogElement.prototype, {
-			close(this: HTMLDialogElement) {
-				this.removeAttribute("open");
-				this.dispatchEvent(new Event("close"));
-			},
-			showModal(this: HTMLDialogElement) {
-				this.setAttribute("open", "");
-			},
-		});
 		snapshot.environments = [
 			{
 				...getEnvironment(),
