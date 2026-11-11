@@ -39,7 +39,10 @@ export function SubtractionItem({
 				{name}
 			</Link>
 			<div className="col-span-2 flex justify-start">
-				<SubtractionAttribution handle={user?.handle ?? ""} time={createdAt} />
+				<SubtractionAttribution
+					username={user?.username ?? ""}
+					time={createdAt}
+				/>
 			</div>
 			{!ready && status && (
 				<span className="flex items-center justify-end gap-1 font-medium">

@@ -166,6 +166,6 @@ declare module "@tanstack/react-router" {
 	// biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation merges into TanStack Router's HistoryState interface
 	interface HistoryState {
 		/** The username typed on the sign-in form, kept out of the recovery URL. */
-		recoveryHandle?: string;
+		recoveryUsername?: string;
 	}
 }

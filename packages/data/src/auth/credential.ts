@@ -1,4 +1,5 @@
-import { and, eq, sql } from "drizzle-orm";
+import { normalizeUsername } from "@virtool/contracts";
+import { and, eq } from "drizzle-orm";
 import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
 import { users } from "../db/schema/users";
@@ -9,7 +10,7 @@ export const CREDENTIAL_PROVIDER_ID = "credential";
 
 /** The sign-in credentials whose stored hash {@link upgradePasswordHash} replaces. */
 export type UpgradePasswordHashInput = {
-	handle: string;
+	username: string;
 	password: string;
 };
 
@@ -25,12 +26,12 @@ export type UpgradePasswordHashInput = {
  */
 export async function upgradePasswordHash(
 	db: Db,
-	{ handle, password }: UpgradePasswordHashInput,
+	{ username, password }: UpgradePasswordHashInput,
 ): Promise<boolean> {
 	const [user] = await db
 		.select({ id: users.id, password: users.password })
 		.from(users)
-		.where(sql`lower(${users.handle}) = ${handle.toLowerCase()}`)
+		.where(eq(users.username, normalizeUsername(username)))
 		.limit(1);
 
 	if (

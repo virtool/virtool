@@ -1,6 +1,7 @@
 import { cn } from "@app/cn";
 import { usePasskeySupport } from "@app/passkeySupport";
 import { getPasskeyNotice, type PasskeyNotice } from "@app/passkeys";
+import { registerUsernameInput } from "@app/usernameInput";
 import Alert from "@base/Alert";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
@@ -29,7 +30,7 @@ type LoginFormProps = {
 };
 
 type FormValues = {
-	handle: string;
+	username: string;
 	password: string;
 };
 
@@ -40,7 +41,7 @@ export default function LoginForm({
 	redirect,
 }: LoginFormProps) {
 	const { control, handleSubmit, register } = useForm<FormValues>();
-	const handle = useWatch({ control, name: "handle" });
+	const username = useWatch({ control, name: "username" });
 	const loginMutation = useLoginMutation();
 	const passkeyMutation = usePasskeySignInMutation();
 	const passkeySupport = usePasskeySupport();
@@ -85,7 +86,7 @@ export default function LoginForm({
 		void continueSignIn();
 	}
 
-	function onSubmit({ handle, password }: FormValues) {
+	function onSubmit({ username, password }: FormValues) {
 		if (isSigningIn) {
 			return;
 		}
@@ -93,7 +94,7 @@ export default function LoginForm({
 		setAutofillNotice(null);
 		setContinueError(null);
 		setRestartNotice(null);
-		loginMutation.mutate({ handle, password }, { onSuccess: onSignedIn });
+		loginMutation.mutate({ username, password }, { onSuccess: onSignedIn });
 	}
 
 	function onPasskeySignIn() {
@@ -154,7 +155,7 @@ export default function LoginForm({
 						aria-required
 						aria-invalid={isError || undefined}
 						aria-describedby={isError ? "login-error" : undefined}
-						{...register("handle", { required: true })}
+						{...registerUsernameInput(register("username", { required: true }))}
 						autoFocus
 					/>
 				</Field>
@@ -184,7 +185,7 @@ export default function LoginForm({
 				<div className="flex items-center justify-between">
 					<Link
 						to="/recover"
-						state={{ recoveryHandle: handle?.trim() || undefined }}
+						state={{ recoveryUsername: username?.trim() || undefined }}
 					>
 						Forgot your password?
 					</Link>

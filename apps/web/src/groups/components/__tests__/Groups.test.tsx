@@ -92,20 +92,38 @@ describe("Groups", () => {
 
 	it("should render correctly when active group has a group member", async () => {
 		const group = createFakeGroup({
-			users: [{ handle: "testUser1", id: 1 }],
+			users: [{ id: 1, lifecycleState: "normal", username: "test_user1" }],
 		});
 		mockListGroups([group]);
 		mockGetGroup(group);
 		await renderWithRouter(<Groups />);
 
 		expect(await screen.findByText("Members")).toBeInTheDocument();
-		expect(screen.getByText("testUser1")).toBeInTheDocument();
+		expect(screen.getByText("test_user1")).toBeInTheDocument();
 		expect(screen.queryByText("No Group Members")).not.toBeInTheDocument();
+	});
+
+	it("should show a pending member without a username", async () => {
+		const group = createFakeGroup({
+			users: [
+				{ id: 1, lifecycleState: "normal", username: "ada" },
+				{ id: 2, lifecycleState: "pending", username: null },
+			],
+		});
+		mockListGroups([group]);
+		mockGetGroup(group);
+		await renderWithRouter(<Groups />);
+
+		expect(await screen.findByText("ada")).toBeInTheDocument();
+		expect(screen.getByText("No username yet")).toBeInTheDocument();
+		expect(
+			screen.getByRole("img", { name: "Invited user" }),
+		).toBeInTheDocument();
 	});
 
 	it("should render correctly when more than one group exists", async () => {
 		const group1 = createFakeGroup({
-			users: [{ handle: "bob", id: 1 }],
+			users: [{ id: 1, lifecycleState: "normal", username: "bob" }],
 			permissions: createFakePermissions({
 				create_sample: true,
 				modify_hmm: true,
@@ -113,7 +131,7 @@ describe("Groups", () => {
 			name: "Group 1",
 		});
 		const group2 = createFakeGroup({
-			users: [{ handle: "testUser2", id: 2 }],
+			users: [{ id: 2, lifecycleState: "normal", username: "test_user2" }],
 			permissions: createFakePermissions({
 				create_sample: true,
 				modify_hmm: true,

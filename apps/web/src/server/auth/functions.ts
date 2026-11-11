@@ -11,7 +11,7 @@ import {
 } from "@virtool/contracts";
 import { upgradePasswordHash } from "@virtool/data/auth/credential";
 import {
-	AccountSetupHandleInUseError,
+	AccountSetupUsernameInUseError,
 	cancelEmailRemediation,
 	changeEmailRemediation,
 	checkEmailRemediationComplete,
@@ -48,7 +48,6 @@ import {
 	loginLegacyIdentity,
 	logout,
 } from "./core";
-import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
 import {
 	checkLoginBudget,
@@ -70,10 +69,11 @@ import {
 	signOut,
 	verifyTwoFactor,
 } from "./sessionActions";
+import { checkReservedUsername, checkUsername } from "./username";
 import { verifyBrowserPrincipal } from "./verify";
 
 const loginSchema = z.object({
-	handle: z.string().min(1),
+	username: z.string().min(1),
 	password: z.string().min(1),
 });
 
@@ -90,14 +90,14 @@ function extendEmailRemediationCookies(sessionId: string) {
 }
 
 const createFirstUserSchema = z.object({
-	handle: z.string().trim().min(1),
+	username: z.string().trim().min(1),
 	email: z.string().trim().min(1).max(254),
 	password: z.string(),
 });
 
 const accountSetupSchema = z.object({
 	token: z.string().regex(/^[0-9a-f]{64}$/),
-	handle: z.string().trim().min(1),
+	username: z.string().trim().min(1),
 	password: z.string(),
 });
 
@@ -163,29 +163,29 @@ export const loginFn = createServerFn({ method: "POST" })
 			const ip = getClientIp();
 			const attempt = {
 				ip,
-				handle: data.handle,
+				username: data.username,
 				devices: getLoginDevices(),
 				secret: config.authSecret,
 			};
 			const budget = await checkLoginBudget(db, attempt);
 
 			const legacy = await loginLegacyIdentity(db, realCookies, {
-				handle: data.handle,
+				username: data.username,
 				password: data.password,
 				ip,
 			});
 			if (legacy) {
 				await Promise.all([
 					settleLoginBudget(attempt, budget),
-					upgradeLoginPasswordHash(data.handle, data.password),
+					upgradeLoginPasswordHash(data.username, data.password),
 				]);
 				return legacy;
 			}
 
-			const result = await signInUsername(data.handle, data.password);
+			const result = await signInUsername(data.username, data.password);
 			await Promise.all([
 				settleLoginBudget(attempt, budget),
-				upgradeLoginPasswordHash(data.handle, data.password),
+				upgradeLoginPasswordHash(data.username, data.password),
 			]);
 
 			if ("twoFactorRedirect" in result) {
@@ -200,9 +200,9 @@ export const loginFn = createServerFn({ method: "POST" })
 
 // A hash that stays outdated still verifies, so a failed upgrade must not fail
 // the sign-in that the password has already passed.
-async function upgradeLoginPasswordHash(handle: string, password: string) {
+async function upgradeLoginPasswordHash(username: string, password: string) {
 	try {
-		await upgradePasswordHash(db, { handle, password });
+		await upgradePasswordHash(db, { username, password });
 	} catch (err) {
 		logger.warn({ err }, "password hash upgrade failed");
 	}
@@ -268,8 +268,8 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 	.middleware([open()])
 	.validator(createFirstUserSchema)
 	.handler(async ({ data }) => {
-		checkHandle(data.handle);
-		checkReservedHandle(data.handle);
+		checkUsername(data.username);
+		checkReservedUsername(data.username);
 		const email = normalizeEmail(data.email);
 		if (!isValidEmail(email)) {
 			throw new ClientError(INVALID_EMAIL_MESSAGE, 400);
@@ -278,14 +278,14 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 
 		try {
 			const result = await createFirstUser(db, {
-				handle: data.handle,
+				username: data.username,
 				email,
 				password: data.password,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
 				keyring,
 				getVerificationUrl,
 			});
-			await signInUsername(data.handle, data.password);
+			await signInUsername(data.username, data.password);
 			recordAccountLifecycle({
 				operation: "bootstrap",
 				outcome: "success",
@@ -314,20 +314,20 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 	.middleware([open()])
 	.validator(accountSetupSchema)
 	.handler(async ({ data }) => {
-		checkHandle(data.handle);
-		checkReservedHandle(data.handle);
+		checkUsername(data.username);
+		checkReservedUsername(data.username);
 		await checkConfiguredPasswordLength(db, data.password).catch(rethrowAsHttp);
 
 		try {
 			const completed = await completeAccountSetup(db, {
 				token: data.token,
-				handle: data.handle,
+				username: data.username,
 				password: data.password,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
 				keyring,
 				getVerificationUrl,
 			});
-			await signInUsername(completed.user.handle, data.password);
+			await signInUsername(data.username, data.password);
 			recordAccountLifecycle({
 				operation: "invitation_accept",
 				outcome: "success",
@@ -345,7 +345,7 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 				outcome: "failure",
 				message: "account invitation acceptance failed",
 			});
-			if (err instanceof AccountSetupHandleInUseError) {
+			if (err instanceof AccountSetupUsernameInUseError) {
 				throw new ClientError("This username is already taken.", 409);
 			}
 			if (

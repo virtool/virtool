@@ -346,16 +346,8 @@ describe("the open endpoints are reachable without a session", () => {
  * A restricted caller holds neither half of the session cookie pair, which is
  * why every policy below refuses them without knowing the concept exists.
  */
-let restrictedUsers = 0;
-
 async function restrictNextCall(): Promise<void> {
-	// A distinct handle per call: `users.handle` is unique case-insensitively
-	// and this runs once per endpoint.
-	restrictedUsers += 1;
-	const userId = await seedUser(db, {
-		handle: `pending${restrictedUsers}`,
-		lifecycleState: "pending",
-	});
+	const userId = await seedUser(db, { lifecycleState: "pending" });
 	const session = await seedSetupSession(db, userId, "account_completion");
 
 	getRequest.mockReturnValue(

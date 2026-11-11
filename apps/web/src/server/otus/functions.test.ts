@@ -132,7 +132,7 @@ describe("reference visibility", () => {
 		referenceId: number;
 		strangerId: number;
 	}> {
-		const ownerId = await seedUser(db, { handle: "owner" });
+		const ownerId = await seedUser(db, { username: "owner" });
 		const referenceId = await seedReference(ownerId);
 		const otu = await createOtu(
 			db,
@@ -141,7 +141,7 @@ describe("reference visibility", () => {
 			ownerId,
 		);
 
-		const strangerId = await signIn(db, getRequest, { handle: "stranger" });
+		const strangerId = await signIn(db, getRequest, { username: "stranger" });
 
 		return { otuId: otu.id, referenceId, strangerId };
 	}

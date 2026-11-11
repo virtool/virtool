@@ -196,7 +196,7 @@ it("shows the same acknowledgement whatever the account", async () => {
 
 it("fills in the username carried from the sign-in form", async () => {
 	await renderWithRouter(<RecoveryWall />, "/recover", {
-		recoveryHandle: "ada",
+		recoveryUsername: "ada",
 	});
 
 	expect(await screen.findByLabelText("Username")).toHaveValue("ada");

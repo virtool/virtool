@@ -30,9 +30,9 @@ export function UserItem({ user }: UserItemProps) {
 	);
 	const isInvited = user.lifecycleState === "pending";
 	const label = isInvited ? (
-		<span className="text-gray-500 italic">No handle yet</span>
+		<span className="text-gray-500 italic">No username yet</span>
 	) : (
-		user.handle
+		user.username
 	);
 	const status = getUserStatus(user);
 
@@ -44,7 +44,7 @@ export function UserItem({ user }: UserItemProps) {
 						<InitialIcon size="md" icon={MailClock} label="Invited user" />
 					) : (
 						<span aria-hidden className="flex">
-							<UserAvatar size="md" handle={user.handle} />
+							<UserAvatar size="md" username={user.username} />
 						</span>
 					)}
 					{canEdit ? (

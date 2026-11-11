@@ -18,13 +18,13 @@ import { NavLink } from "./NavLink";
 
 type NavBarProps = {
 	administratorRole: AdministratorRoleName | null;
-	handle: string;
+	username: string;
 };
 
 /**
  * Display the main navigation bar with links too root level views.
  */
-export default function Nav({ administratorRole, handle }: NavBarProps) {
+export default function Nav({ administratorRole, username }: NavBarProps) {
 	const mutation = useLogout();
 	const [aboutOpen, setAboutOpen] = useState(false);
 
@@ -65,12 +65,12 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 				<Dropdown>
 					<DropdownMenuTrigger aria-label="User menu">
 						<div className="bg-transparent flex items-center">
-							<UserAvatar handle={handle} size="md" />
+							<UserAvatar username={username} size="md" />
 						</div>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuLink to="/account">
-							Signed in as <strong>{handle}</strong>
+							Signed in as <strong>{username}</strong>
 						</DropdownMenuLink>
 
 						<DropdownMenuSeparator />

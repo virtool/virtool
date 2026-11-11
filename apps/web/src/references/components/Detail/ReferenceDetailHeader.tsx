@@ -16,7 +16,7 @@ type ReferenceDetailHeaderProps = {
 	/** The reference details */
 	detail: Reference;
 	name: string;
-	userHandle: string;
+	username: string;
 };
 
 /**
@@ -27,7 +27,7 @@ export default function ReferenceDetailHeader({
 	createdAt,
 	detail,
 	name,
-	userHandle,
+	username,
 }: ReferenceDetailHeaderProps) {
 	const { pathname: location } = useLocation();
 	const { hasPermission: canModify } = useCheckReferenceRight(
@@ -60,7 +60,7 @@ export default function ReferenceDetailHeader({
 					</ViewHeaderIcons>
 				)}
 			</ViewHeaderTitle>
-			<ViewHeaderAttribution time={createdAt} user={userHandle} />
+			<ViewHeaderAttribution time={createdAt} user={username} />
 		</ViewHeader>
 	);
 }

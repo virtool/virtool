@@ -48,6 +48,7 @@ import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getSettings } from "../settings/data";
 import { createTask } from "../tasks/data";
+import { selectSetUpUsername } from "../users/username";
 
 /** Filters and pagination accepted by {@link findReferences}. */
 export type FindReferencesOptions = {
@@ -106,7 +107,7 @@ function selectReferences(db: DbOrTx) {
 			restrict_source_types: legacyReferences.restrict_source_types,
 			source_types: legacyReferences.source_types,
 			ownerId: ownerUser.id,
-			ownerHandle: ownerUser.handle,
+			ownerUsername: ownerUser.username,
 			clonedFromId: legacyReferences.cloned_from_id,
 			clonedFromName: clonedRef.name,
 			taskId: tasks.id,
@@ -121,7 +122,7 @@ function selectReferences(db: DbOrTx) {
 			uploadCreatedAt: uploads.createdAt,
 			uploadSize: uploads.size,
 			uploadUserId: uploadUser.id,
-			uploadUserHandle: uploadUser.handle,
+			uploadUsername: uploadUser.username,
 		})
 		.from(legacyReferences)
 		.leftJoin(ownerUser, eq(legacyReferences.user_id, ownerUser.id))
@@ -164,7 +165,7 @@ function mapMinimal(
 					user:
 						row.uploadUserId == null
 							? null
-							: { id: row.uploadUserId, handle: row.uploadUserHandle ?? "" },
+							: { id: row.uploadUserId, username: row.uploadUsername ?? "" },
 				};
 
 	return {
@@ -185,7 +186,7 @@ function mapMinimal(
 		user:
 			row.ownerId == null
 				? null
-				: { id: row.ownerId, handle: row.ownerHandle ?? "" },
+				: { id: row.ownerId, username: row.ownerUsername ?? "" },
 	};
 }
 
@@ -223,7 +224,7 @@ async function getLatestBuilds(
 			version: indexes.version,
 			createdAt: indexes.created_at,
 			userId: users.id,
-			userHandle: users.handle,
+			username: selectSetUpUsername(users.username),
 		})
 		.from(indexes)
 		.innerJoin(users, eq(indexes.user_id, users.id))
@@ -244,7 +245,7 @@ async function getLatestBuilds(
 				id: row.id,
 				version: row.version ?? 0,
 				createdAt: row.createdAt ?? new Date(),
-				user: { id: row.userId, handle: row.userHandle },
+				user: { id: row.userId, username: row.username },
 			});
 		}
 	}
@@ -257,16 +258,20 @@ async function getContributors(
 	referenceId: number,
 ): Promise<ReferenceContributor[]> {
 	const rows = await db
-		.select({ id: users.id, handle: users.handle, value: count() })
+		.select({
+			id: users.id,
+			username: selectSetUpUsername(users.username),
+			value: count(),
+		})
 		.from(legacyHistory)
 		.innerJoin(users, eq(legacyHistory.user_id, users.id))
 		.where(eq(legacyHistory.reference_id, referenceId))
-		.groupBy(users.id, users.handle)
+		.groupBy(users.id, users.username)
 		.orderBy(asc(users.id));
 
 	return rows.map((row) => ({
 		id: row.id,
-		handle: row.handle,
+		username: row.username,
 		count: row.value,
 	}));
 }
@@ -281,7 +286,7 @@ async function getReferenceUsers(
 	const rows = await db
 		.select({
 			id: users.id,
-			handle: users.handle,
+			username: selectSetUpUsername(users.username),
 			build: legacyReferenceUsers.build,
 			modify: legacyReferenceUsers.modify,
 			modifyOtu: legacyReferenceUsers.modify_otu,
@@ -799,7 +804,7 @@ export async function addReferenceUser(
 	const reference = await getReferenceRow(db, referenceId);
 
 	const [user] = await db
-		.select({ id: users.id, handle: users.handle })
+		.select({ id: users.id, username: selectSetUpUsername(users.username) })
 		.from(users)
 		.where(eq(users.id, userId))
 		.limit(1);
@@ -836,7 +841,7 @@ export async function addReferenceUser(
 
 	return {
 		id: user.id,
-		handle: user.handle,
+		username: user.username,
 		...resolved,
 		createdAt: reference.created_at,
 	};
@@ -906,7 +911,7 @@ export async function updateReferenceUser(
 
 	const [row] = await db
 		.select({
-			handle: users.handle,
+			username: selectSetUpUsername(users.username),
 			build: legacyReferenceUsers.build,
 			modify: legacyReferenceUsers.modify,
 			modifyOtu: legacyReferenceUsers.modify_otu,
@@ -950,7 +955,7 @@ export async function updateReferenceUser(
 
 	return {
 		id: userId,
-		handle: row.handle,
+		username: row.username,
 		...merged,
 		createdAt: reference.created_at,
 	};

@@ -75,7 +75,7 @@ export default function AddReferenceGroup({
 				)}
 				onClick={() => mutation.mutate({ id: group.id })}
 			>
-				<InitialIcon size="md" handle={group.name} />
+				<InitialIcon size="md" username={group.name} />
 				{group.name}
 			</button>
 		);

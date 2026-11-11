@@ -61,9 +61,9 @@ describe("resolveAuthNextStep", () => {
 		queryClient.setQueryData(rootQueryKeys.all(), { firstUser: true });
 		queryClient.setQueryData(
 			accountQueryKeys.all(),
-			createFakeAccount({ handle: "previous" }),
+			createFakeAccount({ username: "previous" }),
 		);
-		const account = createFakeAccount({ handle: "current" });
+		const account = createFakeAccount({ username: "current" });
 		const getAccount = mockGetAccount(account);
 
 		await expect(resolveAuthNextStep(queryClient)).resolves.toEqual({

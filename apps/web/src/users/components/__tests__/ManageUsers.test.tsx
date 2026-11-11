@@ -1,7 +1,11 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
-import { createFakeUsers } from "@tests/fake/user";
+import {
+	createFakePendingUser,
+	createFakeUser,
+	createFakeUsers,
+} from "@tests/fake/user";
 import { mockFindUsers, mockGetAccount } from "@tests/server-fn/users";
 import { at, renderRoute, renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
@@ -9,10 +13,12 @@ import { ManageUsers } from "../ManageUsers";
 
 describe("<ManageUsers />", () => {
 	it("should render a table of users", async () => {
-		const users = createFakeUsers(3);
-		at(users, 0).administratorRole = "full";
-		at(users, 1).lifecycleState = "pending";
-		at(users, 2).active = false;
+		const administrator = createFakeUser({ administratorRole: "full" });
+		const users = [
+			administrator,
+			createFakePendingUser(),
+			createFakeUser({ active: false }),
+		];
 		const findUsers = mockFindUsers(users);
 		const account = createFakeAccount({ administratorRole: "full" });
 
@@ -29,15 +35,15 @@ describe("<ManageUsers />", () => {
 		expect(rows).toHaveLength(3);
 
 		const first = within(at(rows, 0));
-		expect(first.getByText(at(users, 0).handle)).toBeInTheDocument();
+		expect(first.getByText(administrator.username)).toBeInTheDocument();
 		expect(
-			first.getByText(`${at(users, 0).handle}@example.com`),
+			first.getByText(`${administrator.username}@example.com`),
 		).toBeInTheDocument();
 		expect(first.getByText("Full")).toBeInTheDocument();
 		expect(first.getByText("Active")).toBeInTheDocument();
 
 		const second = within(at(rows, 1));
-		expect(second.getByText("No handle yet")).toBeInTheDocument();
+		expect(second.getByText("No username yet")).toBeInTheDocument();
 		expect(
 			second.getByRole("img", { name: "Invited user" }),
 		).toBeInTheDocument();
@@ -51,7 +57,7 @@ describe("<ManageUsers />", () => {
 				page: 1,
 				perPage: 25,
 				roles: [],
-				sort: "handle",
+				sort: "username",
 				statuses: [],
 				term: "",
 			},
@@ -111,7 +117,7 @@ describe("<ManageUsers />", () => {
 					direction: "ascending",
 					page: 1,
 					roles: [],
-					sort: "handle",
+					sort: "username",
 					statuses: [],
 					term: "",
 				}}
@@ -124,7 +130,7 @@ describe("<ManageUsers />", () => {
 		).toBeInTheDocument();
 		expect(screen.getByText("Contact an administrator.")).toBeInTheDocument();
 		for (const user of users) {
-			expect(screen.queryByText(user.handle)).not.toBeInTheDocument();
+			expect(screen.queryByText(user.username)).not.toBeInTheDocument();
 		}
 		expect(
 			screen.queryByRole("button", { name: "Create" }),

@@ -6,11 +6,11 @@ import { useState } from "react";
 
 type RevokeUserAccessProps = {
 	userId: number;
-	handle: string;
+	username: string;
 };
 
 /** A danger-zone control that removes every credential a user holds. */
-export function RevokeUserAccess({ userId, handle }: RevokeUserAccessProps) {
+export function RevokeUserAccess({ userId, username }: RevokeUserAccessProps) {
 	const [open, setOpen] = useState(false);
 	const mutation = useRevokeUserAccess();
 
@@ -26,13 +26,13 @@ export function RevokeUserAccess({ userId, handle }: RevokeUserAccessProps) {
 				</Button>
 			</Alert>
 			<DeleteDialog
-				name={handle}
+				name={username}
 				noun="Access"
 				title="Revoke Access"
 				message={
 					<>
-						Remove all access for <strong>{handle}</strong>? They are signed out
-						everywhere. Their password, API keys, passkeys, two-factor
+						Remove all access for <strong>{username}</strong>? They are signed
+						out everywhere. Their password, API keys, passkeys, two-factor
 						authentication, and outstanding links stop working, and their email
 						address is no longer verified. They are not notified. To restore
 						access, send them a recovery link through a channel you trust.

@@ -88,7 +88,7 @@ beforeEach(async () => {
 	await db.delete(jobs);
 	await db.delete(users);
 
-	userId = await seedUser(db, { handle: "bob" });
+	userId = await seedUser(db, { username: "bob" });
 });
 
 /** The runner metadata and step list a claim carries, all camelCase. */
@@ -181,6 +181,8 @@ describe("handleClaimJob", () => {
 		expect(body.id).toBe(pending.id);
 		expect(body.acquired).toBe(true);
 		expect(body.state).toBe("running");
+		// Runners built before the rename to `username` read `handle`.
+		expect(body.user).toEqual({ id: userId, username: "bob", handle: "bob" });
 
 		// The key is returned in plaintext exactly once, and it has to work. A
 		// claim that answered with a key the guard then refuses would strand the
@@ -396,7 +398,7 @@ describe("handleReadJob", () => {
 
 		expect(body.id).toBe(job.id);
 		expect(body.state).toBe("running");
-		expect(body.user).toEqual({ id: userId, handle: "bob" });
+		expect(body.user).toEqual({ id: userId, username: "bob" });
 		expect(body.steps).toEqual(
 			STEPS.map((step) => ({ ...step, startedAt: null })),
 		);

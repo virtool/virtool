@@ -29,7 +29,7 @@ export function LatestBuild({ id, latestBuild }: LatestBuildProps) {
 					</strong>
 					<span>
 						&nbsp;/ Created <Time sentence time={latestBuild.createdAt} /> by{" "}
-						{latestBuild.user.handle}
+						{latestBuild.user.username}
 					</span>
 				</div>
 			</BoxGroupSection>

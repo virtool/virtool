@@ -14,7 +14,7 @@ describe("useUpdateUser()", () => {
 		const analysisUsers = analysesQueryKeys.users([1, ["pathoscope"]]);
 		queryClient.setQueryData(analysisUsers, []);
 		const user = createFakeUser();
-		mockUpdateUser(user.id, 200, { handle: "new_handle" }, user);
+		mockUpdateUser(user.id, 200, { username: "new_username" }, user);
 
 		function wrapper({ children }: { children: ReactNode }) {
 			return (
@@ -29,7 +29,7 @@ describe("useUpdateUser()", () => {
 		const { result } = renderHook(() => useUpdateUser(), { wrapper });
 		result.current.mutate({
 			userId: user.id,
-			update: { handle: "new_handle" },
+			update: { username: "new_username" },
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));

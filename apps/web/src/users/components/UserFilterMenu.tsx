@@ -41,7 +41,7 @@ export default function UserFilterMenu({
 	const [term, setTerm] = useState("");
 
 	const matches = (users ?? []).filter((user) =>
-		user.handle.toLowerCase().includes(term.toLowerCase()),
+		user.username.toLowerCase().includes(term.toLowerCase()),
 	);
 
 	// Filtering to your own work is the common case, so lift yourself out of the
@@ -56,7 +56,7 @@ export default function UserFilterMenu({
 				key={user.id}
 				onCheckedChange={() => onToggle(user.id)}
 			>
-				<span className="flex-grow truncate">{user.handle}</span>
+				<span className="flex-grow truncate">{user.username}</span>
 				{isSelf && (
 					<span className="shrink-0 pl-2 text-gray-500 text-sm">You</span>
 				)}
@@ -73,7 +73,7 @@ export default function UserFilterMenu({
 					// The menu's typeahead would otherwise swallow every keystroke
 					// and move focus onto the matching user.
 					onKeyDown={(e) => e.stopPropagation()}
-					placeholder="Handle"
+					placeholder="Username"
 					value={term}
 				/>
 			</div>

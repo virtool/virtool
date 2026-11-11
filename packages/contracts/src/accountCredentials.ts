@@ -1,33 +1,37 @@
 import { INVALID_EMAIL_MESSAGE, isValidEmail } from "./emailAddress";
-import {
-	INVALID_HANDLE_MESSAGE,
-	isReservedHandle,
-	isValidHandle,
-	RESERVED_HANDLE_MESSAGE,
-} from "./handle";
 import { checkPasswordLength } from "./passwordPolicy";
+import {
+	INVALID_USERNAME_MESSAGE,
+	isReservedUsername,
+	isValidUsername,
+	normalizeUsername,
+	RESERVED_USERNAME_MESSAGE,
+} from "./username";
 
-/** The handle, email, and password for a new account. */
+/** The username, email, and password for a new account. */
 export type AccountCredentials = {
 	email: string;
-	handle: string;
+	username: string;
 	password: string;
 };
 
 /**
- * Check new account credentials against the handle, email, and password rules.
+ * Check new account credentials against the username, email, and password
+ * rules.
  *
- * Throws an `Error` with a message that a form can show to the user.
+ * The username is checked in its normalized form, so the caller may pass it in
+ * any case. Throws an `Error` with a message that a form can show to the user.
  */
 export function checkAccountCredentials(
 	credentials: AccountCredentials,
 	minimumPasswordLength: number,
 ): void {
-	if (!isValidHandle(credentials.handle)) {
-		throw new Error(INVALID_HANDLE_MESSAGE);
+	const username = normalizeUsername(credentials.username);
+	if (!isValidUsername(username)) {
+		throw new Error(INVALID_USERNAME_MESSAGE);
 	}
-	if (isReservedHandle(credentials.handle)) {
-		throw new Error(RESERVED_HANDLE_MESSAGE);
+	if (isReservedUsername(username)) {
+		throw new Error(RESERVED_USERNAME_MESSAGE);
 	}
 	if (!isValidEmail(credentials.email)) {
 		throw new Error(INVALID_EMAIL_MESSAGE);

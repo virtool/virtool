@@ -271,7 +271,7 @@ describe("management API", () => {
 	it("saves the default administrator and reports invalid input as text", async () => {
 		const set = vi.fn((input: { password: string }) => {
 			if (!input.password) {
-				throw new Error("Handle, email, and password are required");
+				throw new Error("Username, email, and password are required");
 			}
 		});
 		const app = createApi(
@@ -288,7 +288,7 @@ describe("management API", () => {
 			return app.request("http://127.0.0.1/api/default-administrator", {
 				body: JSON.stringify({
 					email: "admin@example.com",
-					handle: "admin",
+					username: "admin",
 					password,
 				}),
 				headers: { origin: "https://dev.localhost:9443" },
@@ -299,14 +299,14 @@ describe("management API", () => {
 		expect((await save("hello world")).status).toBe(202);
 		expect(set).toHaveBeenCalledWith({
 			email: "admin@example.com",
-			handle: "admin",
+			username: "admin",
 			password: "hello world",
 		});
 
 		const invalid = await save("");
 		expect(invalid.status).toBe(422);
 		expect(await invalid.text()).toBe(
-			"Handle, email, and password are required",
+			"Username, email, and password are required",
 		);
 	});
 });

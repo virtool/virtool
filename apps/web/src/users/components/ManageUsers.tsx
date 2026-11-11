@@ -49,7 +49,7 @@ export function ManageUsers({ perPage, search, setSearch }: ManageUsersProps) {
 				<SearchToolbar
 					aria-label="Search users"
 					onChange={(term) => setSearch({ term, page: 1 }, { replace: true })}
-					placeholder="Handle or email"
+					placeholder="Username or email"
 					value={search.term}
 				>
 					<CreateUser />

@@ -61,7 +61,7 @@ export default function UploadItem({
 			)}
 			<td className="break-all font-medium">{name}</td>
 			<td>
-				{user === null ? "Retrieved" : <UserLabel handle={user.handle} />}
+				{user === null ? "Retrieved" : <UserLabel username={user.username} />}
 			</td>
 			<td className="whitespace-nowrap">
 				<Time time={createdAt} />

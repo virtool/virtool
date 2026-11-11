@@ -1,7 +1,11 @@
 import { passkey } from "@better-auth/passkey";
 import {
 	AUTH_BASE_PATH,
+	isValidUsername,
+	normalizeUsername,
 	RECENT_AUTHENTICATION_PASSKEY_OPTIONS_PATH,
+	USERNAME_MAX_LENGTH,
+	USERNAME_MIN_LENGTH,
 } from "@virtool/contracts";
 import { isPasskeyCredentialRegistered } from "@virtool/data/auth/passkeys";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
@@ -31,7 +35,6 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { isSecureOrigin } from "./cookies";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
-import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 import { getNewPasskeyName, passkeyNamePlugin } from "./passkeyName";
 import { assertDatabaseReachable } from "./probe";
 import {
@@ -289,7 +292,7 @@ export function createAuth({
 				generateId: "serial",
 				// The check requires every column Better Auth does not write to be
 				// nullable or defaulted, so that its inserts succeed. Better Auth
-				// never inserts into `users` here (sign-up is off), and `handle`,
+				// never inserts into `users` here (sign-up is off), and
 				// `lastPasswordChange` and `settings` are NOT NULL Virtool columns.
 				validateSchema: false,
 			},
@@ -376,18 +379,19 @@ export function createAuth({
 					}
 				},
 			}),
-			// A Virtool handle is case-insensitive and keeps its original case for
-			// display, which is exactly the split this plugin draws between the
-			// normalized `username` it matches on and the `displayUsername` it
-			// shows.
+			// A username is stored only in its normalized form, so the plugin keeps
+			// no separate display copy. It normalizes before it validates, so a
+			// user who types a username in any case signs in with it.
 			//
-			// The rule is stated once in `./handle` and enforced again where a
-			// handle is set. The plugin checks it before the user lookup, so a
-			// handle it rejects is one that could exist but never sign in.
+			// The plugin checks the rule before the user lookup, so a username it
+			// rejects is one that could exist but never sign in.
 			username({
-				usernameValidator: isValidHandle,
-				minUsernameLength: HANDLE_MIN_LENGTH,
-				maxUsernameLength: HANDLE_MAX_LENGTH,
+				displayUsername: false,
+				usernameNormalization: normalizeUsername,
+				validationOrder: { username: "post-normalization" },
+				usernameValidator: isValidUsername,
+				minUsernameLength: USERNAME_MIN_LENGTH,
+				maxUsernameLength: USERNAME_MAX_LENGTH,
 			}),
 			twoFactor({
 				issuer: "Virtool",
@@ -403,7 +407,7 @@ export function createAuth({
 				rpName: "Virtool",
 				origin: publicOrigin,
 				authenticatorSelection: {
-					// Discoverable, so a user can sign in without typing a handle first.
+					// Discoverable, so a user can sign in without typing a username first.
 					residentKey: "required",
 					// The authenticator must prove a person was present *and* verified —
 					// a PIN, a fingerprint, a face. Without it a passkey degrades to

@@ -55,7 +55,7 @@ it("scrubs, inspects, and accepts a usable invitation", async () => {
 	await fillForm();
 
 	expect(authServerFnMocks.acceptAccountSetupFn).toHaveBeenCalledWith({
-		data: { token, handle: "Ada", password: "a-real-password" },
+		data: { token, username: "ada", password: "a-real-password" },
 	});
 	await waitFor(() =>
 		expect(removeQueries).toHaveBeenCalledWith({
@@ -117,7 +117,7 @@ it("keeps the form and shows the server's message for a taken username", async (
 	expect(
 		await screen.findByText("This username is already taken."),
 	).toHaveAttribute("role", "alert");
-	expect(screen.getByLabelText("Username")).toHaveValue("Ada");
+	expect(screen.getByLabelText("Username")).toHaveValue("ada");
 });
 
 it("hides an unexpected error behind a generic message", async () => {

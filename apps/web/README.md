@@ -77,7 +77,7 @@ them on a matching server version or require a reload during the cutover.
 ## Authentication
 
 Better Auth authenticates interactive users. Virtool owns account state, API
-keys, and authorization. Users sign in with a handle, not an email address,
+keys, and authorization. Users sign in with a username, not an email address,
 because `users.email` isn't globally unique. Inactive and pending users get the
 same 401 as bad credentials.
 
@@ -99,7 +99,7 @@ Budgets are shared across web instances. A refused request gets a 429.
 | Action                                      | Limit            |
 | ------------------------------------------- | ---------------- |
 | Password sign-in, per client IP             | 3 in 10 seconds  |
-| Password sign-in, per handle                | 10 in 15 minutes |
+| Password sign-in, per username              | 10 in 15 minutes |
 | Password sign-in, per known browser         | 5 in 15 minutes  |
 | Passkey sign-in, per client IP              | 3 in 10 seconds  |
 | Passkey challenges, per client IP           | 10 in 60 seconds |
@@ -109,7 +109,7 @@ Budgets are shared across web instances. A refused request gets a 429.
 | Password recovery, per requester            | 5 in 1 minute    |
 | Password recovery, per target account       | 3 in 1 hour      |
 
-A correct password resets the handle budget, so only failures accumulate. It also
+A correct password resets the username budget, so only failures accumulate. It also
 gives the browser a `login_device` cookie for 30 days. That browser then spends
 its own budget, so failures from other browsers can't lock the owner out. A
 password change invalidates these devices.
@@ -129,7 +129,7 @@ window regains focus. No other traffic extends a session, so an unattended tab
 can't keep itself signed in.
 
 Sensitive actions need a sign-in, or a new password, TOTP, or passkey challenge,
-in the last 15 minutes. Examples are handle, password, and email changes, API key changes,
+in the last 15 minutes. Examples are username, password, and email changes, API key changes,
 and administrator changes to users and policy. A stale call returns 403 with the
 code `SESSION_NOT_FRESH`. API keys and restricted credentials can't satisfy this
 requirement. Sign-out and revocation of the current session never need it.
@@ -141,7 +141,7 @@ end a session.
 
 ### Accounts
 
-Administrators create accounts by email invitation. The invitee chooses a handle
+Administrators create accounts by email invitation. The invitee chooses a username
 and password. Only a full administrator can preassign an administrator role. A
 new link always replaces older links, and a copyable link appears only once.
 

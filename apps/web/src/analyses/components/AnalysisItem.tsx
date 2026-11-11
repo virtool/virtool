@@ -110,7 +110,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 				))}
 			</td>
 			<td>
-				<UserLabel handle={user.handle} />
+				<UserLabel username={user.username} />
 			</td>
 			<td className="whitespace-nowrap">
 				<Time time={createdAt} />

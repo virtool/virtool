@@ -81,7 +81,7 @@ export type SchedulerState = {
 /** The administrator the daemon creates in environments that have no users. */
 export type DefaultAdministrator = {
 	email: string;
-	handle: string;
+	username: string;
 };
 
 /** A complete management UI state snapshot. */

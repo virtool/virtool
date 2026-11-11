@@ -20,7 +20,7 @@ export const analysisServerFnMocks = {
 
 /** Sets up listAnalysisUsers to resolve with the given users. */
 export function mockListAnalysisUsers(
-	users: Array<{ handle: string; id: number }>,
+	users: Array<{ username: string; id: number }>,
 ): Mock {
 	analysisServerFnMocks.listAnalysisUsersFn.mockResolvedValue(users);
 	return analysisServerFnMocks.listAnalysisUsersFn;

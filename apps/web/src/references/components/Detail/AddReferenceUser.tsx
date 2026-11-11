@@ -12,6 +12,9 @@ import type { ReferenceUser, User } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import { useState } from "react";
 
+/** A user who has accepted their invitation, so has a username. */
+type SetUpUser = Extract<User, { lifecycleState: "normal" }>;
+
 type AddReferenceUserProps = {
 	users: ReferenceUser[];
 	/** A callback to hide the dialog */
@@ -57,11 +60,14 @@ export default function AddReferenceUser({
 
 	const userIds = users.map((u) => u.id);
 	const items = data.pages.flatMap((page) => page.items);
-	const filteredItems = items.filter((item) => !userIds.includes(item.id));
+	const filteredItems = items.filter(
+		(item): item is SetUpUser =>
+			item.lifecycleState === "normal" && !userIds.includes(item.id),
+	);
 
-	// CompactScrollList types its rows as `unknown`; the items are users.
+	// CompactScrollList types its rows as `unknown`; the items are set-up users.
 	function renderRow(item: unknown) {
-		const user = item as User;
+		const user = item as SetUpUser;
 		return (
 			<button
 				key={user.id}
@@ -75,8 +81,8 @@ export default function AddReferenceUser({
 				)}
 				onClick={() => mutation.mutate({ id: user.id })}
 			>
-				<UserAvatar size="md" handle={user.handle} />
-				{user.handle}
+				<UserAvatar size="md" username={user.username} />
+				{user.username}
 			</button>
 		);
 	}

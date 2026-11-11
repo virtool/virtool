@@ -51,7 +51,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={userDetail.id} />);
 
-			expect(await screen.findByText(userDetail.handle)).toBeInTheDocument();
+			expect(await screen.findByText(userDetail.username)).toBeInTheDocument();
 			expect(screen.getByLabelText("Administrator")).toBeInTheDocument();
 
 			expect(await screen.findByText("Groups")).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe("<UserDetail />", () => {
 			).toBeInTheDocument();
 
 			expect(screen.getByText("Contact an administrator.")).toBeInTheDocument();
-			expect(screen.queryByText(adminUser.handle)).not.toBeInTheDocument();
+			expect(screen.queryByText(adminUser.username)).not.toBeInTheDocument();
 			expect(screen.queryByText("Permissions")).not.toBeInTheDocument();
 
 			expect(getUser).toHaveBeenCalled();
@@ -301,50 +301,52 @@ describe("<UserDetail />", () => {
 		});
 	});
 
-	describe("<Handle />", () => {
-		it("should render with the current handle", async () => {
+	describe("<Username />", () => {
+		it("should render with the current username", async () => {
 			mockListGroups(groups);
 			const getUser = mockGetUser(user.id, user);
 
 			renderWithProviders(<UserDetail userId={user.id} />);
 
-			expect(await screen.findByText("Change Handle")).toBeInTheDocument();
-			expect(screen.getByLabelText("handle")).toHaveValue(user.handle);
+			expect(await screen.findByText("Change Username")).toBeInTheDocument();
+			expect(screen.getByLabelText("Username")).toHaveValue(user.username);
 
 			expect(getUser).toHaveBeenCalled();
 		});
 
-		it("should submit a new handle", async () => {
+		it("should submit a new username", async () => {
 			mockListGroups(groups);
 			mockGetUser(user.id, user);
-			const updateUser = mockUpdateUser(user.id, 200, { handle: "new_handle" });
+			const updateUser = mockUpdateUser(user.id, 200, {
+				username: "new_username",
+			});
 
 			renderWithProviders(<UserDetail userId={user.id} />);
 
-			const input = await screen.findByLabelText("handle");
+			const input = await screen.findByLabelText("Username");
 			await userEvent.clear(input);
-			await userEvent.type(input, "new_handle");
+			await userEvent.type(input, "new_username");
 
 			const form = input.closest("form") as HTMLElement;
 			await userEvent.click(within(form).getByRole("button", { name: "Save" }));
 
 			await waitFor(() =>
 				expect(updateUser).toHaveBeenCalledWith({
-					data: { userId: user.id, handle: "new_handle" },
+					data: { userId: user.id, username: "new_username" },
 				}),
 			);
 		});
 
-		it("should show a conflict error when the handle is taken", async () => {
+		it("should show a conflict error when the username is taken", async () => {
 			mockListGroups(groups);
 			mockGetUser(user.id, user);
 			mockUpdateUser(user.id, 409, { message: "User already exists." });
 
 			renderWithProviders(<UserDetail userId={user.id} />);
 
-			const input = await screen.findByLabelText("handle");
+			const input = await screen.findByLabelText("Username");
 			await userEvent.clear(input);
-			await userEvent.type(input, "taken_handle");
+			await userEvent.type(input, "taken_username");
 
 			const form = input.closest("form") as HTMLElement;
 			await userEvent.click(within(form).getByRole("button", { name: "Save" }));
@@ -354,7 +356,7 @@ describe("<UserDetail />", () => {
 			);
 		});
 
-		it("should show an error when the handle is reserved", async () => {
+		it("should show an error when the username is reserved", async () => {
 			mockListGroups(groups);
 			mockGetUser(user.id, user);
 			mockUpdateUser(user.id, 400, {
@@ -363,7 +365,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={user.id} />);
 
-			const input = await screen.findByLabelText("handle");
+			const input = await screen.findByLabelText("Username");
 			await userEvent.clear(input);
 			await userEvent.type(input, "virtool");
 
@@ -451,7 +453,7 @@ describe("<UserDetail />", () => {
 
 			renderWithProviders(<UserDetail userId={self.id} />);
 
-			expect(await screen.findByText(self.handle)).toBeInTheDocument();
+			expect(await screen.findByText(self.username)).toBeInTheDocument();
 			expect(screen.queryByText("Administrator Role")).not.toBeInTheDocument();
 
 			expect(getUser).toHaveBeenCalled();

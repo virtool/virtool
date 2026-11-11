@@ -46,12 +46,12 @@ beforeEach(async () => {
 	await db.delete(users);
 });
 
-// Handles are unique case-insensitively, so every seeded user needs its own.
-let handleCounter = 0;
+// Usernames are unique, so every seeded user needs its own.
+let usernameCounter = 0;
 
 function seedNextUser(): Promise<number> {
-	handleCounter += 1;
-	return seedUser(db, { handle: `user-${handleCounter}` });
+	usernameCounter += 1;
+	return seedUser(db, { username: `user-${usernameCounter}` });
 }
 
 function adminActor(userId: number): ReferenceActor {
@@ -289,8 +289,8 @@ describe("getIndex", () => {
 		expect(index.manifest).toEqual({ abc: 3 });
 
 		expect(index.contributors).toEqual([
-			{ id: userId, handle: expect.any(String), count: 2 },
-			{ id: otherId, handle: expect.any(String), count: 1 },
+			{ id: userId, username: expect.any(String), count: 2 },
+			{ id: otherId, username: expect.any(String), count: 1 },
 		]);
 
 		// Sorted by name, so Alpha precedes Zebra despite being seeded second.

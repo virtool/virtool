@@ -25,7 +25,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 			createdAt: reference.createdAt,
 			detail: reference,
 			name: reference.name,
-			userHandle: reference.user?.handle ?? "",
+			username: reference.user?.username ?? "",
 		};
 		path = `/refs/${reference.id}/manage`;
 	});
@@ -35,7 +35,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 
 		expect(screen.getByText(reference.name)).toBeInTheDocument();
 		expect(
-			screen.getByText(`${reference.user?.handle} created`),
+			screen.getByText(`${reference.user?.username} created`),
 		).toBeInTheDocument();
 	});
 
@@ -82,7 +82,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 				createdAt: reference.createdAt,
 				detail: reference,
 				name: reference.name,
-				userHandle: reference.user?.handle ?? "",
+				username: reference.user?.username ?? "",
 			};
 			path = `/refs/${reference.id}/manage`;
 		});
@@ -92,7 +92,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 
 			expect(screen.getByText(reference.name)).toBeInTheDocument();
 			expect(
-				screen.getByText(`${reference.user?.handle} created`),
+				screen.getByText(`${reference.user?.username} created`),
 			).toBeInTheDocument();
 			expect(screen.getByText("Archived")).toBeInTheDocument();
 		});

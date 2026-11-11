@@ -33,7 +33,7 @@ beforeEach(async () => {
 async function seedMigratedUser(password: Buffer): Promise<number> {
 	const userId = await seedUser(db, {
 		authMigratedAt: new Date(),
-		handle: "Alice",
+		username: "alice",
 		password,
 	});
 
@@ -75,7 +75,7 @@ describe("upgradePasswordHash", () => {
 
 		expect(
 			await upgradePasswordHash(db, {
-				handle: "alice",
+				username: "alice",
 				password: LEGACY_PASSWORD,
 			}),
 		).toBe(true);
@@ -89,13 +89,13 @@ describe("upgradePasswordHash", () => {
 
 	it("replaces the hash of an unmigrated user with no credential account", async () => {
 		const userId = await seedUser(db, {
-			handle: "alice",
+			username: "alice",
 			password: Buffer.from(LEGACY_HASH),
 		});
 
 		expect(
 			await upgradePasswordHash(db, {
-				handle: "alice",
+				username: "alice",
 				password: LEGACY_PASSWORD,
 			}),
 		).toBe(true);
@@ -109,7 +109,7 @@ describe("upgradePasswordHash", () => {
 		const userId = await seedMigratedUser(Buffer.from(LEGACY_HASH));
 
 		expect(
-			await upgradePasswordHash(db, { handle: "alice", password: "wrong" }),
+			await upgradePasswordHash(db, { username: "alice", password: "wrong" }),
 		).toBe(false);
 
 		const { user, account } = await readHashes(userId);
@@ -123,7 +123,7 @@ describe("upgradePasswordHash", () => {
 
 		expect(
 			await upgradePasswordHash(db, {
-				handle: "alice",
+				username: "alice",
 				password: LEGACY_PASSWORD,
 			}),
 		).toBe(false);
@@ -141,7 +141,7 @@ describe("upgradePasswordHash", () => {
 
 		expect(
 			await upgradePasswordHash(db, {
-				handle: "alice",
+				username: "alice",
 				password: LEGACY_PASSWORD,
 			}),
 		).toBe(true);
@@ -150,10 +150,10 @@ describe("upgradePasswordHash", () => {
 		expect(account).toBe("stale");
 	});
 
-	it("returns false for an unknown handle", async () => {
+	it("returns false for an unknown username", async () => {
 		expect(
 			await upgradePasswordHash(db, {
-				handle: "nobody",
+				username: "nobody",
 				password: LEGACY_PASSWORD,
 			}),
 		).toBe(false);

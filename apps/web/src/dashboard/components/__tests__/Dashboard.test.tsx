@@ -169,11 +169,11 @@ describe("<Dashboard />", () => {
 
 	it("names the account attached to each sample and analysis row", async () => {
 		mockFindRecentlyViewedSamples([
-			createFakeSampleMinimal({ user: { handle: "sample-owner", id: 1 } }),
+			createFakeSampleMinimal({ user: { username: "sample-owner", id: 1 } }),
 		]);
 		mockFindRecentlyViewedAnalyses([
 			createFakeAnalysisMinimal({
-				user: { handle: "analysis-owner", id: 2 },
+				user: { username: "analysis-owner", id: 2 },
 			}),
 		]);
 

@@ -53,7 +53,7 @@ export default function AnalysisPeek({ analysisId }: AnalysisPeekProps) {
 				</div>
 				<Attribution
 					className="col-span-2 font-normal"
-					user={user.handle}
+					user={user.username}
 					time={createdAt}
 				/>
 			</div>

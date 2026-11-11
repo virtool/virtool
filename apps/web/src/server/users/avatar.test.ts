@@ -64,7 +64,7 @@ beforeEach(async () => {
 	await db.delete(authSessions);
 	await db.delete(users);
 
-	viewerId = await seedUser(db, { handle: "viewer" });
+	viewerId = await seedUser(db, { username: "viewer" });
 });
 
 afterEach(() => {
@@ -74,7 +74,7 @@ afterEach(() => {
 async function seedGravatarUser(avatarSource = "gravatar"): Promise<void> {
 	await seedUser(db, {
 		email: "alice@example.com",
-		handle: "alice",
+		username: "alice",
 		settings: { avatar_source: avatarSource },
 	});
 }

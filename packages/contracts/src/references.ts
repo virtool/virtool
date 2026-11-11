@@ -16,7 +16,7 @@ export type ReferenceRight = keyof ReferenceRights;
 /** A user granted rights on a reference. */
 export type ReferenceUser = ReferenceRights & {
 	id: number;
-	handle: string;
+	username: string;
 	createdAt: Date;
 };
 

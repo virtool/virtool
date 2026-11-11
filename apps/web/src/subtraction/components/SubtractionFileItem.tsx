@@ -45,7 +45,7 @@ export function SubtractionFileItem({
 			onClick={() => onClick([id])}
 		>
 			<strong>{name}</strong>
-			<Attribution user={user?.handle} time={uploadedAt} />
+			<Attribution user={user?.username} time={uploadedAt} />
 		</SelectBoxGroupSection>
 	);
 }

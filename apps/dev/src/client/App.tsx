@@ -1282,13 +1282,13 @@ function DefaultAdministratorSettings({
 }) {
 	const [draft, setDraft] = useState<{
 		email: string;
-		handle: string;
 		password: string;
+		username: string;
 	} | null>(null);
 	const form = draft ?? {
 		email: value?.email ?? "",
-		handle: value?.handle ?? "",
 		password: "",
+		username: value?.username ?? "",
 	};
 	const action = useAction();
 	const inputClassName = "rounded-lg border border-slate-200 px-3 py-1.5";
@@ -1315,13 +1315,14 @@ function DefaultAdministratorSettings({
 				}}
 			>
 				<label className="grid gap-1 font-medium">
-					Handle
+					Username
 					<input
+						autoCapitalize="none"
 						autoComplete="off"
 						className={inputClassName}
-						value={form.handle}
+						value={form.username}
 						onChange={(event) =>
-							setDraft({ ...form, handle: event.target.value })
+							setDraft({ ...form, username: event.target.value })
 						}
 					/>
 				</label>
@@ -1355,7 +1356,7 @@ function DefaultAdministratorSettings({
 					disabled={
 						!connected ||
 						action.pending ||
-						!form.handle.trim() ||
+						!form.username.trim() ||
 						!form.email.trim() ||
 						(!value && !form.password)
 					}

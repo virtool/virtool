@@ -62,7 +62,7 @@ function job(overrides: Record<string, unknown> = {}) {
 		progress: 0,
 		state: "running",
 		steps: null,
-		user: { id: 1, handle: "bob", administrator_role: null },
+		user: { id: 1, username: "bob", administrator_role: null },
 		workflow: "create_subtraction",
 		...overrides,
 	};

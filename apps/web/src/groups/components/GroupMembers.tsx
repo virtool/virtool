@@ -1,18 +1,28 @@
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import { UserAvatar } from "@base/Icon";
+import { InitialIcon, UserAvatar } from "@base/Icon";
 import SectionHeader from "@base/SectionHeader";
-import type { UserNested } from "@virtool/contracts";
+import type { UserIdentity } from "@virtool/contracts";
+import { MailClock } from "lucide-react";
 
 type MemberProps = {
-	members: UserNested[];
+	members: UserIdentity[];
 };
 
 export function GroupMembers({ members }: MemberProps) {
-	const memberComponents = members.map((member: UserNested) => (
+	const memberComponents = members.map((member) => (
 		<BoxGroupSection key={member.id}>
 			<div className="flex gap-2.5">
-				<UserAvatar handle={member.handle} size="md" />
-				{member.handle}
+				{member.lifecycleState === "pending" ? (
+					<>
+						<InitialIcon size="md" icon={MailClock} label="Invited user" />
+						<span className="text-gray-500 italic">No username yet</span>
+					</>
+				) : (
+					<>
+						<UserAvatar username={member.username} size="md" />
+						{member.username}
+					</>
+				)}
 			</div>
 		</BoxGroupSection>
 	));

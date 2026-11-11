@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-	AccountSetupHandleInUseError,
+	AccountSetupUsernameInUseError,
 	completeAccountSetup,
 	inspectAccountSetup,
 } from "../auth/lifecycle";
@@ -45,7 +45,7 @@ beforeEach(async () => {
 });
 
 async function createInvitation() {
-	const issuerUserId = await seedUser(db, { handle: "admin" });
+	const issuerUserId = await seedUser(db, { username: "admin" });
 	const created = await createPendingInvitation(db, {
 		email: " ADA@Example.com ",
 		issuerUserId,
@@ -64,7 +64,7 @@ describe("account invitations", () => {
 	it("creates the pending user, passwordless identity, and token atomically", async () => {
 		const created = await createInvitation();
 		expect(created.user.lifecycleState).toBe("pending");
-		expect(created.user.handle).toBe("");
+		expect(created.user.username).toBeNull();
 		expect(created.setupToken).toMatch(/^[0-9a-f]{64}$/);
 		expect(created.invitation.delivery).toBe("copy_only");
 		expect(created.invitation.email).toBe("ada@example.com");
@@ -78,7 +78,7 @@ describe("account invitations", () => {
 	});
 
 	it("sets the role, groups, and default settings of the pending user", async () => {
-		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const issuerUserId = await seedUser(db, { username: "admin" });
 		const group = await seedGroup(db, { name: "researchers" });
 
 		const created = await createPendingInvitation(db, {
@@ -121,7 +121,7 @@ describe("account invitations", () => {
 
 	it("does not expose the bearer token for an emailed invitation", async () => {
 		await db.update(settings).set({ emailEnabled: true });
-		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const issuerUserId = await seedUser(db, { username: "admin" });
 		const created = await createPendingInvitation(db, {
 			email: "ada@example.com",
 			issuerUserId,
@@ -138,7 +138,7 @@ describe("account invitations", () => {
 
 	it("deletes a pending user's queued invitation email", async () => {
 		await db.update(settings).set({ emailEnabled: true });
-		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const issuerUserId = await seedUser(db, { username: "admin" });
 		const created = await createPendingInvitation(db, {
 			email: "ada@example.com",
 			issuerUserId,
@@ -154,7 +154,7 @@ describe("account invitations", () => {
 
 	it("discards a superseded invitation email instead of sending it", async () => {
 		await db.update(settings).set({ emailEnabled: true });
-		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const issuerUserId = await seedUser(db, { username: "admin" });
 		const options = {
 			issuerUserId,
 			deliveryIntent: "email" as const,
@@ -180,7 +180,7 @@ describe("account invitations", () => {
 		expect(await db.select().from(emailOutbox)).toHaveLength(1);
 	});
 
-	it("allows multiple invitations before recipients choose handles", async () => {
+	it("allows multiple invitations before recipients choose usernames", async () => {
 		const first = await createInvitation();
 		const second = await createPendingInvitation(db, {
 			email: "other@example.com",
@@ -191,27 +191,27 @@ describe("account invitations", () => {
 			getSetupUrl: (token) =>
 				`https://virtool.test/account-setup#token=${token}`,
 		});
-		expect(second.user.handle).toBe("");
+		expect(second.user.username).toBeNull();
 	});
 
-	it("keeps the invitation usable after a chosen handle conflicts", async () => {
+	it("keeps the invitation usable after a chosen username conflicts", async () => {
 		const created = await createInvitation();
-		await seedUser(db, { handle: "Ada" });
+		await seedUser(db, { username: "ada" });
 		await expect(
 			completeAccountSetup(db, {
 				keyring,
 				token: created.setupToken,
-				handle: "ada",
+				username: "Ada",
 				password: "a-real-password",
 			}),
-		).rejects.toBeInstanceOf(AccountSetupHandleInUseError);
+		).rejects.toBeInstanceOf(AccountSetupUsernameInUseError);
 		expect(await inspectAccountSetup(db, created.setupToken)).toMatchObject({
 			status: "valid",
 		});
 	});
 
 	it("rolls back the pending identity when group assignment fails", async () => {
-		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const issuerUserId = await seedUser(db, { username: "admin" });
 		await expect(
 			createPendingInvitation(db, {
 				email: "ada@example.com",
@@ -225,7 +225,7 @@ describe("account invitations", () => {
 			}),
 		).rejects.toBeInstanceOf(GroupMembershipError);
 		expect(
-			await db.select().from(users).where(eq(users.handle, "Ada")),
+			await db.select().from(users).where(eq(users.email, "ada@example.com")),
 		).toHaveLength(0);
 		expect(await db.select().from(setupTokens)).toHaveLength(0);
 	});
@@ -279,7 +279,7 @@ describe("account invitations", () => {
 		await completeAccountSetup(db, {
 			keyring,
 			token: created.setupToken,
-			handle: "Ada",
+			username: "Ada",
 			password: "a-real-password",
 			deliveryAvailable: false,
 		});
@@ -293,12 +293,12 @@ describe("account invitations", () => {
 		const accepted = await completeAccountSetup(db, {
 			keyring,
 			token: created.setupToken,
-			handle: "Ada",
+			username: "Ada",
 			password: "a-real-password",
 			deliveryAvailable: false,
 		});
 		expect(accepted.user.lifecycleState).toBe("normal");
-		expect(accepted.user.handle).toBe("Ada");
+		expect(accepted.user.username).toBe("ada");
 		const [row] = await db
 			.select()
 			.from(users)
@@ -310,6 +310,7 @@ describe("account invitations", () => {
 				keyring,
 				token: created.setupToken,
 				password: "another-password",
+				username: "ada",
 			}),
 		).rejects.toThrow();
 	});
@@ -319,7 +320,7 @@ describe("account invitations", () => {
 		await db.update(settings).set({ emailEnabled: true });
 		const accepted = await completeAccountSetup(db, {
 			token: created.setupToken,
-			handle: "Ada",
+			username: "Ada",
 			password: "a-real-password",
 			deliveryAvailable: true,
 			keyring,
@@ -350,6 +351,7 @@ describe("account invitations", () => {
 					keyring,
 					token: created.setupToken,
 					password: "a-real-password",
+					username: "ada",
 				}),
 				regenerateInvitation(other.db, created.user.id, {
 					issuerUserId: created.invitation.issuerUserId,

@@ -40,7 +40,7 @@ describe("<FirstUser />", () => {
 		const account = createFakeAccount();
 		const createFirstUser = mockCreateFirstUser({
 			id: account.id,
-			handle: account.handle,
+			username: account.username,
 		});
 
 		// After setup the root reports no first user, and the session created by
@@ -57,7 +57,7 @@ describe("<FirstUser />", () => {
 		});
 		expect(createFirstUser).toHaveBeenCalledWith({
 			data: {
-				handle: "alice",
+				username: "alice",
 				email: "alice@example.com",
 				password: "supersecret",
 			},

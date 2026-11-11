@@ -4,21 +4,36 @@ import { ADMINISTRATOR_ROLE_NAMES } from "./administrators";
 import type { GroupMinimal } from "./groups";
 import type { Permissions } from "./permissions";
 import type { SearchResult } from "./search";
-import type { AccountLifecycleState } from "./setup";
 
-/** A user reduced to the fields shown alongside another resource. */
+/**
+ * A user reduced to the fields shown alongside another resource.
+ *
+ * Only a set-up account can own or act on a resource, so a nested user always
+ * has a username.
+ */
 export const UserNested = z.object({
 	/** The unique identifier */
 	id: z.number().int(),
 
-	/** The user's handle or username */
-	handle: z.string(),
+	/** The lowercase name the user signs in with */
+	username: z.string(),
 });
 
 export type UserNested = z.infer<typeof UserNested>;
 
+/**
+ * A user identity that may still be waiting on setup.
+ *
+ * A `pending` account has a role and group memberships but no credential and
+ * no username until it is accepted. A deactivated account is unusable whatever
+ * its lifecycle state.
+ */
+export type UserIdentity =
+	| (UserNested & { lifecycleState: "normal" })
+	| { id: number; lifecycleState: "pending"; username: null };
+
 /** A Virtool user, as the administration views read them. */
-export type User = UserNested & {
+export type User = UserIdentity & {
 	/** Their administrator role, defining what resources they can modify */
 	administratorRole: AdministratorRoleName | null;
 
@@ -30,16 +45,6 @@ export type User = UserNested & {
 
 	/** When they last changed their password */
 	lastPasswordChange: Date;
-
-	/**
-	 * Whether the account is usable as an application account yet.
-	 *
-	 * Separate from {@link User.active}: a `pending` account has a role and
-	 * group memberships but no credential. Its handle is empty until acceptance.
-	 * A deactivated account
-	 * is unusable whatever this says.
-	 */
-	lifecycleState: AccountLifecycleState;
 
 	/** What they may do, their groups' grants folded in */
 	permissions: Permissions;
@@ -129,7 +134,11 @@ export type AccountSettings = {
  * `email` is never absent: the column is `NOT NULL` defaulting to `""`, and
  * clearing an address writes the empty string rather than a null.
  */
-export type Account = User & {
+/** A user who has completed setup and so has a username. */
+export type SetUpUser = Extract<User, { lifecycleState: "normal" }>;
+
+/** The signed-in user's own account, which is always set up. */
+export type Account = SetUpUser & {
 	email: string;
 	/** A changelog entry is unread when its date is after this watermark. */
 	lastSeenChangelogAt: Date;
@@ -173,7 +182,12 @@ export const USER_ROLE_FILTERS = [...ADMINISTRATOR_ROLE_NAMES, "none"] as const;
 export type UserRoleFilter = (typeof USER_ROLE_FILTERS)[number];
 
 /** The columns the user administration list can be sorted by. */
-export const USER_SORT_FIELDS = ["handle", "email", "role", "status"] as const;
+export const USER_SORT_FIELDS = [
+	"username",
+	"email",
+	"role",
+	"status",
+] as const;
 
 /** A column the user administration list can be sorted by. */
 export type UserSortField = (typeof USER_SORT_FIELDS)[number];

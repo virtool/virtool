@@ -5,7 +5,7 @@ import {
 	fromStoredJobStep,
 	getJobTerminalRefusal,
 	Job,
-	type JobClaimed,
+	type JobClaimedResponse,
 	type JobPing,
 	type JobStepStarted,
 	toStoredJobClaim,
@@ -95,10 +95,13 @@ function toJob(record: JobRecord): Job {
 // row's `string`, so nothing here re-narrows a value the handler already holds
 // correctly typed. Every other field is either a literal or already narrow, so
 // this shape needs no parse of its own.
+//
+// The user's `handle` is sent beside `username` because runners built before
+// the rename require it.
 function toJobClaimed(
 	claimed: ClaimedJob,
 	workflow: ClaimableJobWorkflow,
-): JobClaimed {
+): JobClaimedResponse {
 	return {
 		id: claimed.id,
 		acquired: true,
@@ -108,7 +111,7 @@ function toJobClaimed(
 		key: claimed.key,
 		state: "running",
 		steps: claimed.steps.map(fromStoredJobStep),
-		user: claimed.user,
+		user: { ...claimed.user, handle: claimed.user.username },
 		workflow,
 	};
 }

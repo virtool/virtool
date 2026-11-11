@@ -106,11 +106,11 @@ describe("<SamplesList />", () => {
 	beforeEach(() => {
 		samples = [createFakeSampleMinimal(), createFakeSampleMinimal()];
 		labels = [createFakeLabel()];
-		// Handles are fixed so neither is a substring of the other, keeping the
+		// Usernames are fixed so neither is a substring of the other, keeping the
 		// search-input assertions unambiguous.
 		users = [
-			{ ...createFakeUserNested(), handle: "amelia" },
-			{ ...createFakeUserNested(), handle: "bilbo" },
+			{ ...createFakeUserNested(), username: "amelia" },
+			{ ...createFakeUserNested(), username: "bilbo" },
 		];
 		mockListUsers(users);
 		mockFindLabels(labels);
@@ -507,14 +507,14 @@ describe("<SamplesList />", () => {
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
 				await screen.findByRole("menuitemcheckbox", {
-					name: at(users, 0).handle,
+					name: at(users, 0).username,
 				}),
 			);
 
 			const chip = await screen.findByRole("button", {
-				name: `Remove ${at(users, 0).handle} user filter`,
+				name: `Remove ${at(users, 0).username} user filter`,
 			});
-			expect(chip).toHaveTextContent(at(users, 0).handle);
+			expect(chip).toHaveTextContent(at(users, 0).username);
 		});
 
 		it("should show a chip for each of several users selected at once", async () => {
@@ -526,29 +526,31 @@ describe("<SamplesList />", () => {
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
 				await screen.findByRole("menuitemcheckbox", {
-					name: at(users, 0).handle,
+					name: at(users, 0).username,
 				}),
 			);
 			// The menu stays open, so the second user is toggled without reopening it.
 			await userEvent.click(
-				screen.getByRole("menuitemcheckbox", { name: at(users, 1).handle }),
+				screen.getByRole("menuitemcheckbox", { name: at(users, 1).username }),
 			);
 
 			expect(
 				await screen.findByRole("button", {
-					name: `Remove ${at(users, 0).handle} user filter`,
+					name: `Remove ${at(users, 0).username} user filter`,
 				}),
 			).toBeInTheDocument();
 			expect(
 				screen.getByRole("button", {
-					name: `Remove ${at(users, 1).handle} user filter`,
+					name: `Remove ${at(users, 1).username} user filter`,
 				}),
 			).toBeInTheDocument();
 		});
 
 		it("should list the logged-in user first, tagged as You", async () => {
 			const self = at(users, 1);
-			mockGetAccount(createFakeAccount({ id: self.id, handle: self.handle }));
+			mockGetAccount(
+				createFakeAccount({ id: self.id, username: self.username }),
+			);
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
@@ -556,8 +558,8 @@ describe("<SamplesList />", () => {
 
 			const items = await screen.findAllByRole("menuitemcheckbox");
 			expect(items.map((item) => item.textContent)).toEqual([
-				`${self.handle}You`,
-				at(users, 0).handle,
+				`${self.username}You`,
+				at(users, 0).username,
 			]);
 
 			const otherUsers = screen.getByTestId("other-users");
@@ -577,14 +579,14 @@ describe("<SamplesList />", () => {
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.type(
 				await screen.findByLabelText("Filter users"),
-				at(users, 1).handle,
+				at(users, 1).username,
 			);
 
 			expect(
-				screen.queryByRole("menuitemcheckbox", { name: at(users, 0).handle }),
+				screen.queryByRole("menuitemcheckbox", { name: at(users, 0).username }),
 			).not.toBeInTheDocument();
 			expect(
-				screen.getByRole("menuitemcheckbox", { name: at(users, 1).handle }),
+				screen.getByRole("menuitemcheckbox", { name: at(users, 1).username }),
 			).toBeInTheDocument();
 		});
 
@@ -594,12 +596,12 @@ describe("<SamplesList />", () => {
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			const removeChipName = `Remove ${at(users, 0).handle} user filter`;
+			const removeChipName = `Remove ${at(users, 0).username} user filter`;
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
 				await screen.findByRole("menuitemcheckbox", {
-					name: at(users, 0).handle,
+					name: at(users, 0).username,
 				}),
 			);
 			expect(

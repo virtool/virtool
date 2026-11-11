@@ -30,7 +30,7 @@ export default function CreateUser() {
 		mutation.mutate(values, {
 			onSuccess: (created) => {
 				setIssued({
-					recipient: created.user.handle || created.invitation.email,
+					recipient: created.invitation.email,
 					setupUrl: created.setupToken
 						? getAccountSetupUrl(created.setupToken)
 						: null,

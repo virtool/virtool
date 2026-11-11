@@ -47,7 +47,7 @@ export default function IndexDetail() {
 				<SubviewHeaderTitle>Index {version}</SubviewHeaderTitle>
 				<div className="flex items-center">
 					<SubviewHeaderAttribution>
-						{user.handle} built <Time sentence time={createdAt} />
+						{user.username} built <Time sentence time={createdAt} />
 					</SubviewHeaderAttribution>
 				</div>
 			</SubviewHeader>

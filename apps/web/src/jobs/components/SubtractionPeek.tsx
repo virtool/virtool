@@ -50,7 +50,7 @@ export default function SubtractionPeek({
 				</div>
 				<div className="col-span-2 font-normal">
 					<SubtractionAttribution
-						handle={user?.handle ?? ""}
+						username={user?.username ?? ""}
 						time={createdAt}
 					/>
 				</div>

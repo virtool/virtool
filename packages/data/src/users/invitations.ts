@@ -52,7 +52,7 @@ export type CreatePendingInvitationInput = InvitationIssueOptions & {
 
 async function issueInvitationInTransaction(
 	tx: DbOrTx,
-	user: { id: number; handle: string; email: string },
+	user: { id: number; email: string },
 	generation: number,
 	options: InvitationIssueOptions,
 ): Promise<{
@@ -149,7 +149,6 @@ export async function createPendingInvitation(
 				tx,
 				{
 					id: userId,
-					handle: "",
 					email: normalizeEmail(input.email),
 				},
 				1,
@@ -217,7 +216,6 @@ export async function regenerateInvitation(
 		const [user] = await tx
 			.select({
 				id: users.id,
-				handle: users.handle,
 				email: users.email,
 				active: users.active,
 				lifecycleState: users.lifecycleState,

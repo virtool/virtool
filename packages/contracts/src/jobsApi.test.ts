@@ -29,12 +29,29 @@ describe("wire shapes", () => {
 			key: "abc123",
 			state: "running",
 			steps: [],
-			user: { id: 3, handle: "igboyes" },
+			user: { id: 3, username: "igboyes" },
 			workflow: "nuvs",
 		});
 
 		expect(claimed.key).toBe("abc123");
 		expect(claimed.claim.runnerId).toBe("runner-1");
+	});
+
+	it("reads the username from a jobs API that sends only the handle", () => {
+		const claimed = JobClaimed.parse({
+			id: 12,
+			acquired: true,
+			claim,
+			claimedAt: "2026-07-31T16:38:58.852Z",
+			createdAt: "2026-07-31T16:30:00.000Z",
+			key: "abc123",
+			state: "running",
+			steps: [],
+			user: { id: 3, handle: "igboyes" },
+			workflow: "nuvs",
+		});
+
+		expect(claimed.user).toEqual({ id: 3, username: "igboyes" });
 	});
 
 	it("adds steps to the claim request without re-spelling the claim", () => {

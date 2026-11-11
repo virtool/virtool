@@ -17,7 +17,7 @@ import {
 	unique,
 	uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { lower, lowerTrim } from "./sql";
+import { lowerTrim } from "./sql";
 
 const bytea = customType<{ data: Buffer; default: false }>({
 	dataType() {
@@ -38,12 +38,10 @@ export const users = pgTable(
 		createdAt: timestamp("created_at")
 			.notNull()
 			.default(sql`timezone('utc', now())`),
-		displayUsername: text("display_username"),
 		email: text("email")
 			.$defaultFn(() => "")
 			.notNull(),
 		emailVerified: boolean("email_verified").notNull().default(false),
-		handle: text("handle").notNull(),
 		image: text("image"),
 		lastPasswordChange: timestamp("last_password_change").notNull(),
 		// Holds the date of the newest changelog entry the user has seen, not the
@@ -73,15 +71,14 @@ export const users = pgTable(
 		updatedAt: timestamp("updated_at")
 			.notNull()
 			.default(sql`timezone('utc', now())`),
+		// The only name a user has, stored lowercase. Null exactly while an
+		// account is pending, so the plain unique constraint never sees two
+		// pending accounts as a collision.
 		username: text("username"),
 	},
 	(table) => [
 		unique("users_legacy_id_key").on(table.legacyId),
 		unique("users_username_key").on(table.username),
-		// Pending invitations have no handle until acceptance.
-		uniqueIndex("users_handle_lower_unique")
-			.on(lower(table.handle))
-			.where(sql`${table.handle} <> ''`),
 		// Better Auth declares its email field unique, but this column is not
 		// globally unique.
 		//
@@ -99,6 +96,14 @@ export const users = pgTable(
 		check(
 			"administrator_role_valid",
 			sql`${table.administratorRole} in ('full', 'settings', 'users', 'base')`,
+		),
+		check(
+			"username_lowercase",
+			sql`${table.username} = lower(${table.username})`,
+		),
+		check(
+			"username_matches_lifecycle_state",
+			sql`(${table.lifecycleState} = 'pending') = (${table.username} is null)`,
 		),
 		check(
 			"lifecycle_state_valid",

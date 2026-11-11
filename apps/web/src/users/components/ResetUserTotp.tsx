@@ -6,11 +6,11 @@ import { useState } from "react";
 
 type ResetUserTotpProps = {
 	userId: number;
-	handle: string;
+	username: string;
 };
 
 /** A danger-zone control that removes a user's two-factor authentication. */
-export function ResetUserTotp({ userId, handle }: ResetUserTotpProps) {
+export function ResetUserTotp({ userId, username }: ResetUserTotpProps) {
 	const [open, setOpen] = useState(false);
 	const mutation = useResetUserTotp();
 
@@ -26,12 +26,12 @@ export function ResetUserTotp({ userId, handle }: ResetUserTotpProps) {
 				</Button>
 			</Alert>
 			<DeleteDialog
-				name={handle}
+				name={username}
 				noun="Two-Factor Authentication"
 				message={
 					<>
 						Remove the authenticator and recovery codes for{" "}
-						<strong>{handle}</strong>? They are signed out everywhere. If the
+						<strong>{username}</strong>? They are signed out everywhere. If the
 						instance requires two-factor authentication and they have no
 						passkey, they must set it up again at their next sign-in.
 					</>

@@ -7,9 +7,9 @@ describe("<Contributors />", () => {
 	it("should render", () => {
 		const props = {
 			contributors: [
-				{ id: 987, handle: "bill", count: 22 },
-				{ id: 123, handle: "bob", count: 5 },
-				{ id: 456, handle: "linda", count: 12 },
+				{ id: 987, username: "bill", count: 22 },
+				{ id: 123, username: "bob", count: 5 },
+				{ id: 456, username: "linda", count: 12 },
 			],
 		};
 

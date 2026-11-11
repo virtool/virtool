@@ -28,15 +28,17 @@ describe("<UploadItem />", () => {
 			id: 1,
 			name: "foo.fa",
 			size: 10,
-			user: { id: 1, handle: "bill" },
+			user: { id: 1, username: "bill" },
 		};
 	});
 
 	it("should render", () => {
-		const user = { id: 1, handle: "bill" };
+		const user = { id: 1, username: "bill" };
 		renderItem({ ...props, user });
 
-		expect(screen.getByRole("cell", { name: user.handle })).toBeInTheDocument();
+		expect(
+			screen.getByRole("cell", { name: user.username }),
+		).toBeInTheDocument();
 		expect(screen.getByRole("cell", { name: props.name })).toBeInTheDocument();
 		expect(screen.getByText("10.0 B")).toBeInTheDocument();
 		expect(

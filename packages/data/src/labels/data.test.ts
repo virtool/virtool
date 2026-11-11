@@ -44,7 +44,9 @@ async function seedLabelledSample(
 	name: string,
 	labelIds: number[],
 ): Promise<number> {
-	const userId = await seedUser(db, { handle: `owner-${name}` });
+	const userId = await seedUser(db, {
+		username: `owner-${name.toLowerCase()}`,
+	});
 	const sampleId = takeFirstOrThrow(
 		await db
 			.insert(legacySamples)

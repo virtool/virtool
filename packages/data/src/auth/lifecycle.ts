@@ -5,10 +5,11 @@ import {
 	EMAIL_REMEDIATION_RESEND_DELAY_SECONDS,
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	type EmailRemediationState,
-	isReservedHandle,
+	isReservedUsername,
 	isValidEmail,
-	isValidHandle,
+	isValidUsername,
 	normalizeEmail,
+	normalizeUsername,
 	type User,
 } from "@virtool/contracts";
 import { and, eq, isNull, like, notLike, or, sql } from "drizzle-orm";
@@ -33,7 +34,7 @@ import { emit } from "../events/emit";
 import { getUser, PendingAccountError, UserNotFoundError } from "../users/data";
 import { claimEmail, EmailInUseError } from "./email";
 import { queueEmailVerificationInTransaction } from "./emailVerification";
-import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
+import { CREDENTIAL_PROVIDER_ID } from "./identity";
 import { hashPassword } from "./password";
 import {
 	consumeSetupToken,
@@ -49,8 +50,8 @@ import { hashToken } from "./tokens";
 /** Thrown when a completion is aimed at an account that is not eligible. */
 export class SetupNotEligibleError extends AppError {}
 
-/** Thrown when a chosen account handle is already in use. */
-export class AccountSetupHandleInUseError extends AppError {}
+/** Thrown when a chosen account username is already in use. */
+export class AccountSetupUsernameInUseError extends AppError {}
 
 export { EmailInUseError } from "./email";
 
@@ -67,23 +68,19 @@ export class AccessRevocationForbiddenError extends AppError {}
  * Give a user the Better Auth credential identity that lets the interactive
  * endpoints authenticate them.
  *
- * Four things together make an identity: the `auth_accounts` row holding the
- * password, the `username`/`display_username` pair the `username` plugin
- * matches a sign-in against, and `auth_migrated_at`, which admits the address
- * to the normalized uniqueness index. They are established in one transaction.
+ * Three things together make an identity: the `auth_accounts` row holding the
+ * password, the `username` the `username` plugin matches a sign-in against,
+ * and `auth_migrated_at`, which admits the address to the normalized
+ * uniqueness index. The caller writes the username; the rest is established
+ * here, in its transaction.
  *
  * `onConflictDoNothing` rather than an insert: a completion retried after its
  * transaction already committed must not mint a second identity, and the
  * `(provider_id, account_id)` constraint is what it lands on.
- *
- * `username` is the lower-cased handle and `display_username` the handle as
- * typed, which is the split the plugin draws and the same one
- * `users_handle_lower_unique` already holds.
  */
 async function establishAuthIdentity(
 	tx: DbOrTx,
 	userId: number,
-	handle: string,
 	passwordHash: string,
 ): Promise<void> {
 	const now = new Date();
@@ -137,7 +134,6 @@ async function establishAuthIdentity(
 		}
 	}
 
-	await updateAuthUsername(tx, userId, handle);
 	await tx
 		.update(users)
 		.set({
@@ -152,8 +148,8 @@ export type CompleteAccountSetupInput = {
 	token: string;
 	/** The password the holder chose. Never one an administrator picked. */
 	password: string;
-	/** The handle selected by the invitation holder. */
-	handle?: string;
+	/** The username the invitation holder chose, in any case. */
+	username: string;
 	/** Whether mailbox verification mail can be queued for a copied link. */
 	deliveryAvailable?: boolean;
 	/** Build a public verification URL if copied-link acceptance needs one. */
@@ -192,7 +188,7 @@ export async function completeAccountSetup(
 	{
 		token,
 		password,
-		handle: requestedHandle,
+		username: requestedUsername,
 		deliveryAvailable = false,
 		getVerificationUrl = () => "",
 		keyring,
@@ -241,7 +237,6 @@ export async function completeAccountSetup(
 				.select({
 					active: users.active,
 					email: users.email,
-					handle: users.handle,
 					lifecycleState: users.lifecycleState,
 				})
 				.from(users)
@@ -259,8 +254,8 @@ export async function completeAccountSetup(
 			) {
 				throw new SetupNotEligibleError();
 			}
-			const handle = requestedHandle?.trim() || row.handle;
-			if (!isValidHandle(handle) || isReservedHandle(handle)) {
+			const username = normalizeUsername(requestedUsername);
+			if (!isValidUsername(username) || isReservedUsername(username)) {
 				throw new SetupNotEligibleError();
 			}
 			const [conflict] = await tx
@@ -268,13 +263,13 @@ export async function completeAccountSetup(
 				.from(users)
 				.where(
 					and(
-						sql`lower(${users.handle}) = ${handle.toLowerCase()}`,
+						eq(users.username, username),
 						sql`${users.id} <> ${consumed.userId}`,
 					),
 				)
 				.limit(1);
 			if (conflict) {
-				throw new AccountSetupHandleInUseError();
+				throw new AccountSetupUsernameInUseError();
 			}
 
 			const email = normalizeEmail(consumed.candidateEmail);
@@ -289,7 +284,7 @@ export async function completeAccountSetup(
 			await tx
 				.update(users)
 				.set({
-					handle,
+					username,
 					password: hashed,
 					email,
 					emailVerified: verified,
@@ -298,12 +293,7 @@ export async function completeAccountSetup(
 				})
 				.where(eq(users.id, consumed.userId));
 
-			await establishAuthIdentity(
-				tx,
-				consumed.userId,
-				handle,
-				hashed.toString("utf8"),
-			);
+			await establishAuthIdentity(tx, consumed.userId, hashed.toString("utf8"));
 
 			// The token just spent is gone, but a second outstanding link for the
 			// same purpose would still work. Completion has to close every door it
@@ -329,7 +319,7 @@ export async function completeAccountSetup(
 					userId: consumed.userId,
 					candidateEmail: email,
 					sourceEmail: email,
-					handle,
+					username,
 					getVerificationUrl,
 					keyring,
 				});
@@ -339,13 +329,8 @@ export async function completeAccountSetup(
 			return { userId: consumed.userId, emailVerificationRequired };
 		})
 		.catch((error: unknown) => {
-			if (
-				isUniqueViolation(error, [
-					"users_handle_lower_unique",
-					"users_username_key",
-				])
-			) {
-				throw new AccountSetupHandleInUseError();
+			if (isUniqueViolation(error, ["users_username_key"])) {
+				throw new AccountSetupUsernameInUseError();
 			}
 			throw error;
 		});
@@ -415,7 +400,7 @@ export type PrepareEmailRemediationInput = {
 /** The staged identity facts needed to address a verification message. */
 export type PreparedEmailRemediation = {
 	email: string;
-	handle: string;
+	username: string;
 };
 
 /** What {@link startEmailRemediation} accepts. */
@@ -557,9 +542,9 @@ async function prepareEmailRemediationInTransaction(
 		.select({
 			active: users.active,
 			authMigratedAt: users.authMigratedAt,
-			handle: users.handle,
 			lifecycleState: users.lifecycleState,
 			password: users.password,
+			username: users.username,
 		})
 		.from(users)
 		.where(eq(users.id, userId))
@@ -570,14 +555,15 @@ async function prepareEmailRemediationInTransaction(
 		!row?.active ||
 		row.authMigratedAt !== null ||
 		row.lifecycleState !== "normal" ||
-		row.password === null
+		row.password === null ||
+		row.username === null
 	) {
 		throw new SetupNotEligibleError();
 	}
 
 	await claimEmail(tx, userId, normalized, { mailboxVerified });
 
-	return { email: normalized, handle: row.handle };
+	return { email: normalized, username: row.username };
 }
 
 /** Atomically stage an address, replace its token, and enqueue its challenge. */
@@ -631,7 +617,7 @@ async function startEmailRemediationInTransaction(
 		setupTokenId: issued.tokenId,
 		template: {
 			type: "email_verification",
-			username: prepared.handle,
+			username: prepared.username,
 			verifyUrl: getVerificationUrl(issued.token),
 			expiresInHours: EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 		},
@@ -749,7 +735,6 @@ export async function completeEmailRemediation(
 			.select({
 				active: users.active,
 				authMigratedAt: users.authMigratedAt,
-				handle: users.handle,
 				lifecycleState: users.lifecycleState,
 				password: users.password,
 			})
@@ -783,7 +768,6 @@ export async function completeEmailRemediation(
 		await establishAuthIdentity(
 			tx,
 			consumed.userId,
-			row.handle,
 			row.password.toString("utf8"),
 		);
 

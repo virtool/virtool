@@ -58,7 +58,7 @@ export default function EditReferenceMember({
 			<DialogContent>
 				<DialogTitle>
 					Modify Rights for{" "}
-					{(member as ReferenceUser)?.handle ||
+					{(member as ReferenceUser)?.username ||
 						(member as ReferenceGroup)?.name}
 				</DialogTitle>
 				{rightComponents}

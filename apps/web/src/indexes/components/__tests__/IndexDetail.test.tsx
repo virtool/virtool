@@ -17,7 +17,7 @@ describe("<IndexDetail />", () => {
 	it("renders the build's contributors, files, and OTUs", async () => {
 		const index = createFakeIndex({
 			version: 2,
-			contributors: [{ id: 1, handle: "alice", count: 3 }],
+			contributors: [{ id: 1, username: "alice", count: 3 }],
 			files: [
 				createFakeIndexFile({
 					downloadUrl: "/indexes/7/files/reference.fa.gz",

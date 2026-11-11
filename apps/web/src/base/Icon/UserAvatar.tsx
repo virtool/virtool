@@ -7,8 +7,8 @@ import InitialIcon from "./InitialIcon";
 type UserAvatarProps = {
 	className?: string;
 
-	/** The handle of the user the avatar represents */
-	handle: string;
+	/** The username of the user the avatar represents */
+	username: string;
 
 	size: "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
 };
@@ -20,7 +20,7 @@ type UserAvatarProps = {
  */
 export default function UserAvatar({
 	className,
-	handle,
+	username,
 	size,
 }: UserAvatarProps) {
 	const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
@@ -31,10 +31,10 @@ export default function UserAvatar({
 		...accountQueryOptions(),
 		enabled: false,
 		select: (account) =>
-			account.handle === handle ? account.settings.avatarSource : null,
+			account.username === username ? account.settings.avatarSource : null,
 	});
 
-	const src = `/avatars/${encodeURIComponent(handle)}${avatarSource ? `?source=${avatarSource}` : ""}`;
+	const src = `/avatars/${encodeURIComponent(username)}${avatarSource ? `?source=${avatarSource}` : ""}`;
 
 	// An image that loads before hydration fires its load event before React
 	// listens for it.
@@ -46,8 +46,8 @@ export default function UserAvatar({
 
 	return (
 		<span className={cn("relative inline-flex shrink-0", className)}>
-			<InitialIcon handle={handle} size={size} />
-			{handle ? (
+			<InitialIcon username={username} size={size} />
+			{username ? (
 				<img
 					key={src}
 					ref={checkLoaded}

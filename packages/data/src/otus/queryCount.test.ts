@@ -69,7 +69,7 @@ beforeEach(async () => {
 	const [user] = await db
 		.insert(users)
 		.values({
-			handle: "leeashley",
+			username: "leeashley",
 			lastPasswordChange: new Date(),
 			password: Buffer.from("x"),
 			settings: {},

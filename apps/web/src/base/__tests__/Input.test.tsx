@@ -8,9 +8,9 @@ describe("<Input />", () => {
 			<Input
 				aria-activedescendant="option-2"
 				aria-controls="listbox"
-				aria-describedby="handle-error"
+				aria-describedby="username-error"
 				aria-expanded={true}
-				aria-label="Handle"
+				aria-label="Username"
 				autoComplete="username"
 				required
 				role="combobox"
@@ -21,21 +21,21 @@ describe("<Input />", () => {
 
 		expect(input).toHaveAttribute("aria-activedescendant", "option-2");
 		expect(input).toHaveAttribute("aria-controls", "listbox");
-		expect(input).toHaveAttribute("aria-describedby", "handle-error");
+		expect(input).toHaveAttribute("aria-describedby", "username-error");
 		expect(input).toHaveAttribute("aria-expanded", "true");
 		expect(input).toHaveAttribute("autocomplete", "username");
 		expect(input).toBeRequired();
 	});
 
 	it("should not be marked invalid when there is no error", () => {
-		const { getByRole } = renderWithProviders(<Input aria-label="Handle" />);
+		const { getByRole } = renderWithProviders(<Input aria-label="Username" />);
 
 		expect(getByRole("textbox")).not.toHaveAttribute("aria-invalid");
 	});
 
 	it("should be marked invalid when passed aria-invalid", () => {
 		const { getByRole } = renderWithProviders(
-			<Input aria-invalid aria-label="Handle" />,
+			<Input aria-invalid aria-label="Username" />,
 		);
 
 		expect(getByRole("textbox")).toBeInvalid();

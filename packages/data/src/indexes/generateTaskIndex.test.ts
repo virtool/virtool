@@ -75,12 +75,12 @@ afterEach(async () => {
 	await rm(workPath, { force: true, recursive: true });
 });
 
-let handleCounter = 0;
+let usernameCounter = 0;
 
 async function seedNextUser(): Promise<number> {
-	handleCounter += 1;
+	usernameCounter += 1;
 
-	return seedUser(db, { handle: `builder${handleCounter}` });
+	return seedUser(db, { username: `builder${usernameCounter}` });
 }
 
 async function seedTask(): Promise<number> {

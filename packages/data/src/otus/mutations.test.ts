@@ -67,7 +67,7 @@ beforeEach(async () => {
 	const [user] = await db
 		.insert(users)
 		.values({
-			handle: "leeashley",
+			username: "leeashley",
 			lastPasswordChange: new Date(),
 			password: Buffer.from("x"),
 			settings: {},
@@ -865,7 +865,7 @@ describe("listByOtu", () => {
 			index: null,
 			otu: { id: otu.id, version: 1 },
 			reference: { id: referenceId, name: "Reference" },
-			user: { id: userId, handle: "leeashley" },
+			user: { id: userId, username: "leeashley" },
 		});
 		expect(changes[1]?.otu.version).toBe(0);
 		expect(changes[0]?.createdAt).toBeInstanceOf(Date);

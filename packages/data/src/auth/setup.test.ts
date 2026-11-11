@@ -314,8 +314,8 @@ describe("verifySetupSession", () => {
 
 describe("invalidateSetupSession", () => {
 	it("deletes the named session and leaves the rest", async () => {
-		const first = await seedUser(db, { handle: "alice" });
-		const second = await seedUser(db, { handle: "bob" });
+		const first = await seedUser(db, { username: "alice" });
+		const second = await seedUser(db, { username: "bob" });
 		const seeded = await seedSetupSession(db, first, "password_recovery");
 		await seedSetupSession(db, second, "password_recovery");
 
@@ -327,8 +327,8 @@ describe("invalidateSetupSession", () => {
 
 describe("invalidateUserSetupSessions", () => {
 	it("deletes every session the user holds", async () => {
-		const first = await seedUser(db, { handle: "alice" });
-		const second = await seedUser(db, { handle: "bob" });
+		const first = await seedUser(db, { username: "alice" });
+		const second = await seedUser(db, { username: "bob" });
 		await seedSetupSession(db, first, "password_recovery");
 		await seedSetupSession(db, second, "password_recovery");
 

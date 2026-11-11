@@ -1,4 +1,5 @@
 import { formatDate } from "@app/date";
+import { registerUsernameInput } from "@app/usernameInput";
 import Button from "@base/Button";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
@@ -16,7 +17,11 @@ import { useCapturedUrlParams, useFollowAuthNextStep } from "../hooks";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
 
-type FormValues = { handle: string; password: string; confirmPassword: string };
+type FormValues = {
+	username: string;
+	password: string;
+	confirmPassword: string;
+};
 
 type SetupState =
 	| { status: "loading" }
@@ -60,7 +65,7 @@ export default function AccountSetup() {
 			.catch(() => setState({ status: "unusable" }));
 	});
 
-	async function onSubmit({ handle, password }: FormValues) {
+	async function onSubmit({ username, password }: FormValues) {
 		if (state.status !== "ready" || submitting.current) {
 			return;
 		}
@@ -68,7 +73,7 @@ export default function AccountSetup() {
 		setSubmissionError("");
 		try {
 			const result = await acceptAccountSetupFn({
-				data: { token: state.token, handle, password },
+				data: { token: state.token, username, password },
 			});
 			if (result.emailVerificationRequired) {
 				setState({ status: "verification_queued", email: state.email });
@@ -156,9 +161,11 @@ export default function AccountSetup() {
 					<Input
 						autoComplete="username"
 						aria-required
-						{...register("handle", { required: "Please choose a username" })}
+						{...registerUsernameInput(
+							register("username", { required: "Please choose a username" }),
+						)}
 					/>
-					<FieldError errors={[errors.handle]} />
+					<FieldError errors={[errors.username]} />
 				</Field>
 				<Field>
 					<FieldLabel>Password</FieldLabel>

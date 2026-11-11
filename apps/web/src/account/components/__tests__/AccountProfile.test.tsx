@@ -5,7 +5,7 @@ import { createFakeAccount } from "@tests/fake/account";
 import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthentication";
 import {
 	mockGetAccount,
-	mockUpdateAccountHandle,
+	mockUpdateAccountUsername,
 	userServerFnMocks,
 } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
@@ -18,13 +18,13 @@ function staleSessionError() {
 	});
 }
 
-async function submitHandle(handle: string) {
-	await screen.findByText("Handle and avatar");
-	const input = screen.getByLabelText("Handle");
+async function submitUsername(username: string) {
+	await screen.findByText("Username and avatar");
+	const input = screen.getByLabelText("Username");
 	const form = input.closest("form") as HTMLElement;
 
 	await userEvent.clear(input);
-	await userEvent.type(input, handle);
+	await userEvent.type(input, username);
 	await userEvent.click(within(form).getByRole("button", { name: "Change" }));
 }
 
@@ -35,7 +35,7 @@ describe("<AccountProfile />", () => {
 		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
 
-		expect(await screen.findByText(account.handle)).toBeInTheDocument();
+		expect(await screen.findByText(account.username)).toBeInTheDocument();
 		expect(screen.queryByText("Email")).not.toBeInTheDocument();
 		expect(screen.queryByText("Password")).not.toBeInTheDocument();
 		expect(screen.queryByText("Passkeys")).not.toBeInTheDocument();
@@ -49,7 +49,7 @@ describe("<AccountProfile />", () => {
 		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
 
-		expect(await screen.findByText(account.handle)).toBeInTheDocument();
+		expect(await screen.findByText(account.username)).toBeInTheDocument();
 		expect(screen.getByText("Full Administrator")).toBeInTheDocument();
 		expect(
 			screen.getByText("Manage who is an administrator and what they can do."),
@@ -62,52 +62,52 @@ describe("<AccountProfile />", () => {
 		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
 
-		expect(await screen.findByText(account.handle)).toBeInTheDocument();
+		expect(await screen.findByText(account.username)).toBeInTheDocument();
 		expect(
 			screen.getByText("You are not an administrator."),
 		).toBeInTheDocument();
 	});
 
-	it("should render with the current handle", async () => {
-		const account = createFakeAccount({ handle: "current_handle" });
+	it("should render with the current username", async () => {
+		const account = createFakeAccount({ username: "current_username" });
 
 		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle and avatar");
-		expect(screen.getByLabelText("Handle")).toHaveValue("current_handle");
+		await screen.findByText("Username and avatar");
+		expect(screen.getByLabelText("Username")).toHaveValue("current_username");
 	});
 
-	it("should change the handle", async () => {
-		const account = createFakeAccount({ handle: "old_handle" });
+	it("should change the username", async () => {
+		const account = createFakeAccount({ username: "old_username" });
 
 		mockGetAccount(account);
-		const updateAccountHandle = mockUpdateAccountHandle(
-			{ ...account, handle: "new_handle" },
+		const updateAccountUsername = mockUpdateAccountUsername(
+			{ ...account, username: "new_username" },
 			200,
 			undefined,
-			"new_handle",
+			"new_username",
 		);
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle and avatar");
-		const input = screen.getByLabelText("Handle");
+		await screen.findByText("Username and avatar");
+		const input = screen.getByLabelText("Username");
 		const form = input.closest("form") as HTMLElement;
 
 		await userEvent.clear(input);
-		await userEvent.type(input, "new_handle");
+		await userEvent.type(input, "new_username");
 		await userEvent.click(within(form).getByRole("button", { name: "Change" }));
 
-		await waitFor(() => expect(updateAccountHandle).toHaveBeenCalled());
+		await waitFor(() => expect(updateAccountUsername).toHaveBeenCalled());
 	});
 
-	it("should confirm the user's identity before changing the handle on a stale session", async () => {
-		const account = createFakeAccount({ handle: "old_handle" });
+	it("should confirm the user's identity before changing the username on a stale session", async () => {
+		const account = createFakeAccount({ username: "old_username" });
 
 		mockGetAccount(account);
-		userServerFnMocks.updateAccountHandleFn
+		userServerFnMocks.updateAccountUsernameFn
 			.mockRejectedValueOnce(staleSessionError())
-			.mockResolvedValueOnce({ ...account, handle: "new_handle" });
+			.mockResolvedValueOnce({ ...account, username: "new_username" });
 		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
 			{ password: true, totp: false },
 		);
@@ -116,7 +116,7 @@ describe("<AccountProfile />", () => {
 		);
 		renderWithProviders(<AccountProfile />);
 
-		await submitHandle("new_handle");
+		await submitUsername("new_username");
 
 		const challenge = await screen.findByRole("dialog", {
 			name: "Confirm your identity",
@@ -130,18 +130,20 @@ describe("<AccountProfile />", () => {
 		);
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateAccountHandleFn).toHaveBeenCalledTimes(2),
+			expect(userServerFnMocks.updateAccountUsernameFn).toHaveBeenCalledTimes(
+				2,
+			),
 		);
-		expect(userServerFnMocks.updateAccountHandleFn).toHaveBeenLastCalledWith({
-			data: { handle: "new_handle" },
+		expect(userServerFnMocks.updateAccountUsernameFn).toHaveBeenLastCalledWith({
+			data: { username: "new_username" },
 		});
 	});
 
-	it("should show no error when the identity check for a handle change is cancelled", async () => {
-		const account = createFakeAccount({ handle: "old_handle" });
+	it("should show no error when the identity check for a username change is cancelled", async () => {
+		const account = createFakeAccount({ username: "old_username" });
 
 		mockGetAccount(account);
-		userServerFnMocks.updateAccountHandleFn.mockRejectedValue(
+		userServerFnMocks.updateAccountUsernameFn.mockRejectedValue(
 			staleSessionError(),
 		);
 		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
@@ -149,7 +151,7 @@ describe("<AccountProfile />", () => {
 		);
 		renderWithProviders(<AccountProfile />);
 
-		await submitHandle("new_handle");
+		await submitUsername("new_username");
 
 		const challenge = await screen.findByRole("dialog", {
 			name: "Confirm your identity",
@@ -167,22 +169,22 @@ describe("<AccountProfile />", () => {
 		expect(
 			screen.queryByText("Recent authentication was cancelled."),
 		).toBeNull();
-		expect(userServerFnMocks.updateAccountHandleFn).toHaveBeenCalledTimes(1);
+		expect(userServerFnMocks.updateAccountUsernameFn).toHaveBeenCalledTimes(1);
 	});
 
-	it("should show a conflict error when the handle is taken", async () => {
-		const account = createFakeAccount({ handle: "old_handle" });
+	it("should show a conflict error when the username is taken", async () => {
+		const account = createFakeAccount({ username: "old_username" });
 
 		mockGetAccount(account);
-		mockUpdateAccountHandle(undefined, 409, "User already exists.");
+		mockUpdateAccountUsername(undefined, 409, "User already exists.");
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle and avatar");
-		const input = screen.getByLabelText("Handle");
+		await screen.findByText("Username and avatar");
+		const input = screen.getByLabelText("Username");
 		const form = input.closest("form") as HTMLElement;
 
 		await userEvent.clear(input);
-		await userEvent.type(input, "taken_handle");
+		await userEvent.type(input, "taken_username");
 		await userEvent.click(within(form).getByRole("button", { name: "Change" }));
 
 		await waitFor(() =>
@@ -190,15 +192,15 @@ describe("<AccountProfile />", () => {
 		);
 	});
 
-	it("should show an error when the handle is reserved", async () => {
-		const account = createFakeAccount({ handle: "old_handle" });
+	it("should show an error when the username is reserved", async () => {
+		const account = createFakeAccount({ username: "old_username" });
 
 		mockGetAccount(account);
-		mockUpdateAccountHandle(undefined, 400, "Reserved username: virtool");
+		mockUpdateAccountUsername(undefined, 400, "Reserved username: virtool");
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle and avatar");
-		const input = screen.getByLabelText("Handle");
+		await screen.findByText("Username and avatar");
+		const input = screen.getByLabelText("Username");
 		const form = input.closest("form") as HTMLElement;
 
 		await userEvent.clear(input);
@@ -212,15 +214,15 @@ describe("<AccountProfile />", () => {
 		);
 	});
 
-	it("should not submit an empty handle", async () => {
-		const account = createFakeAccount({ handle: "old_handle" });
+	it("should not submit an empty username", async () => {
+		const account = createFakeAccount({ username: "old_username" });
 
 		mockGetAccount(account);
-		mockUpdateAccountHandle({ ...account });
+		mockUpdateAccountUsername({ ...account });
 		renderWithProviders(<AccountProfile />);
 
-		await screen.findByText("Handle and avatar");
-		const input = screen.getByLabelText("Handle");
+		await screen.findByText("Username and avatar");
+		const input = screen.getByLabelText("Username");
 		const form = input.closest("form") as HTMLElement;
 
 		await userEvent.clear(input);
@@ -229,7 +231,7 @@ describe("<AccountProfile />", () => {
 		expect(
 			await screen.findByText("Please specify a username"),
 		).toBeInTheDocument();
-		expect(userServerFnMocks.updateAccountHandleFn).not.toHaveBeenCalled();
+		expect(userServerFnMocks.updateAccountUsernameFn).not.toHaveBeenCalled();
 	});
 
 	it("should save the Gravatar choice when toggled", async () => {

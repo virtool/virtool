@@ -159,7 +159,7 @@ describe("setReferenceArchived", () => {
 describe("membership", () => {
 	it("publishes an update frame for each user change", async () => {
 		const referenceId = await seedReference();
-		const memberId = await seedUser(db, { handle: "bob" });
+		const memberId = await seedUser(db, { username: "bob" });
 
 		const frames = await collectFrames(client, async () => {
 			await addReferenceUser(db, referenceId, memberId, { modify: true });
@@ -193,7 +193,7 @@ describe("membership", () => {
 
 	it("rejects a user who is already a member", async () => {
 		const referenceId = await seedReference();
-		const memberId = await seedUser(db, { handle: "bob" });
+		const memberId = await seedUser(db, { username: "bob" });
 		await addReferenceUser(db, referenceId, memberId, {});
 
 		await expect(
@@ -213,7 +213,7 @@ describe("membership", () => {
 
 	it("adds a user once when two requests race", async () => {
 		const referenceId = await seedReference();
-		const memberId = await seedUser(db, { handle: "bob" });
+		const memberId = await seedUser(db, { username: "bob" });
 
 		const results = await Promise.allSettled([
 			addReferenceUser(db, referenceId, memberId, {}),
