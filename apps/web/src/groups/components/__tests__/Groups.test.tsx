@@ -88,6 +88,72 @@ describe("Groups", () => {
 		expect(input).toHaveAccessibleDescription("Provide a name for the group");
 	});
 
+	it("creates a group and closes the dialog", async () => {
+		mockListGroups([]);
+		groupServerFnMocks.createGroupFn.mockResolvedValue(
+			createFakeGroup({ name: "Technicians" }),
+		);
+		await renderWithRouter(<Groups />);
+
+		await userEvent.click(await screen.findByText("Create"));
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Name" }),
+			"Technicians",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() =>
+			expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+		);
+		expect(groupServerFnMocks.createGroupFn).toHaveBeenCalledWith({
+			data: { name: "Technicians" },
+		});
+	});
+
+	it("toggles a permission and renames the selected group", async () => {
+		const group = createFakeGroup({
+			name: "Technicians",
+			permissions: createFakePermissions({ create_sample: true }),
+		});
+		mockListGroups([group]);
+		mockGetGroup(group);
+		groupServerFnMocks.updateGroupFn.mockResolvedValue(group);
+		await renderWithRouter(<Groups />);
+
+		await userEvent.click(
+			await screen.findByRole("checkbox", { name: "create_sample" }),
+		);
+		await userEvent.click(screen.getByRole("checkbox", { name: "modify_hmm" }));
+
+		await waitFor(() =>
+			expect(groupServerFnMocks.updateGroupFn).toHaveBeenCalledTimes(2),
+		);
+		expect(groupServerFnMocks.updateGroupFn).toHaveBeenNthCalledWith(1, {
+			data: {
+				groupId: group.id,
+				name: undefined,
+				permissions: { create_sample: false },
+			},
+		});
+		expect(groupServerFnMocks.updateGroupFn).toHaveBeenNthCalledWith(2, {
+			data: {
+				groupId: group.id,
+				name: undefined,
+				permissions: { modify_hmm: true },
+			},
+		});
+
+		const name = screen.getByRole("textbox", { name: "name" });
+		await userEvent.clear(name);
+		await userEvent.type(name, "Curators{Enter}");
+
+		await waitFor(() =>
+			expect(groupServerFnMocks.updateGroupFn).toHaveBeenLastCalledWith({
+				data: { groupId: group.id, name: "Curators", permissions: undefined },
+			}),
+		);
+	});
+
 	it("asks for confirmation before deleting a group", async () => {
 		const group = createFakeGroup({ name: "Technicians" });
 		mockListGroups([group]);
