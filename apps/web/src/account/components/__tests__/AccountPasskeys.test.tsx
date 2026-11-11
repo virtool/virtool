@@ -128,7 +128,7 @@ describe("<AccountPasskeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Add" }));
 
 		const notice = await screen.findByRole("status");
-		expect(notice).toHaveTextContent("The passkey was not added. Try again.");
+		expect(notice).toMatchTextContent("The passkey was not added. Try again.");
 		expect(notice.firstElementChild).toHaveClass("bg-gray-100");
 		expect(screen.queryByRole("alert")).toBeNull();
 		expect(screen.getByRole("button", { name: "Add" })).toBeEnabled();
@@ -146,8 +146,8 @@ describe("<AccountPasskeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Add" }));
 
 		const alert = await screen.findByRole("alert");
-		expect(alert).toHaveTextContent("This passkey is already registered.");
-		expect(alert).not.toHaveTextContent("virtool.test");
+		expect(alert).toMatchTextContent("This passkey is already registered.");
+		expect(alert).not.toMatchTextContent("virtool.test");
 		expect(alert.firstElementChild).toHaveClass("bg-red-100");
 		expect(screen.queryByRole("status")).toBeNull();
 	});
@@ -185,7 +185,7 @@ describe("<AccountPasskeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Add" }));
 		await passChallenge(user);
 
-		expect(await screen.findByRole("status")).toHaveTextContent(
+		expect(await screen.findByRole("status")).toMatchTextContent(
 			"Your identity is confirmed. Select Add again to add the passkey.",
 		);
 		expect(addPasskey).not.toHaveBeenCalled();
@@ -210,7 +210,7 @@ describe("<AccountPasskeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Add" }));
 		await passChallenge(user);
 
-		expect(await screen.findByRole("status")).toHaveTextContent(
+		expect(await screen.findByRole("status")).toMatchTextContent(
 			"Your identity is confirmed. Select Add again to add the passkey.",
 		);
 		expect(addPasskey).toHaveBeenCalledTimes(1);
@@ -273,7 +273,7 @@ describe("<AccountPasskeys />", () => {
 			await screen.findByRole("button", { name: "Remove Work laptop" }),
 		);
 		const dialog = screen.getByRole("alertdialog");
-		expect(dialog).toHaveTextContent("current session are not affected");
+		expect(dialog).toMatchTextContent("current session are not affected");
 		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
 		await waitFor(() =>
@@ -297,7 +297,7 @@ describe("<AccountPasskeys />", () => {
 		);
 		const dialog = screen.getByRole("alertdialog");
 		await waitFor(() =>
-			expect(dialog).toHaveTextContent(
+			expect(dialog).toMatchTextContent(
 				"You must set up two-factor authentication before you can use Virtool again.",
 			),
 		);
@@ -318,10 +318,10 @@ describe("<AccountPasskeys />", () => {
 			await screen.findByRole("button", { name: "Remove Work laptop" }),
 		);
 		const dialog = screen.getByRole("alertdialog");
-		expect(dialog).toHaveTextContent("Your password");
+		expect(dialog).toMatchTextContent("Your password");
 		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
-		expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+		expect(await within(dialog).findByRole("alert")).toMatchTextContent(
 			"Passkey not found.",
 		);
 		expect(accountServerFnMocks.findPasskeysFn).toHaveBeenCalledTimes(1);

@@ -22,13 +22,13 @@ describe("<Markdown />", () => {
 	it("should render markdown headings and tables", () => {
 		renderWithProviders(<Markdown markdown={markdown} />);
 
-		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+		expect(screen.getByRole("heading", { level: 1 })).toMatchTextContent(
 			"Heading 1",
 		);
-		expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+		expect(screen.getByRole("heading", { level: 2 })).toMatchTextContent(
 			"Heading 2",
 		);
-		expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent(
+		expect(screen.getByRole("heading", { level: 3 })).toMatchTextContent(
 			"Table Example",
 		);
 

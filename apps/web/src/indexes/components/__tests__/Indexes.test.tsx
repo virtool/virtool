@@ -37,7 +37,7 @@ describe("<Indexes />", () => {
 		// `createdAt` crosses the wire as a `Date`, so the attribution renders it
 		// as a relative time.
 		const attribution = screen.getByText(index.user.handle, { exact: false });
-		expect(attribution).toHaveTextContent(/ago$/);
+		expect(attribution).toMatchTextContent(/ago$/);
 	});
 
 	it.each([

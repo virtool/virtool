@@ -48,12 +48,12 @@ describe("<AnalysisMapping />", () => {
 			}),
 		).toBeInTheDocument();
 
-		expect(row("Total reads")).toHaveTextContent("3,217,133");
-		expect(row("Plant Viruses")).toHaveTextContent("32,6281.01%");
-		expect(row(/Subtracted, mapped better to/)).toHaveTextContent(
+		expect(row("Total reads")).toMatchTextContent("3,217,133");
+		expect(row("Plant Viruses")).toMatchTextContent("32,6281.01%");
+		expect(row(/Subtracted, mapped better to/)).toMatchTextContent(
 			"Arabidopsis thaliana−4,102−0.13%",
 		);
-		expect(row("Analysed")).toHaveTextContent("28,5260.89%");
+		expect(row("Analysed")).toMatchTextContent("28,5260.89%");
 
 		expect(screen.getByRole("columnheader", { name: "Reads" })).toBeVisible();
 		expect(
@@ -73,7 +73,7 @@ describe("<AnalysisMapping />", () => {
 			/>,
 		);
 
-		expect(row(/Subtracted, mapped better to/)).toHaveTextContent(
+		expect(row(/Subtracted, mapped better to/)).toMatchTextContent(
 			"Arabidopsis thaliana00.00%",
 		);
 	});
@@ -88,7 +88,7 @@ describe("<AnalysisMapping />", () => {
 			/>,
 		);
 
-		expect(row(/Subtracted, mapped better to/)).toHaveTextContent(
+		expect(row(/Subtracted, mapped better to/)).toMatchTextContent(
 			"Arabidopsis thaliana−12<0.01%",
 		);
 	});

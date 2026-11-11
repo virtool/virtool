@@ -21,8 +21,37 @@ const postgresGuardAlias = {
 	replacement: path.resolve("src/tests/postgresGuard.ts"),
 };
 
+/**
+ * Return the Chromium options for a project. Each call builds new objects,
+ * because Vitest writes the project name into each instance.
+ */
+function createBrowserOptions() {
+	return {
+		enabled: true,
+		provider: playwright({ contextOptions: { timezoneId: "UTC" } }),
+		headless: true,
+		// At the default 414 px width, the navigation hides the account sections.
+		instances: [
+			{ browser: "chromium", viewport: { width: 1280, height: 800 } },
+		],
+		// A failed assertion already names the element and the difference; a
+		// screenshot adds nothing and writes a PNG into the source tree.
+		screenshotFailures: false,
+	};
+}
+
 export default defineConfig({
 	...viteConfig,
+	optimizeDeps: {
+		...viteConfig.optimizeDeps,
+		// Only tests import these. When the Chromium projects find them late, Vite
+		// reloads the page part way through the run and breaks the open suites.
+		include: [
+			...(viteConfig.optimizeDeps?.include ?? []),
+			"axe-core",
+			"react-dom/server",
+		],
+	},
 	test: {
 		globals: true,
 		silent: false,
@@ -55,21 +84,18 @@ export default defineConfig({
 					// and the server-only imports behind them, so nothing here reaches
 					// Postgres. Component tests must not need Docker.
 					name: "web",
-					environment: "jsdom",
 					// A full-route `renderRoute` test (router load + the whole route
 					// tree + the React Compiler Babel pass) is the heaviest thing the
 					// suite does. When CI runs a worker per core, the shared CPU pushes
 					// these past the 5s default and they time out — masquerading as a
 					// flake. Give them headroom while still failing a genuine hang fast.
 					testTimeout: 15_000,
-					setupFiles: ["./src/tests/setupJsdom.tsx"],
+					setupFiles: ["./src/tests/setupBrowser.ts"],
 					include: ["src/**/*.test.tsx"],
-					// `*.a11y.test.tsx` files run in the browser `a11y` project below,
-					// under a real layout engine. The glob here would otherwise also
-					// match them and run them a second time under jsdom, where the
-					// colour-contrast checks they exist for cannot run.
+					// `*.a11y.test.tsx` files run in the `a11y` project below.
 					exclude: ["src/**/*.a11y.test.tsx"],
 					alias: [postgresGuardAlias],
+					browser: createBrowserOptions(),
 				},
 			},
 			{
@@ -137,14 +163,8 @@ export default defineConfig({
 					include: ["src/**/*.shot.tsx"],
 					alias: [postgresGuardAlias],
 					browser: {
-						enabled: true,
-						provider: playwright(),
-						headless: true,
-						instances: [
-							{ browser: "chromium", viewport: { width: 1280, height: 800 } },
-						],
+						...createBrowserOptions(),
 						screenshotDirectory: path.resolve("screenshots"),
-						screenshotFailures: false,
 					},
 				},
 			},

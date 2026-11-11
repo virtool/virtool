@@ -93,6 +93,6 @@ describe("<NcbiApiKey>", () => {
 
 		expect(
 			await screen.findByRole("status", { name: "ncbi api key status" }),
-		).toHaveTextContent("Configuration Error");
+		).toMatchTextContent("Configuration Error");
 	});
 });

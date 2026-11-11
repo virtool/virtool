@@ -49,12 +49,12 @@ describe("<NuvsViewer />", () => {
 
 		expect(
 			await screen.findByRole("heading", {
-				name: `Sequence 2${second.sequence.length} bp`,
+				name: `Sequence 2 ${second.sequence.length} bp`,
 			}),
 		).toBeInTheDocument();
 		expect(
 			screen.queryByRole("heading", {
-				name: `Sequence 1${first.sequence.length} bp`,
+				name: `Sequence 1 ${first.sequence.length} bp`,
 			}),
 		).not.toBeInTheDocument();
 		expect(screen.getByText("Showing 2 of 2")).toBeInTheDocument();

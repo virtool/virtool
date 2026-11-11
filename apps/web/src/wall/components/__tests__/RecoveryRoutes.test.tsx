@@ -37,7 +37,7 @@ it("removes a recovery bearer token before inspecting it", async () => {
 	await renderWithRouter(<RecoveryWall />, "/recover");
 	await screen.findByRole("heading", { name: "Choose a new password" });
 
-	expect(requestUrl).toBe("http://localhost:3000/recover");
+	expect(requestUrl).toBe(`${location.origin}/recover`);
 	expect(window.location.hash).toBe("");
 	expect(window.location.search).toBe("");
 	expect(recoveryServerFnMocks.inspectPasswordRecoveryFn).toHaveBeenCalledWith({
@@ -61,7 +61,7 @@ it("removes a verification bearer token before inspecting it", async () => {
 	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
 	await screen.findByRole("heading", { name: "Email verified" });
 
-	expect(requestUrl).toBe("http://localhost:3000/verify-email");
+	expect(requestUrl).toBe(`${location.origin}/verify-email`);
 	expect(window.location.search).toBe("");
 	expect(recoveryServerFnMocks.verifyCurrentEmailFn).toHaveBeenCalledWith({
 		data: { token },
@@ -159,7 +159,7 @@ it("refuses mismatched passwords before consuming the recovery link", async () =
 		screen.getByRole("button", { name: "Change password" }),
 	);
 
-	expect(await screen.findByRole("alert")).toHaveTextContent(
+	expect(await screen.findByRole("alert")).toMatchTextContent(
 		"The passwords do not match",
 	);
 	expect(

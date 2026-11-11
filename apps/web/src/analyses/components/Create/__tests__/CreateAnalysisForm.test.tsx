@@ -62,7 +62,7 @@ describe("<CreateAnalysisForm>", () => {
 		const trigger = screen
 			.getAllByRole("combobox")
 			.find((element) => element.tagName === "BUTTON");
-		expect(trigger).toHaveTextContent("Plant Viruses");
+		expect(trigger).toMatchTextContent("Plant Viruses");
 
 		await userEvent.click(screen.getByRole("button", { name: "Create" }));
 

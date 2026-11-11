@@ -101,6 +101,7 @@ export function AnalysisMappingSubtractionTitle({
 	return subtractions.map((subtraction, index) => (
 		<span key={subtraction.id}>
 			<Link
+				className="underline"
 				to="/subtractions/$subtractionId"
 				params={{ subtractionId: String(subtraction.id) }}
 			>

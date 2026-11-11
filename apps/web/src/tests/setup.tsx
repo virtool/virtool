@@ -14,6 +14,7 @@ import { act, render as rtlRender } from "@testing-library/react";
 import type { Account } from "@virtool/contracts";
 import { rootQueryKeys } from "@wall/keys";
 import { createContext, type ReactNode, useContext, useState } from "react";
+import { vi } from "vitest";
 import { createFakeAccount } from "./fake/account";
 
 /**
@@ -191,14 +192,35 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 
 	await router.load();
 
-	// `RouterProvider` loads again on mount, and that load's state updates land
-	// after `render` returns. Async `act` keeps them inside the test's scope.
 	const result = await act(async () =>
 		rtlRender(
 			<QueryClientProvider client={queryClient}>
 				<RouterProvider router={router} />
 			</QueryClientProvider>,
 		),
+	);
+
+	// Two things finish after the render, and in a browser they can finish
+	// after the test's assertions. Waiting for them inside `act` keeps their
+	// updates in the test's scope:
+	//
+	// - On mount, `RouterProvider` writes the search defaults into the URL, and
+	//   that starts a second load. The route modules that `beforeLoad` imports
+	//   arrive over the network.
+	// - The authenticated layout renders `UploadOverlay` through `React.lazy`.
+	//   An import of a module settles after the earlier imports of that module,
+	//   so when this one settles, React's has too.
+	await act(() =>
+		Promise.all([
+			import("@uploads/components/UploadOverlay"),
+			vi.waitFor(() => {
+				const { matches, status } = router.state;
+
+				if (status !== "idle" || matches.some((match) => match.isFetching)) {
+					throw new Error("the router is still loading");
+				}
+			}),
+		]),
 	);
 
 	return { ...result, router, queryClient };

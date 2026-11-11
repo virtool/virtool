@@ -3,12 +3,8 @@ import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "@tests/setup";
 import type { PathoscopeHit, PathoscopeIsolate } from "@virtool/contracts";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import PathoscopeDetailComponent from "../PathoscopeDetail";
-
-afterEach(() => {
-	vi.restoreAllMocks();
-});
 
 function createIsolate(
 	name: string,
@@ -102,10 +98,6 @@ describe("<PathoscopeDetail />", () => {
 	});
 
 	it("should tell each isolate which of the otu's segments it does not carry", () => {
-		// jsdom lays nothing out, so the chart measures its container at zero and
-		// draws no panels to label without a width.
-		vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(400);
-
 		renderWithProviders(
 			<AnalysisSearchProvider
 				search={DEFAULT_ANALYSIS_SEARCH}

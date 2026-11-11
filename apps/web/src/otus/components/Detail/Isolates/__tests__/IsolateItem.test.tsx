@@ -25,7 +25,9 @@ async function renderIsolateItem(props: Partial<IsolateItemProps> = {}) {
 		/>,
 	);
 
-	return screen.getByRole("link", { name: formatIsolateName(isolate) });
+	return screen.getByRole("link", {
+		name: new RegExp(`^${RegExp.escape(formatIsolateName(isolate))}`),
+	});
 }
 
 describe("<IsolateItem />", () => {
@@ -38,7 +40,9 @@ describe("<IsolateItem />", () => {
 			"href",
 			`/refs/ref-1/otus/otu-1/isolates/${isolate.id}`,
 		);
-		expect(link.querySelector("svg")).not.toBeNull();
+		expect(link).toHaveAccessibleName(
+			`${formatIsolateName(isolate)} Default isolate`,
+		);
 	});
 
 	it("shows no default marker or delete control when neither applies", async () => {
@@ -46,7 +50,7 @@ describe("<IsolateItem />", () => {
 
 		const link = await renderIsolateItem({ isolate, canDelete: false });
 
-		expect(link.querySelector("svg")).toBeNull();
+		expect(link).toHaveAccessibleName(formatIsolateName(isolate));
 		expect(screen.queryByRole("button")).toBeNull();
 	});
 

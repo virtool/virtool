@@ -93,7 +93,7 @@ describe("<MfaPolicy>", () => {
 			}),
 		);
 
-		expect(await screen.findByRole("alert")).toHaveTextContent(
+		expect(await screen.findByRole("alert")).toMatchTextContent(
 			"Set up two-factor authentication or add a passkey before requiring two-factor authentication.",
 		);
 	});

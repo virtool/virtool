@@ -195,13 +195,13 @@ describe("<PathoscopeList />", () => {
 
 			expect(screen.getAllByRole("listitem")).toHaveLength(2);
 
-			expect(beta).toHaveTextContent("Beta virus");
-			expect(beta).toHaveTextContent("0.250");
-			expect(beta).toHaveTextContent("7");
+			expect(beta).toMatchTextContent("Beta virus");
+			expect(beta).toMatchTextContent("0.250");
+			expect(beta).toMatchTextContent("7");
 
-			expect(alpha).toHaveTextContent("Alpha virus");
-			expect(alpha).toHaveTextContent("12");
-			expect(alpha).toHaveTextContent("0.500");
+			expect(alpha).toMatchTextContent("Alpha virus");
+			expect(alpha).toMatchTextContent("12");
+			expect(alpha).toMatchTextContent("0.500");
 
 			expect(
 				screen.queryByRole("button", { name: /Alpha virus/ }),

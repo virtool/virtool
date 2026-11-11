@@ -135,8 +135,8 @@ describe("<Dashboard />", () => {
 				const lastCell = cells[cells.length - 1];
 
 				// Just the time: "created" is only in the column header.
-				expect(lastCell).toHaveTextContent(/ago|just now/);
-				expect(lastCell).not.toHaveTextContent(/created/i);
+				expect(lastCell).toMatchTextContent(/ago|just now/);
+				expect(lastCell).not.toMatchTextContent(/created/i);
 			}
 		}
 

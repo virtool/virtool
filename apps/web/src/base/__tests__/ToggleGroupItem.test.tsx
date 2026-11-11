@@ -22,7 +22,7 @@ describe("<ToggleGroupItem />", () => {
 
 		await userEvent.hover(selected);
 
-		expect(await screen.findByRole("tooltip")).toHaveTextContent("Chart view");
+		expect(await screen.findByRole("tooltip")).toMatchTextContent("Chart view");
 		expect(selected).toHaveAttribute("data-state", "on");
 		expect(screen.getByRole("radio", { name: "Table" })).toHaveAttribute(
 			"data-state",

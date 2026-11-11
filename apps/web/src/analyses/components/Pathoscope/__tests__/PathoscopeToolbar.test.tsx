@@ -74,7 +74,7 @@ describe("<PathoscopeToolbar />", () => {
 
 		await userEvent.hover(screen.getByRole("button", { name: "Show Reads" }));
 
-		expect(await screen.findByRole("tooltip")).toHaveTextContent(
+		expect(await screen.findByRole("tooltip")).toMatchTextContent(
 			"Show read pseudo-counts instead of weight",
 		);
 	});

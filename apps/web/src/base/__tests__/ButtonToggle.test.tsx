@@ -43,7 +43,7 @@ describe("<ButtonToggle />", () => {
 
 		// Radix renders the tip twice — once drawn, once for screen readers — so
 		// the role is what identifies it.
-		expect(await screen.findByRole("tooltip")).toHaveTextContent(
+		expect(await screen.findByRole("tooltip")).toMatchTextContent(
 			"Hide OTUs with low coverage support",
 		);
 		expect(button).toHaveAttribute("aria-describedby");

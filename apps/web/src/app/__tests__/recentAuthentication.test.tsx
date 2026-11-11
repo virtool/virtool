@@ -423,6 +423,7 @@ describe("recent authentication with a passkey", () => {
 			await screen.findByRole("button", { name: "Continue with a passkey" }),
 		);
 
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 		await expect(promise).resolves.toBe("updated");
 		expect(operation).toHaveBeenCalledTimes(2);
 		expect(webauthn.fetch).toHaveBeenCalledWith(
@@ -525,7 +526,7 @@ describe("recent authentication with a passkey", () => {
 			await screen.findByRole("button", { name: "Continue with a passkey" }),
 		);
 
-		expect(await screen.findByRole("status")).toHaveTextContent(
+		expect(await screen.findByRole("status")).toMatchTextContent(
 			"Passkey verification did not finish. Try again.",
 		);
 		expect(
@@ -541,12 +542,15 @@ describe("recent authentication with a passkey", () => {
 		mockMethods({ passkey: true, password: false, totp: false });
 		const { promise } = startChallenge();
 
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Continue with a passkey" }),
-		);
-
-		await expect(promise).resolves.toBe("updated");
+		const passkey = await screen.findByRole("button", {
+			name: "Continue with a passkey",
+		});
 		expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
+
+		await userEvent.click(passkey);
+
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		await expect(promise).resolves.toBe("updated");
 	});
 
 	it("hides the passkey where the browser cannot use one", async () => {
@@ -569,7 +573,7 @@ describe("recent authentication with a passkey", () => {
 		mockMethods({ passkey: true, password: false, totp: false });
 		const { promise } = startChallenge();
 
-		expect(await screen.findByRole("alert")).toHaveTextContent(
+		expect(await screen.findByRole("alert")).toMatchTextContent(
 			"This browser cannot use a passkey.",
 		);
 

@@ -31,9 +31,9 @@ describe("<EmailDelivery>", () => {
 
 			const status = await findStatus();
 
-			expect(status).toHaveTextContent("Configuration Error");
-			expect(status).toHaveTextContent("has not been changed");
-			expect(status).not.toHaveTextContent("needs an API key");
+			expect(status).toMatchTextContent("Configuration Error");
+			expect(status).toMatchTextContent("has not been changed");
+			expect(status).not.toMatchTextContent("needs an API key");
 		});
 	});
 
@@ -240,7 +240,7 @@ describe("<EmailDelivery>", () => {
 
 			const dialog = await screen.findByRole("alertdialog");
 
-			expect(dialog).toHaveTextContent("cannot be recovered");
+			expect(dialog).toMatchTextContent("cannot be recovered");
 			expect(clearEmailApiKey).not.toHaveBeenCalled();
 
 			await userEvent.click(

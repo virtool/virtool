@@ -85,14 +85,14 @@ describe("<CreateUser />", () => {
 		const clipboard = vi.spyOn(navigator.clipboard, "writeText");
 		clipboard.mockRejectedValueOnce(new Error("Clipboard unavailable"));
 		await user.click(screen.getByRole("button", { name: "Copy" }));
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Could not copy. Select the text and copy it manually.",
 		);
 		await user.click(screen.getByRole("button", { name: "Copy" }));
 		expect(clipboard).toHaveBeenLastCalledWith(
 			(link as HTMLInputElement).value,
 		);
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Copied to clipboard.",
 		);
 		await user.click(screen.getByRole("button", { name: "Done" }));

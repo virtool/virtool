@@ -308,7 +308,7 @@ describe("<LoginForm />", () => {
 				</MemoryRouter>,
 			);
 
-			expect(await screen.findByRole("alert")).toHaveTextContent(
+			expect(await screen.findByRole("alert")).toMatchTextContent(
 				"Passkey sign-in failed. Try again or sign in with your password.",
 			);
 			expect(screen.queryByText("Invalid handle or password.")).toBeNull();
@@ -518,7 +518,7 @@ describe("<LoginForm />", () => {
 			);
 
 			const notice = await screen.findByRole("status");
-			expect(notice).toHaveTextContent("Passkey sign-in did not finish");
+			expect(notice).toMatchTextContent("Passkey sign-in did not finish");
 			expect(screen.queryByRole("alert")).toBeNull();
 		});
 
@@ -537,10 +537,10 @@ describe("<LoginForm />", () => {
 			);
 
 			const alert = await screen.findByRole("alert");
-			expect(alert).toHaveTextContent(
+			expect(alert).toMatchTextContent(
 				"Passkey sign-in failed. Try again or sign in with your password.",
 			);
-			expect(alert).not.toHaveTextContent("virtool.test");
+			expect(alert).not.toMatchTextContent("virtool.test");
 		});
 
 		it("explains when the browser cannot use passkeys", async () => {

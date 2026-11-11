@@ -247,7 +247,7 @@ describe("<SamplesList />", () => {
 			const chip = await screen.findByRole("button", {
 				name: "Clear created filter",
 			});
-			expect(chip).toHaveTextContent(`January ${lastYear}`);
+			expect(chip).toMatchTextContent(`January ${lastYear}`);
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
@@ -271,7 +271,7 @@ describe("<SamplesList />", () => {
 
 			expect(
 				await screen.findByRole("button", { name: "Clear created filter" }),
-			).toHaveTextContent(String(lastYear));
+			).toMatchTextContent(String(lastYear));
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
@@ -317,7 +317,7 @@ describe("<SamplesList />", () => {
 
 			expect(
 				await screen.findByRole("button", { name: "Clear created filter" }),
-			).toHaveTextContent(`${lastYear}-03-02 – ${lastYear}-03-20`);
+			).toMatchTextContent(`${lastYear}-03-02 – ${lastYear}-03-20`);
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
@@ -386,7 +386,7 @@ describe("<SamplesList />", () => {
 				await screen.findByRole("button", {
 					name: `Remove ${firstUser.handle} user filter`,
 				}),
-			).toHaveTextContent(firstUser.handle);
+			).toMatchTextContent(firstUser.handle);
 			expect(
 				screen.getByRole("button", {
 					name: `Remove ${secondUser.handle} user filter`,

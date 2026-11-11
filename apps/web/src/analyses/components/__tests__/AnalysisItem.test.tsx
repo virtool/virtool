@@ -89,7 +89,7 @@ describe("<AnalysisItem />", () => {
 			expect(
 				within(dialog).getByRole("heading", { name: "Delete Analysis" }),
 			).toBeInTheDocument();
-			expect(dialog).toHaveTextContent(
+			expect(dialog).toMatchTextContent(
 				"Are you sure you want to delete the Pathoscope analysis of Grapevine 12? You can't undo this action.",
 			);
 			expect(deleteAnalysis).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ describe("<AnalysisItem />", () => {
 		it("leaves out the sample when it has no name", async () => {
 			const dialog = await openDialog({ sample: { id: 7, name: "" } });
 
-			expect(dialog).toHaveTextContent(
+			expect(dialog).toMatchTextContent(
 				"Are you sure you want to delete the Pathoscope analysis? You can't undo this action.",
 			);
 		});
@@ -144,7 +144,7 @@ describe("<AnalysisItem />", () => {
 				within(dialog).getByRole("button", { name: "Confirm" }),
 			);
 
-			expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+			expect(await within(dialog).findByRole("alert")).toMatchTextContent(
 				"Analysis is still running",
 			);
 			expect(screen.getByRole("alertdialog")).toBeInTheDocument();

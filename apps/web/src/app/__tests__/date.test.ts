@@ -1,5 +1,5 @@
-import { formatCalendarTime, formatElapsed } from "@app/date";
-import { describe, expect, it } from "vitest";
+import { formatCalendarTime, formatElapsed, formatUtcDate } from "@app/date";
+import { afterEach, describe, expect, it } from "vitest";
 
 describe("formatElapsed()", () => {
 	it.each([
@@ -57,5 +57,23 @@ describe("formatCalendarTime()", () => {
 				new Date("2026-03-01T12:00:00Z").getTime(),
 			),
 		).toEqual({ day: "yesterday", text: "Yesterday at 12:00" });
+	});
+});
+
+describe("formatUtcDate()", () => {
+	const originalTimeZone = process.env.TZ;
+
+	afterEach(() => {
+		process.env.TZ = originalTimeZone;
+	});
+
+	it("reports the UTC day when the local day is behind it", () => {
+		// 18:00 in Vancouver on the 20th is already the 21st in UTC, which is the
+		// day the server resolves a date filter against.
+		process.env.TZ = "America/Vancouver";
+		const date = new Date("2026-08-21T01:00:00.000Z");
+
+		expect(date.getDate()).toBe(20);
+		expect(formatUtcDate(date)).toBe("2026-08-21");
 	});
 });

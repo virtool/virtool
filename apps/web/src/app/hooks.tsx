@@ -301,16 +301,21 @@ export function useElementSize<T extends HTMLElement>(): [
 
 	useEffect(() => {
 		const element = ref.current;
+		let last: Size = { height: 0, width: 0 };
 
+		// The observer reports the size once when it starts, which is usually the
+		// size just measured. React can schedule a render for a state update that
+		// changes nothing, so an unchanged size sets no state.
 		function measure() {
 			const height = element?.offsetHeight ?? 0;
 			const width = element?.offsetWidth ?? 0;
 
-			setSize((current) =>
-				current.height === height && current.width === width
-					? current
-					: { height, width },
-			);
+			if (height === last.height && width === last.width) {
+				return;
+			}
+
+			last = { height, width };
+			setSize(last);
 		}
 
 		measure();

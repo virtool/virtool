@@ -1,3 +1,4 @@
+import { reloadPage } from "@app/navigation";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,6 +10,7 @@ import ShellErrorBoundary from "../ShellErrorBoundary";
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 }));
+vi.mock("@app/navigation", () => ({ reloadPage: vi.fn() }));
 
 type Control = { throwing: boolean; value: unknown };
 
@@ -40,8 +42,8 @@ let unmount: (() => void) | undefined;
  * Renders into a root whose error hooks are silenced.
  *
  * `@testing-library/react` gives no way to pass them, and without them React
- * hands every error the boundary catches to `reportError`, which jsdom raises
- * as an uncaught exception and Vitest fails the run on.
+ * hands every error the boundary catches to `reportError`, which the page
+ * raises as an uncaught exception and Vitest fails the run on.
  */
 function renderBoundary(ui: ReactNode) {
 	const container = document.createElement("div");
@@ -126,22 +128,8 @@ describe("ShellErrorBoundary", () => {
 
 		expect(screen.getByText(FAILED_MESSAGE)).toBeInTheDocument();
 
-		const reload = vi.fn();
-		const original = window.location;
-		Object.defineProperty(window, "location", {
-			configurable: true,
-			value: { ...original, reload },
-		});
-
-		try {
-			await userEvent.click(screen.getByRole("button", { name: "Reload" }));
-			expect(reload).toHaveBeenCalledOnce();
-		} finally {
-			Object.defineProperty(window, "location", {
-				configurable: true,
-				value: original,
-			});
-		}
+		await userEvent.click(screen.getByRole("button", { name: "Reload" }));
+		expect(reloadPage).toHaveBeenCalledOnce();
 	});
 
 	it("should not retry a real error, and should report it as thrown", async () => {

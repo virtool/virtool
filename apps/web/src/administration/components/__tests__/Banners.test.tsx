@@ -1,36 +1,16 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeBanner } from "@tests/fake/banner";
+import { bannerServerFnMocks } from "@tests/server-fn/banners";
 import { renderWithProviders } from "@tests/setup";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import Banners from "../Banners";
 
-const findBanners = vi.fn();
-const setActiveBanner = vi.fn();
-const clearActiveBanner = vi.fn();
-const createBanner = vi.fn();
-const updateBanner = vi.fn();
-const deleteBanner = vi.fn();
-
-vi.mock("@server/banners/functions", () => ({
-	findBannerFn: vi.fn(),
-	findBannersFn: (...args: unknown[]) => findBanners(...args),
-	setActiveBannerFn: (...args: unknown[]) => setActiveBanner(...args),
-	clearActiveBannerFn: (...args: unknown[]) => clearActiveBanner(...args),
-	createBannerFn: (...args: unknown[]) => createBanner(...args),
-	updateBannerFn: (...args: unknown[]) => updateBanner(...args),
-	deleteBannerFn: (...args: unknown[]) => deleteBanner(...args),
-}));
-
-const { default: Banners } = await import("../Banners");
-
-beforeEach(() => {
-	findBanners.mockReset();
-	setActiveBanner.mockReset();
-	clearActiveBanner.mockReset();
-	createBanner.mockReset();
-	updateBanner.mockReset();
-	deleteBanner.mockReset();
-});
+const {
+	findBannersFn: findBanners,
+	setActiveBannerFn: setActiveBanner,
+	clearActiveBannerFn: clearActiveBanner,
+} = bannerServerFnMocks;
 
 describe("<Banners>", () => {
 	it("renders the empty state when there are no banners", async () => {

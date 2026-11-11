@@ -76,7 +76,7 @@ describe("<DeleteDialog />", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
-		expect(await screen.findByRole("alert")).toHaveTextContent(
+		expect(await screen.findByRole("alert")).toMatchTextContent(
 			"Cannot delete this.",
 		);
 		expect(screen.getByText("Delete Sample")).toBeInTheDocument();

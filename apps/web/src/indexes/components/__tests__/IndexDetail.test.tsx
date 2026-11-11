@@ -35,17 +35,17 @@ describe("<IndexDetail />", () => {
 		await renderRoute(`/refs/${reference.id}/indexes/${index.id}`);
 
 		expect(await screen.findByText("Index 2")).toBeInTheDocument();
-		expect(screen.getByText("alice")).toHaveTextContent("5 changes");
-		expect(screen.getByText("bob")).toHaveTextContent(/1 change$/);
+		expect(screen.getByText("alice")).toMatchTextContent("5 changes");
+		expect(screen.getByText("bob")).toMatchTextContent(/1 change$/);
 		expect(
 			screen.getByText("Tobacco mosaic virus").parentElement,
-		).toHaveTextContent("3 changes");
-		expect(screen.getByRole("heading", { name: /Files/ })).toHaveTextContent(
+		).toMatchTextContent("3 changes");
+		expect(screen.getByRole("heading", { name: /Files/ })).toMatchTextContent(
 			"1",
 		);
-		expect(screen.getByText("reference.fa.gz").parentElement).toHaveTextContent(
-			"1.0KB",
-		);
+		expect(
+			screen.getByText("reference.fa.gz").parentElement,
+		).toMatchTextContent("1.0KB");
 
 		// The download URL is the raw route's own path, linked to unmodified.
 		expect(screen.getByText("reference.fa.gz").closest("a")).toHaveAttribute(

@@ -98,7 +98,7 @@ describe("<ReadSelector>", () => {
 
 		expect(
 			screen.getByRole("button", { name: /^(Auto-pair|Manual)$/ }),
-		).toHaveTextContent("Auto-pair");
+		).toMatchTextContent("Auto-pair");
 		expect(
 			screen.queryByRole("button", { name: /swap reads/i }),
 		).not.toBeInTheDocument();

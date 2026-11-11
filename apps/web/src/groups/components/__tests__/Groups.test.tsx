@@ -83,7 +83,7 @@ describe("Groups", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
 		const alert = await screen.findByRole("alert");
-		expect(alert).toHaveTextContent("Provide a name for the group");
+		expect(alert).toMatchTextContent("Provide a name for the group");
 		expect(input).toBeInvalid();
 		expect(input).toHaveAccessibleDescription("Provide a name for the group");
 	});

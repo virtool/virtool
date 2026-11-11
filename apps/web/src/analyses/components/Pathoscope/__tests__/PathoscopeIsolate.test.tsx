@@ -11,14 +11,6 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import PathoscopeIsolate from "../PathoscopeIsolate";
 
-/**
- * jsdom does not lay out elements, so `offsetWidth` is always zero. The chart
- * measures its container to size the area, so stub a realistic width.
- */
-function mockElementWidth(width: number) {
-	vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(width);
-}
-
 function segment(
 	key: string,
 	length: number,
@@ -56,13 +48,14 @@ const segments = [
 	segment("seg:S", 2900, "S"),
 ];
 
+/** Render `children` in a container 400 pixels wide, which the chart measures. */
 function render(children: ReactNode) {
 	renderWithProviders(
 		<AnalysisSearchProvider
 			search={DEFAULT_ANALYSIS_SEARCH}
 			setSearch={vi.fn()}
 		>
-			{children}
+			<div style={{ width: 400 }}>{children}</div>
 		</AnalysisSearchProvider>,
 	);
 }
@@ -88,8 +81,6 @@ function renderIsolate(
 
 describe("<PathoscopeIsolate />", () => {
 	it("should label a named segment's panel with the segment's name, not the sequence's accession", () => {
-		mockElementWidth(400);
-
 		renderIsolate([
 			sequence("seg:L", "NC_L", 8900),
 			sequence("seg:M", "NC_M", 4800),
@@ -107,8 +98,6 @@ describe("<PathoscopeIsolate />", () => {
 	});
 
 	it("should reveal a sequence's figures in a popover when its panel is clicked", async () => {
-		mockElementWidth(400);
-
 		renderIsolate([sequence("seg:L", "NC_L", 8900)]);
 
 		// The whole panel is the trigger, curve included, not just the caption
@@ -124,24 +113,22 @@ describe("<PathoscopeIsolate />", () => {
 		expect(screen.getByText("NC_L definition")).toBeVisible();
 		expect(
 			screen.getByRole("rowheader", { name: "Coverage" }).nextSibling,
-		).toHaveTextContent("1.000");
+		).toMatchTextContent("1.000");
 		expect(
 			screen.getByRole("rowheader", { name: "Length" }).nextSibling,
-		).toHaveTextContent("8,900 nt");
+		).toMatchTextContent("8,900 nt");
 	});
 
 	it("should show the isolate's figures in the same columns as the otu's", () => {
-		mockElementWidth(400);
-
 		renderIsolate([sequence("seg:L", "NC_L", 8900)]);
 
 		// The labels are only drawn in the OTU's row, so the isolate's carry them
 		// for assistive technology alone — but the columns themselves have to match.
-		expect(screen.getByText("Weight").previousSibling).toHaveTextContent(
+		expect(screen.getByText("Weight").previousSibling).toMatchTextContent(
 			"0.500",
 		);
-		expect(screen.getByText("Depth").previousSibling).toHaveTextContent("12");
-		expect(screen.getByText("Coverage").previousSibling).toHaveTextContent(
+		expect(screen.getByText("Depth").previousSibling).toMatchTextContent("12");
+		expect(screen.getByText("Coverage").previousSibling).toMatchTextContent(
 			"0.900",
 		);
 

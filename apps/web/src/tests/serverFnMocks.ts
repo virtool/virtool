@@ -1,10 +1,11 @@
 // Registers the global server-function mocks and resets them before each test.
-// Both the jsdom and the browser setups import this, so every project renders
+// The `web` and `shots` setups both import this, so both projects render
 // against the same stubs.
 import { beforeEach, vi } from "vitest";
 import { accountServerFnMocks } from "./server-fn/account";
 import { analysisServerFnMocks } from "./server-fn/analyses";
 import { authServerFnMocks } from "./server-fn/auth";
+import { bannerServerFnMocks } from "./server-fn/banners";
 import { emailServerFnMocks } from "./server-fn/email";
 import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
@@ -27,6 +28,7 @@ import { uploadServerFnMocks } from "./server-fn/uploads";
 import { userServerFnMocks } from "./server-fn/users";
 
 vi.mock("@server/groups/functions", () => groupServerFnMocks);
+vi.mock("@server/banners/functions", () => bannerServerFnMocks);
 vi.mock("@server/analyses/functions", async () => {
 	const { analysisServerFnMocks } = await import("./server-fn/analyses");
 	return analysisServerFnMocks;
@@ -137,6 +139,8 @@ beforeEach(() => {
 		...Object.values(taskServerFnMocks),
 		...Object.values(hmmServerFnMocks),
 		...Object.values(authServerFnMocks),
+		bannerServerFnMocks.findBannerFn,
+		bannerServerFnMocks.findBannersFn,
 		...Object.values(recoveryServerFnMocks),
 		...Object.values(recentAuthenticationServerFnMocks),
 		...Object.values(labelServerFnMocks),
@@ -172,6 +176,11 @@ beforeEach(() => {
 	}
 
 	for (const fn of [
+		bannerServerFnMocks.clearActiveBannerFn,
+		bannerServerFnMocks.createBannerFn,
+		bannerServerFnMocks.deleteBannerFn,
+		bannerServerFnMocks.setActiveBannerFn,
+		bannerServerFnMocks.updateBannerFn,
 		subtractionServerFnMocks.createSubtractionFn,
 		subtractionServerFnMocks.updateSubtractionFn,
 		subtractionServerFnMocks.deleteSubtractionFn,

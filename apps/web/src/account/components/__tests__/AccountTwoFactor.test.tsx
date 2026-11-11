@@ -132,8 +132,10 @@ describe("<AccountTwoFactor />", () => {
 		renderWithProviders(<AccountTwoFactor />);
 		const dialog = await startSetup(user);
 
-		expect(twoFactor.enable).toHaveBeenCalledWith({
-			password: "hunter2hunter2",
+		await waitFor(() => {
+			expect(twoFactor.enable).toHaveBeenCalledWith({
+				password: "hunter2hunter2",
+			});
 		});
 		expect(
 			await within(dialog).findByRole("img", {

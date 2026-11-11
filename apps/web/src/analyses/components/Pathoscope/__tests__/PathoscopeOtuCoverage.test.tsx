@@ -1,15 +1,16 @@
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "@tests/setup";
 import type { Coordinate, PathoscopeSegmentCoverage } from "@virtool/contracts";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ReactElement } from "react";
+import { describe, expect, it } from "vitest";
 import PathoscopeOtuCoverage from "../PathoscopeOtuCoverage";
 
 /**
- * jsdom does not lay out elements, so `offsetWidth` is always zero. The chart
- * measures its container to size the area, so stub a realistic width.
+ * Render `ui` so that the chart measures `width` pixels inside its 1 px
+ * border.
  */
-function mockElementWidth(width: number) {
-	vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(width);
+function renderAtWidth(width: number, ui: ReactElement) {
+	return renderWithProviders(<div style={{ width: width + 2 }}>{ui}</div>);
 }
 
 function segment(
@@ -40,15 +41,10 @@ function paths(): SVGPathElement[] {
 	return [...screen.getByRole("img").querySelectorAll("path")];
 }
 
-afterEach(() => {
-	vi.restoreAllMocks();
-});
-
 describe("<PathoscopeOtuCoverage />", () => {
 	it("should render an area path for the coverage polyline", () => {
-		mockElementWidth(400);
-
-		renderWithProviders(
+		renderAtWidth(
+			400,
 			<PathoscopeOtuCoverage maxDepth={12} segments={single} />,
 		);
 
@@ -58,20 +54,15 @@ describe("<PathoscopeOtuCoverage />", () => {
 		expect(path?.getAttribute("d")).toMatch(/^M0,80L/);
 	});
 
-	it("should render no path when the container has not been measured", () => {
-		mockElementWidth(0);
-
-		renderWithProviders(
-			<PathoscopeOtuCoverage maxDepth={12} segments={single} />,
-		);
+	it("should render no path when the container has no width", () => {
+		renderAtWidth(0, <PathoscopeOtuCoverage maxDepth={12} segments={single} />);
 
 		expect(paths()).toHaveLength(0);
 	});
 
 	it("should rule every panel and label the ceiling once for the chart", () => {
-		mockElementWidth(414);
-
-		const { container } = renderWithProviders(
+		const { container } = renderAtWidth(
+			414,
 			<PathoscopeOtuCoverage
 				maxDepth={1240}
 				segments={[segment(align, 300, "L"), segment(align, 100, "S")]}
@@ -103,11 +94,10 @@ describe("<PathoscopeOtuCoverage />", () => {
 	});
 
 	it("should draw no ceiling for an OTU nothing mapped to", () => {
-		mockElementWidth(400);
-
 		// There is no depth to rule the chart at, and a line along the top would
 		// read as one.
-		const { container } = renderWithProviders(
+		const { container } = renderAtWidth(
+			400,
 			<PathoscopeOtuCoverage
 				maxDepth={0}
 				segments={[{ ...segment(align, 300, "L"), detected: false, align: [] }]}
@@ -121,9 +111,8 @@ describe("<PathoscopeOtuCoverage />", () => {
 	});
 
 	it("should caption each segment with its name, then its length", () => {
-		mockElementWidth(1000);
-
-		renderWithProviders(
+		renderAtWidth(
+			1000,
 			<PathoscopeOtuCoverage
 				maxDepth={12}
 				segments={[segment(align, 3760, "RNA 1"), segment(align, 800)]}
@@ -131,7 +120,7 @@ describe("<PathoscopeOtuCoverage />", () => {
 		);
 
 		// The caption is a flex row, so its spacing is gap rather than text.
-		expect(screen.getByText("RNA 1").parentElement).toHaveTextContent(
+		expect(screen.getByText("RNA 1").parentElement).toMatchTextContent(
 			"RNA 1·3,760 nt",
 		);
 
@@ -140,9 +129,8 @@ describe("<PathoscopeOtuCoverage />", () => {
 	});
 
 	it("should say why a segment nothing mapped to is blank", () => {
-		mockElementWidth(400);
-
-		renderWithProviders(
+		renderAtWidth(
+			400,
 			<PathoscopeOtuCoverage
 				maxDepth={12}
 				segments={[
@@ -159,10 +147,9 @@ describe("<PathoscopeOtuCoverage />", () => {
 	});
 
 	it("should carry the length but not the name of an unsegmented otu's segment", () => {
-		mockElementWidth(400);
-
 		// The name would only repeat what the accordion above already says.
-		renderWithProviders(
+		renderAtWidth(
+			400,
 			<PathoscopeOtuCoverage
 				maxDepth={12}
 				segments={[segment(align, 5000, "L")]}

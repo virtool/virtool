@@ -160,7 +160,7 @@ describe("<FieldError />", () => {
 
 		const alert = screen.getByRole("alert");
 
-		expect(alert).toHaveTextContent("Handle is required");
+		expect(alert).toMatchTextContent("Handle is required");
 		expect(alert.querySelector("svg")).not.toBeNull();
 	});
 
