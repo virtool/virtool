@@ -3,11 +3,6 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { expectNoViolations } from "../axe";
 
-// Re-enabling `color-contrast` is the reason this project runs in a real
-// browser: the rule needs computed layout and rendered colours, which jsdom
-// cannot provide. The jsdom `web` project leaves it disabled.
-const withContrast = { rules: { "color-contrast": { enabled: true } } };
-
 describe("expectNoViolations", () => {
 	it("passes an accessible tree", async () => {
 		const { container } = render(
@@ -34,10 +29,10 @@ describe("expectNoViolations", () => {
 	});
 });
 
-describe("colour contrast in a real browser", () => {
+describe("colour contrast", () => {
 	// Guards WCAG AA text contrast: muted `text-gray-500` on white, the red
 	// `FieldError` message, and white nav text on the teal `bg-virtool` bar. A
-	// lower-contrast token turns this test red, which the jsdom harness can't do.
+	// lower-contrast token turns this test red.
 	it("passes the fixed WCAG AA text colours", async () => {
 		const { baseElement } = render(
 			<main className="bg-white p-4">
@@ -50,7 +45,7 @@ describe("colour contrast in a real browser", () => {
 			</main>,
 		);
 
-		await expectNoViolations(baseElement, withContrast);
+		await expectNoViolations(baseElement);
 	});
 
 	// Proves the rule actually runs here, so the guard above cannot silently
@@ -63,7 +58,7 @@ describe("colour contrast in a real browser", () => {
 			</main>,
 		);
 
-		await expect(expectNoViolations(baseElement, withContrast)).rejects.toThrow(
+		await expect(expectNoViolations(baseElement)).rejects.toThrow(
 			/color-contrast/,
 		);
 	});

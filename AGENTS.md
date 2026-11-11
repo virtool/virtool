@@ -247,6 +247,11 @@ outcome is required.
 - Give each database test file its own `createTestDatabase()` instance.
 - Use explicit `expect()` assertions, not snapshots.
 - Keep each test double in one owning harness, beside the boundary it models.
+- In `@virtool/web`, the file extension picks where a client test runs. A
+  `.test.ts` file runs on Node and must not touch a DOM or browser global. A
+  `.test.tsx` file runs in Chromium.
+- Test shared code once, where it is defined. Give each caller one test that
+  proves the wiring.
 
 App and package READMEs give test commands. Test harnesses document themselves
 in JSDoc.

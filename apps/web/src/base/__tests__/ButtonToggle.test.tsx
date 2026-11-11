@@ -1,5 +1,7 @@
+import { ToggleGroup, ToggleGroupItem } from "@base/Toggle";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { expectNoViolations } from "@tests/axe";
 import { describe, expect, it, vi } from "vitest";
 import { ButtonToggle } from "../Button";
 import Tooltip from "../Tooltip";
@@ -49,5 +51,26 @@ describe("<ButtonToggle />", () => {
 		expect(button).toHaveAttribute("aria-describedby");
 		expect(button).toHaveAttribute("aria-pressed", "true");
 		expect(button).toHaveAttribute("data-state", "on");
+	});
+
+	// Both states must clear 4.5:1. `bg-gray-700` with black text is about
+	// 2.6:1 and fails.
+	it("should pass AA contrast in both the on and off states", async () => {
+		const { baseElement } = render(
+			<main className="bg-white p-4">
+				<ButtonToggle onPressedChange={vi.fn()} pressed={false}>
+					Filter OTUs
+				</ButtonToggle>
+				<ButtonToggle onPressedChange={vi.fn()} pressed>
+					Filter Isolates
+				</ButtonToggle>
+				<ToggleGroup onValueChange={vi.fn()} value="table">
+					<ToggleGroupItem value="charts">Charts</ToggleGroupItem>
+					<ToggleGroupItem value="table">Table</ToggleGroupItem>
+				</ToggleGroup>
+			</main>,
+		);
+
+		await expectNoViolations(baseElement);
 	});
 });

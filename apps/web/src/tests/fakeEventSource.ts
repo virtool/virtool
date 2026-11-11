@@ -1,9 +1,8 @@
 // The SSE bridge constructs an EventSource when the authenticated layout mounts.
-// jsdom has no EventSource, and in a real browser it would connect to a server
-// that does not exist. A noop stand-in keeps the connection inert. The
-// readyState constants are part of the surface: SseConnection reads
-// `window.EventSource.CLOSED` to tell a rejected handshake from a dropped
-// transport.
+// A real EventSource would connect to a server that does not exist, so a noop
+// stand-in keeps the connection inert. The readyState constants are part of the
+// surface: SseConnection reads `EventSource.CLOSED` to tell a rejected
+// handshake from a dropped transport.
 class FakeEventSource {
 	static readonly CONNECTING = 0;
 	static readonly OPEN = 1;
