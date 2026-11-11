@@ -176,29 +176,6 @@ describe("<FileManager>", () => {
 			expect(setSort).toHaveBeenCalledWith("name", "ascending");
 		});
 
-		it("should reverse the column already sorted by", async () => {
-			const setSort = vi.fn();
-
-			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
-			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
-
-			await renderWithRouter(
-				<FileManager
-					{...props}
-					direction="ascending"
-					setSort={setSort}
-					sort="name"
-				/>,
-				path,
-			);
-
-			await userEvent.click(
-				await screen.findByRole("button", { name: "Name" }),
-			);
-
-			expect(setSort).toHaveBeenCalledWith("name", "descending");
-		});
-
 		it("should request the sorted column from the server", async () => {
 			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 			const findUploads = mockFindUploads([

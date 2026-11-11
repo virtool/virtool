@@ -406,66 +406,6 @@ describe("<CreateSamplesFromFiles>", () => {
 		).not.toBeInTheDocument();
 	});
 
-	it("should delete wildcard matches from every name and guard the resulting duplicates", async () => {
-		await renderDialog([
-			createFakeFile({ name: "sample_batch-one_end.fastq.gz" }),
-			createFakeFile({ name: "sample_batch_end.fastq.gz" }),
-		]);
-
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Match text" }),
-			"_batch*_end",
-		);
-		await userEvent.click(
-			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
-		);
-
-		expect(
-			screen.getByRole("textbox", {
-				name: "Name for sample_batch-one_end.fastq.gz",
-			}),
-		).toHaveValue("sample");
-		expect(
-			screen.getByRole("textbox", {
-				name: "Name for sample_batch_end.fastq.gz",
-			}),
-		).toHaveValue("sample");
-		expect(screen.getAllByText("Duplicate sample name")).toHaveLength(2);
-		expect(
-			screen.getByRole("button", { name: /^Create \d+ samples?$/ }),
-		).toBeDisabled();
-	});
-
-	it("should replace all literal matches with literal replacement text", async () => {
-		await renderDialog([
-			createFakeFile({ name: "sample.a+.a+.fastq.gz" }),
-			createFakeFile({ name: "sample.A+.fastq.gz" }),
-		]);
-
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Match text" }),
-			".a+",
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Replacement" }),
-			"$&",
-		);
-		await userEvent.click(
-			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
-		);
-
-		expect(
-			screen.getByRole("textbox", {
-				name: "Name for sample.a+.a+.fastq.gz",
-			}),
-		).toHaveValue("sample$&$&");
-		expect(
-			screen.getByRole("textbox", {
-				name: "Name for sample.A+.fastq.gz",
-			}),
-		).toHaveValue("sample.A+");
-	});
-
 	it("should undo the last bulk rename", async () => {
 		await renderDialog([
 			createFakeFile({ name: "sample_one.fastq.gz" }),
@@ -491,39 +431,6 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Name for sample_two.fastq.gz" }),
 		).toHaveValue("sample_two");
 	});
-
-	it.each([
-		["(sample)_(\\d+)", "$2-$1", "12-sample_34"],
-		["\\d+", "batch", "sample_batch_batch"],
-		["^sample_", "", "12_34"],
-		["$", "_end", "sample_12_34_end"],
-	])(
-		"should replace regex %s with %s",
-		async (pattern, replacement, expected) => {
-			await renderDialog([createFakeFile({ name: "sample_12_34.fastq.gz" })]);
-
-			await userEvent.click(
-				screen.getByRole("button", { name: "Use regular expression" }),
-			);
-			await userEvent.type(
-				screen.getByRole("textbox", { name: "Match text" }),
-				pattern,
-			);
-			if (replacement) {
-				await userEvent.type(
-					screen.getByRole("textbox", { name: "Replacement" }),
-					replacement,
-				);
-			}
-			await userEvent.click(
-				screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
-			);
-
-			expect(
-				screen.getByRole("textbox", { name: "Name for sample_12_34.fastq.gz" }),
-			).toHaveValue(expected);
-		},
-	);
 
 	it("should block invalid regex and recover when corrected or disabled", async () => {
 		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
@@ -563,28 +470,6 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(
 			screen.getByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
 		).toHaveValue("one");
-	});
-
-	it("should replace the whole name once with a standalone wildcard", async () => {
-		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
-
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Match text" }),
-			"*",
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Replacement" }),
-			"renamed",
-		);
-		await userEvent.click(
-			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
-		);
-
-		expect(
-			screen.getByRole("textbox", {
-				name: "Name for sample_one.fastq.gz",
-			}),
-		).toHaveValue("renamed");
 	});
 
 	it("should require a name after deleting it with a standalone wildcard", async () => {

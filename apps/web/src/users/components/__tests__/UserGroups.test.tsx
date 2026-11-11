@@ -278,27 +278,4 @@ describe("<UserGroups />", () => {
 			}),
 		);
 	});
-
-	it("removes a non-primary group without touching the primary", async () => {
-		mockListGroups(allGroups);
-		mockUpdateUser(userId, 200, {});
-
-		renderWithProviders(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member, other]}
-				primaryGroup={member}
-			/>,
-		);
-
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Remove bar" }),
-		);
-
-		await waitFor(() =>
-			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, groups: [1] },
-			}),
-		);
-	});
 });

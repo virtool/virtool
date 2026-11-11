@@ -68,66 +68,6 @@ describe("<AnalysisItem />", () => {
 		},
 	);
 
-	// The workflow writes its analysis result before the job is marked terminal,
-	// so `ready` alone would advertise a button the server answers with a 409.
-	it("withholds removal from a ready analysis whose job is still running", async () => {
-		renderItem(withJob("running", true));
-
-		await expectNoRemoveButton();
-	});
-
-	// An OOM-killed or evicted pod leaves the analysis unready forever. It has to
-	// stay removable, or the user is stuck looking at it.
-	it.each<JobState>(["cancelled", "failed", "succeeded"])(
-		"offers removal for an unready analysis whose job is %s",
-		async (state) => {
-			renderItem(withJob(state, false));
-
-			expect(
-				await screen.findByRole("button", { name: "Delete" }),
-			).toBeInTheDocument();
-			// The failure itself stays on screen alongside the remove button.
-			expect(screen.getByRole("progressbar")).toBeInTheDocument();
-		},
-	);
-
-	it("offers removal for an unready analysis with no job", async () => {
-		renderItem({ ready: false, job: null });
-
-		expect(
-			await screen.findByRole("button", { name: "Delete" }),
-		).toBeInTheDocument();
-	});
-
-	it("offers removal to a sample owner with no administrator role", async () => {
-		const sample = createFakeSample({ allWrite: false, groupWrite: false });
-		mockGetSample(sample);
-		mockGetAccount(
-			createFakeAccount({ administratorRole: null, id: sample.user.id }),
-		);
-
-		renderItem(withJob("succeeded", true));
-
-		expect(
-			await screen.findByRole("button", { name: "Delete" }),
-		).toBeInTheDocument();
-	});
-
-	it.each([null, "users"] as const)(
-		"withholds removal from a user who cannot write to the sample with role %s",
-		async (administratorRole) => {
-			const sample = createFakeSample({ allWrite: false, groupWrite: false });
-			mockGetSample(sample);
-			mockGetAccount(
-				createFakeAccount({ administratorRole, id: sample.user.id + 1 }),
-			);
-
-			renderItem(withJob("succeeded", true));
-
-			await expectNoRemoveButton();
-		},
-	);
-
 	describe("deletion", () => {
 		async function openDialog(overrides: Partial<AnalysisMinimal> = {}) {
 			renderItem({ id: 42, workflow: "pathoscope", ...overrides });

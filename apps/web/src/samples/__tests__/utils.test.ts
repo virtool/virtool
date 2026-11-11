@@ -1,6 +1,15 @@
+import { createFakeAccount } from "@tests/fake/account";
 import { createFakeFile } from "@tests/fake/files";
+import { createFakeJobNested } from "@tests/fake/jobs";
+import { createFakeSample } from "@tests/fake/samples";
+import type { JobState } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
-import { getCreateSampleRequest, getSampleNameFromReads } from "../utils";
+import {
+	checkCanDeleteSample,
+	checkCanEditSample,
+	getCreateSampleRequest,
+	getSampleNameFromReads,
+} from "../utils";
 
 describe("getSampleNameFromReads", () => {
 	it.each([
@@ -12,6 +21,7 @@ describe("getSampleNameFromReads", () => {
 		"fastq.gz",
 		"fq.bz2",
 		"fastq.bz2",
+		"FASTQ.GZ",
 	])("drops the .%s extension", (extension) => {
 		const file = createFakeFile({ name: `sample_one.${extension}` });
 
@@ -87,5 +97,77 @@ describe("getCreateSampleRequest", () => {
 		expect(getCreateSampleRequest({ ...values, group: "" }, [7]).group).toBe(
 			null,
 		);
+	});
+});
+
+describe("checkCanEditSample", () => {
+	const owner = createFakeAccount({ administratorRole: null });
+	const other = createFakeAccount({
+		administratorRole: null,
+		id: owner.id + 1,
+	});
+	const [group] = other.groups;
+
+	const locked = createFakeSample({
+		allWrite: false,
+		group: group ?? null,
+		groupWrite: false,
+		user: { ...createFakeSample().user, id: owner.id },
+	});
+
+	it.each([
+		[
+			"a full administrator",
+			createFakeAccount({ administratorRole: "full" }),
+			{},
+			true,
+		],
+		["the owner", owner, {}, true],
+		["any user when all may write", other, { allWrite: true }, true],
+		[
+			"a group member when the group may write",
+			other,
+			{ groupWrite: true },
+			true,
+		],
+		["a group member when the group may not write", other, {}, false],
+		[
+			"a user administrator who is not the owner",
+			{ ...other, administratorRole: "users" as const },
+			{},
+			false,
+		],
+		[
+			"a user outside the group",
+			{ ...other, groups: [] },
+			{ groupWrite: true },
+			false,
+		],
+	])("decides for %s", (_, account, overrides, expected) => {
+		expect(checkCanEditSample(account, { ...locked, ...overrides })).toBe(
+			expected,
+		);
+	});
+});
+
+describe("checkCanDeleteSample", () => {
+	it("allows a ready sample", () => {
+		expect(checkCanDeleteSample(true)).toBe(true);
+	});
+
+	it.each<[JobState, boolean]>([
+		["cancelled", true],
+		["failed", true],
+		["pending", false],
+		["running", false],
+		["succeeded", false],
+	])("decides for an unready sample whose job is %s", (state, expected) => {
+		expect(checkCanDeleteSample(false, createFakeJobNested({ state }))).toBe(
+			expected,
+		);
+	});
+
+	it("refuses an unready sample with no job", () => {
+		expect(checkCanDeleteSample(false)).toBe(false);
 	});
 });

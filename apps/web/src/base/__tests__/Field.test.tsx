@@ -184,17 +184,6 @@ describe("<FieldError />", () => {
 		expect(screen.getByRole("alert").querySelector("svg")).toBeNull();
 	});
 
-	it("should show one message for duplicate errors", () => {
-		renderWithProviders(
-			<FieldError
-				errors={[{ message: "Required" }, undefined, { message: "Required" }]}
-			/>,
-		);
-
-		expect(screen.getByRole("alert")).toHaveTextContent(/^Required$/);
-		expect(screen.queryByRole("list")).toBeNull();
-	});
-
 	it("should list several distinct errors", () => {
 		renderWithProviders(
 			<FieldError

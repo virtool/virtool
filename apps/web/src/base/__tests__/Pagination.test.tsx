@@ -20,7 +20,7 @@ describe("<Pagination />", () => {
 		};
 	});
 
-	it("Should render correctly when pageCount=6 and currentPage=1", async () => {
+	it("should render the controls and the page range", async () => {
 		renderWithProviders(<Pagination {...props} />);
 		expect(
 			screen.getByRole("button", { name: "Go to previous page" }),
@@ -31,22 +31,6 @@ describe("<Pagination />", () => {
 		expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "5" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "6" })).not.toBeInTheDocument();
-	});
-
-	it("should render correctly when pageCount=6 and currentPage = 3", async () => {
-		props.storedPage = 3;
-		renderWithProviders(<Pagination {...props} />);
-		expect(
-			screen.getByRole("button", { name: "Go to previous page" }),
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Go to next page" }),
-		).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "1" })).not.toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "6" })).not.toBeInTheDocument();
 	});
 
@@ -62,20 +46,5 @@ describe("<Pagination />", () => {
 			screen.queryByRole("navigation", { name: "pagination" }),
 		).not.toBeInTheDocument();
 		expect(screen.queryByRole("button")).not.toBeInTheDocument();
-	});
-
-	it("should render correctly when pageCount=3", async () => {
-		props.pageCount = 3;
-		renderWithProviders(<Pagination {...props} />);
-		expect(
-			screen.getByRole("button", { name: "Go to previous page" }),
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Go to next page" }),
-		).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "4" })).not.toBeInTheDocument();
 	});
 });

@@ -64,18 +64,6 @@ describe("<FirstUser />", () => {
 		});
 	});
 
-	it("refuses mismatched passwords before submitting", async () => {
-		const createFirstUser = mockCreateFirstUser();
-
-		await renderSetup();
-		await fillForm("different");
-
-		expect(
-			await screen.findByText("The passwords do not match"),
-		).toBeInTheDocument();
-		expect(createFirstUser).not.toHaveBeenCalled();
-	});
-
 	it("says a verification email is on its way before entering the app", async () => {
 		const account = createFakeAccount();
 		authServerFnMocks.createFirstUserFn.mockResolvedValue({

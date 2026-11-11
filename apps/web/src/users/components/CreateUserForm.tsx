@@ -7,6 +7,7 @@ import Field, {
 import Input from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
+import { getGroupRemoval } from "@users/utils";
 import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
 import { ChevronDown } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
@@ -105,11 +106,13 @@ export function CreateUserForm({
 						primaryGroupId={primaryGroup}
 						onAdd={(id) => setValue("groups", [...selectedGroups, id])}
 						onRemove={(id) => {
-							setValue(
-								"groups",
-								selectedGroups.filter((groupId) => groupId !== id),
+							const { groups, clearsPrimary } = getGroupRemoval(
+								selectedGroups,
+								primaryGroup,
+								id,
 							);
-							if (primaryGroup === id) {
+							setValue("groups", groups);
+							if (clearsPrimary) {
 								setValue("primaryGroup", null);
 							}
 						}}

@@ -10,7 +10,7 @@ import {
 	useSuspenseUser,
 	useUpdateUser,
 } from "@users/queries";
-import { hasSufficientAdminRole } from "@virtool/contracts";
+import { checkCanResetTotp, checkCanRevokeAccess } from "@users/utils";
 import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
 import { DeletePendingUser } from "./DeletePendingUser";
 import Handle from "./Handle";
@@ -46,13 +46,8 @@ export default function UserDetail({ userId }: UserDetailProps) {
 
 	const mutation = useUpdateUser();
 
-	const canResetTotp =
-		data.twoFactorEnabled &&
-		account !== undefined &&
-		account.id !== userId &&
-		hasSufficientAdminRole("full", account.administratorRole);
-
-	const canRevokeAccess = account !== undefined && account.id !== userId;
+	const canResetTotp = checkCanResetTotp(account, data);
+	const canRevokeAccess = checkCanRevokeAccess(account, userId);
 
 	if (!canEdit) {
 		return (

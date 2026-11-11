@@ -30,8 +30,8 @@ import type {
 	SampleSortField,
 	SortDirection,
 } from "@virtool/contracts";
-import { union } from "es-toolkit";
 import { useEffect } from "react";
+import { getToggledLabels } from "./labels";
 import type { CreateSampleRequest, SampleUpdate } from "./types";
 
 /** A label carried by at least one of the selected samples */
@@ -433,25 +433,12 @@ export function useUpdateLabel(
 	const queryClient = useQueryClient();
 
 	return useMutation<Sample[], Error, number>({
-		mutationFn: (labelId) => {
-			const clicked = selectedLabels.find((label) => label.id === labelId);
-			const allLabeled = clicked?.allLabeled === true;
-
-			return Promise.all(
-				selectedSamples.map((sample) => {
-					const labelIds = sample.labels.map((label) => label.id);
-
-					return updateSampleFn({
-						data: {
-							sampleId: sample.id,
-							labels: allLabeled
-								? labelIds.filter((id) => id !== labelId)
-								: union(labelIds, [labelId]),
-						},
-					}) as Promise<Sample>;
-				}),
-			);
-		},
+		mutationFn: (labelId) =>
+			Promise.all(
+				getToggledLabels(selectedLabels, selectedSamples, labelId).map(
+					(data) => updateSampleFn({ data }) as Promise<Sample>,
+				),
+			),
 		onSuccess: (samples) => {
 			invalidateChanges(
 				queryClient,

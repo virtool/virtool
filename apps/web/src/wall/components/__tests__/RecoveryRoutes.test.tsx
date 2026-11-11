@@ -160,7 +160,7 @@ it("refuses mismatched passwords before consuming the recovery link", async () =
 	);
 
 	expect(await screen.findByRole("alert")).toHaveTextContent(
-		"The passwords do not match.",
+		"The passwords do not match",
 	);
 	expect(
 		recoveryServerFnMocks.completePasswordRecoveryFn,

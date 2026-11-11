@@ -7,6 +7,7 @@ import Popover from "@base/Popover";
 import Tooltip from "@base/Tooltip";
 import { Info, Regex, ReplaceAll } from "lucide-react";
 import { useId } from "react";
+import { renameNames } from "./rename";
 
 type BulkRenameProps = {
 	canUndo: boolean;
@@ -34,15 +35,7 @@ export default function BulkRename({
 	replacement,
 }: BulkRenameProps) {
 	const errorId = useId();
-	const { pattern, error } = getPattern(match, isRegex);
-	const renamed = names.map((name) => {
-		if (!match || !pattern) {
-			return name;
-		}
-		return isRegex
-			? name.replace(pattern, replacement)
-			: name.replace(pattern, (matched) => (matched ? replacement : ""));
-	});
+	const { error, renamed } = renameNames(names, match, replacement, isRegex);
 	const changedCount = renamed.filter(
 		(name, index) => name !== names[index],
 	).length;
@@ -128,18 +121,4 @@ export default function BulkRename({
 			)}
 		</BoxGroupSection>
 	);
-}
-
-function getPattern(match: string, isRegex: boolean) {
-	try {
-		const source = isRegex
-			? match
-			: match
-					.split(/\*+/)
-					.map((text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-					.join(".*");
-		return { pattern: new RegExp(source, "g"), error: null };
-	} catch {
-		return { pattern: null, error: "Enter a valid regular expression." };
-	}
 }

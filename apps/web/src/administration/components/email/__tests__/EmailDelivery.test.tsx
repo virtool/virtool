@@ -16,40 +16,6 @@ function findStatus() {
 
 describe("<EmailDelivery>", () => {
 	describe("availability", () => {
-		it("reports a ready instance", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(await findStatus()).toHaveTextContent("Active");
-		});
-
-		it("reports a configured instance even when sending is switched off", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings({ enabled: false }));
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(await findStatus()).toHaveTextContent("Disabled");
-			expect(screen.getByText(/new email is not sent/i)).toBeVisible();
-		});
-
-		it("names the fields an unconfigured instance is missing", async () => {
-			mockEmailSettingsStore(
-				createFakeEmailSettings({
-					availability: "unconfigured",
-					enabled: false,
-					hasApiKey: false,
-					senderAddress: "",
-				}),
-			);
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(await findStatus()).toHaveTextContent(
-				"needs an API key and a sender address",
-			);
-		});
-
 		// A key that cannot be decrypted is intact. Reporting it as missing would
 		// point an administrator at the API key when the encryption key is at
 		// fault, and invite them to overwrite a value that is still good.

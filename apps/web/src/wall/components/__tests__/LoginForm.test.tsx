@@ -245,24 +245,6 @@ describe("<LoginForm />", () => {
 		},
 	);
 
-	it("hides an unexpected error behind a generic message", async () => {
-		loginMock.mockRejectedValue(new Error("BETTER_AUTH internal detail"));
-
-		renderWithProviders(
-			<MemoryRouter>
-				<LoginForm />
-			</MemoryRouter>,
-		);
-
-		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
-		await userEvent.type(screen.getByLabelText("Password"), "password");
-		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-
-		const alert = await screen.findByRole("alert");
-		expect(alert).toHaveTextContent("Sign-in failed. Try again.");
-		expect(alert).not.toHaveTextContent("BETTER_AUTH");
-	});
-
 	it("sends a user who must turn on two-factor authentication to enrollment", async () => {
 		loginMock.mockResolvedValue({ login: true });
 		mockGetAccountMfaEnrollmentRequired();

@@ -2,7 +2,12 @@
 // and aggregate figure is derived server-side from the raw alignments, in
 // `@server/analyses/format`. Nothing is re-derived here.
 
-import { type AnalysisMinimal, AnalysisWorkflow } from "@virtool/contracts";
+import {
+	type AnalysisMinimal,
+	AnalysisWorkflow,
+	isJobStateTerminal,
+	type JobState,
+} from "@virtool/contracts";
 
 /** The workflows this client can view results for, and filter a list by. */
 export const supportedWorkflows = AnalysisWorkflow.options;
@@ -37,4 +42,23 @@ export function getWorkflowVersionLabel({
 	}
 
 	return version;
+}
+
+/**
+ * Whether an analysis can be removed, given its embedded job and the job as
+ * last fetched, if it has been.
+ *
+ * The same predicate `deleteAnalysis` applies, and deliberately not `ready`.
+ * It reads both ways: an unready analysis whose pod was OOM-killed or evicted
+ * stays removable rather than stranding the user, and a finished analysis
+ * whose job has not been marked terminal yet does not advertise a button the
+ * server would answer with a 409.
+ */
+export function checkCanRemoveAnalysis(
+	analysis: Pick<AnalysisMinimal, "job">,
+	job?: { state: JobState },
+): boolean {
+	const state = job?.state ?? analysis.job?.state;
+
+	return state === undefined || isJobStateTerminal(state);
 }

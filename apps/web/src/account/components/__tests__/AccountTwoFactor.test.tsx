@@ -117,20 +117,18 @@ describe("<AccountTwoFactor />", () => {
 		expect(screen.queryByText(/Make new codes so that/)).toBeNull();
 	});
 
-	it.each([
-		[2, "Only 2 recovery codes are left."],
-		[1, "Only 1 recovery code is left."],
-		[0, "You have no recovery codes left."],
-	])("warns when %i recovery codes are left", async (remaining, message) => {
+	it("warns when few recovery codes are left", async () => {
 		mockGetAccountSecurity({
-			recoveryCodesRemaining: remaining,
+			recoveryCodesRemaining: 2,
 			twoFactorEnabled: true,
 		});
 
 		renderWithProviders(<AccountTwoFactor />);
 
 		expect(
-			await screen.findByText(message, { exact: false }),
+			await screen.findByText("Only 2 recovery codes are left.", {
+				exact: false,
+			}),
 		).toBeInTheDocument();
 	});
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { SequenceCreateRequest, SequenceUpdateRequest } from "./otus";
+import {
+	normalizeSequence,
+	SEQUENCE_PATTERN,
+	SequenceCreateRequest,
+	SequenceUpdateRequest,
+} from "./otus";
 
 const createFields = {
 	accession: "NC_1",
@@ -33,5 +38,28 @@ describe("SequenceUpdateRequest", () => {
 
 	it("leaves an absent sequence absent", () => {
 		expect(SequenceUpdateRequest.parse({}).sequence).toBeUndefined();
+	});
+});
+
+describe("normalizeSequence", () => {
+	it.each([
+		["atgc", "ATGC"],
+		["AT GC", "ATGC"],
+		["at\r\ngc\n", "ATGC"],
+		["\tatgc ", "ATGC"],
+		["", ""],
+	])("normalizes %j to %j", (sequence, expected) => {
+		expect(normalizeSequence(sequence)).toBe(expected);
+	});
+});
+
+describe("SEQUENCE_PATTERN", () => {
+	it.each(["ATCG", "NRYKM", ""])("accepts %j", (sequence) => {
+		expect(SEQUENCE_PATTERN.test(sequence)).toBe(true);
+	});
+
+	// Lowercase is accepted only once it is normalized.
+	it.each(["atcg", "ATGX", "AT GC", "U"])("rejects %j", (sequence) => {
+		expect(SEQUENCE_PATTERN.test(sequence)).toBe(false);
 	});
 });

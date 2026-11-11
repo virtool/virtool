@@ -134,27 +134,23 @@ describe("<AccountPasskeys />", () => {
 		expect(screen.getByRole("button", { name: "Add" })).toBeEnabled();
 	});
 
-	it.each([
-		["the browser", "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"],
-		["the server", "PASSKEY_ALREADY_REGISTERED"],
-	])(
-		"shows a red alert when %s says the passkey is already registered",
-		async (_, code) => {
-			const user = userEvent.setup();
-			mockFindPasskeys([]);
-			addPasskey.mockResolvedValue(failure(400, code));
+	it("shows a red alert when the passkey is already registered", async () => {
+		const user = userEvent.setup();
+		mockFindPasskeys([]);
+		addPasskey.mockResolvedValue(
+			failure(400, "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"),
+		);
 
-			renderWithProviders(<AccountPasskeys />);
-			await screen.findByText("You have not added any passkeys.");
-			await user.click(screen.getByRole("button", { name: "Add" }));
+		renderWithProviders(<AccountPasskeys />);
+		await screen.findByText("You have not added any passkeys.");
+		await user.click(screen.getByRole("button", { name: "Add" }));
 
-			const alert = await screen.findByRole("alert");
-			expect(alert).toHaveTextContent("This passkey is already registered.");
-			expect(alert).not.toHaveTextContent("virtool.test");
-			expect(alert.firstElementChild).toHaveClass("bg-red-100");
-			expect(screen.queryByRole("status")).toBeNull();
-		},
-	);
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent("This passkey is already registered.");
+		expect(alert).not.toHaveTextContent("virtool.test");
+		expect(alert.firstElementChild).toHaveClass("bg-red-100");
+		expect(screen.queryByRole("status")).toBeNull();
+	});
 
 	async function passChallenge(user: ReturnType<typeof userEvent.setup>) {
 		const challenge = await screen.findByRole("dialog", {

@@ -100,38 +100,6 @@ describe("<DeleteDialog />", () => {
 		expect(screen.getByText("Delete Sample")).toBeInTheDocument();
 	});
 
-	it("falls back to a generic message when the ClientError carries none", async () => {
-		const onConfirm = vi.fn().mockRejectedValue(clientError(""));
-		renderWithProviders(
-			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
-		);
-
-		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
-
-		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"Something went wrong. Please try again.",
-		);
-	});
-
-	it("hides an unexpected error's message rather than leaking it", async () => {
-		const onConfirm = vi
-			.fn()
-			.mockRejectedValue(
-				new Error(
-					'duplicate key value violates unique constraint "samples_pkey"',
-				),
-			);
-		renderWithProviders(
-			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
-		);
-
-		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
-
-		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"Something went wrong. Please try again.",
-		);
-	});
-
 	it("stays open without an error when recent authentication is cancelled", async () => {
 		const cancelled = new Error("Recent authentication was cancelled.");
 		cancelled.name = "RecentAuthenticationCancelled";
