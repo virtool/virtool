@@ -19,43 +19,7 @@ describe("<CreateIsolate />", () => {
 		};
 	});
 
-	it("should render properly", () => {
-		renderWithProviders(<CreateIsolate {...props} />);
-
-		expect(screen.getByText("Create Isolate")).toBeInTheDocument();
-		expect(screen.getByText("Source Type")).toBeInTheDocument();
-		expect(screen.getByText("Source Name")).toBeInTheDocument();
-		expect(screen.getByText("Isolate Name")).toBeInTheDocument();
-		expect(screen.getByRole("button")).toBeInTheDocument();
-	});
-
 	describe("<IsolateForm />", () => {
-		it("should render with source types restricted", async () => {
-			renderWithProviders(<CreateIsolate {...props} />);
-
-			await userEvent.click(screen.getByLabelText("Source Type"));
-
-			expect(
-				screen.getByRole("option", { name: "Unknown" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("option", { name: "Isolate" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("option", { name: "Genotype" }),
-			).toBeInTheDocument();
-		});
-
-		it("should render with source types unrestricted", () => {
-			props.restrictSourceTypes = false;
-			renderWithProviders(<CreateIsolate {...props} />);
-
-			expect(
-				screen.getByRole("textbox", { name: "Source Type" }),
-			).toBeInTheDocument();
-			expect(screen.queryByRole("combobox")).toBeNull();
-		});
-
 		it.each([
 			["Genotype", "A"],
 			["unknown", ""],

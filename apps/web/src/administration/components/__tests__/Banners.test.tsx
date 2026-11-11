@@ -70,27 +70,7 @@ describe("<Banners>", () => {
 		expect(radios[2]).not.toBeChecked();
 	});
 
-	it("selects the Off option when no banner is active", async () => {
-		const banners = [
-			createFakeBanner({
-				id: 1,
-				active: false,
-				color: "blue",
-				message: "First",
-			}),
-		];
-		findBanners.mockResolvedValueOnce(banners);
-
-		renderWithProviders(<Banners />);
-
-		await screen.findByText("First");
-
-		const radios = screen.getAllByRole("radio");
-		expect(radios[0]).toBeChecked();
-		expect(radios[1]).not.toBeChecked();
-	});
-
-	it("activates a banner by selecting its radio", async () => {
+	it("selects Off when no banner is active and activates a banner by selecting its radio", async () => {
 		const banners = [
 			createFakeBanner({
 				id: 1,
@@ -106,6 +86,10 @@ describe("<Banners>", () => {
 		renderWithProviders(<Banners />);
 
 		await screen.findByText("First");
+		const radios = screen.getAllByRole("radio");
+		expect(radios[0]).toBeChecked();
+		expect(radios[1]).not.toBeChecked();
+
 		await userEvent.click(screen.getByLabelText(/First/));
 
 		await waitFor(() =>

@@ -35,7 +35,7 @@ describe("<HmmDetail />", () => {
 			expect(screen.queryByText("Cluster Members")).not.toBeInTheDocument();
 		});
 
-		it("should render details correctly", async () => {
+		it("should render the details, cluster members, families, and genera", async () => {
 			mockGetHmm(hmmDetail);
 			await renderRoute(path);
 
@@ -49,13 +49,8 @@ describe("<HmmDetail />", () => {
 
 			expect(screen.getByText("Mean Entropy")).toBeInTheDocument();
 			expect(screen.getByText(hmmDetail.meanEntropy)).toBeInTheDocument();
-		});
 
-		it("should render Cluster table correctly", async () => {
-			mockGetHmm(hmmDetail);
-			await renderRoute(path);
-
-			expect(await screen.findByText("Cluster Members")).toBeInTheDocument();
+			expect(screen.getByText("Cluster Members")).toBeInTheDocument();
 			expect(screen.getByText(hmmDetail.entries.length)).toBeInTheDocument();
 
 			const firstEntry = at(hmmDetail.entries, 0);
@@ -70,32 +65,18 @@ describe("<HmmDetail />", () => {
 			expect(screen.getByText(secondEntry.name)).toBeInTheDocument();
 
 			expect(screen.getByText("Organism")).toBeInTheDocument();
-			expect(screen.queryByText(firstEntry.organism)).toBeInTheDocument();
-			expect(screen.queryByText(secondEntry.organism)).toBeInTheDocument();
-		});
-	});
+			expect(screen.getByText(firstEntry.organism)).toBeInTheDocument();
+			expect(screen.getByText(secondEntry.organism)).toBeInTheDocument();
 
-	describe("HmmTaxonomy", () => {
-		it("should render Families correctly", async () => {
-			mockGetHmm(hmmDetail);
-			await renderRoute(path);
-
-			expect(await screen.findByText("Families")).toBeInTheDocument();
-
+			expect(screen.getByText("Families")).toBeInTheDocument();
 			expect(screen.getByText("Papillomaviridae")).toBeInTheDocument();
 			expect(
 				screen.getByText(hmmDetail.families.Papillomaviridae),
 			).toBeInTheDocument();
 			expect(screen.getByText("None")).toBeInTheDocument();
 			expect(screen.getByText(hmmDetail.families.None)).toBeInTheDocument();
-		});
 
-		it("should render Genera correctly", async () => {
-			mockGetHmm(hmmDetail);
-			await renderRoute(path);
-
-			expect(await screen.findByText("Genera")).toBeInTheDocument();
-
+			expect(screen.getByText("Genera")).toBeInTheDocument();
 			expect(screen.getByText("Begomovirus")).toBeInTheDocument();
 			expect(
 				screen.getByText(hmmDetail.genera.Begomovirus),

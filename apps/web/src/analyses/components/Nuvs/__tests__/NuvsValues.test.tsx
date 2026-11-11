@@ -10,16 +10,10 @@ describe("<NuvsValues />", () => {
 		expect(screen.getByText("E = 0.5")).toBeInTheDocument();
 	});
 
-	it("uses the plural for several ORFs", () => {
-		render(<NuvsValues e={0.5} orfCount={2} />);
+	it("uses the plural for several ORFs and leaves out a missing e-value", () => {
+		render(<NuvsValues e={null} orfCount={2} />);
 
 		expect(screen.getByText("2 ORFs")).toBeInTheDocument();
-	});
-
-	it("leaves out the e-value when the contig has none", () => {
-		render(<NuvsValues e={null} orfCount={0} />);
-
-		expect(screen.getByText("0 ORFs")).toBeInTheDocument();
 		expect(screen.queryByText(/E =/)).not.toBeInTheDocument();
 	});
 });

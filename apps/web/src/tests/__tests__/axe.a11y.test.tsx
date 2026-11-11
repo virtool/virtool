@@ -8,6 +8,32 @@ import { expectNoViolations } from "../axe";
 // cannot provide. The jsdom `web` project leaves it disabled.
 const withContrast = { rules: { "color-contrast": { enabled: true } } };
 
+describe("expectNoViolations", () => {
+	it("passes an accessible tree", async () => {
+		const { container } = render(
+			<main>
+				<h1>Samples</h1>
+				<button type="button">Create</button>
+				<label>
+					Name
+					<input type="text" />
+				</label>
+			</main>,
+		);
+
+		await expectNoViolations(container);
+	});
+
+	it("rejects when a barrier is present", async () => {
+		// An input with no associated label is a well-known axe barrier.
+		const { container } = render(<input type="text" />);
+
+		await expect(expectNoViolations(container)).rejects.toThrow(
+			/expected no accessibility violations, found \d+/,
+		);
+	});
+});
+
 describe("colour contrast in a real browser", () => {
 	// Guards WCAG AA text contrast: muted `text-gray-500` on white, the red
 	// `FieldError` message, and white nav text on the teal `bg-virtool` bar. A

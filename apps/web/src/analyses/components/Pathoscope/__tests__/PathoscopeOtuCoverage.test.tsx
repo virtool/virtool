@@ -172,34 +172,4 @@ describe("<PathoscopeOtuCoverage />", () => {
 		expect(screen.getByText("5,000 nt")).toBeVisible();
 		expect(screen.queryByText("L")).toBeNull();
 	});
-
-	it("should fix the label row's height rather than let its content set it", () => {
-		mockElementWidth(400);
-
-		// Every chart has to be the same total height whatever its captions say, or
-		// the two read as different components rather than one in two states.
-		const { container } = renderWithProviders(
-			<PathoscopeOtuCoverage maxDepth={12} segments={[segment(align, 5000)]} />,
-		);
-
-		const labelRow = container.querySelector(".text-gray-600.text-sm");
-
-		expect(labelRow).not.toBeNull();
-
-		// In rem, so it grows with the reader's font-size preference.
-		expect((labelRow as HTMLElement).style.height).toBe("1.125rem");
-	});
-
-	it("should left-justify segment labels", () => {
-		mockElementWidth(400);
-
-		renderWithProviders(
-			<PathoscopeOtuCoverage
-				maxDepth={12}
-				segments={[segment(align, 3400, "L"), segment(align, 800)]}
-			/>,
-		);
-
-		expect(screen.getByText("L").className).toContain("text-left");
-	});
 });

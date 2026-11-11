@@ -16,8 +16,8 @@ function clientError(message: string): Error {
 }
 
 describe("<DeleteDialog />", () => {
-	it("titles the dialog and prompts with the item name", () => {
-		renderWithProviders(
+	it("titles the dialog, prompts with the item name, and takes a custom title and confirm label", () => {
+		const { rerender } = renderWithProviders(
 			<DeleteDialog name="Foo" noun="Sample" onConfirm={vi.fn()} open />,
 		);
 
@@ -26,10 +26,9 @@ describe("<DeleteDialog />", () => {
 			screen.getByText(/are you sure you want to delete/i),
 		).toBeInTheDocument();
 		expect(screen.getByText("Foo")).toBeInTheDocument();
-	});
+		expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
 
-	it("takes a custom title and confirm label", () => {
-		renderWithProviders(
+		rerender(
 			<DeleteDialog
 				confirmLabel="Sign out"
 				name="Firefox"
@@ -46,23 +45,6 @@ describe("<DeleteDialog />", () => {
 			screen.getByRole("button", { name: "Sign out" }),
 		).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
-	});
-
-	it("opens from its trigger", async () => {
-		renderWithProviders(
-			<DeleteDialog
-				name="Foo"
-				noun="Sample"
-				onConfirm={vi.fn()}
-				trigger={<button type="button">open</button>}
-			/>,
-		);
-
-		expect(screen.queryByText("Delete Sample")).toBeNull();
-
-		await userEvent.click(screen.getByRole("button", { name: "open" }));
-
-		expect(screen.getByText("Delete Sample")).toBeInTheDocument();
 	});
 
 	it("runs onConfirm and closes on success", async () => {
@@ -193,7 +175,7 @@ describe("<DeleteDialog />", () => {
 		expect(onConfirm).toHaveBeenCalledTimes(2);
 	});
 
-	it("returns focus to its trigger when closed", async () => {
+	it("opens from its trigger and returns focus to it when closed", async () => {
 		const user = userEvent.setup();
 		renderWithProviders(
 			<DeleteDialog
@@ -206,7 +188,12 @@ describe("<DeleteDialog />", () => {
 
 		const trigger = screen.getByRole("button", { name: "Delete" });
 
+		expect(screen.queryByText("Delete Sample")).toBeNull();
+
 		await user.click(trigger);
+
+		expect(screen.getByText("Delete Sample")).toBeInTheDocument();
+
 		await user.click(screen.getByRole("button", { name: "Cancel" }));
 
 		await waitFor(() => expect(trigger).toHaveFocus());

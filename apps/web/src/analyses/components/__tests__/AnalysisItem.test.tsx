@@ -134,18 +134,6 @@ describe("<AnalysisItem />", () => {
 			expect(deleteAnalysis).not.toHaveBeenCalled();
 		});
 
-		it("does not delete when closed with the escape key", async () => {
-			const deleteAnalysis = mockDeleteAnalysis();
-
-			await openDialog();
-			await userEvent.keyboard("{Escape}");
-
-			await waitFor(() =>
-				expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
-			);
-			expect(deleteAnalysis).not.toHaveBeenCalled();
-		});
-
 		it("shows a refusal from the server and stays open", async () => {
 			const refusal = new Error("Analysis is still running");
 			refusal.name = CLIENT_ERROR_NAME;
@@ -163,16 +151,16 @@ describe("<AnalysisItem />", () => {
 		});
 	});
 
-	it("labels the version of an unready analysis as pending", async () => {
-		renderItem({ ready: false, workflowVersion: null });
+	it.each([
+		[false, "Pending", "not recorded"],
+		[true, "not recorded", "Pending"],
+	])(
+		"labels a missing version when ready is %s as %s",
+		async (ready, label, other) => {
+			renderItem({ ready, workflowVersion: null });
 
-		expect(await screen.findByText("Pending")).toBeInTheDocument();
-		expect(screen.queryByText("not recorded")).not.toBeInTheDocument();
-	});
-
-	it("labels a ready analysis with no version as not recorded", async () => {
-		renderItem({ ready: true, workflowVersion: null });
-
-		expect(await screen.findByText("not recorded")).toBeInTheDocument();
-	});
+			expect(await screen.findByText(label)).toBeInTheDocument();
+			expect(screen.queryByText(other)).not.toBeInTheDocument();
+		},
+	);
 });

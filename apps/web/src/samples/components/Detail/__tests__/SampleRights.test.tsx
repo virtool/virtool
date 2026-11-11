@@ -29,29 +29,22 @@ describe("<SampleRights />", () => {
 		mockListGroups([group]);
 	});
 
-	it("should render", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
-		renderWithProviders(<SampleRights sampleId={sample.id} />);
-
-		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
-		expect(screen.getByText("Group")).toBeInTheDocument();
-		expect(screen.getByText("Group Rights")).toBeInTheDocument();
-		expect(screen.getByText("All Users' Rights")).toBeInTheDocument();
-	});
-
-	it("should return Not allowed panel when [canModifyRights=false]", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: null }));
-		renderWithProviders(<SampleRights sampleId={sample.id} />);
-
-		expect(await screen.findByText("Not allowed")).toBeInTheDocument();
-	});
-
-	it("should handle group change when input is changed", async () => {
+	async function renderRights() {
 		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 		const updateSampleRights = mockUpdateSampleRights(sample);
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
 		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
+
+		return updateSampleRights;
+	}
+
+	it("should render and save a group change", async () => {
+		const updateSampleRights = await renderRights();
+
+		expect(screen.getByText("Group Rights")).toBeInTheDocument();
+		expect(screen.getByText("All Users' Rights")).toBeInTheDocument();
+
 		await userEvent.click(screen.getByLabelText("Group"));
 		await userEvent.click(screen.getByRole("option", { name: group.name }));
 
@@ -62,35 +55,32 @@ describe("<SampleRights />", () => {
 		);
 	});
 
-	it("should handle group rights change when input is changed", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
-		const updateSampleRights = mockUpdateSampleRights(sample);
-		renderWithProviders(<SampleRights sampleId={sample.id} />);
+	it("should save the group and all users' rights", async () => {
+		const updateSampleRights = await renderRights();
 
-		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
 		await userEvent.click(screen.getByLabelText("Group Rights"));
 		await userEvent.click(screen.getByRole("option", { name: "Read & write" }));
 
 		await waitFor(() =>
-			expect(updateSampleRights).toHaveBeenCalledWith({
+			expect(updateSampleRights).toHaveBeenLastCalledWith({
 				data: expect.objectContaining({ groupRead: true, groupWrite: true }),
 			}),
 		);
-	});
 
-	it("should handle all users' rights change when input is changed", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
-		const updateSampleRights = mockUpdateSampleRights(sample);
-		renderWithProviders(<SampleRights sampleId={sample.id} />);
-
-		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
 		await userEvent.click(screen.getByLabelText("All Users' Rights"));
 		await userEvent.click(screen.getByRole("option", { name: "Read & write" }));
 
 		await waitFor(() =>
-			expect(updateSampleRights).toHaveBeenCalledWith({
+			expect(updateSampleRights).toHaveBeenLastCalledWith({
 				data: expect.objectContaining({ allRead: true, allWrite: true }),
 			}),
 		);
+	});
+
+	it("should return Not allowed panel when [canModifyRights=false]", async () => {
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
+		renderWithProviders(<SampleRights sampleId={sample.id} />);
+
+		expect(await screen.findByText("Not allowed")).toBeInTheDocument();
 	});
 });

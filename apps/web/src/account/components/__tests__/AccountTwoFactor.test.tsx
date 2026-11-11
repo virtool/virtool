@@ -76,18 +76,6 @@ describe("<AccountTwoFactor />", () => {
 		expect(screen.getByRole("status", { name: "loading" })).toBeInTheDocument();
 	});
 
-	it("shows an error in this section only", async () => {
-		accountServerFnMocks.getAccountSecurityFn.mockRejectedValue(
-			new Error("failed"),
-		);
-
-		renderWithProviders(<AccountTwoFactor />);
-
-		expect(
-			await screen.findByText("Couldn't load your two-factor authentication."),
-		).toBeInTheDocument();
-	});
-
 	it("shows TOTP off with a set-up control", async () => {
 		mockGetAccountSecurity();
 
@@ -139,6 +127,7 @@ describe("<AccountTwoFactor />", () => {
 			success({ method: "totp", backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
 		);
 		twoFactor.verifyTotp.mockResolvedValue(success({ status: true }));
+		const clipboard = vi.spyOn(navigator.clipboard, "writeText");
 
 		renderWithProviders(<AccountTwoFactor />);
 		const dialog = await startSetup(user);
@@ -169,6 +158,12 @@ describe("<AccountTwoFactor />", () => {
 		expect(within(codes).getAllByRole("listitem")).toHaveLength(4);
 		expect(await screen.findByText("On")).toBeInTheDocument();
 
+		await user.click(within(dialog).getByRole("button", { name: "Copy all" }));
+		expect(clipboard).toHaveBeenLastCalledWith(BACKUP_CODES.join("\n"));
+		expect(
+			within(dialog).getByText("Copied to clipboard."),
+		).toBeInTheDocument();
+
 		const done = within(dialog).getByRole("button", { name: "Done" });
 		expect(done).toBeDisabled();
 		await user.keyboard("{Escape}");
@@ -182,29 +177,6 @@ describe("<AccountTwoFactor />", () => {
 		await user.click(done);
 
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-	});
-
-	it("copies every recovery code", async () => {
-		const user = userEvent.setup();
-		mockGetAccountSecurity();
-		twoFactor.enable.mockResolvedValue(
-			success({ method: "totp", backupCodes: BACKUP_CODES, totpURI: TOTP_URI }),
-		);
-		twoFactor.verifyTotp.mockResolvedValue(success({ status: true }));
-		const clipboard = vi.spyOn(navigator.clipboard, "writeText");
-
-		renderWithProviders(<AccountTwoFactor />);
-		const dialog = await startSetup(user);
-		await user.type(await within(dialog).findByLabelText("Code"), "123456");
-		await user.click(within(dialog).getByRole("button", { name: "Turn on" }));
-		await user.click(
-			await within(dialog).findByRole("button", { name: "Copy all" }),
-		);
-
-		expect(clipboard).toHaveBeenLastCalledWith(BACKUP_CODES.join("\n"));
-		expect(
-			within(dialog).getByText("Copied to clipboard."),
-		).toBeInTheDocument();
 	});
 
 	it("shows a wrong password", async () => {

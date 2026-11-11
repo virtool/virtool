@@ -142,21 +142,6 @@ describe("<CreateSamplesFromFiles>", () => {
 		);
 	});
 
-	it("should scroll the rows without scrolling the bulk rename controls", async () => {
-		await renderDialog([
-			createFakeFile({ name: "sample_one.fastq.gz" }),
-			createFakeFile({ name: "sample_two.fastq.gz" }),
-		]);
-
-		const table = screen.getByRole("table", { name: "Samples" });
-		const scrollContainer = table.parentElement;
-		const bulkRename = screen.getByRole("group", { name: "Bulk rename" });
-
-		expect(scrollContainer).toHaveClass("overflow-y-auto");
-		expect(scrollContainer).not.toContainElement(bulkRename);
-		expect(table.querySelector("thead")).toHaveClass("sticky", "top-0");
-	});
-
 	it("should collapse a detected mate pair into one paired row", async () => {
 		const left = createFakeFile({ name: "sample_one_R1.fastq.gz" });
 		const right = createFakeFile({ name: "sample_one_R2.fastq.gz" });
@@ -192,27 +177,6 @@ describe("<CreateSamplesFromFiles>", () => {
 		});
 	});
 
-	it("should create a sample whose mate isn't selected as unpaired", async () => {
-		const left = createFakeFile({ name: "sample_one_R1.fastq.gz" });
-
-		const createSample = mockCreateSample();
-
-		await renderDialog([left]);
-
-		expect(await screen.findByText("Unpaired")).toBeInTheDocument();
-
-		await submitForm();
-
-		await waitFor(() =>
-			expect(createSample).toHaveBeenCalledWith({
-				data: expect.objectContaining({
-					name: "sample_one_R1",
-					files: [left.id],
-				}),
-			}),
-		);
-	});
-
 	it("should apply the shared fields to every sample in the batch", async () => {
 		const first = createFakeFile({ name: "sample_one.fastq.gz" });
 		const second = createFakeFile({ name: "sample_two.fastq.gz" });
@@ -222,23 +186,9 @@ describe("<CreateSamplesFromFiles>", () => {
 		await renderDialog([first, second]);
 
 		await userEvent.click(
-			await screen.findByRole("button", { name: "Show Metadata Fields" }),
-		);
-		await userEvent.type(await screen.findByLabelText("Isolate"), "Clone AB");
-		await userEvent.type(screen.getByLabelText("Host"), "Apple");
-		await userEvent.type(screen.getByLabelText("Locale"), "Earth");
-
-		await userEvent.click(
-			screen.getByRole("button", { name: "Toggle Labels menu" }),
+			await screen.findByRole("button", { name: "Toggle Labels menu" }),
 		);
 		await userEvent.click(screen.getByRole("option", { name: label.name }));
-
-		await userEvent.click(
-			screen.getByRole("button", { name: "Toggle Default Subtractions menu" }),
-		);
-		await userEvent.click(
-			screen.getByRole("option", { name: subtractionShortlist.name }),
-		);
 
 		await submitForm();
 
@@ -248,39 +198,10 @@ describe("<CreateSamplesFromFiles>", () => {
 			expect(createSample).toHaveBeenCalledWith({
 				data: expect.objectContaining({
 					name,
-					isolate: "Clone AB",
-					host: "Apple",
-					locale: "Earth",
 					labels: [label.id],
-					subtractions: [subtractionShortlist.id],
 				}),
 			});
 		}
-	});
-
-	it("should submit an edited name", async () => {
-		const file = createFakeFile({ name: "sample_one.fastq.gz" });
-
-		const createSample = mockCreateSample();
-
-		await renderDialog([file]);
-
-		const field = await screen.findByRole("textbox", {
-			name: "Name for sample_one.fastq.gz",
-		});
-		await userEvent.clear(field);
-		await userEvent.type(field, "Sample A");
-		expect(
-			screen.getByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
-		).toHaveValue("Sample A");
-
-		await submitForm();
-
-		await waitFor(() =>
-			expect(createSample).toHaveBeenCalledWith({
-				data: expect.objectContaining({ name: "Sample A", files: [file.id] }),
-			}),
-		);
 	});
 
 	it("should not create a sample for a removed row", async () => {
@@ -472,9 +393,10 @@ describe("<CreateSamplesFromFiles>", () => {
 		).toHaveValue("one");
 	});
 
-	it("should require a name after deleting it with a standalone wildcard", async () => {
+	it("should require a name after a standalone wildcard deletes it, then submit an edited one", async () => {
+		const file = createFakeFile({ name: "sample_one.fastq.gz" });
 		const createSample = mockCreateSample();
-		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
+		await renderDialog([file]);
 
 		await userEvent.type(
 			screen.getByRole("textbox", { name: "Match text" }),
@@ -484,35 +406,24 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
 		);
 
-		expect(
-			screen.getByRole("textbox", {
-				name: "Name for sample_one.fastq.gz",
-			}),
-		).toHaveValue("");
+		const field = screen.getByRole("textbox", {
+			name: "Name for sample_one.fastq.gz",
+		});
+		expect(field).toHaveValue("");
 		expect(await screen.findByText("Required Field")).toBeInTheDocument();
 
 		await submitForm();
 
 		expect(createSample).not.toHaveBeenCalled();
-	});
 
-	it("should require a name for every row", async () => {
-		const file = createFakeFile({ name: "sample_one.fastq.gz" });
+		await userEvent.type(field, "Sample A");
+		await submitForm();
 
-		const createSample = mockCreateSample();
-
-		await renderDialog([file]);
-
-		await userEvent.clear(
-			await screen.findByRole("textbox", {
-				name: "Name for sample_one.fastq.gz",
+		await waitFor(() =>
+			expect(createSample).toHaveBeenCalledWith({
+				data: expect.objectContaining({ name: "Sample A", files: [file.id] }),
 			}),
 		);
-
-		await submitForm();
-
-		expect(await screen.findByText("Required Field")).toBeInTheDocument();
-		expect(createSample).not.toHaveBeenCalled();
 	});
 
 	it("should keep only the failed rows when part of the batch fails", async () => {

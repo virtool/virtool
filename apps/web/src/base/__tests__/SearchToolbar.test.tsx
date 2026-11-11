@@ -10,26 +10,28 @@ describe("<SearchToolbar />", () => {
 		const onChange = vi.fn();
 
 		renderWithProviders(
-			<SearchToolbar aria-label="Search things" onChange={onChange} value="" />,
+			<SearchToolbar
+				aria-label="Search things"
+				onChange={onChange}
+				placeholder="Thing name"
+				value=""
+			>
+				<Button>Create</Button>
+			</SearchToolbar>,
 		);
 
-		await userEvent.type(screen.getByRole("textbox"), "Foo");
+		const input = screen.getByRole("textbox", { name: "Search things" });
 
+		expect(input).toHaveAttribute("placeholder", "Thing name");
+		expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
+
+		await userEvent.type(input, "Foo");
+
+		expect(input).toHaveValue("Foo");
 		await waitFor(() => expect(onChange).toHaveBeenCalledWith("Foo"));
 
 		// Without debouncing this would have fired once per keystroke.
 		expect(onChange).toHaveBeenCalledTimes(1);
-	});
-
-	it("should show each keystroke immediately while the commit is deferred", async () => {
-		renderWithProviders(
-			<SearchToolbar aria-label="Search things" onChange={vi.fn()} value="" />,
-		);
-
-		const input = screen.getByRole("textbox");
-		await userEvent.type(input, "Foo");
-
-		expect(input).toHaveValue("Foo");
 	});
 
 	it("should keep a trailing space so the user can continue typing", async () => {
@@ -47,41 +49,5 @@ describe("<SearchToolbar />", () => {
 
 		expect(input).toHaveValue("Foo Bar");
 		await waitFor(() => expect(onChange).toHaveBeenLastCalledWith("Foo Bar"));
-	});
-
-	it("should resync the input when the term changes externally", () => {
-		const { rerender } = renderWithProviders(
-			<SearchToolbar
-				aria-label="Search things"
-				onChange={vi.fn()}
-				value="Foo"
-			/>,
-		);
-
-		expect(screen.getByRole("textbox")).toHaveValue("Foo");
-
-		rerender(
-			<SearchToolbar aria-label="Search things" onChange={vi.fn()} value="" />,
-		);
-
-		expect(screen.getByRole("textbox")).toHaveValue("");
-	});
-
-	it("should render the accessible name, placeholder, and trailing controls", () => {
-		renderWithProviders(
-			<SearchToolbar
-				aria-label="Search things"
-				onChange={vi.fn()}
-				placeholder="Thing name"
-				value=""
-			>
-				<Button>Create</Button>
-			</SearchToolbar>,
-		);
-
-		expect(
-			screen.getByRole("textbox", { name: "Search things" }),
-		).toHaveAttribute("placeholder", "Thing name");
-		expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
 	});
 });

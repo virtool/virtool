@@ -130,16 +130,6 @@ describe("<PathoscopeIsolate />", () => {
 		).toHaveTextContent("8,900 nt");
 	});
 
-	it("should not make a panel the isolate has no sequence for a trigger", () => {
-		mockElementWidth(400);
-
-		renderIsolate([sequence("seg:L", "NC_L", 8900)]);
-
-		expect(
-			screen.queryByRole("button", { name: /M · not in this isolate/ }),
-		).toBeNull();
-	});
-
 	it("should show the isolate's figures in the same columns as the otu's", () => {
 		mockElementWidth(400);
 
@@ -154,6 +144,11 @@ describe("<PathoscopeIsolate />", () => {
 		expect(screen.getByText("Coverage").previousSibling).toHaveTextContent(
 			"0.900",
 		);
+
+		// A panel the isolate has no sequence for opens nothing.
+		expect(
+			screen.queryByRole("button", { name: /M · not in this isolate/ }),
+		).toBeNull();
 	});
 
 	it("should render nothing but the heading for an isolate with no segments", () => {

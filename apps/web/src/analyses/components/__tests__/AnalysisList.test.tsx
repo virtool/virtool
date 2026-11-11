@@ -156,7 +156,7 @@ describe("<AnalysesList /> table", () => {
 		);
 	}
 
-	it("labels every column, including the one with no visible header", async () => {
+	it("labels every column and shows the reference, index, and subtractions of each analysis", async () => {
 		mockFindAnalyses([analysis]);
 		renderTable({});
 
@@ -171,22 +171,25 @@ describe("<AnalysesList /> table", () => {
 			"Created",
 			"Actions",
 		]);
-	});
-
-	it("shows the reference, index, and subtractions of each analysis", async () => {
-		mockFindAnalyses([analysis]);
-		renderTable({});
 
 		expect(await screen.findByText("Plant Viruses")).toBeInTheDocument();
 		expect(screen.getByText("Index 3")).toBeInTheDocument();
 		expect(screen.getByText("Arabidopsis")).toBeInTheDocument();
 	});
 
-	it("sorts by an unsorted column ascending", async () => {
+	it("requests the default order, then sorts by an unsorted column ascending", async () => {
 		const onSearchChange = vi.fn();
-
-		mockFindAnalyses([analysis]);
+		const findAnalyses = mockFindAnalyses([analysis]);
 		renderTable({ onSearchChange });
+
+		await waitFor(() => {
+			expect(findAnalyses).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					direction: "descending",
+					sort: undefined,
+				}),
+			});
+		});
 
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Workflow" }),
@@ -195,6 +198,14 @@ describe("<AnalysesList /> table", () => {
 		expect(onSearchChange).toHaveBeenCalledWith(
 			expect.objectContaining({ direction: "ascending", sort: "workflow" }),
 		);
+		await waitFor(() => {
+			expect(findAnalyses).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					direction: "ascending",
+					sort: "workflow",
+				}),
+			});
+		});
 	});
 
 	it("marks only the sorted column with a direction", async () => {
@@ -212,34 +223,6 @@ describe("<AnalysesList /> table", () => {
 			"ascending",
 			null,
 		]);
-	});
-
-	it("requests the sorted column from the server", async () => {
-		const findAnalyses = mockFindAnalyses([analysis]);
-		renderTable({ direction: "ascending", sort: "user" });
-
-		await waitFor(() => {
-			expect(findAnalyses).toHaveBeenCalledWith({
-				data: expect.objectContaining({
-					direction: "ascending",
-					sort: "user",
-				}),
-			});
-		});
-	});
-
-	it("requests the default order when no column is sorted by", async () => {
-		const findAnalyses = mockFindAnalyses([analysis]);
-		renderTable({});
-
-		await waitFor(() => {
-			expect(findAnalyses).toHaveBeenCalledWith({
-				data: expect.objectContaining({
-					direction: "descending",
-					sort: undefined,
-				}),
-			});
-		});
 	});
 });
 

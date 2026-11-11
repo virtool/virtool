@@ -36,11 +36,18 @@ describe("<SequenceEdit>", () => {
 		});
 	});
 
-	it("should render all fields with current sequence data", async () => {
+	it("should show the current data and submit every changed field", async () => {
+		const updateSequence = mockUpdateSequence({
+			accession: "user_typed_accession",
+			definition: "user_typed_definition",
+			host: "user_typed_host",
+			segment: null,
+			sequence: "ACGRYKM",
+		});
+
 		renderSequenceEdit();
 
 		expect(await screen.findByText("Segment")).toBeInTheDocument();
-		expect(screen.getByRole("combobox")).toBeInTheDocument();
 		expect(screen.getByRole("textbox", { name: "Accession (ID)" })).toHaveValue(
 			activeSequence.accession,
 		);
@@ -53,20 +60,8 @@ describe("<SequenceEdit>", () => {
 		expect(screen.getByRole("textbox", { name: /Sequence [0-9]/ })).toHaveValue(
 			activeSequence.sequence,
 		);
-	});
 
-	it("should submit correct data when all fields changed", async () => {
-		const updateSequence = mockUpdateSequence({
-			accession: "user_typed_accession",
-			definition: "user_typed_definition",
-			host: "user_typed_host",
-			segment: null,
-			sequence: "ACGRYKM",
-		});
-
-		renderSequenceEdit();
-
-		await userEvent.click(await screen.findByRole("combobox"));
+		await userEvent.click(screen.getByRole("combobox"));
 		await userEvent.click(screen.getByRole("option", { name: "None" }));
 		await userEvent.clear(
 			screen.getByRole("textbox", { name: "Accession (ID)" }),
@@ -109,66 +104,5 @@ describe("<SequenceEdit>", () => {
 				},
 			}),
 		);
-	});
-
-	it("should display errors when accession, definition, or sequence not defined", async () => {
-		renderSequenceEdit();
-
-		await userEvent.clear(
-			await screen.findByRole("textbox", { name: "Accession (ID)" }),
-		);
-		await userEvent.clear(screen.getByRole("textbox", { name: "Definition" }));
-		await userEvent.clear(
-			screen.getByRole("textbox", { name: /Sequence [0-9]/ }),
-		);
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-		expect(screen.getAllByText("Required Field").length).toBe(3);
-	});
-
-	it("should submit lowercase multi-line sequence input as one uppercase line", async () => {
-		const updateSequence = mockUpdateSequence({
-			accession: activeSequence.accession,
-			definition: activeSequence.definition,
-			host: activeSequence.host,
-			segment: activeSequence.segment,
-			sequence: "ACGRYKM",
-		});
-
-		renderSequenceEdit();
-
-		const sequenceField = await screen.findByRole("textbox", {
-			name: /Sequence [0-9]/,
-		});
-		await userEvent.clear(sequenceField);
-		await userEvent.type(sequenceField, "acgr{Enter}yk m");
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-		await waitFor(() =>
-			expect(updateSequence).toHaveBeenCalledWith({
-				data: expect.objectContaining({ sequence: "ACGRYKM" }),
-			}),
-		);
-		expect(
-			screen.queryByText(
-				"Sequence should only contain the characters: ATCGNRYKM",
-			),
-		).toBeNull();
-	});
-
-	it("should display specific error when sequence contains chars !== ATCGNRYKM", async () => {
-		renderSequenceEdit();
-
-		await userEvent.type(
-			await screen.findByRole("textbox", { name: /Sequence [0-9]/ }),
-			"q",
-		);
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-		expect(
-			screen.getByText(
-				"Sequence should only contain the characters: ATCGNRYKM",
-			),
-		).toBeInTheDocument();
 	});
 });

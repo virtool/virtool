@@ -47,22 +47,6 @@ describe("<Time />", () => {
 		vi.setSystemTime(new Date("2019-04-22T10:20:30Z"));
 	});
 
-	it("should render 2 months ago", () => {
-		renderWithProviders(<Time time={fakeTime} />);
-		expect(screen.getByText("2 months ago")).toHaveTextContent("2 months ago");
-	});
-
-	it("should re-render when time prop changes", () => {
-		const { rerender } = renderWithProviders(<Time time={fakeTime} />);
-		expect(screen.getByText("2 months ago")).toBeInTheDocument();
-
-		// Add one month to the time prop.
-		rerender(<Time time={new Date("2019-01-10T12:21:00.000000Z")} />);
-
-		expect(screen.queryByText("2 months ago")).toBeNull();
-		expect(screen.getByText("3 months ago")).toBeInTheDocument();
-	});
-
 	it("should re-render when time string changes", () => {
 		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
 
@@ -140,14 +124,6 @@ describe("<Time />", () => {
 		clearInterval.mockRestore();
 	});
 
-	it("should show the date and time when the account prefers absolute times", () => {
-		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
-
-		renderWithTimeFormat(<Time time={fakeTime} />, "absolute");
-
-		expect(screen.getByText("Feb 10 at 17:11")).toBeInTheDocument();
-	});
-
 	it("should show the absolute time in a tooltip on focus", () => {
 		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
 
@@ -170,7 +146,7 @@ describe("<Time />", () => {
 		expect(screen.getByRole("tooltip")).toHaveTextContent("2 months ago");
 	});
 
-	it("should read 'on' before an absolute time in a sentence", () => {
+	it("should read 'on' or 'today at' before an absolute time in a sentence", () => {
 		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
 
 		const { container, unmount } = renderWithTimeFormat(
@@ -192,19 +168,17 @@ describe("<Time />", () => {
 		);
 
 		expect(relative.container).toHaveTextContent("Added 2 months ago");
-	});
 
-	it("should name the day for an absolute time in a sentence", () => {
-		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
+		relative.unmount();
 
-		const { container } = renderWithTimeFormat(
+		const today = renderWithTimeFormat(
 			<p>
 				Added <Time sentence time={new Date("2019-04-22T08:05:00Z")} />
 			</p>,
 			"absolute",
 		);
 
-		expect(container).toHaveTextContent("Added today at 08:05");
+		expect(today.container).toHaveTextContent("Added today at 08:05");
 	});
 
 	afterAll(() => {

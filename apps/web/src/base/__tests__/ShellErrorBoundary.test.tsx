@@ -82,17 +82,7 @@ afterEach(() => {
 });
 
 describe("ShellErrorBoundary", () => {
-	it("should render its children when nothing throws", () => {
-		renderBoundary(
-			<ShellErrorBoundary>
-				<p>Samples</p>
-			</ShellErrorBoundary>,
-		);
-
-		expect(screen.getByText("Samples")).toBeInTheDocument();
-	});
-
-	it("should remount the tree after a falsy throw instead of going blank", async () => {
+	it("should remount the tree after a falsy throw and report it as a named error", async () => {
 		const control: Control = { throwing: true, value: undefined };
 
 		renderBoundary(
@@ -110,22 +100,6 @@ describe("ShellErrorBoundary", () => {
 
 		expect(screen.getByText("Samples")).toBeInTheDocument();
 		expect(screen.queryByText(FAILED_MESSAGE)).not.toBeInTheDocument();
-	});
-
-	it("should report a falsy throw to sentry as a named error", async () => {
-		const control: Control = { throwing: true, value: undefined };
-
-		renderBoundary(
-			<ShellErrorBoundary>
-				<Thrower control={control}>
-					<p>Samples</p>
-				</Thrower>
-			</ShellErrorBoundary>,
-		);
-
-		control.throwing = false;
-		await settle();
-
 		expect(Sentry.captureException).toHaveBeenCalledWith(
 			expect.objectContaining({
 				message: "Router threw a falsy value and unmounted the app",

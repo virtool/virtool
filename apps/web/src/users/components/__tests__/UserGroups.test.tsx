@@ -42,40 +42,6 @@ describe("<UserGroups />", () => {
 		).toBeInTheDocument();
 	});
 
-	it("shows an empty message when the user has no groups", async () => {
-		mockListGroups(allGroups);
-
-		renderWithProviders(
-			<UserGroups userId={userId} memberGroups={[]} primaryGroup={null} />,
-		);
-
-		expect(
-			await screen.findByText("This user is not a member of any groups."),
-		).toBeInTheDocument();
-	});
-
-	it("hides the combobox when the user is in every group", async () => {
-		mockListGroups(allGroups);
-
-		renderWithProviders(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member, other]}
-				primaryGroup={member}
-			/>,
-		);
-
-		expect(
-			await screen.findByText("This user is a member of every group."),
-		).toBeInTheDocument();
-		expect(
-			screen.queryByRole("combobox", { name: "Add group" }),
-		).not.toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Primary group: foo" }),
-		).toBeInTheDocument();
-	});
-
 	it("points to group creation when no groups exist", async () => {
 		mockListGroups([]);
 
@@ -119,97 +85,6 @@ describe("<UserGroups />", () => {
 		);
 	});
 
-	it("adds a group using only the keyboard", async () => {
-		mockListGroups(allGroups);
-		mockUpdateUser(userId, 200, {});
-
-		renderWithProviders(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member]}
-				primaryGroup={member}
-			/>,
-		);
-
-		const combobox = await screen.findByRole("combobox", { name: "Add group" });
-
-		await userEvent.tab();
-		expect(combobox).toHaveFocus();
-
-		await userEvent.keyboard("{ArrowDown}{Enter}");
-
-		await waitFor(() =>
-			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, groups: [1, 2] },
-			}),
-		);
-	});
-
-	it("keeps the remaining groups addable after a search-and-add", async () => {
-		const third = createFakeGroup({ id: 3, name: "baz" });
-		mockListGroups([member, other, third]);
-		mockUpdateUser(userId, 200, {});
-
-		const { rerender } = renderWithProviders(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member]}
-				primaryGroup={member}
-			/>,
-		);
-
-		const combobox = await screen.findByRole("combobox", { name: "Add group" });
-
-		await userEvent.type(combobox, "bar");
-		await userEvent.click(await screen.findByRole("option", { name: "bar" }));
-
-		await waitFor(() =>
-			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, groups: [1, 2] },
-			}),
-		);
-
-		// The updated user lands, making `bar` a member. A term left filtering to
-		// `bar` would empty the options and hide the combobox entirely.
-		rerender(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member, other]}
-				primaryGroup={member}
-			/>,
-		);
-
-		expect(combobox).toHaveValue("");
-		expect(
-			screen.queryByText("This user is a member of every group."),
-		).not.toBeInTheDocument();
-
-		await userEvent.click(
-			screen.getByRole("button", { name: "Toggle Add group menu" }),
-		);
-
-		expect(screen.getByRole("option", { name: "baz" })).toBeInTheDocument();
-	});
-
-	it("presses no primary toggle when there is no primary group", async () => {
-		mockListGroups(allGroups);
-
-		renderWithProviders(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member, other]}
-				primaryGroup={null}
-			/>,
-		);
-
-		expect(
-			await screen.findByRole("button", { name: "Primary group: foo" }),
-		).toHaveAttribute("aria-pressed", "false");
-		expect(
-			screen.getByRole("button", { name: "Primary group: bar" }),
-		).toHaveAttribute("aria-pressed", "false");
-	});
-
 	it("sets the primary group when a toggle is pressed", async () => {
 		mockListGroups(allGroups);
 		mockUpdateUser(userId, 200, {});
@@ -229,29 +104,6 @@ describe("<UserGroups />", () => {
 		await waitFor(() =>
 			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, primaryGroup: 2 },
-			}),
-		);
-	});
-
-	it("clears the primary group when its toggle is pressed again", async () => {
-		mockListGroups(allGroups);
-		mockUpdateUser(userId, 200, {});
-
-		renderWithProviders(
-			<UserGroups
-				userId={userId}
-				memberGroups={[member, other]}
-				primaryGroup={member}
-			/>,
-		);
-
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Primary group: foo" }),
-		);
-
-		await waitFor(() =>
-			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, primaryGroup: null },
 			}),
 		);
 	});

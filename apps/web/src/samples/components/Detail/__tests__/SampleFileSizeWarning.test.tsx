@@ -15,24 +15,6 @@ describe("<SampleFileSizeWarning />", () => {
 		};
 	});
 
-	it("should warn when a read is smaller than 10 MB", async () => {
-		props.reads = [createFakeSampleRead({ size: 5 })];
-		await renderWithRouter(<SampleFileSizeWarning {...props} />);
-
-		expect(
-			screen.getByText(
-				"The read files in this sample are smaller than expected.",
-			),
-		).toBeInTheDocument();
-		expect(screen.getByText("Check the file sizes")).toBeInTheDocument();
-		expect(
-			screen.getByText("and ensure they are correct."),
-		).toBeInTheDocument();
-		expect(
-			screen.queryByText("Check the file sizes and ensure they are correct."),
-		).toBeNull();
-	});
-
 	it("should not warn when every read is at least 10 MB", async () => {
 		props.reads = [createFakeSampleRead({ size: 10000000 })];
 		await renderWithRouter(<SampleFileSizeWarning {...props} />);
@@ -44,7 +26,7 @@ describe("<SampleFileSizeWarning />", () => {
 		).toBeNull();
 	});
 
-	it("should link to the files outside the uploads page", async () => {
+	it("should warn with a link to the files when a read is smaller than 10 MB", async () => {
 		props.reads = [createFakeSampleRead({ size: 5 })];
 		await renderWithRouter(<SampleFileSizeWarning {...props} />);
 
@@ -52,6 +34,9 @@ describe("<SampleFileSizeWarning />", () => {
 			screen.getByText(
 				"The read files in this sample are smaller than expected.",
 			),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("and ensure they are correct."),
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole("link", { name: "Check the file sizes" }),

@@ -7,23 +7,7 @@ import { describe, expect, it } from "vitest";
 import AccountSettings from "../AccountSettings";
 
 describe("<AccountSettings />", () => {
-	it("should show the current acronym preference", async () => {
-		const account = createFakeAccount();
-		mockGetAccount({
-			...account,
-			settings: { ...account.settings, preferAcronym: true },
-		});
-
-		renderWithProviders(<AccountSettings />);
-
-		expect(
-			await screen.findByRole("switch", {
-				name: "Prefer acronym",
-			}),
-		).toBeChecked();
-	});
-
-	it("should save the acronym preference when toggled", async () => {
+	it("should show and save the acronym preference when toggled", async () => {
 		const account = createFakeAccount();
 		const settings = { ...account.settings, preferAcronym: false };
 		mockGetAccount({ ...account, settings });

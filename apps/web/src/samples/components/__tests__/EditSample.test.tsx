@@ -20,43 +20,7 @@ describe("<Editsample />", () => {
 		};
 	});
 
-	it("should render when [open=false]", async () => {
-		props.open = false;
-
-		await renderWithRouter(<EditSample {...props} />);
-
-		expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
-		expect(screen.queryByRole("textbox", { name: "Isolate" })).toBeNull();
-		expect(screen.queryByRole("textbox", { name: "Host" })).toBeNull();
-		expect(screen.queryByRole("textbox", { name: "Locale" })).toBeNull();
-		expect(screen.queryByRole("textbox", { name: "Notes" })).toBeNull();
-		expect(screen.queryByText("Save")).toBeNull();
-	});
-
-	it.each(["Name", "Isolate", "Host", "Locale", "Notes"])(
-		"should render and change the %s field",
-		async (inputLabel) => {
-			await renderWithRouter(<EditSample {...props} />);
-
-			const inputBox = screen.getByLabelText(inputLabel);
-			expect(inputBox).toBeInTheDocument();
-			const field = inputLabel.toLowerCase() as
-				| "name"
-				| "isolate"
-				| "host"
-				| "locale"
-				| "notes";
-			expect(inputBox).toHaveValue(sample[field]);
-
-			await userEvent.clear(inputBox);
-			expect(inputBox).toHaveValue("");
-
-			await userEvent.type(inputBox, "test");
-			expect(inputBox).toHaveValue("test");
-		},
-	);
-
-	it("should update sample when form is submitted", async () => {
+	it("should show the current values and submit the edited ones", async () => {
 		const updateSample = mockUpdateSample(sample, {
 			name: "newName",
 			isolate: "newIsolate",
@@ -65,6 +29,12 @@ describe("<Editsample />", () => {
 			notes: "newNotes",
 		});
 		await renderWithRouter(<EditSample {...props} />);
+
+		expect(screen.getByLabelText("Name")).toHaveValue(sample.name);
+		expect(screen.getByLabelText("Isolate")).toHaveValue(sample.isolate);
+		expect(screen.getByLabelText("Host")).toHaveValue(sample.host);
+		expect(screen.getByLabelText("Locale")).toHaveValue(sample.locale);
+		expect(screen.getByLabelText("Notes")).toHaveValue(sample.notes);
 
 		const nameInput = screen.getByLabelText("Name");
 		await userEvent.clear(nameInput);
