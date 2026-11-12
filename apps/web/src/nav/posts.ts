@@ -1,4 +1,4 @@
-import type { BlogIndexPost } from "@virtool/contracts";
+import type { BlogIndexPost } from "@virtool/contracts/blog";
 
 const VERSION = /^(\d+)\.(\d+)\.(\d+)$/;
 

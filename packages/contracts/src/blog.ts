@@ -1,3 +1,6 @@
+// A subpath, not the root entry, holds these schemas: module-level zod schemas
+// are not tree-shaken, and the workflow apps bundle the root entry.
+
 import { z } from "zod";
 import { Timestamp } from "./timestamps";
 

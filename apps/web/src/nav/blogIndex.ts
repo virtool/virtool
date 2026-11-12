@@ -3,7 +3,7 @@ import {
 	type BlogIndex,
 	type BlogIndexPost,
 	blogIndexPostSchema,
-} from "@virtool/contracts";
+} from "@virtool/contracts/blog";
 import { z } from "zod";
 
 // Each post is checked on its own, so one post that a newer site publishes in

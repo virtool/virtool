@@ -7,6 +7,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./bearer": "./src/bearer.ts",
+		"./blog": "./src/blog.ts",
 		"./userAgent": "./src/userAgent.ts"
 	},
 	"scripts": {

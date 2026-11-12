@@ -81,7 +81,7 @@ describe("<Nav />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "User menu" }));
 
 		expect(
-			screen.getByRole("menuitem", { name: "Logout" }),
+			screen.getByRole("menuitem", { name: "Sign out" }),
 		).toBeInTheDocument();
 	});
 });

@@ -1,7 +1,7 @@
 import type { APIContext } from "astro";
 import { loadPosts } from "@utils/loadPosts";
 import { getFirstImage, getImagePath } from "@utils/posts";
-import type { BlogIndex } from "@virtool/contracts";
+import type { BlogIndex } from "@virtool/contracts/blog";
 
 // The web app shows the first image of each post, so the build emits every post
 // image as an asset that this index can link to.

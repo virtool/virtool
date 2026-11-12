@@ -5,8 +5,9 @@ import Popover from "@base/Popover";
 import Tooltip from "@base/Tooltip";
 import { useChangelogPosts, useMarkChangelogSeen } from "@nav/changelog";
 import { getNewestPostDate } from "@nav/posts";
-import { SITE_ORIGIN } from "@virtool/contracts";
+import { SITE_ORIGIN } from "@virtool/contracts/blog";
 import { Megaphone } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 // A fixed locale and time zone keep the server and browser renders equal. Post
 // dates are calendar days at UTC midnight.
@@ -26,13 +27,33 @@ export default function ChangelogPopover() {
 	const { posts, unread } = useChangelogPosts();
 	const mutation = useMarkChangelogSeen();
 
+	const [open, setOpen] = useState(false);
+	const markedTime = useRef<number | null>(null);
+
 	const label = unread ? "What's new (unread)" : "What's new";
+	const newestPostTime = getNewestPostDate(posts)?.getTime();
+	const { mutate } = mutation;
 
-	function onOpenChange(open: boolean) {
-		const newestPostDate = getNewestPostDate(posts);
+	// Posts can load after the popover opens, so marking follows the open state
+	// instead of the open event. Each date is sent once per opening, so a failed
+	// request is not retried until the user opens the popover again.
+	useEffect(() => {
+		if (
+			open &&
+			unread &&
+			newestPostTime !== undefined &&
+			markedTime.current !== newestPostTime
+		) {
+			markedTime.current = newestPostTime;
+			mutate(new Date(newestPostTime));
+		}
+	}, [mutate, newestPostTime, open, unread]);
 
-		if (open && unread && newestPostDate) {
-			mutation.mutate(newestPostDate);
+	function onOpenChange(next: boolean) {
+		setOpen(next);
+
+		if (!next) {
+			markedTime.current = null;
 		}
 	}
 

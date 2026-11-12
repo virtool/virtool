@@ -1,6 +1,6 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { SITE_ORIGIN } from "@virtool/contracts";
+import { SITE_ORIGIN } from "@virtool/contracts/blog";
 
 const cspDirectives = [
 	"default-src 'self'",

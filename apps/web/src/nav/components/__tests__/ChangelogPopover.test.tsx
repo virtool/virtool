@@ -1,10 +1,11 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeBlogIndexPost, mockFetchBlogIndex } from "@tests/blogIndex";
 import { createFakeAccount } from "@tests/fake/account";
 import { mockMarkChangelogSeen } from "@tests/server-fn/changelog";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
+import type { BlogIndexPost } from "@virtool/contracts/blog";
 import { describe, expect, it, vi } from "vitest";
 import ChangelogPopover from "../ChangelogPopover";
 
@@ -137,6 +138,34 @@ describe("<ChangelogPopover />", () => {
 		await userEvent.click(button);
 
 		expect(markSeen).toHaveBeenCalledWith({ data: { newestPostDate: after } });
+		expect(
+			await screen.findByRole("button", { name: "What's new" }),
+		).toBeInTheDocument();
+	});
+
+	it("marks posts seen when they load after the popover opens", async () => {
+		mockAccount();
+		let resolveIndex: (index: { posts: BlogIndexPost[] }) => void = () => {};
+		mockFetchBlogIndex([]).mockReturnValue(
+			new Promise((resolve) => {
+				resolveIndex = resolve;
+			}),
+		);
+		const markSeen = mockMarkChangelogSeen();
+
+		await renderWithRouter(<ChangelogPopover />);
+		await userEvent.click(screen.getByRole("button", { name: "What's new" }));
+		expect(markSeen).not.toHaveBeenCalled();
+
+		mockAccount(after);
+		resolveIndex({ posts: [createFakeBlogIndexPost({ date: after })] });
+
+		await waitFor(() =>
+			expect(markSeen).toHaveBeenCalledWith({
+				data: { newestPostDate: after },
+			}),
+		);
+		expect(markSeen).toHaveBeenCalledTimes(1);
 		expect(
 			await screen.findByRole("button", { name: "What's new" }),
 		).toBeInTheDocument();

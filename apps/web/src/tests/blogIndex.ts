@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { BlogIndexPost } from "@virtool/contracts";
+import type { BlogIndexPost } from "@virtool/contracts/blog";
 import { type Mock, vi } from "vitest";
 
 /**
