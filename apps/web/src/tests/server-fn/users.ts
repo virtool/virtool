@@ -3,6 +3,7 @@ import type {
 	Account,
 	AdministeredUserDetail,
 	Invitation,
+	SetUpUser,
 	User,
 	UserNested,
 } from "@virtool/contracts";
@@ -55,7 +56,7 @@ export function mockFindUsers(users: (User & { email?: string })[]): Mock {
 }
 
 /** Sets up searchUsers to resolve with a single page containing the given users. */
-export function mockSearchUsers(users: User[]): Mock {
+export function mockSearchUsers(users: SetUpUser[]): Mock {
 	userServerFnMocks.searchUsersFn.mockResolvedValue({
 		items: users,
 		foundCount: users.length,

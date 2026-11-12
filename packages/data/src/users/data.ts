@@ -1,6 +1,5 @@
 import {
 	type Account,
-	type AccountLifecycleState,
 	type AccountSecurity,
 	type AccountSettings,
 	ADMINISTRATOR_ROLES,
@@ -21,6 +20,7 @@ import {
 	REFERENCE_EXPORT_TABLE_FORMATS,
 	type ReferenceExportFastaHeader,
 	type ReferenceExportTableFormat,
+	type SetUpUser,
 	type SortDirection,
 	TIME_FORMATS,
 	type TimeFormat,
@@ -177,14 +177,6 @@ export type FindUsersFilters = {
 	perPage?: number;
 	administrator?: boolean;
 	active?: boolean;
-	/**
-	 * Which lifecycle states to return. Defaults to `"normal"`, so a caller
-	 * that has not thought about pending accounts does not publish them.
-	 *
-	 * The user administration list reads pending accounts through
-	 * {@link findAdministeredUsers} instead.
-	 */
-	lifecycleState?: AccountLifecycleState | "any";
 };
 
 /** Values accepted when creating a user. */
@@ -379,6 +371,17 @@ export async function listUsers(db: Db): Promise<UserNested[]> {
 		.orderBy(asc(usersTable.username));
 }
 
+// The query already leaves out pending rows; this narrows the type to match.
+function isSetUpUser(user: User): user is SetUpUser {
+	return user.lifecycleState === "normal";
+}
+
+/**
+ * Search set-up users by username.
+ *
+ * Pending accounts are never returned. The user administration list reads
+ * them through {@link findAdministeredUsers} instead.
+ */
 export async function findUsers(
 	db: Db,
 	filters: FindUsersFilters,
@@ -389,13 +392,12 @@ export async function findUsers(
 		perPage = 25,
 		administrator,
 		active = true,
-		lifecycleState = "normal",
 	} = filters;
 
-	const conditions = [eq(usersTable.active, active)];
-	if (lifecycleState !== "any") {
-		conditions.push(eq(usersTable.lifecycleState, lifecycleState));
-	}
+	const conditions = [
+		eq(usersTable.active, active),
+		eq(usersTable.lifecycleState, "normal"),
+	];
 	if (administrator === true) {
 		conditions.push(isNotNull(usersTable.administratorRole));
 	}
@@ -422,7 +424,7 @@ export async function findUsers(
 	const foundCount = foundRow?.value ?? 0;
 
 	return {
-		items: await assembleUsers(db, rows),
+		items: (await assembleUsers(db, rows)).filter(isSetUpUser),
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,

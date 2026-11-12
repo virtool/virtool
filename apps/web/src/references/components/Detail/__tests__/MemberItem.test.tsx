@@ -10,7 +10,7 @@ describe("<MemberItem />", () => {
 	beforeEach(() => {
 		props = {
 			canModify: false,
-			usernameOrName: "bob",
+			name: "bob",
 			id: 7,
 			onEdit: vi.fn(),
 			onRemove: vi.fn(),
@@ -29,7 +29,7 @@ describe("<MemberItem />", () => {
 	});
 
 	it("should render an invited user without a username", () => {
-		props.usernameOrName = null;
+		props.name = null;
 		renderWithProviders(<MemberItem {...props} />);
 		expect(screen.getByText("No username yet")).toBeInTheDocument();
 	});

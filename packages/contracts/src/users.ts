@@ -127,17 +127,16 @@ export type AccountSettings = {
 	avatarSource: AvatarSource;
 };
 
-/**
- * The signed-in user's own view of themselves.
- *
- * A {@link User} plus the fields only the account holder may read.
- * `email` is never absent: the column is `NOT NULL` defaulting to `""`, and
- * clearing an address writes the empty string rather than a null.
- */
 /** A user who has completed setup and so has a username. */
 export type SetUpUser = Extract<User, { lifecycleState: "normal" }>;
 
-/** The signed-in user's own account, which is always set up. */
+/**
+ * The signed-in user's own view of themselves, which is always set up.
+ *
+ * A {@link SetUpUser} plus the fields only the account holder may read.
+ * `email` is never absent: the column is `NOT NULL` defaulting to `""`, and
+ * clearing an address writes the empty string rather than a null.
+ */
 export type Account = SetUpUser & {
 	email: string;
 	/** A changelog entry is unread when its date is after this watermark. */
@@ -159,9 +158,9 @@ export type AccountSecurity = {
 	twoFactorEnabled: boolean;
 };
 
-/** A page of users. */
+/** A page of set-up users. */
 export type UserSearchResult = SearchResult & {
-	items: User[];
+	items: SetUpUser[];
 };
 
 /**

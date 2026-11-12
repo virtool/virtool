@@ -8,12 +8,9 @@ import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
 import { useAddReferenceMember } from "@references/queries";
 import { useInfiniteFindUsers } from "@users/queries";
-import type { ReferenceUser, User } from "@virtool/contracts";
+import type { ReferenceUser, SetUpUser } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import { useState } from "react";
-
-/** A user who has accepted their invitation, so has a username. */
-type SetUpUser = Extract<User, { lifecycleState: "normal" }>;
 
 type AddReferenceUserProps = {
 	users: ReferenceUser[];
@@ -60,10 +57,7 @@ export default function AddReferenceUser({
 
 	const userIds = users.map((u) => u.id);
 	const items = data.pages.flatMap((page) => page.items);
-	const filteredItems = items.filter(
-		(item): item is SetUpUser =>
-			item.lifecycleState === "normal" && !userIds.includes(item.id),
-	);
+	const filteredItems = items.filter((item) => !userIds.includes(item.id));
 
 	// CompactScrollList types its rows as `unknown`; the items are set-up users.
 	function renderRow(item: unknown) {

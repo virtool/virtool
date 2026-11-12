@@ -46,7 +46,7 @@ export default function UserAvatar({
 
 	return (
 		<span className={cn("relative inline-flex shrink-0", className)}>
-			<InitialIcon username={username} size={size} />
+			<InitialIcon name={username} size={size} />
 			{username ? (
 				<img
 					key={src}

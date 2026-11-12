@@ -7,6 +7,7 @@ import {
 	FinalizeSubtractionRequest,
 	JobClaimed,
 	JobFileManifest,
+	JobsApiJob,
 } from "./jobsApi";
 
 const claim: JobClaim = {
@@ -52,6 +53,24 @@ describe("wire shapes", () => {
 		});
 
 		expect(claimed.user).toEqual({ id: 3, username: "igboyes" });
+	});
+
+	it("reads a job's username from a jobs API that sends only the handle", () => {
+		const job = JobsApiJob.parse({
+			id: 12,
+			args: {},
+			claim,
+			claimedAt: "2026-07-31T16:38:58.852Z",
+			createdAt: "2026-07-31T16:30:00.000Z",
+			finishedAt: null,
+			progress: 0,
+			state: "running",
+			steps: [],
+			user: { id: 3, handle: "igboyes" },
+			workflow: "nuvs",
+		});
+
+		expect(job.user).toEqual({ id: 3, username: "igboyes" });
 	});
 
 	it("adds steps to the claim request without re-spelling the claim", () => {

@@ -73,7 +73,7 @@ export default function ReferenceMembers({
 			<BoxGroup>
 				{members.length ? (
 					members.map((member: ReferenceGroup | ReferenceUser) => {
-						const usernameOrName = objectHasProperty(member, "username")
+						const name = objectHasProperty(member, "username")
 							? (member as ReferenceUser).username
 							: (member as ReferenceGroup).name;
 
@@ -81,7 +81,7 @@ export default function ReferenceMembers({
 							<MemberItem
 								key={member.id}
 								canModify={canModify}
-								usernameOrName={usernameOrName}
+								name={name}
 								id={member.id}
 								onEdit={(id) => setEditId(id)}
 								onRemove={(id) => mutation.mutate({ id })}

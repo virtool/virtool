@@ -41,7 +41,7 @@ export default function UserFilterMenu({
 	const [term, setTerm] = useState("");
 
 	const matches = (users ?? []).filter((user) =>
-		user.username.toLowerCase().includes(term.toLowerCase()),
+		user.username.includes(term.toLowerCase()),
 	);
 
 	// Filtering to your own work is the common case, so lift yourself out of the

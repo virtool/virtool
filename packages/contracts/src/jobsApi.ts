@@ -31,10 +31,10 @@
 // with the web app's `/jobs/{jobId}` route.
 //
 //   POST   /jobs/claim                         CreateJobClaimRequest -> JobClaimed     (200 | 404 no job available | 422 unclaimable workflow)
-//   GET    /jobs/{jobId}                       -                     -> Job            (200 | 401 | 403 | 404)
+//   GET    /jobs/{jobId}                       -                     -> JobsApiJob     (200 | 401 | 403 | 404)
 //   POST   /jobs/{jobId}/steps/{stepId}/start  StartJobStepRequest   -> JobStepStarted (200 | 401 | 403 | 404 | 409)
 //   PUT    /jobs/{jobId}/ping                  -                     -> JobPing        (200 | 401 terminal | 403 | 404)
-//   POST   /jobs/{jobId}/finish                -                     -> Job            (200 | 401 | 403 | 404 | 409)
+//   POST   /jobs/{jobId}/finish                -                     -> JobsApiJob     (200 | 401 | 403 | 404 | 409)
 //   PATCH  /samples/{id}                       FinalizeSampleRequest      -> Sample
 //   PATCH  /subtractions/{id}                  FinalizeSubtractionRequest -> Subtraction
 //   PATCH  /analyses/{id}                      FinalizeAnalysisRequest    -> Analysis
@@ -72,7 +72,7 @@
 
 import { z } from "zod";
 import { AnalysisFormat, AnalysisWorkflow } from "./analyses";
-import { JobClaim, JobState, JobStep, JobWorkflow } from "./jobs";
+import { Job, JobClaim, JobState, JobStep, JobWorkflow } from "./jobs";
 import { JsonObject } from "./json";
 import { LibraryType, Quality } from "./samples";
 import { NucleotideComposition } from "./subtractions";
@@ -116,14 +116,13 @@ export const CreateJobClaimRequest = JobClaim.extend({
 export type CreateJobClaimRequest = z.infer<typeof CreateJobClaimRequest>;
 
 /**
- * Read a claimed job's user from a jobs API that sends `handle`, `username`, or
- * both.
+ * Read a job's user from a jobs API that sends `handle`, `username`, or both.
  *
  * Runners built before the rename to `username` require `handle`, so the jobs
  * API sends both names for one release. This accepts either, so new runners
  * work against an old jobs API too.
  */
-const JobClaimedUser = z.preprocess(function readLegacyHandle(value) {
+const JobsApiUser = z.preprocess(function readLegacyHandle(value) {
 	if (
 		typeof value === "object" &&
 		value !== null &&
@@ -134,6 +133,22 @@ const JobClaimedUser = z.preprocess(function readLegacyHandle(value) {
 	}
 	return value;
 }, UserNested);
+
+/** A job's user as the jobs API sends it, with `handle` beside `username`. */
+export type JobsApiUserResponse = UserNested & { handle: string };
+
+/** Get the user the jobs API sends, carrying `handle` for runners built before the rename. */
+export function toJobsApiUserResponse(user: UserNested): JobsApiUserResponse {
+	return { ...user, handle: user.username };
+}
+
+/** Response to `GET /jobs/{jobId}` and `POST /jobs/{jobId}/finish`, read by a runner. */
+export const JobsApiJob = Job.extend({ user: JobsApiUser });
+
+/** The job the jobs API sends, with the user's `handle` beside the `username`. */
+export type JobsApiJobResponse = Omit<Job, "user"> & {
+	user: JobsApiUserResponse;
+};
 
 /** Response to `POST /jobs/claim` — the claimed job and its one-time runner key. */
 export const JobClaimed = z.object({
@@ -155,18 +170,15 @@ export const JobClaimed = z.object({
 
 	state: JobState,
 	steps: z.array(JobStep),
-	user: JobClaimedUser,
+	user: JobsApiUser,
 	workflow: JobWorkflow,
 });
 
 export type JobClaimed = z.infer<typeof JobClaimed>;
 
-/**
- * The claim response the jobs API sends, with the user's `handle` beside the
- * `username` for runners built before the rename.
- */
+/** The claim response the jobs API sends, with the user's `handle` beside the `username`. */
 export type JobClaimedResponse = Omit<JobClaimed, "user"> & {
-	user: UserNested & { handle: string };
+	user: JobsApiUserResponse;
 };
 
 /**

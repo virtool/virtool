@@ -349,7 +349,7 @@ export async function listAnalysisUsers(
 			),
 		)
 		.groupBy(users.id, users.username)
-		.orderBy(asc(sql`lower(${users.username})`));
+		.orderBy(asc(users.username));
 }
 
 const SORT_COLUMNS = {

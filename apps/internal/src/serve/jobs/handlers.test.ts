@@ -398,7 +398,8 @@ describe("handleReadJob", () => {
 
 		expect(body.id).toBe(job.id);
 		expect(body.state).toBe("running");
-		expect(body.user).toEqual({ id: userId, username: "bob" });
+		// Runners built before the rename to `username` read `handle`.
+		expect(body.user).toEqual({ id: userId, username: "bob", handle: "bob" });
 		expect(body.steps).toEqual(
 			STEPS.map((step) => ({ ...step, startedAt: null })),
 		);
@@ -680,7 +681,11 @@ describe("handleFinishJob", () => {
 		);
 
 		expect(response.status).toBe(200);
-		expect((await response.json()).state).toBe("succeeded");
+
+		const body = await response.json();
+
+		expect(body.state).toBe("succeeded");
+		expect(body.user).toEqual({ id: userId, username: "bob", handle: "bob" });
 
 		const [row] = await db
 			.select({ state: jobs.state, finished_at: jobs.finished_at })

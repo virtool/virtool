@@ -803,25 +803,30 @@ describe("listUsers", () => {
 });
 
 describe("findUsers", () => {
-	// Default-deny: a caller that has not thought about pending accounts does
-	// not publish them, and the administration views opt in explicitly.
-	it("hides pending accounts unless asked for them", async () => {
+	it("never returns pending accounts", async () => {
 		const alice = await seedUser(db, { username: "alice" });
-		const pending = await seedUser(db, { lifecycleState: "pending" });
+		await seedUser(db, { lifecycleState: "pending" });
 
-		expect((await findUsers(db, {})).items.map((user) => user.id)).toEqual([
-			alice,
-		]);
-		expect(
-			(await findUsers(db, { lifecycleState: "any" })).items.map(
-				(user) => user.id,
-			),
-		).toEqual([alice, pending]);
-		expect(
-			(await findUsers(db, { lifecycleState: "pending" })).items,
-		).toMatchObject([
-			{ id: pending, lifecycleState: "pending", username: null },
-		]);
+		const result = await findUsers(db, {});
+
+		expect(result.items.map((user) => user.id)).toEqual([alice]);
+		expect(result.foundCount).toBe(1);
+	});
+
+	// Pending rows are left out by the query, so they never count toward a page.
+	it("fills each page with set-up users", async () => {
+		await seedUser(db, { username: "a" });
+		await seedUser(db, { lifecycleState: "pending" });
+		await seedUser(db, { username: "b" });
+		await seedUser(db, { lifecycleState: "pending" });
+		await seedUser(db, { username: "c" });
+
+		const page1 = await findUsers(db, { page: 1, perPage: 2 });
+		const page2 = await findUsers(db, { page: 2, perPage: 2 });
+
+		expect(page1.items.map((user) => user.username)).toEqual(["a", "b"]);
+		expect(page2.items.map((user) => user.username)).toEqual(["c"]);
+		expect(page1.pageCount).toBe(2);
 	});
 
 	// Any signed-in user may search, so the results must not show who has no
