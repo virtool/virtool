@@ -19,6 +19,7 @@ import {
 	addReferenceUser,
 	checkReferenceVisibility,
 	createReference,
+	getReference,
 	ReferenceMemberConflictError,
 	removeReferenceGroup,
 	removeReferenceUser,
@@ -199,6 +200,43 @@ describe("membership", () => {
 		await expect(
 			addReferenceUser(db, referenceId, memberId, {}),
 		).rejects.toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("rejects a user who has not set up their account", async () => {
+		const referenceId = await seedReference();
+		const memberId = await seedUser(db, { lifecycleState: "pending" });
+
+		await expect(
+			addReferenceUser(db, referenceId, memberId, {}),
+		).rejects.toBeInstanceOf(ReferenceMemberConflictError);
+	});
+
+	it("reads a pending member without a username", async () => {
+		const referenceId = await seedReference();
+		const memberId = await seedUser(db, { lifecycleState: "pending" });
+		await db.insert(legacyReferenceUsers).values({
+			reference_id: referenceId,
+			user_id: memberId,
+			build: false,
+			modify: false,
+			modify_otu: false,
+		});
+
+		const reference = await getReference(db, referenceId);
+		const updated = await updateReferenceUser(db, referenceId, memberId, {
+			build: true,
+		});
+
+		expect(reference.users.find((user) => user.id === memberId)).toMatchObject({
+			lifecycleState: "pending",
+			username: null,
+		});
+		expect(updated).toMatchObject({
+			id: memberId,
+			lifecycleState: "pending",
+			username: null,
+			build: true,
+		});
 	});
 
 	it("rejects a group that is already a member", async () => {

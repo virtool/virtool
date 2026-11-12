@@ -28,6 +28,12 @@ describe("<MemberItem />", () => {
 		).not.toBeInTheDocument();
 	});
 
+	it("should render an invited user without a username", () => {
+		props.usernameOrName = null;
+		renderWithProviders(<MemberItem {...props} />);
+		expect(screen.getByText("No username yet")).toBeInTheDocument();
+	});
+
 	it("should show modification button when [canModify=true]", () => {
 		props.canModify = true;
 		renderWithProviders(<MemberItem {...props} />);

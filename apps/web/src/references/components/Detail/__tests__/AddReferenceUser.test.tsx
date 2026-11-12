@@ -29,6 +29,7 @@ describe("<AddReferenceUser />", () => {
 				users={[
 					{
 						id: alice.id,
+						lifecycleState: "normal",
 						username: alice.username,
 						build: false,
 						modify: false,

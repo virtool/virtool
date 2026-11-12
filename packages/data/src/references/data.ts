@@ -48,7 +48,7 @@ import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getSettings } from "../settings/data";
 import { createTask } from "../tasks/data";
-import { selectSetUpUsername } from "../users/username";
+import { getUserIdentity, selectSetUpUsername } from "../users/username";
 
 /** Filters and pagination accepted by {@link findReferences}. */
 export type FindReferencesOptions = {
@@ -286,7 +286,8 @@ async function getReferenceUsers(
 	const rows = await db
 		.select({
 			id: users.id,
-			username: selectSetUpUsername(users.username),
+			lifecycleState: users.lifecycleState,
+			username: users.username,
 			build: legacyReferenceUsers.build,
 			modify: legacyReferenceUsers.modify,
 			modifyOtu: legacyReferenceUsers.modify_otu,
@@ -296,7 +297,13 @@ async function getReferenceUsers(
 		.where(eq(legacyReferenceUsers.reference_id, referenceId))
 		.orderBy(asc(users.id));
 
-	return rows.map((row) => ({ ...row, createdAt }));
+	return rows.map((row) => ({
+		...getUserIdentity(row),
+		build: row.build,
+		modify: row.modify,
+		modifyOtu: row.modifyOtu,
+		createdAt,
+	}));
 }
 
 async function getReferenceGroups(
@@ -803,14 +810,25 @@ export async function addReferenceUser(
 ): Promise<ReferenceUser> {
 	const reference = await getReferenceRow(db, referenceId);
 
-	const [user] = await db
-		.select({ id: users.id, username: selectSetUpUsername(users.username) })
+	const [row] = await db
+		.select({
+			id: users.id,
+			lifecycleState: users.lifecycleState,
+			username: users.username,
+		})
 		.from(users)
 		.where(eq(users.id, userId))
 		.limit(1);
 
-	if (!user) {
+	if (!row) {
 		throw new ReferenceMemberConflictError("User does not exist.");
+	}
+
+	const user = getUserIdentity(row);
+	if (user.lifecycleState === "pending") {
+		throw new ReferenceMemberConflictError(
+			"User has not set up their account.",
+		);
 	}
 
 	const resolved: ReferenceRights = {
@@ -840,8 +858,7 @@ export async function addReferenceUser(
 	await emit("references", referenceId, "update");
 
 	return {
-		id: user.id,
-		username: user.username,
+		...user,
 		...resolved,
 		createdAt: reference.created_at,
 	};
@@ -911,7 +928,9 @@ export async function updateReferenceUser(
 
 	const [row] = await db
 		.select({
-			username: selectSetUpUsername(users.username),
+			id: users.id,
+			lifecycleState: users.lifecycleState,
+			username: users.username,
 			build: legacyReferenceUsers.build,
 			modify: legacyReferenceUsers.modify,
 			modifyOtu: legacyReferenceUsers.modify_otu,
@@ -954,8 +973,7 @@ export async function updateReferenceUser(
 	await emit("references", referenceId, "update");
 
 	return {
-		id: userId,
-		username: row.username,
+		...getUserIdentity(row),
 		...merged,
 		createdAt: reference.created_at,
 	};
