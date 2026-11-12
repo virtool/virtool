@@ -31,12 +31,6 @@ const password = Buffer.from(
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
-	// The body runs against the schema of its paired migration, where every user
-	// has a handle and an unmigrated user has no username yet.
-	await database.client`
-		ALTER TABLE public.users
-		DROP CONSTRAINT username_matches_lifecycle_state
-	`;
 }, 60_000);
 
 afterAll(async () => {

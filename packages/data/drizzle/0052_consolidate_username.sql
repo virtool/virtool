@@ -9,4 +9,4 @@ END $$;--> statement-breakpoint
 -- servers don't write handle, so it needs a default until then.
 ALTER TABLE "users" ALTER COLUMN "handle" SET DEFAULT '';--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "username_lowercase" CHECK ("users"."username" = lower("users"."username"));--> statement-breakpoint
-ALTER TABLE "users" ADD CONSTRAINT "username_matches_lifecycle_state" CHECK (("users"."lifecycle_state" = 'pending') = ("users"."username" is null));
+ALTER TABLE "users" ADD CONSTRAINT "pending_has_no_username" CHECK ("users"."lifecycle_state" <> 'pending' or "users"."username" is null);

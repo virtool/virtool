@@ -103,7 +103,7 @@ async function seedMigratedUser(
 	} = {},
 ): Promise<number> {
 	// A pending row carries no legacy password or username — the
-	// `pending_has_no_password` and `username_matches_lifecycle_state`
+	// `pending_has_no_password` and `pending_has_no_username`
 	// constraints refuse them — so the credential exists only on the Better
 	// Auth side, which is the state a half-finished completion would leave
 	// behind.

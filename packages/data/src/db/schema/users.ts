@@ -101,9 +101,12 @@ export const users = pgTable(
 			"username_lowercase",
 			sql`${table.username} = lower(${table.username})`,
 		),
+		// Only the pending half of the username invariant is a database rule.
+		// Servers from earlier releases complete an account in two statements,
+		// leaving a set-up account without a username until the second runs.
 		check(
-			"username_matches_lifecycle_state",
-			sql`(${table.lifecycleState} = 'pending') = (${table.username} is null)`,
+			"pending_has_no_username",
+			sql`${table.lifecycleState} <> 'pending' or ${table.username} is null`,
 		),
 		check(
 			"lifecycle_state_valid",

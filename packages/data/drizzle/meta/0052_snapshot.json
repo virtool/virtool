@@ -5442,9 +5442,9 @@
           "name": "username_lowercase",
           "value": "\"users\".\"username\" = lower(\"users\".\"username\")"
         },
-        "username_matches_lifecycle_state": {
-          "name": "username_matches_lifecycle_state",
-          "value": "(\"users\".\"lifecycle_state\" = 'pending') = (\"users\".\"username\" is null)"
+        "pending_has_no_username": {
+          "name": "pending_has_no_username",
+          "value": "\"users\".\"lifecycle_state\" <> 'pending' or \"users\".\"username\" is null"
         },
         "lifecycle_state_valid": {
           "name": "lifecycle_state_valid",

@@ -22,7 +22,7 @@ beforeAll(async () => {
 	await database.client`
 		ALTER TABLE public.users
 		DROP CONSTRAINT username_lowercase,
-		DROP CONSTRAINT username_matches_lifecycle_state
+		DROP CONSTRAINT pending_has_no_username
 	`;
 }, 60_000);
 
