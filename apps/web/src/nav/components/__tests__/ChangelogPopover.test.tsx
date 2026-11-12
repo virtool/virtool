@@ -28,6 +28,24 @@ describe("<ChangelogPopover />", () => {
 		).toBeInTheDocument();
 	});
 
+	it("shows the tip in sentence case and names the button from its label", async () => {
+		mockAccount();
+		mockFetchBlogIndex([createFakeBlogIndexPost({ date: after })]);
+
+		await renderWithRouter(<ChangelogPopover />);
+		const button = await screen.findByRole("button", {
+			name: "What's new (unread)",
+		});
+		await userEvent.hover(button);
+
+		const tooltip = await screen.findByRole("tooltip");
+
+		expect(tooltip).toHaveTextContent(/^What's new$/);
+		expect(tooltip).not.toHaveClass("capitalize");
+		expect(button).toHaveAttribute("aria-label", "What's new (unread)");
+		expect(button).toHaveAccessibleName("What's new (unread)");
+	});
+
 	it("shows no indicator when every post is dated at or before the watermark", async () => {
 		mockAccount();
 		mockFetchBlogIndex([
@@ -112,11 +130,34 @@ describe("<ChangelogPopover />", () => {
 		const markSeen = mockMarkChangelogSeen();
 
 		await renderWithRouter(<ChangelogPopover />);
-		await userEvent.click(
-			await screen.findByRole("button", { name: "What's new (unread)" }),
-		);
+		const button = await screen.findByRole("button", {
+			name: "What's new (unread)",
+		});
+		mockAccount(after);
+		await userEvent.click(button);
 
 		expect(markSeen).toHaveBeenCalledWith({ data: { newestPostDate: after } });
+		expect(
+			await screen.findByRole("button", { name: "What's new" }),
+		).toBeInTheDocument();
+	});
+
+	it("refetches the account after marking succeeds", async () => {
+		const getAccount = mockAccount();
+		mockFetchBlogIndex([createFakeBlogIndexPost({ date: after })]);
+		mockMarkChangelogSeen();
+
+		await renderWithRouter(<ChangelogPopover />);
+		const button = await screen.findByRole("button", {
+			name: "What's new (unread)",
+		});
+		const calls = getAccount.mock.calls.length;
+		mockAccount(after);
+		await userEvent.click(button);
+
+		await vi.waitFor(() =>
+			expect(getAccount.mock.calls.length).toBeGreaterThan(calls),
+		);
 		expect(
 			await screen.findByRole("button", { name: "What's new" }),
 		).toBeInTheDocument();

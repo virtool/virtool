@@ -35,14 +35,36 @@ describe("fetchBlogIndex", () => {
 		);
 	});
 
-	it("rejects an index that does not match the schema", async () => {
+	it("leaves out posts that do not match the schema", async () => {
 		stubFetch(
 			Response.json({
 				posts: [
 					{ ...post, image: { ...post.image, url: "javascript:alert(1)" } },
+					{ ...post, slug: "" },
+					{ ...post, date: "yesterday" },
+					"time-format",
+					{ ...post, slug: "valid" },
 				],
 			}),
 		);
+
+		expect(await fetchBlogIndex()).toEqual({
+			posts: [
+				{
+					...post,
+					date: new Date("2026-11-10T00:00:00.000Z"),
+					slug: "valid",
+				},
+			],
+		});
+	});
+
+	it.each([
+		["a non-object", "posts"],
+		["an object without posts", { items: [post] }],
+		["posts that are not an array", { posts: post }],
+	])("rejects %s", async (_name, body) => {
+		stubFetch(Response.json(body));
 
 		await expect(fetchBlogIndex()).rejects.toThrow();
 	});

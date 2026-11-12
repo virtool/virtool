@@ -39,7 +39,8 @@ export function useChangelogPosts() {
  * the newest post that the popover showed.
  *
  * The cached account takes the new watermark before the request settles, so the
- * indicator clears as the popover opens.
+ * indicator clears as the popover opens. A failed request restores the cached
+ * account, and a successful one refetches it.
  */
 export function useMarkChangelogSeen() {
 	const queryClient = useQueryClient();
@@ -66,6 +67,11 @@ export function useMarkChangelogSeen() {
 
 			return { previous };
 		},
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				exact: true,
+				queryKey: accountQueryOptions().queryKey,
+			}),
 		onError: (_error, _date, context) => {
 			if (context?.previous) {
 				queryClient.setQueryData(accountQueryKeys.all(), context.previous);

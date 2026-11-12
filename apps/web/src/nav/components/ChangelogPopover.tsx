@@ -42,7 +42,7 @@ export default function ChangelogPopover() {
 			onOpenChange={onOpenChange}
 			sideOffset={4}
 			trigger={
-				<Tooltip position="bottom" tip={label}>
+				<Tooltip capitalize={false} position="bottom" tip="What's new">
 					<button
 						aria-label={label}
 						className={iconButtonVariants({ onDark: true })}
