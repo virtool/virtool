@@ -1,3 +1,38 @@
+## 42.65.1 (2026-11-10)
+
+### Fixes
+
+#### Clarify password recovery ([#4226](https://github.com/virtool/virtool/pull/4226))
+
+**Forgot your password?** now fills in the username that you typed on the sign-in
+page. The recovery page tells you that the link goes to the verified email
+address of the account. It also tells you that Virtool does not send a second
+link within one hour, and that an administrator can help if you forgot your
+username or have no verified email address.
+
+The recovery email now gives the time until the link expires. If a password
+change cancels a pending email verification, Virtool tells you, so you can start
+the verification again after you sign in.
+
+#### Remove the unused job permissions ([#4224](https://github.com/virtool/virtool/pull/4224))
+
+Groups and API keys no longer show the `cancel_job` and `remove_job` permissions. These permissions did not give access to any action. The database migration removes them from all groups and API keys.
+
+#### Use consistent wording on the sign-in and setup screens ([#4230](https://github.com/virtool/virtool/pull/4230))
+
+The email verification screens and the user menu now say **Sign in** and
+**Sign out**, as the other screens do. A failed sign-in now shows **Incorrect
+username or password.** The messages for a username or password that is not
+valid now say what is necessary, for example **Password must have at least 8
+characters.**
+
+On the setup screen, the help text for the email address now says that you can
+finish setup without email delivery. The email address is still necessary.
+
+### Maintenance
+
+- Remove the unused identity migration function ([#4229](https://github.com/virtool/virtool/pull/4229))
+
 ## 42.65.0 (2026-11-10)
 
 ### Features

@@ -235,7 +235,7 @@ describe("changePassword", () => {
 			}),
 		).rejects.toMatchObject({
 			name: CLIENT_ERROR_NAME,
-			message: "Password does not meet minimum length requirement (8)",
+			message: "Password must have at least 8 characters.",
 			status: 400,
 		});
 

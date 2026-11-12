@@ -358,7 +358,7 @@ describe("<UserDetail />", () => {
 			mockListGroups(groups);
 			mockGetUser(user.id, user);
 			mockUpdateUser(user.id, 400, {
-				message: "Reserved user name: virtool",
+				message: "Reserved username: virtool",
 			});
 
 			renderWithProviders(<UserDetail userId={user.id} />);
@@ -372,7 +372,7 @@ describe("<UserDetail />", () => {
 
 			await waitFor(() =>
 				expect(
-					screen.getByText("Reserved user name: virtool"),
+					screen.getByText("Reserved username: virtool"),
 				).toBeInTheDocument(),
 			);
 		});

@@ -84,7 +84,7 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 								Administration{" "}
 							</DropdownMenuLink>
 						)}
-						<DropdownMenuItem onSelect={onLogout}>Logout</DropdownMenuItem>
+						<DropdownMenuItem onSelect={onLogout}>Sign out</DropdownMenuItem>
 					</DropdownMenuContent>
 				</Dropdown>
 			</div>

@@ -86,7 +86,7 @@ it("returns to address entry and supersedes the pending link", async () => {
 	expect(authServerFnMocks.changeEmailRemediationFn).toHaveBeenCalledOnce();
 });
 
-it("cancels pending remediation and returns to login", async () => {
+it("cancels pending remediation and returns to sign in", async () => {
 	authServerFnMocks.getEmailRemediationFn.mockResolvedValue(pendingState);
 	authServerFnMocks.cancelEmailRemediationFn.mockResolvedValue(null);
 	mockGetAccountUnauthorized();
@@ -156,7 +156,7 @@ it("scrubs the token and shows a cross-browser verification result", async () =>
 	expect(authServerFnMocks.completeEmailRemediationFn).toHaveBeenCalledWith({
 		data: { token },
 	});
-	await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+	await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 	await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
 	expect(router.state.location.search).toEqual({ redirect: "/samples" });
 });

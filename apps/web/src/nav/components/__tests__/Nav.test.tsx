@@ -46,7 +46,7 @@ describe("<Nav />", () => {
 			screen.queryByRole("menuitem", { name: "Documentation" }),
 		).not.toBeInTheDocument();
 		expect(
-			screen.getByRole("menuitem", { name: "Logout" }),
+			screen.getByRole("menuitem", { name: "Sign out" }),
 		).toBeInTheDocument();
 	});
 
