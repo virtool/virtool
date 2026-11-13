@@ -51,11 +51,11 @@ afterAll(async () => {
 });
 
 async function seedMigratedUser(
-	options: { handle?: string; email?: string; emailVerified?: boolean } = {},
+	options: { username?: string; email?: string; emailVerified?: boolean } = {},
 ) {
 	const password = await hashPassword("current-password-123");
 	const userId = await seedUser(db, {
-		handle: options.handle ?? "ada",
+		username: options.username ?? "ada",
 		email: options.email ?? "ada@example.com",
 		password,
 	});
@@ -290,7 +290,7 @@ describe("password recovery", () => {
 	it("rechecks issuer authority after target role changes", async () => {
 		const userId = await seedMigratedUser();
 		const issuerUserId = await seedUser(db, {
-			handle: "issuer",
+			username: "issuer",
 			administratorRole: "users",
 		});
 		await setAdministratorRole(db, userId, "full");

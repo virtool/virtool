@@ -1,3 +1,4 @@
+import { registerUsernameInput } from "@app/usernameInput";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Field, { FieldError } from "@base/Field";
 import Input from "@base/Input";
@@ -6,32 +7,32 @@ import SectionHeader from "@base/SectionHeader";
 import { useUpdateUser } from "@users/queries";
 import { useForm } from "react-hook-form";
 
-type HandleProps = {
-	/** The users unique id */
+type UsernameProps = {
+	/** The user's unique ID */
 	id: number;
-	/** The users current handle */
-	handle: string;
+	/** The user's current username */
+	username: string;
 };
 
 type FormValues = {
-	handle: string;
+	username: string;
 };
 
 /**
- * The handle view to change a user's handle
+ * The username view to change a user's username
  */
-export default function Handle({ id, handle }: HandleProps) {
+export default function Username({ id, username }: UsernameProps) {
 	const mutation = useUpdateUser();
 	const {
 		formState: { errors },
 		handleSubmit,
 		register,
-	} = useForm<FormValues>({ values: { handle } });
+	} = useForm<FormValues>({ values: { username } });
 
 	return (
 		<section>
 			<SectionHeader level={3}>
-				<h3>Change Handle</h3>
+				<h3>Change Username</h3>
 				<p>The username this person signs in with.</p>
 			</SectionHeader>
 			<BoxGroup>
@@ -40,22 +41,24 @@ export default function Handle({ id, handle }: HandleProps) {
 						onSubmit={handleSubmit((values) =>
 							mutation.mutate({
 								userId: id,
-								update: { handle: values.handle },
+								update: { username: values.username },
 							}),
 						)}
 					>
 						<Field>
 							<Input
-								aria-label="handle"
+								aria-label="Username"
 								autoComplete="off"
 								aria-required
-								{...register("handle", {
-									required: "Please specify a username",
-								})}
+								{...registerUsernameInput(
+									register("username", {
+										required: "Please specify a username",
+									}),
+								)}
 							/>
 							<FieldError
 								errors={[
-									errors.handle,
+									errors.username,
 									mutation.isError
 										? { message: mutation.error.message }
 										: undefined,

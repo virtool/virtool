@@ -73,8 +73,8 @@ it("passes when every credential id is unique", async () => {
 });
 
 it("reports duplicate credential ids by row without naming the credential", async () => {
-	const alice = await seedUser(db, { handle: "alice" });
-	const bob = await seedUser(db, { handle: "bob" });
+	const alice = await seedUser(db, { username: "alice" });
+	const bob = await seedUser(db, { username: "bob" });
 	const [first, , second] = await db
 		.insert(authPasskeys)
 		.values([

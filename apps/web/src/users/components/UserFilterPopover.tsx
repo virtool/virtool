@@ -57,7 +57,7 @@ export default function UserFilterPopover({
 		<FilterComboboxPopover
 			emptyMessage="No users found."
 			getKey={(user) => user.id}
-			getText={(user) => user.handle}
+			getText={(user) => user.username}
 			inputLabel="Filter users"
 			items={others}
 			listboxLabel="Users"
@@ -65,11 +65,11 @@ export default function UserFilterPopover({
 			onClear={onClear}
 			onToggle={onToggle}
 			pinned={self}
-			placeholder="Handle"
+			placeholder="Username"
 			popoverLabel="Filter by user"
 			renderItem={(user) => (
 				<>
-					<span className="flex-grow truncate">{user.handle}</span>
+					<span className="flex-grow truncate">{user.username}</span>
 					{user === self && (
 						<span className="shrink-0 pl-2 text-gray-500 text-sm">You</span>
 					)}

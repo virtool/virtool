@@ -84,14 +84,14 @@ describe("<Dashboard />", () => {
 		mockFindRecentlyViewedSamples([
 			createFakeSampleMinimal({
 				name: "Foo sample",
-				user: { handle: "sample-owner", id: 1 },
+				user: { username: "sample-owner", id: 1 },
 			}),
 		]);
 		mockFindRecentlyViewedAnalyses([
 			createFakeAnalysisMinimal({
 				id: 12,
 				sample: { id: sample.id, name: sample.name },
-				user: { handle: "analysis-owner", id: 2 },
+				user: { username: "analysis-owner", id: 2 },
 				workflow: "pathoscope",
 			}),
 		]);

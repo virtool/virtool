@@ -1,4 +1,8 @@
-import { isValidHandle, type User } from "@virtool/contracts";
+import {
+	isValidUsername,
+	normalizeUsername,
+	type User,
+} from "@virtool/contracts";
 import {
 	isPasswordHash,
 	TIMING_DUMMY_HASH,
@@ -15,7 +19,7 @@ import {
 	createFirstAdministrator,
 	FirstAdministratorExistsError,
 } from "@virtool/data/users/data";
-import { sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getReleaseDate } from "../changelog/release";
 import type { CookieAdapter } from "./cookies";
 
@@ -37,7 +41,7 @@ export class FirstUserExistsError extends Error {
 
 /** Inputs for the unmigrated-identity password check. */
 export type LegacyLoginInput = {
-	handle: string;
+	username: string;
 	password: string;
 	ip: string;
 };
@@ -64,7 +68,7 @@ export async function loginLegacyIdentity(
 			password: users.password,
 		})
 		.from(users)
-		.where(sql`lower(${users.handle}) = ${input.handle.toLowerCase()}`)
+		.where(eq(users.username, normalizeUsername(input.username)))
 		.limit(1);
 
 	if (user && user.authMigratedAt !== null) {
@@ -74,7 +78,7 @@ export async function loginLegacyIdentity(
 	if (
 		!user?.active ||
 		user.lifecycleState !== "normal" ||
-		!isValidHandle(input.handle) ||
+		!isValidUsername(normalizeUsername(input.username)) ||
 		user.password === null ||
 		!isPasswordHash(user.password)
 	) {
@@ -97,7 +101,7 @@ export async function loginLegacyIdentity(
 
 /** Inputs to create the first instance user. */
 export type CreateFirstUserInput = {
-	handle: string;
+	username: string;
 	email: string;
 	password: string;
 	deliveryAvailable: boolean;

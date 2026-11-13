@@ -1,6 +1,5 @@
 import {
 	type Account,
-	type AccountLifecycleState,
 	type AccountSecurity,
 	type AccountSettings,
 	ADMINISTRATOR_ROLES,
@@ -12,6 +11,7 @@ import {
 	type AvatarSource,
 	emptyPermissions,
 	normalizeEmail,
+	normalizeUsername,
 	PATHOSCOPE_COLUMNS,
 	type PathoscopeColumn,
 	PERMISSION_NAMES,
@@ -20,6 +20,7 @@ import {
 	REFERENCE_EXPORT_TABLE_FORMATS,
 	type ReferenceExportFastaHeader,
 	type ReferenceExportTableFormat,
+	type SetUpUser,
 	type SortDirection,
 	TIME_FORMATS,
 	type TimeFormat,
@@ -47,11 +48,7 @@ import {
 } from "drizzle-orm";
 import { claimEmail } from "../auth/email";
 import { queueEmailVerificationInTransaction } from "../auth/emailVerification";
-import {
-	CREDENTIAL_PROVIDER_ID,
-	updateAuthPassword,
-	updateAuthUsername,
-} from "../auth/identity";
+import { CREDENTIAL_PROVIDER_ID, updateAuthPassword } from "../auth/identity";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { queuePasswordChangedEmail } from "../auth/securityEmail";
 import {
@@ -76,6 +73,7 @@ import { type UserRow, users as usersTable } from "../db/schema/users";
 import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
+import { getUserIdentity, selectSetUpUsername } from "./username";
 
 /**
  * {@link AccountSettings} as it is stored in the `users.settings` JSONB column.
@@ -179,19 +177,11 @@ export type FindUsersFilters = {
 	perPage?: number;
 	administrator?: boolean;
 	active?: boolean;
-	/**
-	 * Which lifecycle states to return. Defaults to `"normal"`, so a caller
-	 * that has not thought about pending accounts does not publish them.
-	 *
-	 * The user administration list reads pending accounts through
-	 * {@link findAdministeredUsers} instead.
-	 */
-	lifecycleState?: AccountLifecycleState | "any";
 };
 
 /** Values accepted when creating a user. */
 export type CreateUserValues = {
-	handle: string;
+	username: string;
 	password: string;
 	email?: string;
 	emailVerified?: boolean;
@@ -213,7 +203,7 @@ export type CreatePendingUserValues = {
 /** Partial values accepted when updating a user. */
 export type UserUpdateValues = {
 	active?: boolean;
-	handle?: string;
+	username?: string;
 	groups?: number[];
 	primaryGroup?: number | null;
 };
@@ -231,7 +221,7 @@ export class UserNotFoundError extends AppError {}
 /** Thrown when a supplied password does not match the user's stored one. */
 export class InvalidPasswordError extends AppError {}
 
-/** Thrown when a user handle conflicts with an existing user. */
+/** Thrown when a username conflicts with an existing user. */
 export class UserConflictError extends AppError {}
 
 /** Thrown when a user's group assignment names an invalid group. */
@@ -325,13 +315,11 @@ function buildUser(row: UserRow, memberships: GroupMembershipRow[]): User {
 	const primary = memberships.find((membership) => membership.primary);
 
 	return {
-		id: row.id,
-		handle: row.handle,
+		...getUserIdentity(row),
 		administratorRole: row.administratorRole,
 		active: row.active,
 		groups,
 		lastPasswordChange: row.lastPasswordChange,
-		lifecycleState: row.lifecycleState,
 		permissions: mergePermissions(
 			memberships.map((membership) => membership.permissions),
 		),
@@ -376,14 +364,28 @@ export async function getUserCount(db: Db): Promise<number> {
  */
 export async function listUsers(db: Db): Promise<UserNested[]> {
 	return db
-		.select({ id: usersTable.id, handle: usersTable.handle })
+		.select({
+			id: usersTable.id,
+			username: selectSetUpUsername(usersTable.username),
+		})
 		.from(usersTable)
 		.where(
 			and(eq(usersTable.active, true), eq(usersTable.lifecycleState, "normal")),
 		)
-		.orderBy(asc(sql`lower(${usersTable.handle})`));
+		.orderBy(asc(usersTable.username));
 }
 
+// The query already leaves out pending rows; this narrows the type to match.
+function isSetUpUser(user: User): user is SetUpUser {
+	return user.lifecycleState === "normal";
+}
+
+/**
+ * Search set-up users by username.
+ *
+ * Pending accounts are never returned. The user administration list reads
+ * them through {@link findAdministeredUsers} instead.
+ */
 export async function findUsers(
 	db: Db,
 	filters: FindUsersFilters,
@@ -394,13 +396,12 @@ export async function findUsers(
 		perPage = 25,
 		administrator,
 		active = true,
-		lifecycleState = "normal",
 	} = filters;
 
-	const conditions = [eq(usersTable.active, active)];
-	if (lifecycleState !== "any") {
-		conditions.push(eq(usersTable.lifecycleState, lifecycleState));
-	}
+	const conditions = [
+		eq(usersTable.active, active),
+		eq(usersTable.lifecycleState, "normal"),
+	];
 	if (administrator === true) {
 		conditions.push(isNotNull(usersTable.administratorRole));
 	}
@@ -408,7 +409,7 @@ export async function findUsers(
 		conditions.push(isNull(usersTable.administratorRole));
 	}
 	if (term) {
-		conditions.push(ilike(usersTable.handle, toSearchPattern(term)));
+		conditions.push(ilike(usersTable.username, toSearchPattern(term)));
 	}
 	const filter = and(...conditions);
 
@@ -419,7 +420,7 @@ export async function findUsers(
 			.select()
 			.from(usersTable)
 			.where(filter)
-			.orderBy(asc(sql`lower(${usersTable.handle})`))
+			.orderBy(asc(usersTable.username))
 			.limit(perPage)
 			.offset(getPageOffset(page, perPage)),
 	]);
@@ -427,7 +428,7 @@ export async function findUsers(
 	const foundCount = foundRow?.value ?? 0;
 
 	return {
-		items: await assembleUsers(db, rows),
+		items: (await assembleUsers(db, rows)).filter(isSetUpUser),
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,
@@ -471,8 +472,6 @@ function getRoleCondition(roles: UserRoleFilter[]): SQL | undefined {
 
 function getSortExpressions(sort: UserSortField, direction: SortDirection) {
 	const order = direction === "ascending" ? asc : desc;
-	const handle = sql`lower(${usersTable.handle})`;
-
 	switch (sort) {
 		case "email":
 			// Accounts without an address go last in either direction.
@@ -497,9 +496,12 @@ function getSortExpressions(sort: UserSortField, direction: SortDirection) {
 					else 0 end`),
 			];
 		default:
-			// Pending accounts have no handle yet, so they go last in either
+			// Pending accounts have no username yet, so they go last in either
 			// direction.
-			return [asc(sql`${usersTable.handle} = ''`), order(handle)];
+			return [
+				asc(sql`${usersTable.username} is null`),
+				order(usersTable.username),
+			];
 	}
 }
 
@@ -519,14 +521,14 @@ export async function findAdministeredUsers(
 		perPage = 25,
 		statuses = [],
 		roles = [],
-		sort = "handle",
+		sort = "username",
 		direction = "ascending",
 	} = options;
 
 	const filter = and(
 		term
 			? or(
-					ilike(usersTable.handle, toSearchPattern(term)),
+					ilike(usersTable.username, toSearchPattern(term)),
 					ilike(usersTable.email, toSearchPattern(term)),
 				)
 			: undefined,
@@ -542,7 +544,7 @@ export async function findAdministeredUsers(
 			.where(filter)
 			.orderBy(
 				...getSortExpressions(sort, direction),
-				...getSortExpressions("handle", "ascending"),
+				...getSortExpressions("username", "ascending"),
 				asc(usersTable.id),
 			)
 			.limit(perPage)
@@ -585,29 +587,29 @@ export async function getUser(
 	return { ...user, twoFactorEnabled: row.twoFactorEnabled ?? false };
 }
 
-/** Get the handle of the user with `userId`, or `null` when they have none. */
-export async function getUserHandle(
+/** Get the username of the user with `userId`, or `null` when they have none. */
+export async function getUsername(
 	db: Db,
 	userId: number,
 ): Promise<string | null> {
 	const [row] = await db
-		.select({ handle: usersTable.handle })
+		.select({ username: usersTable.username })
 		.from(usersTable)
 		.where(eq(usersTable.id, userId))
 		.limit(1);
 
-	return row?.handle || null;
+	return row?.username ?? null;
 }
 
 /**
- * Get the email whose Gravatar represents the user with `handle`, or `null`
+ * Get the email whose Gravatar represents the user with `username`, or `null`
  * when the user has none to show.
  *
  * Only an active user who chose Gravatar has one.
  */
 export async function getGravatarEmail(
 	db: Db,
-	handle: string,
+	username: string,
 ): Promise<string | null> {
 	const [row] = await db
 		.select({
@@ -616,12 +618,7 @@ export async function getGravatarEmail(
 			settings: usersTable.settings,
 		})
 		.from(usersTable)
-		.where(
-			and(
-				sql`lower(${usersTable.handle}) = lower(${handle})`,
-				sql`${usersTable.handle} <> ''`,
-			),
-		)
+		.where(eq(usersTable.username, normalizeUsername(username)))
 		.limit(1);
 
 	if (
@@ -647,6 +644,11 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 	}
 
 	const user = takeFirstOrThrow(await assembleUsers(db, [row]));
+
+	// Only a set-up account can sign in, so a pending one has no account view.
+	if (user.lifecycleState === "pending") {
+		throw new UserNotFoundError();
+	}
 
 	return {
 		...user,
@@ -891,8 +893,8 @@ export async function getAdministratorRole(
 /**
  * Create an account that exists but cannot yet be signed in as.
  *
- * The administrator role and group memberships are set here. The handle stays
- * empty so the invitee can choose it during acceptance.
+ * The administrator role and group memberships are set here. The username
+ * stays null so the invitee can choose it during acceptance.
  * The credential is also missing: `password` stays null and `lifecycle_state` is `pending`,
  * which the `pending_has_no_password` constraint holds together. The Better Auth
  * credential row exists with a null password, so acceptance fills the credential
@@ -938,7 +940,6 @@ export async function createPendingUserInTransaction(
 			.values({
 				authMigratedAt: now,
 				email,
-				handle: "",
 				lifecycleState: "pending",
 				administratorRole: values.administratorRole ?? null,
 				lastPasswordChange: now,
@@ -1012,9 +1013,7 @@ export async function createUserInTransaction(
 			.insert(usersTable)
 			.values({
 				authMigratedAt: now,
-				handle: values.handle,
-				username: values.handle.toLowerCase(),
-				displayUsername: values.handle,
+				username: normalizeUsername(values.username),
 				email,
 				emailVerified: values.emailVerified ?? false,
 				password,
@@ -1041,7 +1040,7 @@ export async function createUserInTransaction(
 
 /** Inputs for transactionally creating the first instance administrator. */
 export type CreateFirstAdministratorInput = {
-	handle: string;
+	username: string;
 	email: string;
 	password: string;
 	deliveryAvailable: boolean;
@@ -1079,7 +1078,7 @@ export async function createFirstAdministrator(
 		const userId = await createUserInTransaction(
 			tx,
 			{
-				handle: input.handle,
+				username: input.username,
 				email: input.email,
 				password: input.password,
 				administratorRole: "full",
@@ -1095,7 +1094,7 @@ export async function createFirstAdministrator(
 				userId,
 				candidateEmail: normalizeEmail(input.email),
 				sourceEmail: normalizeEmail(input.email),
-				handle: input.handle,
+				username: normalizeUsername(input.username),
 				getVerificationUrl: input.getVerificationUrl,
 				keyring: input.keyring,
 			});
@@ -1129,7 +1128,7 @@ export async function updateUser(
 		throw new UserNotFoundError();
 	}
 
-	if (values.handle !== undefined && existing.lifecycleState === "pending") {
+	if (values.username !== undefined && existing.lifecycleState === "pending") {
 		throw new PendingAccountError();
 	}
 
@@ -1137,8 +1136,8 @@ export async function updateUser(
 	if (values.active !== undefined) {
 		patch.active = values.active;
 	}
-	if (values.handle !== undefined) {
-		patch.handle = values.handle;
+	if (values.username !== undefined) {
+		patch.username = normalizeUsername(values.username);
 	}
 	const revokeSessions = values.active !== undefined;
 
@@ -1149,31 +1148,12 @@ export async function updateUser(
 		if (Object.keys(patch).length > 0) {
 			try {
 				await tx.update(usersTable).set(patch).where(eq(usersTable.id, userId));
-
-				if (values.handle !== undefined) {
-					await tx
-						.update(usersTable)
-						.set({
-							username: values.handle.toLowerCase(),
-							displayUsername: values.handle,
-						})
-						.where(
-							and(
-								eq(usersTable.id, userId),
-								isNotNull(usersTable.authMigratedAt),
-							),
-						);
-				}
 			} catch (error) {
 				if (isUniqueViolation(error)) {
 					throw new UserConflictError();
 				}
 				throw error;
 			}
-		}
-
-		if (values.handle !== undefined) {
-			await updateAuthUsername(tx, userId, values.handle);
 		}
 
 		if (revokeSessions) {

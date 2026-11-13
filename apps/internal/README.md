@@ -138,6 +138,25 @@ SELECT id, handle FROM public.users WHERE force_reset = true ORDER BY id;
 This query works only on a database that hasn't reached the migration that drops
 the `force_reset` column.
 
+`username_backfill@1` makes the lowercase handle each set-up user's username,
+and gives pending invitations no username. Users with mixed-case handles then
+see and sign in with the lowercase form. It fails, and changes nothing, if a
+set-up user's lowercase handle isn't a valid username, if a pending invitation
+has a handle, or if a stored username differs from the lowercase handle. Its
+findings use the `user:<id>` subject. Before deploy, list the users it would
+report:
+
+```sql
+SELECT id, handle, username, lifecycle_state FROM public.users
+WHERE (lifecycle_state = 'pending' AND handle <> '')
+   OR (lifecycle_state <> 'pending' AND lower(handle) !~ '^[a-z0-9_.]{3,30}$')
+   OR (lifecycle_state <> 'pending' AND username IS NOT NULL AND username <> lower(handle))
+ORDER BY id;
+```
+
+This query works only on a database that hasn't reached the migration that drops
+the `handle` column.
+
 ## Metrics
 
 `serve` exposes `GET /metrics` on port 9950 and `run` on port 9900. Set

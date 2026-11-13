@@ -62,6 +62,7 @@ import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
 import { getSettings } from "../settings/data";
 import { reserveUploads } from "../uploads/data";
+import { selectSetUpUsername } from "../users/username";
 
 /** A read or write right on a sample. */
 export type SampleRight = "read" | "write";
@@ -371,7 +372,10 @@ async function getReads(
 		.select({
 			read: sampleReads,
 			upload: uploads,
-			uploadUser: { id: users.id, handle: users.handle },
+			uploadUser: {
+				id: users.id,
+				username: selectSetUpUsername(users.username),
+			},
 		})
 		.from(sampleReads)
 		.leftJoin(uploads, eq(uploads.id, sampleReads.upload))
@@ -437,13 +441,13 @@ function mapMinimal(
 // in the schema; an ownerless sample maps to the sentinel owner.
 function resolveOwner(
 	userId: number | null,
-	handle: string | null,
+	username: string | null,
 ): UserNested {
 	if (userId == null) {
-		return { id: 0, handle: "" };
+		return { id: 0, username: "" };
 	}
 
-	return { id: userId, handle: handle ?? "" };
+	return { id: userId, username: username ?? "" };
 }
 
 /** Resolve a user id to the identity used for per-sample authorization. */
@@ -618,7 +622,7 @@ function composeWorkflowFilter(db: Db, workflows: string[]): SQL | undefined {
 const SORT_COLUMNS = {
 	createdAt: legacySamples.created_at,
 	name: legacySamples.name,
-	user: users.handle,
+	user: selectSetUpUsername(users.username),
 } as const;
 
 /**
@@ -695,7 +699,7 @@ export async function findSamples(
 		// The owner joins onto the sample row; the collection relationships fan
 		// out below, batched by the page's sample ids.
 		db
-			.select({ sample: legacySamples, ownerHandle: users.handle })
+			.select({ sample: legacySamples, ownerUsername: users.username })
 			.from(legacySamples)
 			.leftJoin(users, eq(users.id, legacySamples.user_id))
 			.where(where)
@@ -728,7 +732,7 @@ export async function findSamples(
 		page: options.page,
 		perPage: options.perPage,
 		pageCount: getPageCount(foundCount, options.perPage),
-		items: rows.map(({ sample, ownerHandle }) =>
+		items: rows.map(({ sample, ownerUsername }) =>
 			mapMinimal(
 				sample,
 				labelsBySample.get(sample.id) ?? [],
@@ -736,7 +740,7 @@ export async function findSamples(
 				sample.job_id != null
 					? (jobsById.get(sample.job_id) ?? undefined)
 					: undefined,
-				resolveOwner(sample.user_id, ownerHandle),
+				resolveOwner(sample.user_id, ownerUsername),
 			),
 		),
 	};
@@ -786,7 +790,7 @@ export async function findRecentlyViewedSamples(
 			.innerJoin(legacySamples, eq(legacySamples.id, sampleViews.sample_id))
 			.where(scope),
 		db
-			.select({ sample: legacySamples, ownerHandle: users.handle })
+			.select({ sample: legacySamples, ownerUsername: users.username })
 			.from(sampleViews)
 			.innerJoin(legacySamples, eq(legacySamples.id, sampleViews.sample_id))
 			.leftJoin(users, eq(users.id, legacySamples.user_id))
@@ -818,7 +822,7 @@ export async function findRecentlyViewedSamples(
 		page: 1,
 		perPage,
 		pageCount: getPageCount(totalCount, perPage),
-		items: rows.map(({ sample, ownerHandle }) =>
+		items: rows.map(({ sample, ownerUsername }) =>
 			mapMinimal(
 				sample,
 				labelsBySample.get(sample.id) ?? [],
@@ -826,7 +830,7 @@ export async function findRecentlyViewedSamples(
 				sample.job_id != null
 					? (jobsById.get(sample.job_id) ?? undefined)
 					: undefined,
-				resolveOwner(sample.user_id, ownerHandle),
+				resolveOwner(sample.user_id, ownerUsername),
 			),
 		),
 	};
@@ -861,7 +865,7 @@ export async function getSample(db: Db, sampleId: number): Promise<Sample> {
 	const [row] = await db
 		.select({
 			sample: legacySamples,
-			ownerHandle: users.handle,
+			ownerUsername: users.username,
 			group: { id: groups.id, name: groups.name, legacyId: groups.legacyId },
 		})
 		.from(legacySamples)
@@ -874,7 +878,7 @@ export async function getSample(db: Db, sampleId: number): Promise<Sample> {
 		throw new SampleNotFoundError();
 	}
 
-	const { sample, ownerHandle, group: groupRow } = row;
+	const { sample, ownerUsername, group: groupRow } = row;
 
 	if (sample.user_id == null) {
 		throw new SampleOwnerlessError();
@@ -899,7 +903,7 @@ export async function getSample(db: Db, sampleId: number): Promise<Sample> {
 		sample.job_id != null
 			? (jobsById.get(sample.job_id) ?? undefined)
 			: undefined,
-		resolveOwner(sample.user_id, ownerHandle),
+		resolveOwner(sample.user_id, ownerUsername),
 	);
 
 	return {

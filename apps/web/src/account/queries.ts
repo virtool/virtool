@@ -32,8 +32,8 @@ import {
 } from "@server/auth/recoveryFunctions";
 import {
 	changePasswordFn,
-	updateAccountHandleFn,
 	updateAccountSettingsFn,
+	updateAccountUsernameFn,
 } from "@server/users/functions";
 import {
 	type QueryClient,
@@ -92,21 +92,21 @@ export function useUpdateAccount() {
 }
 
 /**
- * Initializes a mutator for changing the current account's handle
+ * Initializes a mutator for changing the current account's username
  *
- * @returns A mutator for changing the account handle
+ * @returns A mutator for changing the account username
  */
-export function useUpdateHandle() {
+export function useUpdateUsername() {
 	const queryClient = useQueryClient();
 	const mutationFn = useRecentlyAuthenticatedMutation(
-		({ handle }: { handle: string }) =>
-			updateAccountHandleFn({ data: { handle } }),
+		({ username }: { username: string }) =>
+			updateAccountUsernameFn({ data: { username } }),
 	);
 
 	return useMutation<
-		Awaited<ReturnType<typeof updateAccountHandleFn>>,
+		Awaited<ReturnType<typeof updateAccountUsernameFn>>,
 		Error,
-		{ handle: string }
+		{ username: string }
 	>({
 		mutationFn,
 		onSuccess: () => {

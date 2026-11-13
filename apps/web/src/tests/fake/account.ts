@@ -7,7 +7,12 @@ import {
 	PATHOSCOPE_COLUMNS,
 } from "@virtool/contracts";
 import { createFakePermissions } from "./permissions";
-import { createFakeUser } from "./user";
+import { createFakeUser, type FakeNormalUser } from "./user";
+
+type AccountOnlyFields = Omit<Account, keyof FakeNormalUser>;
+
+/** A signed-in account, which always has a username. */
+type FakeAccount = FakeNormalUser & AccountOnlyFields;
 
 const defaultSettings: AccountSettings = {
 	avatarSource: "initials",
@@ -36,7 +41,9 @@ export function createFakeAccountSecurity(
 	};
 }
 
-export function createFakeAccount(overrides?: Partial<Account>): Account {
+export function createFakeAccount(
+	overrides?: Partial<Omit<FakeAccount, "lifecycleState">>,
+): FakeAccount {
 	const { settings, email, lastSeenChangelogAt, ...userProps } =
 		overrides || {};
 

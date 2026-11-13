@@ -156,18 +156,18 @@ describe("default administrator", () => {
 		const store = createStore();
 		store.setDefaultAdministrator({
 			email: "admin@example.com",
-			handle: "admin",
+			username: "admin",
 			password: "hello world",
 		});
 		store.setDefaultAdministrator({
 			email: " new@example.com ",
-			handle: "boss",
+			username: "boss",
 			password: "",
 		});
 
 		expect(store.getDefaultAdministrator()).toEqual({
 			email: "new@example.com",
-			handle: "boss",
+			username: "boss",
 		});
 		expect(store.getDefaultAdministratorCredentials()?.password).toBe(
 			"hello world",
@@ -180,10 +180,10 @@ describe("default administrator", () => {
 		expect(() =>
 			store.setDefaultAdministrator({
 				email: "admin@example.com",
-				handle: "admin",
+				username: "admin",
 				password: "",
 			}),
-		).toThrow("Handle, email, and password are required");
+		).toThrow("Username, email, and password are required");
 		expect(store.getDefaultAdministrator()).toBeNull();
 	});
 
@@ -193,12 +193,12 @@ describe("default administrator", () => {
 		["admin", "admin", "hello world", "Enter a valid email address."],
 		["admin", "admin@example.com", "short", "must have at least 8 characters"],
 	])(
-		"rejects handle %j, email %j, and password %j",
-		(handle, email, password, message) => {
+		"rejects username %j, email %j, and password %j",
+		(username, email, password, message) => {
 			const store = createStore();
 
 			expect(() =>
-				store.setDefaultAdministrator({ email, handle, password }),
+				store.setDefaultAdministrator({ email, password, username }),
 			).toThrow(message);
 			expect(store.getDefaultAdministrator()).toBeNull();
 		},
@@ -208,25 +208,55 @@ describe("default administrator", () => {
 		const store = createStore();
 		store.setDefaultAdministrator({
 			email: "admin@example.com",
-			handle: "admin",
+			username: "admin",
 			password: "hello world",
 		});
 
 		expect(() =>
 			store.setDefaultAdministrator({
 				email: "admin@example.com",
-				handle: "virtool",
+				username: "virtool",
 				password: "",
 			}),
 		).toThrow("Reserved username: virtool");
-		expect(store.getDefaultAdministrator()?.handle).toBe("admin");
+		expect(store.getDefaultAdministrator()?.username).toBe("admin");
+	});
+
+	it("saves the username in lowercase", () => {
+		const store = createStore();
+		store.setDefaultAdministrator({
+			email: "admin@example.com",
+			password: "hello world",
+			username: " Admin ",
+		});
+
+		expect(store.getDefaultAdministrator()?.username).toBe("admin");
+	});
+
+	it("reads a default administrator saved under the handle key", () => {
+		const directory = mkdtempSync(join(tmpdir(), "virtool-dev-"));
+		const legacy = new StateStore(directory);
+		legacy.setMeta("default_administrator_handle", "Admin");
+		legacy.setMeta("default_administrator_email", "admin@example.com");
+		legacy.setMeta("default_administrator_password", "hello world");
+		legacy.close();
+
+		const store = new StateStore(directory);
+		stores.push(store);
+
+		expect(store.getDefaultAdministratorCredentials()).toEqual({
+			email: "admin@example.com",
+			password: "hello world",
+			username: "admin",
+		});
+		expect(store.getMeta("default_administrator_handle")).toBeNull();
 	});
 
 	it("clears every saved value", () => {
 		const store = createStore();
 		store.setDefaultAdministrator({
 			email: "admin@example.com",
-			handle: "admin",
+			username: "admin",
 			password: "hello world",
 		});
 

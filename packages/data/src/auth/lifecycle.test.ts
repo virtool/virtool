@@ -94,7 +94,6 @@ describe("completeAccountSetup", () => {
 	it("credentials a pending account and moves it to normal", async () => {
 		const userId = await seedUser(db, {
 			email: "Ada@Example.com",
-			handle: "Ada",
 			lifecycleState: "pending",
 		});
 		const { token } = await seedSetupToken(db, userId, "account_completion", {
@@ -105,15 +104,16 @@ describe("completeAccountSetup", () => {
 			keyring,
 			token,
 			password: "a-good-password",
+			username: "Ada",
 		});
 
 		expect(result.user.lifecycleState).toBe("normal");
+		expect(result.user.username).toBe("ada");
 
 		const row = await readUser(userId);
 		expect(row.email).toBe("ada@example.com");
 		expect(row.emailVerified).toBe(true);
 		expect(row.username).toBe("ada");
-		expect(row.displayUsername).toBe("Ada");
 		expect(row.authMigratedAt).toBeInstanceOf(Date);
 		expect(row.password).not.toBeNull();
 		expect(
@@ -134,6 +134,7 @@ describe("completeAccountSetup", () => {
 			keyring,
 			token,
 			password: "a-good-password",
+			username: "ada",
 		});
 
 		const accounts = await db.select().from(authAccounts);
@@ -157,6 +158,7 @@ describe("completeAccountSetup", () => {
 			keyring,
 			token,
 			password: "a-good-password",
+			username: "ada",
 		});
 
 		expect(await db.select().from(setupSessions)).toHaveLength(0);
@@ -174,6 +176,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "a-good-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 	});
@@ -189,6 +192,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "a-good-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(SetupNotEligibleError);
 	});
@@ -205,6 +209,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "a-good-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(SetupNotEligibleError);
 
@@ -227,6 +232,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "a-good-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 	});
@@ -234,12 +240,11 @@ describe("completeAccountSetup", () => {
 	it("refuses an address another account already holds", async () => {
 		await seedUser(db, {
 			authMigratedAt: new Date(),
-			handle: "bob",
+			username: "bob",
 			email: "ada@example.com",
 		});
 		const userId = await seedUser(db, {
 			email: "ada@example.com",
-			handle: "ada",
 			lifecycleState: "pending",
 		});
 		const { token } = await seedSetupToken(db, userId, "account_completion", {
@@ -251,6 +256,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "a-good-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
@@ -258,12 +264,11 @@ describe("completeAccountSetup", () => {
 	it("refuses an address another account holds with surrounding whitespace", async () => {
 		await seedUser(db, {
 			authMigratedAt: new Date(),
-			handle: "bob",
+			username: "bob",
 			email: " ADA@example.com ",
 		});
 		const userId = await seedUser(db, {
 			email: "ada@example.com",
-			handle: "ada",
 			lifecycleState: "pending",
 		});
 		const { token } = await seedSetupToken(db, userId, "account_completion", {
@@ -275,6 +280,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "a-good-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
@@ -284,12 +290,11 @@ describe("completeAccountSetup", () => {
 	it("rolls the whole transition back when it fails", async () => {
 		await seedUser(db, {
 			authMigratedAt: new Date(),
-			handle: "bob",
+			username: "bob",
 			email: "ada@example.com",
 		});
 		const userId = await seedUser(db, {
 			email: "ada@example.com",
-			handle: "ada",
 			lifecycleState: "pending",
 		});
 		const { token } = await seedSetupToken(db, userId, "account_completion", {
@@ -301,6 +306,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "a-good-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(EmailInUseError);
 
@@ -326,6 +332,7 @@ describe("completeAccountSetup", () => {
 			keyring,
 			token,
 			password: "a-good-password",
+			username: "ada",
 		});
 
 		await expect(
@@ -333,6 +340,7 @@ describe("completeAccountSetup", () => {
 				keyring,
 				token,
 				password: "another-password",
+				username: "ada",
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
 
@@ -356,11 +364,13 @@ describe("completeAccountSetup", () => {
 					keyring,
 					token,
 					password: "a-good-password",
+					username: "ada",
 				}),
 				completeAccountSetup(other.db, {
 					keyring,
 					token,
 					password: "a-good-password",
+					username: "ada",
 				}),
 			]);
 
@@ -378,7 +388,7 @@ describe("completeEmailRemediation", () => {
 	it("keeps a staged address off the user row until completion", async () => {
 		const userId = await seedUser(db, {
 			email: "legacy@example.com",
-			handle: "Ada",
+			username: "ada",
 		});
 		await seedSettings(db, { emailEnabled: true });
 
@@ -399,7 +409,7 @@ describe("completeEmailRemediation", () => {
 	});
 
 	it("serializes address resubmission with verification completion", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		const token = await startOfflineEmailRemediation(
 			userId,
 			"first@example.com",
@@ -446,7 +456,7 @@ describe("completeEmailRemediation", () => {
 	});
 
 	it("keeps concurrent address submissions bound to their own tokens", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		await seedSettings(db, { emailEnabled: true });
 		const other = database.connect();
 
@@ -514,7 +524,7 @@ describe("completeEmailRemediation", () => {
 
 	it("claims the address and derives an identity from the legacy hash", async () => {
 		const password = await hashPassword("legacy-password");
-		const userId = await seedUser(db, { handle: "Ada", password });
+		const userId = await seedUser(db, { username: "ada", password });
 		const token = await startOfflineEmailRemediation(
 			userId,
 			" Ada@Example.com ",
@@ -538,7 +548,7 @@ describe("completeEmailRemediation", () => {
 
 	it("places the remediated address under normalized uniqueness", async () => {
 		const userId = await seedUser(db, {
-			handle: "Ada",
+			username: "ada",
 			password: await hashPassword("legacy-password"),
 		});
 		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
@@ -550,7 +560,7 @@ describe("completeEmailRemediation", () => {
 		});
 
 		const other = await seedUser(db, {
-			handle: "other",
+			username: "other",
 			email: "other@example.com",
 		});
 		await db
@@ -586,8 +596,8 @@ describe("completeEmailRemediation", () => {
 	});
 
 	it("refuses an address another account already holds while staging", async () => {
-		await seedUser(db, { handle: "bob", email: "ada@example.com" });
-		const userId = await seedUser(db, { handle: "ada" });
+		await seedUser(db, { username: "bob", email: "ada@example.com" });
+		const userId = await seedUser(db, { username: "ada" });
 
 		await expect(
 			prepareEmailRemediation(db, { userId, email: "ada@example.com" }),
@@ -597,9 +607,9 @@ describe("completeEmailRemediation", () => {
 	it.each([{ active: true }, { active: false }])(
 		"lets a mailbox claim an address a legacy account records (active: $active)",
 		async ({ active }) => {
-			await seedUser(db, { active, handle: "bob", email: "ada@example.com" });
+			await seedUser(db, { active, username: "bob", email: "ada@example.com" });
 			const userId = await seedUser(db, {
-				handle: "ada",
+				username: "ada",
 				email: "ada@example.com",
 			});
 			await seedSettings(db, { emailEnabled: true });
@@ -627,8 +637,8 @@ describe("completeEmailRemediation", () => {
 	);
 
 	it("refuses an offline claim to an address a legacy account records", async () => {
-		await seedUser(db, { handle: "bob", email: "ada@example.com" });
-		const userId = await seedUser(db, { handle: "ada" });
+		await seedUser(db, { username: "bob", email: "ada@example.com" });
+		const userId = await seedUser(db, { username: "ada" });
 
 		await expect(
 			startEmailRemediation(db, {
@@ -643,8 +653,8 @@ describe("completeEmailRemediation", () => {
 	});
 
 	it("refuses an unverified completion to an address a legacy account records", async () => {
-		await seedUser(db, { handle: "bob", email: "ada@example.com" });
-		const userId = await seedUser(db, { handle: "ada" });
+		await seedUser(db, { username: "bob", email: "ada@example.com" });
+		const userId = await seedUser(db, { username: "ada" });
 		const { token } = await seedSetupToken(db, userId, "email_remediation", {
 			candidateEmail: "ada@example.com",
 		});
@@ -659,10 +669,10 @@ describe("completeEmailRemediation", () => {
 		await seedUser(db, {
 			active: false,
 			authMigratedAt: new Date(),
-			handle: "bob",
+			username: "bob",
 			email: "ada@example.com",
 		});
-		const userId = await seedUser(db, { handle: "ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		const { token } = await seedSetupToken(db, userId, "email_remediation", {
 			candidateEmail: "ada@example.com",
 		});
@@ -686,8 +696,8 @@ describe("completeEmailRemediation", () => {
 	});
 
 	it("binds completion to the restricted setup user", async () => {
-		const firstUserId = await seedUser(db, { handle: "ada" });
-		const secondUserId = await seedUser(db, { handle: "bob" });
+		const firstUserId = await seedUser(db, { username: "ada" });
+		const secondUserId = await seedUser(db, { username: "bob" });
 		const { token } = await seedSetupToken(
 			db,
 			firstUserId,
@@ -707,7 +717,7 @@ describe("completeEmailRemediation", () => {
 
 describe("email remediation journey", () => {
 	it("verifies with the bearer token alone and leaves the setup browser resumable", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		const setup = await seedSetupSession(db, userId, "email_remediation");
 		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
 
@@ -726,7 +736,7 @@ describe("email remediation journey", () => {
 	});
 
 	it("allows exactly one promotion claim for a matching setup browser", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		const setup = await seedSetupSession(db, userId, "email_remediation");
 		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
 		await verifyEmailRemediationToken(db, token);
@@ -744,7 +754,7 @@ describe("email remediation journey", () => {
 	});
 
 	it("returns an already-verified result for replay and concurrent consumption", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
 		const other = database.connect();
 
@@ -767,7 +777,7 @@ describe("email remediation journey", () => {
 	});
 
 	it("classifies expired, superseded, and unknown tokens without changing users", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		const expired = await seedSetupToken(db, userId, "email_remediation", {
 			candidateEmail: "ada@example.com",
 			expiresAt: new Date(Date.now() - 1_000),
@@ -792,7 +802,7 @@ describe("email remediation journey", () => {
 	});
 
 	it("revokes the challenge on change and cancellation", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		await seedSetupSession(db, userId, "email_remediation");
 		const first = await startOfflineEmailRemediation(userId, "ada@example.com");
 
@@ -815,7 +825,7 @@ describe("email remediation journey", () => {
 	});
 
 	it("reports terminal delivery failure and replaces the link on resend", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		await seedSettings(db, { emailEnabled: true });
 		await startEmailRemediation(db, {
 			deliveryAvailable: true,
@@ -857,7 +867,7 @@ describe("email remediation journey", () => {
 	});
 
 	it("rate-limits immediate resend attempts", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		await seedSettings(db, { emailEnabled: true });
 		const input = {
 			deliveryAvailable: true,
@@ -875,7 +885,7 @@ describe("email remediation journey", () => {
 	});
 
 	it("extends the initiating setup session to the link expiry", async () => {
-		const userId = await seedUser(db, { handle: "Ada" });
+		const userId = await seedUser(db, { username: "ada" });
 		const setup = await seedSetupSession(db, userId, "email_remediation");
 		await seedSettings(db, { emailEnabled: true });
 
@@ -920,7 +930,7 @@ describe("resetUserTotp", () => {
 
 	it("removes the factor and every session of the user", async () => {
 		const userId = await seedUser(db);
-		const otherId = await seedUser(db, { handle: "bob" });
+		const otherId = await seedUser(db, { username: "bob" });
 		await seedTwoFactor(userId);
 		await seedTwoFactor(otherId);
 		await Promise.all([
@@ -989,11 +999,11 @@ describe("resetUserTotp", () => {
 });
 
 describe("revokeUserAccess", () => {
-	async function seedAccount(handle: string, email: string): Promise<number> {
+	async function seedAccount(username: string, email: string): Promise<number> {
 		const userId = await seedUser(db, {
 			authMigratedAt: new Date(),
 			email,
-			handle,
+			username,
 			password: await hashPassword("original-password"),
 		});
 		const now = new Date();
@@ -1053,7 +1063,7 @@ describe("revokeUserAccess", () => {
 	it("removes every credential of the user and no one else's", async () => {
 		const issuerId = await seedUser(db, {
 			administratorRole: "users",
-			handle: "admin",
+			username: "admin",
 		});
 		const userId = await seedAccount("alice", "alice@example.com");
 		const otherId = await seedAccount("bob", "bob@example.com");
@@ -1080,7 +1090,7 @@ describe("revokeUserAccess", () => {
 	});
 
 	it("replaces the password on both sides of the migration", async () => {
-		const issuerId = await seedUser(db, { handle: "admin" });
+		const issuerId = await seedUser(db, { username: "admin" });
 		const userId = await seedAccount("alice", "alice@example.com");
 
 		await revokeUserAccess(db, userId, issuerId);
@@ -1092,7 +1102,7 @@ describe("revokeUserAccess", () => {
 	});
 
 	it("leaves Better Auth rows that only share a value with the user id", async () => {
-		const issuerId = await seedUser(db, { handle: "admin" });
+		const issuerId = await seedUser(db, { username: "admin" });
 		const userId = await seedAccount("alice", "alice@example.com");
 		await seedVerification("2fa-attempts-abc", String(userId));
 		await seedVerification("2fa-otp-abc", String(userId));
@@ -1107,7 +1117,7 @@ describe("revokeUserAccess", () => {
 	});
 
 	it("closes self-service recovery and sends no email", async () => {
-		const issuerId = await seedUser(db, { handle: "admin" });
+		const issuerId = await seedUser(db, { username: "admin" });
 		const userId = await seedAccount("alice", "alice@example.com");
 
 		await revokeUserAccess(db, userId, issuerId);
@@ -1120,7 +1130,7 @@ describe("revokeUserAccess", () => {
 	it("leaves a copy-only administrator link as the way back in", async () => {
 		const issuerId = await seedUser(db, {
 			administratorRole: "users",
-			handle: "admin",
+			username: "admin",
 		});
 		const userId = await seedAccount("alice", "alice@example.com");
 		await revokeUserAccess(db, userId, issuerId);
@@ -1150,7 +1160,7 @@ describe("revokeUserAccess", () => {
 	});
 
 	it("revokes a deactivated user", async () => {
-		const issuerId = await seedUser(db, { handle: "admin" });
+		const issuerId = await seedUser(db, { username: "admin" });
 		const userId = await seedAccount("alice", "alice@example.com");
 		await db.update(users).set({ active: false }).where(eq(users.id, userId));
 
@@ -1160,7 +1170,7 @@ describe("revokeUserAccess", () => {
 	});
 
 	it("replaces the password of an account with no credential row", async () => {
-		const issuerId = await seedUser(db, { handle: "admin" });
+		const issuerId = await seedUser(db, { username: "admin" });
 		const userId = await seedUser(db, {
 			password: await hashPassword("original-password"),
 		});
@@ -1176,7 +1186,7 @@ describe("revokeUserAccess", () => {
 	it("refuses an administrator target without the full role and changes nothing", async () => {
 		const issuerId = await seedUser(db, {
 			administratorRole: "users",
-			handle: "admin",
+			username: "admin",
 		});
 		const userId = await seedAccount("alice", "alice@example.com");
 		await db
@@ -1195,7 +1205,7 @@ describe("revokeUserAccess", () => {
 	it("lets a full administrator revoke an administrator", async () => {
 		const issuerId = await seedUser(db, {
 			administratorRole: "full",
-			handle: "admin",
+			username: "admin",
 		});
 		const userId = await seedAccount("alice", "alice@example.com");
 		await db
@@ -1209,7 +1219,7 @@ describe("revokeUserAccess", () => {
 	});
 
 	it("refuses a pending account", async () => {
-		const issuerId = await seedUser(db, { handle: "admin" });
+		const issuerId = await seedUser(db, { username: "admin" });
 		const userId = await seedUser(db, { lifecycleState: "pending" });
 
 		await expect(revokeUserAccess(db, userId, issuerId)).rejects.toBeInstanceOf(
@@ -1218,7 +1228,7 @@ describe("revokeUserAccess", () => {
 	});
 
 	it("throws for an unknown user", async () => {
-		const issuerId = await seedUser(db, { handle: "admin" });
+		const issuerId = await seedUser(db, { username: "admin" });
 
 		await expect(
 			revokeUserAccess(db, 999_999, issuerId),

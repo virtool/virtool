@@ -30,7 +30,7 @@ import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/j
 import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
 import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
 import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
-import { Route as AvatarsHandleRouteImport } from './routes/avatars.$handle'
+import { Route as AvatarsUsernameRouteImport } from './routes/avatars.$username'
 import { Route as HealthLiveRouteImport } from './routes/health/live'
 import { Route as HealthReadyRouteImport } from './routes/health/ready'
 import { Route as UploadsUploadIdRouteImport } from './routes/uploads_.$uploadId'
@@ -203,9 +203,9 @@ const AuthenticatedSubtractionsRoute =
     path: '/subtractions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AvatarsHandleRoute = AvatarsHandleRouteImport.update({
-  id: '/avatars/$handle',
-  path: '/avatars/$handle',
+const AvatarsUsernameRoute = AvatarsUsernameRouteImport.update({
+  id: '/avatars/$username',
+  path: '/avatars/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthLiveRoute = HealthLiveRouteImport.update({
@@ -608,7 +608,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
-  '/avatars/$handle': typeof AvatarsHandleRoute
+  '/avatars/$username': typeof AvatarsUsernameRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
@@ -688,7 +688,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/verify-email': typeof VerifyEmailRoute
   '/home': typeof AuthenticatedHomeRoute
-  '/avatars/$handle': typeof AvatarsHandleRoute
+  '/avatars/$username': typeof AvatarsUsernameRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
@@ -773,7 +773,7 @@ export interface FileRoutesById {
   '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/_authenticated/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
-  '/avatars/$handle': typeof AvatarsHandleRoute
+  '/avatars/$username': typeof AvatarsUsernameRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads_/$uploadId': typeof UploadsUploadIdRoute
@@ -864,7 +864,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/samples'
     | '/subtractions'
-    | '/avatars/$handle'
+    | '/avatars/$username'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
@@ -944,7 +944,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/verify-email'
     | '/home'
-    | '/avatars/$handle'
+    | '/avatars/$username'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
@@ -1028,7 +1028,7 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs'
     | '/_authenticated/samples'
     | '/_authenticated/subtractions'
-    | '/avatars/$handle'
+    | '/avatars/$username'
     | '/health/live'
     | '/health/ready'
     | '/uploads_/$uploadId'
@@ -1110,7 +1110,7 @@ export interface RootRouteChildren {
   RecoverRoute: typeof RecoverRoute
   SetupRoute: typeof SetupRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
-  AvatarsHandleRoute: typeof AvatarsHandleRoute
+  AvatarsUsernameRoute: typeof AvatarsUsernameRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
@@ -1272,11 +1272,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubtractionsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/avatars/$handle': {
-      id: '/avatars/$handle'
-      path: '/avatars/$handle'
-      fullPath: '/avatars/$handle'
-      preLoaderRoute: typeof AvatarsHandleRouteImport
+    '/avatars/$username': {
+      id: '/avatars/$username'
+      path: '/avatars/$username'
+      fullPath: '/avatars/$username'
+      preLoaderRoute: typeof AvatarsUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/health/live': {
@@ -2060,7 +2060,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecoverRoute: RecoverRoute,
   SetupRoute: SetupRoute,
   VerifyEmailRoute: VerifyEmailRoute,
-  AvatarsHandleRoute: AvatarsHandleRoute,
+  AvatarsUsernameRoute: AvatarsUsernameRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
   UploadsUploadIdRoute: UploadsUploadIdRoute,

@@ -4,6 +4,7 @@ import { passkeyCredentialUniqueness } from "./bodies/passkey-credential-uniquen
 import { primaryGroupUniqueness } from "./bodies/primary-group-uniqueness";
 import { sampleNameUniqueness } from "./bodies/sample-name-uniqueness";
 import { totpEnrollmentSetupState } from "./bodies/totp-enrollment-setup-state";
+import { usernameBackfill } from "./bodies/username-backfill";
 import type { DataMigrationRegistry } from "./define";
 
 /**
@@ -19,4 +20,5 @@ export const DATA_MIGRATIONS: DataMigrationRegistry = {
 	[primaryGroupUniqueness.key]: primaryGroupUniqueness,
 	[sampleNameUniqueness.key]: sampleNameUniqueness,
 	[totpEnrollmentSetupState.key]: totpEnrollmentSetupState,
+	[usernameBackfill.key]: usernameBackfill,
 };

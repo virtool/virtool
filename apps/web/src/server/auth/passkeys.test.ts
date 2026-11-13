@@ -186,10 +186,10 @@ async function passkeyRows() {
 }
 
 describe("registration", () => {
-	it("asks for a verified, discoverable credential labelled with the handle", async () => {
+	it("asks for a verified, discoverable credential labelled with the username", async () => {
 		const userId = await seedUser(db, {
 			email: "alice@example.com",
-			handle: "Alice",
+			username: "alice",
 		});
 		const options = await registrationOptions(
 			await signedInBrowser(userId),
@@ -197,7 +197,7 @@ describe("registration", () => {
 		);
 
 		expect(options.rp).toEqual({ id: RP_ID, name: "Virtool" });
-		expect(options.user.name).toBe("Alice");
+		expect(options.user.name).toBe("alice");
 		expect(options.authenticatorSelection).toMatchObject({
 			residentKey: "required",
 			userVerification: "required",
@@ -323,8 +323,8 @@ describe("registration", () => {
 	});
 
 	it("refuses a credential id another user already holds", async () => {
-		const alice = await seedUser(db, { handle: "alice" });
-		const bob = await seedUser(db, { handle: "bob" });
+		const alice = await seedUser(db, { username: "alice" });
+		const bob = await seedUser(db, { username: "bob" });
 		const credentialId = new Uint8Array(32).fill(7);
 
 		await register(alice, authenticator(credentialId));
@@ -419,7 +419,10 @@ describe("sign-in", () => {
 
 	it.each([
 		["deactivated", { active: false }],
-		["pending", { lifecycleState: "pending" as const, password: null }],
+		[
+			"pending",
+			{ lifecycleState: "pending" as const, password: null, username: null },
+		],
 	])(
 		"refuses a %s user with the invalid-credentials response",
 		async (_, state) => {
@@ -560,8 +563,8 @@ describe("recent authentication", () => {
 	}
 
 	it("asks only for the session user's passkeys, with user verification", async () => {
-		const alice = await enroll({ handle: "alice" });
-		await enroll({ handle: "bob" });
+		const alice = await enroll({ username: "alice" });
+		await enroll({ username: "bob" });
 		const browser = await signedInBrowser(alice.userId);
 
 		const options = await stepUpOptions(browser);
@@ -636,8 +639,8 @@ describe("recent authentication", () => {
 	});
 
 	it("refuses a passkey that belongs to another user", async () => {
-		const alice = await enroll({ handle: "alice" });
-		const bob = await enroll({ handle: "bob" });
+		const alice = await enroll({ username: "alice" });
+		const bob = await enroll({ username: "bob" });
 		const browser = await signedInBrowser(alice.userId);
 
 		const { response } = await stepUp(browser, bob.key);
@@ -649,8 +652,8 @@ describe("recent authentication", () => {
 	});
 
 	it("refuses options issued to another user's session", async () => {
-		const alice = await enroll({ handle: "alice" });
-		const bob = await enroll({ handle: "bob" });
+		const alice = await enroll({ username: "alice" });
+		const bob = await enroll({ username: "bob" });
 		const aliceBrowser = await signedInBrowser(alice.userId);
 		const bobBrowser = await signedInBrowser(bob.userId);
 		const options = await stepUpOptions(bobBrowser);

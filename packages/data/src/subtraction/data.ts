@@ -119,14 +119,14 @@ function selectSubtractionsWithResources(db: DbOrTx) {
 			uploadId: uploads.id,
 			uploadName: uploads.name,
 			userId: users.id,
-			userHandle: users.handle,
+			username: users.username,
 			jobId: jobs.id,
 			jobCreatedAt: jobs.created_at,
 			jobState: jobs.state,
 			jobSteps: jobs.steps,
 			jobWorkflow: jobs.workflow,
 			jobUserId: jobUser.id,
-			jobUserHandle: jobUser.handle,
+			jobUsername: jobUser.username,
 		})
 		.from(subtractions)
 		.leftJoin(uploads, eq(subtractions.upload_id, uploads.id))
@@ -156,7 +156,7 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 					user:
 						row.jobUserId == null
 							? null
-							: { id: row.jobUserId, handle: row.jobUserHandle ?? "" },
+							: { id: row.jobUserId, username: row.jobUsername ?? "" },
 					// `jobs.workflow` carries no constraint, so it arrives as free
 					// text; only the union members are ever written there.
 					workflow: (row.jobWorkflow ?? "create_subtraction") as JobWorkflow,
@@ -175,7 +175,7 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 		user:
 			row.userId == null
 				? null
-				: { id: row.userId, handle: row.userHandle ?? "" },
+				: { id: row.userId, username: row.username ?? "" },
 	};
 }
 

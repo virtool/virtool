@@ -1,5 +1,6 @@
 import { accountQueryKeys } from "@account/keys";
 import { isServiceUnavailable } from "@app/queryErrors";
+import { lowercaseInputValue } from "@app/usernameInput";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
 import Input from "@base/Input";
@@ -37,10 +38,10 @@ const ADMINISTRATOR_HELP =
 /** Minimal recovery entry and bearer-link completion screen. */
 export default function RecoveryWall() {
 	const [state, setState] = useState<RecoveryState>({ status: "loading" });
-	const recoveryHandle = useLocation({
-		select: (location) => location.state.recoveryHandle ?? "",
+	const recoveryUsername = useLocation({
+		select: (location) => location.state.recoveryUsername ?? "",
 	});
-	const [handle, setHandle] = useState(recoveryHandle);
+	const [username, setUsername] = useState(recoveryUsername);
 	const [emailVerificationCancelled, setEmailVerificationCancelled] =
 		useState(false);
 	const [password, setPassword] = useState("");
@@ -97,7 +98,7 @@ export default function RecoveryWall() {
 		setPending(true);
 		setError("");
 		try {
-			await requestPasswordRecoveryFn({ data: { handle } });
+			await requestPasswordRecoveryFn({ data: { username } });
 			setState({ status: "acknowledged" });
 		} catch (cause) {
 			setError(
@@ -178,8 +179,11 @@ export default function RecoveryWall() {
 							<Input
 								autoComplete="username"
 								required
-								value={handle}
-								onChange={(event) => setHandle(event.target.value)}
+								value={username}
+								onChange={(event) => {
+									lowercaseInputValue(event.target);
+									setUsername(event.target.value);
+								}}
 							/>
 						</Field>
 						{error && (

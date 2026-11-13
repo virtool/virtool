@@ -18,7 +18,7 @@ function createBuildIndexJob(indexId: number): Job {
 		progress: 100,
 		state: "succeeded",
 		steps: null,
-		user: { id: 7, handle: "bob" },
+		user: { id: 7, username: "bob" },
 		workflow: "build_index",
 	};
 }

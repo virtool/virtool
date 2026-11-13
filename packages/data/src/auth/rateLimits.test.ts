@@ -12,7 +12,7 @@ import {
 	spendRateLimit,
 } from "./rateLimits";
 
-const KEY = getRateLimitKey("login", "handle", "digest");
+const KEY = getRateLimitKey("login", "username", "digest");
 const RULE = { window: 60, max: 3 };
 
 let database: TestDatabase;

@@ -3,6 +3,7 @@ import type {
 	Account,
 	AdministeredUserDetail,
 	Invitation,
+	SetUpUser,
 	User,
 	UserNested,
 } from "@virtool/contracts";
@@ -27,7 +28,7 @@ export const userServerFnMocks = {
 	resetUserTotpFn: vi.fn(),
 	revokeUserAccessFn: vi.fn(),
 	updateUserFn: vi.fn(),
-	updateAccountHandleFn: vi.fn(),
+	updateAccountUsernameFn: vi.fn(),
 	updateAccountSettingsFn: vi.fn(),
 	changePasswordFn: vi.fn(),
 	setAdministratorRoleFn: vi.fn(),
@@ -36,13 +37,14 @@ export const userServerFnMocks = {
 
 /**
  * Sets up findUsers to resolve with a single page containing the given users.
- * A user without an email gets one derived from their handle.
+ * A user without an email gets one derived from their username, or from their
+ * ID when they have no username yet.
  */
 export function mockFindUsers(users: (User & { email?: string })[]): Mock {
 	userServerFnMocks.findUsersFn.mockResolvedValue({
 		items: users.map((user) => ({
 			...user,
-			email: user.email ?? `${user.handle}@example.com`,
+			email: user.email ?? `${user.username ?? `user${user.id}`}@example.com`,
 		})),
 		foundCount: users.length,
 		page: 1,
@@ -54,7 +56,7 @@ export function mockFindUsers(users: (User & { email?: string })[]): Mock {
 }
 
 /** Sets up searchUsers to resolve with a single page containing the given users. */
-export function mockSearchUsers(users: User[]): Mock {
+export function mockSearchUsers(users: SetUpUser[]): Mock {
 	userServerFnMocks.searchUsersFn.mockResolvedValue({
 		items: users,
 		foundCount: users.length,
@@ -66,10 +68,10 @@ export function mockSearchUsers(users: User[]): Mock {
 	return userServerFnMocks.searchUsersFn;
 }
 
-/** Sets up listUsers to resolve with the given users, reduced to id and handle. */
+/** Sets up listUsers to resolve with the given users, reduced to id and username. */
 export function mockListUsers(users: UserNested[]): Mock {
 	userServerFnMocks.listUsersFn.mockResolvedValue(
-		users.map(({ handle, id }) => ({ handle, id })),
+		users.map(({ username, id }) => ({ username, id })),
 	);
 	return userServerFnMocks.listUsersFn;
 }
@@ -249,33 +251,33 @@ export function mockUpdateUser(
 }
 
 /**
- * Sets up updateAccountHandle to resolve with the updated user (or reject on a
- * 4xx code, e.g. 409 for a duplicate handle).
+ * Sets up updateAccountUsername to resolve with the updated user (or reject on a
+ * 4xx code, e.g. 409 for a duplicate username).
  *
- * When `expectedHandle` is given, the resolved variant also asserts the payload
- * carried the expected handle so callers can verify the value actually sent.
+ * When `expectedUsername` is given, the resolved variant also asserts the payload
+ * carried the expected username so callers can verify the value actually sent.
  */
-export function mockUpdateAccountHandle(
+export function mockUpdateAccountUsername(
 	user?: User,
 	statusCode = 200,
 	message = "User already exists.",
-	expectedHandle?: string,
+	expectedUsername?: string,
 ): Mock {
 	if (statusCode >= 400) {
-		userServerFnMocks.updateAccountHandleFn.mockRejectedValue(
+		userServerFnMocks.updateAccountUsernameFn.mockRejectedValue(
 			new Error(message),
 		);
 	} else {
-		userServerFnMocks.updateAccountHandleFn.mockImplementation(
-			async ({ data }: { data: { handle: string } }) => {
-				if (expectedHandle !== undefined) {
-					expect(data.handle).toBe(expectedHandle);
+		userServerFnMocks.updateAccountUsernameFn.mockImplementation(
+			async ({ data }: { data: { username: string } }) => {
+				if (expectedUsername !== undefined) {
+					expect(data.username).toBe(expectedUsername);
 				}
 				return user ?? {};
 			},
 		);
 	}
-	return userServerFnMocks.updateAccountHandleFn;
+	return userServerFnMocks.updateAccountUsernameFn;
 }
 
 /**

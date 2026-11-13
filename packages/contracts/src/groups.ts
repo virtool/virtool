@@ -1,6 +1,6 @@
 import type { Permissions } from "./permissions";
 import type { SearchResult } from "./search";
-import type { UserNested } from "./users";
+import type { UserIdentity } from "./users";
 
 /** A group reduced to the fields embedded in other resources. */
 export type GroupMinimal = {
@@ -19,8 +19,8 @@ export type Group = GroupMinimal & {
 	/** What the group grants every member */
 	permissions: Permissions;
 
-	/** The users belonging to the group */
-	users: UserNested[];
+	/** The users belonging to the group, including pending accounts */
+	users: UserIdentity[];
 };
 
 /** A page of groups. */

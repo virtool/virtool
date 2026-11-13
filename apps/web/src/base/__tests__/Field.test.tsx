@@ -21,7 +21,7 @@ describe("<Field />", () => {
 	it("should not mark the control invalid or described when there is no description or error", () => {
 		renderWithProviders(
 			<Field>
-				<FieldLabel>Handle</FieldLabel>
+				<FieldLabel>Username</FieldLabel>
 				<Input />
 				<FieldError />
 			</Field>,
@@ -36,7 +36,7 @@ describe("<Field />", () => {
 	it("should name the control with its label and describe it with its description", () => {
 		renderWithProviders(
 			<Field>
-				<FieldLabel>Handle</FieldLabel>
+				<FieldLabel>Username</FieldLabel>
 				<Input />
 				<FieldDescription>Shown to other users</FieldDescription>
 				<FieldError />
@@ -44,17 +44,17 @@ describe("<Field />", () => {
 		);
 
 		expect(
-			screen.getByRole("textbox", { name: "Handle" }),
+			screen.getByRole("textbox", { name: "Username" }),
 		).toHaveAccessibleDescription("Shown to other users");
 	});
 
 	it("should mark the control invalid and describe it with the error", () => {
 		renderWithProviders(
 			<Field>
-				<FieldLabel>Handle</FieldLabel>
+				<FieldLabel>Username</FieldLabel>
 				<Input />
 				<FieldDescription>Shown to other users</FieldDescription>
-				<FieldError>Handle is required</FieldError>
+				<FieldError>Username is required</FieldError>
 			</Field>,
 		);
 
@@ -62,20 +62,20 @@ describe("<Field />", () => {
 
 		expect(input).toBeInvalid();
 		expect(input).toHaveAccessibleDescription(
-			"Shown to other users Handle is required",
+			"Shown to other users Username is required",
 		);
 	});
 
 	it("should let explicit props override the field", () => {
 		renderWithProviders(
 			<Field>
-				<FieldLabel htmlFor="custom">Handle</FieldLabel>
+				<FieldLabel htmlFor="custom">Username</FieldLabel>
 				<Input id="custom" aria-invalid={false} />
-				<FieldError>Handle is required</FieldError>
+				<FieldError>Username is required</FieldError>
 			</Field>,
 		);
 
-		const input = screen.getByRole("textbox", { name: "Handle" });
+		const input = screen.getByRole("textbox", { name: "Username" });
 
 		expect(input).toHaveAttribute("id", "custom");
 		expect(input).not.toBeInvalid();
@@ -156,11 +156,11 @@ describe('<FieldLabel variant="row" />', () => {
 
 describe("<FieldError />", () => {
 	it("should announce its message as an assertive live region with a non-color icon", () => {
-		renderWithProviders(<FieldError>Handle is required</FieldError>);
+		renderWithProviders(<FieldError>Username is required</FieldError>);
 
 		const alert = screen.getByRole("alert");
 
-		expect(alert).toMatchTextContent("Handle is required");
+		expect(alert).toMatchTextContent("Username is required");
 		expect(alert.querySelector("svg")).not.toBeNull();
 	});
 

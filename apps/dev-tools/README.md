@@ -15,12 +15,12 @@ reads `VT_POSTGRES_URL_FILE` from the environment's configuration directory.
 
 ## Commands
 
-| Command                                                                        | Result                                                                                    |
-| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `create administrator --handle=<handle> --email=<email> --password=<password>` | Creates a full administrator if the database has no users. Otherwise, it makes no change. |
+| Command                                                                            | Result                                                                                    |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `create administrator --username=<username> --email=<email> --password=<password>` | Creates a full administrator if the database has no users. Otherwise, it makes no change. |
 
-If no users exist, the command applies the handle, email, and minimum password
-length rules of the first-user setup page.
+If no users exist, the command applies the username, email, and minimum password
+length rules of the first-user setup page. It stores the username in lowercase.
 
 ## Development
 

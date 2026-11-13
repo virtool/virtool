@@ -59,7 +59,7 @@ describe("verifyBrowserPrincipal", () => {
 			verifyBrowserPrincipal(db, new Request("https://virtool.test/"), resolve),
 		).resolves.toMatchObject({
 			kind: "browser",
-			handle: "alice",
+			username: "alice",
 			sessionId: seeded.sessionId,
 			userId,
 		});
@@ -128,7 +128,7 @@ describe("verifyApiKey", () => {
 
 		await expect(verifyApiKey(db, "ALICE", key)).resolves.toEqual({
 			kind: "api_key",
-			handle: "alice",
+			username: "alice",
 			keyId: row?.id,
 			permissions: { ...emptyPermissions(), upload_file: true },
 			userId,
@@ -154,7 +154,7 @@ describe("parsers", () => {
 			parseBasicAuthHeader(
 				`Basic ${Buffer.from("alice:key").toString("base64")}`,
 			),
-		).toEqual({ handle: "alice", key: "key" });
+		).toEqual({ username: "alice", key: "key" });
 	});
 
 	it("keeps a cookie value that is not valid percent-encoding", () => {

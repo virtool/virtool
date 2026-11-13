@@ -118,7 +118,7 @@ export default function Change({
 				<span>{description || "No Description"}</span>
 			</div>
 
-			<Attribution time={createdAt} user={user.handle} verb="" />
+			<Attribution time={createdAt} user={user.username} verb="" />
 		</BoxGroupSection>
 	);
 }

@@ -131,7 +131,7 @@ describe("installHmm", () => {
 		const installed = (await call("installHmmFn")) as {
 			name: string;
 			ready: boolean;
-			user: { id: number; handle: string };
+			user: { id: number; username: string };
 		};
 
 		expect(installed).toMatchObject({

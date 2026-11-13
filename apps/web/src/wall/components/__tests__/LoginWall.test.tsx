@@ -68,7 +68,7 @@ describe("<LoginWall />", () => {
 			"/login?reason=session-ended&redirect=%2Fsamples",
 		);
 
-		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+		await userEvent.type(await screen.findByLabelText("Username"), "alice");
 		await userEvent.type(screen.getByLabelText("Password"), "password");
 		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 

@@ -1,3 +1,41 @@
+## 42.66.0 (2026-11-13)
+
+### Features
+
+#### Show release posts in the app ([#4234](https://github.com/virtool/virtool/pull/4234))
+
+The nav bar has a **What's new** button. It opens a list of the release posts
+from virtool.ca for the version that your instance runs and earlier versions.
+Each post shows its image, title, summary, version, and date, and links to the
+full post. The list also links to the full change history.
+
+A dot on the button shows that there is a post that you did not see. The dot
+goes away when you open the list.
+
+Your browser gets the posts and their images from `https://www.virtool.ca`. If
+your network blocks that site, the list is empty.
+
+### Fixes
+
+#### Send a new instance from the sign-in page to setup ([#4231](https://github.com/virtool/virtool/pull/4231))
+
+On an instance that has no users, the sign-in page now opens the setup screen,
+as the other pages do. Before, it showed the sign-in form, and no user could
+sign in.
+
+### Maintenance
+
+- Start a new user's changelog watermark at the release date of the running version ([#4234](https://github.com/virtool/virtool/pull/4234))
+- Take web app screenshots and run client tests without jsdom ([#4236](https://github.com/virtool/virtool/pull/4236))
+
+#### Update dependencies ([#4233](https://github.com/virtool/virtool/pull/4233))
+
+- Bump `fast-xml-parser` from ^5.11.2 to ^5.12.0.
+
+#### Update dependencies ([#4237](https://github.com/virtool/virtool/pull/4237))
+
+- Bump `hono` from ^4.13.9 to ^4.13.16.
+
 ## 42.65.1 (2026-11-10)
 
 ### Fixes

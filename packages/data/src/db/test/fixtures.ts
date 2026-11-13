@@ -51,7 +51,11 @@ export type TestDatabaseOptions = {
  * names every declared column and a running server must never name a dropped
  * one. Applying it here keeps test databases equal to migrated ones.
  */
-const RETIRED_SCHEMA: string[] = [];
+const RETIRED_SCHEMA = [
+	`ALTER TABLE "users" ADD COLUMN "handle" text DEFAULT '' NOT NULL`,
+	`ALTER TABLE "users" ADD COLUMN "display_username" text`,
+	`CREATE UNIQUE INDEX "users_handle_lower_unique" ON "users" USING btree (lower("handle")) WHERE "users"."handle" <> ''`,
+];
 
 /**
  * The DDL for the whole schema, derived by diffing an empty schema against

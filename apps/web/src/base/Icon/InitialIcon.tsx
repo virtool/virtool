@@ -27,13 +27,13 @@ type InitialIconProps = {
 	className?: string;
 	size: "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
 } & (
-	| { handle: string; icon?: never; label?: never }
-	| { handle?: never; icon: LucideIcon; label: string }
+	| { name: string; icon?: never; label?: never }
+	| { name?: never; icon: LucideIcon; label: string }
 );
 
 export default function InitialIcon({
 	className,
-	handle,
+	name,
 	icon: Glyph,
 	label,
 	size,
@@ -67,12 +67,12 @@ export default function InitialIcon({
 		);
 	}
 
-	const hash = handle.split("").reduce(hashColor, 0) % 360;
+	const hash = name.split("").reduce(hashColor, 0) % 360;
 
 	return (
 		<svg
 			role="img"
-			aria-label={handle}
+			aria-label={name}
 			className={cn("overflow-visible", className)}
 			style={{ height: sizeValue, width: sizeValue }}
 		>
@@ -91,7 +91,7 @@ export default function InitialIcon({
 				fontSize={fontSizeValue}
 				fontWeight="bold"
 			>
-				{handle.slice(0, 2).toUpperCase()}
+				{name.slice(0, 2).toUpperCase()}
 			</text>
 		</svg>
 	);

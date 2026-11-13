@@ -1,4 +1,5 @@
 import { getErrorStatus } from "@app/queryErrors";
+import { registerUsernameInput } from "@app/usernameInput";
 import Button from "@base/Button";
 import Field, { FieldDescription, FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
@@ -15,7 +16,7 @@ import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
 
 type FormValues = {
-	handle: string;
+	username: string;
 	email: string;
 	password: string;
 	confirmPassword: string;
@@ -42,12 +43,12 @@ export default function FirstUser() {
 		register,
 	} = useForm<FormValues>();
 
-	function onSubmit({ handle, email, password }: FormValues) {
+	function onSubmit({ username, email, password }: FormValues) {
 		if (mutation.isPending) {
 			return;
 		}
 		mutation.mutate(
-			{ handle, email, password },
+			{ username, email, password },
 			{
 				onSuccess: (result) => {
 					if (result.emailVerificationRequired) {
@@ -100,11 +101,13 @@ export default function FirstUser() {
 					<Input
 						autoComplete="username"
 						aria-required
-						{...register("handle", {
-							required: "Please provide a username",
-						})}
+						{...registerUsernameInput(
+							register("username", {
+								required: "Please provide a username",
+							}),
+						)}
 					/>
-					<FieldError errors={[errors.handle]} />
+					<FieldError errors={[errors.username]} />
 				</Field>
 				<Field>
 					<FieldLabel>Email</FieldLabel>

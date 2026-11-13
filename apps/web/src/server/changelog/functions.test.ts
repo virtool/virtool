@@ -117,7 +117,7 @@ describe("markChangelogSeenFn", () => {
 
 	it("changes only the caller's watermark", async () => {
 		await signInWithWatermark(before);
-		const otherUserId = await seedUser(db, { handle: "bob" });
+		const otherUserId = await seedUser(db, { username: "bob" });
 		await db
 			.update(users)
 			.set({ lastSeenChangelogAt: before })

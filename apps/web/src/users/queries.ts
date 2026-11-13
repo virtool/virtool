@@ -45,7 +45,7 @@ export function useInvitationEmailAvailability() {
 /**
  * Fetch every active user, for populating selectors and filters
  *
- * @returns A list of users with their ids and handles
+ * @returns A list of users with their ids and usernames
  */
 export function useListUsers() {
 	return useQuery<UserNested[]>({
@@ -232,7 +232,7 @@ export function useSuspenseUser(userId: number) {
 /** Values accepted when updating a user from the administration views. */
 export type UserUpdate = {
 	active?: boolean;
-	handle?: string;
+	username?: string;
 	groups?: number[];
 	primaryGroup?: number | null;
 };

@@ -34,7 +34,7 @@ export default function UserFilterGroup({
 	selected,
 	users,
 }: UserFilterGroupProps) {
-	const handlesById = new Map(users?.map((user) => [user.id, user.handle]));
+	const usernamesById = new Map(users?.map((user) => [user.id, user.username]));
 
 	return (
 		<FilterGroup
@@ -52,15 +52,15 @@ export default function UserFilterGroup({
 			title="Users"
 		>
 			{selected.map((userId) => {
-				const handle = handlesById.get(userId);
+				const username = usernamesById.get(userId);
 
 				return (
 					<FilterChip
 						key={userId}
 						onRemove={() => onToggle(userId)}
-						removeLabel={`Remove ${handle ?? `User ${userId}`} user filter`}
+						removeLabel={`Remove ${username ?? `User ${userId}`} user filter`}
 					>
-						{handle ??
+						{username ??
 							(isPending ? (
 								<span className="h-3 w-16 animate-pulse rounded-sm bg-gray-200" />
 							) : (

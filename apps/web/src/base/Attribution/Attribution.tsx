@@ -28,7 +28,7 @@ export default function Attribution({
 }: AttributionProps) {
 	return (
 		<span className={cn(className, "inline-flex", "items-center gap-2")}>
-			{user ? <UserAvatar size="md" handle={user} /> : null}
+			{user ? <UserAvatar size="md" username={user} /> : null}
 			<span>
 				{user} {user ? verb : capitalize(verb)}
 				{time === null ? null : (

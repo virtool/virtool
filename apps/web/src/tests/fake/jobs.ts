@@ -42,7 +42,7 @@ export function createFakeJobNested(overrides?: Partial<JobNested>): JobNested {
 			"succeeded",
 		]),
 		user: {
-			handle: faker.internet.username(),
+			username: faker.internet.username(),
 			id: faker.number.int(),
 		},
 		workflow: faker.helpers.arrayElement<JobWorkflow>([

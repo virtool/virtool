@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
-import { createFakeUser } from "@tests/fake/user";
+import { createFakePendingUser } from "@tests/fake/user";
 import { mockListGroups } from "@tests/server-fn/groups";
 import {
 	createFakeInvitation,
@@ -22,7 +22,7 @@ describe("<InvitationControls />", () => {
 	let invitation: Invitation;
 
 	beforeEach(() => {
-		user = createFakeUser({ handle: "", lifecycleState: "pending" });
+		user = createFakePendingUser();
 		invitation = createFakeInvitation({
 			userId: user.id,
 			email: "bob@example.com",

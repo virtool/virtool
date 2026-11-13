@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { normalizeUsername } from "@virtool/contracts";
 import {
 	clearRateLimit,
 	getRateLimitKey,
@@ -6,13 +7,13 @@ import {
 } from "@virtool/data/auth/rateLimits";
 import type { Db } from "@virtool/data/db/pg";
 import { users } from "@virtool/data/db/schema/users";
-import { sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logger } from "../logger";
 
 // An attempt spends from the requester, then from the account or the browser's
 // device, before any password check. An attempt that the requester budget
-// refuses spends nothing else. Handles without an account get the same budget,
-// so a refusal doesn't reveal which handles exist.
+// refuses spends nothing else. Usernames without an account get the same budget,
+// so a refusal doesn't reveal which usernames exist.
 
 // Matches Better Auth's own `/sign-in` rule.
 const REQUESTER_RULE = { window: 10, max: 3 };
@@ -43,7 +44,7 @@ export type LoginBudget = {
 /** What a password sign-in attempt is counted against. */
 export type LoginAttempt = {
 	ip: string;
-	handle: string;
+	username: string;
 	devices: string | undefined;
 	secret: string;
 };
@@ -55,16 +56,16 @@ type LoginDevice = {
 	raw: string;
 };
 
-function normalizeHandle(handle: string): string {
-	return handle.trim().toLowerCase();
-}
-
 function digest(value: string): string {
 	return createHash("sha256").update(value).digest("hex");
 }
 
-function getTargetKey(handle: string): string {
-	return getRateLimitKey("login", "handle", digest(normalizeHandle(handle)));
+function getTargetKey(username: string): string {
+	return getRateLimitKey(
+		"login",
+		"username",
+		digest(normalizeUsername(username)),
+	);
 }
 
 function signLoginDevice(
@@ -108,18 +109,18 @@ function parseLoginDevices(value: string | undefined): LoginDevice[] {
 		});
 }
 
-async function findUser(db: Db, handle: string) {
+async function findUser(db: Db, username: string) {
 	const [user] = await db
 		.select({ id: users.id, lastPasswordChange: users.lastPasswordChange })
 		.from(users)
-		.where(sql`lower(${users.handle}) = ${normalizeHandle(handle)}`)
+		.where(eq(users.username, normalizeUsername(username)))
 		.limit(1);
 
 	return user;
 }
 
 /**
- * Find a device the browser holds for the handle's account. A password change
+ * Find a device the browser holds for the username's account. A password change
  * invalidates every device issued before it.
  */
 async function findLoginDevice(
@@ -131,7 +132,7 @@ async function findLoginDevice(
 		return undefined;
 	}
 
-	const user = await findUser(db, attempt.handle);
+	const user = await findUser(db, attempt.username);
 	if (!user) {
 		return undefined;
 	}
@@ -185,7 +186,7 @@ export async function checkLoginBudget(
 	const device = await findLoginDevice(db, attempt);
 	const budget = device
 		? { key: getRateLimitKey("login", "device", digest(device.raw)) }
-		: { key: getTargetKey(attempt.handle) };
+		: { key: getTargetKey(attempt.username) };
 
 	const allowed = await spendRateLimit(
 		db,
@@ -217,7 +218,7 @@ export async function clearLoginFailures(
 }
 
 /**
- * Add or renew the browser's device for the handle's account after a correct
+ * Add or renew the browser's device for the username's account after a correct
  * password, and return the new cookie value.
  *
  * Returns `undefined` when the device can't be issued. The session already
@@ -225,10 +226,10 @@ export async function clearLoginFailures(
  */
 export async function rememberLoginDevice(
 	db: Db,
-	attempt: Pick<LoginAttempt, "handle" | "devices" | "secret">,
+	attempt: Pick<LoginAttempt, "username" | "devices" | "secret">,
 ): Promise<string | undefined> {
 	try {
-		const user = await findUser(db, attempt.handle);
+		const user = await findUser(db, attempt.username);
 		if (!user) {
 			return undefined;
 		}

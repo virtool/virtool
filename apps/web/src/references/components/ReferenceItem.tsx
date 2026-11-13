@@ -67,7 +67,7 @@ export function ReferenceItem({ onClone, reference }: ReferenceItemProps) {
 			>
 				{name}
 			</Link>
-			<Attribution time={createdAt} user={user?.handle} />
+			<Attribution time={createdAt} user={user?.username} />
 			<div className="flex h-10 items-center justify-end">{end}</div>
 		</BoxGroupSection>
 	);

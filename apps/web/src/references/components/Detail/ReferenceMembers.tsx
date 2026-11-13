@@ -73,15 +73,15 @@ export default function ReferenceMembers({
 			<BoxGroup>
 				{members.length ? (
 					members.map((member: ReferenceGroup | ReferenceUser) => {
-						const handleOrName = objectHasProperty(member, "handle")
-							? (member as ReferenceUser).handle
+						const name = objectHasProperty(member, "username")
+							? (member as ReferenceUser).username
 							: (member as ReferenceGroup).name;
 
 						return (
 							<MemberItem
 								key={member.id}
 								canModify={canModify}
-								handleOrName={handleOrName}
+								name={name}
 								id={member.id}
 								onEdit={(id) => setEditId(id)}
 								onRemove={(id) => mutation.mutate({ id })}

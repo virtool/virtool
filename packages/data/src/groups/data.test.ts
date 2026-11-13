@@ -127,8 +127,8 @@ describe("getGroup", () => {
 			name: "technicians",
 			permissions: { create_ref: true },
 		});
-		const bob = await seedUser(db, { handle: "bob" });
-		const alice = await seedUser(db, { handle: "alice" });
+		const bob = await seedUser(db, { username: "bob" });
+		const alice = await seedUser(db, { username: "alice" });
 		await addToGroup(db, bob, groupId);
 		await addToGroup(db, alice, groupId);
 
@@ -140,10 +140,10 @@ describe("getGroup", () => {
 			name: "technicians",
 			permissions: { ...NO_PERMISSIONS, create_ref: true },
 		});
-		// Members come back handle-ascending.
+		// Members come back username-ascending.
 		expect(group.users).toEqual([
-			{ id: alice, handle: "alice" },
-			{ id: bob, handle: "bob" },
+			{ id: alice, lifecycleState: "normal", username: "alice" },
+			{ id: bob, lifecycleState: "normal", username: "bob" },
 		]);
 	});
 

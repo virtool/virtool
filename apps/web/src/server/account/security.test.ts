@@ -104,7 +104,7 @@ async function signInMigratedUser() {
 	const now = new Date();
 	await db
 		.update(users)
-		.set({ authMigratedAt: now, username: "alice", displayUsername: "alice" })
+		.set({ authMigratedAt: now, username: "alice" })
 		.where(eq(users.id, userId));
 	await db.insert(authAccounts).values({
 		accountId: String(userId),

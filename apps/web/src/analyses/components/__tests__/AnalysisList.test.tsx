@@ -309,13 +309,13 @@ describe("<AnalysesList /> filtering", () => {
 		await userEvent.click(await screen.findByRole("button", { name: "Users" }));
 		await userEvent.click(
 			await screen.findByRole("option", {
-				name: at(users, 0).handle,
+				name: at(users, 0).username,
 			}),
 		);
 
 		expect(
 			await screen.findByRole("button", {
-				name: `Remove ${at(users, 0).handle} user filter`,
+				name: `Remove ${at(users, 0).username} user filter`,
 			}),
 		).toBeInTheDocument();
 

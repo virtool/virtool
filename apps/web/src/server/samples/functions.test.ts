@@ -102,7 +102,7 @@ function call(name: string, data?: unknown) {
 
 describe("getSample", () => {
 	it("returns 403 when the caller may not read the sample", async () => {
-		const owner = await seedUser(db, { handle: "owner" });
+		const owner = await seedUser(db, { username: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner, all_read: false });
 
 		await signIn(db, getRequest, { administratorRole: null });
@@ -183,7 +183,7 @@ describe("updateSampleRights", () => {
 	});
 
 	it("refuses a non-owner who is not a full administrator", async () => {
-		const owner = await seedUser(db, { handle: "owner" });
+		const owner = await seedUser(db, { username: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner });
 
 		await signIn(db, getRequest, { administratorRole: null });
@@ -205,7 +205,7 @@ describe("updateSampleRights", () => {
 	});
 
 	it("allows a full administrator who is not the owner", async () => {
-		const owner = await seedUser(db, { handle: "owner" });
+		const owner = await seedUser(db, { username: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner });
 
 		await signIn(db, getRequest, { administratorRole: "full" });
@@ -220,7 +220,7 @@ describe("updateSampleRights", () => {
 
 describe("deleteSample", () => {
 	it("refuses a caller without write rights", async () => {
-		const owner = await seedUser(db, { handle: "owner" });
+		const owner = await seedUser(db, { username: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner, all_write: false });
 
 		await signIn(db, getRequest, { administratorRole: null });

@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeGroup } from "@tests/fake/groups";
-import { createFakeUser } from "@tests/fake/user";
+import { createFakePendingUser } from "@tests/fake/user";
 import {
 	mockCreateUser,
 	mockInvitationEmailAvailability,
@@ -60,7 +60,7 @@ describe("<CreateUser />", () => {
 	it("creates user once form is submitted", async () => {
 		const user = userEvent.setup();
 		const emailInput = "user@example.com";
-		const createUser = mockCreateUser(createFakeUser({ handle: "" }));
+		const createUser = mockCreateUser(createFakePendingUser());
 		await renderWithRouter(<CreateUser />);
 
 		await userEvent.click(screen.getByRole("button"));
@@ -75,7 +75,7 @@ describe("<CreateUser />", () => {
 		expect(createUser.mock.calls[0]?.[0]).toMatchObject({
 			data: { email: emailInput },
 		});
-		expect(createUser.mock.calls[0]?.[0].data).not.toHaveProperty("handle");
+		expect(createUser.mock.calls[0]?.[0].data).not.toHaveProperty("username");
 		expect(screen.getByRole("heading", { name: "User Created" })).toBeVisible();
 		expect(
 			screen.getByText(/Send this link to user@example.com/),
@@ -103,7 +103,7 @@ describe("<CreateUser />", () => {
 
 	it("defaults to email once availability loads", async () => {
 		mockInvitationEmailAvailability(true);
-		const createUser = mockCreateUser(createFakeUser({ handle: "" }));
+		const createUser = mockCreateUser(createFakePendingUser());
 		await renderWithRouter(<CreateUser />);
 
 		await userEvent.click(screen.getByRole("button"));

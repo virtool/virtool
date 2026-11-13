@@ -146,7 +146,7 @@ function browserPrincipal(userId: number) {
 		kind: "browser" as const,
 		sessionId: 1,
 		createdAt: new Date(),
-		handle: "alice",
+		username: "alice",
 		userId,
 	};
 }
@@ -335,7 +335,7 @@ describe("raw request boundary", () => {
 			),
 		).resolves.toEqual({
 			kind: "api_key",
-			handle: "alice",
+			username: "alice",
 			keyId: row?.id,
 			permissions: { ...emptyPermissions(), upload_file: true },
 			userId,

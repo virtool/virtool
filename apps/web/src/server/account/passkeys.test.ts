@@ -113,8 +113,8 @@ function account(name: string, data?: unknown) {
 	return callServerFn(accountHandlers, name, data);
 }
 
-async function seedAccount(handle = "Alice") {
-	const userId = await seedUser(db, { handle });
+async function seedAccount(username = "alice") {
+	const userId = await seedUser(db, { username });
 	await db.insert(authAccounts).values({
 		accountId: String(userId),
 		providerId: "credential",
@@ -173,7 +173,7 @@ describe("listing", () => {
 
 	it("returns only the user's passkeys, oldest first, without credential material", async () => {
 		const userId = await seedAccount();
-		const bobId = await seedAccount("Bob");
+		const bobId = await seedAccount("bob");
 		const newer = await seedPasskey(userId, "newer", new Date(2026, 1, 2));
 		const older = await seedPasskey(userId, "older", new Date(2026, 1, 1));
 		await seedPasskey(bobId, "bob");
@@ -241,7 +241,7 @@ describe("renaming", () => {
 
 	it("answers another user's passkey as not found and leaves it unchanged", async () => {
 		const userId = await seedAccount();
-		const bobId = await seedAccount("Bob");
+		const bobId = await seedAccount("bob");
 		const managementId = await seedPasskey(bobId, "bob");
 		await signInAs(userId);
 
@@ -308,7 +308,7 @@ describe("removal", () => {
 
 	it("answers another user's passkey as not found and leaves it in place", async () => {
 		const userId = await seedAccount();
-		const bobId = await seedAccount("Bob");
+		const bobId = await seedAccount("bob");
 		const managementId = await seedPasskey(bobId, "bob");
 		await signInAs(userId);
 

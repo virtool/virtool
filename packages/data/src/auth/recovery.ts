@@ -1,3 +1,4 @@
+import { normalizeUsername } from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Keyring } from "../crypto/keyring";
 import type { Db, DbOrTx } from "../db/pg";
@@ -141,7 +142,7 @@ async function hasRecentSelfServiceLink(
  *
  * Issuing supersedes the user's earlier links, and the outbox drops mail for a
  * superseded link. A public request therefore leaves a recent link in place, so
- * anyone who knows a handle can't invalidate the link its owner is waiting for.
+ * anyone who knows a username can't invalidate the link its owner is waiting for.
  */
 export async function issueRecoveryLink(
 	db: Db,
@@ -155,7 +156,7 @@ export async function issueRecoveryLink(
 				authMigratedAt: users.authMigratedAt,
 				email: users.email,
 				emailVerified: users.emailVerified,
-				handle: users.handle,
+				username: users.username,
 				administratorRole: users.administratorRole,
 				lifecycleState: users.lifecycleState,
 			})
@@ -163,7 +164,11 @@ export async function issueRecoveryLink(
 			.where(eq(users.id, input.userId))
 			.for("update")
 			.limit(1);
-		if (!user?.active || user.lifecycleState !== "normal") {
+		if (
+			!user?.active ||
+			user.lifecycleState !== "normal" ||
+			user.username === null
+		) {
 			throw new RecoveryNotEligibleError();
 		}
 		// An unmigrated account has no email to recover through, so only an
@@ -221,7 +226,7 @@ export async function issueRecoveryLink(
 			setupTokenId: issued.tokenId,
 			template: {
 				type: "password_recovery",
-				username: user.handle,
+				username: user.username,
 				recoveryUrl: input.getRecoveryUrl(issued.token),
 				expiresInHours: EMAILED_RECOVERY_LIFETIME_MS / (60 * 60 * 1000),
 			},
@@ -244,10 +249,10 @@ export async function issueRecoveryLink(
 	});
 }
 
-/** Resolve a handle to an eligible verified-email recovery target. */
+/** Resolve a username to an eligible verified-email recovery target. */
 export async function getSelfServiceRecoveryTarget(
 	db: Db,
-	handle: string,
+	username: string,
 ): Promise<number | null> {
 	const [row] = await db
 		.select({ id: users.id })
@@ -255,7 +260,7 @@ export async function getSelfServiceRecoveryTarget(
 		.innerJoin(authAccounts, eq(authAccounts.userId, users.id))
 		.where(
 			and(
-				sql`lower(${users.handle}) = ${handle.trim().toLowerCase()}`,
+				eq(users.username, normalizeUsername(username)),
 				eq(users.active, true),
 				eq(users.lifecycleState, "normal"),
 				eq(users.emailVerified, true),

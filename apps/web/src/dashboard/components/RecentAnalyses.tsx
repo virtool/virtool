@@ -154,7 +154,7 @@ function AnalysesTable({ analyses, remaining }: AnalysesTableProps) {
 							{analysis.sample.name}
 						</Link>
 					</DashboardTableCell>
-					<DashboardTableUserCell handle={analysis.user.handle} />
+					<DashboardTableUserCell username={analysis.user.username} />
 					<DashboardTableCreatedCell time={analysis.createdAt} />
 				</DashboardTableRow>
 			))}

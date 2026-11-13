@@ -73,7 +73,7 @@ export default function SubtractionDetail() {
 						</ViewHeaderTitle>
 						{data.user ? (
 							<SubtractionAttribution
-								handle={data.user.handle}
+								username={data.user.username}
 								time={data.createdAt}
 							/>
 						) : null}
@@ -120,7 +120,7 @@ export default function SubtractionDetail() {
 				</ViewHeaderTitle>
 				{data.user ? (
 					<SubtractionAttribution
-						handle={data.user.handle}
+						username={data.user.username}
 						time={data.createdAt}
 					/>
 				) : null}

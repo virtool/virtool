@@ -15,9 +15,9 @@ The file bytes never pass through the Virtool server, allowing large uploads.
 
 ## Authenticate
 
-Authenticate requests to Virtool with HTTP Basic authentication. Use your user handle as
-the username and an API key as the password. The API key and its owner must both have
-the `upload_file` permission.
+Authenticate requests to Virtool with HTTP Basic authentication. Use your Virtool
+username as the username and an API key as the password. The API key and its owner must
+both have the `upload_file` permission.
 
 The signed storage requests in the transfer step don't use the API key. The temporary
 storage URL contains all authorization needed to write that one file.
@@ -28,10 +28,10 @@ Send a `POST` request to `/api/v1/uploads`.
 
 ```bash
 VT_URL="https://virtool.example.com"
-VT_HANDLE="alice"
+VT_USERNAME="alice"
 VT_API_KEY="your-api-key"
 
-curl --user "$VT_HANDLE:$VT_API_KEY" \
+curl --user "$VT_USERNAME:$VT_API_KEY" \
   --header "Content-Type: application/json" \
   --data '{"name":"reads_1.fq.gz","type":"reads","size":10737418240}' \
   "$VT_URL/api/v1/uploads"
@@ -125,7 +125,7 @@ completed.
 Send a `POST` request to `/api/v1/uploads/{uploadId}/finalize`.
 
 ```bash
-curl --user "$VT_HANDLE:$VT_API_KEY" \
+curl --user "$VT_USERNAME:$VT_API_KEY" \
   --request POST \
   "$VT_URL/api/v1/uploads/123/finalize"
 ```
@@ -139,7 +139,7 @@ missing block list or mismatched size returns `409`.
 Send a `DELETE` request to `/api/v1/uploads/{uploadId}`.
 
 ```bash
-curl --user "$VT_HANDLE:$VT_API_KEY" \
+curl --user "$VT_USERNAME:$VT_API_KEY" \
   --request DELETE \
   "$VT_URL/api/v1/uploads/123"
 ```

@@ -109,11 +109,11 @@ describe("<SamplesList />", () => {
 	beforeEach(() => {
 		samples = [createFakeSampleMinimal(), createFakeSampleMinimal()];
 		labels = [createFakeLabel()];
-		// Handles are fixed so neither is a substring of the other, keeping the
+		// Usernames are fixed so neither is a substring of the other, keeping the
 		// search-input assertions unambiguous.
 		users = [
-			{ ...createFakeUserNested(), handle: "amelia" },
-			{ ...createFakeUserNested(), handle: "bilbo" },
+			{ ...createFakeUserNested(), username: "amelia" },
+			{ ...createFakeUserNested(), username: "bilbo" },
 		];
 		mockListUsers(users);
 		mockFindLabels(labels);
@@ -400,20 +400,22 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
-				await screen.findByRole("option", { name: firstUser.handle }),
+				await screen.findByRole("option", {
+					name: firstUser.username,
+				}),
 			);
 			await userEvent.click(
-				screen.getByRole("option", { name: secondUser.handle }),
+				screen.getByRole("option", { name: secondUser.username }),
 			);
 
 			expect(
 				await screen.findByRole("button", {
-					name: `Remove ${firstUser.handle} user filter`,
+					name: `Remove ${firstUser.username} user filter`,
 				}),
-			).toMatchTextContent(firstUser.handle);
+			).toMatchTextContent(firstUser.username);
 			expect(
 				screen.getByRole("button", {
-					name: `Remove ${secondUser.handle} user filter`,
+					name: `Remove ${secondUser.username} user filter`,
 				}),
 			).toBeInTheDocument();
 
@@ -427,7 +429,9 @@ describe("<SamplesList />", () => {
 		it("should list the logged-in user first and narrow the others by search", async () => {
 			const self = at(users, 1);
 			const other = at(users, 0);
-			mockGetAccount(createFakeAccount({ id: self.id, handle: self.handle }));
+			mockGetAccount(
+				createFakeAccount({ id: self.id, username: self.username }),
+			);
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
@@ -435,21 +439,26 @@ describe("<SamplesList />", () => {
 
 			const items = await screen.findAllByRole("option");
 			expect(items.map((item) => item.textContent)).toEqual([
-				`${self.handle}You`,
-				other.handle,
+				`${self.username}You`,
+				other.username,
 			]);
 
 			const otherUsers = screen.getByTestId("other-users");
 			expect(otherUsers).not.toContainElement(at(items, 0));
 			expect(otherUsers).toContainElement(at(items, 1));
 
-			await userEvent.type(screen.getByLabelText("Filter users"), self.handle);
+			await userEvent.type(
+				screen.getByLabelText("Filter users"),
+				self.username,
+			);
 
 			expect(
-				screen.queryByRole("option", { name: other.handle }),
+				screen.queryByRole("option", { name: other.username }),
 			).not.toBeInTheDocument();
 			expect(
-				screen.getByRole("option", { name: new RegExp(self.handle) }),
+				screen.getByRole("option", {
+					name: new RegExp(self.username),
+				}),
 			).toBeInTheDocument();
 		});
 	});

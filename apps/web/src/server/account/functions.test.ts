@@ -106,7 +106,7 @@ describe("active browser sessions", () => {
 			userAgent:
 				"Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0",
 		});
-		const otherUserId = await seedUser(db, { handle: "bob" });
+		const otherUserId = await seedUser(db, { username: "bob" });
 		await seedSession(db, otherUserId);
 
 		const result = (await call("findActiveBrowserSessionsFn")) as Array<
@@ -169,7 +169,7 @@ describe("active browser sessions", () => {
 
 	it("does not disclose or revoke another user's session", async () => {
 		await signIn(db, getRequest);
-		const otherUserId = await seedUser(db, { handle: "bob" });
+		const otherUserId = await seedUser(db, { username: "bob" });
 		const target = await seedSession(db, otherUserId);
 
 		expect(
@@ -254,13 +254,13 @@ describe("createApiKey", () => {
 
 describe("updateApiKey", () => {
 	it("responds with 404 for a key the user does not own", async () => {
-		const owner = await signIn(db, getRequest, { handle: "owner" });
+		const owner = await signIn(db, getRequest, { username: "owner" });
 		const created = (await call("createApiKeyFn", {
 			name: "Robot",
 			permissions: {},
 		})) as { id: number };
 
-		await signIn(db, getRequest, { handle: "intruder" });
+		await signIn(db, getRequest, { username: "intruder" });
 
 		await expect(
 			call("updateApiKeyFn", {
