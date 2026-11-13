@@ -1,5 +1,6 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { SITE_ORIGIN } from "@virtool/contracts/blog";
 
 const cspDirectives = [
 	"default-src 'self'",
@@ -8,7 +9,8 @@ const cspDirectives = [
 	"form-action 'self'",
 	"frame-ancestors 'none'",
 	"font-src 'self'",
-	"img-src 'self' data:",
+	// The changelog popover shows post images from the website.
+	`img-src 'self' data: ${SITE_ORIGIN}`,
 	"style-src 'self' 'unsafe-inline'",
 	// Without this, `script-src` is the fallback and its nonce cannot be carried
 	// by a blob URL, so every blob-backed worker is blocked. Vite's HMR client
@@ -57,7 +59,8 @@ export const getRequestNonce: () => string = createServerOnlyFn(() => {
 /**
  * The `Content-Security-Policy` header value for a document carrying `nonce`.
  *
- * `connect-src` allows `'self'` plus every origin in `connectSrc`. Chunked
+ * `connect-src` allows `'self'`, the website, which serves the changelog
+ * popover's blog index, and every origin in `connectSrc`. Chunked
  * uploads PUT their blocks straight to blob storage from the browser, so the
  * storage origin has to be allow-listed or every block is blocked. No
  * third-party Sentry host is allow-listed: browser envelopes are tunnelled
@@ -69,7 +72,7 @@ export function buildContentSecurityPolicy(
 ): string {
 	return [
 		...cspDirectives,
-		["connect-src 'self'", ...connectSrc].join(" "),
+		["connect-src 'self'", SITE_ORIGIN, ...connectSrc].join(" "),
 		`script-src 'self' 'nonce-${nonce}'`,
 	].join("; ");
 }

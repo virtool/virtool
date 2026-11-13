@@ -2,13 +2,14 @@ import { AnalysisSearchProvider } from "@analyses/components/AnalysisSearchConte
 import NuvsViewer from "@analyses/components/Nuvs/NuvsViewer";
 import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { createFakeFormattedNuvsAnalysis } from "@tests/fake/analyses";
+import { render, screen } from "@testing-library/react";
+import {
+	createFakeFormattedNuvsAnalysis,
+	createFakeFormattedNuvsHit,
+} from "@tests/fake/analyses";
 import { createFakeSample } from "@tests/fake/samples";
-import { mockBlastNuvs } from "@tests/server-fn/analyses";
-import { at, MemoryRouter } from "@tests/setup";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "@tests/setup";
+import { describe, expect, it, vi } from "vitest";
 
 function renderWithAnalysisSearch(
 	ui: React.ReactElement,
@@ -29,78 +30,37 @@ function renderWithAnalysisSearch(
 }
 
 describe("<NuvsViewer />", () => {
-	let sample: ReturnType<typeof createFakeSample>;
-	let nuvs: ReturnType<typeof createFakeFormattedNuvsAnalysis>;
-	let firstHit: (typeof nuvs.results.hits)[number];
-	let props: { detail: typeof nuvs; sample: typeof sample };
-
-	beforeEach(() => {
-		sample = createFakeSample();
-		nuvs = createFakeFormattedNuvsAnalysis();
-
-		firstHit = at(nuvs.results.hits, 0);
-
-		props = {
-			detail: nuvs,
-			sample: sample,
-		};
-	});
-
-	describe("<NuvsDetail />", () => {
-		it("should default to the first hit when no active hit is set", async () => {
-			renderWithAnalysisSearch(<NuvsViewer {...props} />);
-
-			expect(
-				await screen.findByText(
-					"This sequence has no BLAST information attached to it.",
-				),
-			).toBeInTheDocument();
-			expect(screen.getByText("Families")).toBeInTheDocument();
-			expect(screen.queryByText("No Hits")).not.toBeInTheDocument();
+	// The first hit is the default, so only a later one shows that the search
+	// picks the hit the detail renders.
+	it("should show the hit the search selects beside the toolbar", async () => {
+		const first = createFakeFormattedNuvsHit({ index: 1 });
+		const second = createFakeFormattedNuvsHit({ index: 2 });
+		const nuvs = createFakeFormattedNuvsAnalysis({
+			results: {
+				...createFakeFormattedNuvsAnalysis().results,
+				hits: [first, second],
+			},
 		});
 
-		it("should render correctly", async () => {
-			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
-				hit: String(firstHit.id),
-			});
+		renderWithAnalysisSearch(
+			<NuvsViewer detail={nuvs} sample={createFakeSample()} />,
+			{ hit: String(second.id) },
+		);
 
-			expect(
-				await screen.findByText(
-					"This sequence has no BLAST information attached to it.",
-				),
-			).toBeInTheDocument();
-			expect(screen.getByText("Families")).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "BLAST at NCBI" }),
-			).toBeInTheDocument();
-		});
-
-		it("should render blast when clicked", async () => {
-			const blastNuvs = mockBlastNuvs(firstHit.index);
-			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
-				hit: String(firstHit.id),
-			});
-
-			await userEvent.click(
-				await screen.findByRole("button", { name: "BLAST at NCBI" }),
-			);
-			await waitFor(() => expect(blastNuvs).toHaveBeenCalled());
-		});
-	});
-
-	describe("<NuvsExport />", () => {
-		it("should render export dialog when exporting", async () => {
-			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
-				hit: String(firstHit.id),
-			});
-
-			await userEvent.click(
-				await screen.findByRole("button", { name: "Export" }),
-			);
-			expect(screen.getByText("Export Analysis")).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "Download" }),
-			).toBeInTheDocument();
-		});
+		expect(
+			await screen.findByRole("heading", {
+				name: `Sequence 2 ${second.sequence.length} bp`,
+			}),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("heading", {
+				name: `Sequence 1 ${first.sequence.length} bp`,
+			}),
+		).not.toBeInTheDocument();
+		expect(screen.getByText("Showing 2 of 2")).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "BLAST at NCBI" }),
+		).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
 	});
 });

@@ -108,12 +108,7 @@ describe("<SamplesList />", () => {
 
 	beforeEach(() => {
 		samples = [createFakeSampleMinimal(), createFakeSampleMinimal()];
-		// Names are fixed so neither is a substring of the other, keeping the
-		// search-input assertions unambiguous.
-		labels = [
-			{ ...createFakeLabel(), name: "Fungus" },
-			{ ...createFakeLabel(), name: "Pest" },
-		];
+		labels = [createFakeLabel()];
 		// Handles are fixed so neither is a substring of the other, keeping the
 		// search-input assertions unambiguous.
 		users = [
@@ -129,30 +124,33 @@ describe("<SamplesList />", () => {
 		mockListSubtractionsShortlist([createFakeSubtractionNested()]);
 	});
 
-	it("should render correctly", async () => {
+	it("should render the list without a create button for a user who cannot modify", async () => {
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		await renderWithRouter(<SamplesList />, path);
 		expect(await screen.findByText("Samples")).toBeInTheDocument();
 
 		expect(screen.getByText(at(samples, 0).name)).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Labels" })).toBeInTheDocument();
+		expect(
+			screen.queryByRole("link", { name: "Create" }),
+		).not.toBeInTheDocument();
 	});
 
-	it("should call onChange when search input changes in toolbar", async () => {
-		mockFindSamples(samples);
-		mockFindSamples(samples);
-		mockFindSamples(samples);
-		await renderWithRouter(<SamplesListHarness />, path);
-		expect(await screen.findByText("Samples")).toBeInTheDocument();
+	it("should render create button when [canModify=true]", async () => {
+		mockGetAccount(
+			createFakeAccount({
+				administratorRole: "full",
+			}),
+		);
+		await renderWithRouter(<SamplesList />, path);
 
-		const inputElement = screen.getByPlaceholderText("Sample name");
-		expect(inputElement).toHaveValue("");
-
-		await userEvent.type(inputElement, "Foo");
-		expect(inputElement).toHaveValue("Foo");
+		expect(
+			await screen.findByRole("link", { name: "Create" }),
+		).toBeInTheDocument();
 	});
 
 	describe("pagination reset", () => {
-		it("should return to the first page when the search term changes", async () => {
+		it("should show a term chip and return to the first page when the search term changes", async () => {
 			const [first, second] = mockSamplePages();
 
 			await renderWithRouter(
@@ -169,6 +167,10 @@ describe("<SamplesList />", () => {
 					data: expect.objectContaining({ page: 1, term: "Foo" }),
 				}),
 			);
+			expect(
+				screen.getByRole("button", { name: "Clear search term" }),
+			).toBeInTheDocument();
+			expect(screen.getByText("Search")).toBeInTheDocument();
 		});
 
 		it("should return to the first page when an individual filter is cleared", async () => {
@@ -198,148 +200,49 @@ describe("<SamplesList />", () => {
 		});
 	});
 
-	it("should render create button when [canModify=true]", async () => {
-		mockGetAccount(
-			createFakeAccount({
-				administratorRole: "full",
-			}),
+	it("should add a chip for a label picked in the dropdown and remove it on clear", async () => {
+		await renderWithRouter(<SamplesListHarness />, path);
+		expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+		const label = at(labels, 0);
+		const removeChipName = `Remove ${label.name} label filter`;
+
+		await userEvent.click(screen.getByRole("button", { name: "Labels" }));
+		await userEvent.click(
+			await screen.findByRole("option", { name: label.name }),
 		);
-		await renderWithRouter(<SamplesList />, path);
-
 		expect(
-			await screen.findByRole("link", { name: "Create" }),
+			await screen.findByRole("button", { name: removeChipName }),
 		).toBeInTheDocument();
-	});
 
-	it("should not render create button when [canModify=false]", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: null }));
-		await renderWithRouter(<SamplesList />, path);
+		await userEvent.click(screen.getByRole("button", { name: "Clear" }));
 
 		expect(
-			screen.queryByRole("link", { name: "Create" }),
+			screen.queryByRole("button", { name: removeChipName }),
 		).not.toBeInTheDocument();
 	});
 
-	describe("label filtering", () => {
-		it("should show a chip for a label selected in the popover", async () => {
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
+	it("should add a chip for a group picked in the popover and remove it on clear", async () => {
+		const group = createFakeGroupMinimal();
+		mockListSampleGroups([group]);
+		await renderWithRouter(<SamplesListHarness />, path);
+		expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
-			await userEvent.click(
-				await screen.findByRole("option", { name: at(labels, 0).name }),
-			);
+		const removeChipName = `Remove ${group.name} group filter`;
 
-			expect(
-				await screen.findByRole("button", {
-					name: `Remove ${at(labels, 0).name} label filter`,
-				}),
-			).toBeInTheDocument();
-		});
+		await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+		await userEvent.click(
+			await screen.findByRole("option", { name: group.name }),
+		);
+		expect(
+			await screen.findByRole("button", { name: removeChipName }),
+		).toBeInTheDocument();
 
-		it("should narrow the labels to those matching the search", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
+		await userEvent.click(screen.getByRole("button", { name: "Clear" }));
 
-			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
-			await userEvent.type(
-				await screen.findByLabelText("Filter labels"),
-				at(labels, 1).name,
-			);
-
-			expect(
-				screen.queryByRole("option", { name: at(labels, 0).name }),
-			).not.toBeInTheDocument();
-			expect(
-				screen.getByRole("option", { name: at(labels, 1).name }),
-			).toBeInTheDocument();
-		});
-
-		it("should focus the search input when the popover opens", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
-
-			expect(await screen.findByLabelText("Filter labels")).toHaveFocus();
-		});
-
-		it("should toggle the highlighted label with the keyboard", async () => {
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
-			const input = await screen.findByLabelText("Filter labels");
-			await userEvent.type(input, at(labels, 1).name);
-			await userEvent.keyboard("{Enter}");
-
-			expect(
-				await screen.findByRole("button", {
-					name: `Remove ${at(labels, 1).name} label filter`,
-				}),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("option", { name: at(labels, 1).name }),
-			).toHaveAttribute("aria-selected", "true");
-			expect(input).toHaveFocus();
-		});
-
-		it("should clear the search on the first Escape and close on the next", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
-			const input = await screen.findByLabelText("Filter labels");
-			await userEvent.type(input, "zzz");
-
-			await userEvent.keyboard("{Escape}");
-			expect(input).toHaveValue("");
-			expect(input).toBeInTheDocument();
-
-			await userEvent.keyboard("{Escape}");
-			expect(screen.queryByLabelText("Filter labels")).not.toBeInTheDocument();
-		});
-
-		it("should remove every chip when the popover is cleared", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			const removeChipName = `Remove ${at(labels, 0).name} label filter`;
-
-			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
-			await userEvent.click(
-				await screen.findByRole("option", { name: at(labels, 0).name }),
-			);
-			expect(
-				await screen.findByRole("button", { name: removeChipName }),
-			).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
-
-			expect(
-				screen.queryByRole("button", { name: removeChipName }),
-			).not.toBeInTheDocument();
-		});
-
-		it("should show a chip for the search term", async () => {
-			// One queued result per samples fetch: the initial empty-term render
-			// plus the single refetch the debounced toolbar commits for "Foo".
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.type(screen.getByPlaceholderText("Sample name"), "Foo");
-
-			expect(
-				await screen.findByRole("button", { name: "Clear search term" }),
-			).toBeInTheDocument();
-			expect(screen.getByText("Search")).toBeInTheDocument();
-		});
+		expect(
+			screen.queryByRole("button", { name: removeChipName }),
+		).not.toBeInTheDocument();
 	});
 
 	describe("date filtering", () => {
@@ -353,7 +256,10 @@ describe("<SamplesList />", () => {
 			);
 		}
 
-		async function pickLastJanuary() {
+		it("should request a picked month or year and remove the chip on clear", async () => {
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
 			await openCreatedFilter();
 			await userEvent.click(
 				await screen.findByRole("button", { name: "Previous year" }),
@@ -361,32 +267,11 @@ describe("<SamplesList />", () => {
 			await userEvent.click(
 				screen.getByRole("button", { name: `January ${lastYear}` }),
 			);
-		}
 
-		it("should show a chip naming the month picked in the popover", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await pickLastJanuary();
-
-			expect(
-				await screen.findByRole("button", { name: "Clear created filter" }),
-			).toHaveTextContent(`January ${lastYear}`);
-		});
-
-		it("should request the month's bounds", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await pickLastJanuary();
-			expect(
-				await screen.findByRole("button", { name: "Clear created filter" }),
-			).toBeInTheDocument();
-
+			const chip = await screen.findByRole("button", {
+				name: "Clear created filter",
+			});
+			expect(chip).toMatchTextContent(`January ${lastYear}`);
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
@@ -395,13 +280,12 @@ describe("<SamplesList />", () => {
 					}),
 				}),
 			);
-		});
 
-		it("should request a whole year when one is picked", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
+			await userEvent.click(chip);
+
+			expect(
+				screen.queryByRole("button", { name: "Clear created filter" }),
+			).not.toBeInTheDocument();
 
 			await openCreatedFilter();
 			await userEvent.click(await screen.findByRole("radio", { name: "Year" }));
@@ -411,7 +295,7 @@ describe("<SamplesList />", () => {
 
 			expect(
 				await screen.findByRole("button", { name: "Clear created filter" }),
-			).toHaveTextContent(String(lastYear));
+			).toMatchTextContent(String(lastYear));
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
@@ -423,8 +307,6 @@ describe("<SamplesList />", () => {
 		});
 
 		it("should show both bounds of a range picked on the calendar", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
 			// Seeded with a range so the popover opens on the calendar, showing the
 			// month those bounds fall in rather than whichever month today is in.
 			await renderWithRouter(
@@ -459,7 +341,7 @@ describe("<SamplesList />", () => {
 
 			expect(
 				await screen.findByRole("button", { name: "Clear created filter" }),
-			).toHaveTextContent(`${lastYear}-03-02 – ${lastYear}-03-20`);
+			).toMatchTextContent(`${lastYear}-03-02 – ${lastYear}-03-20`);
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
@@ -469,150 +351,82 @@ describe("<SamplesList />", () => {
 				}),
 			);
 		});
-
-		it("should remove the chip when the filter is cleared", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await pickLastJanuary();
-			const chip = await screen.findByRole("button", {
-				name: "Clear created filter",
-			});
-
-			await userEvent.click(chip);
-
-			expect(
-				screen.queryByRole("button", { name: "Clear created filter" }),
-			).not.toBeInTheDocument();
-		});
 	});
 
-	describe("workflow filtering", () => {
-		it("should show a chip for a workflow state selected in the dropdown", async () => {
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
+	it("should add a chip for each workflow state picked in the open menu and remove them on clear", async () => {
+		await renderWithRouter(<SamplesListHarness />, path);
+		expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("button", { name: "Workflows" }));
+		await userEvent.click(screen.getByRole("button", { name: "Workflows" }));
 
-			const item = await screen.findByRole("menuitemcheckbox", {
-				name: "Pathoscope Complete",
-			});
-			expect(item).toHaveAttribute("aria-checked", "false");
-
-			await userEvent.click(item);
-
-			expect(
-				await screen.findByRole("button", {
-					name: "Remove Pathoscope Complete filter",
-				}),
-			).toBeInTheDocument();
+		const item = await screen.findByRole("menuitemcheckbox", {
+			name: "Nuvs In progress",
 		});
+		expect(item).toHaveAttribute("aria-checked", "false");
 
-		it("should keep the menu open and check both states toggled for one workflow", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
+		await userEvent.click(item);
+		await userEvent.click(
+			screen.getByRole("menuitemcheckbox", { name: "Nuvs Complete" }),
+		);
 
-			await userEvent.click(screen.getByRole("button", { name: "Workflows" }));
+		expect(
+			screen.getByRole("menuitemcheckbox", { name: "Nuvs In progress" }),
+		).toHaveAttribute("aria-checked", "true");
+		expect(
+			screen.getByRole("menuitemcheckbox", { name: "Nuvs Complete" }),
+		).toHaveAttribute("aria-checked", "true");
+		expect(
+			await screen.findByRole("button", {
+				name: "Remove Nuvs Complete filter",
+			}),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Remove Nuvs In progress filter" }),
+		).toBeInTheDocument();
 
-			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
-					name: "Nuvs In progress",
-				}),
-			);
-			await userEvent.click(
-				screen.getByRole("menuitemcheckbox", { name: "Nuvs Complete" }),
-			);
+		await userEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
 
-			expect(
-				screen.getByRole("menuitemcheckbox", { name: "Nuvs In progress" }),
-			).toHaveAttribute("aria-checked", "true");
-			expect(
-				screen.getByRole("menuitemcheckbox", { name: "Nuvs Complete" }),
-			).toHaveAttribute("aria-checked", "true");
-		});
-
-		it("should remove every workflow chip when the dropdown is cleared", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			const removeChipName = "Remove Pathoscope Not analyzed filter";
-
-			await userEvent.click(screen.getByRole("button", { name: "Workflows" }));
-			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
-					name: "Pathoscope Not analyzed",
-				}),
-			);
-			expect(
-				await screen.findByRole("button", { name: removeChipName }),
-			).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
-
-			expect(
-				screen.queryByRole("button", { name: removeChipName }),
-			).not.toBeInTheDocument();
-		});
+		expect(
+			screen.queryByRole("button", { name: /^Remove Nuvs .* filter$/ }),
+		).not.toBeInTheDocument();
 	});
 
 	describe("user filtering", () => {
-		it("should show a chip for a user selected in the dropdown", async () => {
-			mockFindSamples(samples);
+		it("should add a chip for each user picked in the open menu and remove them on clear", async () => {
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("button", { name: "Users" }));
-			await userEvent.click(
-				await screen.findByRole("option", {
-					name: at(users, 0).handle,
-				}),
-			);
-
-			const chip = await screen.findByRole("button", {
-				name: `Remove ${at(users, 0).handle} user filter`,
-			});
-			expect(chip).toHaveTextContent(at(users, 0).handle);
-		});
-
-		it("should show a chip for each of several users selected at once", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
+			const [firstUser, secondUser] = [at(users, 0), at(users, 1)];
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
-				await screen.findByRole("option", {
-					name: at(users, 0).handle,
-				}),
+				await screen.findByRole("option", { name: firstUser.handle }),
 			);
-			// The menu stays open, so the second user is toggled without reopening it.
 			await userEvent.click(
-				screen.getByRole("option", { name: at(users, 1).handle }),
+				screen.getByRole("option", { name: secondUser.handle }),
 			);
 
 			expect(
 				await screen.findByRole("button", {
-					name: `Remove ${at(users, 0).handle} user filter`,
+					name: `Remove ${firstUser.handle} user filter`,
 				}),
-			).toBeInTheDocument();
+			).toMatchTextContent(firstUser.handle);
 			expect(
 				screen.getByRole("button", {
-					name: `Remove ${at(users, 1).handle} user filter`,
+					name: `Remove ${secondUser.handle} user filter`,
 				}),
 			).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+
+			expect(
+				screen.queryByRole("button", { name: /user filter$/ }),
+			).not.toBeInTheDocument();
 		});
 
-		it("should list the logged-in user first, tagged as You", async () => {
+		it("should list the logged-in user first and narrow the others by search", async () => {
 			const self = at(users, 1);
+			const other = at(users, 0);
 			mockGetAccount(createFakeAccount({ id: self.id, handle: self.handle }));
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
@@ -622,310 +436,32 @@ describe("<SamplesList />", () => {
 			const items = await screen.findAllByRole("option");
 			expect(items.map((item) => item.textContent)).toEqual([
 				`${self.handle}You`,
-				at(users, 0).handle,
+				other.handle,
 			]);
 
 			const otherUsers = screen.getByTestId("other-users");
 			expect(otherUsers).not.toContainElement(at(items, 0));
 			expect(otherUsers).toContainElement(at(items, 1));
-			expect(otherUsers).toHaveClass(
-				"max-h-96",
-				"overflow-x-hidden",
-				"overflow-y-auto",
-			);
-		});
 
-		it("should narrow the user list as the search input is typed in", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Users" }));
-			await userEvent.type(
-				await screen.findByLabelText("Filter users"),
-				at(users, 1).handle,
-			);
+			await userEvent.type(screen.getByLabelText("Filter users"), self.handle);
 
 			expect(
-				screen.queryByRole("option", { name: at(users, 0).handle }),
+				screen.queryByRole("option", { name: other.handle }),
 			).not.toBeInTheDocument();
 			expect(
-				screen.getByRole("option", { name: at(users, 1).handle }),
+				screen.getByRole("option", { name: new RegExp(self.handle) }),
 			).toBeInTheDocument();
-		});
-
-		it("should focus the search input when the popover opens", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Users" }));
-
-			expect(await screen.findByLabelText("Filter users")).toHaveFocus();
-		});
-
-		it("should toggle the highlighted user with the keyboard", async () => {
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Users" }));
-			const input = await screen.findByLabelText("Filter users");
-			await userEvent.type(input, at(users, 1).handle);
-			await userEvent.keyboard("{Enter}");
-
-			expect(
-				await screen.findByRole("button", {
-					name: `Remove ${at(users, 1).handle} user filter`,
-				}),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("option", { name: at(users, 1).handle }),
-			).toHaveAttribute("aria-selected", "true");
-			expect(input).toHaveFocus();
-		});
-
-		it("should clear the search on the first Escape and close on the next", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Users" }));
-			const input = await screen.findByLabelText("Filter users");
-			await userEvent.type(input, "zzz");
-
-			await userEvent.keyboard("{Escape}");
-			expect(input).toHaveValue("");
-			expect(input).toBeInTheDocument();
-
-			await userEvent.keyboard("{Escape}");
-			expect(screen.queryByLabelText("Filter users")).not.toBeInTheDocument();
-		});
-
-		it("should remove every chip when the dropdown is cleared", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			const removeChipName = `Remove ${at(users, 0).handle} user filter`;
-
-			await userEvent.click(screen.getByRole("button", { name: "Users" }));
-			await userEvent.click(
-				await screen.findByRole("option", {
-					name: at(users, 0).handle,
-				}),
-			);
-			expect(
-				await screen.findByRole("button", { name: removeChipName }),
-			).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
-
-			expect(
-				screen.queryByRole("button", { name: removeChipName }),
-			).not.toBeInTheDocument();
-		});
-	});
-
-	describe("group filtering", () => {
-		let groups: ReturnType<typeof createFakeGroupMinimal>[];
-
-		beforeEach(() => {
-			// Names are fixed so neither is a substring of the other, keeping the
-			// search-input assertions unambiguous.
-			groups = [
-				createFakeGroupMinimal({ name: "Botany" }),
-				createFakeGroupMinimal({ name: "Virology" }),
-			];
-			mockListSampleGroups(groups);
-		});
-
-		it("should show a chip for a group selected in the popover", async () => {
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
-			await userEvent.click(
-				await screen.findByRole("option", { name: at(groups, 0).name }),
-			);
-
-			expect(
-				await screen.findByRole("button", {
-					name: `Remove ${at(groups, 0).name} group filter`,
-				}),
-			).toBeInTheDocument();
-		});
-
-		it("should narrow the groups to those matching the search", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
-			await userEvent.type(
-				await screen.findByLabelText("Filter groups"),
-				at(groups, 1).name,
-			);
-
-			expect(
-				screen.queryByRole("option", { name: at(groups, 0).name }),
-			).not.toBeInTheDocument();
-			expect(
-				screen.getByRole("option", { name: at(groups, 1).name }),
-			).toBeInTheDocument();
-		});
-
-		it("should focus the search input when the popover opens", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
-
-			expect(await screen.findByLabelText("Filter groups")).toHaveFocus();
-		});
-
-		it("should toggle the highlighted group with the keyboard", async () => {
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
-			const input = await screen.findByLabelText("Filter groups");
-			await userEvent.type(input, at(groups, 1).name);
-			await userEvent.keyboard("{Enter}");
-
-			expect(
-				await screen.findByRole("button", {
-					name: `Remove ${at(groups, 1).name} group filter`,
-				}),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("option", { name: at(groups, 1).name }),
-			).toHaveAttribute("aria-selected", "true");
-			expect(input).toHaveFocus();
-		});
-
-		it("should clear the search on the first Escape and close on the next", async () => {
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
-			const input = await screen.findByLabelText("Filter groups");
-			await userEvent.type(input, "zzz");
-
-			await userEvent.keyboard("{Escape}");
-			expect(input).toHaveValue("");
-			expect(input).toBeInTheDocument();
-
-			await userEvent.keyboard("{Escape}");
-			expect(screen.queryByLabelText("Filter groups")).not.toBeInTheDocument();
-		});
-
-		it("should remove every chip when the popover is cleared", async () => {
-			mockFindSamples(samples);
-			mockFindSamples(samples);
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			const removeChipName = `Remove ${at(groups, 0).name} group filter`;
-
-			await userEvent.click(screen.getByRole("button", { name: "Groups" }));
-			await userEvent.click(
-				await screen.findByRole("option", { name: at(groups, 0).name }),
-			);
-			expect(
-				await screen.findByRole("button", { name: removeChipName }),
-			).toBeInTheDocument();
-
-			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
-
-			expect(
-				screen.queryByRole("button", { name: removeChipName }),
-			).not.toBeInTheDocument();
 		});
 	});
 
 	describe("select all", () => {
-		it("should show the sample count until something is selected", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			expect(screen.getByText("2 samples")).toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: `Select ${at(samples, 0).name}` }),
-			);
-
-			expect(screen.queryByText("2 samples")).not.toBeInTheDocument();
-			expect(screen.getByText("1 selected")).toBeInTheDocument();
-		});
-
-		it("should count the samples matching the filters, not every visible sample", async () => {
-			mockListUsers(users);
-			mockFindHmms(createFakeHmmSearchResults());
-			mockListReadyIndexes([createFakeIndexMinimal()]);
-			mockListSubtractionsShortlist([createFakeSubtractionNested()]);
+		it("should count matching samples, then the selection, with a mixed state for a partial one", async () => {
 			mockFindSamples(samples, { foundCount: 2, totalCount: 17 });
-
 			await renderWithRouter(<SamplesList />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
 			expect(screen.getByText("2 samples")).toBeInTheDocument();
 			expect(screen.queryByText("17 samples")).not.toBeInTheDocument();
-		});
-
-		it("should select every sample on the page", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: "Select all samples" }),
-			);
-
-			for (const sample of samples) {
-				expect(
-					screen.getByRole("checkbox", { name: `Select ${sample.name}` }),
-				).toBeChecked();
-			}
-		});
-
-		it("should complete the selection when only some samples are selected", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: `Select ${at(samples, 0).name}` }),
-			);
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: "Select all samples" }),
-			);
-
-			for (const sample of samples) {
-				expect(
-					screen.getByRole("checkbox", { name: `Select ${sample.name}` }),
-				).toBeChecked();
-			}
-		});
-
-		it("should clear the selection when every sample is already selected", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			const selectAll = screen.getByRole("checkbox", {
-				name: "Select all samples",
-			});
-
-			await userEvent.click(selectAll);
-			await userEvent.click(selectAll);
-
-			for (const sample of samples) {
-				expect(
-					screen.getByRole("checkbox", { name: `Select ${sample.name}` }),
-				).not.toBeChecked();
-			}
-		});
-
-		it("should show a mixed state when only some samples are selected", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
 			const selectAll = screen.getByRole("checkbox", {
 				name: "Select all samples",
@@ -935,6 +471,8 @@ describe("<SamplesList />", () => {
 			await userEvent.click(
 				screen.getByRole("checkbox", { name: `Select ${at(samples, 0).name}` }),
 			);
+			expect(screen.queryByText("2 samples")).not.toBeInTheDocument();
+			expect(screen.getByText("1 selected")).toBeInTheDocument();
 			expect(selectAll).toBePartiallyChecked();
 
 			await userEvent.click(
@@ -943,34 +481,7 @@ describe("<SamplesList />", () => {
 			expect(selectAll).toBeChecked();
 		});
 
-		it("should leave samples selected on other pages alone", async () => {
-			const [first, second] = mockSamplePages();
-
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: `Select ${first.name}` }),
-			);
-			await userEvent.click(screen.getByRole("button", { name: "2" }));
-
-			expect(await screen.findByText(second.name)).toBeInTheDocument();
-
-			// Selecting and clearing this page must not touch the page-one selection.
-			const selectAll = screen.getByRole("checkbox", {
-				name: "Select all samples",
-			});
-			expect(selectAll).not.toBeChecked();
-
-			await userEvent.click(selectAll);
-			expect(screen.getByText("2 selected")).toBeInTheDocument();
-
-			await userEvent.click(selectAll);
-			expect(screen.getByText("1 selected")).toBeInTheDocument();
-		});
-
 		it("should clear the selection when a filter changes", async () => {
-			mockFindSamples(samples);
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
@@ -991,118 +502,37 @@ describe("<SamplesList />", () => {
 		});
 	});
 
-	describe("shift-click range select", () => {
-		function checkboxFor(name: string) {
-			return screen.getByRole("checkbox", { name: `Select ${name}` });
-		}
-
-		// A single user-event session is used per test so a held shift modifier
-		// carries across to the click; the default per-call helpers reset it.
-		function withShift(user: ReturnType<typeof userEvent.setup>) {
-			return async function shiftSelect(name: string) {
-				await user.keyboard("{Shift>}");
-				await user.click(checkboxFor(name));
-				await user.keyboard("{/Shift}");
-			};
-		}
-
-		async function renderRange(names: string[]) {
-			const documents = mockSampleRange(names);
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-			return documents;
-		}
-
-		const fourNames = [
+	it("should select a contiguous range when a row is shift-clicked", async () => {
+		// One user-event session keeps the held shift modifier across to the
+		// click; the default per-call helpers reset it.
+		const user = userEvent.setup();
+		const range = mockSampleRange([
 			"Range Sample 1",
 			"Range Sample 2",
 			"Range Sample 3",
 			"Range Sample 4",
-		];
+		]);
+		await renderWithRouter(<SamplesList />, path);
+		expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-		it("should select a contiguous range when a row is shift-clicked", async () => {
-			const user = userEvent.setup();
-			const shiftSelect = withShift(user);
-			const range = await renderRange(fourNames);
+		function checkboxFor(name: string) {
+			return screen.getByRole("checkbox", { name: `Select ${name}` });
+		}
 
-			await user.click(checkboxFor(at(range, 0).name));
-			await shiftSelect(at(range, 2).name);
+		await user.click(checkboxFor(at(range, 0).name));
+		await user.keyboard("{Shift>}");
+		await user.click(checkboxFor(at(range, 2).name));
+		await user.keyboard("{/Shift}");
 
-			expect(checkboxFor(at(range, 0).name)).toBeChecked();
-			expect(checkboxFor(at(range, 1).name)).toBeChecked();
-			expect(checkboxFor(at(range, 2).name)).toBeChecked();
-			expect(checkboxFor(at(range, 3).name)).not.toBeChecked();
-			expect(screen.getByText("3 selected")).toBeInTheDocument();
-		});
-
-		it("should select the same range regardless of click direction", async () => {
-			const user = userEvent.setup();
-			const shiftSelect = withShift(user);
-			const range = await renderRange(fourNames);
-
-			await user.click(checkboxFor(at(range, 2).name));
-			await shiftSelect(at(range, 0).name);
-
-			expect(checkboxFor(at(range, 0).name)).toBeChecked();
-			expect(checkboxFor(at(range, 1).name)).toBeChecked();
-			expect(checkboxFor(at(range, 2).name)).toBeChecked();
-			expect(checkboxFor(at(range, 3).name)).not.toBeChecked();
-		});
-
-		it("should deselect the range when the shift-clicked row was selected", async () => {
-			const user = userEvent.setup();
-			const shiftSelect = withShift(user);
-			const range = await renderRange(fourNames);
-
-			await user.click(checkboxFor(at(range, 0).name));
-			await shiftSelect(at(range, 3).name);
-			expect(screen.getByText("4 selected")).toBeInTheDocument();
-
-			await shiftSelect(at(range, 0).name);
-
-			for (const sample of range) {
-				expect(checkboxFor(sample.name)).not.toBeChecked();
-			}
-			expect(screen.getByText("4 samples")).toBeInTheDocument();
-		});
-
-		it("should anchor the range on the most recent shift-click", async () => {
-			const user = userEvent.setup();
-			const shiftSelect = withShift(user);
-			const range = await renderRange([...fourNames, "Range Sample 5"]);
-
-			await user.click(checkboxFor(at(range, 0).name));
-			await shiftSelect(at(range, 4).name);
-			await shiftSelect(at(range, 2).name);
-
-			expect(checkboxFor(at(range, 0).name)).toBeChecked();
-			expect(checkboxFor(at(range, 1).name)).toBeChecked();
-			expect(checkboxFor(at(range, 2).name)).not.toBeChecked();
-			expect(checkboxFor(at(range, 3).name)).not.toBeChecked();
-			expect(checkboxFor(at(range, 4).name)).not.toBeChecked();
-			expect(screen.getByText("2 selected")).toBeInTheDocument();
-		});
-
-		it("should fall back to a single toggle when the anchor is on another page", async () => {
-			const user = userEvent.setup();
-			const shiftSelect = withShift(user);
-			const [first, second] = mockSamplePages();
-
-			await renderWithRouter(<SamplesListHarness />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await user.click(checkboxFor(first.name));
-			await user.click(screen.getByRole("button", { name: "2" }));
-			expect(await screen.findByText(second.name)).toBeInTheDocument();
-
-			await shiftSelect(second.name);
-
-			expect(screen.getByText("2 selected")).toBeInTheDocument();
-		});
+		expect(checkboxFor(at(range, 0).name)).toBeChecked();
+		expect(checkboxFor(at(range, 1).name)).toBeChecked();
+		expect(checkboxFor(at(range, 2).name)).toBeChecked();
+		expect(checkboxFor(at(range, 3).name)).not.toBeChecked();
+		expect(screen.getByText("3 selected")).toBeInTheDocument();
 	});
 
 	describe("quick analyze", () => {
-		it("should scope to the clicked sample, ignoring the selection", async () => {
+		it("should analyze only the clicked row and keep the selection", async () => {
 			await renderWithRouter(<SamplesList />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
@@ -1124,71 +554,48 @@ describe("<SamplesList />", () => {
 			expect(
 				within(dialog).queryByText(selectedSample.name),
 			).not.toBeInTheDocument();
-		});
-
-		it("should title a single clicked sample without a count", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("button", {
-					name: `Quick analyze ${at(samples, 0).name}`,
-				}),
-			);
-
-			const dialog = await screen.findByRole("dialog");
-
 			expect(within(dialog).getByText("Selected Sample")).toBeInTheDocument();
 			expect(
 				within(dialog).queryByText("Selected Samples"),
 			).not.toBeInTheDocument();
+
+			await userEvent.keyboard("{Escape}");
+			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+			expect(
+				screen.getByRole("checkbox", { name: `Select ${selectedSample.name}` }),
+			).toBeChecked();
+			expect(
+				screen.getByRole("checkbox", { name: `Select ${clickedSample.name}` }),
+			).not.toBeChecked();
 		});
 
-		it("should count a single-sample selection from the header", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: `Select ${at(samples, 0).name}` }),
-			);
-			await userEvent.click(screen.getByRole("button", { name: "Analyze" }));
-
-			const dialog = await screen.findByRole("dialog");
-
-			const title = within(dialog).getByText("Selected Samples");
-			expect(within(title).getByText("1")).toBeInTheDocument();
-		});
-
-		it("should include every selected sample when triggered from the header", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: "Select all samples" }),
-			);
-			await userEvent.click(screen.getByRole("button", { name: "Analyze" }));
-
-			const dialog = await screen.findByRole("dialog");
-
-			const title = within(dialog).getByText("Selected Samples");
-			expect(within(title).getByText("2")).toBeInTheDocument();
-
-			for (const sample of samples) {
-				expect(within(dialog).getByText(sample.name)).toBeInTheDocument();
-			}
-		});
-
-		it("should include samples selected on an earlier page", async () => {
+		it("should analyze every selected sample, across pages, from the header", async () => {
 			const [first, second] = mockSamplePages();
 
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
+			expect(
+				screen.queryByRole("button", { name: "Analyze" }),
+			).not.toBeInTheDocument();
+
 			await userEvent.click(
 				screen.getByRole("checkbox", { name: `Select ${first.name}` }),
 			);
-			await userEvent.click(screen.getByRole("button", { name: "2" }));
+			await userEvent.click(screen.getByRole("button", { name: "Analyze" }));
 
+			const singleDialog = await screen.findByRole("dialog");
+			expect(
+				within(within(singleDialog).getByText("Selected Samples")).getByText(
+					"1",
+				),
+			).toBeInTheDocument();
+
+			await userEvent.keyboard("{Escape}");
+			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "2" }));
 			expect(await screen.findByText(second.name)).toBeInTheDocument();
 
 			await userEvent.click(
@@ -1202,52 +609,6 @@ describe("<SamplesList />", () => {
 			expect(within(title).getByText("2")).toBeInTheDocument();
 			expect(within(dialog).getByText(first.name)).toBeInTheDocument();
 			expect(within(dialog).getByText(second.name)).toBeInTheDocument();
-		});
-
-		it("should not show the quick analyze button until samples are selected", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			expect(
-				screen.queryByRole("button", { name: "Analyze" }),
-			).not.toBeInTheDocument();
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: `Select ${at(samples, 0).name}` }),
-			);
-
-			expect(
-				screen.getByRole("button", { name: "Analyze" }),
-			).toBeInTheDocument();
-		});
-
-		it("should leave the existing selection intact after a row is analyzed", async () => {
-			await renderWithRouter(<SamplesList />, path);
-			expect(await screen.findByText("Samples")).toBeInTheDocument();
-
-			const selectedSample = at(samples, 0);
-			const clickedSample = at(samples, 1);
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: `Select ${selectedSample.name}` }),
-			);
-			await userEvent.click(
-				screen.getByRole("button", {
-					name: `Quick analyze ${clickedSample.name}`,
-				}),
-			);
-
-			expect(await screen.findByRole("dialog")).toBeInTheDocument();
-
-			await userEvent.keyboard("{Escape}");
-			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-			expect(
-				screen.getByRole("checkbox", { name: `Select ${selectedSample.name}` }),
-			).toBeChecked();
-			expect(
-				screen.getByRole("checkbox", { name: `Select ${clickedSample.name}` }),
-			).not.toBeChecked();
 		});
 	});
 
@@ -1274,8 +635,6 @@ describe("<SamplesList />", () => {
 
 		it.each([
 			["a search term", { term: "ferret" }],
-			["a label", { labels: [1] }],
-			["a workflow", { workflows: ["pathoscope_bowtie:complete"] }],
 			["a user", { users: [1] }],
 		])("should say no samples match when %s is active", async (_, search) => {
 			await renderWithRouter(

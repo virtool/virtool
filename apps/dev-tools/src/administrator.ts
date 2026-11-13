@@ -53,6 +53,9 @@ export async function createAdministrator(
 			getVerificationUrl: () => "",
 			keyring: createKeyring(undefined, undefined),
 			handle: input.handle,
+			// Dev-tools has no changelog of its own, so the administrator starts
+			// with every post unread.
+			lastSeenChangelogAt: new Date(0),
 			password: input.password,
 		});
 		return { status: "created", userId: user.id };

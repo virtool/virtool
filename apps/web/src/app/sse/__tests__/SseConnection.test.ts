@@ -74,9 +74,14 @@ class FakeEventSource {
 const fetchMock = vi.fn();
 const invalidateQueries = vi.fn();
 
+/**
+ * Connect a fresh copy of the module. Timers are faked only after the import,
+ * because a cold import waits on real timers.
+ */
 async function establish() {
 	vi.resetModules();
 	const sse = await import("../SseConnection");
+	vi.useFakeTimers();
 	sse.init({ invalidateQueries } as unknown as QueryClient);
 	sse.establishConnection();
 
@@ -94,7 +99,6 @@ function openConnection(): FakeEventSource {
 
 describe("SseConnection", () => {
 	beforeEach(() => {
-		vi.useFakeTimers();
 		FakeEventSource.instances = [];
 		endSession.mockReset();
 		endSession.mockResolvedValue(true);

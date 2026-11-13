@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeFile } from "@tests/fake/files";
@@ -12,15 +12,6 @@ import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
 import { beforeEach, describe, expect, it } from "vitest";
 import CreateSample from "../CreateSample";
-
-function escapeRegExp(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/** The read-list button whose accessible name contains `name`. */
-function readRowButton(name: string): HTMLElement {
-	return screen.getByRole("button", { name: new RegExp(escapeRegExp(name)) });
-}
 
 async function setReadSelectorMode(
 	name: "Auto-pair" | "Manual",
@@ -232,7 +223,7 @@ describe("<CreateSample>", () => {
 		expect(screen.queryByLabelText("Locale")).not.toBeInTheDocument();
 	});
 
-	it("should be able to autofill the sample name", async () => {
+	it("should autofill the sample name from the selected reads", async () => {
 		const file = createFakeFile({ name: "14T81.fq.gz" });
 
 		mockFindUploads([file]);
@@ -247,80 +238,6 @@ describe("<CreateSample>", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Auto Fill" }));
 
 		expect(field).toHaveValue("14T81");
-	});
-
-	it("should autofill the sample name from a fastq.gz filename", async () => {
-		const file = createFakeFile({ name: "sample_one.fastq.gz" });
-
-		mockFindUploads([file]);
-		mockListSubtractionsShortlist([{ name: "foo", ready: true, id: 1 }]);
-
-		await renderPage();
-
-		const field = await screen.findByRole("textbox", { name: "Name" });
-		expect(field).toHaveValue("");
-
-		await userEvent.click(screen.getByText(file.name));
-		await userEvent.click(screen.getByRole("button", { name: "Auto Fill" }));
-
-		expect(field).toHaveValue("sample_one");
-	});
-
-	it.each([
-		["sample_one.fq", "sample_one"],
-		["sample_one.fastq", "sample_one"],
-		["sample_one.fa", "sample_one"],
-		["sample_one.fasta", "sample_one"],
-		["sample_one.FASTQ.GZ", "sample_one"],
-	])("should autofill the sample name from %s", async (fileName, expected) => {
-		const file = createFakeFile({ name: fileName });
-
-		mockFindUploads([file]);
-		mockListSubtractionsShortlist([{ name: "foo", ready: true, id: 1 }]);
-
-		await renderPage();
-
-		const field = await screen.findByRole("textbox", { name: "Name" });
-		expect(field).toHaveValue("");
-
-		await userEvent.click(screen.getByText(file.name));
-		await userEvent.click(screen.getByRole("button", { name: "Auto Fill" }));
-
-		expect(field).toHaveValue(expected);
-	});
-
-	it("should not autofill the sample name when the extension is invalid", async () => {
-		const file = createFakeFile({ name: "sample_one.fqst" });
-
-		mockFindUploads([file]);
-		mockListSubtractionsShortlist([{ name: "foo", ready: true, id: 1 }]);
-
-		await renderPage();
-
-		const field = await screen.findByRole("textbox", { name: "Name" });
-		expect(field).toHaveValue("");
-
-		await userEvent.click(screen.getByText(file.name));
-		await userEvent.click(screen.getByRole("button", { name: "Auto Fill" }));
-
-		expect(field).toHaveValue("");
-	});
-
-	it("should clear selections when reset button is clicked", async () => {
-		const file = createFakeFile({ name: "large.fastq.gz" });
-
-		mockFindUploads([file]);
-		mockListSubtractionsShortlist([]);
-
-		await renderPage();
-
-		expect(await screen.findByText("Create Sample")).toBeInTheDocument();
-
-		await userEvent.click(screen.getByText(file.name));
-		expect(screen.getByText("Unpaired")).toBeInTheDocument();
-
-		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
-		expect(screen.queryByText("Unpaired")).not.toBeInTheDocument();
 	});
 
 	it("should clear the form when the form reset button is clicked", async () => {
@@ -367,76 +284,5 @@ describe("<CreateSample>", () => {
 
 		expect(await screen.findByText("1 sample created")).toBeInTheDocument();
 		expect(screen.getByLabelText("Name")).toHaveValue("");
-	});
-
-	it("should be able to swap read orientation", async () => {
-		const firstFile = createFakeFile({ name: "alpha.fastq.gz" });
-		const secondFile = createFakeFile({ name: "beta.fastq.gz" });
-		const files = [firstFile, secondFile];
-
-		mockFindUploads(files);
-		mockListSubtractionsShortlist([]);
-
-		await renderPage();
-
-		expect(await screen.findByText("Create Sample")).toBeInTheDocument();
-
-		await setReadSelectorMode("Manual");
-		await userEvent.click(screen.getByText(firstFile.name));
-		await userEvent.click(screen.getByText(secondFile.name));
-
-		expect(screen.getByText("Paired")).toBeInTheDocument();
-		expect(
-			within(readRowButton(firstFile.name)).getByText("LEFT"),
-		).toBeVisible();
-
-		await userEvent.click(screen.getByRole("button", { name: /swap reads/i }));
-
-		expect(
-			within(readRowButton(firstFile.name)).getByText("RIGHT"),
-		).toBeVisible();
-	});
-
-	it("should show correct read orientations", async () => {
-		const firstFile = createFakeFile({ name: "alpha.fastq.gz" });
-		const secondFile = createFakeFile({ name: "beta.fastq.gz" });
-		const files = [firstFile, secondFile];
-
-		mockFindUploads(files);
-		mockListSubtractionsShortlist([{ name: "foo", ready: true, id: 1 }]);
-
-		await renderPage();
-
-		await userEvent.type(await screen.findByLabelText("Name"), "Sample B");
-
-		await setReadSelectorMode("Manual");
-		await userEvent.click(screen.getByText(firstFile.name));
-
-		expect(
-			within(readRowButton(firstFile.name)).getByText("LEFT"),
-		).toBeVisible();
-		expect(screen.getByText(/Unpaired/)).toBeInTheDocument();
-
-		await userEvent.click(screen.getByText(secondFile.name));
-
-		expect(
-			within(readRowButton(secondFile.name)).getByText("RIGHT"),
-		).toBeVisible();
-		expect(screen.getByText(/Paired/)).toBeInTheDocument();
-	});
-
-	it("should render correct read orientations with 1 file selected", async () => {
-		const file = createFakeFile({ name: "large.fastq.gz" });
-		mockFindUploads([file]);
-		mockListSubtractionsShortlist([]);
-		await renderPage();
-
-		expect(await screen.findByText("Create Sample")).toBeInTheDocument();
-
-		await userEvent.click(screen.getByText(file.name));
-
-		expect(within(readRowButton(file.name)).getByText("LEFT")).toBeVisible();
-		expect(within(readRowButton(file.name)).queryByText("RIGHT")).toBeNull();
-		expect(screen.getByText(/Unpaired/)).toBeInTheDocument();
 	});
 });

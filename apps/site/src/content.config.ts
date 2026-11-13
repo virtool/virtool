@@ -1,5 +1,6 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
+import { postSchema } from "@virtool/changelog";
 
 const manual = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/manual" }),
@@ -10,51 +11,14 @@ const manual = defineCollection({
   }),
 });
 
-const postFields = { title: z.string(), summary: z.string() };
-
-/**
- * Optional articles on the site. A post with images is a directory with an
- * `index.mdx` and the images beside it. `summary` is one sentence, because the
- * post list shows it.
- *
- * A `release` post shows users one new feature and why it is useful. Write one
- * only for a change that users must know about; the changelog lists the rest.
- *
- * - The title is a noun phrase that names the feature with the words the UI
- *   uses, such as "Time format".
- * - The summary tells what the user gets. The body tells why they need it.
- * - The body opens with the current behaviour and its cost to the user, as
- *   facts, with no persuasion.
- * - The next paragraph starts with "You can now" and gives examples of each
- *   case, not steps.
- * - One image shows the new state, cropped to the change, with data that shows
- *   why the feature is useful.
- * - The post ends with the scope and default if they matter, then one line
- *   that links to the manual for instructions.
- *
- * A release post cannot name its version, because Knope calculates the version
- * later. Set `pr`
- * to the pull request that makes the change. That pull request needs a change
- * file that names `virtool`, or the changelog will not contain it. The build
- * hides the post until that release exists and logs a warning for each hidden
- * post. The dev server shows it as unreleased.
- *
- * A `research` post tells users about work outside a release, such as a paper.
- */
+// The glob reads the posts through the package link, so the site follows the
+// package wherever the workspace keeps it.
 const posts = defineCollection({
-  loader: glob({ pattern: "**/*.mdx", base: "./src/content/posts" }),
-  schema: z.discriminatedUnion("type", [
-    z.object({
-      ...postFields,
-      type: z.literal("release"),
-      pr: z.number().int().positive(),
-    }),
-    z.object({
-      ...postFields,
-      type: z.literal("research"),
-      date: z.coerce.date().transform((date) => date.toISOString().slice(0, 10)),
-    }),
-  ]),
+  loader: glob({
+    pattern: "**/*.mdx",
+    base: "./node_modules/@virtool/changelog/posts",
+  }),
+  schema: postSchema,
 });
 
 export const collections = { manual, posts };

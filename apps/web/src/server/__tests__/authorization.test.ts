@@ -138,6 +138,13 @@ const MODULES = [
 		)) as SplitServerFnModule,
 	},
 	{
+		path: "../changelog/functions.ts",
+		fns: await import("../changelog/functions"),
+		handlers: (await import(
+			"../changelog/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
 		path: "../email/functions.ts",
 		fns: await import("../email/functions"),
 		handlers: (await import(

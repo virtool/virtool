@@ -1,19 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Release } from "./changelog";
-import {
-  getHiddenPosts,
-  getPostSections,
-  getPublishedPosts,
-  getReleasedPosts,
-} from "./posts";
-
-function release(
-  version: string,
-  date: string,
-  pullRequests: number[],
-): Release {
-  return { version, date, body: "", maintenance: "", actions: [], pullRequests };
-}
+import { getFirstImage, getImagePath, getPostSections } from "./posts";
 
 function post(slug: string, pr: number) {
   return {
@@ -34,73 +20,6 @@ function research(slug: string, date: string) {
     summary: `About ${slug}`,
   };
 }
-
-const releases = [
-  release("2.0.0", "2026-11-04", [30, 31]),
-  release("1.0.0", "2026-11-02", [20, 31]),
-];
-
-describe("getReleasedPosts", () => {
-  it("should add the version and date of the matching release", () => {
-    expect(getReleasedPosts([post("first", 20)], releases)).toEqual([
-      { ...post("first", 20), version: "1.0.0", date: "2026-11-02" },
-    ]);
-  });
-
-  it("should leave out a post with no matching release", () => {
-    expect(getReleasedPosts([post("unreleased", 99)], releases)).toEqual([]);
-  });
-
-  it("should leave out a research post", () => {
-    const posts = [research("paper", "2026-11-03")];
-
-    expect(getReleasedPosts(posts, releases)).toEqual([]);
-  });
-
-  it("should return the newest post first", () => {
-    const posts = [post("older", 20), post("newer", 30)];
-
-    expect(getReleasedPosts(posts, releases).map(({ slug }) => slug)).toEqual([
-      "newer",
-      "older",
-    ]);
-  });
-
-  it("should use the first release that shipped the pull request", () => {
-    const [{ version }] = getReleasedPosts([post("repeated", 31)], releases);
-
-    expect(version).toBe("1.0.0");
-  });
-});
-
-describe("getHiddenPosts", () => {
-  it("should return only release posts with no matching release", () => {
-    const posts = [
-      post("released", 20),
-      post("unreleased", 99),
-      research("paper", "2026-11-03"),
-    ];
-
-    expect(getHiddenPosts(posts, releases)).toEqual([post("unreleased", 99)]);
-  });
-});
-
-describe("getPublishedPosts", () => {
-  it("should merge released and research posts, newest first", () => {
-    const posts = [
-      post("older", 20),
-      post("unreleased", 99),
-      post("newer", 30),
-      research("paper", "2026-11-03"),
-    ];
-
-    expect(getPublishedPosts(posts, releases).map(({ slug }) => slug)).toEqual([
-      "newer",
-      "paper",
-      "older",
-    ]);
-  });
-});
 
 describe("getPostSections", () => {
   it("should group posts by year, newest first", () => {
@@ -128,5 +47,32 @@ describe("getPostSections", () => {
       "Unreleased",
       "2026",
     ]);
+  });
+});
+
+describe("getFirstImage", () => {
+  it("returns the first image with its alt text", () => {
+    expect(
+      getFirstImage(
+        'Text.\n\n![The new menu](./menu.png?url "Menu")\n\n![Other](./other.png)',
+      ),
+    ).toEqual({ alt: "The new menu", src: "./menu.png?url" });
+  });
+
+  it("returns undefined when the body has no image", () => {
+    expect(getFirstImage("Text with a [link](/docs).")).toBeUndefined();
+  });
+});
+
+describe("getImagePath", () => {
+  it("resolves an image beside the post and removes the query", () => {
+    expect(
+      getImagePath(
+        "node_modules/@virtool/changelog/posts/time-format/index.mdx",
+        "./references_tooltip.png?url",
+      ),
+    ).toBe(
+      "/node_modules/@virtool/changelog/posts/time-format/references_tooltip.png",
+    );
   });
 });

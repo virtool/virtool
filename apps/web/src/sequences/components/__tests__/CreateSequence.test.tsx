@@ -1,10 +1,10 @@
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeOtu } from "@tests/fake/otus";
 import { createFakeReference } from "@tests/fake/references";
 import { mockCreateSequence } from "@tests/server-fn/otus";
 import { at, renderWithProviders } from "@tests/setup";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import CreateSequence from "../CreateSequence";
 
 describe("<CreateSequence>", () => {
@@ -29,10 +29,6 @@ describe("<CreateSequence>", () => {
 	beforeEach(() => {
 		reference = createFakeReference();
 		otu = createFakeOtu();
-	});
-
-	afterEach(() => {
-		window.sessionStorage.clear();
 	});
 
 	it("should update fields on typing", async () => {
@@ -164,63 +160,5 @@ describe("<CreateSequence>", () => {
 				"Sequence should only contain the characters: ATCGNRYKM",
 			),
 		).toBeInTheDocument();
-	});
-
-	it("should clear form cache after submitting", async () => {
-		const isolate = at(otu.isolates, 0);
-		const segment = at(otu.schema, 0);
-
-		const createSequence = mockCreateSequence({
-			accession: "user_typed_accession",
-			definition: "user_typed_definition",
-			host: "user_typed_host",
-			segment: segment.name,
-			sequence: "ATGRYKM",
-		});
-
-		renderCreateSequence();
-
-		await userEvent.click(await screen.findByRole("combobox"));
-		await userEvent.click(
-			await screen.findByRole("option", { name: segment.name }),
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Accession (ID)" }),
-			"user_typed_accession",
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Host" }),
-			"user_typed_host",
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Definition" }),
-			"user_typed_definition",
-		);
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Sequence 0" }),
-			"ATGRYKM",
-		);
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-		await waitFor(() =>
-			expect(createSequence).toHaveBeenCalledWith({
-				data: {
-					otuId: otu.id,
-					isolateId: isolate.id,
-					accession: "user_typed_accession",
-					definition: "user_typed_definition",
-					host: "user_typed_host",
-					segment: segment.name,
-					sequence: "ATGRYKM",
-				},
-			}),
-		);
-
-		window.sessionStorage.clear();
-		cleanup();
-
-		renderCreateSequence();
-
-		expect(screen.queryByText("Resumed editing draft sequence.")).toBeNull();
 	});
 });

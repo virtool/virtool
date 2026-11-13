@@ -17,7 +17,10 @@ describe("<IndexDetail />", () => {
 	it("renders the build's contributors, files, and OTUs", async () => {
 		const index = createFakeIndex({
 			version: 2,
-			contributors: [{ id: 1, handle: "alice", count: 3 }],
+			contributors: [
+				{ id: 1, handle: "alice", count: 5 },
+				{ id: 2, handle: "bob", count: 1 },
+			],
 			files: [
 				createFakeIndexFile({
 					downloadUrl: "/indexes/7/files/reference.fa.gz",
@@ -32,8 +35,17 @@ describe("<IndexDetail />", () => {
 		await renderRoute(`/refs/${reference.id}/indexes/${index.id}`);
 
 		expect(await screen.findByText("Index 2")).toBeInTheDocument();
-		expect(screen.getByText("alice")).toBeInTheDocument();
-		expect(screen.getByText("Tobacco mosaic virus")).toBeInTheDocument();
+		expect(screen.getByText("alice")).toMatchTextContent("5 changes");
+		expect(screen.getByText("bob")).toMatchTextContent(/1 change$/);
+		expect(
+			screen.getByText("Tobacco mosaic virus").parentElement,
+		).toMatchTextContent("3 changes");
+		expect(screen.getByRole("heading", { name: /Files/ })).toMatchTextContent(
+			"1",
+		);
+		expect(
+			screen.getByText("reference.fa.gz").parentElement,
+		).toMatchTextContent("1.0KB");
 
 		// The download URL is the raw route's own path, linked to unmodified.
 		expect(screen.getByText("reference.fa.gz").closest("a")).toHaveAttribute(

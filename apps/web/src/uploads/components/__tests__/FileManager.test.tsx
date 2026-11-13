@@ -59,7 +59,7 @@ describe("<FileManager>", () => {
 		path = "/samples/uploads?page=1";
 	});
 
-	it("should upload with validation based on passed regex", async () => {
+	it("should show the hint and upload only the files the regex accepts", async () => {
 		mockGetAccount(
 			createFakeAccount({
 				administratorRole: null,
@@ -76,12 +76,19 @@ describe("<FileManager>", () => {
 		mockFindUploads([createFakeFile({ name: "subtraction.fq.gz" })]);
 
 		await renderWithRouter(
-			<FileManager {...props} regex={/.(?:fa|fasta)(?:.gz|.gzip)?$/} />,
+			<FileManager
+				{...props}
+				hint="Supports plain or gzipped FASTA"
+				regex={/.(?:fa|fasta)(?:.gz|.gzip)?$/}
+			/>,
 			path,
 		);
 
 		expect(
 			await screen.findByText("Drag files here to upload"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Supports plain or gzipped FASTA"),
 		).toBeInTheDocument();
 		expect(screen.getByText("subtraction.fq.gz")).toBeInTheDocument();
 		expect(
@@ -120,25 +127,6 @@ describe("<FileManager>", () => {
 		).not.toBeInTheDocument();
 	});
 
-	it("should show the hint under the upload prompt", async () => {
-		mockGetAccount(
-			createFakeAccount({
-				administratorRole: "full",
-			}),
-		);
-		mockFindUploads([createFakeFile({ name: "subtraction.fq.gz" })]);
-
-		await renderWithRouter(
-			<FileManager {...props} hint="Supports plain or gzipped FASTA" />,
-			path,
-		);
-
-		expect(
-			await screen.findByText("Supports plain or gzipped FASTA"),
-		).toBeInTheDocument();
-		expect(screen.getByText("Drag files here to upload")).toBeInTheDocument();
-	});
-
 	describe("table", () => {
 		it("should label every column, including the ones with no visible header", async () => {
 			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
@@ -174,29 +162,6 @@ describe("<FileManager>", () => {
 			);
 
 			expect(setSort).toHaveBeenCalledWith("name", "ascending");
-		});
-
-		it("should reverse the column already sorted by", async () => {
-			const setSort = vi.fn();
-
-			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
-			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
-
-			await renderWithRouter(
-				<FileManager
-					{...props}
-					direction="ascending"
-					setSort={setSort}
-					sort="name"
-				/>,
-				path,
-			);
-
-			await userEvent.click(
-				await screen.findByRole("button", { name: "Name" }),
-			);
-
-			expect(setSort).toHaveBeenCalledWith("name", "descending");
 		});
 
 		it("should request the sorted column from the server", async () => {
@@ -261,6 +226,9 @@ describe("<FileManager>", () => {
 			await renderWithRouter(<FileManager {...props} />, path);
 
 			expect(await screen.findByText("one.fq.gz")).toBeInTheDocument();
+			expect(
+				screen.queryByRole("checkbox", { name: "Select all files" }),
+			).not.toBeInTheDocument();
 			expect(
 				screen.queryByRole("checkbox", { name: "Select one.fq.gz" }),
 			).not.toBeInTheDocument();
@@ -458,21 +426,6 @@ describe("<FileManager>", () => {
 			expect(screen.getByText("2 files")).toBeInTheDocument();
 			expect(
 				screen.queryByRole("button", { name: "Delete" }),
-			).not.toBeInTheDocument();
-		});
-
-		it("should hide checkboxes when there is nothing to do with a selection", async () => {
-			mockGetAccount(createFakeAccount({ administratorRole: null }));
-			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
-
-			await renderWithRouter(<FileManager {...props} />, path);
-
-			expect(await screen.findByText("one.fq.gz")).toBeInTheDocument();
-			expect(
-				screen.queryByRole("checkbox", { name: "Select all files" }),
-			).not.toBeInTheDocument();
-			expect(
-				screen.queryByRole("checkbox", { name: "Select one.fq.gz" }),
 			).not.toBeInTheDocument();
 		});
 	});

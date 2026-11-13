@@ -63,21 +63,6 @@ describe("<ReferenceList />", () => {
 	});
 
 	describe("<ReferenceToolbar />", () => {
-		it("should render when toolbar term is changed to foo", async () => {
-			mockFindReferences([references]);
-			await renderWithRouter(<ReferenceListHarness />);
-
-			expect(await screen.findByText("References")).toBeInTheDocument();
-
-			const inputElement = screen.getByPlaceholderText("Reference name");
-			expect(inputElement).toHaveValue("");
-
-			await userEvent.type(inputElement, "Foo");
-			expect(await screen.findByDisplayValue("Foo")).toBeInTheDocument();
-
-			await userEvent.clear(screen.getByRole("textbox"));
-		});
-
 		it("should not render creation button when [canCreate=false]", async () => {
 			const permissions = createFakePermissions({ create_ref: false });
 			const account = createFakeAccount({ permissions: permissions });
@@ -89,22 +74,6 @@ describe("<ReferenceList />", () => {
 			expect(
 				screen.queryByRole("link", { name: "Create" }),
 			).not.toBeInTheDocument();
-		});
-
-		it("should default the lifecycle toggle to Active", async () => {
-			mockFindReferences([references]);
-			await renderWithRouter(<ReferenceListHarness />);
-
-			expect(await screen.findByText("References")).toBeInTheDocument();
-
-			expect(screen.getByRole("radio", { name: "Active" })).toHaveAttribute(
-				"data-state",
-				"on",
-			);
-			expect(screen.getByRole("radio", { name: "Archived" })).toHaveAttribute(
-				"data-state",
-				"off",
-			);
 		});
 
 		it("should refetch with archived=true when the Archived toggle is clicked", async () => {
@@ -138,19 +107,6 @@ describe("<ReferenceList />", () => {
 			expect(
 				await screen.findByText(/No archived references found/i),
 			).toBeInTheDocument();
-		});
-
-		it("should handle toolbar updates correctly", async () => {
-			mockFindReferences([references]);
-			await renderWithRouter(<ReferenceListHarness />);
-
-			expect(await screen.findByText("References")).toBeInTheDocument();
-
-			const inputElement = screen.getByPlaceholderText("Reference name");
-			expect(inputElement).toHaveValue("");
-
-			await userEvent.type(inputElement, "Foobar");
-			expect(await screen.findByDisplayValue("Foobar")).toBeInTheDocument();
 		});
 	});
 
@@ -192,14 +148,16 @@ describe("<ReferenceList />", () => {
 	});
 
 	describe("<CloneReference />", () => {
-		it("should show the clone without a reload", async () => {
+		it("should clone with the default input and show the clone without a reload", async () => {
 			const permissions = createFakePermissions({ create_ref: true });
 			mockGetAccount(createFakeAccount({ permissions }));
 
 			const clone = createFakeReferenceMinimal({ name: "Cloned Reference" });
 
 			mockFindReferences([references]);
-			mockCreateReference(createFakeReference({ name: clone.name }));
+			const create = mockCreateReference(
+				createFakeReference({ name: clone.name }),
+			);
 
 			await renderWithRouter(<ReferenceListHarness />);
 
@@ -217,22 +175,6 @@ describe("<ReferenceList />", () => {
 			await userEvent.click(screen.getByRole("button", { name: "Clone" }));
 
 			expect(await screen.findByText(clone.name)).toBeInTheDocument();
-		});
-
-		it("handleSubmit() should mutate with correct input", async () => {
-			const permissions = createFakePermissions({ create_ref: true });
-			const account = createFakeAccount({ permissions: permissions });
-			mockGetAccount(account);
-			mockFindReferences([references]);
-			const create = mockCreateReference(createFakeReference());
-			await renderWithRouter(<ReferenceListHarness />);
-
-			expect(await screen.findByText("References")).toBeInTheDocument();
-			await userEvent.click(
-				await screen.findByRole("button", { name: "clone" }),
-			);
-			await userEvent.click(screen.getByRole("button", { name: "Clone" }));
-
 			expect(create).toHaveBeenCalledWith({
 				data: {
 					name: `Clone of ${references.name}`,

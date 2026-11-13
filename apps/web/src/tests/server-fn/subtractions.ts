@@ -7,7 +7,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/subtraction/functions` server-fn module. Wired
- * in globally from `tests/setup.tsx` so any test rendering a view that lists or
+ * in globally from `tests/serverFnMocks.ts` so any test rendering a view that lists or
  * reads subtractions can stub them without per-file `vi.mock` boilerplate.
  */
 export const subtractionServerFnMocks = {

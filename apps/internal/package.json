@@ -1,6 +1,6 @@
 {
 	"name": "@virtool/internal",
-	"version": "42.65.0",
+	"version": "42.65.1",
 	"private": true,
 	"type": "module",
 	"files": [
@@ -27,7 +27,7 @@
 		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"drizzle-orm": "^0.45.4",
-		"hono": "^4.13.9",
+		"hono": "^4.13.16",
 		"pino": "^10.4.0",
 		"postgres": "^4.0.0",
 		"prom-client": "^15.1.3",

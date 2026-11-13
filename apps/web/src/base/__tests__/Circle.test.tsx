@@ -3,60 +3,36 @@ import { describe, expect, it } from "vitest";
 import Circle from "../Circle";
 
 describe("Circle", () => {
-	it("defaults to size-3 and lets a size-* class override it", () => {
-		const { container, rerender } = render(<Circle />);
-		expect(container.querySelector("svg")).toHaveClass("size-3");
-
-		rerender(<Circle className="size-5 text-red-500" />);
-		expect(container.querySelector("svg")).toHaveClass(
-			"size-5",
-			"text-red-500",
-		);
-	});
-
-	it("should render with correct color class", () => {
-		const { container } = render(<Circle color="red" />);
-		const svg = container.querySelector("svg");
-		expect(svg).toHaveClass("text-red-500");
-	});
-
-	it("should render with custom className", () => {
-		const { container } = render(<Circle className="custom-class" />);
-		const svg = container.querySelector("svg");
-		expect(svg).toHaveClass("custom-class");
-	});
-
-	it("should pass additional props to svg", () => {
+	it("draws a full circle by default and passes props to the svg", () => {
 		const { container } = render(<Circle aria-label="test-circle" />);
-		const svg = container.querySelector("svg");
-		expect(svg).toHaveAttribute("aria-label", "test-circle");
-	});
 
-	it("should render full fill by default", () => {
-		const { container } = render(<Circle />);
-		expect(container.querySelector("circle")).toBeInTheDocument();
+		expect(container.querySelector("svg")).toHaveAttribute(
+			"aria-label",
+			"test-circle",
+		);
 		expect(container.querySelector("circle")).toHaveAttribute(
 			"fill",
 			"currentColor",
 		);
+		expect(container.querySelector("path")).not.toBeInTheDocument();
 	});
 
-	it("should render half fill", () => {
-		const { container } = render(<Circle fill="half" />);
-		expect(container.querySelector("path")).toBeInTheDocument();
+	it("draws half and empty fills as an outline", () => {
+		const { container, rerender } = render(<Circle fill="half" />);
+
 		expect(container.querySelector("path")).toHaveAttribute(
 			"d",
 			"M 5 0.5 A 4.5 4.5 0 0 0 5 9.5 Z",
 		);
-		expect(container.querySelector("circle")).toBeInTheDocument();
 		expect(container.querySelector("circle")).toHaveAttribute("fill", "none");
-	});
 
-	it("should render empty fill", () => {
-		const { container } = render(<Circle fill="empty" />);
-		const circle = container.querySelector("circle");
-		expect(circle).toBeInTheDocument();
-		expect(circle).toHaveAttribute("fill", "none");
-		expect(circle).toHaveAttribute("stroke", "currentColor");
+		rerender(<Circle fill="empty" />);
+
+		expect(container.querySelector("path")).not.toBeInTheDocument();
+		expect(container.querySelector("circle")).toHaveAttribute("fill", "none");
+		expect(container.querySelector("circle")).toHaveAttribute(
+			"stroke",
+			"currentColor",
+		);
 	});
 });

@@ -4,6 +4,13 @@ import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthen
 import { describe, expect, it, vi } from "vitest";
 import { resolveRecentAuthenticationFresh } from "../recentAuthentication";
 
+vi.mock("@server/auth/recentAuthentication", async () => {
+	const { recentAuthenticationServerFnMocks } = await import(
+		"@tests/server-fn/recentAuthentication"
+	);
+	return recentAuthenticationServerFnMocks;
+});
+
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@tanstack/react-query")>()),
 	isServer: true,

@@ -13,11 +13,26 @@ import {
 	mockRevokeUserAccess,
 	mockSetAdministratorRole,
 	mockUpdateUser,
+	userServerFnMocks,
 } from "@tests/server-fn/users";
-import { renderWithProviders, renderWithRouter } from "@tests/setup";
+import { renderWithProviders } from "@tests/setup";
 import UserDetail from "@users/components/UserDetail";
 import type { Group, User } from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
+
+function renderUserDetail(target: User, twoFactorEnabled = false) {
+	mockGetUser(target.id, target, twoFactorEnabled);
+	return renderWithProviders(<UserDetail userId={target.id} />);
+}
+
+async function submitHandle(handle: string) {
+	const input = await screen.findByLabelText("handle");
+	await userEvent.clear(input);
+	await userEvent.type(input, handle);
+
+	const form = input.closest("form") as HTMLElement;
+	await userEvent.click(within(form).getByRole("button", { name: "Save" }));
+}
 
 describe("<UserDetail />", () => {
 	let groups: Group[];
@@ -36,76 +51,36 @@ describe("<UserDetail />", () => {
 			active: true,
 		});
 		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+		mockListGroups(groups);
 	});
 
 	describe("<UserDetail />", () => {
-		it("should render correctly when administratorRole = AdministratorRoles.FULL, canModifyUser=true and 5 groups exist", async () => {
-			mockListGroups(groups);
-
+		it("should render correctly when administratorRole = AdministratorRoles.FULL and canModifyUser=true", async () => {
 			const userDetail = createFakeUser({
 				administratorRole: "full",
 				groups,
 			});
 
-			const getUser = mockGetUser(userDetail.id, userDetail);
-
-			renderWithProviders(<UserDetail userId={userDetail.id} />);
+			renderUserDetail(userDetail);
 
 			expect(await screen.findByText(userDetail.handle)).toBeInTheDocument();
 			expect(screen.getByLabelText("Administrator")).toBeInTheDocument();
-
-			expect(await screen.findByText("Groups")).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "Primary group: Group 0" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "Primary group: Group 1" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "Primary group: Group 2" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "Primary group: Group 3" }),
-			).toBeInTheDocument();
-
-			expect(
-				screen.getByRole("button", { name: "Primary group: Group 1" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "Primary group: Group 4" }),
-			).toBeInTheDocument();
-
-			expect(screen.getByText("Permissions")).toBeInTheDocument();
-			expect(
-				screen.getByText("Change group membership to modify permissions"),
-			).toBeInTheDocument();
-			expect(screen.getByText("create_ref")).toBeInTheDocument();
-			expect(screen.getByText("create_sample")).toBeInTheDocument();
-
-			expect(getUser).toHaveBeenCalled();
 		});
 
 		it("should render correctly when [administratorRole=null] and canModifyUser=false", async () => {
-			mockListGroups(groups);
-			const getUser = mockGetUser(user.id, user);
-
-			renderWithProviders(<UserDetail userId={user.id} />);
+			renderUserDetail(user);
 
 			expect(await screen.findByText("Group 4")).toBeInTheDocument();
 			expect(screen.queryByLabelText("Administrator")).not.toBeInTheDocument();
 			expect(screen.queryByText("User Role")).not.toBeInTheDocument();
-			expect(screen.getByText("Group 4")).toBeInTheDocument();
 			expect(screen.getByText("create_sample")).toBeInTheDocument();
-
-			expect(getUser).toHaveBeenCalled();
 		});
 
 		it("should render correctly when user has insufficient permissions", async () => {
 			mockGetAccount(createFakeAccount({ administratorRole: "users" }));
 			const adminUser = createFakeUser({ administratorRole: "full" });
-			const getUser = mockGetUser(adminUser.id, adminUser);
 
-			renderWithProviders(<UserDetail userId={adminUser.id} />);
+			renderUserDetail(adminUser);
 
 			expect(
 				await screen.findByText(
@@ -116,15 +91,11 @@ describe("<UserDetail />", () => {
 			expect(screen.getByText("Contact an administrator.")).toBeInTheDocument();
 			expect(screen.queryByText(adminUser.handle)).not.toBeInTheDocument();
 			expect(screen.queryByText("Permissions")).not.toBeInTheDocument();
-
-			expect(getUser).toHaveBeenCalled();
 		});
 
 		it("should handle user deactivation", async () => {
-			mockListGroups(groups);
-			mockGetUser(user.id, user);
 			const updateUser = mockUpdateUser(user.id, 200, { active: false });
-			renderWithProviders(<UserDetail userId={user.id} />);
+			renderUserDetail(user);
 
 			await userEvent.click(
 				await screen.findByRole("button", { name: "Deactivate" }),
@@ -134,13 +105,11 @@ describe("<UserDetail />", () => {
 		});
 
 		it("should handle user reactivation", async () => {
-			mockListGroups(groups);
 			const inactiveUser = createFakeUser({ active: false });
-			mockGetUser(inactiveUser.id, inactiveUser);
 			const updateUser = mockUpdateUser(inactiveUser.id, 200, {
 				active: true,
 			});
-			renderWithProviders(<UserDetail userId={inactiveUser.id} />);
+			renderUserDetail(inactiveUser);
 
 			await userEvent.click(
 				await screen.findByRole("button", { name: "Activate" }),
@@ -152,11 +121,9 @@ describe("<UserDetail />", () => {
 
 	describe("<RevokeUserAccess />", () => {
 		it("lets an administrator revoke a user's access", async () => {
-			mockListGroups(groups);
-			mockGetUser(user.id, user);
 			const revokeUserAccess = mockRevokeUserAccess(user);
 
-			renderWithProviders(<UserDetail userId={user.id} />);
+			renderUserDetail(user);
 
 			await userEvent.click(
 				await screen.findByRole("button", { name: "Revoke" }),
@@ -169,33 +136,14 @@ describe("<UserDetail />", () => {
 				}),
 			);
 		});
-
-		it("is hidden on the administrator's own user page", async () => {
-			const account = createFakeAccount({ administratorRole: "full" });
-			mockGetAccount(account);
-			mockListGroups(groups);
-			const self = createFakeUser({ id: account.id });
-			mockGetUser(self.id, self);
-
-			renderWithProviders(<UserDetail userId={self.id} />);
-
-			expect(
-				await screen.findByRole("button", { name: "Deactivate" }),
-			).toBeInTheDocument();
-			expect(
-				screen.queryByRole("button", { name: "Revoke" }),
-			).not.toBeInTheDocument();
-		});
 	});
 
 	describe("<ResetUserTotp />", () => {
 		it("lets a full administrator reset an enrolled user", async () => {
-			mockListGroups(groups);
 			const enrolled = createFakeUser();
-			mockGetUser(enrolled.id, enrolled, true);
 			const resetUserTotp = mockResetUserTotp(enrolled);
 
-			renderWithProviders(<UserDetail userId={enrolled.id} />);
+			renderUserDetail(enrolled, true);
 
 			await userEvent.click(
 				await screen.findByRole("button", { name: "Reset" }),
@@ -208,125 +156,18 @@ describe("<UserDetail />", () => {
 				}),
 			);
 		});
-
-		it("is hidden for a user without two-factor authentication", async () => {
-			mockListGroups(groups);
-			mockGetUser(user.id, user);
-
-			renderWithProviders(<UserDetail userId={user.id} />);
-
-			expect(
-				await screen.findByRole("button", { name: "Deactivate" }),
-			).toBeInTheDocument();
-			expect(
-				screen.queryByRole("button", { name: "Reset" }),
-			).not.toBeInTheDocument();
-		});
-
-		it("is hidden for an administrator without the full role", async () => {
-			mockGetAccount(createFakeAccount({ administratorRole: "users" }));
-			mockListGroups(groups);
-			const enrolled = createFakeUser();
-			mockGetUser(enrolled.id, enrolled, true);
-
-			renderWithProviders(<UserDetail userId={enrolled.id} />);
-
-			expect(
-				await screen.findByRole("button", { name: "Deactivate" }),
-			).toBeInTheDocument();
-			expect(
-				screen.queryByRole("button", { name: "Reset" }),
-			).not.toBeInTheDocument();
-		});
-
-		it("is hidden on the administrator's own account", async () => {
-			const account = createFakeAccount({ administratorRole: "full" });
-			mockGetAccount(account);
-			mockListGroups(groups);
-			const self = createFakeUser({ id: account.id });
-			mockGetUser(self.id, self, true);
-
-			renderWithProviders(<UserDetail userId={self.id} />);
-
-			expect(
-				await screen.findByRole("button", { name: "Deactivate" }),
-			).toBeInTheDocument();
-			expect(
-				screen.queryByRole("button", { name: "Reset" }),
-			).not.toBeInTheDocument();
-		});
-	});
-
-	describe("<UserGroups />", () => {
-		it("should render correctly", async () => {
-			const listGroups = mockListGroups(groups);
-			const getUser = mockGetUser(user.id, user);
-
-			renderWithProviders(<UserDetail userId={user.id} />);
-
-			await waitFor(() => {
-				expect(getUser).toHaveBeenCalled();
-				expect(listGroups).toHaveBeenCalled();
-			});
-
-			expect(
-				await screen.findByRole("button", { name: "Primary group: Group 1" }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "Primary group: Group 3" }),
-			).toBeInTheDocument();
-		});
-		it("should point to group creation when no groups exist", async () => {
-			const user = createFakeUser({ groups: [], primaryGroup: null });
-
-			mockListGroups([]);
-
-			const getUser = mockGetUser(user.id, user);
-
-			await renderWithRouter(<UserDetail userId={user.id} />);
-
-			expect(await screen.findByText("Groups")).toBeInTheDocument();
-			expect(
-				await screen.findByText(/No groups have been created yet/),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("link", { name: "Manage groups" }),
-			).toBeInTheDocument();
-			expect(screen.queryByLabelText("group3")).not.toBeInTheDocument();
-			expect(
-				screen.queryByRole("button", { name: /^Primary group:/ }),
-			).not.toBeInTheDocument();
-
-			expect(getUser).toHaveBeenCalled();
-		});
 	});
 
 	describe("<Handle />", () => {
-		it("should render with the current handle", async () => {
-			mockListGroups(groups);
-			const getUser = mockGetUser(user.id, user);
+		it("should show the current handle and submit a new one", async () => {
+			const updateUser = mockUpdateUser(user.id, 200, { handle: "new_handle" });
 
-			renderWithProviders(<UserDetail userId={user.id} />);
+			renderUserDetail(user);
 
 			expect(await screen.findByText("Change Handle")).toBeInTheDocument();
 			expect(screen.getByLabelText("handle")).toHaveValue(user.handle);
 
-			expect(getUser).toHaveBeenCalled();
-		});
-
-		it("should submit a new handle", async () => {
-			mockListGroups(groups);
-			mockGetUser(user.id, user);
-			const updateUser = mockUpdateUser(user.id, 200, { handle: "new_handle" });
-
-			renderWithProviders(<UserDetail userId={user.id} />);
-
-			const input = await screen.findByLabelText("handle");
-			await userEvent.clear(input);
-			await userEvent.type(input, "new_handle");
-
-			const form = input.closest("form") as HTMLElement;
-			await userEvent.click(within(form).getByRole("button", { name: "Save" }));
+			await submitHandle("new_handle");
 
 			await waitFor(() =>
 				expect(updateUser).toHaveBeenCalledWith({
@@ -335,53 +176,27 @@ describe("<UserDetail />", () => {
 			);
 		});
 
-		it("should show a conflict error when the handle is taken", async () => {
-			mockListGroups(groups);
-			mockGetUser(user.id, user);
-			mockUpdateUser(user.id, 409, { message: "User already exists." });
+		it("should show the server's error when the handle is taken or reserved", async () => {
+			userServerFnMocks.updateUserFn
+				.mockRejectedValueOnce(new Error("User already exists."))
+				.mockRejectedValueOnce(new Error("Reserved username: virtool"));
 
-			renderWithProviders(<UserDetail userId={user.id} />);
+			renderUserDetail(user);
 
-			const input = await screen.findByLabelText("handle");
-			await userEvent.clear(input);
-			await userEvent.type(input, "taken_handle");
+			await submitHandle("taken_handle");
+			expect(
+				await screen.findByText("User already exists."),
+			).toBeInTheDocument();
 
-			const form = input.closest("form") as HTMLElement;
-			await userEvent.click(within(form).getByRole("button", { name: "Save" }));
-
-			await waitFor(() =>
-				expect(screen.getByText("User already exists.")).toBeInTheDocument(),
-			);
-		});
-
-		it("should show an error when the handle is reserved", async () => {
-			mockListGroups(groups);
-			mockGetUser(user.id, user);
-			mockUpdateUser(user.id, 400, {
-				message: "Reserved user name: virtool",
-			});
-
-			renderWithProviders(<UserDetail userId={user.id} />);
-
-			const input = await screen.findByLabelText("handle");
-			await userEvent.clear(input);
-			await userEvent.type(input, "virtool");
-
-			const form = input.closest("form") as HTMLElement;
-			await userEvent.click(within(form).getByRole("button", { name: "Save" }));
-
-			await waitFor(() =>
-				expect(
-					screen.getByText("Reserved user name: virtool"),
-				).toBeInTheDocument(),
-			);
+			await submitHandle("virtool");
+			expect(
+				await screen.findByText("Reserved username: virtool"),
+			).toBeInTheDocument();
 		});
 	});
 
 	describe("<UserPermissions />", () => {
 		it("should render permissions correctly", async () => {
-			mockListGroups(groups);
-
 			const permissions = {
 				create_ref: true,
 				create_sample: true,
@@ -391,11 +206,7 @@ describe("<UserDetail />", () => {
 				upload_file: false,
 			};
 
-			const user = createFakeUser({ permissions });
-
-			const getUser = mockGetUser(user.id, user);
-
-			renderWithProviders(<UserDetail userId={user.id} />);
+			renderUserDetail(createFakeUser({ permissions }));
 
 			expect(await screen.findByText("Permissions")).toBeInTheDocument();
 			expect(
@@ -407,23 +218,17 @@ describe("<UserDetail />", () => {
 			expect(screen.getByLabelText("create_sample:true")).toBeInTheDocument();
 			expect(screen.getByLabelText("remove_file:false")).toBeInTheDocument();
 			expect(screen.getByLabelText("upload_file:false")).toBeInTheDocument();
-
-			expect(getUser).toHaveBeenCalled();
 		});
 	});
 
 	describe("<UserAdministratorRole />", () => {
 		beforeEach(() => {
-			mockListGroups(groups);
 			mockGetAccount(createFakeAccount({ id: 1, administratorRole: "full" }));
 			mockListAdministratorRoles(administratorRoles);
 		});
 
 		it("shows the role selector when managing another user", async () => {
-			const target = createFakeUser({ id: 2, administratorRole: null });
-			mockGetUser(target.id, target);
-
-			renderWithProviders(<UserDetail userId={target.id} />);
+			renderUserDetail(createFakeUser({ id: 2, administratorRole: null }));
 
 			expect(await screen.findByText("Administrator Role")).toBeInTheDocument();
 			expect(screen.getByText("Select administrator role")).toBeInTheDocument();
@@ -431,10 +236,9 @@ describe("<UserDetail />", () => {
 
 		it("lets a full administrator remove a user's role", async () => {
 			const target = createFakeUser({ id: 2, administratorRole: "users" });
-			mockGetUser(target.id, target);
 			const setAdministratorRole = mockSetAdministratorRole(target);
 
-			renderWithProviders(<UserDetail userId={target.id} />);
+			renderUserDetail(target);
 
 			await userEvent.click(
 				await screen.findByRole("button", {
@@ -447,14 +251,11 @@ describe("<UserDetail />", () => {
 
 		it("is hidden for a full administrator viewing their own account", async () => {
 			const self = createFakeUser({ id: 1, administratorRole: "full" });
-			const getUser = mockGetUser(self.id, self);
 
-			renderWithProviders(<UserDetail userId={self.id} />);
+			renderUserDetail(self);
 
 			expect(await screen.findByText(self.handle)).toBeInTheDocument();
 			expect(screen.queryByText("Administrator Role")).not.toBeInTheDocument();
-
-			expect(getUser).toHaveBeenCalled();
 		});
 	});
 });

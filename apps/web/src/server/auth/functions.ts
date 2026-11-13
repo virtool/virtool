@@ -128,7 +128,7 @@ function rethrowAsHttp(err: unknown): never {
 		err instanceof InvalidCredentialsError ||
 		(err instanceof APIError && err.statusCode < 500)
 	) {
-		throw new ClientError("Invalid handle or password.", 400);
+		throw new ClientError("Incorrect username or password.", 400);
 	}
 	if (err instanceof EmailRemediationRateLimitedError) {
 		throw new ClientError(

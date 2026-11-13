@@ -2,6 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { uploadServerFnMocks } from "../../tests/server-fn/uploads";
 import { type ChunkedInit, uploadBlocks } from "../chunkedUpload";
 
+vi.mock("@server/uploads/functions", async () => {
+	const { uploadServerFnMocks } = await import("@tests/server-fn/uploads");
+	return uploadServerFnMocks;
+});
+
 // The status a request settles with, chosen from its URL so a test can fail
 // just the block PUTs while the commit and everything else succeed.
 let statusFor: (url: string) => number;

@@ -4,9 +4,23 @@ import { userServerFnMocks } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
 import { silenceExpectedLogs } from "@tests/silenceExpectedLogs";
 import { CLIENT_ERROR_NAME, UNAVAILABLE_MESSAGE } from "@virtool/contracts";
+import { rootQueryKeys } from "@wall/keys";
 import { describe, expect, it } from "vitest";
 
 describe("/login", () => {
+	it("sends a new instance to setup", async () => {
+		const { router } = await renderRoute("/login", {
+			seed: (queryClient) => {
+				queryClient.setQueryData(rootQueryKeys.all(), { firstUser: true });
+				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+			},
+		});
+
+		await waitFor(() => {
+			expect(router.state.location.pathname).toBe("/setup");
+		});
+	});
+
 	it("shows the outage rather than the sign-in form while the database is down", async () => {
 		silenceExpectedLogs();
 		userServerFnMocks.getAccountFn.mockRejectedValue(

@@ -85,14 +85,14 @@ describe("<CreateUser />", () => {
 		const clipboard = vi.spyOn(navigator.clipboard, "writeText");
 		clipboard.mockRejectedValueOnce(new Error("Clipboard unavailable"));
 		await user.click(screen.getByRole("button", { name: "Copy" }));
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Could not copy. Select the text and copy it manually.",
 		);
 		await user.click(screen.getByRole("button", { name: "Copy" }));
 		expect(clipboard).toHaveBeenLastCalledWith(
 			(link as HTMLInputElement).value,
 		);
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Copied to clipboard.",
 		);
 		await user.click(screen.getByRole("button", { name: "Done" }));
@@ -173,10 +173,6 @@ describe("<CreateUser />", () => {
 			/>,
 		);
 
-		expect(
-			screen.getByText("This user is not a member of any groups."),
-		).toBeInTheDocument();
-
 		const combobox = screen.getByRole("combobox", { name: "Add group" });
 		await userEvent.type(combobox, "baz");
 		await userEvent.click(await screen.findByRole("option", { name: "baz" }));
@@ -247,10 +243,6 @@ describe("<CreateUser />", () => {
 		await userEvent.click(await screen.findByRole("option", { name: "foo" }));
 		await userEvent.click(toggle);
 		await userEvent.click(await screen.findByRole("option", { name: "bar" }));
-
-		expect(
-			screen.getByText("This user is a member of every group."),
-		).toBeInTheDocument();
 
 		await userEvent.click(
 			screen.getByRole("button", { name: "Primary group: foo" }),

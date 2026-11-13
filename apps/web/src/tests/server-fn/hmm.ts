@@ -3,7 +3,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/hmm/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test rendering an HMM view can stub
+ * globally from `tests/serverFnMocks.ts` so any test rendering an HMM view can stub
  * these without per-file `vi.mock` boilerplate.
  */
 export const hmmServerFnMocks = {
