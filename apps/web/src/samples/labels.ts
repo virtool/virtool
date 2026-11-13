@@ -1,6 +1,6 @@
 import type { SampleLabel } from "@samples/queries";
 import type { SampleMinimal } from "@virtool/contracts";
-import { groupBy } from "es-toolkit";
+import { groupBy, union } from "es-toolkit";
 
 /**
  * Normalizes a label color, which may or may not carry a leading ``#``.
@@ -25,5 +25,32 @@ export function getSelectedLabels(samples: SampleMinimal[]): SampleLabel[] {
 		}
 
 		return [{ ...first, allLabeled: labels.length === samples.length }];
+	});
+}
+
+/**
+ * The label ids each selected sample carries once a label is toggled across
+ * the selection.
+ *
+ * The label is removed when every selected sample already carries it, and added
+ * otherwise.
+ */
+export function getToggledLabels(
+	selectedLabels: SampleLabel[],
+	samples: SampleMinimal[],
+	labelId: number,
+): { sampleId: number; labels: number[] }[] {
+	const allLabeled =
+		selectedLabels.find((label) => label.id === labelId)?.allLabeled === true;
+
+	return samples.map((sample) => {
+		const labelIds = sample.labels.map((label) => label.id);
+
+		return {
+			sampleId: sample.id,
+			labels: allLabeled
+				? labelIds.filter((id) => id !== labelId)
+				: union(labelIds, [labelId]),
+		};
 	});
 }

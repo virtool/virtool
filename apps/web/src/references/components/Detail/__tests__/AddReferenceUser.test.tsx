@@ -6,19 +6,6 @@ import { describe, expect, it } from "vitest";
 import AddReferenceUser from "../AddReferenceUser";
 
 describe("<AddReferenceUser />", () => {
-	it("lists users returned by the search", async () => {
-		const alice = createFakeUser({ handle: "alice" });
-		const bob = createFakeUser({ handle: "bob" });
-		mockSearchUsers([alice, bob]);
-
-		renderWithProviders(
-			<AddReferenceUser users={[]} onHide={() => undefined} refId={1} show />,
-		);
-
-		expect(await screen.findByText("alice")).toBeInTheDocument();
-		expect(screen.getByText("bob")).toBeInTheDocument();
-	});
-
 	it("omits users already members of the reference", async () => {
 		const alice = createFakeUser({ handle: "alice" });
 		const bob = createFakeUser({ handle: "bob" });

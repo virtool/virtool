@@ -16,7 +16,7 @@ describe("<ReferenceManager />", () => {
 		mockGetReference(reference);
 	});
 
-	it("should render properly", async () => {
+	it("should render the general information, clone source, build, and contributors", async () => {
 		await renderRoute(path);
 
 		expect(await screen.findByText("General")).toBeInTheDocument();
@@ -35,13 +35,9 @@ describe("<ReferenceManager />", () => {
 		expect(screen.getByText("No index builds found")).toBeInTheDocument();
 		expect(screen.getByText("Contributors")).toBeInTheDocument();
 		expect(screen.getByText("No contributors found")).toBeInTheDocument();
-	});
 
-	it("should render clone source when [cloned_from] is set", async () => {
-		await renderRoute(path);
-
-		expect(await screen.findByText("Clone Reference")).toBeInTheDocument();
-		expect(screen.getByText("Source Reference"));
+		expect(screen.getByText("Clone Reference")).toBeInTheDocument();
+		expect(screen.getByText("Source Reference")).toBeInTheDocument();
 		expect(screen.getByText("Source Reference Name")).toBeInTheDocument();
 	});
 });

@@ -37,51 +37,40 @@ describe("<Indexes />", () => {
 		// `createdAt` crosses the wire as a `Date`, so the attribution renders it
 		// as a relative time.
 		const attribution = screen.getByText(index.user.handle, { exact: false });
-		expect(attribution).toHaveTextContent(/ago$/);
+		expect(attribution).toMatchTextContent(/ago$/);
 	});
 
-	it("offers a rebuild when the reference has unbuilt changes", async () => {
-		mockFindIndexes([createFakeIndexMinimal({ ready: true })], {
-			changeCount: 2,
-		});
+	it.each([
+		{ changeCount: 2, offered: true },
+		{ changeCount: 0, offered: false },
+	])(
+		"offers a rebuild only when there are unbuilt changes ($changeCount)",
+		async ({ changeCount, offered }) => {
+			mockFindIndexes([createFakeIndexMinimal({ ready: true })], {
+				changeCount,
+			});
 
-		await renderRoute(path(), { account });
+			await renderRoute(path(), { account });
 
-		expect(
-			await screen.findByRole("button", { name: "Create" }),
-		).toBeInTheDocument();
-	});
+			expect(await screen.findByText(/version/i)).toBeInTheDocument();
+			expect(screen.queryByRole("button", { name: "Create" }) !== null).toBe(
+				offered,
+			);
+		},
+	);
 
-	it("does not offer a rebuild when nothing has changed", async () => {
-		mockFindIndexes([createFakeIndexMinimal({ ready: true })], {
-			changeCount: 0,
-		});
+	it.each([
+		{ changeCount: 3, description: "This reference has unbuilt changes." },
+		{ changeCount: 0, description: "This reference has no indexes yet." },
+	])(
+		"explains an empty list ($changeCount changes)",
+		async ({ changeCount, description }) => {
+			mockFindIndexes([], { changeCount });
 
-		await renderRoute(path(), { account });
+			await renderRoute(path(), { account });
 
-		expect(await screen.findByText(/version/i)).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Create" })).toBeNull();
-	});
-
-	it("explains an empty list that has unbuilt changes", async () => {
-		mockFindIndexes([], { changeCount: 3 });
-
-		await renderRoute(path(), { account });
-
-		expect(await screen.findByText("No indexes found")).toBeInTheDocument();
-		expect(
-			screen.getByText("This reference has unbuilt changes."),
-		).toBeInTheDocument();
-	});
-
-	it("explains an empty list with nothing to build", async () => {
-		mockFindIndexes([], { changeCount: 0 });
-
-		await renderRoute(path(), { account });
-
-		expect(await screen.findByText("No indexes found")).toBeInTheDocument();
-		expect(
-			screen.getByText("This reference has no indexes yet."),
-		).toBeInTheDocument();
-	});
+			expect(await screen.findByText("No indexes found")).toBeInTheDocument();
+			expect(screen.getByText(description)).toBeInTheDocument();
+		},
+	);
 });

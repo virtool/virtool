@@ -37,22 +37,21 @@ describe("<SubtractionItem />", () => {
 		};
 	});
 
-	it("should render", async () => {
-		await renderWithRouter(<SubtractionItem {...props} />);
-
-		expect(screen.getByText("Arabidopsis thaliana")).toBeInTheDocument();
-		expect(screen.getByRole("progressbar")).toHaveAttribute("data-value", "50");
-	});
-
-	it.each(["pending", "running", "failed"] as const)(
-		"should render progress bar for ",
+	it.each(["pending", "running"] as const)(
+		"should show progress without a state label when the job is %s",
 		async (state) => {
 			if (props.job) {
 				props.job.state = state;
 			}
 
 			await renderWithRouter(<SubtractionItem {...props} />);
-			expect(screen.getByRole("progressbar")).toBeInTheDocument();
+
+			expect(screen.getByText("Arabidopsis thaliana")).toBeInTheDocument();
+			expect(screen.getByRole("progressbar")).toHaveAttribute(
+				"data-value",
+				"50",
+			);
+			expect(screen.queryByText(state)).not.toBeInTheDocument();
 		},
 	);
 
@@ -66,39 +65,24 @@ describe("<SubtractionItem />", () => {
 			await renderWithRouter(<SubtractionItem {...props} />);
 
 			expect(screen.getByText(state)).toBeInTheDocument();
+			expect(screen.getByRole("progressbar")).toBeInTheDocument();
 		},
 	);
 
-	it.each(["pending", "running"] as const)(
-		"should not label the state when the job is %s",
-		async (state) => {
-			if (props.job) {
-				props.job.state = state;
-			}
+	it.each([
+		["ready", { ready: true }],
+		["has no job", { job: null, ready: false }],
+	] as const)(
+		"should show only the attribution when the subtraction %s",
+		async (_, overrides) => {
+			await renderWithRouter(<SubtractionItem {...props} {...overrides} />);
 
-			await renderWithRouter(<SubtractionItem {...props} />);
-
-			expect(screen.queryByText(state)).not.toBeInTheDocument();
+			expect(screen.getByText("Arabidopsis thaliana")).toBeInTheDocument();
+			expect(
+				screen.getByText(`${props.user?.handle} created`),
+			).toBeInTheDocument();
+			expect(screen.getByText("1 year ago")).toBeInTheDocument();
+			expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 		},
 	);
-
-	it("should not render progress bar if job is ready", async () => {
-		props.ready = true;
-
-		await renderWithRouter(<SubtractionItem {...props} />);
-
-		expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-		expect(screen.queryByText("Complete")).not.toBeInTheDocument();
-		expect(
-			screen.getByText(`${props.user?.handle} created`),
-		).toBeInTheDocument();
-		expect(screen.getByText("1 year ago")).toBeInTheDocument();
-	});
-
-	it("should correctly render subtractions where job is absent", async () => {
-		props.job = null;
-		props.ready = false;
-
-		await renderWithRouter(<SubtractionItem {...props} />);
-	});
 });

@@ -32,7 +32,7 @@ describe("<UploadItem />", () => {
 		};
 	});
 
-	it("should render", () => {
+	it("should render the file with a download link named after it", () => {
 		const user = { id: 1, handle: "bill" };
 		renderItem({ ...props, user });
 
@@ -42,6 +42,11 @@ describe("<UploadItem />", () => {
 		expect(
 			screen.getByRole("button", { name: `Delete ${props.name}` }),
 		).toBeInTheDocument();
+
+		const link = screen.getByRole("link", { name: `Download ${props.name}` });
+
+		expect(link).toHaveAttribute("href", `/uploads/${props.id}`);
+		expect(link).toHaveAttribute("download", props.name);
 	});
 
 	it("should name the file as retrieved when [user=null]", () => {
@@ -55,15 +60,6 @@ describe("<UploadItem />", () => {
 		expect(
 			screen.getByRole("button", { name: `Delete ${props.name}` }),
 		).toBeInTheDocument();
-	});
-
-	it("should link to the download route, named after the file", () => {
-		renderItem(props);
-
-		const link = screen.getByRole("link", { name: `Download ${props.name}` });
-
-		expect(link).toHaveAttribute("href", `/uploads/${props.id}`);
-		expect(link).toHaveAttribute("download", props.name);
 	});
 
 	// Downloading is not gated on the delete permission — every signed-in user

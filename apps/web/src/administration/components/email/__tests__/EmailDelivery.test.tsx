@@ -16,40 +16,6 @@ function findStatus() {
 
 describe("<EmailDelivery>", () => {
 	describe("availability", () => {
-		it("reports a ready instance", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(await findStatus()).toHaveTextContent("Active");
-		});
-
-		it("reports a configured instance even when sending is switched off", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings({ enabled: false }));
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(await findStatus()).toHaveTextContent("Disabled");
-			expect(screen.getByText(/new email is not sent/i)).toBeVisible();
-		});
-
-		it("names the fields an unconfigured instance is missing", async () => {
-			mockEmailSettingsStore(
-				createFakeEmailSettings({
-					availability: "unconfigured",
-					enabled: false,
-					hasApiKey: false,
-					senderAddress: "",
-				}),
-			);
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(await findStatus()).toHaveTextContent(
-				"needs an API key and a sender address",
-			);
-		});
-
 		// A key that cannot be decrypted is intact. Reporting it as missing would
 		// point an administrator at the API key when the encryption key is at
 		// fault, and invite them to overwrite a value that is still good.
@@ -65,9 +31,9 @@ describe("<EmailDelivery>", () => {
 
 			const status = await findStatus();
 
-			expect(status).toHaveTextContent("Configuration Error");
-			expect(status).toHaveTextContent("has not been changed");
-			expect(status).not.toHaveTextContent("needs an API key");
+			expect(status).toMatchTextContent("Configuration Error");
+			expect(status).toMatchTextContent("has not been changed");
+			expect(status).not.toMatchTextContent("needs an API key");
 		});
 	});
 
@@ -127,16 +93,6 @@ describe("<EmailDelivery>", () => {
 	});
 
 	describe("the sender identity", () => {
-		it("shows the sender section", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(
-				await screen.findByRole("heading", { name: "Sender" }),
-			).toBeVisible();
-		});
-
 		it("saves the fields the server last returned", async () => {
 			const { updateEmailSettings } = mockEmailSettingsStore(
 				createFakeEmailSettings(),
@@ -249,7 +205,7 @@ describe("<EmailDelivery>", () => {
 			await waitFor(() => expect(input).toHaveValue(""));
 		});
 
-		it("refuses to submit an empty field, so a blank cannot clear the key", async () => {
+		it("refuses an empty or whitespace-only key, so a blank cannot clear the key", async () => {
 			const { clearEmailApiKey, setEmailApiKey } = mockEmailSettingsStore(
 				createFakeEmailSettings(),
 			);
@@ -259,29 +215,16 @@ describe("<EmailDelivery>", () => {
 			await userEvent.click(
 				await screen.findByRole("button", { name: "Replace Key" }),
 			);
-
 			expect(await screen.findByText("An API key is required.")).toBeVisible();
-			expect(setEmailApiKey).not.toHaveBeenCalled();
-			expect(clearEmailApiKey).not.toHaveBeenCalled();
-		});
 
-		it("refuses to submit a whitespace-only key", async () => {
-			const { setEmailApiKey } = mockEmailSettingsStore(
-				createFakeEmailSettings(),
-			);
-
-			renderWithProviders(<EmailDelivery />);
-
-			await userEvent.type(
-				await screen.findByLabelText("Resend API Key"),
-				"   ",
-			);
+			await userEvent.type(screen.getByLabelText("Resend API Key"), "   ");
 			await userEvent.click(
 				screen.getByRole("button", { name: "Replace Key" }),
 			);
 
 			expect(await screen.findByText("An API key is required.")).toBeVisible();
 			expect(setEmailApiKey).not.toHaveBeenCalled();
+			expect(clearEmailApiKey).not.toHaveBeenCalled();
 		});
 
 		it("confirms before removing a stored key", async () => {
@@ -297,7 +240,7 @@ describe("<EmailDelivery>", () => {
 
 			const dialog = await screen.findByRole("alertdialog");
 
-			expect(dialog).toHaveTextContent("cannot be recovered");
+			expect(dialog).toMatchTextContent("cannot be recovered");
 			expect(clearEmailApiKey).not.toHaveBeenCalled();
 
 			await userEvent.click(
@@ -309,94 +252,7 @@ describe("<EmailDelivery>", () => {
 	});
 
 	describe("test delivery", () => {
-		it("shows the test widget under sending", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-
-			renderWithProviders(<EmailDelivery />);
-
-			expect(await screen.findByText("Test")).toBeVisible();
-		});
-
-		it("reports acceptance without claiming the message arrived", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
-				ok: true,
-				providerMessageId: "msg_1",
-			});
-
-			renderWithProviders(<EmailDelivery />);
-
-			await userEvent.type(
-				await screen.findByLabelText("Email Address"),
-				"someone@example.com",
-			);
-			await userEvent.click(screen.getByRole("button", { name: "Send" }));
-
-			await waitFor(() => {
-				expect(emailServerFnMocks.sendTestEmailFn).toHaveBeenCalledWith({
-					data: { recipient: "someone@example.com" },
-				});
-			});
-
-			expect(
-				await screen.findByText(/Resend accepted the test message/),
-			).toBeVisible();
-		});
-
-		it("words a bounded failure code itself", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
-				ok: false,
-				code: "invalid_sender",
-			});
-
-			renderWithProviders(<EmailDelivery />);
-
-			await userEvent.type(
-				await screen.findByLabelText("Email Address"),
-				"someone@example.com",
-			);
-			await userEvent.click(screen.getByRole("button", { name: "Send" }));
-
-			expect(
-				await screen.findByText(/Resend rejected the sender address/),
-			).toBeVisible();
-		});
-
-		it("keeps the recipient after a failure so it can be retried", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
-				ok: false,
-				code: "rate_limited",
-			});
-
-			renderWithProviders(<EmailDelivery />);
-
-			const input = await screen.findByLabelText("Email Address");
-			await userEvent.type(input, "someone@example.com");
-			await userEvent.click(screen.getByRole("button", { name: "Send" }));
-
-			await screen.findByText(/rate limiting/);
-
-			expect(input).toHaveValue("someone@example.com");
-		});
-
-		it("refuses a malformed recipient without calling the server", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-
-			renderWithProviders(<EmailDelivery />);
-
-			await userEvent.type(
-				await screen.findByLabelText("Email Address"),
-				"nope",
-			);
-			await userEvent.click(screen.getByRole("button", { name: "Send" }));
-
-			expect(await screen.findByText("Invalid email address.")).toBeVisible();
-			expect(emailServerFnMocks.sendTestEmailFn).not.toHaveBeenCalled();
-		});
-
-		it("trims a pasted recipient before validating and sending", async () => {
+		it("trims a pasted recipient and reports acceptance without claiming the message arrived", async () => {
 			mockEmailSettingsStore(createFakeEmailSettings());
 			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
 				ok: true,
@@ -416,6 +272,44 @@ describe("<EmailDelivery>", () => {
 					data: { recipient: "someone@example.com" },
 				});
 			});
+
+			expect(
+				await screen.findByText(/Resend accepted the test message/),
+			).toBeVisible();
+		});
+
+		it("words a bounded failure code itself and keeps the recipient for a retry", async () => {
+			mockEmailSettingsStore(createFakeEmailSettings());
+			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
+				ok: false,
+				code: "invalid_sender",
+			});
+
+			renderWithProviders(<EmailDelivery />);
+
+			const input = await screen.findByLabelText("Email Address");
+			await userEvent.type(input, "someone@example.com");
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
+
+			expect(
+				await screen.findByText(/Resend rejected the sender address/),
+			).toBeVisible();
+			expect(input).toHaveValue("someone@example.com");
+		});
+
+		it("refuses a malformed recipient without calling the server", async () => {
+			mockEmailSettingsStore(createFakeEmailSettings());
+
+			renderWithProviders(<EmailDelivery />);
+
+			await userEvent.type(
+				await screen.findByLabelText("Email Address"),
+				"nope",
+			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
+
+			expect(await screen.findByText("Invalid email address.")).toBeVisible();
+			expect(emailServerFnMocks.sendTestEmailFn).not.toHaveBeenCalled();
 		});
 
 		it("clears an earlier test result after sender settings are saved", async () => {

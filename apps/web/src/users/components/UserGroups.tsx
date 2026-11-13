@@ -4,6 +4,7 @@ import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import { useListGroups } from "@groups/queries";
 import { useUpdateUser } from "@users/queries";
+import { getGroupRemoval } from "@users/utils";
 import type { GroupMinimal } from "@virtool/contracts";
 import GroupMembershipField from "./GroupMembershipField";
 
@@ -42,12 +43,15 @@ export default function UserGroups({
 	}
 
 	function removeGroup(id: number) {
+		const { groups, clearsPrimary } = getGroupRemoval(
+			memberIds,
+			primaryGroup?.id ?? null,
+			id,
+		);
+
 		mutation.mutate({
 			userId,
-			update: {
-				groups: memberIds.filter((memberId) => memberId !== id),
-				...(primaryGroup?.id === id ? { primaryGroup: null } : {}),
-			},
+			update: { groups, ...(clearsPrimary ? { primaryGroup: null } : {}) },
 		});
 	}
 

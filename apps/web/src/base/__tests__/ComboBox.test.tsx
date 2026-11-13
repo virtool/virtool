@@ -40,19 +40,14 @@ describe("<ComboBox />", () => {
 		expect(input).toHaveAttribute("aria-expanded", "false");
 	});
 
-	it("puts the input in the tab order", async () => {
-		renderComboBox();
-
-		await userEvent.tab();
-
-		expect(screen.getByRole("combobox", { name: "Add group" })).toHaveFocus();
-	});
-
 	it("opens the menu and selects an option with the keyboard alone", async () => {
 		const onChange = vi.fn();
 		renderComboBox(onChange);
 
 		await userEvent.tab();
+
+		expect(screen.getByRole("combobox", { name: "Add group" })).toHaveFocus();
+
 		await userEvent.keyboard("{ArrowDown}");
 
 		expect(screen.getByRole("combobox", { name: "Add group" })).toHaveAttribute(
@@ -65,7 +60,7 @@ describe("<ComboBox />", () => {
 		expect(onChange).toHaveBeenCalledWith(groups[1]);
 	});
 
-	it("marks the active option for screen readers as it is navigated", async () => {
+	it("marks the active option for screen readers until the menu closes", async () => {
 		renderComboBox();
 
 		await userEvent.tab();
@@ -84,25 +79,16 @@ describe("<ComboBox />", () => {
 			"aria-activedescendant",
 			screen.getByRole("option", { name: "Technicians" }).id,
 		);
-	});
-
-	it("closes the menu on Escape", async () => {
-		renderComboBox();
-
-		await userEvent.tab();
-		await userEvent.keyboard("{ArrowDown}");
-
-		const input = screen.getByRole("combobox", { name: "Add group" });
-		expect(input).toHaveAttribute("aria-expanded", "true");
 
 		await userEvent.keyboard("{Escape}");
 
 		expect(input).toHaveAttribute("aria-expanded", "false");
 	});
 
-	it("passes the selected item, not its key, to onChange", async () => {
+	it("passes the selected item, not its key, and leaves the term alone", async () => {
 		const onChange = vi.fn();
-		renderComboBox(onChange);
+		const onTermChange = vi.fn();
+		renderComboBox(onChange, onTermChange);
 
 		await userEvent.click(
 			screen.getByRole("button", { name: "Toggle Add group menu" }),
@@ -110,6 +96,7 @@ describe("<ComboBox />", () => {
 		await userEvent.click(screen.getByRole("option", { name: "Managers" }));
 
 		expect(onChange).toHaveBeenCalledWith(groups[0]);
+		expect(onTermChange).not.toHaveBeenCalled();
 	});
 
 	it("reports the term only as the user types it", async () => {
@@ -123,18 +110,6 @@ describe("<ComboBox />", () => {
 		);
 
 		expect(onTermChange).toHaveBeenCalledWith("M");
-	});
-
-	it("leaves the term alone when an option is selected", async () => {
-		const onTermChange = vi.fn();
-		renderComboBox(vi.fn(), onTermChange);
-
-		await userEvent.click(
-			screen.getByRole("button", { name: "Toggle Add group menu" }),
-		);
-		await userEvent.click(screen.getByRole("option", { name: "Managers" }));
-
-		expect(onTermChange).not.toHaveBeenCalled();
 	});
 
 	// Downshift's blur reducer commits the highlighted option as a selection, so

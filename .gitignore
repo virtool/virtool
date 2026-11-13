@@ -35,3 +35,6 @@ tags
 .vale/styles/*
 !.vale/styles/config
 !.vale/styles/Virtool
+
+# PNGs written by the `shots` Vitest project.
+/apps/web/screenshots

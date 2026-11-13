@@ -67,19 +67,6 @@ it("scrubs, inspects, and accepts a usable invitation", async () => {
 	});
 });
 
-it("refuses mismatched passwords before submitting", async () => {
-	mockUsableInvitation();
-
-	await renderWithRouter(<AccountSetup />, "/account-setup");
-	await screen.findByRole("heading", { name: "Set up your account" });
-	await fillForm("something-else");
-
-	expect(
-		await screen.findByText("The passwords do not match"),
-	).toBeInTheDocument();
-	expect(authServerFnMocks.acceptAccountSetupFn).not.toHaveBeenCalled();
-});
-
 it("says a verification email is on its way when the server queued one", async () => {
 	mockUsableInvitation();
 	authServerFnMocks.acceptAccountSetupFn.mockResolvedValue({

@@ -104,7 +104,9 @@ describe("<AuthenticatedLayout />", () => {
 
 	it("offers a retry instead of the login page when the account fetch fails", async () => {
 		silenceExpectedLogs();
-		mockGetAccount(createFakeAccount()).mockRejectedValueOnce(
+		// Fail every load until the retry: the router loads once before mounting
+		// and again on mount, and each load runs the guard.
+		userServerFnMocks.getAccountFn.mockRejectedValue(
 			new TypeError("Failed to fetch"),
 		);
 
@@ -117,6 +119,7 @@ describe("<AuthenticatedLayout />", () => {
 		const retry = await screen.findByRole("button", { name: "Try again" });
 		expect(router.state.location.pathname).toBe("/samples");
 
+		mockGetAccount(createFakeAccount());
 		await userEvent.click(retry);
 
 		await waitFor(() => {

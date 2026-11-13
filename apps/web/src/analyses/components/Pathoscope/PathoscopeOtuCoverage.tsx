@@ -1,8 +1,7 @@
 import { toThousand } from "@app/format";
 import type { PathoscopeSegmentCoverage } from "@virtool/contracts";
-import PathoscopeCoverageChart, {
-	type CoveragePanel,
-} from "./PathoscopeCoverageChart";
+import type { CoveragePanel } from "./coverage";
+import PathoscopeCoverageChart from "./PathoscopeCoverageChart";
 
 const height = 80;
 

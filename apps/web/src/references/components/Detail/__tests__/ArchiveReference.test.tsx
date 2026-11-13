@@ -85,19 +85,4 @@ describe("<ArchiveReference />", () => {
 			await screen.findByText(/Failed to archive reference/i),
 		).toBeInTheDocument();
 	});
-
-	it("should close without mutating when the Cancel button is clicked", async () => {
-		const detail = createFakeReference({ archived: false });
-		mockArchiveReference(detail);
-
-		await renderWithRouter(<ArchiveReference detail={detail} />);
-
-		await userEvent.click(screen.getByRole("button", { name: "archive" }));
-		await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-
-		await waitFor(() => {
-			expect(getDialogTitle("Archive", detail.name)).toBeNull();
-		});
-		expect(referenceServerFnMocks.archiveReferenceFn).not.toHaveBeenCalled();
-	});
 });

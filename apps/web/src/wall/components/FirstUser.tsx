@@ -2,7 +2,7 @@ import { getErrorStatus } from "@app/queryErrors";
 import Button from "@base/Button";
 import Field, { FieldDescription, FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
-import { usePasswordRules } from "@forms/password";
+import { getPasswordMismatchError, usePasswordRules } from "@forms/password";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -142,7 +142,7 @@ export default function FirstUser() {
 						{...register("confirmPassword", {
 							required: "Please confirm the password",
 							validate: (value) =>
-								value === getValues("password") || "The passwords do not match",
+								getPasswordMismatchError(getValues("password"), value) ?? true,
 						})}
 					/>
 					<FieldError errors={[errors.confirmPassword]} />
