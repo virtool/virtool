@@ -54,6 +54,12 @@ A `release` post names a pull request. The build gets the version and date from
 the `virtool` release that contains it, and hides the post if no release
 contains it. The dev server shows these posts first, marked "Unreleased." A `research` post has no release, and its author gives the date.
 
+`/blog/index.json` lists each released post with its slug, version, release
+date, title, summary, and the URL and alt text of its first image. The web app
+reads it from the browser, so the file has `Access-Control-Allow-Origin: *`.
+Keep its fields compatible, because web app releases that are already deployed
+read it. The build fails if a released post has no image.
+
 See [Posts](../../CONTRIBUTING.md#posts) for how to write a post.
 
 ## Deployment

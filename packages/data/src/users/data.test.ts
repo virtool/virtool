@@ -246,19 +246,16 @@ describe("markChangelogSeen", () => {
 			.where(eq(users.id, userId));
 	}
 
-	it("gives a new user a watermark at the time of creation", async () => {
-		const before = Date.now();
+	it("starts a new user's watermark at the given date", async () => {
 		const { id } = await createUser(db, {
 			handle: "alice",
 			password: "a-real-password",
+			lastSeenChangelogAt: earlier,
 		});
 
 		const { lastSeenChangelogAt } = await getAccount(db, id);
 
-		expect(lastSeenChangelogAt.getTime()).toBeGreaterThanOrEqual(before - 1000);
-		expect(lastSeenChangelogAt.getTime()).toBeLessThanOrEqual(
-			Date.now() + 1000,
-		);
+		expect(lastSeenChangelogAt).toEqual(earlier);
 	});
 
 	it("moves the watermark forward to the entry date", async () => {
@@ -1053,6 +1050,7 @@ describe("createUser", () => {
 		const user = await createUser(db, {
 			handle: "alice",
 			password: "a-real-password",
+			lastSeenChangelogAt: new Date(),
 		});
 
 		expect(user).toMatchObject({
@@ -1089,12 +1087,14 @@ describe("createUser", () => {
 		await createUser(db, {
 			handle: "alice",
 			password: "a-real-password",
+			lastSeenChangelogAt: new Date(),
 		});
 
 		await expect(
 			createUser(db, {
 				handle: "alice",
 				password: "another-password",
+				lastSeenChangelogAt: new Date(),
 			}),
 		).rejects.toBeInstanceOf(UserConflictError);
 	});

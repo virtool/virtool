@@ -8,8 +8,8 @@ const postFields = { title: z.string(), summary: z.string() };
  * directory or file name is the slug. `summary` is one sentence, because post
  * lists show it.
  *
- * Keep the frontmatter plain YAML, because the web app reads it with no MDX
- * compiler.
+ * The site publishes the title, summary, and first image of each released post
+ * in a blog index, and the web app shows them.
  *
  * A `release` post shows users one new feature and why it is useful. Write one
  * only for a change that users must know about; the changelog lists the rest.

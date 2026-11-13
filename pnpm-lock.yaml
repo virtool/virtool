@@ -673,6 +673,9 @@ importers:
       '@virtool/changelog':
         specifier: workspace:*
         version: link:../../packages/changelog
+      '@virtool/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       astro:
         specifier: ^7.4.4
         version: 7.4.5(@azure/identity@4.14.1(supports-color@10.2.2))(@azure/storage-blob@12.34.0(supports-color@10.2.2))(@types/node@26.6.6)(db0@0.4.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
@@ -764,6 +767,9 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.14.25
         version: 3.14.25(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@virtool/changelog':
+        specifier: workspace:*
+        version: link:../../packages/changelog
       '@virtool/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

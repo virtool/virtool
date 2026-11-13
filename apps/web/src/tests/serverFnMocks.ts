@@ -2,10 +2,12 @@
 // The `web` and `shots` setups both import this, so both projects render
 // against the same stubs.
 import { beforeEach, vi } from "vitest";
+import { blogIndexMocks } from "./blogIndex";
 import { accountServerFnMocks } from "./server-fn/account";
 import { analysisServerFnMocks } from "./server-fn/analyses";
 import { authServerFnMocks } from "./server-fn/auth";
 import { bannerServerFnMocks } from "./server-fn/banners";
+import { changelogServerFnMocks } from "./server-fn/changelog";
 import { emailServerFnMocks } from "./server-fn/email";
 import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
@@ -36,6 +38,14 @@ vi.mock("@server/analyses/functions", async () => {
 vi.mock("@server/account/functions", async () => {
 	const { accountServerFnMocks } = await import("./server-fn/account");
 	return accountServerFnMocks;
+});
+vi.mock("@nav/blogIndex", async () => {
+	const { blogIndexMocks } = await import("./blogIndex");
+	return blogIndexMocks;
+});
+vi.mock("@server/changelog/functions", async () => {
+	const { changelogServerFnMocks } = await import("./server-fn/changelog");
+	return changelogServerFnMocks;
 });
 // See the users mock below for why this resolves the mock via dynamic import.
 vi.mock("@server/auth/functions", async () => {
@@ -141,6 +151,8 @@ beforeEach(() => {
 		...Object.values(authServerFnMocks),
 		bannerServerFnMocks.findBannerFn,
 		bannerServerFnMocks.findBannersFn,
+		...Object.values(changelogServerFnMocks),
+		...Object.values(blogIndexMocks),
 		...Object.values(recoveryServerFnMocks),
 		...Object.values(recentAuthenticationServerFnMocks),
 		...Object.values(labelServerFnMocks),
