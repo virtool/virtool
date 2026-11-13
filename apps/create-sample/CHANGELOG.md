@@ -1,3 +1,9 @@
+## 42.62.3 (2026-11-13)
+
+### Maintenance
+
+- Accept the username of the job's user from the jobs API, with or without the old handle field ([#4232](https://github.com/virtool/virtool/pull/4232))
+
 ## 42.62.2 (2026-11-09)
 
 ### Maintenance

@@ -1,3 +1,28 @@
+## 42.67.0 (2026-11-13)
+
+### Features
+
+#### Use username as the only name for a user ([#4232](https://github.com/virtool/virtool/pull/4232))
+
+Virtool now says **Username** everywhere it said **Handle**, for example on the
+account page and on the user administration screens. A username is always kept
+and shown in lowercase. You can type it in any case to sign in, to accept an
+invitation, or to change it, and Virtool changes it to lowercase.
+
+A user whose handle had uppercase letters now sees it in lowercase. Sign-in and
+API keys continue to work for these users. A bookmarked user list that sorts by
+handle must be sorted again.
+
+The database migration changes each handle to a lowercase username. If a user
+has a handle that is not a valid username, the migration stops before it changes
+data and reports the user.
+
+### Fixes
+
+#### Type to search the users, groups, and labels filters ([#4227](https://github.com/virtool/virtool/pull/4227))
+
+When you open the **Users** filter on the samples and analyses lists, or the **Groups** or **Labels** filter on the samples list, the search box now has focus. You can start to type immediately. The **Groups** and **Labels** filters now have a search box that finds items by name. Use the up and down arrow keys to move through the list. Press Enter to add or remove the highlighted item. The first Escape clears the search, and the next Escape closes the filter.
+
 ## 42.66.0 (2026-11-13)
 
 ### Features
