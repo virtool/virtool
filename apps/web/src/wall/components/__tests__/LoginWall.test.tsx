@@ -37,15 +37,30 @@ describe("<LoginWall />", () => {
 		});
 	}
 
-	it("tells a user whose session ended why they are back at the wall", async () => {
-		await renderWall("/login?reason=session-ended");
+	const SESSION_ENDED = "Your session ended. Sign in again.";
+	const SETUP_COMPLETE = "Virtool is already set up. Sign in to continue.";
 
-		await waitFor(() => {
+	it.each([
+		["session-ended", SESSION_ENDED],
+		["setup-complete", SETUP_COMPLETE],
+		[undefined, undefined],
+	])(
+		"explains why the user is at the wall when reason=%s",
+		async (reason, notice) => {
+			await renderWall(reason ? `/login?reason=${reason}` : "/login");
+
 			expect(
-				screen.getByText("Your session ended. Sign in again."),
+				await screen.findByRole("button", { name: "Sign in" }),
 			).toBeInTheDocument();
-		});
-	});
+			for (const text of [SESSION_ENDED, SETUP_COMPLETE]) {
+				if (text === notice) {
+					expect(screen.getByText(text)).toBeInTheDocument();
+				} else {
+					expect(screen.queryByText(text)).not.toBeInTheDocument();
+				}
+			}
+		},
+	);
 
 	it("drops the session notice once the password is accepted", async () => {
 		authServerFnMocks.loginFn.mockResolvedValue({ twoFactorRedirect: true });
@@ -64,27 +79,6 @@ describe("<LoginWall />", () => {
 			expect(router.state.location.search).toEqual({ redirect: "/samples" }),
 		);
 		expect(screen.queryByText(/session ended/i)).not.toBeInTheDocument();
-	});
-
-	it("says nothing about a session to a user who simply visits the wall", async () => {
-		await renderWall("/login");
-
-		await waitFor(() => {
-			expect(
-				screen.getByRole("button", { name: "Sign in" }),
-			).toBeInTheDocument();
-		});
-		expect(screen.queryByText(/session ended/i)).not.toBeInTheDocument();
-	});
-
-	it("tells a user that another browser already set up Virtool", async () => {
-		await renderWall("/login?reason=setup-complete");
-
-		expect(
-			await screen.findByText(
-				"Virtool is already set up. Sign in to continue.",
-			),
-		).toBeInTheDocument();
 	});
 
 	it("sends a user who must turn on two-factor authentication to enrollment", async () => {

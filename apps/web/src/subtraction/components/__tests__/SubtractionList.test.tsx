@@ -13,18 +13,20 @@ describe("<SubtractionList />", () => {
 		subtractions = createFakeSubtractionMinimal();
 	});
 
-	it("renders correctly", async () => {
-		const findSubtractions = mockFindSubtractions([subtractions]);
+	it("renders the list and a create button when [canModify=true]", async () => {
+		mockFindSubtractions([subtractions]);
+		const account = createFakeAccount({ administratorRole: "full" });
 
-		await renderRoute("/subtractions");
+		await renderRoute("/subtractions", { account });
 
 		expect(
 			await screen.findByRole("heading", { name: /Subtractions/ }),
 		).toBeInTheDocument();
 		expect(screen.getByText("1")).toBeInTheDocument();
 		expect(screen.getByText(subtractions.name)).toBeInTheDocument();
-
-		expect(findSubtractions).toHaveBeenCalled();
+		expect(
+			await screen.findByRole("button", { name: "Create" }),
+		).toBeInTheDocument();
 	});
 
 	it("should put the search term in the url once typing settles", async () => {
@@ -47,28 +49,13 @@ describe("<SubtractionList />", () => {
 		);
 	});
 
-	it("should render create button when [canModify=true]", async () => {
-		const findSubtractions = mockFindSubtractions([subtractions]);
-		const account = createFakeAccount({ administratorRole: "full" });
-
-		await renderRoute("/subtractions", { account });
-
-		expect(
-			await screen.findByRole("button", { name: "Create" }),
-		).toBeInTheDocument();
-
-		expect(findSubtractions).toHaveBeenCalled();
-	});
-
 	it("should not render create button when [canModify=false]", async () => {
-		const findSubtractions = mockFindSubtractions([subtractions]);
+		mockFindSubtractions([subtractions]);
 		const account = createFakeAccount({ administratorRole: null });
 
 		await renderRoute("/subtractions", { account });
 
 		expect(await screen.findByText(subtractions.name)).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Create" })).toBeNull();
-
-		expect(findSubtractions).toHaveBeenCalled();
 	});
 });

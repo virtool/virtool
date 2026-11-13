@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPostSections } from "./posts";
+import { getFirstImage, getImagePath, getPostSections } from "./posts";
 
 function post(slug: string, pr: number) {
   return {
@@ -47,5 +47,32 @@ describe("getPostSections", () => {
       "Unreleased",
       "2026",
     ]);
+  });
+});
+
+describe("getFirstImage", () => {
+  it("returns the first image with its alt text", () => {
+    expect(
+      getFirstImage(
+        'Text.\n\n![The new menu](./menu.png?url "Menu")\n\n![Other](./other.png)',
+      ),
+    ).toEqual({ alt: "The new menu", src: "./menu.png?url" });
+  });
+
+  it("returns undefined when the body has no image", () => {
+    expect(getFirstImage("Text with a [link](/docs).")).toBeUndefined();
+  });
+});
+
+describe("getImagePath", () => {
+  it("resolves an image beside the post and removes the query", () => {
+    expect(
+      getImagePath(
+        "node_modules/@virtool/changelog/posts/time-format/index.mdx",
+        "./references_tooltip.png?url",
+      ),
+    ).toBe(
+      "/node_modules/@virtool/changelog/posts/time-format/references_tooltip.png",
+    );
   });
 });

@@ -3,7 +3,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/analyses/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test importing this helper can stub the
+ * globally from `tests/serverFnMocks.ts` so any test importing this helper can stub the
  * analysis server functions without per-file `vi.mock` boilerplate.
  */
 export const analysisServerFnMocks = {

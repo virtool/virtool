@@ -1,25 +1,11 @@
 import { cn } from "@app/cn";
-import { range } from "es-toolkit/math";
 import { type ReactNode, useEffect } from "react";
 import PaginationContent from "./PaginationContent";
 import PaginationLink from "./PaginationLink";
 import PaginationNext from "./PaginationNext";
 import PaginationPrevious from "./PaginationPrevious";
 import PaginationRoot from "./PaginationRoot";
-
-function getPageRange(
-	pageCount: number,
-	storedPage: number,
-	leftButtons = 1,
-	rightButtons = 2,
-) {
-	const totalButtons = leftButtons + rightButtons;
-	let maxVal = Math.min(pageCount, storedPage + rightButtons);
-	const minVal = Math.max(1, maxVal - totalButtons);
-	maxVal = Math.min(pageCount, minVal + totalButtons);
-
-	return range(minVal, maxVal + 1);
-}
+import { getPageRange } from "./pageRange";
 
 type PaginationProps = {
 	children?: ReactNode;

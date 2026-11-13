@@ -20,6 +20,7 @@ import {
 	FirstAdministratorExistsError,
 } from "@virtool/data/users/data";
 import { eq } from "drizzle-orm";
+import { getReleaseDate } from "../changelog/release";
 import type { CookieAdapter } from "./cookies";
 
 /** Submitted credentials do not identify an eligible account. */
@@ -120,7 +121,10 @@ export async function createFirstUser(
 	input: CreateFirstUserInput,
 ): Promise<{ user: User; emailVerificationRequired: boolean }> {
 	try {
-		return await createFirstAdministrator(db, input);
+		return await createFirstAdministrator(db, {
+			...input,
+			lastSeenChangelogAt: getReleaseDate(),
+		});
 	} catch (err) {
 		if (err instanceof FirstAdministratorExistsError) {
 			throw new FirstUserExistsError();

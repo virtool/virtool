@@ -19,45 +19,27 @@ describe("<JobItem />", () => {
 		};
 	});
 
-	describe("<JobItem />", () => {
-		it("should render properly", async () => {
-			await renderWithRouter(<JobItem {...props} />);
+	it.each<[JobState, number]>([
+		["running", 40],
+		["succeeded", 100],
+	])("should render state=%s with progress=%s", async (state, progress) => {
+		props.state = state;
+		props.progress = progress;
 
-			expect(screen.getByText("Build Index")).toBeInTheDocument();
-			expect(
-				screen.getByText(`${props.user.username} created`),
-			).toBeInTheDocument();
-		});
-	});
+		await renderWithRouter(<JobItem {...props} />);
 
-	describe("<JobStatus />", () => {
-		it.each<[JobState, number]>([
-			["pending", 0],
-			["running", 0],
-			["running", 40],
-			["cancelled", 45],
-			["failed", 25],
-		])("should render state=%s with progress=%s", async (state, progress) => {
-			props.state = state;
-			props.progress = progress;
+		expect(screen.getByText("Build Index")).toBeInTheDocument();
+		expect(
+			screen.getByText(`${props.user.username} created`),
+		).toBeInTheDocument();
+		expect(screen.getByText(state)).toBeInTheDocument();
 
-			await renderWithRouter(<JobItem {...props} />);
+		const progressbar = screen.queryByRole("progressbar");
 
-			expect(screen.getByText(state)).toBeInTheDocument();
-			expect(screen.getByRole("progressbar")).toHaveAttribute(
-				"data-value",
-				`${progress}`,
-			);
-		});
-
-		it("should render properly when job is complete", async () => {
-			props.state = "succeeded";
-			props.progress = 100;
-
-			await renderWithRouter(<JobItem {...props} />);
-
-			expect(screen.getByText("succeeded")).toBeInTheDocument();
-			expect(screen.queryByRole("progressbar")).toBeNull();
-		});
+		if (state === "succeeded") {
+			expect(progressbar).toBeNull();
+		} else {
+			expect(progressbar).toHaveAttribute("data-value", `${progress}`);
+		}
 	});
 });

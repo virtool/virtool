@@ -8,7 +8,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/indexes/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test rendering an index view — or the
+ * globally from `tests/serverFnMocks.ts` so any test rendering an index view — or the
  * analysis-creation dialog, which offers the ready ones — can stub these without
  * per-file `vi.mock` boilerplate.
  */

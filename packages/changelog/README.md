@@ -1,7 +1,7 @@
 # `@virtool/changelog`
 
 The release posts, the post schema, and the parser for the `virtool`
-changelog. The site and the web app read posts from this package. Knope writes
+changelog. The site reads posts from this package. Knope writes
 the changelog in the web app, and each consumer gives the changelog text to the
 parser.
 

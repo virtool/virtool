@@ -4,7 +4,7 @@ import { lowercaseInputValue } from "@app/usernameInput";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
 import Input from "@base/Input";
-import { usePasswordRules } from "@forms/password";
+import { getPasswordMismatchError, usePasswordRules } from "@forms/password";
 import {
 	completePasswordRecoveryFn,
 	inspectPasswordRecoveryFn,
@@ -118,8 +118,9 @@ export default function RecoveryWall() {
 		if (submitting.current || state.status !== "ready") {
 			return;
 		}
-		if (password !== confirmPassword) {
-			setError("The passwords do not match.");
+		const mismatch = getPasswordMismatchError(password, confirmPassword);
+		if (mismatch) {
+			setError(mismatch);
 			return;
 		}
 		if (

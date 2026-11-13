@@ -54,6 +54,9 @@ export async function createAdministrator(
 			email,
 			getVerificationUrl: () => "",
 			keyring: createKeyring(undefined, undefined),
+			// Dev-tools has no changelog of its own, so the administrator starts
+			// with every post unread.
+			lastSeenChangelogAt: new Date(0),
 			password: input.password,
 			username,
 		});

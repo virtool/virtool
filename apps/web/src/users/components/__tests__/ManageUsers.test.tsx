@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import {
@@ -73,15 +73,19 @@ describe("<ManageUsers />", () => {
 		});
 
 		await userEvent.click(await screen.findByRole("button", { name: "Email" }));
-		expect(router.state.location.search).toMatchObject({
-			sort: "email",
-			direction: "ascending",
+		await waitFor(() => {
+			expect(router.state.location.search).toMatchObject({
+				sort: "email",
+				direction: "ascending",
+			});
 		});
 
 		await userEvent.click(await screen.findByRole("button", { name: "Email" }));
-		expect(router.state.location.search).toMatchObject({
-			sort: "email",
-			direction: "descending",
+		await waitFor(() => {
+			expect(router.state.location.search).toMatchObject({
+				sort: "email",
+				direction: "descending",
+			});
 		});
 	});
 

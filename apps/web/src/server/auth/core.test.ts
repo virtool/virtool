@@ -19,6 +19,7 @@ import {
 	it,
 	vi,
 } from "vitest";
+import { getReleaseDate } from "../changelog/release";
 import type { CookieAdapter } from "./cookies";
 import {
 	createFirstUser,
@@ -168,6 +169,23 @@ describe("createFirstUser", () => {
 
 		expect(result.user.administratorRole).toBe("full");
 		expect(await db.select().from(authAccounts)).toHaveLength(1);
+	});
+
+	it("starts the watermark at this build's release date", async () => {
+		const { user } = await createFirstUser(db, {
+			username: "alice",
+			email: "alice@example.com",
+			password: "a-real-password",
+			deliveryAvailable: false,
+			keyring,
+			getVerificationUrl: () => "https://virtool.test/verify-email",
+		});
+
+		const [row] = await db
+			.select({ lastSeenChangelogAt: users.lastSeenChangelogAt })
+			.from(users)
+			.where(eq(users.id, user.id));
+		expect(row?.lastSeenChangelogAt).toEqual(getReleaseDate());
 	});
 
 	it("refuses a second first user", async () => {

@@ -10,27 +10,22 @@ const { default: NcbiApiKey } = await import("../NcbiApiKey");
 describe("<NcbiApiKey>", () => {
 	// The field is empty whichever way the setting is stored, so the placeholder
 	// is the only thing telling an administrator whether one is already set.
-	it("says a key is configured when one is", async () => {
-		mockSettingsStore(createFakeSettings({ hasNcbiApiKey: true }));
+	it.each([
+		[true, "A key is configured"],
+		[false, "No key configured"],
+	])(
+		"shows whether a key is configured when hasNcbiApiKey=%s",
+		async (hasNcbiApiKey, placeholder) => {
+			mockSettingsStore(createFakeSettings({ hasNcbiApiKey }));
 
-		renderWithProviders(<NcbiApiKey />);
+			renderWithProviders(<NcbiApiKey />);
 
-		expect(await screen.findByLabelText("API Key")).toHaveAttribute(
-			"placeholder",
-			"A key is configured",
-		);
-	});
-
-	it("says no key is configured when none is", async () => {
-		mockSettingsStore(createFakeSettings({ hasNcbiApiKey: false }));
-
-		renderWithProviders(<NcbiApiKey />);
-
-		expect(await screen.findByLabelText("API Key")).toHaveAttribute(
-			"placeholder",
-			"No key configured",
-		);
-	});
+			expect(await screen.findByLabelText("API Key")).toHaveAttribute(
+				"placeholder",
+				placeholder,
+			);
+		},
+	);
 
 	it("saves a typed key and clears the field", async () => {
 		const { setNcbiApiKey } = mockSettingsStore(
@@ -40,6 +35,9 @@ describe("<NcbiApiKey>", () => {
 		renderWithProviders(<NcbiApiKey />);
 
 		const input = await screen.findByLabelText("API Key");
+		expect(
+			screen.queryByRole("button", { name: "Remove" }),
+		).not.toBeInTheDocument();
 		await userEvent.type(input, "  secret-key  ");
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -65,16 +63,18 @@ describe("<NcbiApiKey>", () => {
 		expect(setNcbiApiKey).not.toHaveBeenCalled();
 	});
 
-	it("offers to remove a configured key", async () => {
+	it("offers to remove a usable key without a notice", async () => {
 		const { clearNcbiApiKey } = mockSettingsStore(
-			createFakeSettings({ hasNcbiApiKey: true }),
+			createFakeSettings({ hasNcbiApiKey: true, ncbiAvailability: "ready" }),
 		);
 
 		renderWithProviders(<NcbiApiKey />);
 
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Remove" }),
-		);
+		const remove = await screen.findByRole("button", { name: "Remove" });
+		expect(
+			screen.queryByRole("status", { name: "ncbi api key status" }),
+		).not.toBeInTheDocument();
+		await userEvent.click(remove);
 
 		await waitFor(() => expect(clearNcbiApiKey).toHaveBeenCalled());
 	});
@@ -93,30 +93,6 @@ describe("<NcbiApiKey>", () => {
 
 		expect(
 			await screen.findByRole("status", { name: "ncbi api key status" }),
-		).toHaveTextContent("Configuration Error");
-	});
-
-	it("shows no notice when the stored key is usable", async () => {
-		mockSettingsStore(
-			createFakeSettings({ hasNcbiApiKey: true, ncbiAvailability: "ready" }),
-		);
-
-		renderWithProviders(<NcbiApiKey />);
-
-		expect(await screen.findByLabelText("API Key")).toBeInTheDocument();
-		expect(
-			screen.queryByRole("status", { name: "ncbi api key status" }),
-		).not.toBeInTheDocument();
-	});
-
-	it("offers no removal when no key is configured", async () => {
-		mockSettingsStore(createFakeSettings({ hasNcbiApiKey: false }));
-
-		renderWithProviders(<NcbiApiKey />);
-
-		expect(await screen.findByLabelText("API Key")).toBeInTheDocument();
-		expect(
-			screen.queryByRole("button", { name: "Remove" }),
-		).not.toBeInTheDocument();
+		).toMatchTextContent("Configuration Error");
 	});
 });

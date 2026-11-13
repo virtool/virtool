@@ -145,7 +145,9 @@ summary, such as a `minor` bump for `virtool` with a few paragraphs of prose.
 
 A post is an optional article on the site. Add an MDX file to the `posts`
 directory of the `@virtool/changelog` package. The site build fails if a required
-field is missing. A post can make `Knope / Check` ask for a change file; see
+field is missing. The web app shows the title, summary, and first image of each
+release post under **What's new**, but only in that release and later ones. The
+site build fails if a released post has no image. A post can make `Knope / Check` ask for a change file; see
 [`@virtool/changelog`](packages/changelog/README.md).
 
 A `release` post can merge in the same pull request as its change, or in a

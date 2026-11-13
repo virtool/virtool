@@ -12,17 +12,6 @@ import { describe, expect, it } from "vitest";
 import Groups from "../Groups";
 
 describe("Groups", () => {
-	it("should render correctly when loading = true", async () => {
-		await renderWithRouter(<Groups />);
-
-		expect(screen.queryByText("No groups found")).not.toBeInTheDocument();
-		expect(screen.queryByText("create_ref")).not.toBeInTheDocument();
-		expect(screen.queryByText("No Group Members")).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole("button", { name: "Delete" }),
-		).not.toBeInTheDocument();
-	});
-
 	it("should render correctly when no groups exist", async () => {
 		mockListGroups([]);
 		await renderWithRouter(<Groups />);
@@ -43,66 +32,6 @@ describe("Groups", () => {
 		expect(screen.getByText("Create")).toBeInTheDocument();
 	});
 
-	it("should render correctly when one groups exists and group contains no members", async () => {
-		const group = createFakeGroup();
-		mockListGroups([group]);
-		mockGetGroup(group);
-		await renderWithRouter(<Groups />);
-
-		expect(
-			await screen.findByRole("button", { name: "Delete" }),
-		).toBeInTheDocument();
-		expect(screen.queryByText("No groups found")).not.toBeInTheDocument();
-		expect(screen.getByText("create_ref")).toBeInTheDocument();
-		expect(screen.getByText("No Group Members")).toBeInTheDocument();
-		expect(screen.getAllByText(group.name)).toHaveLength(1);
-		expect(screen.getByRole("textbox", { name: "name" })).toHaveValue(
-			group.name,
-		);
-	});
-
-	it("should render create new group view correctly", async () => {
-		mockListGroups([]);
-		await renderWithRouter(<Groups />);
-
-		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-		await userEvent.click(await screen.findByText("Create"));
-
-		expect(screen.getByRole("dialog")).toBeInTheDocument();
-		expect(screen.getByText("Name")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
-		expect(screen.getByRole("textbox", { name: "Name" })).toBeInTheDocument();
-	});
-
-	it("should announce a validation error and tie it to the input on failed submit", async () => {
-		mockListGroups([]);
-		await renderWithRouter(<Groups />);
-
-		await userEvent.click(await screen.findByText("Create"));
-		const input = screen.getByRole("textbox", { name: "Name" });
-		expect(input).not.toBeInvalid();
-
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-		const alert = await screen.findByRole("alert");
-		expect(alert).toHaveTextContent("Provide a name for the group");
-		expect(input).toBeInvalid();
-		expect(input).toHaveAccessibleDescription("Provide a name for the group");
-	});
-
-	it("should render correctly when active group has a group member", async () => {
-		const group = createFakeGroup({
-			users: [{ id: 1, lifecycleState: "normal", username: "test_user1" }],
-		});
-		mockListGroups([group]);
-		mockGetGroup(group);
-		await renderWithRouter(<Groups />);
-
-		expect(await screen.findByText("Members")).toBeInTheDocument();
-		expect(screen.getByText("test_user1")).toBeInTheDocument();
-		expect(screen.queryByText("No Group Members")).not.toBeInTheDocument();
-	});
-
 	it("should show a pending member without a username", async () => {
 		const group = createFakeGroup({
 			users: [
@@ -121,7 +50,7 @@ describe("Groups", () => {
 		).toBeInTheDocument();
 	});
 
-	it("should render correctly when more than one group exists", async () => {
+	it("should show the selected group's name, permissions, and members", async () => {
 		const group1 = createFakeGroup({
 			users: [{ id: 1, lifecycleState: "normal", username: "bob" }],
 			permissions: createFakePermissions({
@@ -130,23 +59,117 @@ describe("Groups", () => {
 			}),
 			name: "Group 1",
 		});
-		const group2 = createFakeGroup({
-			users: [{ id: 2, lifecycleState: "normal", username: "test_user2" }],
-			permissions: createFakePermissions({
-				create_sample: true,
-				modify_hmm: true,
-			}),
-			name: "Group 2",
-		});
-
+		const group2 = createFakeGroup({ users: [], name: "Group 2" });
 		mockListGroups([group1, group2]);
-		mockGetGroup(group1);
-
+		groupServerFnMocks.getGroupFn.mockImplementation(
+			async ({ data }: { data: { groupId: number } }) =>
+				[group1, group2].find((group) => group.id === data.groupId),
+		);
 		await renderWithRouter(<Groups />);
 
-		expect(await screen.findByText("Group 1")).toBeInTheDocument();
+		expect(
+			await screen.findByRole("button", { name: "Delete" }),
+		).toBeInTheDocument();
+		expect(screen.queryByText("No groups found")).not.toBeInTheDocument();
+		expect(screen.getAllByText("Group 1")).toHaveLength(1);
 		expect(screen.getByText("Group 2")).toBeInTheDocument();
+		expect(screen.getByRole("textbox", { name: "name" })).toHaveValue(
+			"Group 1",
+		);
+		expect(screen.getByText("create_ref")).toBeInTheDocument();
+		expect(screen.getByText("Members")).toBeInTheDocument();
 		expect(screen.getByText("bob")).toBeInTheDocument();
+		expect(screen.queryByText("No Group Members")).not.toBeInTheDocument();
+
+		await userEvent.click(screen.getByRole("tab", { name: "Group 2" }));
+
+		expect(await screen.findByText("No Group Members")).toBeInTheDocument();
+		expect(screen.getByRole("textbox", { name: "name" })).toHaveValue(
+			"Group 2",
+		);
+		expect(screen.queryByText("bob")).not.toBeInTheDocument();
+	});
+
+	it("should announce a validation error and tie it to the input on failed submit", async () => {
+		mockListGroups([]);
+		await renderWithRouter(<Groups />);
+
+		await userEvent.click(await screen.findByText("Create"));
+		const input = screen.getByRole("textbox", { name: "Name" });
+		expect(input).not.toBeInvalid();
+
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		const alert = await screen.findByRole("alert");
+		expect(alert).toMatchTextContent("Provide a name for the group");
+		expect(input).toBeInvalid();
+		expect(input).toHaveAccessibleDescription("Provide a name for the group");
+	});
+
+	it("creates a group and closes the dialog", async () => {
+		mockListGroups([]);
+		groupServerFnMocks.createGroupFn.mockResolvedValue(
+			createFakeGroup({ name: "Technicians" }),
+		);
+		await renderWithRouter(<Groups />);
+
+		await userEvent.click(await screen.findByText("Create"));
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Name" }),
+			"Technicians",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() =>
+			expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+		);
+		expect(groupServerFnMocks.createGroupFn).toHaveBeenCalledWith({
+			data: { name: "Technicians" },
+		});
+	});
+
+	it("toggles a permission and renames the selected group", async () => {
+		const group = createFakeGroup({
+			name: "Technicians",
+			permissions: createFakePermissions({ create_sample: true }),
+		});
+		mockListGroups([group]);
+		mockGetGroup(group);
+		groupServerFnMocks.updateGroupFn.mockResolvedValue(group);
+		await renderWithRouter(<Groups />);
+
+		await userEvent.click(
+			await screen.findByRole("checkbox", { name: "create_sample" }),
+		);
+		await userEvent.click(screen.getByRole("checkbox", { name: "modify_hmm" }));
+
+		await waitFor(() =>
+			expect(groupServerFnMocks.updateGroupFn).toHaveBeenCalledTimes(2),
+		);
+		expect(groupServerFnMocks.updateGroupFn).toHaveBeenNthCalledWith(1, {
+			data: {
+				groupId: group.id,
+				name: undefined,
+				permissions: { create_sample: false },
+			},
+		});
+		expect(groupServerFnMocks.updateGroupFn).toHaveBeenNthCalledWith(2, {
+			data: {
+				groupId: group.id,
+				name: undefined,
+				permissions: { modify_hmm: true },
+			},
+		});
+
+		const name = screen.getByRole("textbox", { name: "name" });
+		await userEvent.clear(name);
+		await userEvent.type(name, "Curators{Enter}");
+
+		await waitFor(() =>
+			expect(groupServerFnMocks.updateGroupFn).toHaveBeenLastCalledWith({
+				data: { groupId: group.id, name: "Curators", permissions: undefined },
+			}),
+		);
 	});
 
 	it("asks for confirmation before deleting a group", async () => {

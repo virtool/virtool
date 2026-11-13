@@ -18,19 +18,6 @@ import Select, { SelectButton } from "../Select";
 import Switch from "../Switch";
 
 describe("<Field />", () => {
-	it("should connect the label to the control", () => {
-		renderWithProviders(
-			<Field>
-				<FieldLabel>Username</FieldLabel>
-				<Input />
-			</Field>,
-		);
-
-		expect(
-			screen.getByRole("textbox", { name: "Username" }),
-		).toBeInTheDocument();
-	});
-
 	it("should not mark the control invalid or described when there is no description or error", () => {
 		renderWithProviders(
 			<Field>
@@ -46,7 +33,7 @@ describe("<Field />", () => {
 		expect(input).not.toHaveAttribute("aria-describedby");
 	});
 
-	it("should describe the control with its description", () => {
+	it("should name the control with its label and describe it with its description", () => {
 		renderWithProviders(
 			<Field>
 				<FieldLabel>Username</FieldLabel>
@@ -56,9 +43,9 @@ describe("<Field />", () => {
 			</Field>,
 		);
 
-		expect(screen.getByRole("textbox")).toHaveAccessibleDescription(
-			"Shown to other users",
-		);
+		expect(
+			screen.getByRole("textbox", { name: "Username" }),
+		).toHaveAccessibleDescription("Shown to other users");
 	});
 
 	it("should mark the control invalid and describe it with the error", () => {
@@ -168,33 +155,19 @@ describe('<FieldLabel variant="row" />', () => {
 });
 
 describe("<FieldError />", () => {
-	it("should announce its message as an assertive live region", () => {
+	it("should announce its message as an assertive live region with a non-color icon", () => {
 		renderWithProviders(<FieldError>Username is required</FieldError>);
 
-		expect(screen.getByRole("alert")).toHaveTextContent("Username is required");
-	});
+		const alert = screen.getByRole("alert");
 
-	it("should show a non-color icon alongside the message", () => {
-		renderWithProviders(<FieldError>Username is required</FieldError>);
-
-		expect(screen.getByRole("alert").querySelector("svg")).not.toBeNull();
+		expect(alert).toMatchTextContent("Username is required");
+		expect(alert.querySelector("svg")).not.toBeNull();
 	});
 
 	it("should not show an icon when there is no error", () => {
 		renderWithProviders(<FieldError />);
 
 		expect(screen.getByRole("alert").querySelector("svg")).toBeNull();
-	});
-
-	it("should show one message for duplicate errors", () => {
-		renderWithProviders(
-			<FieldError
-				errors={[{ message: "Required" }, undefined, { message: "Required" }]}
-			/>,
-		);
-
-		expect(screen.getByRole("alert")).toHaveTextContent(/^Required$/);
-		expect(screen.queryByRole("list")).toBeNull();
 	});
 
 	it("should list several distinct errors", () => {

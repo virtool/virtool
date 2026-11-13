@@ -13,6 +13,11 @@ import {
 	vi,
 } from "vitest";
 
+vi.mock("@server/jobs/functions", async () => {
+	const { jobServerFnMocks } = await import("@tests/server-fn/jobs");
+	return jobServerFnMocks;
+});
+
 const FLUSH_MS = 500;
 
 function createJob(id: number, overrides?: Partial<Job>): Job {

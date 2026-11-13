@@ -6,13 +6,10 @@ function startsWith(key: readonly unknown[], prefix: readonly unknown[]) {
 }
 
 describe("userQueryKeys", () => {
-	it("nests the nested list under lists(), so one invalidation covers it too", () => {
+	it("gives the nested list its own key under lists(), so one invalidation covers it too", () => {
 		expect(startsWith(userQueryKeys.nested(), userQueryKeys.lists())).toBe(
 			true,
 		);
-	});
-
-	it("gives the nested list its own key rather than colliding with lists()", () => {
 		expect(userQueryKeys.nested()).not.toEqual(userQueryKeys.lists());
 	});
 });

@@ -7,10 +7,15 @@ import {
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { getAuthNextStep } from "../authStep";
 import { rootQueryKeys } from "../keys";
 import { getAuthNextStepRoute, resolveAuthNextStep } from "../nextStep";
+
+vi.mock("@server/users/functions", async () => {
+	const { userServerFnMocks } = await import("@tests/server-fn/users");
+	return userServerFnMocks;
+});
 
 function namedError(name: string, purpose?: string) {
 	return Object.assign(new Error(name), { name, purpose });

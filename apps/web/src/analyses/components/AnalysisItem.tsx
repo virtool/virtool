@@ -9,10 +9,14 @@ import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { useCheckCanEditSample } from "@samples/hooks";
-import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
+import type { AnalysisMinimal } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
-import { checkSupportedWorkflow, getWorkflowVersionLabel } from "../utils";
+import {
+	checkCanRemoveAnalysis,
+	checkSupportedWorkflow,
+	getWorkflowVersionLabel,
+} from "../utils";
 
 type AnalysisItemProps = {
 	analysis: AnalysisMinimal;
@@ -40,13 +44,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 		analysis.job ?? undefined,
 	);
 
-	// The same predicate `deleteAnalysis` applies, and deliberately not `ready`.
-	// It reads both ways: an unready analysis whose pod was OOM-killed or evicted
-	// stays removable rather than stranding the user, and a finished analysis
-	// whose job has not been marked terminal yet does not advertise a button the
-	// server would answer with a 409.
-	const state = job?.state ?? analysis.job?.state;
-	const canDelete = state === undefined || isJobStateTerminal(state);
+	const canDelete = checkCanRemoveAnalysis(analysis, job);
 
 	const workflowName = getWorkflowDisplayName(workflow);
 	const sampleName = analysis.sample.name;

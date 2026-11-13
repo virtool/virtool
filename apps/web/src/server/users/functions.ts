@@ -60,6 +60,7 @@ import {
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { createReplacementSession } from "../auth/sessionActions";
 import { checkReservedUsername, checkUsername } from "../auth/username";
+import { getReleaseDate } from "../changelog/release";
 import { db, keyring } from "../composition";
 import { config } from "../config";
 import { isEmailDeliveryAvailable } from "../email/delivery";
@@ -288,6 +289,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 				administratorRole: data.administratorRole,
 				groups: data.groups,
 				primaryGroup: data.primaryGroup,
+				lastSeenChangelogAt: getReleaseDate(),
 				deliveryIntent: data.deliveryIntent,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
 				issuerUserId: context.principal.userId,

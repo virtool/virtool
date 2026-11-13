@@ -3,7 +3,7 @@ import { registerUsernameInput } from "@app/usernameInput";
 import Button from "@base/Button";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
-import { usePasswordRules } from "@forms/password";
+import { getPasswordMismatchError, usePasswordRules } from "@forms/password";
 import {
 	acceptAccountSetupFn,
 	inspectAccountSetupFn,
@@ -186,7 +186,7 @@ export default function AccountSetup() {
 						{...register("confirmPassword", {
 							required: "Please confirm the password",
 							validate: (value) =>
-								value === getValues("password") || "The passwords do not match",
+								getPasswordMismatchError(getValues("password"), value) ?? true,
 						})}
 					/>
 					<FieldError errors={[errors.confirmPassword]} />

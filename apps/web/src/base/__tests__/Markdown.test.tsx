@@ -19,34 +19,18 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 `;
 
 describe("<Markdown />", () => {
-	it("should render markdown", () => {
+	it("should render markdown headings and tables", () => {
 		renderWithProviders(<Markdown markdown={markdown} />);
 
-		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+		expect(screen.getByRole("heading", { level: 1 })).toMatchTextContent(
 			"Heading 1",
 		);
-		expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+		expect(screen.getByRole("heading", { level: 2 })).toMatchTextContent(
 			"Heading 2",
 		);
-		expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent(
+		expect(screen.getByRole("heading", { level: 3 })).toMatchTextContent(
 			"Table Example",
 		);
-	});
-
-	it("should escape raw HTML rather than rendering it", () => {
-		const { container } = renderWithProviders(
-			<Markdown markdown={`<img src="x" onerror="alert(1)"> <b>bold</b>`} />,
-		);
-
-		expect(container.querySelector("img")).toBeNull();
-		expect(container.querySelector("b")).toBeNull();
-		expect(
-			screen.getByText(`<img src="x" onerror="alert(1)"> <b>bold</b>`),
-		).toBeInTheDocument();
-	});
-
-	it("should render table", () => {
-		renderWithProviders(<Markdown markdown={markdown} />);
 
 		expect(screen.getByText("Header 1")).toBeInTheDocument();
 		expect(screen.getByText("Header 2")).toBeInTheDocument();
@@ -60,5 +44,17 @@ describe("<Markdown />", () => {
 		expect(screen.getByText("Data 4")).toBeInTheDocument();
 		expect(screen.getByText("Data 5")).toBeInTheDocument();
 		expect(screen.getByText("Data 6")).toBeInTheDocument();
+	});
+
+	it("should escape raw HTML rather than rendering it", () => {
+		const { container } = renderWithProviders(
+			<Markdown markdown={`<img src="x" onerror="alert(1)"> <b>bold</b>`} />,
+		);
+
+		expect(container.querySelector("img")).toBeNull();
+		expect(container.querySelector("b")).toBeNull();
+		expect(
+			screen.getByText(`<img src="x" onerror="alert(1)"> <b>bold</b>`),
+		).toBeInTheDocument();
 	});
 });

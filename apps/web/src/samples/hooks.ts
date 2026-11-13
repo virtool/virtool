@@ -1,6 +1,6 @@
 import { useFetchAccount } from "@account/account";
-import { hasSufficientAdminRole } from "@virtool/contracts";
 import { useFetchSample } from "./queries";
+import { checkCanEditSample } from "./utils";
 
 /**
  * Determines if the current user has permission to edit a sample
@@ -28,12 +28,7 @@ export function useCheckCanEditSample(sampleId: number) {
 		return { hasPermission: false, isPending: true };
 	}
 
-	const hasPermission =
-		hasSufficientAdminRole("full", account.administratorRole) ||
-		sample.allWrite ||
-		sample.user.id === account.id ||
-		(sample.groupWrite &&
-			account.groups.some((g) => g.id === sample.group?.id));
+	const hasPermission = checkCanEditSample(account, sample);
 
 	return { hasPermission, isPending: false };
 }

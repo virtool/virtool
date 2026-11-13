@@ -48,6 +48,8 @@ export type CreatePendingInvitationInput = InvitationIssueOptions & {
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
 	primaryGroup?: number | null;
+	/** The start of the user's changelog watermark. */
+	lastSeenChangelogAt: Date;
 };
 
 async function issueInvitationInTransaction(

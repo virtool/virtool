@@ -186,6 +186,8 @@ export type CreateUserValues = {
 	email?: string;
 	emailVerified?: boolean;
 	administratorRole?: AdministratorRoleName | null;
+	/** The start of the user's changelog watermark. */
+	lastSeenChangelogAt: Date;
 };
 
 /** Values accepted when creating a pending user. */
@@ -194,6 +196,8 @@ export type CreatePendingUserValues = {
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
 	primaryGroup?: number | null;
+	/** The start of the user's changelog watermark. */
+	lastSeenChangelogAt: Date;
 };
 
 /** Partial values accepted when updating a user. */
@@ -658,8 +662,9 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
  * Advance the user's changelog watermark to the date of the newest entry they
  * have seen.
  *
- * The watermark starts at the time the user was created or the column was
- * added, which can be later than an entry's date. The write only moves it
+ * The watermark starts at the date the caller gives when it creates the user,
+ * or at the time the column was added, which can be later than an entry's
+ * date. The write only moves it
  * forward, so marking an older entry as seen can't bring back entries the user
  * never had as unread.
  */
@@ -938,6 +943,7 @@ export async function createPendingUserInTransaction(
 				lifecycleState: "pending",
 				administratorRole: values.administratorRole ?? null,
 				lastPasswordChange: now,
+				lastSeenChangelogAt: values.lastSeenChangelogAt,
 				legacyId: null,
 				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
 			})
@@ -1013,6 +1019,7 @@ export async function createUserInTransaction(
 				password,
 				administratorRole: values.administratorRole ?? null,
 				lastPasswordChange: now,
+				lastSeenChangelogAt: values.lastSeenChangelogAt,
 				legacyId: null,
 				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
 			})
@@ -1039,6 +1046,8 @@ export type CreateFirstAdministratorInput = {
 	deliveryAvailable: boolean;
 	getVerificationUrl: (token: string) => string;
 	keyring: Keyring;
+	/** The start of the administrator's changelog watermark. */
+	lastSeenChangelogAt: Date;
 };
 
 /** Create exactly one first administrator and optional verification message. */
@@ -1074,6 +1083,7 @@ export async function createFirstAdministrator(
 				password: input.password,
 				administratorRole: "full",
 				emailVerified: false,
+				lastSeenChangelogAt: input.lastSeenChangelogAt,
 			},
 			password,
 		);

@@ -11,7 +11,7 @@ import { expect, type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/users/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test importing this helper can stub
+ * globally from `tests/serverFnMocks.ts` so any test importing this helper can stub
  * the users server functions without per-file `vi.mock` boilerplate.
  */
 export const userServerFnMocks = {
