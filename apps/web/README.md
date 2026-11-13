@@ -303,9 +303,9 @@ of `web` or `shots` needs Chromium. Install it with
 #### Screenshots
 
 A `*.shot.tsx` file renders a route or component with fake data and saves a
-PNG. It needs no Postgres, vtd environment, or development server. Take every
+PNG. It needs no Postgres, `vtd` environment, or development server. Take every
 shot with `pnpm --filter @virtool/web shots`. Add a file path to take only the
-shots in that file. PNGs go to `apps/web/screenshots/`, which Git ignores.
+shots in that file. The images go to `apps/web/screenshots/`, which Git ignores.
 
 Put tests in adjacent `__tests__/` directories. Use `user-event` and accessible
 queries, and don't disambiguate controls by index. Local tests skip React
