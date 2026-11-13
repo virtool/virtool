@@ -188,10 +188,10 @@ describe("default administrator", () => {
 	});
 
 	it.each([
-		["ad", "admin@example.com", "hello world", "User name must have 3 to 30"],
-		["virtool", "admin@example.com", "hello world", "Reserved user name"],
+		["ad", "admin@example.com", "hello world", "Username must have 3 to 30"],
+		["virtool", "admin@example.com", "hello world", "Reserved username"],
 		["admin", "admin", "hello world", "Enter a valid email address."],
-		["admin", "admin@example.com", "short", "minimum length requirement (8)"],
+		["admin", "admin@example.com", "short", "must have at least 8 characters"],
 	])(
 		"rejects handle %j, email %j, and password %j",
 		(handle, email, password, message) => {
@@ -218,7 +218,7 @@ describe("default administrator", () => {
 				handle: "virtool",
 				password: "",
 			}),
-		).toThrow("Reserved user name: virtool");
+		).toThrow("Reserved username: virtool");
 		expect(store.getDefaultAdministrator()?.handle).toBe("admin");
 	});
 

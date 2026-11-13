@@ -3,11 +3,13 @@ import Button from "@base/Button";
 import Field, { FieldDescription, FieldError, FieldLabel } from "@base/Field";
 import Input from "@base/Input";
 import { getPasswordMismatchError, usePasswordRules } from "@forms/password";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { getWallErrorMessage } from "../errors";
 import { useFollowAuthNextStep } from "../hooks";
+import { rootQueryKeys } from "../keys";
 import { useCreateFirstUser } from "../queries";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
@@ -28,6 +30,7 @@ type FormValues = {
 export default function FirstUser() {
 	const mutation = useCreateFirstUser();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const follow = useFollowAuthNextStep();
 	const passwordRules = usePasswordRules();
 	const [verificationQueued, setVerificationQueued] = useState(false);
@@ -56,6 +59,9 @@ export default function FirstUser() {
 				onError: (error) => {
 					// Another browser finished setup first.
 					if (getErrorStatus(error) === 409) {
+						// The cached root still reports a first user, and the sign-in
+						// guard would send the browser back here.
+						queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
 						void navigate({
 							to: "/login",
 							replace: true,
@@ -113,7 +119,7 @@ export default function FirstUser() {
 					/>
 					<FieldDescription>
 						If email delivery is set up, Virtool sends a link to verify this
-						address. You do not need email to finish setup.
+						address. You can finish setup without email delivery.
 					</FieldDescription>
 					<FieldError errors={[errors.email]} />
 				</Field>

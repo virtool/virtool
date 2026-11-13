@@ -1,0 +1,24 @@
+{
+	"name": "@virtool/changelog",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"format": "prettier --write posts",
+		"format:check": "prettier --check posts",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@virtool/tsconfig": "workspace:*",
+		"prettier": "^3.9.10",
+		"vitest": "^5.1.0"
+	}
+}

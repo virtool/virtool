@@ -3,7 +3,7 @@ import { getUserCount } from "@virtool/data/users/data";
 import { open } from "../auth/policy";
 import { db } from "../composition";
 
-// Public: the `_authenticated` guard reads `firstUser` before any session
+// Public: the route guards read `firstUser` before any session
 // exists to decide whether to redirect to first-user setup, so this cannot
 // require a session. `version` is the running deployment's build version,
 // injected by Vite's `define` (see appVersion.d.ts).

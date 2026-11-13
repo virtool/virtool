@@ -167,7 +167,7 @@ describe("<LoginForm />", () => {
 		const user = userEvent.setup();
 		const handle = "test_Username";
 		const password = "Password";
-		const errorMessage = "Invalid handle or password.";
+		const errorMessage = "Incorrect username or password.";
 
 		loginMock.mockRejectedValue(createClientError(errorMessage));
 
@@ -311,7 +311,7 @@ describe("<LoginForm />", () => {
 			expect(await screen.findByRole("alert")).toMatchTextContent(
 				"Passkey sign-in failed. Try again or sign in with your password.",
 			);
-			expect(screen.queryByText("Invalid handle or password.")).toBeNull();
+			expect(screen.queryByText("Incorrect username or password.")).toBeNull();
 			expect(screen.getByLabelText("Username")).not.toHaveAttribute(
 				"aria-invalid",
 			);

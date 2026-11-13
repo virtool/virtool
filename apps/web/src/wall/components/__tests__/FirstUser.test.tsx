@@ -91,6 +91,7 @@ describe("<FirstUser />", () => {
 
 	it("sends the user to sign in when another browser finished setup first", async () => {
 		mockCreateFirstUser(undefined, 409);
+		mockGetRoot({ firstUser: false });
 		mockGetAccountUnauthorized();
 
 		const { router } = await renderSetup();

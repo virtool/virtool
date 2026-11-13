@@ -179,7 +179,7 @@ describe("<UserDetail />", () => {
 		it("should show the server's error when the handle is taken or reserved", async () => {
 			userServerFnMocks.updateUserFn
 				.mockRejectedValueOnce(new Error("User already exists."))
-				.mockRejectedValueOnce(new Error("Reserved user name: virtool"));
+				.mockRejectedValueOnce(new Error("Reserved username: virtool"));
 
 			renderUserDetail(user);
 
@@ -190,7 +190,7 @@ describe("<UserDetail />", () => {
 
 			await submitHandle("virtool");
 			expect(
-				await screen.findByText("Reserved user name: virtool"),
+				await screen.findByText("Reserved username: virtool"),
 			).toBeInTheDocument();
 		});
 	});
