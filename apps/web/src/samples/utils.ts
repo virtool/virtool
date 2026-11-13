@@ -1,5 +1,12 @@
 import { stripMateToken } from "@uploads/pairing";
-import type { JobNested, LibraryType, Upload } from "@virtool/contracts";
+import {
+	type Account,
+	hasSufficientAdminRole,
+	type JobNested,
+	type LibraryType,
+	type Sample,
+	type Upload,
+} from "@virtool/contracts";
 import type { CreateSampleRequest } from "./types";
 
 /** The workflows that samples can be filtered by. */
@@ -147,4 +154,21 @@ export function checkCanDeleteSample(ready: boolean, job?: JobNested): boolean {
 		return true;
 	}
 	return job?.state === "failed" || job?.state === "cancelled";
+}
+
+/**
+ * Whether an account can edit a sample: as a full administrator, as its owner,
+ * through its group, or because the sample lets every user write to it.
+ */
+export function checkCanEditSample(
+	account: Pick<Account, "administratorRole" | "groups" | "id">,
+	sample: Pick<Sample, "allWrite" | "group" | "groupWrite" | "user">,
+): boolean {
+	return (
+		hasSufficientAdminRole("full", account.administratorRole) ||
+		sample.allWrite ||
+		sample.user.id === account.id ||
+		(sample.groupWrite &&
+			account.groups.some((group) => group.id === sample.group?.id))
+	);
 }

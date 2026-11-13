@@ -1,134 +1,34 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
-import { DEFAULT_SORT_KEY } from "@analyses/search";
-import { createFuse } from "@app/fuse";
-import { normalizeSearchTerm } from "@app/search";
+import {
+	sortAndFilterNuvsHits,
+	sortAndFilterPathoscopeHits,
+} from "@analyses/hits";
 import { useListReadyIndexes } from "@indexes/queries";
 import { useFetchSample } from "@samples/queries";
 import { useFetchSubtractionsShortlist } from "@subtraction/queries";
 import type { SubtractionOption } from "@subtraction/types";
-import type { IndexMinimal, PathoscopeHit } from "@virtool/contracts";
-import { groupBy, maxBy, sortBy } from "es-toolkit";
+import type { IndexMinimal } from "@virtool/contracts";
+import { groupBy, maxBy } from "es-toolkit";
 import type {
 	FormattedNuvsAnalysis,
 	FormattedNuvsHit,
 	FormattedPathoscopeAnalysis,
 } from "./types";
 
-/**
- * The value a pathoscope sort key ranks a hit by.
- *
- * The toolbar calls `pi` "Weight", because that is the term the results are
- * described in and nobody outside the workflow knows what pi is. The key it puts
- * in the URL is therefore not a field name, and sorting by it read `undefined`
- * off every hit — leaving the list in whatever order it already had.
- *
- * Names are compared lower-cased, so an OTU named "adenovirus" is not ranked
- * behind every capitalised name by the codepoint order a raw comparison gives.
- */
-function pathoscopeSortValue(
-	hit: PathoscopeHit,
-	sortKey: string,
-): number | string {
-	switch (sortKey) {
-		case "name":
-			return hit.name.toLowerCase();
-		case "weight":
-			return hit.pi;
-		case "depth":
-			return hit.depth;
-		default:
-			return hit.coverage;
-	}
-}
-
-/**
- * The value a Nuvs sort key ranks a contig by.
- *
- * "Length" is the length of the contig's own sequence. A `NuvsHit` carries no
- * `length` field — reading the key off the hit gave `undefined` for every one of
- * them, so the list stayed in the workflow's output order while the toolbar
- * reported it was sorted by length.
- *
- * A contig with no ORF hits has no e-value. It ranks last rather than first,
- * where `null` would otherwise put it: it is the absence of a hit, not the
- * strongest one.
- */
-function nuvsSortValue(hit: FormattedNuvsHit, sortKey: string): number {
-	switch (sortKey) {
-		case "e":
-			return hit.e ?? Number.POSITIVE_INFINITY;
-		case "orfs":
-			return hit.annotatedOrfCount;
-		default:
-			return hit.sequence.length;
-	}
-}
-
 /** Sort and filter a list of pathoscope hits  */
 export function useSortAndFilterPathoscopeHits(
 	detail: FormattedPathoscopeAnalysis,
 ) {
-	let hits = detail.results.hits;
+	const { search } = useAnalysisSearch();
 
-	const {
-		search: { dir, find, minCoverage, showLowOtus, sort },
-	} = useAnalysisSearch();
-
-	const fuse = createFuse(hits, ["name", "acronym"]);
-	const normalizedFind = normalizeSearchTerm(find);
-
-	if (normalizedFind) {
-		hits = fuse.search(normalizedFind).map((result) => result.item);
-	}
-
-	// Measured breadth, not a read budget: reads piled onto one conserved locus
-	// buy an OTU the reads to tile its genome without covering any more of it.
-	if (!showLowOtus) {
-		hits = hits.filter((hit) => hit.coverage >= minCoverage);
-	}
-
-	const sortedHits = sortBy(hits, [
-		(hit) => pathoscopeSortValue(hit, sort ?? DEFAULT_SORT_KEY.pathoscope),
-	]);
-
-	// Descending is the default: a freshly-opened analysis should lead with its
-	// strongest hits, not its weakest.
-	if (dir === "desc") {
-		sortedHits.reverse();
-	}
-
-	return sortedHits;
+	return sortAndFilterPathoscopeHits(detail.results.hits, search);
 }
 
 /** Sort and filter a list of Nuvs hits  */
 export function useSortAndFilterNuvsHits(detail: FormattedNuvsAnalysis) {
-	let hits = detail.results.hits;
+	const { search } = useAnalysisSearch();
 
-	const {
-		search: { find, showUnhitSequences, sort },
-	} = useAnalysisSearch();
-
-	const fuse = createFuse(hits, ["names", "families"]);
-	const normalizedFind = normalizeSearchTerm(find);
-
-	if (normalizedFind) {
-		hits = fuse.search(normalizedFind).map((result) => result.item);
-	}
-
-	if (!showUnhitSequences) {
-		hits = hits.filter((hit) => hit.e !== null);
-	}
-
-	const sortKey = sort ?? DEFAULT_SORT_KEY.nuvs;
-
-	const sortedHits = sortBy(hits, [(hit) => nuvsSortValue(hit, sortKey)]);
-
-	// The lowest e-value is the strongest hit, so that key alone reads upward.
-	if (sortKey !== "e") {
-		sortedHits.reverse();
-	}
-
-	return sortedHits;
+	return sortAndFilterNuvsHits(detail.results.hits, search);
 }
 
 export function useActiveHit(matches: FormattedNuvsHit[]) {

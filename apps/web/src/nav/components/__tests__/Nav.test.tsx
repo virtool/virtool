@@ -63,6 +63,11 @@ describe("<Nav />", () => {
 		).toBeInTheDocument();
 		const docLink = screen.getByRole("link", { name: "virtool.ca/docs" });
 		expect(docLink).toHaveAttribute("href", "https://www.virtool.ca/docs");
+		expect(screen.getByText(__APP_VERSION__)).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "Changelog" })).toHaveAttribute(
+			"href",
+			`https://www.virtool.ca/changelog/${__APP_VERSION__}`,
+		);
 	});
 
 	it("stays usable when the changelog has no posts", async () => {

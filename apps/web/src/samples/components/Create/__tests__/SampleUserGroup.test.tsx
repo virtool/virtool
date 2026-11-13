@@ -24,7 +24,7 @@ describe("SampleUserGroup", () => {
 		const { rerender } = renderWithProviders(<SampleUserGroup {...props} />);
 
 		expect(screen.getByLabelText("User Group")).toBeInTheDocument();
-		expect(screen.getByRole("combobox")).toHaveTextContent("None");
+		expect(screen.getByRole("combobox")).toMatchTextContent("None");
 
 		await userEvent.click(screen.getByLabelText("User Group"));
 		expect(screen.getByRole("option", { name: "None" })).toBeInTheDocument();

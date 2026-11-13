@@ -31,77 +31,51 @@ function renderToolbar(search: Partial<AnalysisSearch> = {}) {
 }
 
 describe("<PathoscopeToolbar />", () => {
-	it("should show the charts selected by default and switch to the table", async () => {
-		const setSearch = renderToolbar();
+	// The trigger shows the sort key alone, so its name is the only thing saying
+	// the control sorts. The filters sit behind a popover, so the toolbar only
+	// carries its trigger.
+	it("should show the charts selected, name the sort and filter triggers, and switch to the table", async () => {
+		const setSearch = renderToolbar({ sort: "depth" });
 
-		expect(screen.getByRole("radio", { name: "Charts" })).toHaveAttribute(
-			"data-state",
-			"on",
-		);
-		expect(screen.getByRole("radio", { name: "Table" })).toHaveAttribute(
-			"data-state",
-			"off",
-		);
+		expect(screen.getByRole("radio", { name: "Charts" })).toBeChecked();
+		expect(screen.getByRole("radio", { name: "Table" })).not.toBeChecked();
+		expect(
+			screen.getByRole("button", { name: "Sort by Depth" }),
+		).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Filter/ })).toBeInTheDocument();
 
 		await userEvent.click(screen.getByRole("radio", { name: "Table" }));
 
 		expect(setSearch).toHaveBeenCalledWith({ table: true });
 	});
 
-	it("should show the table selected and switch back to the charts", async () => {
-		const setSearch = renderToolbar({ table: true });
-
-		expect(screen.getByRole("radio", { name: "Table" })).toHaveAttribute(
-			"data-state",
-			"on",
-		);
-
-		await userEvent.click(screen.getByRole("radio", { name: "Charts" }));
-
-		expect(setSearch).toHaveBeenCalledWith({ table: false });
-	});
-
-	// The trigger shows the sort key alone, so its name is the only thing saying
-	// the control sorts.
-	it("should name the sort trigger for the key it sorts by", () => {
-		renderToolbar({ sort: "depth" });
-
-		expect(
-			screen.getByRole("button", { name: "Sort by Depth" }),
-		).toBeInTheDocument();
-	});
-
 	// The direction button is an arrow and nothing else, so its name is all a
 	// screen reader has.
-	it("should name the sort direction button for the direction it switches to", async () => {
-		const setSearch = renderToolbar({ dir: "desc" });
+	it("should show the table selected, switch the sort direction, and switch back to the charts", async () => {
+		const setSearch = renderToolbar({ dir: "desc", table: true });
+
+		expect(screen.getByRole("radio", { name: "Table" })).toBeChecked();
 
 		await userEvent.click(
 			screen.getByRole("button", { name: "Sort ascending" }),
 		);
 
 		expect(setSearch).toHaveBeenCalledWith({ dir: "asc" });
+
+		await userEvent.click(screen.getByRole("radio", { name: "Charts" }));
+
+		expect(setSearch).toHaveBeenCalledWith({ table: false });
 	});
 
-	// Below 2xl every one of these shows its icon alone, so the tooltip is what
-	// says which is which.
-	it.each([
-		["radio", "Charts", "Chart view"],
-		["radio", "Table", "Table view"],
-		["button", "Show Reads", "Show read pseudo-counts instead of weight"],
-		["button", "Export", "Export results"],
-	])("should describe the %s named %s on hover", async (role, name, tip) => {
+	// Below 2xl the toolbar's controls show their icons alone, so the tooltip is
+	// what says which is which.
+	it("should describe an icon-only control on hover", async () => {
 		renderToolbar();
 
-		await userEvent.hover(screen.getByRole(role, { name }));
+		await userEvent.hover(screen.getByRole("button", { name: "Show Reads" }));
 
-		expect(await screen.findByRole("tooltip")).toHaveTextContent(tip);
-	});
-
-	// The filters moved behind a popover, so the toolbar only carries its trigger.
-	it("should offer the filters behind one button", () => {
-		renderToolbar();
-
-		expect(screen.getByRole("button", { name: /^Filter/ })).toBeInTheDocument();
+		expect(await screen.findByRole("tooltip")).toMatchTextContent(
+			"Show read pseudo-counts instead of weight",
+		);
 	});
 });

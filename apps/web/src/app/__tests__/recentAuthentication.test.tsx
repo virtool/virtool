@@ -232,40 +232,6 @@ describe("recent authentication orchestration", () => {
 		expect(operation).toHaveBeenCalledTimes(1);
 	});
 
-	it("submits a password without an authenticator code when both methods are enrolled", async () => {
-		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
-			{ passkey: false, password: true, totp: true },
-		);
-		const operation = vi
-			.fn<(value: string) => Promise<string>>()
-			.mockRejectedValueOnce(staleError())
-			.mockResolvedValueOnce("updated");
-		const { result } = renderHook(
-			() => useRecentlyAuthenticatedMutation(operation),
-			{ wrapper },
-		);
-
-		let promise: Promise<string> | undefined;
-		act(() => {
-			promise = result.current("value");
-		});
-		const password = await screen.findByLabelText("Password");
-		expect(screen.queryByRole("tab")).not.toBeInTheDocument();
-		expect(
-			screen.queryByLabelText("Authenticator code"),
-		).not.toBeInTheDocument();
-		expect(screen.getByText("Enter your password to continue.")).toBeVisible();
-		await userEvent.type(password, "secret");
-		await userEvent.click(screen.getByRole("button", { name: "Continue" }));
-
-		await expect(promise).resolves.toBe("updated");
-		expect(
-			recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn,
-		).toHaveBeenCalledWith({
-			data: { method: "password", password: "secret" },
-		});
-	});
-
 	it("switches between password and authenticator code", async () => {
 		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
 			{ passkey: false, password: true, totp: true },
@@ -283,9 +249,15 @@ describe("recent authentication orchestration", () => {
 		act(() => {
 			promise = result.current("value");
 		});
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Continue" }),
-		);
+		const continueButton = await screen.findByRole("button", {
+			name: "Continue",
+		});
+		expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("Authenticator code"),
+		).not.toBeInTheDocument();
+		expect(screen.getByText("Enter your password to continue.")).toBeVisible();
+		await userEvent.click(continueButton);
 		expect(await screen.findByText("Enter your password.")).toBeVisible();
 
 		await userEvent.type(screen.getByLabelText("Password"), "secret");
@@ -314,27 +286,25 @@ describe("recent authentication orchestration", () => {
 		expect(password).toHaveFocus();
 		expect(password).toHaveValue("");
 
-		await userEvent.click(
-			screen.getByRole("button", {
-				name: "Use an authenticator code instead",
-			}),
-		);
-		await userEvent.type(screen.getByLabelText("Authenticator code"), "123456");
+		await userEvent.type(password, "secret");
 		await userEvent.click(screen.getByRole("button", { name: "Continue" }));
 
 		await expect(promise).resolves.toBe("updated");
 		expect(
 			recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn,
-		).toHaveBeenCalledWith({ data: { method: "totp", code: "123456" } });
+		).toHaveBeenCalledWith({
+			data: { method: "password", password: "secret" },
+		});
 	});
 
-	it("shows no switch link when only one method is enrolled", async () => {
+	it("verifies with a code and shows no switch link when only one method is enrolled", async () => {
 		recentAuthenticationServerFnMocks.getRecentAuthenticationMethodsFn.mockResolvedValue(
 			{ passkey: false, password: false, totp: true },
 		);
 		const operation = vi
 			.fn<(value: string) => Promise<string>>()
-			.mockRejectedValue(staleError());
+			.mockRejectedValueOnce(staleError())
+			.mockResolvedValueOnce("updated");
 		const { result } = renderHook(
 			() => useRecentlyAuthenticatedMutation(operation),
 			{ wrapper },
@@ -350,9 +320,13 @@ describe("recent authentication orchestration", () => {
 			screen.queryByRole("button", { name: "Use your password instead" }),
 		).not.toBeInTheDocument();
 
-		const rejection = expect(promise).rejects.toThrow("cancelled");
-		await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-		await rejection;
+		await userEvent.type(code, "123456");
+		await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+		await expect(promise).resolves.toBe("updated");
+		expect(
+			recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn,
+		).toHaveBeenCalledWith({ data: { method: "totp", code: "123456" } });
 	});
 });
 
@@ -449,6 +423,7 @@ describe("recent authentication with a passkey", () => {
 			await screen.findByRole("button", { name: "Continue with a passkey" }),
 		);
 
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 		await expect(promise).resolves.toBe("updated");
 		expect(operation).toHaveBeenCalledTimes(2);
 		expect(webauthn.fetch).toHaveBeenCalledWith(
@@ -468,27 +443,7 @@ describe("recent authentication with a passkey", () => {
 		});
 	});
 
-	it("shows a pending state while the passkey is in use", async () => {
-		mockMethods({ passkey: true, password: true, totp: false });
-		const authentication = Promise.withResolvers<typeof ASSERTION>();
-		webauthn.startAuthentication.mockReturnValue(authentication.promise);
-		const { promise } = startChallenge();
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Continue with a passkey" }),
-		);
-
-		expect(
-			await screen.findByRole("button", { name: "Waiting for your passkey…" }),
-		).toBeDisabled();
-		expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
-
-		await act(async () => {
-			authentication.resolve(ASSERTION);
-			await expect(promise).resolves.toBe("updated");
-		});
-	});
-
-	it("cancels a running ceremony when the challenge is cancelled", async () => {
+	it("shows a pending state and cancels a running ceremony with the challenge", async () => {
 		mockMethods({ passkey: true, password: true, totp: false });
 		webauthn.startAuthentication.mockReturnValue(new Promise(() => {}));
 		const { promise } = startChallenge();
@@ -496,7 +451,11 @@ describe("recent authentication with a passkey", () => {
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Continue with a passkey" }),
 		);
-		await screen.findByRole("button", { name: "Waiting for your passkey…" });
+		expect(
+			await screen.findByRole("button", { name: "Waiting for your passkey…" }),
+		).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+
 		const rejection = expect(promise).rejects.toThrow("cancelled");
 		await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -522,20 +481,33 @@ describe("recent authentication with a passkey", () => {
 		expect(webauthn.startAuthentication).not.toHaveBeenCalled();
 	});
 
-	it("keeps the challenge open when the server rate-limits a passkey", async () => {
+	it("keeps the challenge open when the server refuses or rate-limits a passkey", async () => {
 		mockMethods({ passkey: true, password: true, totp: false });
-		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockRejectedValue(
-			Object.assign(new Error("Too many attempts. Wait and try again."), {
-				name: CLIENT_ERROR_NAME,
-				status: 429,
-			}),
-		);
+		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn
+			.mockRejectedValueOnce(
+				Object.assign(new Error("Authentication challenge failed."), {
+					status: 400,
+				}),
+			)
+			.mockRejectedValueOnce(
+				Object.assign(new Error("Too many attempts. Wait and try again."), {
+					name: CLIENT_ERROR_NAME,
+					status: 429,
+				}),
+			);
 		const { operation } = startChallenge();
 
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Continue with a passkey" }),
 		);
+		expect(
+			await screen.findByText("Your passkey could not be verified. Try again."),
+		).toHaveAttribute("role", "alert");
+		expect(screen.getByLabelText("Password")).toBeVisible();
 
+		await userEvent.click(
+			screen.getByRole("button", { name: "Continue with a passkey" }),
+		);
 		expect(
 			await screen.findByText("Too many attempts. Wait and try again."),
 		).toHaveAttribute("role", "alert");
@@ -554,7 +526,7 @@ describe("recent authentication with a passkey", () => {
 			await screen.findByRole("button", { name: "Continue with a passkey" }),
 		);
 
-		expect(await screen.findByRole("status")).toHaveTextContent(
+		expect(await screen.findByRole("status")).toMatchTextContent(
 			"Passkey verification did not finish. Try again.",
 		);
 		expect(
@@ -566,35 +538,19 @@ describe("recent authentication with a passkey", () => {
 		).toBeEnabled();
 	});
 
-	it("shows an error when the server refuses the passkey", async () => {
-		mockMethods({ passkey: true, password: true, totp: false });
-		recentAuthenticationServerFnMocks.challengeRecentAuthenticationFn.mockRejectedValue(
-			Object.assign(new Error("Authentication challenge failed."), {
-				status: 400,
-			}),
-		);
-		startChallenge();
-
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Continue with a passkey" }),
-		);
-
-		expect(
-			await screen.findByText("Your passkey could not be verified. Try again."),
-		).toHaveAttribute("role", "alert");
-		expect(screen.getByLabelText("Password")).toBeVisible();
-	});
-
 	it("shows only the passkey for an account without a password or code", async () => {
 		mockMethods({ passkey: true, password: false, totp: false });
 		const { promise } = startChallenge();
 
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Continue with a passkey" }),
-		);
-
-		await expect(promise).resolves.toBe("updated");
+		const passkey = await screen.findByRole("button", {
+			name: "Continue with a passkey",
+		});
 		expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
+
+		await userEvent.click(passkey);
+
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		await expect(promise).resolves.toBe("updated");
 	});
 
 	it("hides the passkey where the browser cannot use one", async () => {
@@ -617,7 +573,7 @@ describe("recent authentication with a passkey", () => {
 		mockMethods({ passkey: true, password: false, totp: false });
 		const { promise } = startChallenge();
 
-		expect(await screen.findByRole("alert")).toHaveTextContent(
+		expect(await screen.findByRole("alert")).toMatchTextContent(
 			"This browser cannot use a passkey.",
 		);
 

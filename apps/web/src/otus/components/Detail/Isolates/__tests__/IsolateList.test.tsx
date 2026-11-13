@@ -29,7 +29,8 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
 	}),
 }));
 
-// jsdom has no layout, so the virtualizer would render no rows.
+// The test renders no sized scroll area, so the virtualizer would render only
+// some of the rows.
 vi.mock("@tanstack/react-virtual", () => ({
 	useVirtualizer: ({ count }: { count: number }) => ({
 		getTotalSize: () => count * 48,

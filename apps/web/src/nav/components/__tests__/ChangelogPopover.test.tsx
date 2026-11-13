@@ -41,7 +41,7 @@ describe("<ChangelogPopover />", () => {
 
 		const tooltip = await screen.findByRole("tooltip");
 
-		expect(tooltip).toHaveTextContent(/^What's new$/);
+		expect(tooltip.textContent).toBe("What's new");
 		expect(tooltip).not.toHaveClass("capitalize");
 		expect(button).toHaveAttribute("aria-label", "What's new (unread)");
 		expect(button).toHaveAccessibleName("What's new (unread)");

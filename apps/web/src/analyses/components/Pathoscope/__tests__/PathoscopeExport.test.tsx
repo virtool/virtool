@@ -111,9 +111,15 @@ describe("<PathoscopeExport />", () => {
 			"href",
 			"/analyses/documents/5.csv?columns=name,weight,depth,coverage",
 		);
+		expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+			"href",
+			"/account/settings#pathoscope",
+		);
 	});
 
-	it("should copy the shown viruses as a tab-separated table", async () => {
+	// The menu closes on a copy, so the trigger is the only place left to say it
+	// happened.
+	it("should copy the shown viruses as a tab-separated table and report it on the trigger", async () => {
 		await renderExport({ sort: "coverage" });
 		await openMenu();
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
@@ -125,6 +131,9 @@ describe("<PathoscopeExport />", () => {
 				"Alpha virus\t0.250\t12\t0.500",
 			].join("\n"),
 		);
+		expect(
+			await screen.findByRole("button", { name: "Copied" }),
+		).toBeInTheDocument();
 	});
 
 	it("should copy the isolates of every shown virus", async () => {
@@ -174,36 +183,14 @@ describe("<PathoscopeExport />", () => {
 		);
 	});
 
-	it("should link to the Pathoscope account settings", async () => {
-		await renderExport();
-		await openMenu();
-
-		expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
-			"href",
-			"/account/settings#pathoscope",
-		);
-	});
-
-	it("should leave the header row out when it is not wanted", async () => {
-		await renderExport({ find: "Beta" });
+	it("should copy read pseudo-counts without the header row", async () => {
+		await renderExport({ find: "Alpha", reads: true });
 		await openMenu();
 		await userEvent.click(
 			screen.getByRole("menuitem", { name: "OTUs without headers" }),
 		);
 
-		expect(writeText).toHaveBeenCalledWith("Beta virus\t0.500\t7\t0.250");
-	});
-
-	it("should copy read pseudo-counts when reads are shown", async () => {
-		await renderExport({ find: "Alpha", reads: true });
-		await openMenu();
-		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
-
-		expect(writeText).toHaveBeenCalledWith(
-			["Name\tReads\tDepth\tCoverage", "Alpha virus\t250\t12\t0.500"].join(
-				"\n",
-			),
-		);
+		expect(writeText).toHaveBeenCalledWith("Alpha virus\t250\t12\t0.500");
 	});
 
 	it("should name OTUs by acronym when the account prefers it", async () => {
@@ -301,18 +288,6 @@ describe("<PathoscopeExport />", () => {
 			).toHaveBeenLastCalledWith({ data: { preferAcronym: false } }),
 		);
 		await waitFor(() => expect(toggle).not.toBeChecked());
-	});
-
-	// The menu closes on a copy, so the trigger is the only place left to say it
-	// happened.
-	it("should report a copy on the trigger", async () => {
-		await renderExport();
-		await openMenu();
-		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
-
-		expect(
-			await screen.findByRole("button", { name: "Copied" }),
-		).toBeInTheDocument();
 	});
 
 	it("should offer downloads alone outside a secure context", async () => {

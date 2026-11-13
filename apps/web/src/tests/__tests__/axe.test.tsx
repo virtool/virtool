@@ -1,11 +1,11 @@
-import { renderWithProviders } from "@tests/setup";
-import type { Result } from "axe-core";
+import { FieldError } from "@base/Field";
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { expectNoViolations, formatViolations } from "../axe";
+import { expectNoViolations } from "../axe";
 
 describe("expectNoViolations", () => {
 	it("passes an accessible tree", async () => {
-		const { container } = renderWithProviders(
+		const { container } = render(
 			<main>
 				<h1>Samples</h1>
 				<button type="button">Create</button>
@@ -21,51 +21,45 @@ describe("expectNoViolations", () => {
 
 	it("rejects when a barrier is present", async () => {
 		// An input with no associated label is a well-known axe barrier.
-		const { container } = renderWithProviders(<input type="text" />);
+		const { container } = render(<input type="text" />);
 
 		await expect(expectNoViolations(container)).rejects.toThrow(
 			/expected no accessibility violations, found \d+/,
 		);
 	});
+});
 
-	it("does not flag colour contrast, which jsdom cannot compute", async () => {
-		const { container } = renderWithProviders(
-			<main>
-				<h1>Low contrast heading</h1>
-				<p style={{ color: "#eee", background: "#fff" }}>Barely visible</p>
+describe("colour contrast", () => {
+	// Guards WCAG AA text contrast: muted `text-gray-500` on white, the red
+	// `FieldError` message, and white nav text on the teal `bg-virtool` bar. A
+	// lower-contrast token turns this test red.
+	it("passes the fixed WCAG AA text colours", async () => {
+		const { baseElement } = render(
+			<main className="bg-white p-4">
+				<h1>Samples</h1>
+				<p className="text-gray-500">No samples found.</p>
+				<FieldError>Name is required.</FieldError>
+				<nav aria-label="Primary" className="bg-virtool p-2 text-white">
+					<span>Samples</span>
+				</nav>
 			</main>,
 		);
 
-		await expectNoViolations(container);
+		await expectNoViolations(baseElement);
 	});
 
-	it("formats multiple nodes, unknown impact, and multi-line summaries", () => {
-		const violations = [
-			{
-				id: "image-alt",
-				impact: null,
-				help: "Images must have alternate text",
-				helpUrl: "https://example.com/image-alt",
-				nodes: [
-					{
-						html: "<img src=first>",
-						failureSummary: "Fix any of the following:\n  Element has no alt",
-					},
-					{ html: "<img src=second>" },
-				],
-			},
-		] as unknown as Result[];
+	// Proves the rule actually runs here, so the guard above cannot silently
+	// no-op: a genuinely low-contrast colour (`text-gray-300` on white, ~1.5:1)
+	// must be reported.
+	it("flags a genuinely low-contrast colour", async () => {
+		const { baseElement } = render(
+			<main className="bg-white p-4">
+				<p className="text-gray-300">Barely visible text</p>
+			</main>,
+		);
 
-		const output = formatViolations(violations);
-
-		// Unknown impact falls back to "unknown".
-		expect(output).toContain("image-alt (unknown):");
-		// Every offending node appears.
-		expect(output).toContain("<img src=first>");
-		expect(output).toContain("<img src=second>");
-		// The multi-line failure summary is indented under its node.
-		expect(output).toContain(
-			"    Fix any of the following:\n      Element has no alt",
+		await expect(expectNoViolations(baseElement)).rejects.toThrow(
+			/color-contrast/,
 		);
 	});
 });

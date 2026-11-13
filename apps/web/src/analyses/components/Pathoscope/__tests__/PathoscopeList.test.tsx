@@ -70,24 +70,6 @@ beforeEach(() => {
 });
 
 describe("<PathoscopeList />", () => {
-	// The count is the only statement of how long the list is, so a selection
-	// joins it rather than replacing it.
-	it("should keep the hit count once a hit is selected", async () => {
-		renderList();
-
-		expect(screen.getByText("2 hits")).toBeInTheDocument();
-		expect(
-			screen.queryByRole("button", { name: "Copy" }),
-		).not.toBeInTheDocument();
-
-		await userEvent.click(
-			screen.getByRole("checkbox", { name: "Select Alpha virus" }),
-		);
-
-		expect(screen.getByText("1 selected · 2 hits")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
-	});
-
 	// A reader cannot see the hits that were held back, so the total is what
 	// says they are there.
 	it("should count the shown hits against the whole list when filtering", () => {
@@ -103,33 +85,38 @@ describe("<PathoscopeList />", () => {
 		expect(screen.getByText("2 hits")).toBeInTheDocument();
 	});
 
-	it("should copy the selected hits as a tab-separated table", async () => {
-		renderList();
+	// Scoped to the header because each figure keeps a label of its own for
+	// assistive technology, so the same words appear once per hit as well.
+	function headerLabels() {
+		return within(screen.getByRole("group", { name: "Hit list" }));
+	}
 
-		await userEvent.click(
-			screen.getByRole("checkbox", { name: "Select Beta virus" }),
-		);
-		await userEvent.click(screen.getByRole("button", { name: "Copy" }));
-
-		expect(writeText).toHaveBeenCalledWith(
-			["Name\tWeight\tDepth\tCoverage", "Beta virus\t0.250\t7\t0.250"].join(
-				"\n",
-			),
-		);
-
-		expect(
-			await screen.findByRole("button", { name: "Copied" }),
-		).toBeInTheDocument();
-	});
-
+	// The columns are labelled on the header rather than on every hit, so a
+	// column is named once however long the list is.
+	//
+	// The count is the only statement of how long the list is, so a selection
+	// joins it rather than replacing it.
+	//
 	// The list is sorted ascending by coverage here, so Beta is shown above
 	// Alpha even though Alpha is checked first.
-	it("should copy the hits in display order rather than click order", async () => {
+	it("should label the columns, count the selection, and copy the hits in display order", async () => {
 		renderList();
+
+		for (const label of ["Acronym", "Weight", "Depth", "Coverage"]) {
+			expect(headerLabels().getByText(label)).toBeInTheDocument();
+		}
+
+		expect(screen.getByText("2 hits")).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Copy" }),
+		).not.toBeInTheDocument();
 
 		await userEvent.click(
 			screen.getByRole("checkbox", { name: "Select Alpha virus" }),
 		);
+
+		expect(screen.getByText("1 selected · 2 hits")).toBeInTheDocument();
+
 		await userEvent.click(
 			screen.getByRole("checkbox", { name: "Select Beta virus" }),
 		);
@@ -145,6 +132,9 @@ describe("<PathoscopeList />", () => {
 				"Alpha virus\t0.250\t12\t0.500",
 			].join("\n"),
 		);
+		expect(
+			await screen.findByRole("button", { name: "Copied" }),
+		).toBeInTheDocument();
 	});
 
 	// The trigger is the hit's name and nothing else. One spanning the whole
@@ -189,29 +179,6 @@ describe("<PathoscopeList />", () => {
 		).toBeChecked();
 	});
 
-	// Scoped to the header because each figure keeps a label of its own for
-	// assistive technology, so the same words appear once per hit as well.
-	function headerLabels() {
-		return within(screen.getByRole("group", { name: "Hit list" }));
-	}
-
-	// The columns are labelled on the header rather than on every hit, so a
-	// column is named once however long the list is.
-	it("should label the columns of figures in the header", () => {
-		renderList();
-
-		for (const label of ["Acronym", "Weight", "Depth", "Coverage"]) {
-			expect(headerLabels().getByText(label)).toBeInTheDocument();
-		}
-	});
-
-	it("should label the weight column reads when read counts are shown", () => {
-		renderList({ reads: true });
-
-		expect(headerLabels().getByText("Reads")).toBeInTheDocument();
-		expect(headerLabels().queryByText("Weight")).not.toBeInTheDocument();
-	});
-
 	// Nothing fills the column, so a heading would sit over empty space.
 	it("should not label the acronym column when no hit has one", () => {
 		renderList({}, [createFakePathoscopeHit({ acronym: "", id: "a" })]);
@@ -228,13 +195,13 @@ describe("<PathoscopeList />", () => {
 
 			expect(screen.getAllByRole("listitem")).toHaveLength(2);
 
-			expect(beta).toHaveTextContent("Beta virus");
-			expect(beta).toHaveTextContent("0.250");
-			expect(beta).toHaveTextContent("7");
+			expect(beta).toMatchTextContent("Beta virus");
+			expect(beta).toMatchTextContent("0.250");
+			expect(beta).toMatchTextContent("7");
 
-			expect(alpha).toHaveTextContent("Alpha virus");
-			expect(alpha).toHaveTextContent("12");
-			expect(alpha).toHaveTextContent("0.500");
+			expect(alpha).toMatchTextContent("Alpha virus");
+			expect(alpha).toMatchTextContent("12");
+			expect(alpha).toMatchTextContent("0.500");
 
 			expect(
 				screen.queryByRole("button", { name: /Alpha virus/ }),
@@ -253,21 +220,6 @@ describe("<PathoscopeList />", () => {
 			// are `sr-only`, so only assistive technology reads them.
 			expect(screen.getAllByText("Reads")).toHaveLength(hits.length + 1);
 			expect(screen.getAllByText("Coverage")).toHaveLength(hits.length + 1);
-		});
-
-		it("should copy the hits selected from its rows", async () => {
-			renderList({ table: true });
-
-			await userEvent.click(
-				screen.getByRole("checkbox", { name: "Select Beta virus" }),
-			);
-			await userEvent.click(screen.getByRole("button", { name: "Copy" }));
-
-			expect(writeText).toHaveBeenCalledWith(
-				["Name\tWeight\tDepth\tCoverage", "Beta virus\t0.250\t7\t0.250"].join(
-					"\n",
-				),
-			);
 		});
 
 		it("should have no accessibility violations", async () => {

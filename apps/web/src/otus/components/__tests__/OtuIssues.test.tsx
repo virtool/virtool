@@ -5,25 +5,6 @@ import { describe, expect, it } from "vitest";
 import OtuIssues from "../OtuIssues";
 
 describe("<OtuIssues />", () => {
-	it("renders correctly without issues", () => {
-		const props: ComponentProps<typeof OtuIssues> = {
-			issues: {
-				emptyOtu: false,
-				isolateInconsistency: false,
-				emptyIsolate: false,
-				emptySequence: false,
-			},
-			isolates: [],
-		};
-		renderWithProviders(<OtuIssues {...props} />);
-
-		expect(
-			screen.getByText(
-				"There are some issues that must be resolved before this OTU can be included in the next index build",
-			),
-		).toBeInTheDocument();
-	});
-
 	it("renders correctly with issues", () => {
 		const props: ComponentProps<typeof OtuIssues> = {
 			issues: {

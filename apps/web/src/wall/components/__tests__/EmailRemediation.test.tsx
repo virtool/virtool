@@ -42,7 +42,7 @@ it("submits an address and persists the mailbox challenge state", async () => {
 	});
 });
 
-it("resumes pending verification with resend, change, and cancel actions", async () => {
+it("resumes pending verification and resends the link", async () => {
 	authServerFnMocks.getEmailRemediationFn.mockResolvedValue(pendingState);
 	authServerFnMocks.resendEmailRemediationFn.mockResolvedValue({
 		complete: false,
@@ -58,10 +58,13 @@ it("resumes pending verification with resend, change, and cancel actions", async
 	expect(screen.getByRole("button", { name: "Resend" })).toBeDisabled();
 });
 
-it("offers recovery when delivery is exhausted", async () => {
+it("offers recovery when delivery is exhausted and returns to address entry", async () => {
 	authServerFnMocks.getEmailRemediationFn.mockResolvedValue({
 		...pendingState,
 		deliveryFailed: true,
+	});
+	authServerFnMocks.changeEmailRemediationFn.mockResolvedValue({
+		status: "input",
 	});
 	await renderRoute("/email-remediation");
 
@@ -69,19 +72,10 @@ it("offers recovery when delivery is exhausted", async () => {
 		await screen.findByText(/message could not be sent/i),
 	).toBeInTheDocument();
 	expect(screen.getByRole("button", { name: "Resend" })).toBeEnabled();
-	expect(screen.getByRole("button", { name: "Change email" })).toBeEnabled();
-});
+	const change = screen.getByRole("button", { name: "Change email" });
+	expect(change).toBeEnabled();
 
-it("returns to address entry and supersedes the pending link", async () => {
-	authServerFnMocks.getEmailRemediationFn.mockResolvedValue(pendingState);
-	authServerFnMocks.changeEmailRemediationFn.mockResolvedValue({
-		status: "input",
-	});
-	await renderRoute("/email-remediation");
-
-	await userEvent.click(
-		await screen.findByRole("button", { name: "Change email" }),
-	);
+	await userEvent.click(change);
 	expect(await screen.findByLabelText("Email address")).toBeInTheDocument();
 	expect(authServerFnMocks.changeEmailRemediationFn).toHaveBeenCalledOnce();
 });

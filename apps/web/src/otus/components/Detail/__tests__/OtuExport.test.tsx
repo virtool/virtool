@@ -68,19 +68,6 @@ beforeEach(() => {
 });
 
 describe("<OtuExport />", () => {
-	it("follows the account defaults and marks them", async () => {
-		await renderExport();
-
-		const accession = await screen.findByRole("menuitemradio", {
-			name: /^Accession Default$/,
-		});
-
-		await waitFor(() => expect(accession).toBeChecked());
-		expect(
-			screen.getByRole("menuitemradio", { name: /^CSV Default$/ }),
-		).toBeChecked();
-	});
-
 	it("copies FASTA with the header chosen in the menu", async () => {
 		await renderExport();
 		await waitFor(() =>

@@ -1,51 +1,10 @@
 import Alert from "@base/Alert";
 import ExternalLink from "@base/ExternalLink";
-import type { PaletteColor } from "@base/types";
-import type { EmailAvailability, EmailSettings } from "@virtool/contracts";
-import type { LucideIcon } from "lucide-react";
-import {
-	CircleAlert,
-	CircleCheck,
-	CircleSlash,
-	TriangleAlert,
-} from "lucide-react";
+import type { EmailSettings } from "@virtool/contracts";
+import { getEmailStatusPresentation, listMissingFields } from "./emailStatus";
 
 const ENCRYPTION_KEY_DOCS =
 	"https://www.virtool.ca/docs/start/configuration#encryption-key";
-
-type StatusPresentation = {
-	color: PaletteColor;
-	icon: LucideIcon;
-	label: string;
-};
-
-const presentations: Record<
-	EmailAvailability | "disabled",
-	StatusPresentation
-> = {
-	configuration_error: {
-		color: "red",
-		icon: TriangleAlert,
-		label: "Configuration Error",
-	},
-	disabled: { color: "gray", icon: CircleSlash, label: "Disabled" },
-	ready: { color: "green", icon: CircleCheck, label: "Active" },
-	unconfigured: {
-		color: "orange",
-		icon: CircleAlert,
-		label: "Needs Configuration",
-	},
-};
-
-/** Name the fields an unconfigured instance is still missing. */
-function listMissingFields(settings: EmailSettings): string {
-	const missing = [
-		settings.hasApiKey ? null : "an API key",
-		settings.senderAddress === "" ? "a sender address" : null,
-	].filter((field) => field !== null);
-
-	return missing.join(" and ");
-}
 
 function Detail({ settings }: { settings: EmailSettings }) {
 	switch (settings.availability) {
@@ -88,11 +47,7 @@ export default function EmailDeliveryStatus({
 }: {
 	settings: EmailSettings;
 }) {
-	const presentation =
-		settings.availability === "ready" && !settings.enabled
-			? presentations.disabled
-			: presentations[settings.availability];
-	const { color, icon, label } = presentation;
+	const { color, icon, label } = getEmailStatusPresentation(settings);
 
 	return (
 		<Alert color={color} icon={icon} outerClassName="mb-0">
