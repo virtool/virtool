@@ -51,7 +51,11 @@ export default function JobItem({
 			>
 				{getWorkflowDisplayName(workflow)}
 			</Link>
-			<Attribution className="col-span-1" time={createdAt} user={user.handle} />
+			<Attribution
+				className="col-span-1"
+				time={createdAt}
+				user={user.username}
+			/>
 			<div className="col-span-1 flex font-medium gap-1 items-center justify-end">
 				<span className="capitalize">{state}</span>
 				{state === "succeeded" ? (

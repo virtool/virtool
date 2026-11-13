@@ -135,8 +135,9 @@ export default function AnalysisDetail() {
 					{getWorkflowDisplayName(analysis.workflow)} for {sample.name}
 				</SubviewHeaderTitle>
 				<SubviewHeaderAttribution>
-					{analysis.user.handle} started <CreatedAt time={analysis.createdAt} />{" "}
-					· Workflow Version <WorkflowVersion analysis={analysis} />
+					{analysis.user.username} started{" "}
+					<CreatedAt time={analysis.createdAt} /> · Workflow Version{" "}
+					<WorkflowVersion analysis={analysis} />
 				</SubviewHeaderAttribution>
 			</SubviewHeader>
 

@@ -92,7 +92,7 @@ beforeEach(async () => {
 	await db.delete(groups);
 	await db.delete(users);
 
-	ownerId = await seedUser(db, { handle: "alice" });
+	ownerId = await seedUser(db, { username: "alice" });
 });
 
 // Returns the key the row records, which is what a test writes its bytes under.
@@ -226,7 +226,7 @@ describe("handleIndexFile", () => {
 	// this check would expose every reference's builds to any signed-in user.
 	it("returns 404 to a user who cannot see the reference", async () => {
 		const { indexId } = await seedBuild();
-		const strangerId = await seedUser(db, { handle: "bob" });
+		const strangerId = await seedUser(db, { username: "bob" });
 
 		const response = await handleIndexFile(
 			await request(strangerId),
@@ -239,7 +239,7 @@ describe("handleIndexFile", () => {
 
 	it("serves a user holding a membership row on the reference", async () => {
 		const { referenceId, indexId } = await seedBuild();
-		const memberId = await seedUser(db, { handle: "bob" });
+		const memberId = await seedUser(db, { username: "bob" });
 
 		// Membership alone grants read; none of the rights flags is set.
 		await db.insert(legacyReferenceUsers).values({
@@ -262,7 +262,7 @@ describe("handleIndexFile", () => {
 	it("serves a full administrator who is not a member", async () => {
 		const { indexId } = await seedBuild();
 		const adminId = await seedUser(db, {
-			handle: "bob",
+			username: "bob",
 			administratorRole: "full",
 		});
 

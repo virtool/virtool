@@ -79,7 +79,7 @@ describe("<SubtractionItem />", () => {
 
 			expect(screen.getByText("Arabidopsis thaliana")).toBeInTheDocument();
 			expect(
-				screen.getByText(`${props.user?.handle} created`),
+				screen.getByText(`${props.user?.username} created`),
 			).toBeInTheDocument();
 			expect(screen.getByText("1 year ago")).toBeInTheDocument();
 			expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();

@@ -30,7 +30,7 @@ describe("<JobItem />", () => {
 
 		expect(screen.getByText("Build Index")).toBeInTheDocument();
 		expect(
-			screen.getByText(`${props.user.handle} created`),
+			screen.getByText(`${props.user.username} created`),
 		).toBeInTheDocument();
 		expect(screen.getByText(state)).toBeInTheDocument();
 

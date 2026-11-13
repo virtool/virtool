@@ -35,7 +35,7 @@ import {
 	getGravatarEmail,
 	getUser,
 	getUserCount,
-	getUserHandle,
+	getUsername,
 	InvalidPasswordError,
 	listAdministratorRoles,
 	listUsers,
@@ -164,7 +164,7 @@ describe("getAccount", () => {
 	it("returns the email and settings that only the account holder may read", async () => {
 		const userId = await seedUser(db, {
 			email: "alice@example.com",
-			handle: "alice",
+			username: "alice",
 			settings: storedSettings,
 		});
 
@@ -190,7 +190,7 @@ describe("getAccount", () => {
 	// of handing the client `undefined` for a boolean it renders a toggle from.
 	it("falls back to the defaults for keys the stored blob is missing", async () => {
 		const userId = await seedUser(db, {
-			handle: "bob",
+			username: "bob",
 			settings: { show_ids: false },
 		});
 
@@ -213,14 +213,15 @@ describe("getAccount", () => {
 	it("returns the same user fields the administration views see", async () => {
 		const userId = await seedUser(db, {
 			administratorRole: "full",
-			handle: "alice",
+			username: "alice",
 		});
 
 		const account = await getAccount(db, userId);
 
 		expect(account).toMatchObject({
 			id: userId,
-			handle: "alice",
+			lifecycleState: "normal",
+			username: "alice",
 			administratorRole: "full",
 			active: true,
 			groups: [],
@@ -248,7 +249,7 @@ describe("markChangelogSeen", () => {
 
 	it("starts a new user's watermark at the given date", async () => {
 		const { id } = await createUser(db, {
-			handle: "alice",
+			username: "alice",
 			password: "a-real-password",
 			lastSeenChangelogAt: earlier,
 		});
@@ -279,8 +280,8 @@ describe("markChangelogSeen", () => {
 	});
 
 	it("leaves other users unchanged", async () => {
-		const userId = await seedUser(db, { handle: "alice" });
-		const otherId = await seedUser(db, { handle: "bob" });
+		const userId = await seedUser(db, { username: "alice" });
+		const otherId = await seedUser(db, { username: "bob" });
 		await Promise.all([
 			setWatermark(userId, earlier),
 			setWatermark(otherId, earlier),
@@ -293,21 +294,21 @@ describe("markChangelogSeen", () => {
 	});
 });
 
-describe("getUserHandle", () => {
-	it("returns the user's handle", async () => {
-		const userId = await seedUser(db, { handle: "Alice" });
+describe("getUsername", () => {
+	it("returns the user's username", async () => {
+		const userId = await seedUser(db, { username: "alice" });
 
-		expect(await getUserHandle(db, userId)).toBe("Alice");
+		expect(await getUsername(db, userId)).toBe("alice");
 	});
 
-	it("returns null when the user has no handle", async () => {
-		const userId = await seedUser(db, { handle: "" });
+	it("returns null for a pending user", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
 
-		expect(await getUserHandle(db, userId)).toBeNull();
+		expect(await getUsername(db, userId)).toBeNull();
 	});
 
 	it("returns null when the user does not exist", async () => {
-		expect(await getUserHandle(db, 999)).toBeNull();
+		expect(await getUsername(db, 999)).toBeNull();
 	});
 });
 
@@ -320,7 +321,7 @@ describe("getGravatarEmail", () => {
 		await seedUser(db, {
 			active,
 			email,
-			handle: "Alice",
+			username: "alice",
 			settings: { avatar_source: avatarSource },
 		});
 	}
@@ -329,6 +330,12 @@ describe("getGravatarEmail", () => {
 		await seedGravatarUser();
 
 		expect(await getGravatarEmail(db, "alice")).toBe("alice@example.com");
+	});
+
+	it("matches the username in any case", async () => {
+		await seedGravatarUser();
+
+		expect(await getGravatarEmail(db, " Alice ")).toBe("alice@example.com");
 	});
 
 	it.each([
@@ -341,7 +348,7 @@ describe("getGravatarEmail", () => {
 		expect(await getGravatarEmail(db, "alice")).toBeNull();
 	});
 
-	it("returns null when no user has the handle", async () => {
+	it("returns null when no user has the username", async () => {
 		expect(await getGravatarEmail(db, "nobody")).toBeNull();
 	});
 });
@@ -349,7 +356,7 @@ describe("getGravatarEmail", () => {
 describe("updateAccountSettings", () => {
 	it("writes the changed key in its stored spelling and keeps the others", async () => {
 		const userId = await seedUser(db, {
-			handle: "alice",
+			username: "alice",
 			settings: storedSettings,
 		});
 
@@ -378,7 +385,7 @@ describe("updateAccountSettings", () => {
 	});
 
 	it("reads back the reference export defaults it writes", async () => {
-		const userId = await seedUser(db, { handle: "carol" });
+		const userId = await seedUser(db, { username: "carol" });
 
 		await updateAccountSettings(db, userId, {
 			referenceExportFastaHeader: "accession",
@@ -392,7 +399,7 @@ describe("updateAccountSettings", () => {
 	});
 
 	it("reads back the time format it writes", async () => {
-		const userId = await seedUser(db, { handle: "dave" });
+		const userId = await seedUser(db, { username: "dave" });
 
 		await updateAccountSettings(db, userId, { timeFormat: "absolute" });
 
@@ -404,7 +411,7 @@ describe("updateAccountSettings", () => {
 
 	it("falls back to relative times for an unknown stored time format", async () => {
 		const userId = await seedUser(db, {
-			handle: "erin",
+			username: "erin",
 			settings: { time_format: "sundial" },
 		});
 
@@ -412,7 +419,7 @@ describe("updateAccountSettings", () => {
 	});
 
 	it("reads back the Pathoscope columns it writes", async () => {
-		const userId = await seedUser(db, { handle: "bob" });
+		const userId = await seedUser(db, { username: "bob" });
 
 		const settings = await updateAccountSettings(db, userId, {
 			pathoscopeColumns: ["weight", "depth"],
@@ -449,7 +456,7 @@ describe("updateAccountSettings", () => {
 		});
 
 		it("publishes an account update for the user", async () => {
-			const userId = await seedUser(db, { handle: "dave" });
+			const userId = await seedUser(db, { username: "dave" });
 
 			await updateAccountSettings(db, userId, { showIds: true });
 
@@ -498,33 +505,23 @@ describe("updateUser", () => {
 		expect((await readUser(userId))?.active).toBe(false);
 	});
 
-	it("leaves sessions alone when only the handle changes", async () => {
+	it("leaves sessions alone when only the username changes", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
 
-		await updateUser(db, userId, { handle: "renamed" });
+		await updateUser(db, userId, { username: "renamed" });
 
 		expect(await countSessions(userId)).toBe(1);
-		expect((await readUser(userId))?.handle).toBe("renamed");
+		expect((await readUser(userId))?.username).toBe("renamed");
 	});
 
-	it("synchronizes Better Auth usernames when a migrated handle changes", async () => {
-		const userId = await seedUser(db, { handle: "Alice" });
-		await db
-			.update(users)
-			.set({
-				username: "alice",
-				displayUsername: "Alice",
-				authMigratedAt: new Date(),
-			})
-			.where(eq(users.id, userId));
+	it("stores a changed username normalized", async () => {
+		const userId = await seedUser(db, { username: "alice" });
 
-		await updateUser(db, userId, { handle: "Renamed" });
+		const updated = await updateUser(db, userId, { username: " Renamed " });
 
-		const user = await readUser(userId);
-		expect(user?.handle).toBe("Renamed");
-		expect(user?.username).toBe("renamed");
-		expect(user?.displayUsername).toBe("Renamed");
+		expect(updated.username).toBe("renamed");
+		expect((await readUser(userId))?.username).toBe("renamed");
 	});
 
 	it("leaves sessions alone when only group membership changes", async () => {
@@ -537,8 +534,8 @@ describe("updateUser", () => {
 	});
 
 	it("revokes only the target user's sessions", async () => {
-		const alice = await seedUser(db, { handle: "alice" });
-		const bob = await seedUser(db, { handle: "bob" });
+		const alice = await seedUser(db, { username: "alice" });
+		const bob = await seedUser(db, { username: "bob" });
 		await seedSession(db, alice);
 		await seedSession(db, bob);
 
@@ -657,7 +654,7 @@ describe("updateUser", () => {
 
 	it("throws when the user does not exist", async () => {
 		await expect(
-			updateUser(db, 404, { handle: "ghost" }),
+			updateUser(db, 404, { username: "ghost" }),
 		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
 });
@@ -770,59 +767,69 @@ describe("changePassword", () => {
 describe("getUserCount", () => {
 	it("counts every user row", async () => {
 		expect(await getUserCount(db)).toBe(0);
-		await seedUser(db, { handle: "alice" });
-		await seedUser(db, { handle: "bob" });
+		await seedUser(db, { username: "alice" });
+		await seedUser(db, { username: "bob" });
 		expect(await getUserCount(db)).toBe(2);
 	});
 });
 
 describe("listUsers", () => {
-	it("returns only active users, handle-ascending and case-insensitively", async () => {
-		await seedUser(db, { handle: "Charlie" });
-		await seedUser(db, { handle: "alice" });
-		await seedUser(db, { handle: "bob", active: false });
+	it("returns only active users, username-ascending", async () => {
+		await seedUser(db, { username: "charlie" });
+		await seedUser(db, { username: "alice" });
+		await seedUser(db, { username: "bob", active: false });
 
 		const result = await listUsers(db);
 
-		expect(result.map((user) => user.handle)).toEqual(["alice", "Charlie"]);
+		expect(result).toEqual([
+			{ id: expect.any(Number), username: "alice" },
+			{ id: expect.any(Number), username: "charlie" },
+		]);
 	});
 
 	// This answers "who can something be assigned to", and an account that
 	// cannot sign in yet is not an answer to it.
 	it("leaves out a pending account", async () => {
-		await seedUser(db, { handle: "alice" });
-		await seedUser(db, { handle: "bob", lifecycleState: "pending" });
+		await seedUser(db, { username: "alice" });
+		await seedUser(db, { username: "bob", lifecycleState: "pending" });
 
-		expect((await listUsers(db)).map((user) => user.handle)).toEqual(["alice"]);
+		expect((await listUsers(db)).map((user) => user.username)).toEqual([
+			"alice",
+		]);
 	});
 });
 
 describe("findUsers", () => {
-	// Default-deny: a caller that has not thought about pending accounts does
-	// not publish them, and the administration views opt in explicitly.
-	it("hides pending accounts unless asked for them", async () => {
-		await seedUser(db, { handle: "alice" });
-		await seedUser(db, { handle: "bob", lifecycleState: "pending" });
+	it("never returns pending accounts", async () => {
+		const alice = await seedUser(db, { username: "alice" });
+		await seedUser(db, { lifecycleState: "pending" });
 
-		expect((await findUsers(db, {})).items.map((user) => user.handle)).toEqual([
-			"alice",
-		]);
-		expect(
-			(await findUsers(db, { lifecycleState: "any" })).items
-				.map((user) => user.handle)
-				.toSorted(),
-		).toEqual(["alice", "bob"]);
-		expect(
-			(await findUsers(db, { lifecycleState: "pending" })).items.map(
-				(user) => user.handle,
-			),
-		).toEqual(["bob"]);
+		const result = await findUsers(db, {});
+
+		expect(result.items.map((user) => user.id)).toEqual([alice]);
+		expect(result.foundCount).toBe(1);
+	});
+
+	// Pending rows are left out by the query, so they never count toward a page.
+	it("fills each page with set-up users", async () => {
+		await seedUser(db, { username: "a" });
+		await seedUser(db, { lifecycleState: "pending" });
+		await seedUser(db, { username: "b" });
+		await seedUser(db, { lifecycleState: "pending" });
+		await seedUser(db, { username: "c" });
+
+		const page1 = await findUsers(db, { page: 1, perPage: 2 });
+		const page2 = await findUsers(db, { page: 2, perPage: 2 });
+
+		expect(page1.items.map((user) => user.username)).toEqual(["a", "b"]);
+		expect(page2.items.map((user) => user.username)).toEqual(["c"]);
+		expect(page1.pageCount).toBe(2);
 	});
 
 	// Any signed-in user may search, so the results must not show who has no
 	// second factor.
 	it("leaves out two-factor state", async () => {
-		await seedUser(db, { handle: "alice" });
+		await seedUser(db, { username: "alice" });
 
 		const [user] = (await findUsers(db, {})).items;
 
@@ -830,14 +837,14 @@ describe("findUsers", () => {
 		expect(user).not.toHaveProperty("twoFactorEnabled");
 	});
 
-	it("filters by handle substring", async () => {
-		await seedUser(db, { handle: "alice" });
-		await seedUser(db, { handle: "malice" });
-		await seedUser(db, { handle: "bob" });
+	it("filters by username substring", async () => {
+		await seedUser(db, { username: "alice" });
+		await seedUser(db, { username: "malice" });
+		await seedUser(db, { username: "bob" });
 
 		const result = await findUsers(db, { term: "lice" });
 
-		expect(result.items.map((user) => user.handle)).toEqual([
+		expect(result.items.map((user) => user.username)).toEqual([
 			"alice",
 			"malice",
 		]);
@@ -846,50 +853,50 @@ describe("findUsers", () => {
 	});
 
 	it("matches % and _ in the term literally", async () => {
-		await seedUser(db, { handle: "a_b" });
-		await seedUser(db, { handle: "axb" });
-		await seedUser(db, { handle: "c%d" });
-		await seedUser(db, { handle: "cxd" });
+		await seedUser(db, { username: "a_b" });
+		await seedUser(db, { username: "axb" });
+		await seedUser(db, { username: "c%d" });
+		await seedUser(db, { username: "cxd" });
 
 		const underscore = await findUsers(db, { term: "a_b" });
 		const percent = await findUsers(db, { term: "c%d" });
 
-		expect(underscore.items.map((user) => user.handle)).toEqual(["a_b"]);
-		expect(percent.items.map((user) => user.handle)).toEqual(["c%d"]);
+		expect(underscore.items.map((user) => user.username)).toEqual(["a_b"]);
+		expect(percent.items.map((user) => user.username)).toEqual(["c%d"]);
 	});
 
 	it("filters to administrators and to non-administrators", async () => {
-		await seedUser(db, { handle: "admin", administratorRole: "full" });
-		await seedUser(db, { handle: "regular" });
+		await seedUser(db, { username: "admin", administratorRole: "full" });
+		await seedUser(db, { username: "regular" });
 
 		const admins = await findUsers(db, { administrator: true });
 		const regulars = await findUsers(db, { administrator: false });
 
-		expect(admins.items.map((user) => user.handle)).toEqual(["admin"]);
-		expect(regulars.items.map((user) => user.handle)).toEqual(["regular"]);
+		expect(admins.items.map((user) => user.username)).toEqual(["admin"]);
+		expect(regulars.items.map((user) => user.username)).toEqual(["regular"]);
 	});
 
 	it("excludes inactive users by default and includes them on request", async () => {
-		await seedUser(db, { handle: "alice" });
-		await seedUser(db, { handle: "bob", active: false });
+		await seedUser(db, { username: "alice" });
+		await seedUser(db, { username: "bob", active: false });
 
 		const active = await findUsers(db, {});
 		const inactive = await findUsers(db, { active: false });
 
-		expect(active.items.map((user) => user.handle)).toEqual(["alice"]);
-		expect(inactive.items.map((user) => user.handle)).toEqual(["bob"]);
+		expect(active.items.map((user) => user.username)).toEqual(["alice"]);
+		expect(inactive.items.map((user) => user.username)).toEqual(["bob"]);
 	});
 
 	it("paginates and reports the page count", async () => {
-		for (const handle of ["a", "b", "c"]) {
-			await seedUser(db, { handle });
+		for (const username of ["a", "b", "c"]) {
+			await seedUser(db, { username });
 		}
 
 		const page1 = await findUsers(db, { page: 1, perPage: 2 });
 		const page2 = await findUsers(db, { page: 2, perPage: 2 });
 
-		expect(page1.items.map((user) => user.handle)).toEqual(["a", "b"]);
-		expect(page2.items.map((user) => user.handle)).toEqual(["c"]);
+		expect(page1.items.map((user) => user.username)).toEqual(["a", "b"]);
+		expect(page2.items.map((user) => user.username)).toEqual(["c"]);
 		expect(page1.pageCount).toBe(2);
 	});
 });
@@ -897,21 +904,20 @@ describe("findUsers", () => {
 describe("findAdministeredUsers", () => {
 	async function seedMixedUsers() {
 		await seedUser(db, {
-			handle: "carol",
+			username: "carol",
 			email: "carol@example.com",
 			administratorRole: "users",
 		});
 		await seedUser(db, {
-			handle: "",
 			email: "invited@example.com",
 			lifecycleState: "pending",
 		});
 		await seedUser(db, {
-			handle: "Alice",
+			username: "alice",
 			email: "zed@example.com",
 			administratorRole: "full",
 		});
-		await seedUser(db, { handle: "bob", active: false });
+		await seedUser(db, { username: "bob", active: false });
 	}
 
 	async function getEmails(
@@ -922,24 +928,25 @@ describe("findAdministeredUsers", () => {
 		);
 	}
 
-	it("returns every account with its email, pending handles last", async () => {
+	it("returns every account with its email, pending accounts last", async () => {
 		await seedMixedUsers();
 
 		const result = await findAdministeredUsers(db, {});
 
-		expect(result.items.map((user) => user.handle)).toEqual([
-			"Alice",
+		expect(result.items.map((user) => user.username)).toEqual([
+			"alice",
 			"bob",
 			"carol",
-			"",
+			null,
 		]);
+		expect(result.items[3]?.lifecycleState).toBe("pending");
 		expect(result.items[0]?.email).toBe("zed@example.com");
 		expect(result.foundCount).toBe(4);
 	});
 
 	it("matches search wildcards literally", async () => {
-		await seedUser(db, { handle: "a_b", email: "one@example.com" });
-		await seedUser(db, { handle: "acb", email: "two@example.com" });
+		await seedUser(db, { username: "a_b", email: "one@example.com" });
+		await seedUser(db, { username: "acb", email: "two@example.com" });
 
 		expect(await getEmails({ term: "a_b" })).toEqual(["one@example.com"]);
 		expect(await getEmails({ term: "%" })).toEqual([]);
@@ -972,7 +979,7 @@ describe("findAdministeredUsers", () => {
 		]);
 	});
 
-	it("searches handles and emails", async () => {
+	it("searches usernames and emails", async () => {
 		await seedMixedUsers();
 
 		expect(await getEmails({ term: "zed" })).toEqual(["zed@example.com"]);
@@ -1004,7 +1011,7 @@ describe("findAdministeredUsers", () => {
 
 describe("getUser", () => {
 	it("merges permissions across the user's groups and names the primary", async () => {
-		const userId = await seedUser(db, { handle: "alice" });
+		const userId = await seedUser(db, { username: "alice" });
 		const refs = await seedGroup(db, {
 			name: "refs",
 			permissions: { create_ref: true },
@@ -1029,7 +1036,7 @@ describe("getUser", () => {
 	});
 
 	it("reports whether the user has confirmed a TOTP enrollment", async () => {
-		const userId = await seedUser(db, { handle: "alice" });
+		const userId = await seedUser(db, { username: "alice" });
 		expect((await getUser(db, userId)).twoFactorEnabled).toBe(false);
 
 		await db
@@ -1048,13 +1055,14 @@ describe("getUser", () => {
 describe("createUser", () => {
 	it("creates a user with the default settings and no administrator role", async () => {
 		const user = await createUser(db, {
-			handle: "alice",
+			username: "alice",
 			password: "a-real-password",
 			lastSeenChangelogAt: new Date(),
 		});
 
 		expect(user).toMatchObject({
-			handle: "alice",
+			lifecycleState: "normal",
+			username: "alice",
 			administratorRole: null,
 			active: true,
 			groups: [],
@@ -1083,16 +1091,27 @@ describe("createUser", () => {
 		).toBe(true);
 	});
 
-	it("rejects a duplicate handle", async () => {
+	it("stores the username normalized", async () => {
+		const user = await createUser(db, {
+			username: " Alice ",
+			lastSeenChangelogAt: new Date(),
+			password: "a-real-password",
+		});
+
+		expect(user.username).toBe("alice");
+		expect((await readUser(user.id))?.username).toBe("alice");
+	});
+
+	it("rejects a duplicate username in any case", async () => {
 		await createUser(db, {
-			handle: "alice",
+			username: "alice",
 			password: "a-real-password",
 			lastSeenChangelogAt: new Date(),
 		});
 
 		await expect(
 			createUser(db, {
-				handle: "alice",
+				username: "Alice",
 				password: "another-password",
 				lastSeenChangelogAt: new Date(),
 			}),
@@ -1121,10 +1140,10 @@ describe("setAdministratorRole", () => {
 describe("getAdministratorRole", () => {
 	it("returns the role, or null when there is none", async () => {
 		const admin = await seedUser(db, {
-			handle: "admin",
+			username: "admin",
 			administratorRole: "settings",
 		});
-		const regular = await seedUser(db, { handle: "regular" });
+		const regular = await seedUser(db, { username: "regular" });
 
 		expect(await getAdministratorRole(db, admin)).toBe("settings");
 		expect(await getAdministratorRole(db, regular)).toBeNull();
@@ -1145,14 +1164,11 @@ describe("listAdministratorRoles", () => {
 });
 
 describe("updateUser on a pending account", () => {
-	it("refuses to change the handle before setup", async () => {
-		const userId = await seedUser(db, {
-			handle: "",
-			lifecycleState: "pending",
-		});
+	it("refuses to change the username before setup", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
 
 		await expect(
-			updateUser(db, userId, { handle: "new-handle" }),
+			updateUser(db, userId, { username: "new_username" }),
 		).rejects.toBeInstanceOf(PendingAccountError);
 
 		const [row] = await db.select().from(users).where(eq(users.id, userId));
@@ -1160,19 +1176,16 @@ describe("updateUser on a pending account", () => {
 		expect(row?.lifecycleState).toBe("pending");
 	});
 
-	it("reserves the handle for the invitee while allowing group changes", async () => {
-		const userId = await seedUser(db, {
-			handle: "",
-			lifecycleState: "pending",
-		});
+	it("reserves the username for the invitee while allowing group changes", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
 		const group = await seedGroup(db, { name: "researchers" });
 
 		await expect(
-			updateUser(db, userId, { handle: "ada" }),
+			updateUser(db, userId, { username: "ada" }),
 		).rejects.toBeInstanceOf(PendingAccountError);
 		const updated = await updateUser(db, userId, { groups: [group] });
 
-		expect(updated.handle).toBe("");
+		expect(updated.username).toBeNull();
 		expect(updated.groups.map((entry) => entry.name)).toEqual(["researchers"]);
 		expect(updated.lifecycleState).toBe("pending");
 	});
@@ -1180,10 +1193,7 @@ describe("updateUser on a pending account", () => {
 
 describe("changePassword on a pending account", () => {
 	it("reports a bad credential rather than a lifecycle state", async () => {
-		const userId = await seedUser(db, {
-			handle: "",
-			lifecycleState: "pending",
-		});
+		const userId = await seedUser(db, { lifecycleState: "pending" });
 
 		await expect(
 			changePassword(db, {

@@ -4,7 +4,7 @@ import {
 	type GroupMinimal,
 	type GroupSearchResult,
 	type Permissions,
-	type UserNested,
+	type UserIdentity,
 } from "@virtool/contracts";
 import { asc, count, eq, ilike, sql } from "drizzle-orm";
 import { isUniqueViolation } from "../db/errors";
@@ -20,6 +20,7 @@ import { users as usersTable } from "../db/schema/users";
 import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
+import { getUserIdentity } from "../users/username";
 
 /** Partial values accepted when updating a group. */
 export type GroupUpdateValues = {
@@ -41,15 +42,24 @@ function toGroupMinimal(row: GroupRow): GroupMinimal {
 	};
 }
 
-async function fetchGroupUsers(db: Db, groupId: number): Promise<UserNested[]> {
+// An invitation assigns groups, so pending accounts are members too. They sort
+// last because they have no username yet.
+async function fetchGroupUsers(
+	db: Db,
+	groupId: number,
+): Promise<UserIdentity[]> {
 	const rows = await db
-		.select({ id: usersTable.id, handle: usersTable.handle })
+		.select({
+			id: usersTable.id,
+			lifecycleState: usersTable.lifecycleState,
+			username: usersTable.username,
+		})
 		.from(usersTable)
 		.innerJoin(userGroupsTable, eq(userGroupsTable.userId, usersTable.id))
 		.where(eq(userGroupsTable.groupId, groupId))
-		.orderBy(asc(usersTable.handle));
+		.orderBy(asc(usersTable.username), asc(usersTable.id));
 
-	return rows.map((row) => ({ id: row.id, handle: row.handle }));
+	return rows.map(getUserIdentity);
 }
 
 export async function listGroups(db: Db): Promise<GroupMinimal[]> {

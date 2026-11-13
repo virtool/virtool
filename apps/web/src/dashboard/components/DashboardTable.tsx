@@ -141,17 +141,17 @@ export function DashboardTableMore({ children }: DashboardTableMoreProps) {
 }
 
 type DashboardTableUserCellProps = {
-	/** The account's handle. */
-	handle: string;
+	/** The account's username. */
+	username: string;
 };
 
 /** A column naming the account attached to the record. */
 export function DashboardTableUserCell({
-	handle,
+	username,
 }: DashboardTableUserCellProps) {
 	return (
 		<DashboardTableCell>
-			<UserLabel handle={handle} />
+			<UserLabel username={username} />
 		</DashboardTableCell>
 	);
 }

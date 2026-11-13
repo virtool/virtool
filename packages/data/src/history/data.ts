@@ -28,6 +28,7 @@ import {
 	type OtuDocument,
 	OtuNotFoundError,
 } from "../otus/data";
+import { selectSetUpUsername } from "../users/username";
 import { type DiffEntry, patch, swap } from "./dictdiffer";
 
 // Re-exported so a caller of `patchOtusToVersions` can name what it gets back
@@ -100,7 +101,7 @@ type JoinedHistoryRow = {
 	referenceId: number;
 	referenceName: string;
 	userId: number;
-	userHandle: string;
+	username: string;
 };
 
 function mapOtuHistory(row: JoinedHistoryRow): OtuHistory {
@@ -121,7 +122,7 @@ function mapOtuHistory(row: JoinedHistoryRow): OtuHistory {
 			version: coerceOtuVersion(row.otuVersion),
 		},
 		reference: { id: row.referenceId, name: row.referenceName },
-		user: { id: row.userId, handle: row.userHandle },
+		user: { id: row.userId, username: row.username },
 	};
 }
 
@@ -164,7 +165,7 @@ export async function listByOtu(
 			referenceId: legacyHistory.reference_id,
 			referenceName: legacyReferences.name,
 			userId: users.id,
-			userHandle: users.handle,
+			username: selectSetUpUsername(users.username),
 		})
 		.from(legacyHistory)
 		.innerJoin(users, eq(legacyHistory.user_id, users.id))
@@ -220,7 +221,7 @@ export async function findUnbuiltByReference(
 				referenceId: legacyHistory.reference_id,
 				referenceName: legacyReferences.name,
 				userId: users.id,
-				userHandle: users.handle,
+				username: selectSetUpUsername(users.username),
 			})
 			.from(legacyHistory)
 			.innerJoin(users, eq(legacyHistory.user_id, users.id))
@@ -270,7 +271,7 @@ export async function getMostRecentChange(
 			description: legacyHistory.description,
 			methodName: legacyHistory.method_name,
 			userId: users.id,
-			userHandle: users.handle,
+			username: selectSetUpUsername(users.username),
 		})
 		.from(legacyHistory)
 		.innerJoin(users, eq(legacyHistory.user_id, users.id))
@@ -290,7 +291,7 @@ export async function getMostRecentChange(
 		createdAt: row.createdAt,
 		description: row.description,
 		methodName: row.methodName as HistoryNested["methodName"],
-		user: { id: row.userId, handle: row.userHandle },
+		user: { id: row.userId, username: row.username },
 	};
 }
 

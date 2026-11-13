@@ -83,7 +83,7 @@ export default function SampleItem({
 					<Time time={sample.createdAt} />
 				</div>
 				<div className="min-w-0" role="cell">
-					<UserLabel handle={sample.user.handle} />
+					<UserLabel username={sample.user.username} />
 				</div>
 				<div className="flex items-center justify-end pr-4" role="cell">
 					<EndIcon

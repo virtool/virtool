@@ -9,7 +9,7 @@ describe("<MemberItem />", () => {
 		renderWithProviders(
 			<MemberItem
 				canModify={false}
-				handleOrName="bob"
+				name="bob"
 				id={7}
 				onEdit={vi.fn()}
 				onRemove={vi.fn()}
@@ -21,6 +21,20 @@ describe("<MemberItem />", () => {
 		expect(screen.queryByRole("button", { name: "Remove member" })).toBeNull();
 	});
 
+	it("shows an invited member without a username", () => {
+		renderWithProviders(
+			<MemberItem
+				canModify={false}
+				name={null}
+				id={7}
+				onEdit={vi.fn()}
+				onRemove={vi.fn()}
+			/>,
+		);
+
+		expect(screen.getByText("No username yet")).toBeInTheDocument();
+	});
+
 	it("edits and removes the member when [canModify=true]", async () => {
 		const onEdit = vi.fn();
 		const onRemove = vi.fn();
@@ -28,7 +42,7 @@ describe("<MemberItem />", () => {
 		renderWithProviders(
 			<MemberItem
 				canModify
-				handleOrName="bob"
+				name="bob"
 				id={7}
 				onEdit={onEdit}
 				onRemove={onRemove}

@@ -9,10 +9,10 @@ import Nav from "../Nav";
 describe("<Nav />", () => {
 	const props: {
 		administratorRole: AdministratorRoleName;
-		handle: string;
+		username: string;
 	} = {
 		administratorRole: "full",
-		handle: "Bob",
+		username: "bob",
 	};
 
 	it("should render", async () => {
@@ -34,7 +34,7 @@ describe("<Nav />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "User menu" }));
 
 		expect(
-			screen.getByRole("menuitem", { name: "Signed in as Bob" }),
+			screen.getByRole("menuitem", { name: "Signed in as bob" }),
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole("menuitem", { name: "Account" }),

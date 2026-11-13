@@ -147,26 +147,34 @@ async function readUser(userId: number) {
 	return row;
 }
 
-describe("updateAccountHandleFn", () => {
-	it("changes the handle for a fresh session", async () => {
+describe("updateAccountUsernameFn", () => {
+	it("changes the username for a fresh session", async () => {
 		const { userId } = await signIn();
 
-		await call("updateAccountHandleFn", { handle: "renamed" });
+		await call("updateAccountUsernameFn", { username: "renamed" });
 
-		expect((await readUser(userId))?.handle).toBe("renamed");
+		expect((await readUser(userId))?.username).toBe("renamed");
 	});
 
-	it("refuses to change the handle for a stale session", async () => {
+	it("stores a mixed-case username in lowercase", async () => {
 		const { userId } = await signIn();
-		const { handle } = (await readUser(userId)) ?? {};
+
+		await call("updateAccountUsernameFn", { username: " Renamed " });
+
+		expect((await readUser(userId))?.username).toBe("renamed");
+	});
+
+	it("refuses to change the username for a stale session", async () => {
+		const { userId } = await signIn();
+		const { username } = (await readUser(userId)) ?? {};
 		await db.update(authSessions).set({
 			createdAt: new Date(Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1)),
 		});
 
 		await expect(
-			call("updateAccountHandleFn", { handle: "renamed" }),
+			call("updateAccountUsernameFn", { username: "renamed" }),
 		).rejects.toBeInstanceOf(SessionNotFreshError);
-		expect((await readUser(userId))?.handle).toBe(handle);
+		expect((await readUser(userId))?.username).toBe(username);
 	});
 });
 
@@ -260,7 +268,7 @@ describe("resetUserTotpFn", () => {
 	}
 
 	async function seedEnrolledUser() {
-		const userId = await seedUser(db, { handle: "bob" });
+		const userId = await seedUser(db, { username: "bob" });
 		await db.insert(authTwoFactors).values({
 			backupCodes: "encrypted",
 			secret: "secret",
@@ -336,7 +344,7 @@ describe("resetUserTotpFn", () => {
 	it("responds with 409 for a user with no factor", async () => {
 		silenceLogs();
 		await signInAdministrator();
-		const targetId = await seedUser(db, { handle: "bob" });
+		const targetId = await seedUser(db, { username: "bob" });
 
 		await expect(
 			call("resetUserTotpFn", { userId: targetId }),
@@ -359,7 +367,7 @@ describe("revokeUserAccessFn", () => {
 	}
 
 	async function seedTarget(administratorRole: "base" | null = null) {
-		const userId = await seedUser(db, { administratorRole, handle: "bob" });
+		const userId = await seedUser(db, { administratorRole, username: "bob" });
 		await seedSession(db, userId);
 		return userId;
 	}
@@ -436,7 +444,7 @@ describe("revokeUserAccessFn", () => {
 		silenceLogs();
 		await signInAdministrator("full");
 		const targetId = await seedUser(db, {
-			handle: "bob",
+			username: "bob",
 			lifecycleState: "pending",
 		});
 

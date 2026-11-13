@@ -15,7 +15,7 @@ type DaemonLogReader = () => Promise<string>;
 
 type DefaultAdministratorSettings = {
 	clear: () => void;
-	set: (input: { email: string; handle: string; password: string }) => void;
+	set: (input: { email: string; password: string; username: string }) => void;
 };
 
 export class SnapshotFeed {
@@ -188,21 +188,21 @@ export function createApi(
 	app.post("/api/default-administrator", async (context) => {
 		const body = (await context.req.json()) as {
 			email?: unknown;
-			handle?: unknown;
 			password?: unknown;
+			username?: unknown;
 		};
 		if (
-			typeof body.handle !== "string" ||
+			typeof body.username !== "string" ||
 			typeof body.email !== "string" ||
 			typeof body.password !== "string"
 		) {
-			return context.text("Handle, email, and password must be strings", 422);
+			return context.text("Username, email, and password must be strings", 422);
 		}
 		try {
 			defaultAdministrator?.set({
 				email: body.email,
-				handle: body.handle,
 				password: body.password,
+				username: body.username,
 			});
 		} catch (error) {
 			return context.text(

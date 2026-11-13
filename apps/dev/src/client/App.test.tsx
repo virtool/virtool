@@ -521,16 +521,16 @@ it("lists uncreated worktrees in their own section", async () => {
 it("saves the default administrator without showing the saved password", async () => {
 	snapshot.defaultAdministrator = {
 		email: "admin@example.com",
-		handle: "admin",
+		username: "admin",
 	};
 	const user = userEvent.setup();
 	await renderApp();
 	await user.click(screen.getByRole("link", { name: "Shared" }));
 
-	expect(screen.getByLabelText("Handle")).toHaveValue("admin");
+	expect(screen.getByLabelText("Username")).toHaveValue("admin");
 	expect(screen.getByLabelText("Password")).toHaveValue("");
-	await user.clear(screen.getByLabelText("Handle"));
-	await user.type(screen.getByLabelText("Handle"), "boss");
+	await user.clear(screen.getByLabelText("Username"));
+	await user.type(screen.getByLabelText("Username"), "boss");
 	await user.click(screen.getByRole("button", { name: "Save" }));
 
 	expect(fetch).toHaveBeenCalledWith(
@@ -538,8 +538,8 @@ it("saves the default administrator without showing the saved password", async (
 		expect.objectContaining({
 			body: JSON.stringify({
 				email: "admin@example.com",
-				handle: "boss",
 				password: "",
+				username: "boss",
 			}),
 		}),
 	);
@@ -550,7 +550,7 @@ it("requires a password before the first default administrator save", async () =
 	const user = userEvent.setup();
 	await renderApp();
 	await user.click(screen.getByRole("link", { name: "Shared" }));
-	await user.type(screen.getByLabelText("Handle"), "admin");
+	await user.type(screen.getByLabelText("Username"), "admin");
 	await user.type(screen.getByLabelText("Email"), "admin@example.com");
 
 	expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
@@ -576,7 +576,7 @@ it("shows why the daemon rejects a default administrator", async () => {
 	const user = userEvent.setup();
 	await renderApp();
 	await user.click(screen.getByRole("link", { name: "Shared" }));
-	await user.type(screen.getByLabelText("Handle"), "virtool");
+	await user.type(screen.getByLabelText("Username"), "virtool");
 	await user.type(screen.getByLabelText("Email"), "admin@example.com");
 	await user.type(screen.getByLabelText("Password"), "hello world");
 	await user.click(screen.getByRole("button", { name: "Save" }));
@@ -601,7 +601,7 @@ describe("create options", () => {
 		];
 		snapshot.defaultAdministrator = {
 			email: "admin@example.com",
-			handle: "admin",
+			username: "admin",
 		};
 	});
 

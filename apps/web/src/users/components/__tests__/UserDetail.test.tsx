@@ -25,10 +25,10 @@ function renderUserDetail(target: User, twoFactorEnabled = false) {
 	return renderWithProviders(<UserDetail userId={target.id} />);
 }
 
-async function submitHandle(handle: string) {
-	const input = await screen.findByLabelText("handle");
+async function submitUsername(username: string) {
+	const input = await screen.findByLabelText("Username");
 	await userEvent.clear(input);
-	await userEvent.type(input, handle);
+	await userEvent.type(input, username);
 
 	const form = input.closest("form") as HTMLElement;
 	await userEvent.click(within(form).getByRole("button", { name: "Save" }));
@@ -63,7 +63,7 @@ describe("<UserDetail />", () => {
 
 			renderUserDetail(userDetail);
 
-			expect(await screen.findByText(userDetail.handle)).toBeInTheDocument();
+			expect(await screen.findByText(userDetail.username)).toBeInTheDocument();
 			expect(screen.getByLabelText("Administrator")).toBeInTheDocument();
 		});
 
@@ -89,7 +89,7 @@ describe("<UserDetail />", () => {
 			).toBeInTheDocument();
 
 			expect(screen.getByText("Contact an administrator.")).toBeInTheDocument();
-			expect(screen.queryByText(adminUser.handle)).not.toBeInTheDocument();
+			expect(screen.queryByText(adminUser.username)).not.toBeInTheDocument();
 			expect(screen.queryByText("Permissions")).not.toBeInTheDocument();
 		});
 
@@ -158,37 +158,39 @@ describe("<UserDetail />", () => {
 		});
 	});
 
-	describe("<Handle />", () => {
-		it("should show the current handle and submit a new one", async () => {
-			const updateUser = mockUpdateUser(user.id, 200, { handle: "new_handle" });
+	describe("<Username />", () => {
+		it("should show the current username and submit a new one", async () => {
+			const updateUser = mockUpdateUser(user.id, 200, {
+				username: "new_username",
+			});
 
 			renderUserDetail(user);
 
-			expect(await screen.findByText("Change Handle")).toBeInTheDocument();
-			expect(screen.getByLabelText("handle")).toHaveValue(user.handle);
+			expect(await screen.findByText("Change Username")).toBeInTheDocument();
+			expect(screen.getByLabelText("Username")).toHaveValue(user.username);
 
-			await submitHandle("new_handle");
+			await submitUsername("new_username");
 
 			await waitFor(() =>
 				expect(updateUser).toHaveBeenCalledWith({
-					data: { userId: user.id, handle: "new_handle" },
+					data: { userId: user.id, username: "new_username" },
 				}),
 			);
 		});
 
-		it("should show the server's error when the handle is taken or reserved", async () => {
+		it("should show the server's error when the username is taken or reserved", async () => {
 			userServerFnMocks.updateUserFn
 				.mockRejectedValueOnce(new Error("User already exists."))
 				.mockRejectedValueOnce(new Error("Reserved username: virtool"));
 
 			renderUserDetail(user);
 
-			await submitHandle("taken_handle");
+			await submitUsername("taken_username");
 			expect(
 				await screen.findByText("User already exists."),
 			).toBeInTheDocument();
 
-			await submitHandle("virtool");
+			await submitUsername("virtool");
 			expect(
 				await screen.findByText("Reserved username: virtool"),
 			).toBeInTheDocument();
@@ -254,7 +256,7 @@ describe("<UserDetail />", () => {
 
 			renderUserDetail(self);
 
-			expect(await screen.findByText(self.handle)).toBeInTheDocument();
+			expect(await screen.findByText(self.username)).toBeInTheDocument();
 			expect(screen.queryByText("Administrator Role")).not.toBeInTheDocument();
 		});
 	});

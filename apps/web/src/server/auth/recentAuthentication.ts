@@ -161,7 +161,7 @@ export const challengeRecentAuthenticationFn = createServerFn({
 			attributePrincipal({
 				kind: "browser",
 				userId: context.principal.userId,
-				handle: context.principal.handle,
+				username: context.principal.username,
 				sessionId,
 				createdAt: replacement.createdAt,
 			});

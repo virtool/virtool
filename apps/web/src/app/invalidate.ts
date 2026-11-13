@@ -54,7 +54,7 @@ const domains: Record<SseDomain, DomainCache> = {
 	users: { keys: userQueryKeys, shape: "records" },
 };
 
-/** Domains whose records embed a user's handle. */
+/** Domains whose records embed a user's username. */
 const userEmbedders: QueryKey[] = [
 	accountQueryKeys.all(),
 	analysesQueryKeys.all(),

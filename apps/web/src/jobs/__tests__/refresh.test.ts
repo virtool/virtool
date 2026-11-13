@@ -31,7 +31,7 @@ function createJob(id: number, overrides?: Partial<Job>): Job {
 		progress: 50,
 		state: "running",
 		steps: null,
-		user: { id: 7, handle: "bob" },
+		user: { id: 7, username: "bob" },
 		workflow: "pathoscope",
 		...overrides,
 	};

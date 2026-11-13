@@ -102,16 +102,16 @@ async function seedMigratedUser(
 		lifecycleState?: AccountLifecycleState;
 	} = {},
 ): Promise<number> {
-	// A pending row carries no legacy password — `pending_has_no_password`
-	// refuses the pair — so the credential exists only on the Better Auth side,
-	// which is the state a half-finished completion would leave behind.
+	// A pending row carries no legacy password or username — the
+	// `pending_has_no_password` and `pending_has_no_username`
+	// constraints refuse them — so the credential exists only on the Better
+	// Auth side, which is the state a half-finished completion would leave
+	// behind.
 	const pending = state.lifecycleState === "pending";
 	const [user] = await db
 		.insert(users)
 		.values({
-			handle: "Alice",
-			username: "alice",
-			displayUsername: "Alice",
+			username: pending ? null : "alice",
 			name: "Alice",
 			email: "alice@virtool.test",
 			password: pending ? null : Buffer.from(hash, "utf8"),
@@ -236,7 +236,7 @@ describe("legacy bcrypt credentials", () => {
 		expect(session?.userAgent).toHaveLength(512);
 	});
 
-	it("matches the handle case-insensitively", async () => {
+	it("signs in a user stored as alice with ALICE", async () => {
 		await seedMigratedUser();
 
 		const response = await auth.handler(

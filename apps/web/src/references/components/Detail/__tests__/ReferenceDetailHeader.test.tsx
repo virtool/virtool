@@ -25,7 +25,7 @@ async function renderHeader({
 			createdAt={reference.createdAt}
 			detail={reference}
 			name={reference.name}
-			userHandle={reference.user?.handle ?? ""}
+			username={reference.user?.username ?? ""}
 		/>,
 		`/refs/${reference.id}/manage`,
 	);
@@ -39,7 +39,7 @@ describe("<ReferenceDetailHeader />", () => {
 
 		expect(screen.getByText(reference.name)).toBeInTheDocument();
 		expect(
-			screen.getByText(`${reference.user?.handle} created`),
+			screen.getByText(`${reference.user?.username} created`),
 		).toBeInTheDocument();
 		expect(
 			await screen.findByRole("button", { name: "modify" }),
@@ -53,7 +53,7 @@ describe("<ReferenceDetailHeader />", () => {
 
 		expect(screen.getByText(reference.name)).toBeInTheDocument();
 		expect(
-			screen.getByText(`${reference.user?.handle} created`),
+			screen.getByText(`${reference.user?.username} created`),
 		).toBeInTheDocument();
 		expect(screen.getByText("Archived")).toBeInTheDocument();
 		expect(

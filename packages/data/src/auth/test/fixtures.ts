@@ -21,7 +21,7 @@ export type SeedUserOptions = {
 	administratorRole?: AdministratorRoleName | null;
 	authMigratedAt?: Date | null;
 	email?: string;
-	handle?: string;
+	username?: string;
 	lifecycleState?: AccountLifecycleState;
 	password?: Buffer | null;
 	settings?: Record<string, unknown>;
@@ -38,8 +38,8 @@ export type SeededSession = {
  * Insert a user, active and with no administrator role unless told otherwise,
  * and return its id.
  *
- * `handle` is unique (case-insensitively), so a test seeding a second user must
- * pass a distinct one.
+ * `username` is unique, so a test seeding a second user must pass a distinct
+ * one. A pending account is seeded with no username, whatever is passed.
  *
  * `password` defaults to a placeholder that is not a real password hash. A test
  * that exercises a code path which verifies the stored password must pass a
@@ -56,7 +56,7 @@ export async function seedUser(
 		administratorRole = null,
 		authMigratedAt = null,
 		email = "",
-		handle = "alice",
+		username = "alice",
 		lifecycleState = "normal",
 		password = Buffer.from("not-a-real-hash"),
 		settings = {},
@@ -69,7 +69,7 @@ export async function seedUser(
 			administratorRole,
 			authMigratedAt,
 			email,
-			handle,
+			username: lifecycleState === "pending" ? null : username,
 			lastPasswordChange: new Date(),
 			lifecycleState,
 			password: lifecycleState === "pending" ? null : password,

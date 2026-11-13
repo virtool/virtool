@@ -132,7 +132,28 @@ describe("<LoginForm />", () => {
 			expect(router.state.location.pathname).toBe("/recover"),
 		);
 		expect(router.state.location.search).toEqual({});
-		expect(router.state.location.state.recoveryHandle).toBe("ada");
+		expect(router.state.location.state.recoveryUsername).toBe("ada");
+	});
+
+	it("makes the username lowercase as the user types", async () => {
+		const user = userEvent.setup();
+
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm />
+			</MemoryRouter>,
+		);
+
+		const input = await screen.findByLabelText<HTMLInputElement>("Username");
+		await user.type(input, "Ada");
+		expect(input).toHaveValue("ada");
+
+		await user.type(input, "L", {
+			initialSelectionStart: 1,
+			initialSelectionEnd: 1,
+		});
+		expect(input).toHaveValue("alda");
+		expect(input.selectionStart).toBe(2);
 	});
 
 	it("signs in with the form values and carries the redirect into email remediation", async () => {
@@ -158,14 +179,14 @@ describe("<LoginForm />", () => {
 		);
 		expect(loginMock).toHaveBeenCalledTimes(1);
 		expect(loginMock).toHaveBeenCalledWith(
-			{ handle: "Alice", password: "password" },
+			{ username: "alice", password: "password" },
 			expect.anything(),
 		);
 	});
 
 	it("displays the thrown error message on login failure", async () => {
 		const user = userEvent.setup();
-		const handle = "test_Username";
+		const username = "test_username";
 		const password = "Password";
 		const errorMessage = "Incorrect username or password.";
 
@@ -177,7 +198,7 @@ describe("<LoginForm />", () => {
 			</MemoryRouter>,
 		);
 
-		await user.type(await screen.findByLabelText("Username"), handle);
+		await user.type(await screen.findByLabelText("Username"), username);
 		await user.type(screen.getByLabelText("Password"), password);
 		await user.click(screen.getByRole("button", { name: "Sign in" }));
 

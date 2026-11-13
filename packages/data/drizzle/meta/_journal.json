@@ -365,6 +365,13 @@
       "when": 1794348142813,
       "tag": "0051_strip_job_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1794354356528,
+      "tag": "0052_consolidate_username",
+      "breakpoints": true
     }
   ]
 }

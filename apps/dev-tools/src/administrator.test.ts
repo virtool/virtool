@@ -26,8 +26,8 @@ beforeEach(async () => {
 
 const input = {
 	email: "Admin@Example.com",
-	handle: "admin",
 	password: "hello world",
+	username: "Admin",
 };
 
 describe("createAdministrator", () => {
@@ -39,31 +39,31 @@ describe("createAdministrator", () => {
 			.select({
 				administratorRole: users.administratorRole,
 				email: users.email,
-				handle: users.handle,
+				username: users.username,
 			})
 			.from(users);
 		expect(rows).toEqual([
 			{
 				administratorRole: "full",
 				email: "admin@example.com",
-				handle: "admin",
+				username: "admin",
 			},
 		]);
 	});
 
 	it("leaves existing users unchanged", async () => {
-		await seedUser(db, { handle: "alice" });
+		await seedUser(db, { username: "alice" });
 
 		const result = await createAdministrator(db, input);
 
 		expect(result).toEqual({ status: "exists" });
-		const rows = await db.select({ handle: users.handle }).from(users);
-		expect(rows).toEqual([{ handle: "alice" }]);
+		const rows = await db.select({ username: users.username }).from(users);
+		expect(rows).toEqual([{ username: "alice" }]);
 	});
 
-	it("rejects a reserved handle", async () => {
+	it("rejects a reserved username in any case", async () => {
 		await expect(
-			createAdministrator(db, { ...input, handle: "virtool" }),
+			createAdministrator(db, { ...input, username: "Virtool" }),
 		).rejects.toThrow("Reserved username: virtool");
 	});
 
@@ -80,12 +80,12 @@ describe("createAdministrator", () => {
 	});
 
 	it("does not check the credentials when users exist", async () => {
-		await seedUser(db, { handle: "alice" });
+		await seedUser(db, { username: "alice" });
 
 		const result = await createAdministrator(db, {
 			email: "admin",
-			handle: "virtool",
 			password: "short",
+			username: "virtool",
 		});
 
 		expect(result).toEqual({ status: "exists" });
@@ -96,20 +96,20 @@ describe("parseAdministratorArgs", () => {
 	it("reads values that start with a hyphen", () => {
 		expect(
 			parseAdministratorArgs([
-				"--handle=admin",
+				"--username=admin",
 				"--email=admin@example.com",
 				"--password=-secret123",
 			]),
 		).toEqual({
 			email: "admin@example.com",
-			handle: "admin",
 			password: "-secret123",
+			username: "admin",
 		});
 	});
 
 	it("requires every option", () => {
-		expect(() => parseAdministratorArgs(["--handle=admin"])).toThrow(
-			"create administrator requires --handle, --email, and --password",
+		expect(() => parseAdministratorArgs(["--username=admin"])).toThrow(
+			"create administrator requires --username, --email, and --password",
 		);
 	});
 });

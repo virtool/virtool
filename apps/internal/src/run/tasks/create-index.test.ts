@@ -70,7 +70,7 @@ async function claimBuild(count = 2): Promise<{
 }> {
 	handleCounter += 1;
 
-	const userId = await seedUser(db, { handle: `builder${handleCounter}` });
+	const userId = await seedUser(db, { username: `builder${handleCounter}` });
 	const referenceId = await seedReference(db, userId);
 
 	const otus = Array.from({ length: count }, (_, index) => ({

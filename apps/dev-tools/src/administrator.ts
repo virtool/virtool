@@ -3,6 +3,7 @@ import {
 	type AccountCredentials,
 	checkAccountCredentials,
 	normalizeEmail,
+	normalizeUsername,
 } from "@virtool/contracts";
 import { createKeyring } from "@virtool/data/crypto/keyring";
 import { createDb, type Db } from "@virtool/data/db/pg";
@@ -45,6 +46,7 @@ export async function createAdministrator(
 	const { minimumPasswordLength } = await getSettings(db);
 	checkAccountCredentials(input, minimumPasswordLength);
 	const email = normalizeEmail(input.email);
+	const username = normalizeUsername(input.username);
 
 	try {
 		const { user } = await createFirstAdministrator(db, {
@@ -52,11 +54,11 @@ export async function createAdministrator(
 			email,
 			getVerificationUrl: () => "",
 			keyring: createKeyring(undefined, undefined),
-			handle: input.handle,
 			// Dev-tools has no changelog of its own, so the administrator starts
 			// with every post unread.
 			lastSeenChangelogAt: new Date(0),
 			password: input.password,
+			username,
 		});
 		return { status: "created", userId: user.id };
 	} catch (err) {
@@ -78,24 +80,24 @@ export function parseAdministratorArgs(argv: string[]): AccountCredentials {
 		args: argv,
 		options: {
 			email: { type: "string" },
-			handle: { type: "string" },
 			password: { type: "string" },
+			username: { type: "string" },
 		},
 		strict: true,
 	});
-	if (!values.handle || !values.email || !values.password) {
+	if (!values.username || !values.email || !values.password) {
 		throw new Error(
-			"create administrator requires --handle, --email, and --password",
+			"create administrator requires --username, --email, and --password",
 		);
 	}
 	return {
 		email: values.email,
-		handle: values.handle,
 		password: values.password,
+		username: values.username,
 	};
 }
 
-/** Run `create administrator --handle=<handle> --email=<email> --password=<password>`. */
+/** Run `create administrator --username=<username> --email=<email> --password=<password>`. */
 export async function startCreateAdministrator(argv: string[]): Promise<void> {
 	const credentials = parseAdministratorArgs(argv);
 	const env = AdministratorEnv.parse(
@@ -111,7 +113,7 @@ export async function startCreateAdministrator(argv: string[]): Promise<void> {
 	try {
 		const result = await createAdministrator(db, credentials);
 		logger.info(
-			{ handle: credentials.handle, ...result },
+			{ username: normalizeUsername(credentials.username), ...result },
 			result.status === "created"
 				? "created administrator"
 				: "skipped administrator because users exist",

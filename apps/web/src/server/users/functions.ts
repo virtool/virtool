@@ -51,7 +51,6 @@ import {
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { PROTECTED_OPERATIONS } from "../auth/freshness";
-import { checkHandle, checkReservedHandle } from "../auth/handle";
 import { requireAdminRole } from "../auth/middleware";
 import {
 	adminRole,
@@ -60,6 +59,7 @@ import {
 } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { createReplacementSession } from "../auth/sessionActions";
+import { checkReservedUsername, checkUsername } from "../auth/username";
 import { getReleaseDate } from "../changelog/release";
 import { db, keyring } from "../composition";
 import { config } from "../config";
@@ -91,7 +91,7 @@ const findUsersSchema = z
 			.array(z.enum(USER_ROLE_FILTERS))
 			.max(USER_ROLE_FILTERS.length)
 			.default([]),
-		sort: z.enum(USER_SORT_FIELDS).default("handle"),
+		sort: z.enum(USER_SORT_FIELDS).default("username"),
 		direction: z.enum(SORT_DIRECTIONS).default("ascending"),
 	})
 	.optional();
@@ -138,13 +138,13 @@ const createUserSchema = z.object({
 
 const updateUserSchema = userIdSchema.extend({
 	active: z.boolean().optional(),
-	handle: z.string().trim().min(1).optional(),
+	username: z.string().trim().min(1).optional(),
 	groups: z.array(rowIdSchema).optional(),
 	primaryGroup: rowIdSchema.nullable().optional(),
 });
 
-const accountHandleSchema = z.object({
-	handle: z.string().trim().min(1),
+const accountUsernameSchema = z.object({
+	username: z.string().trim().min(1),
 });
 
 // Password length is enforced by checkConfiguredPasswordLength in the handler,
@@ -415,9 +415,9 @@ export const updateUserFn = createServerFn({ method: "POST" })
 		}
 
 		const { userId, ...values } = data;
-		if (values.handle !== undefined) {
-			checkHandle(values.handle);
-			checkReservedHandle(values.handle);
+		if (values.username !== undefined) {
+			checkUsername(values.username);
+			checkReservedUsername(values.username);
 		}
 		try {
 			return await updateUser(db, userId, values);
@@ -427,21 +427,23 @@ export const updateUserFn = createServerFn({ method: "POST" })
 	});
 
 /**
- * Change the signed-in user's handle.
+ * Change the signed-in user's username.
  *
- * The handle is the password sign-in identifier, so the change needs a recent
- * authentication.
+ * The username is the password sign-in identifier, so the change needs a
+ * recent authentication.
  */
-export const updateAccountHandleFn = createServerFn({ method: "POST" })
-	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.accountHandleChange)])
-	.validator(accountHandleSchema)
+export const updateAccountUsernameFn = createServerFn({ method: "POST" })
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.accountUsernameChange),
+	])
+	.validator(accountUsernameSchema)
 	.handler(async ({ context, data }) => {
-		checkHandle(data.handle);
-		checkReservedHandle(data.handle);
+		checkUsername(data.username);
+		checkReservedUsername(data.username);
 
 		try {
 			return await updateUser(db, context.principal.userId, {
-				handle: data.handle,
+				username: data.username,
 			});
 		} catch (err) {
 			throw rethrowAsHttp(err);

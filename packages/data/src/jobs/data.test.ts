@@ -61,7 +61,7 @@ beforeEach(async () => {
 	await db.delete(jobs);
 	await db.delete(users);
 
-	userId = await seedUser(db, { handle: "bob" });
+	userId = await seedUser(db, { username: "bob" });
 });
 
 async function seedJob(
@@ -158,7 +158,7 @@ describe("getJob", () => {
 			id: jobId,
 			progress: 100,
 			state: "succeeded",
-			user: { id: userId, handle: "bob" },
+			user: { id: userId, username: "bob" },
 			workflow: "pathoscope",
 		});
 	});

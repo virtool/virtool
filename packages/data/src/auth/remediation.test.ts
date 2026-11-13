@@ -16,14 +16,14 @@ beforeEach(async () => {
 }, 60_000);
 
 it("counts active and deactivated unmigrated accounts", async () => {
-	const migrated = await seedUser(db, { handle: "migrated" });
+	const migrated = await seedUser(db, { username: "migrated" });
 	await db
 		.update(users)
 		.set({ authMigratedAt: new Date() })
 		.where(eq(users.id, migrated));
-	await seedUser(db, { handle: "active-legacy" });
-	await seedUser(db, { active: false, handle: "inactive-legacy" });
-	await seedUser(db, { handle: "pending", lifecycleState: "pending" });
+	await seedUser(db, { username: "active-legacy" });
+	await seedUser(db, { active: false, username: "inactive-legacy" });
+	await seedUser(db, { username: "pending", lifecycleState: "pending" });
 
 	const report = await getEmailRemediationReport(db);
 

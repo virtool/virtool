@@ -5,12 +5,13 @@ import { authPasskeys, authSessions } from "../db/schema/auth";
 import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { nowUtc } from "../db/time";
+import { selectSetUpUsername } from "../users/username";
 
 /** A live Better Auth session resolved with the database clock. */
 export type ResolvedBrowserSession = {
 	sessionId: number;
 	userId: number;
-	handle: string;
+	username: string;
 	createdAt: Date;
 	/** Whether the live MFA policy restricts this session to TOTP enrollment. */
 	mfaEnrollmentRequired: boolean;
@@ -143,7 +144,7 @@ export async function resolveBrowserSessionForUpdate(
 		.select({
 			sessionId: authSessions.id,
 			userId: authSessions.userId,
-			handle: users.handle,
+			username: selectSetUpUsername(users.username),
 			createdAt: authSessions.createdAt,
 			mfaEnrollmentRequired,
 		})
@@ -174,7 +175,7 @@ export async function resolveBrowserSession(
 		.select({
 			sessionId: authSessions.id,
 			userId: authSessions.userId,
-			handle: users.handle,
+			username: selectSetUpUsername(users.username),
 			createdAt: authSessions.createdAt,
 			mfaEnrollmentRequired,
 		})

@@ -5,8 +5,8 @@ import type { RestrictedSetup } from "./setup";
 export type BrowserPrincipal = {
 	kind: "browser";
 	userId: number;
-	/** Login handle, for attribution only; never an authorization input. */
-	handle: string;
+	/** Username, for attribution only; never an authorization input. */
+	username: string;
 	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
 	/** Immutable time at which this browser session was created. */
@@ -20,8 +20,8 @@ export type BrowserPrincipal = {
 export type MfaEnrollmentPrincipal = {
 	kind: "mfa_enrollment";
 	userId: number;
-	/** Login handle, for attribution only; never an authorization input. */
-	handle: string;
+	/** Username, for attribution only; never an authorization input. */
+	username: string;
 	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
 	/** Immutable time at which this browser session was created. */
@@ -32,8 +32,8 @@ export type MfaEnrollmentPrincipal = {
 export type ApiKeyPrincipal = {
 	kind: "api_key";
 	userId: number;
-	/** Login handle, for attribution only; never an authorization input. */
-	handle: string;
+	/** Username, for attribution only; never an authorization input. */
+	username: string;
 	/** Stable database identifier; never the key or its digest. */
 	keyId: number;
 	permissions: Permissions;

@@ -101,8 +101,8 @@ describe("findApiKeys", () => {
 	});
 
 	it("does not return another user's keys", async () => {
-		const owner = await seedUser(db, { handle: "owner" });
-		const other = await seedUser(db, { handle: "other" });
+		const owner = await seedUser(db, { username: "owner" });
+		const other = await seedUser(db, { username: "other" });
 		await createApiKey(db, owner, { name: "Robot", permissions: perms() });
 
 		expect(await findApiKeys(db, other)).toHaveLength(0);
@@ -135,8 +135,8 @@ describe("updateApiKey", () => {
 	});
 
 	it("throws when the key belongs to another user", async () => {
-		const owner = await seedUser(db, { handle: "owner" });
-		const other = await seedUser(db, { handle: "other" });
+		const owner = await seedUser(db, { username: "owner" });
+		const other = await seedUser(db, { username: "other" });
 		const { apiKey } = await createApiKey(db, owner, {
 			name: "Robot",
 			permissions: perms({ create_ref: true }),

@@ -7,8 +7,8 @@ import AddReferenceUser from "../AddReferenceUser";
 
 describe("<AddReferenceUser />", () => {
 	it("omits users already members of the reference", async () => {
-		const alice = createFakeUser({ handle: "alice" });
-		const bob = createFakeUser({ handle: "bob" });
+		const alice = createFakeUser({ username: "alice" });
+		const bob = createFakeUser({ username: "bob" });
 		mockSearchUsers([alice, bob]);
 
 		renderWithProviders(
@@ -16,7 +16,8 @@ describe("<AddReferenceUser />", () => {
 				users={[
 					{
 						id: alice.id,
-						handle: alice.handle,
+						lifecycleState: "normal",
+						username: alice.username,
 						build: false,
 						modify: false,
 						modifyOtu: false,

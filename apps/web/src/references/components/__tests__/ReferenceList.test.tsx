@@ -53,7 +53,7 @@ describe("<ReferenceList />", () => {
 		expect(await screen.findByText("References")).toBeInTheDocument();
 		expect(screen.getByText(references.name)).toBeInTheDocument();
 		expect(
-			screen.getByText(`${references.user?.handle} created`),
+			screen.getByText(`${references.user?.username} created`),
 		).toBeInTheDocument();
 
 		expect(

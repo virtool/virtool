@@ -32,9 +32,27 @@ describe("Groups", () => {
 		expect(screen.getByText("Create")).toBeInTheDocument();
 	});
 
+	it("should show a pending member without a username", async () => {
+		const group = createFakeGroup({
+			users: [
+				{ id: 1, lifecycleState: "normal", username: "ada" },
+				{ id: 2, lifecycleState: "pending", username: null },
+			],
+		});
+		mockListGroups([group]);
+		mockGetGroup(group);
+		await renderWithRouter(<Groups />);
+
+		expect(await screen.findByText("ada")).toBeInTheDocument();
+		expect(screen.getByText("No username yet")).toBeInTheDocument();
+		expect(
+			screen.getByRole("img", { name: "Invited user" }),
+		).toBeInTheDocument();
+	});
+
 	it("should show the selected group's name, permissions, and members", async () => {
 		const group1 = createFakeGroup({
-			users: [{ handle: "bob", id: 1 }],
+			users: [{ id: 1, lifecycleState: "normal", username: "bob" }],
 			permissions: createFakePermissions({
 				create_sample: true,
 				modify_hmm: true,

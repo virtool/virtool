@@ -21,6 +21,7 @@ import { users } from "../db/schema/users";
 import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
+import { selectSetUpUsername } from "../users/username";
 
 /** A job as it appears in a search result list. */
 export type JobMinimal = {
@@ -28,7 +29,7 @@ export type JobMinimal = {
 	createdAt: Date;
 	progress: number;
 	state: JobState;
-	user: { id: number; handle: string };
+	user: { id: number; username: string };
 	/**
 	 * Deliberately open. `jobs.workflow` carries no CHECK constraint, so a row
 	 * can name a workflow this build has never heard of.
@@ -48,7 +49,7 @@ export type Job = {
 	progress: number;
 	state: JobState;
 	steps: StoredJobStep[] | null;
-	user: { id: number; handle: string };
+	user: { id: number; username: string };
 	/** Open for the same reason as {@link JobMinimal.workflow}. */
 	workflow: string;
 };
@@ -151,7 +152,7 @@ export async function findJobs(
 				steps: jobs.steps,
 				workflow: jobs.workflow,
 				userId: users.id,
-				handle: users.handle,
+				username: selectSetUpUsername(users.username),
 			})
 			.from(jobs)
 			.innerJoin(users, eq(jobs.user_id, users.id))
@@ -171,7 +172,7 @@ export async function findJobs(
 		createdAt: row.createdAt,
 		progress: computeJobProgress(row.state, row.steps),
 		state: row.state,
-		user: { id: row.userId, handle: row.handle },
+		user: { id: row.userId, username: row.username },
 		workflow: row.workflow,
 	}));
 
@@ -221,7 +222,7 @@ function toJob(row: JobRowWithResources): Job {
 		progress: computeJobProgress(row.state, row.steps),
 		state: row.state,
 		steps: row.steps,
-		user: { id: row.userId, handle: row.handle },
+		user: { id: row.userId, username: row.username },
 		workflow: row.workflow,
 	};
 }
@@ -239,7 +240,7 @@ function selectJobsWithResources(db: Db) {
 			steps: jobs.steps,
 			workflow: jobs.workflow,
 			userId: users.id,
-			handle: users.handle,
+			username: selectSetUpUsername(users.username),
 			sample_id: legacySamples.id,
 			index_id: indexes.id,
 			subtraction_id: subtractions.id,
@@ -341,7 +342,7 @@ export type ClaimedJob = {
 	/** Returned once and never stored in the clear. */
 	key: string;
 	steps: StoredJobStep[];
-	user: { id: number; handle: string };
+	user: { id: number; username: string };
 	workflow: string;
 };
 
@@ -414,7 +415,7 @@ export async function claimJob(
 
 		const user = takeFirstOrThrow(
 			await tx
-				.select({ id: users.id, handle: users.handle })
+				.select({ id: users.id, username: selectSetUpUsername(users.username) })
 				.from(users)
 				.where(eq(users.id, pending.user_id))
 				.limit(1),

@@ -87,7 +87,7 @@ async function claimClone(
 	count = 2,
 	manifestOverride?: Record<string, number>,
 ) {
-	const userId = await seedUser(db, { handle: "curator" });
+	const userId = await seedUser(db, { username: "curator" });
 	const sourceId = await seedReference(userId, "Source");
 	const cloneId = await seedReference(userId, "Clone of Source");
 
@@ -240,7 +240,7 @@ describe("cloneReferenceTask", () => {
 	});
 
 	it("refuses a payload without the manifest the clone was frozen against", async () => {
-		const userId = await seedUser(db, { handle: "curator" });
+		const userId = await seedUser(db, { username: "curator" });
 		const cloneId = await seedReference(userId, "Clone of Source");
 
 		await seedTaskRow(db, cloneReferenceTask.type, {

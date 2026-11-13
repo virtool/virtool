@@ -18,8 +18,8 @@ describe("<IndexDetail />", () => {
 		const index = createFakeIndex({
 			version: 2,
 			contributors: [
-				{ id: 1, handle: "alice", count: 5 },
-				{ id: 2, handle: "bob", count: 1 },
+				{ id: 1, username: "alice", count: 5 },
+				{ id: 2, username: "bob", count: 1 },
 			],
 			files: [
 				createFakeIndexFile({
