@@ -8,10 +8,16 @@
 // warnings.
 import "@app/style.css";
 import { faker } from "@faker-js/faker";
+import { configure } from "@testing-library/react";
 import "./fakeEventSource";
 import "./serverFnMocks";
 
 faker.seed(1);
+
+// Vite transforms a lazily imported module when the browser first requests it.
+// On a cold CI run that can take longer than the 1 s default, so a `findBy` or
+// `waitFor` behind a `lazy()` or dynamic `import()` would time out.
+configure({ asyncUtilTimeout: 5000 });
 
 // Radix keeps a closing overlay in the DOM until its exit animation ends, and
 // the overlay keeps `aria-hidden` on the rest of the page until then.
