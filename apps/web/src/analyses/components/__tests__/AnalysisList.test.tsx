@@ -308,7 +308,7 @@ describe("<AnalysesList /> filtering", () => {
 
 		await userEvent.click(await screen.findByRole("button", { name: "Users" }));
 		await userEvent.click(
-			await screen.findByRole("menuitemcheckbox", {
+			await screen.findByRole("option", {
 				name: at(users, 0).username,
 			}),
 		);

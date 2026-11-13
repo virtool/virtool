@@ -2,6 +2,7 @@ import { getDateFilter } from "@samples/dateFilter";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
+import { createFakeGroupMinimal } from "@tests/fake/groups";
 import { createFakeHmmSearchResults } from "@tests/fake/hmm";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
 import { createFakeLabel } from "@tests/fake/labels";
@@ -27,6 +28,7 @@ import SamplesList from "../SamplesList";
 type SamplesListSearch = {
 	createdAfter?: string;
 	createdBefore?: string;
+	groups?: number[];
 	labels?: number[];
 	page?: number;
 	term?: string;
@@ -49,6 +51,7 @@ function SamplesListHarness({
 	return (
 		<SamplesList
 			dateFilter={getDateFilter(search.createdAfter, search.createdBefore)}
+			filterGroups={search.groups}
 			filterLabels={search.labels}
 			page={search.page}
 			setSearch={handleSetSearch}
@@ -206,15 +209,36 @@ describe("<SamplesList />", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: "Labels" }));
 		await userEvent.click(
-			await screen.findByRole("menuitemcheckbox", {
-				name: new RegExp(label.name),
-			}),
+			await screen.findByRole("option", { name: label.name }),
 		);
 		expect(
 			await screen.findByRole("button", { name: removeChipName }),
 		).toBeInTheDocument();
 
-		await userEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
+		await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+
+		expect(
+			screen.queryByRole("button", { name: removeChipName }),
+		).not.toBeInTheDocument();
+	});
+
+	it("should add a chip for a group picked in the popover and remove it on clear", async () => {
+		const group = createFakeGroupMinimal();
+		mockListSampleGroups([group]);
+		await renderWithRouter(<SamplesListHarness />, path);
+		expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+		const removeChipName = `Remove ${group.name} group filter`;
+
+		await userEvent.click(screen.getByRole("button", { name: "Groups" }));
+		await userEvent.click(
+			await screen.findByRole("option", { name: group.name }),
+		);
+		expect(
+			await screen.findByRole("button", { name: removeChipName }),
+		).toBeInTheDocument();
+
+		await userEvent.click(screen.getByRole("button", { name: "Clear" }));
 
 		expect(
 			screen.queryByRole("button", { name: removeChipName }),
@@ -376,12 +400,12 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
+				await screen.findByRole("option", {
 					name: firstUser.username,
 				}),
 			);
 			await userEvent.click(
-				screen.getByRole("menuitemcheckbox", { name: secondUser.username }),
+				screen.getByRole("option", { name: secondUser.username }),
 			);
 
 			expect(
@@ -395,7 +419,7 @@ describe("<SamplesList />", () => {
 				}),
 			).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
+			await userEvent.click(screen.getByRole("button", { name: "Clear" }));
 
 			expect(
 				screen.queryByRole("button", { name: /user filter$/ }),
@@ -413,7 +437,7 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Users" }));
 
-			const items = await screen.findAllByRole("menuitemcheckbox");
+			const items = await screen.findAllByRole("option");
 			expect(items.map((item) => item.textContent)).toEqual([
 				`${self.username}You`,
 				other.username,
@@ -429,10 +453,10 @@ describe("<SamplesList />", () => {
 			);
 
 			expect(
-				screen.queryByRole("menuitemcheckbox", { name: other.username }),
+				screen.queryByRole("option", { name: other.username }),
 			).not.toBeInTheDocument();
 			expect(
-				screen.getByRole("menuitemcheckbox", {
+				screen.getByRole("option", {
 					name: new RegExp(self.username),
 				}),
 			).toBeInTheDocument();
@@ -479,9 +503,7 @@ describe("<SamplesList />", () => {
 
 			await userEvent.click(screen.getByRole("button", { name: "Labels" }));
 			await userEvent.click(
-				await screen.findByRole("menuitemcheckbox", {
-					name: new RegExp(label.name),
-				}),
+				await screen.findByRole("option", { name: label.name }),
 			);
 
 			expect(await screen.findByText("2 samples")).toBeInTheDocument();
