@@ -56,3 +56,5 @@ minimumReleaseAgeExclude:
   - fast-xml-parser@5.12.0
   # Renovate security update: hono@4.13.16
   - hono@4.13.16
+  # Renovate security update: astro@7.4.7
+  - astro@7.4.7
