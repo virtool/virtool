@@ -12,6 +12,9 @@ import {
 	IndexReferenceNotFoundError,
 	IndexSequenceNotFoundError,
 } from "./errors";
+// The fixtures were captured independently from the legacy server. Do not
+// regenerate them from this package or edit a golden to match its output: that
+// turns a caught divergence into a permanent one.
 import golden from "./fixtures/golden.json" with { type: "json" };
 import {
 	type IndexOtu,

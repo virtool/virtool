@@ -44,6 +44,8 @@ export async function createIndexArtifact(
 	const database = createIndexArtifactSchema(path);
 
 	try {
+		// Outside a transaction SQLite commits per statement, which is one fsync
+		// per sequence row. In a benchmark, autocommit was far slower.
 		database.exec("BEGIN");
 
 		try {

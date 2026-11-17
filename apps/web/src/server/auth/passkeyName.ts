@@ -1,7 +1,7 @@
 import { getAuthenticatorName } from "@better-auth/passkey";
 import { DEFAULT_PASSKEY_NAME } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
-import { getUserHandle } from "@virtool/data/users/data";
+import { getUsername } from "@virtool/data/users/data";
 import type { BetterAuthPlugin } from "better-auth";
 import {
 	APIError,
@@ -30,7 +30,7 @@ export function getNewPasskeyName(
 /**
  * Keep the names of new passkeys out of the client's control.
  *
- * The authenticator labels a new passkey with the user's handle, whatever the
+ * The authenticator labels a new passkey with the user's username, whatever the
  * options request asks for. The registration request cannot name the passkey,
  * because the passkey plugin stores that name with no limits. The server names
  * it instead, and a rename goes through Virtool, which applies the limits.
@@ -51,12 +51,12 @@ export function passkeyNamePlugin(db: Db) {
 							return;
 						}
 
-						const handle = await getUserHandle(db, Number(session.user.id));
-						if (!handle) {
+						const username = await getUsername(db, Number(session.user.id));
+						if (!username) {
 							return;
 						}
 
-						return { context: { query: { ...ctx.query, name: handle } } };
+						return { context: { query: { ...ctx.query, name: username } } };
 					}),
 				},
 				{

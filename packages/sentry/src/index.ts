@@ -1,10 +1,3 @@
-export const SENTRY_DSN_ENV = "VT_SENTRY_DSN";
-
-export function readDsn(): string | undefined {
-	const value = process.env[SENTRY_DSN_ENV];
-	return value && value.length > 0 ? value : undefined;
-}
-
 /** Request paths whose traces are dropped outright. */
 const UNSAMPLED_PATHS = new Set(["/health/live", "/health/ready", "/metrics"]);
 
@@ -104,12 +97,18 @@ export type CommonSentryOptions = {
  * `service` names the process — `"web"`, `"jobs-api"` — and is required rather
  * than defaulted, because an untagged event is indistinguishable from one whose
  * tagging silently regressed.
+ *
+ * `dsn` comes from the caller's parsed configuration, because only that value
+ * has been through `<KEY>_FILE` resolution.
  */
-export function getCommonOptions(service: string): CommonSentryOptions {
+export function getCommonOptions(
+	service: string,
+	dsn: string | undefined,
+): CommonSentryOptions {
 	const environment = process.env.NODE_ENV ?? "development";
 	const isProd = environment === "production";
 	return {
-		dsn: readDsn(),
+		dsn,
 		environment,
 		dist: service,
 		initialScope: { tags: { service } },

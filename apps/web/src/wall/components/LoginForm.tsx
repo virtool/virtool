@@ -1,6 +1,7 @@
 import { cn } from "@app/cn";
 import { usePasskeySupport } from "@app/passkeySupport";
 import { getPasskeyNotice, type PasskeyNotice } from "@app/passkeys";
+import { registerUsernameInput } from "@app/usernameInput";
 import Alert from "@base/Alert";
 import Button from "@base/Button";
 import Field, { FieldLabel } from "@base/Field";
@@ -8,7 +9,7 @@ import Input from "@base/Input";
 import { Link } from "@tanstack/react-router";
 import { CircleAlert, Info, KeyRound, TriangleAlert } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { getWallErrorMessage } from "../errors";
 import { useFollowAuthNextStep, usePasskeyAutofill } from "../hooks";
 import {
@@ -29,7 +30,7 @@ type LoginFormProps = {
 };
 
 type FormValues = {
-	handle: string;
+	username: string;
 	password: string;
 };
 
@@ -39,7 +40,8 @@ export default function LoginForm({
 	onChallenge,
 	redirect,
 }: LoginFormProps) {
-	const { handleSubmit, register } = useForm<FormValues>();
+	const { control, handleSubmit, register } = useForm<FormValues>();
+	const username = useWatch({ control, name: "username" });
 	const loginMutation = useLoginMutation();
 	const passkeyMutation = usePasskeySignInMutation();
 	const passkeySupport = usePasskeySupport();
@@ -84,7 +86,7 @@ export default function LoginForm({
 		void continueSignIn();
 	}
 
-	function onSubmit({ handle, password }: FormValues) {
+	function onSubmit({ username, password }: FormValues) {
 		if (isSigningIn) {
 			return;
 		}
@@ -92,7 +94,7 @@ export default function LoginForm({
 		setAutofillNotice(null);
 		setContinueError(null);
 		setRestartNotice(null);
-		loginMutation.mutate({ handle, password }, { onSuccess: onSignedIn });
+		loginMutation.mutate({ username, password }, { onSuccess: onSignedIn });
 	}
 
 	function onPasskeySignIn() {
@@ -153,7 +155,7 @@ export default function LoginForm({
 						aria-required
 						aria-invalid={isError || undefined}
 						aria-describedby={isError ? "login-error" : undefined}
-						{...register("handle", { required: true })}
+						{...registerUsernameInput(register("username", { required: true }))}
 						autoFocus
 					/>
 				</Field>
@@ -181,7 +183,12 @@ export default function LoginForm({
 					)}
 				</div>
 				<div className="flex items-center justify-between">
-					<Link to="/recover">Forgot your password?</Link>
+					<Link
+						to="/recover"
+						state={{ recoveryUsername: username?.trim() || undefined }}
+					>
+						Forgot your password?
+					</Link>
 					<Button type="submit" color="blue" disabled={isSigningIn}>
 						Sign in
 					</Button>

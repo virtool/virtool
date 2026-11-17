@@ -279,9 +279,8 @@ export async function collapseOtu(
 
 		seenRepresentativeSets.add(key);
 
-		// A no-op, and deliberately kept for now: a sequence has exactly one parent
-		// isolate, so this is true precisely when `isolate.default` is. VIR-2938
-		// deletes it.
+		// A no-op: a sequence has exactly one parent isolate, so this is true
+		// precisely when `isolate.default` is.
 		const containsDefaultSequence = isolate.sequences.some((sequence) =>
 			defaultSequenceIds.has(sequence.id),
 		);

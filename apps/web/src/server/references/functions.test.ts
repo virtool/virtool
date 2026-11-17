@@ -152,7 +152,7 @@ describe("findReferences", () => {
 		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const otherId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		await seedReference(ownerId);
 		await seedReference(otherId);
@@ -174,7 +174,7 @@ describe("findReferences", () => {
 		const adminId = await signIn(db, getRequest, { administratorRole: "full" });
 		const otherId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		await seedReference(adminId);
 		await seedReference(otherId);
@@ -220,7 +220,7 @@ describe("getReference", () => {
 	it("hides a reference the caller cannot see behind a 404", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
@@ -233,7 +233,7 @@ describe("getReference", () => {
 	it("returns the detail for a full administrator who is not a member", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		await signIn(db, getRequest, { administratorRole: "full" });
 		const referenceId = await seedReference(ownerId);
@@ -248,7 +248,7 @@ describe("getReference", () => {
 	it("returns the detail for a member reached through a group, regardless of rights", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
@@ -320,7 +320,7 @@ describe("createReference", () => {
 	it("refuses to clone a reference the caller cannot see, as if it were missing", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		// A base administrator holds `create_ref` but not reference visibility.
 		await signIn(db, getRequest, { administratorRole: "base" });
@@ -378,7 +378,7 @@ describe("updateReference", () => {
 	it("returns 404 to a caller who cannot see the reference", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
@@ -395,7 +395,7 @@ describe("updateReference", () => {
 	it("refuses a member without modify on the reference", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
@@ -471,7 +471,7 @@ describe("reference membership", () => {
 	it("refuses adding a group member when the caller lacks modify", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
-			handle: "bob",
+			username: "bob",
 		});
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);

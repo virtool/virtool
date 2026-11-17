@@ -1,86 +1,57 @@
-import type { Release } from "@utils/changelog";
+import type { PublishedPost, UnreleasedPost } from "@virtool/changelog";
 
-/** The frontmatter of a post about a release, which names its pull request. */
-export type ReleasePostFrontmatter = {
-  type: "release";
+/** A group of posts in the blog sidebar, such as all posts of one year. */
+export type PostSection = {
   title: string;
-  summary: string;
-  pr: number;
+  posts: (PublishedPost | UnreleasedPost)[];
 };
 
-/** The frontmatter of a research post, which has no release. */
-export type ResearchPostFrontmatter = {
-  type: "research";
-  title: string;
-  summary: string;
-  date: string;
-};
+// Expects the posts newest first, as `loadPosts` lists them. A post with no
+// date has no release yet, and only the dev server lists it.
+export function getPostSections(
+  posts: (PublishedPost | UnreleasedPost)[],
+): PostSection[] {
+  const sections: PostSection[] = [];
 
-/** The frontmatter that an author writes for a post. */
-export type PostFrontmatter = ReleasePostFrontmatter | ResearchPostFrontmatter;
+  for (const post of posts) {
+    const title = "date" in post ? post.date.slice(0, 4) : "Unreleased";
+    const section = sections.at(-1);
 
-/** A post with the slug that its URL uses. */
-export type Post = PostFrontmatter & { slug: string };
+    if (section?.title === title) {
+      section.posts.push(post);
+    } else {
+      sections.push({ title, posts: [post] });
+    }
+  }
 
-/** A release post with the version and date of the release that shipped it. */
-export type ReleasedPost = ReleasePostFrontmatter & {
-  slug: string;
-  version: string;
-  date: string;
-};
-
-/** A post that the site shows. */
-export type PublishedPost =
-  | ReleasedPost
-  | (ResearchPostFrontmatter & { slug: string });
-
-// The changelog lists the newest release first, so the last match is the
-// release that first shipped the pull request.
-function findRelease(pr: number, releases: Release[]): Release | undefined {
-  return releases.findLast(({ pullRequests }) => pullRequests.includes(pr));
+  return sections;
 }
 
-function compareNewestFirst(a: { date: string }, b: { date: string }): number {
-  return b.date.localeCompare(a.date);
+/** The first image in a post's MDX body. */
+export type PostImage = { alt: string; src: string };
+
+const IMAGE = /!\[([^\]]*)\]\(\s*([^\s)]+)(?:\s+"[^"]*")?\s*\)/;
+
+/** Get the first Markdown image in a post's MDX body. */
+export function getFirstImage(body: string): PostImage | undefined {
+  const match = body.match(IMAGE);
+
+  if (!match) {
+    return undefined;
+  }
+
+  const [, alt = "", src = ""] = match;
+
+  return { alt, src };
 }
 
-export function getReleasedPosts(
-  posts: Post[],
-  releases: Release[],
-): ReleasedPost[] {
-  return posts
-    .flatMap((post) => {
-      if (post.type !== "release") {
-        return [];
-      }
+/**
+ * Get the path of an image that a post links to, from the path of the post
+ * file. Both paths are relative to the site root, and the result starts with
+ * `/` as `import.meta.glob` keys do.
+ */
+export function getImagePath(postPath: string, src: string): string {
+  const directory = postPath.slice(0, postPath.lastIndexOf("/") + 1);
 
-      const release = findRelease(post.pr, releases);
-
-      return release
-        ? [{ ...post, version: release.version, date: release.date }]
-        : [];
-    })
-    .sort(compareNewestFirst);
-}
-
-export function getHiddenPosts(
-  posts: Post[],
-  releases: Release[],
-): (ReleasePostFrontmatter & { slug: string })[] {
-  return posts.flatMap((post) =>
-    post.type === "release" && !findRelease(post.pr, releases) ? [post] : [],
-  );
-}
-
-export function getPublishedPosts(
-  posts: Post[],
-  releases: Release[],
-): PublishedPost[] {
-  const research = posts.flatMap((post) =>
-    post.type === "research" ? [post] : [],
-  );
-
-  return [...getReleasedPosts(posts, releases), ...research].sort(
-    compareNewestFirst,
-  );
+  return new URL(src.split("?")[0] ?? "", `file:///${directory}`).pathname;
 }

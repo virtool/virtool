@@ -1,6 +1,8 @@
 # Virtool.ca website
 
-The product [website](https://www.virtool.ca) for Virtool.
+The product [website](https://www.virtool.ca) for Virtool. It uses
+[Astro](https://docs.astro.build) and lives in the monorepo as the
+`@virtool/site` workspace package.
 
 ## Configuration
 
@@ -11,14 +13,9 @@ Virtool service `_FILE` convention.
 | --- | --- | --- | --- |
 | `GITHUB_TOKEN` | String | Unset | Authenticate GitHub API requests that load release data, increasing the API rate limit. |
 
-## Astro
+## Commands
 
-The website uses [Astro](https://docs.astro.build) as a site builder. It lives
-in the `virtool` monorepo as the `@virtool/site` workspace package.
-
-### Commands
-
-All commands are run from the monorepo root:
+Run all commands from the monorepo root.
 
 | Command                                       | Action                                         |
 | :-------------------------------------------- | :--------------------------------------------- |
@@ -27,43 +24,41 @@ All commands are run from the monorepo root:
 | `pnpm --filter @virtool/site build`           | Build the production site to `apps/site/dist/` |
 | `pnpm --filter @virtool/site preview`         | Build, then preview locally with Wrangler      |
 | `pnpm --filter @virtool/site test`            | Run the Vitest suite                           |
+| `pnpm --filter @virtool/site format`          | Format the Markdown and MDX content            |
+| `pnpm --filter @virtool/site format:check`    | Find content that is not formatted             |
 | `pnpm --filter @virtool/site run deploy`      | Build and deploy to Cloudflare Workers         |
 | `pnpm --filter @virtool/site astro -- --help` | Run the Astro command-line tool                |
 
 ## Changelog
 
-The `/changelog` page shows all `virtool` releases in one list, newest first.
-Each release also has a page at `/changelog/<version>`. This link does not
-change, so the web app uses it. The build reads the releases from the web app
-changelog, which Knope generates, so the pages need no separate content. The
-pages leave out dependency entries: `Update … dependencies`
-sections, and bullets that bump a dependency or update a digest.
+The `/changelog` page lists all `virtool` releases, newest first. Each release
+has a page at `/changelog/<version>`. This link does not change, so the web app
+uses it. The build reads the releases from the web app changelog, which Knope
+generates, so the pages need no separate content.
 
-The "Show maintenance" switch shows or hides each Maintenance section. It is off
-by default, and the browser remembers the setting. When it is off, the list and
-the left menu also hide releases that have only maintenance content. A release
-that has only maintenance content always shows that content on its own page.
-The left menu always shows the current release and its minor version group.
+## Search
 
-The left menu lists every release, grouped by minor version, and links to its
-page. On a version page, the menu marks that release, and links go to the next
-newer and next older releases. A release with a post shows a link to that post.
+The docs and the changelog each have a search at the top of their sidebar. The
+docs search finds only docs pages. The changelog search finds only release
+pages, and it does not find maintenance notes. The build makes the search index after Astro
+finishes, so the dev server has no search. Use `preview` to test it.
 
-Each `**Action required:**` paragraph moves out of its entry and into an
-"Action required" box below the release date.
+## Blog
 
-## Posts
+The `/blog` page lists all posts, newest first, and its sidebar lists them by
+year with their dates. Each post is at `/blog/<slug>`. Old `/posts` URLs
+redirect to `/blog`. The slug comes from the file name, and the web app links to
+posts by slug, so do not rename a post after it is published.
 
-The `/posts` page lists all posts, newest first, with the type of each post.
-Each post is at `/posts/<slug>`. The slug comes from the file name, and the web
-app links to posts by slug, so do not rename a post after it is published.
+A `release` post names a pull request. The build gets the version and date from
+the `virtool` release that contains it, and hides the post if no release
+contains it. The dev server shows these posts first, marked "Unreleased." A `research` post has no release, and its author gives the date.
 
-The two types of post are:
-
-- A `release` post names a pull request. The build gets the version and date
-  from the `virtool` release that contains it. The build hides a release post
-  with no matching release and logs a warning for it.
-- A `research` post has no release, and its author gives the date.
+`/blog/index.json` lists each released post with its slug, version, release
+date, title, summary, and the URL and alt text of its first image. The web app
+reads it from the browser, so the file has `Access-Control-Allow-Origin: *`.
+Keep its fields compatible, because web app releases that are already deployed
+read it. The build fails if a released post has no image.
 
 See [Posts](../../CONTRIBUTING.md#posts) for how to write a post.
 

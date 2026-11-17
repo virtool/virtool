@@ -137,7 +137,7 @@ it("gives each default administrator value as one argument", async () => {
 	store.setDesired("wt-1", "up");
 	store.setDefaultAdministrator({
 		email: "admin@example.com",
-		handle: "admin",
+		username: "admin",
 		password: "-secret123",
 	});
 	const run = vi.fn<CommandRunner>(async (_command, args) => ({
@@ -161,7 +161,7 @@ it("gives each default administrator value as one argument", async () => {
 	expect(administrator?.slice(administrator.indexOf("create"))).toEqual([
 		"create",
 		"administrator",
-		"--handle=admin",
+		"--username=admin",
 		"--email=admin@example.com",
 		"--password=-secret123",
 	]);
@@ -179,7 +179,7 @@ describe("default administrator step", () => {
 		]);
 		store.setDefaultAdministrator({
 			email: "admin@example.com",
-			handle: "admin",
+			username: "admin",
 			password: "hello world",
 		});
 		store.setDesired("wt-1", "up", createDefaultAdministrator);

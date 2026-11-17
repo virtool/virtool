@@ -3,6 +3,7 @@ import type { EmailSettings, EmailTestResult } from "@virtool/contracts";
 import {
 	clearEmailApiKey,
 	EmailConfigurationError,
+	type EmailConfigurationErrorReason,
 	type EmailDeliverySettings,
 	getEmailSettings,
 	resolveEmailDelivery,
@@ -40,9 +41,21 @@ const addressSchema = z
 
 const optionalAddressSchema = z.union([z.literal(""), addressSchema]);
 
+const configurationErrorMessages: Record<
+	EmailConfigurationErrorReason,
+	string
+> = {
+	missing_encryption_key:
+		"This instance has no usable encryption key. Configure one before you save an API key.",
+	undecryptable_api_key:
+		"The stored API key cannot be read with the encryption key of this instance. Restore the encryption key or save a new API key.",
+	unconfigured:
+		"Save an API key and a sender address before you enable email delivery.",
+};
+
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof EmailConfigurationError) {
-		throw new ClientError(err.message, 400);
+		throw new ClientError(configurationErrorMessages[err.reason], 400);
 	}
 	throw err;
 }

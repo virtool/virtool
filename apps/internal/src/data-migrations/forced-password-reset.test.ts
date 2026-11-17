@@ -23,10 +23,11 @@ let db: Db;
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
-	// Flagged users predate this constraint, which stays unvalidated until the
-	// body passes.
+	// The body runs against the schema of its paired migration, which still has
+	// this column.
 	await database.client`
-		ALTER TABLE public.users DROP CONSTRAINT force_reset_unset
+		ALTER TABLE public.users
+		ADD COLUMN force_reset boolean DEFAULT false NOT NULL
 	`;
 }, 60_000);
 
@@ -71,14 +72,15 @@ async function seedFlaggedUser({
 	migrated = false,
 }: SeedOptions) {
 	const userId = await seedUser(db, {
-		handle,
+		username: handle.toLowerCase(),
 		email,
 		password: Buffer.from(OLD_PASSWORD, "utf8"),
 		authMigratedAt: migrated ? new Date() : null,
 	});
 	await database.client`
 		UPDATE public.users
-		SET force_reset = ${flagged}, email_verified = ${emailVerified}
+		SET force_reset = ${flagged}, email_verified = ${emailVerified},
+			handle = ${handle}
 		WHERE id = ${userId}
 	`;
 

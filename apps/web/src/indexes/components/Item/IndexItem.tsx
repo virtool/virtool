@@ -37,7 +37,7 @@ export function IndexItem({ activeId, index, refId }: IndexItemProps) {
 				/>
 				<IndexItemIcon activeId={activeId} id={index.id} ready={index.ready} />
 			</h3>
-			<Attribution time={index.createdAt} user={index.user.handle} />
+			<Attribution time={index.createdAt} user={index.user.username} />
 		</BoxGroupSection>
 	);
 }

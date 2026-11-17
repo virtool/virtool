@@ -24,7 +24,7 @@ import {
 import { z } from "zod";
 
 import { defineAudit, defineBackfill } from "./define";
-import { executeDataMigration } from "./run";
+import { executeDataMigration, INTERRUPTED_ERROR } from "./run";
 
 vi.mock("@sentry/node", () => ({ captureException: vi.fn() }));
 
@@ -137,6 +137,32 @@ describe("audits", () => {
 		expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error), {
 			tags: { data_migration: "broken", data_migration_version: 1 },
 		});
+	});
+
+	it("record an interruption without reporting it as a defect", async () => {
+		const controller = new AbortController();
+
+		const finished = await executeDataMigration(
+			{ db, client: database.client, logger, signal: controller.signal },
+			defineAudit({
+				key: "interrupted",
+				migrationTag: "0024_fixture",
+				kind: "audit",
+				version: 1,
+				description: "breaks when shutdown aborts it",
+				run: async () => {
+					controller.abort();
+
+					throw new Error("connection ended mid-query");
+				},
+			}),
+		);
+
+		expect(finished).toMatchObject({
+			status: "errored",
+			error: INTERRUPTED_ERROR,
+		});
+		expect(Sentry.captureException).not.toHaveBeenCalled();
 	});
 
 	it("count a retry and clear the previous attempt's findings", async () => {
@@ -258,8 +284,10 @@ describe("data migrations", () => {
 
 		expect(interrupted).toMatchObject({
 			status: "errored",
+			error: INTERRUPTED_ERROR,
 			progress: { processed: 2, batches: 1 },
 		});
+		expect(Sentry.captureException).not.toHaveBeenCalled();
 
 		expect(await countUnstamped()).toBe(3);
 	});

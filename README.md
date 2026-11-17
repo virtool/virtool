@@ -14,9 +14,9 @@ vtd stop
 vtd remove
 ```
 
-Lifecycle commands acknowledge immediately. Follow progress in the management
-UI at <https://dev.localhost:9443>. See [the development guide](dev/README.md)
-for architecture, data safety, workflow scheduling, and troubleshooting.
+Lifecycle commands return immediately. Follow progress in the management UI at
+<https://dev.localhost:9443>. See [the development guide](dev/README.md) for
+data safety, workflow scheduling, and troubleshooting.
 
 ## Images
 
@@ -37,12 +37,6 @@ Build one image locally by naming its Bake target:
 ```shell
 docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```
-
-The app builds inside Docker. A shared build stage installs the app's
-workspace closure from the lockfile, builds the app, and runs
-`pnpm --prod deploy`. The app Dockerfile copies only what its runtime needs
-from that stage. The web image copies the self-contained `.output` bundle and
-needs no deploy.
 
 The web build uploads its source maps to Sentry only when `SENTRY_AUTH_TOKEN`
 is set. `SENTRY_RELEASE` names the Sentry release, because the build context

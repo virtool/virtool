@@ -48,10 +48,10 @@ export function useCreateFirstUser() {
 	return useMutation<
 		Awaited<ReturnType<typeof createFirstUserFn>>,
 		Error,
-		{ handle: string; email: string; password: string }
+		{ username: string; email: string; password: string }
 	>({
-		mutationFn: ({ handle, email, password }) =>
-			createFirstUserFn({ data: { handle, email, password } }),
+		mutationFn: ({ username, email, password }) =>
+			createFirstUserFn({ data: { username, email, password } }),
 		onSuccess: () => {
 			queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
 			queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
@@ -66,9 +66,13 @@ export function useCreateFirstUser() {
  * caches.
  */
 export function useLoginMutation() {
-	return useMutation<LoginResult, Error, { handle: string; password: string }>({
-		mutationFn: ({ handle, password }) =>
-			loginFn({ data: { handle, password } }),
+	return useMutation<
+		LoginResult,
+		Error,
+		{ username: string; password: string }
+	>({
+		mutationFn: ({ username, password }) =>
+			loginFn({ data: { username, password } }),
 	});
 }
 

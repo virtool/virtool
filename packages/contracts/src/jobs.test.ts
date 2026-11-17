@@ -103,7 +103,7 @@ describe("Job timestamps", () => {
 			progress: 0,
 			state: "pending",
 			steps: null,
-			user: { id: 3, handle: "igboyes" },
+			user: { id: 3, username: "igboyes" },
 			workflow: "create_sample",
 			...overrides,
 		};
@@ -158,7 +158,7 @@ describe("Job", () => {
 		progress: 0,
 		state: "pending",
 		steps: null,
-		user: { id: 3, handle: "igboyes" },
+		user: { id: 3, username: "igboyes" },
 		workflow: "create_sample",
 	};
 

@@ -37,7 +37,7 @@ it("removes a recovery bearer token before inspecting it", async () => {
 	await renderWithRouter(<RecoveryWall />, "/recover");
 	await screen.findByRole("heading", { name: "Choose a new password" });
 
-	expect(requestUrl).toBe("http://localhost:3000/recover");
+	expect(requestUrl).toBe(`${location.origin}/recover`);
 	expect(window.location.hash).toBe("");
 	expect(window.location.search).toBe("");
 	expect(recoveryServerFnMocks.inspectPasswordRecoveryFn).toHaveBeenCalledWith({
@@ -61,7 +61,7 @@ it("removes a verification bearer token before inspecting it", async () => {
 	await renderWithRouter(<EmailVerificationWall />, "/verify-email");
 	await screen.findByRole("heading", { name: "Email verified" });
 
-	expect(requestUrl).toBe("http://localhost:3000/verify-email");
+	expect(requestUrl).toBe(`${location.origin}/verify-email`);
 	expect(window.location.search).toBe("");
 	expect(recoveryServerFnMocks.verifyCurrentEmailFn).toHaveBeenCalledWith({
 		data: { token },
@@ -159,8 +159,8 @@ it("refuses mismatched passwords before consuming the recovery link", async () =
 		screen.getByRole("button", { name: "Change password" }),
 	);
 
-	expect(await screen.findByRole("alert")).toHaveTextContent(
-		"The passwords do not match.",
+	expect(await screen.findByRole("alert")).toMatchTextContent(
+		"The passwords do not match",
 	);
 	expect(
 		recoveryServerFnMocks.completePasswordRecoveryFn,
@@ -186,10 +186,62 @@ it("shows the same acknowledgement whatever the account", async () => {
 	).toBeInTheDocument();
 	expect(
 		screen.getByText(
-			"If this account can receive recovery email, a link has been queued.",
+			"If you asked for a link in the last hour, use that link. Virtool does not send a new one.",
 		),
 	).toBeInTheDocument();
+	expect(
+		screen.getByText(/ask an administrator for a reset link/),
+	).toBeInTheDocument();
 });
+
+it("fills in the username carried from the sign-in form", async () => {
+	await renderWithRouter(<RecoveryWall />, "/recover", {
+		recoveryUsername: "ada",
+	});
+
+	expect(await screen.findByLabelText("Username")).toHaveValue("ada");
+});
+
+it.each([
+	[true, true],
+	[false, false],
+])(
+	"tells the user when recovery cancelled an email verification (%s)",
+	async (cancelled, shown) => {
+		window.history.replaceState(
+			{},
+			"",
+			`/recover#token=${token}&purpose=password_recovery`,
+		);
+		recoveryServerFnMocks.inspectPasswordRecoveryFn.mockResolvedValue({
+			status: "usable",
+		});
+		recoveryServerFnMocks.completePasswordRecoveryFn.mockResolvedValue({
+			status: "password_changed",
+			next: "login",
+			emailVerificationCancelled: cancelled,
+		});
+
+		await renderWithRouter(<RecoveryWall />, "/recover");
+		await screen.findByRole("heading", { name: "Choose a new password" });
+		await userEvent.type(
+			screen.getByLabelText("New password"),
+			"a-new-password",
+		);
+		await userEvent.type(
+			screen.getByLabelText("Confirm new password"),
+			"a-new-password",
+		);
+		await userEvent.click(
+			screen.getByRole("button", { name: "Change password" }),
+		);
+
+		await screen.findByRole("heading", { name: "Password changed" });
+		expect(
+			screen.queryByText(/cancelled a pending email verification/) !== null,
+		).toBe(shown);
+	},
+);
 
 function outage(): Error {
 	return Object.assign(new Error(UNAVAILABLE_MESSAGE), {

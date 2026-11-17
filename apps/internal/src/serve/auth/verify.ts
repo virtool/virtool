@@ -24,10 +24,10 @@ import { eq } from "drizzle-orm";
 /**
  * The `job-{id}` login carried by the Basic credentials.
  *
- * Anchored and case-sensitive. `apps/web` refuses any handle beginning with
- * `job` case-insensitively, because it matches handles that way and `JOB-1`
- * would otherwise resolve the very row `job-1` is refused. Nothing here is
- * case-folded — the login is not a handle, it is a literal prefix and an id —
+ * Anchored and case-sensitive. `apps/web` refuses any username beginning with
+ * `job` in any case, because it matches usernames that way and `JOB-1` would
+ * otherwise resolve the very row `job-1` is refused. Nothing here is
+ * case-folded — the login is not a username, it is a literal prefix and an id —
  * so `JOB-1` is simply not a job login and gets the same 401 as anything else.
  *
  * The digits are `[1-9]\d*` rather than `\d+`, which is the same spelling

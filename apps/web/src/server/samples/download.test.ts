@@ -89,7 +89,7 @@ beforeEach(async () => {
 	await db.delete(groups);
 	await db.delete(users);
 
-	ownerId = await seedUser(db, { handle: "alice" });
+	ownerId = await seedUser(db, { username: "alice" });
 });
 
 async function seedSample(
@@ -275,7 +275,7 @@ describe("handleSampleReads", () => {
 		const sampleId = await seedSample();
 		await write(await seedRead(sampleId), "hello");
 
-		const strangerId = await seedUser(db, { handle: "bob" });
+		const strangerId = await seedUser(db, { username: "bob" });
 
 		const response = await handleSampleReads(
 			await request(strangerId),
@@ -291,7 +291,7 @@ describe("handleSampleReads", () => {
 		const sampleId = await seedSample({ group_id: groupId, group_read: true });
 		await write(await seedRead(sampleId), "hello");
 
-		const memberId = await seedUser(db, { handle: "bob" });
+		const memberId = await seedUser(db, { username: "bob" });
 		await addToGroup(db, memberId, groupId);
 
 		const response = await handleSampleReads(

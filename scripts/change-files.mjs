@@ -79,6 +79,14 @@ export function parseChangeFile(text, names) {
 		}
 	}
 
+	// Only `maintenance` entries are bullets. Every other entry is a heading with
+	// text below it, so a reader learns what changed.
+	if (summary && !details && maintenance.length < packages.length) {
+		errors.push(
+			"a change without `maintenance` needs details after the summary",
+		);
+	}
+
 	// Release notes collapse maintenance entries, and administrators must not
 	// miss an action.
 	if (maintenance.length > 0 && body.join("\n").includes(actionMarker)) {

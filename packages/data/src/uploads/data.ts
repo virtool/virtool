@@ -23,6 +23,7 @@ import { users as usersTable } from "../db/schema/users";
 import { nowUtc, secondsAgo } from "../db/time";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
+import { selectSetUpUsername } from "../users/username";
 
 /**
  * How old a reserved upload must be before the sweep may reap it.
@@ -93,7 +94,10 @@ async function fetchUser(
 	userId: number,
 ): Promise<UserNested | null> {
 	const [row] = await db
-		.select({ id: usersTable.id, handle: usersTable.handle })
+		.select({
+			id: usersTable.id,
+			username: selectSetUpUsername(usersTable.username),
+		})
 		.from(usersTable)
 		.where(eq(usersTable.id, userId));
 
@@ -110,7 +114,7 @@ const SORT_COLUMNS = {
 	createdAt: uploadsTable.createdAt,
 	name: uploadsTable.name,
 	size: uploadsTable.size,
-	user: usersTable.handle,
+	user: selectSetUpUsername(usersTable.username),
 } as const;
 
 /**
@@ -163,7 +167,10 @@ export async function findUploads(
 		db
 			.select({
 				upload: uploadsTable,
-				user: { id: usersTable.id, handle: usersTable.handle },
+				user: {
+					id: usersTable.id,
+					username: selectSetUpUsername(usersTable.username),
+				},
 			})
 			.from(uploadsTable)
 			.leftJoin(usersTable, eq(usersTable.id, uploadsTable.userId))

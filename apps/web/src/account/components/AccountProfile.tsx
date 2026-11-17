@@ -6,9 +6,9 @@ import SectionHeader from "@base/SectionHeader";
 import { ADMINISTRATOR_ROLES } from "@virtool/contracts";
 import { ShieldUser } from "lucide-react";
 import { useFetchAccount } from "../account";
-import AccountHandle from "./AccountHandle";
+import AccountUsername from "./AccountUsername";
 
-/** Displays the account's identity with options to change the handle and avatar. */
+/** Displays the account's identity with options to change the username and avatar. */
 export default function AccountProfile() {
 	const { data, isPending, isError } = useFetchAccount();
 
@@ -20,16 +20,19 @@ export default function AccountProfile() {
 		return <LoadingPlaceholder />;
 	}
 
-	const { administratorRole, groups, handle, settings } = data;
+	const { administratorRole, groups, username, settings } = data;
 	const role = ADMINISTRATOR_ROLES.find(({ id }) => id === administratorRole);
 
 	return (
 		<section className="flex flex-col gap-4">
 			<SectionHeader className="mb-0">
 				<h2>Profile</h2>
-				<p>Your handle, avatar, administrator role, and groups.</p>
+				<p>Your username, avatar, administrator role, and groups.</p>
 			</SectionHeader>
-			<AccountHandle avatarSource={settings.avatarSource} handle={handle} />
+			<AccountUsername
+				avatarSource={settings.avatarSource}
+				username={username}
+			/>
 			<section>
 				<SectionHeader level={3}>
 					<h3>Administrator role</h3>

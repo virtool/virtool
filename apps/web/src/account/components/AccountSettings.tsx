@@ -18,6 +18,8 @@ import {
 	REFERENCE_EXPORT_TABLE_FORMATS,
 	type ReferenceExportFastaHeader,
 	type ReferenceExportTableFormat,
+	TIME_FORMATS,
+	type TimeFormat,
 } from "@virtool/contracts";
 import { useFetchAccount } from "../account";
 import { useUpdateAccountSettings } from "../queries";
@@ -35,7 +37,18 @@ const TABLE_FORMAT_EXAMPLES: Record<ReferenceExportTableFormat, string> = {
 	tsv: "OTU                   Isolate     Accession\nTobacco mosaic virus  Isolate OM  NC_001367",
 };
 
-type ExportOptionProps = {
+const TIME_FORMAT_LABELS: Record<TimeFormat, string> = {
+	absolute: "Date and time",
+	relative: "Relative",
+};
+
+// The examples in each position give the same instant in the two formats.
+const TIME_FORMAT_EXAMPLES: Record<TimeFormat, string> = {
+	absolute: "Today at 11:12 · Sep 26, 2023",
+	relative: "2 hours ago · 3 years ago",
+};
+
+type SettingOptionProps = {
 	/** A sample of the output this option gives */
 	example: string;
 
@@ -46,8 +59,8 @@ type ExportOptionProps = {
 	value: string;
 };
 
-/** A card radio for an export default, with a sample of its output. */
-function ExportOption({ example, title, value }: ExportOptionProps) {
+/** A card radio for a setting, with a sample of its output. */
+function SettingOption({ example, title, value }: SettingOptionProps) {
 	return (
 		<FieldLabel variant="card">
 			<Field orientation="horizontal" className="items-start">
@@ -84,7 +97,39 @@ export default function AccountSettings() {
 				<h2>Settings</h2>
 				<p>Change how Virtool behaves for your account.</p>
 			</SectionHeader>
-			<section aria-labelledby="pathoscope-heading" id="pathoscope">
+			<section aria-labelledby="times-heading" id="times">
+				<SectionHeader level={3}>
+					<h3 id="times-heading">Times</h3>
+					<p>
+						Change how Virtool shows times. A tooltip on each time shows the
+						other format.
+					</p>
+				</SectionHeader>
+				<FieldSet>
+					<FieldLegend variant="label">Time format</FieldLegend>
+					<RadioGroup
+						className="grid-cols-2"
+						onValueChange={(value) =>
+							mutation.mutate({ timeFormat: value as TimeFormat })
+						}
+						value={data.settings.timeFormat}
+					>
+						{TIME_FORMATS.map((value) => (
+							<SettingOption
+								example={TIME_FORMAT_EXAMPLES[value]}
+								key={value}
+								title={TIME_FORMAT_LABELS[value]}
+								value={value}
+							/>
+						))}
+					</RadioGroup>
+				</FieldSet>
+			</section>
+			<section
+				aria-labelledby="pathoscope-heading"
+				className="mt-12"
+				id="pathoscope"
+			>
 				<SectionHeader level={3}>
 					<h3 id="pathoscope-heading">Pathoscope export</h3>
 					<p>Change how Pathoscope results are copied and downloaded.</p>
@@ -152,7 +197,7 @@ export default function AccountSettings() {
 						value={data.settings.referenceExportFastaHeader}
 					>
 						{REFERENCE_EXPORT_FASTA_HEADERS.map((value) => (
-							<ExportOption
+							<SettingOption
 								example={FASTA_HEADER_EXAMPLES[value]}
 								key={value}
 								title={FASTA_HEADER_LABELS[value]}
@@ -173,7 +218,7 @@ export default function AccountSettings() {
 						value={data.settings.referenceExportTableFormat}
 					>
 						{REFERENCE_EXPORT_TABLE_FORMATS.map((value) => (
-							<ExportOption
+							<SettingOption
 								example={TABLE_FORMAT_EXAMPLES[value]}
 								key={value}
 								title={TABLE_FORMAT_LABELS[value]}

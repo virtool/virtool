@@ -56,6 +56,15 @@
 			groupName: "auth dependencies",
 			commitMessageExtra: "",
 		},
+		// The app's SimpleWebAuthn range must stay inside the passkey plugin's,
+		// or pnpm installs a second copy. Move the major by hand when the
+		// plugin does.
+		{
+			matchManagers: ["npm"],
+			matchPackageNames: ["@simplewebauthn/**"],
+			matchUpdateTypes: ["major"],
+			enabled: false,
+		},
 		{
 			matchManagers: ["npm"],
 			matchPackageNames: ["superagent", "@types/superagent", "nock"],

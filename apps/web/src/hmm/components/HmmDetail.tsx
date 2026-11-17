@@ -6,6 +6,7 @@ import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
 import ScrollArea from "@base/ScrollArea";
 import { ViewHeader, ViewHeaderTitle } from "@base/View";
+import { parseHmmId } from "@hmm/id";
 import { getRouteApi } from "@tanstack/react-router";
 import { useFetchHmm } from "../queries";
 import { HmmEntropyIndicator } from "./HmmEntropyIndicator";
@@ -130,14 +131,9 @@ function HmmDetailView({ hmmId }: { hmmId: number }) {
  */
 export default function HmmDetail() {
 	const { hmmId } = routeApi.useParams();
-	const id = Number(hmmId);
+	const id = parseHmmId(hmmId);
 
-	/*
-	 * The path segment is whatever the URL carried, so it need not be a row id
-	 * at all. Fetching on a `NaN` reaches the server function's validator, which
-	 * rejects it as an unhandled 500 rather than the not-found this is.
-	 */
-	if (!Number.isSafeInteger(id) || id < 1) {
+	if (id === null) {
 		return <NotFound />;
 	}
 

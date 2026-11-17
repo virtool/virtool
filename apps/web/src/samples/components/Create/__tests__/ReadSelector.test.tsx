@@ -65,7 +65,7 @@ async function setMode(name: "Auto-pair" | "Manual"): Promise<void> {
 }
 
 describe("<ReadSelector>", () => {
-	it("filters with surrounding whitespace while preserving the typed term", async () => {
+	it("trims the search term without changing what was typed", async () => {
 		const alpha = createFakeFile({ name: "alpha.fastq.gz" });
 		const beta = createFakeFile({ name: "beta.fastq.gz" });
 		mockFindUploads([alpha, beta]);
@@ -73,6 +73,12 @@ describe("<ReadSelector>", () => {
 		renderWithProviders(<Harness files={[alpha, beta]} />);
 
 		const input = screen.getByRole("textbox", { name: "Search read files" });
+		await userEvent.type(input, "   ");
+
+		expect(rowButton(alpha.name)).toBeInTheDocument();
+		expect(rowButton(beta.name)).toBeInTheDocument();
+
+		await userEvent.clear(input);
 		await userEvent.type(input, "  alpha  ");
 
 		expect(input).toHaveValue("  alpha  ");
@@ -82,29 +88,20 @@ describe("<ReadSelector>", () => {
 		).not.toBeInTheDocument();
 	});
 
-	it("shows every read file for a whitespace-only term", async () => {
-		const alpha = createFakeFile({ name: "alpha.fastq.gz" });
-		const beta = createFakeFile({ name: "beta.fastq.gz" });
-		mockFindUploads([alpha, beta]);
-
-		renderWithProviders(<Harness files={[alpha, beta]} />);
-
-		await userEvent.type(
-			screen.getByRole("textbox", { name: "Search read files" }),
-			"   ",
-		);
-
-		expect(rowButton(alpha.name)).toBeInTheDocument();
-		expect(rowButton(beta.name)).toBeInTheDocument();
-	});
-
-	it("defaults to Auto-pair mode", () => {
-		mockFindUploads([]);
-		renderWithProviders(<Harness files={[createFakeFile()]} />);
+	it("defaults to Auto-pair mode, which has no swap control", () => {
+		const files = [
+			createFakeFile({ name: "alpha.fastq.gz" }),
+			createFakeFile({ name: "beta.fastq.gz" }),
+		];
+		mockFindUploads(files);
+		renderWithProviders(<Harness files={files} />);
 
 		expect(
 			screen.getByRole("button", { name: /^(Auto-pair|Manual)$/ }),
-		).toHaveTextContent("Auto-pair");
+		).toMatchTextContent("Auto-pair");
+		expect(
+			screen.queryByRole("button", { name: /swap reads/i }),
+		).not.toBeInTheDocument();
 	});
 
 	describe("Auto-pair mode", () => {
@@ -162,20 +159,6 @@ describe("<ReadSelector>", () => {
 			expect(rowButton(file.name)).toHaveAttribute("aria-pressed", "false");
 			expect(screen.queryByText("Unpaired")).not.toBeInTheDocument();
 		});
-
-		it("does not show the swap control", async () => {
-			const files = [
-				createFakeFile({ name: "alpha.fastq.gz" }),
-				createFakeFile({ name: "beta.fastq.gz" }),
-			];
-			mockFindUploads(files);
-
-			renderWithProviders(<Harness files={files} />);
-
-			expect(
-				screen.queryByRole("button", { name: /swap reads/i }),
-			).not.toBeInTheDocument();
-		});
 	});
 
 	describe("Manual mode", () => {
@@ -210,18 +193,6 @@ describe("<ReadSelector>", () => {
 			);
 			await userEvent.click(rowButton(thirdFile.name));
 			expect(rowButton(thirdFile.name)).toHaveAttribute("aria-pressed", "true");
-		});
-
-		it("does not collapse detected pairs into a single row", async () => {
-			const r1 = createFakeFile({ name: "sample_R1.fastq.gz" });
-			const r2 = createFakeFile({ name: "sample_R2.fastq.gz" });
-			mockFindUploads([r1, r2]);
-
-			renderWithProviders(<Harness files={[r1, r2]} />);
-			await setMode("Manual");
-
-			// Each mate is its own selectable row.
-			expect(rowButton(r1.name)).not.toBe(rowButton(r2.name));
 		});
 
 		it("swaps the LEFT and RIGHT reads", async () => {
@@ -275,7 +246,7 @@ describe("<ReadSelector>", () => {
 	});
 
 	describe("mode switching", () => {
-		it("keeps the selection unchanged across a mode switch", async () => {
+		it("keeps the selection across a switch to Manual, which splits the pair", async () => {
 			const r1 = createFakeFile({ name: "sample_R1.fastq.gz" });
 			const r2 = createFakeFile({ name: "sample_R2.fastq.gz" });
 			mockFindUploads([r1, r2]);
@@ -288,7 +259,9 @@ describe("<ReadSelector>", () => {
 
 			await setMode("Manual");
 
-			// Still paired, with LEFT/RIGHT preserved on the now-flat rows.
+			// Still paired, with LEFT/RIGHT preserved on the now-flat rows. Manual
+			// mode gives each mate its own selectable row.
+			expect(rowButton(r1.name)).not.toBe(rowButton(r2.name));
 			expect(screen.getByText("Paired")).toBeInTheDocument();
 			expect(within(rowButton(r1.name)).getByText("LEFT")).toBeVisible();
 			expect(within(rowButton(r2.name)).getByText("RIGHT")).toBeVisible();

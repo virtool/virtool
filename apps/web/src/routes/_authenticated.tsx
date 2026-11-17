@@ -89,7 +89,7 @@ function AuthenticatedLayout() {
 
 	useEffect(() => {
 		if (data) {
-			Sentry.setUser({ id: data.id, username: data.handle });
+			Sentry.setUser({ id: data.id, username: data.username });
 		}
 	}, [data]);
 
@@ -119,7 +119,7 @@ function AuthenticatedLayout() {
 					<Banner />
 					<Nav
 						administratorRole={data.administratorRole}
-						handle={data.handle}
+						username={data.username}
 					/>
 				</div>
 

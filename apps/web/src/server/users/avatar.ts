@@ -39,7 +39,8 @@ function getETag(hash: string): string {
 }
 
 /**
- * Serve the avatar of the user with `handle`, backing `GET /avatars/{handle}`.
+ * Serve the avatar of the user with `username`, backing
+ * `GET /avatars/{username}`.
  *
  * The image is proxied rather than linked, so the browser never receives the
  * email hash and Gravatar never sees the viewer's address. A 404 tells the
@@ -47,14 +48,14 @@ function getETag(hash: string): string {
  */
 export async function handleAvatar(
 	request: Request,
-	handle: string,
+	username: string,
 ): Promise<Response> {
 	const session = await requireAuthenticatedRequest(request);
 	if (session instanceof Response) {
 		return session;
 	}
 
-	const email = await getGravatarEmail(db, handle);
+	const email = await getGravatarEmail(db, username);
 
 	if (email === null) {
 		return notFound();

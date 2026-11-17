@@ -9,11 +9,16 @@ import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import { useQuery } from "@tanstack/react-query";
 import { Info, TriangleAlert } from "lucide-react";
-import { passkeysQueryOptions, useRegisterPasskey } from "../queries";
+import {
+	accountSecurityQueryOptions,
+	passkeysQueryOptions,
+	useRegisterPasskey,
+} from "../queries";
 import AccountPasskeyItem from "./AccountPasskeyItem";
 
 function PasskeyList() {
 	const { data, isPending, isError } = useQuery(passkeysQueryOptions());
+	const { data: security } = useQuery(accountSecurityQueryOptions());
 
 	if (isError && !data) {
 		return <QueryError noun="your passkeys" />;
@@ -31,8 +36,18 @@ function PasskeyList() {
 		);
 	}
 
+	// Without TOTP, the last passkey is what satisfies the required policy.
+	const removeRestrictsSession =
+		security?.mfaRequired === true &&
+		!security.twoFactorEnabled &&
+		data.length === 1;
+
 	return data.map((passkey) => (
-		<AccountPasskeyItem key={passkey.managementId} passkey={passkey} />
+		<AccountPasskeyItem
+			key={passkey.managementId}
+			passkey={passkey}
+			removeRestrictsSession={removeRestrictsSession}
+		/>
 	));
 }
 

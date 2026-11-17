@@ -2,6 +2,14 @@ type MenuItem = { title: string; slug: string; order: number };
 
 type MenuSection = { title: string; items: MenuItem[] };
 
+// Pages without an `order` sort last. Plain subtraction gives NaN for them,
+// which leaves the sort order undefined.
+function compareOrder(a: MenuItem, b: MenuItem) {
+  return (
+    (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
+  );
+}
+
 const SECTION_TITLES: Record<string, string> = {
   api: "API",
 };
@@ -41,7 +49,7 @@ export function getMenuSectionsFromCollection(
   const flattened = Object.values(menu);
 
   flattened.forEach((section) => {
-    section.items.sort((a, b) => a.order - b.order);
+    section.items.sort(compareOrder);
   });
 
   return flattened;
@@ -60,7 +68,7 @@ export function getMenuSectionFromCollection(
     })),
   };
 
-  menu.items.sort((a, b) => a.order - b.order);
+  menu.items.sort(compareOrder);
 
   return menu;
 }

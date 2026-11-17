@@ -15,7 +15,10 @@ export type StorageObjectInfo = {
 
 /** The response-header overrides and lifetime for a presigned download URL. */
 export type PresignDownloadOptions = {
-	/** The `Content-Disposition` response header. */
+	/**
+	 * The `Content-Disposition` response header. A browser ignores `<a download>`
+	 * on a cross-origin URL, so the filename has to come from the URL.
+	 */
 	contentDisposition: string;
 	/** The `Content-Type` response header. */
 	contentType: string;
@@ -38,8 +41,9 @@ export type PresignUploadOptions = {
  *
  * Keys are `/`-delimited with no leading slash, e.g.
  * `samples/abc123/reads_1.fq.gz`. There are deliberately no paths or file
- * handles — callers stream bytes. The one exception is {@link presignDownload},
- * an opt-in capability a backend may leave unimplemented.
+ * handles — callers stream bytes. The exceptions are {@link presignDownload}
+ * and {@link presignUpload}, opt-in capabilities that a backend may leave
+ * unimplemented.
  */
 export type StorageBackend = {
 	/** Stream the object at `key`. Throws StorageKeyNotFoundError if absent. */
@@ -77,7 +81,8 @@ export type StorageBackend = {
 	 * to directly, chunk by chunk, instead of streaming the bytes through this
 	 * server. The URL grants only create and write on that one key; the caller
 	 * appends the block-blob query parameters (`comp=block`, `comp=blocklist`)
-	 * itself.
+	 * itself. Many short requests replace one long stream, so a proxy idle
+	 * timeout cannot stop a large upload.
 	 *
 	 * Optional: only the Azure backend implements it — chunked direct upload is
 	 * an Azure Block Blob capability, and `MemoryStorage` and the S3 backend

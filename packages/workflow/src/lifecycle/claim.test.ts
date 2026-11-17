@@ -39,7 +39,7 @@ function claimed(overrides: Record<string, unknown> = {}) {
 		key: "bocxcbnu",
 		state: "running",
 		steps: [],
-		user: { id: 1, handle: "bob", administrator_role: null },
+		user: { id: 1, username: "bob", administrator_role: null },
 		workflow: "create_subtraction",
 		...overrides,
 	};

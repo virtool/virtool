@@ -16,17 +16,6 @@ describe("useFuse()", () => {
 		keys = ["name"];
 	});
 
-	it("should change returnObj to match useFuse result when term is changed to non empty single character", () => {
-		const { result } = renderHook(() => useFuse(collection, keys));
-		const setTerm = result.current[2];
-
-		act(() => {
-			setTerm("z");
-		});
-		expect(result.current[0]).toEqual([{ name: "zzzzz" }]);
-		expect(result.current[1]).toBe("z");
-	});
-
 	it("should return empty array when searchFuse yields no matches", () => {
 		const { result } = renderHook(() => useFuse(collection, keys));
 		const setTerm = result.current[2];

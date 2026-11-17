@@ -1,3 +1,4 @@
+import { createMemoryStorage } from "@tests/memoryStorage";
 import { userServerFnMocks } from "@tests/server-fn/users";
 import {
 	FORBIDDEN_ERROR_NAME,
@@ -8,13 +9,18 @@ import {
 } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const assign = vi.fn();
+const { assign, getPagePath } = vi.hoisted(() => ({
+	assign: vi.fn(),
+	getPagePath: vi.fn(),
+}));
+
+// `loadSession` resets the module registry, so each factory must return the
+// instances this file holds, not fresh ones.
+vi.mock("@server/users/functions", () => userServerFnMocks);
+vi.mock("../navigation", () => ({ getPagePath, loadPage: assign }));
 
 function setLocation(pathname: string, search = "") {
-	Object.defineProperty(window, "location", {
-		configurable: true,
-		value: { assign, pathname, search },
-	});
+	getPagePath.mockReturnValue({ pathname, search });
 }
 
 function namedError(name: string, purpose?: string): Error {
@@ -37,7 +43,7 @@ const LOGIN_URL =
 beforeEach(() => {
 	assign.mockClear();
 	userServerFnMocks.getAccountFn.mockReset();
-	window.sessionStorage.clear();
+	vi.stubGlobal("sessionStorage", createMemoryStorage());
 	setLocation("/samples", "?find=foo");
 });
 
@@ -64,13 +70,13 @@ describe("endSession", () => {
 	it("stays when the current cookie is still accepted", async () => {
 		const { armSessionEnd, endSession } = await loadSession();
 		userServerFnMocks.getAccountFn.mockResolvedValue({});
-		window.sessionStorage.setItem("draft", "unsaved");
+		sessionStorage.setItem("draft", "unsaved");
 
 		armSessionEnd();
 
 		await expect(endSession()).resolves.toBe(false);
 		expect(assign).not.toHaveBeenCalled();
-		expect(window.sessionStorage.getItem("draft")).toBe("unsaved");
+		expect(sessionStorage.getItem("draft")).toBe("unsaved");
 	});
 
 	it("stays when the check fails, and asks again next time", async () => {
@@ -92,12 +98,12 @@ describe("endSession", () => {
 	it("clears session storage so no draft outlives the session", async () => {
 		const { armSessionEnd, endSession } = await loadSession();
 		rejectAccount(UNAUTHORIZED_ERROR_NAME);
-		window.sessionStorage.setItem("draft", "unsaved");
+		sessionStorage.setItem("draft", "unsaved");
 
 		armSessionEnd();
 		await endSession();
 
-		expect(window.sessionStorage.getItem("draft")).toBeNull();
+		expect(sessionStorage.getItem("draft")).toBeNull();
 	});
 
 	it("does not point the login wall back at itself", async () => {
@@ -142,23 +148,23 @@ describe("endSession", () => {
 	it("keeps drafts for MFA enrollment, because the session continues", async () => {
 		const { armSessionEnd, endSession } = await loadSession();
 		rejectAccount(MFA_ENROLLMENT_REQUIRED_ERROR_NAME);
-		window.sessionStorage.setItem("draft", "unsaved");
+		sessionStorage.setItem("draft", "unsaved");
 
 		armSessionEnd();
 		await endSession();
 
-		expect(window.sessionStorage.getItem("draft")).toBe("unsaved");
+		expect(sessionStorage.getItem("draft")).toBe("unsaved");
 	});
 
 	it("clears drafts for email remediation, because the session is gone", async () => {
 		const { armSessionEnd, endSession } = await loadSession();
 		rejectAccount(SETUP_REQUIRED_ERROR_NAME, "email_remediation");
-		window.sessionStorage.setItem("draft", "unsaved");
+		sessionStorage.setItem("draft", "unsaved");
 
 		armSessionEnd();
 		await endSession();
 
-		expect(window.sessionStorage.getItem("draft")).toBeNull();
+		expect(sessionStorage.getItem("draft")).toBeNull();
 	});
 
 	it("does not leave the wall that the restriction calls for", async () => {

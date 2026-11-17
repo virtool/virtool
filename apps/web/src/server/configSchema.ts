@@ -11,24 +11,28 @@ const DEFAULT_UPLOADS_CHUNKED_CONCURRENCY = 8;
 /** The shortest `VT_AUTH_SECRET` accepted, in characters. */
 const MINIMUM_AUTH_SECRET_LENGTH = 32;
 
+/**
+ * The hosts where `VT_PUBLIC_ORIGIN` can use plain `http`.
+ *
+ * Loopback addresses are secure contexts too, but a WebAuthn Relying Party ID
+ * must be a domain. An origin such as `http://127.0.0.1:5173` can never register
+ * a passkey.
+ */
 const INSECURE_ORIGIN_HOSTS: ReadonlySet<string> = new Set(["localhost"]);
 
 /** Server-side configuration parsed from process.env. */
 export type ServerConfig = {
 	postgresUrl: string;
 	postgresPoolMax: number;
+	/**
+	 * Never inferred from `Host` or forwarded headers. WebAuthn binds a passkey to
+	 * this origin and to the Relying Party ID derived from it.
+	 */
 	publicOrigin: string;
 	webauthnRpId: string;
 	authSecret: string;
 	metricsToken: string | undefined;
-	/**
-	 * Server-side Sentry DSN.
-	 *
-	 * Parsed here rather than read by `@virtool/sentry`'s `readDsn`, which goes
-	 * straight to `process.env` and so would miss a `VT_SENTRY_DSN_FILE` mount.
-	 * The browser DSN is a separate value baked in at build time by Vite and
-	 * cannot be file-backed at all.
-	 */
+	/** Sentry DSN for the server, also rendered into the document for the browser. */
 	sentryDsn: string | undefined;
 	/** Active key for encrypting secrets stored by Virtool. */
 	encryptionKey: string | undefined;
@@ -48,8 +52,9 @@ export type ServerConfig = {
 	 */
 	uploadsChunked: boolean;
 	/**
-	 * How many blocks a chunked upload PUTs at once. Higher values raise
-	 * throughput on a high-latency path at the cost of more concurrent requests.
+	 * How many block PUTs a browser runs at once across all active uploads.
+	 * Higher values raise throughput on a high-latency path at the cost of more
+	 * concurrent requests.
 	 * The server passes it to the client at upload init.
 	 */
 	uploadsChunkedConcurrency: number;
@@ -300,6 +305,29 @@ function buildStorage(env: NodeJS.ProcessEnv): StorageResult {
 	};
 }
 
+/**
+ * Better Auth environment variables that explicit options can't override.
+ * `BETTER_AUTH_SECRETS` replaces `secret`, and `BETTER_AUTH_TRUSTED_ORIGINS`
+ * adds to `trustedOrigins`. The other variables it reads only fill options that
+ * Virtool always sets.
+ *
+ * Better Auth reads these from the plain environment, so a `_FILE` variant
+ * has no effect and is not checked.
+ */
+const OVERRIDING_AUTH_VARIABLES = [
+	"BETTER_AUTH_SECRETS",
+	"BETTER_AUTH_TRUSTED_ORIGINS",
+] as const;
+
+function getOverridingAuthIssues(env: NodeJS.ProcessEnv): z.core.$ZodIssue[] {
+	return OVERRIDING_AUTH_VARIABLES.filter((key) => env[key]).map((key) => ({
+		code: "custom",
+		path: [key],
+		message: `Unset ${key}. Virtool configures Better Auth from VT_AUTH_SECRET and VT_PUBLIC_ORIGIN only.`,
+		input: undefined,
+	}));
+}
+
 // Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
 // from. The resolver is shared with `apps/internal` through
 // `@virtool/env` rather than copied, so the precedence rule — the
@@ -316,12 +344,19 @@ export function parseServerConfig(
 	const parsed = ServerEnv.safeParse(resolved);
 	const storage = buildStorage(resolved);
 	const publicOrigin = parsePublicOrigin(resolved);
+	const overridingAuth = getOverridingAuthIssues(env);
 
-	if (!parsed.success || !storage.config || !publicOrigin.url) {
+	if (
+		!parsed.success ||
+		!storage.config ||
+		!publicOrigin.url ||
+		overridingAuth.length > 0
+	) {
 		throw new z.ZodError([
 			...(parsed.success ? [] : parsed.error.issues),
 			...storage.issues,
 			...publicOrigin.issues,
+			...overridingAuth,
 		]);
 	}
 

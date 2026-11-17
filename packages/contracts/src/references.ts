@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { SearchResult } from "./search";
 import type { Task } from "./tasks";
-import type { UserNested } from "./users";
+import type { UserIdentity, UserNested } from "./users";
 
 /** The three per-reference rights a member (user or group) can be granted. */
 export type ReferenceRights = {
@@ -13,12 +13,14 @@ export type ReferenceRights = {
 /** The name of a single reference right. */
 export type ReferenceRight = keyof ReferenceRights;
 
-/** A user granted rights on a reference. */
-export type ReferenceUser = ReferenceRights & {
-	id: number;
-	handle: string;
-	createdAt: Date;
-};
+/**
+ * A user granted rights on a reference. A pending account can only be one
+ * through an earlier release, which did not refuse it.
+ */
+export type ReferenceUser = ReferenceRights &
+	UserIdentity & {
+		createdAt: Date;
+	};
 
 /** A group granted rights on a reference. */
 export type ReferenceGroup = ReferenceRights & {

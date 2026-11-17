@@ -98,8 +98,7 @@ describe("shouldRetryQuery", () => {
 	it("keeps retrying an auth error whose name was lost in serialization", () => {
 		// Guards the adapter's whole reason for existing: without `name`, an
 		// UnauthorizedError is indistinguishable from a transient failure and is
-		// retried ~4× over ~15s before the user reaches the login wall. See
-		// VIR-2783 for the end-to-end coverage this cannot provide.
+		// retried ~4× over ~15s before the user reaches the login wall.
 		expect(shouldRetryQuery(0, new Error("Unauthorized"))).toBe(true);
 	});
 

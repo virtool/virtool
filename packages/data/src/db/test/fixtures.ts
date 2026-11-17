@@ -52,8 +52,9 @@ export type TestDatabaseOptions = {
  * one. Applying it here keeps test databases equal to migrated ones.
  */
 const RETIRED_SCHEMA = [
-	`ALTER TABLE "users" ADD COLUMN "force_reset" boolean DEFAULT false NOT NULL`,
-	`ALTER TABLE "users" ADD CONSTRAINT "force_reset_unset" CHECK ("users"."force_reset" = false)`,
+	`ALTER TABLE "users" ADD COLUMN "handle" text DEFAULT '' NOT NULL`,
+	`ALTER TABLE "users" ADD COLUMN "display_username" text`,
+	`CREATE UNIQUE INDEX "users_handle_lower_unique" ON "users" USING btree (lower("handle")) WHERE "users"."handle" <> ''`,
 ];
 
 /**

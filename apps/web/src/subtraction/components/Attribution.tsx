@@ -2,24 +2,24 @@ import Attribution, { AttributionWithName } from "@base/Attribution";
 import type { ReactElement } from "react";
 
 type SubtractionAttributionProps = {
-	/* The user handle */
-	handle: string;
+	/* The user username */
+	username: string;
 	/* The time of the subtraction */
 	time?: Date | null;
 };
 
 /**
- * Formatted attribution showing creating user's handle and time of creation
+ * Formatted attribution showing creating user's username and time of creation
  */
 export function SubtractionAttribution({
-	handle,
+	username,
 	time,
 }: SubtractionAttributionProps): ReactElement {
-	if (handle) {
+	if (username) {
 		if (time) {
-			return <Attribution user={handle} time={time} />;
+			return <Attribution user={username} time={time} />;
 		}
-		return <AttributionWithName user={handle} />;
+		return <AttributionWithName user={username} />;
 	}
 	return (
 		<div className="top-1/2 min-h-5 text-xs italic text-gray-500">

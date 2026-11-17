@@ -8,7 +8,7 @@ import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
 import { useAddReferenceMember } from "@references/queries";
 import { useInfiniteFindUsers } from "@users/queries";
-import type { ReferenceUser, User } from "@virtool/contracts";
+import type { ReferenceUser, SetUpUser } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import { useState } from "react";
 
@@ -59,9 +59,9 @@ export default function AddReferenceUser({
 	const items = data.pages.flatMap((page) => page.items);
 	const filteredItems = items.filter((item) => !userIds.includes(item.id));
 
-	// CompactScrollList types its rows as `unknown`; the items are users.
+	// CompactScrollList types its rows as `unknown`; the items are set-up users.
 	function renderRow(item: unknown) {
-		const user = item as User;
+		const user = item as SetUpUser;
 		return (
 			<button
 				key={user.id}
@@ -75,8 +75,8 @@ export default function AddReferenceUser({
 				)}
 				onClick={() => mutation.mutate({ id: user.id })}
 			>
-				<UserAvatar size="md" handle={user.handle} />
-				{user.handle}
+				<UserAvatar size="md" username={user.username} />
+				{user.username}
 			</button>
 		);
 	}

@@ -44,7 +44,7 @@ describe("<AccountPassword />", () => {
 		await userEvent.click(button);
 
 		expect(
-			screen.getByText("Password does not meet minimum length requirement (8)"),
+			screen.getByText("Password must have at least 8 characters."),
 		).toBeInTheDocument();
 	});
 

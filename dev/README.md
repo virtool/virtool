@@ -17,10 +17,10 @@ vtd ui
 vtd daemon stop
 ```
 
-The first command installs and starts a systemd user service for the
-repository. Commands return immediately; the UI at <https://dev.localhost:9443>
-shows progress, failures, and logs. The daemon restarts itself when
-`apps/dev` changes.
+The first command installs and starts one systemd user service for the
+repository. systemd restarts the daemon after a crash and when `apps/dev`
+changes. `vtd daemon stop` stops the unit. Commands return immediately; the UI
+at <https://dev.localhost:9443> shows progress, failures, and logs.
 
 Each environment is served at `https://<environment>.localhost:9443`. Its
 hostname and data stay the same when you rename the branch or move the
@@ -64,7 +64,7 @@ the first-user setup page and rejects values that are not valid. It checks the
 password against the default minimum length. Environments that already have
 users skip the check and make no change.
 
-The daemon runs `create administrator` from
+The daemon runs the `create administrator` command of
 [`@virtool/dev-tools`](../apps/dev-tools/README.md). Worktrees on branches that
 do not have the `dev-tools` Compose service skip this step.
 
@@ -79,9 +79,7 @@ The environment detail page shows the choice. **Create**, **Start**, and
 ## Workflows
 
 Workflow images build on demand, the same way CI builds them. The daemon runs
-the app's `docker buildx bake` target in the environment's worktree, and the
-app builds inside Docker. The core services build from
-`dev/Dockerfile`.
+the app's `docker buildx bake` target in the environment's worktree.
 
 The daemon runs queued workflow jobs from all
 ready environments, one at a time by default. Set the concurrency in the UI.

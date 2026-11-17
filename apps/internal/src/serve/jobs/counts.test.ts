@@ -35,7 +35,7 @@ beforeEach(async () => {
 	await db.delete(jobs);
 	await db.delete(users);
 
-	userId = await seedUser(db, { handle: "bob" });
+	userId = await seedUser(db, { username: "bob" });
 });
 
 /**

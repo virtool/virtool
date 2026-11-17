@@ -19,7 +19,7 @@ beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
 
-	ownerId = await seedUser(db, { handle: "owner" });
+	ownerId = await seedUser(db, { username: "owner" });
 	referenceId = await seedReference(db, ownerId);
 }, 60_000);
 

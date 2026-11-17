@@ -1,2 +1,4 @@
 /releases /releases/deprecated.json
 /releases4 /releases/deprecated.json
+/posts /blog 301
+/posts/* /blog/:splat 301

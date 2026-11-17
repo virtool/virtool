@@ -16,7 +16,7 @@ export default function AttributionWithName({
 		<span className={`inline-flex items-center ${className}`}>
 			{capitalize(verb)} by{" "}
 			{user ? (
-				<UserAvatar size="md" handle={user} className="mr-0.5 ml-1.5" />
+				<UserAvatar size="md" username={user} className="mr-0.5 ml-1.5" />
 			) : null}{" "}
 			{user}
 		</span>

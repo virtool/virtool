@@ -1,7 +1,7 @@
 import type { EmailTemplate } from "@virtool/contracts";
 
 /** The template payload revision stored on queued email. */
-export const EMAIL_TEMPLATE_VERSION = 4;
+export const EMAIL_TEMPLATE_VERSION = 5;
 
 /** The oldest queued template payload this release can still render. */
 export const MIN_EMAIL_TEMPLATE_VERSION = 1;
@@ -108,7 +108,9 @@ export function renderEmailTemplate(
 				`Hello ${template.username},`,
 				"Open this link to reset the password on your Virtool account:",
 				template.recoveryUrl,
-				"If you did not request a reset, you can ignore this email and your password stays unchanged.",
+				templateVersion < 5
+					? "If you did not request a reset, you can ignore this email and your password stays unchanged."
+					: `This link expires in ${template.expiresInHours} hours. If you did not request a reset, you can ignore this email and your password stays unchanged.`,
 			);
 
 		case "test": {

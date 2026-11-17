@@ -90,7 +90,7 @@ async function seedUpload(
 
 describe("createUpload", () => {
 	it("writes the body to storage and inserts a ready row", async () => {
-		const userId = await seedUser(db, { handle: "bob" });
+		const userId = await seedUser(db, { username: "bob" });
 		const storage = new MemoryStorage();
 
 		const upload = await createUpload(db, storage, {
@@ -107,7 +107,7 @@ describe("createUpload", () => {
 			removed: false,
 			reserved: false,
 			size: 5,
-			user: { id: userId, handle: "bob" },
+			user: { id: userId, username: "bob" },
 		});
 
 		const [row] = await db
@@ -178,7 +178,7 @@ describe("getUploadFile", () => {
 
 describe("findUploads", () => {
 	it("returns only ready, un-removed, un-reserved uploads, newest first", async () => {
-		const userId = await seedUser(db, { handle: "bob" });
+		const userId = await seedUser(db, { username: "bob" });
 
 		const older = await seedUpload(userId, {
 			name: "older.fq.gz",
@@ -200,7 +200,7 @@ describe("findUploads", () => {
 		]);
 		expect(result.foundCount).toBe(2);
 		expect(result.totalCount).toBe(2);
-		expect(result.items[0]?.user).toEqual({ id: userId, handle: "bob" });
+		expect(result.items[0]?.user).toEqual({ id: userId, username: "bob" });
 	});
 
 	// A ready row migrated from before these columns existed carries null. The
@@ -232,21 +232,21 @@ describe("findUploads", () => {
 	});
 
 	it("filters by user", async () => {
-		const bob = await seedUser(db, { handle: "bob" });
-		const alice = await seedUser(db, { handle: "alice" });
+		const bob = await seedUser(db, { username: "bob" });
+		const alice = await seedUser(db, { username: "alice" });
 		await seedUpload(bob);
 		await seedUpload(alice);
 
 		const result = await findUploads(db, undefined, 1, 25, alice);
 
 		expect(result.items).toHaveLength(1);
-		expect(result.items[0]?.user).toEqual({ id: alice, handle: "alice" });
+		expect(result.items[0]?.user).toEqual({ id: alice, username: "alice" });
 	});
 
 	describe("sorting", () => {
 		async function seedSortable() {
-			const bob = await seedUser(db, { handle: "bob" });
-			const alice = await seedUser(db, { handle: "alice" });
+			const bob = await seedUser(db, { username: "bob" });
+			const alice = await seedUser(db, { username: "alice" });
 
 			await seedUpload(bob, {
 				name: "beta.fq.gz",
@@ -686,7 +686,7 @@ describe("reapUploads (orphaned)", () => {
 
 describe("createPendingUpload", () => {
 	it("inserts an unfinished row that no list shows, minting its key", async () => {
-		const userId = await seedUser(db, { handle: "bob" });
+		const userId = await seedUser(db, { username: "bob" });
 
 		const { upload, storageKey } = await createPendingUpload(db, {
 			name: "reads.fq.gz",
@@ -701,7 +701,7 @@ describe("createPendingUpload", () => {
 			ready: false,
 			removed: false,
 			reserved: false,
-			user: { id: userId, handle: "bob" },
+			user: { id: userId, username: "bob" },
 		});
 		expect(storageKey).toMatch(/^uploads\/[0-9a-f]{32}$/);
 
@@ -790,8 +790,8 @@ describe("finalizePendingUpload", () => {
 
 	it("does not finalize another user's upload", async () => {
 		const storage = new MemoryStorage();
-		const owner = await seedUser(db, { handle: "owner" });
-		const other = await seedUser(db, { handle: "other" });
+		const owner = await seedUser(db, { username: "owner" });
+		const other = await seedUser(db, { username: "other" });
 
 		const { upload, storageKey } = await createPendingUpload(db, {
 			name: "reads.fq.gz",
@@ -925,8 +925,8 @@ describe("cancelPendingUpload", () => {
 	});
 
 	it("does not cancel another user's upload", async () => {
-		const owner = await seedUser(db, { handle: "owner" });
-		const other = await seedUser(db, { handle: "other" });
+		const owner = await seedUser(db, { username: "owner" });
+		const other = await seedUser(db, { username: "other" });
 		const { upload } = await createPendingUpload(db, {
 			name: "reads.fq.gz",
 			type: "reads",

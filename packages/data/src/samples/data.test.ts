@@ -91,7 +91,7 @@ beforeEach(async () => {
 	await db.delete(groups);
 	await db.delete(users);
 
-	ownerId = await seedUser(db, { handle: "owner" });
+	ownerId = await seedUser(db, { username: "owner" });
 	referenceId = await seedReference(db, ownerId);
 	indexId = await seedIndex(db, { referenceId, userId: ownerId, version: 1 });
 });
@@ -235,7 +235,7 @@ describe("checkSampleRight", () => {
 
 	it("denies a non-owner without world or group rights", async () => {
 		const sampleId = await seedSample({ all_read: false });
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		const actor = await resolveSampleActor(db, other);
 		expect(await checkSampleRight(db, sampleId, actor, "read")).toBe(false);
 	});
@@ -256,7 +256,7 @@ describe("findSamples", () => {
 
 	it("scopes a non-admin to their own, world-readable, and group-readable samples", async () => {
 		const groupId = await seedGroup(db, { name: "techs" });
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		await addToGroup(db, other, groupId);
 
 		const own = await seedSample({ user_id: other, name: "Own" });
@@ -292,7 +292,7 @@ describe("findSamples", () => {
 
 	it("leaves samples the caller cannot read out of both counts", async () => {
 		await seedSample({ user_id: ownerId, name: "Mine" });
-		const stranger = await seedUser(db, { handle: "stranger" });
+		const stranger = await seedUser(db, { username: "stranger" });
 		await seedSample({ user_id: stranger, name: "Theirs" });
 
 		const actor = await resolveSampleActor(db, ownerId);
@@ -327,7 +327,7 @@ describe("findSamples", () => {
 	});
 
 	it("filters by owner", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		await seedSample({ user_id: ownerId, name: "Mine" });
 		await seedSample({ user_id: other, name: "Theirs" });
 
@@ -470,9 +470,9 @@ describe("findSamples", () => {
 			]);
 		});
 
-		it("sorts by the owner's handle", async () => {
-			const amelia = await seedUser(db, { handle: "amelia" });
-			const zoe = await seedUser(db, { handle: "zoe" });
+		it("sorts by the owner's username", async () => {
+			const amelia = await seedUser(db, { username: "amelia" });
+			const zoe = await seedUser(db, { username: "zoe" });
 			const byZoe = await seedSample({ name: "Z", user_id: zoe });
 			const byAmelia = await seedSample({ name: "A", user_id: amelia });
 
@@ -1071,7 +1071,7 @@ describe("resolveSampleActor", () => {
 	it("resolves group membership and the admin flag", async () => {
 		const groupId = await seedGroup(db, { name: "g" });
 		const adminId = await seedUser(db, {
-			handle: "admin",
+			username: "admin",
 			administratorRole: "full",
 		});
 		await addToGroup(db, adminId, groupId);
@@ -1136,7 +1136,7 @@ describe("findRecentlyViewedSamples", () => {
 	});
 
 	it("excludes a sample the viewer may no longer read", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		const hidden = await seedSample({ user_id: ownerId, name: "Hidden" });
 
 		await seedSampleView(other, hidden, new Date("2020-01-01T00:00:00.000Z"));
@@ -1149,7 +1149,7 @@ describe("findRecentlyViewedSamples", () => {
 	});
 
 	it("scopes the list to the given user's own views", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		const mine = await seedSample({ name: "Mine", all_read: true });
 		const theirs = await seedSample({ name: "Theirs", all_read: true });
 
@@ -1204,7 +1204,7 @@ describe("listSampleGroups", () => {
 	});
 
 	it("omits groups whose samples the actor cannot read", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		const mine = await seedGroup(db, { name: "mine" });
 		const theirs = await seedGroup(db, { name: "theirs" });
 

@@ -39,7 +39,7 @@ export default function CreateAnalysisBody({
 
 	return (
 		<>
-			<HmmAlert installed={Boolean(hmms.status.task?.complete)} />
+			<HmmAlert status={hmms.status} />
 			<CreateAnalysisForm
 				compatibleWorkflows={getCompatibleWorkflows(hmms.totalCount > 0)}
 				defaultSubtractions={defaultSubtractions}

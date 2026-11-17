@@ -31,6 +31,8 @@ const getRequest = vi.fn();
 let currentSessionId: number | null = null;
 let currentUserId: number | null = null;
 
+import { silenceLogs } from "../test/silenceLogs";
+
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
 	getCookie: vi.fn(),
@@ -81,13 +83,13 @@ const presignUpload = vi.fn();
 	presignUpload;
 
 // Mutable so a test can flip the chunked-upload flag; reset in `beforeEach`.
-const testConfig = {
+const testConfig = vi.hoisted(() => ({
 	authSecret: "test-auth-secret-test-auth-secret",
 	publicOrigin: "https://virtool.test",
 	uploadsChunked: false,
 	uploadsChunkedConcurrency: 8,
 	webauthnRpId: "virtool.test",
-};
+}));
 
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
@@ -247,6 +249,7 @@ describe("deleteUpload", () => {
 	});
 
 	it("soft-deletes an upload for a permitted user", async () => {
+		silenceLogs();
 		const userId = await signIn("full");
 		const upload = await seedUpload(userId);
 

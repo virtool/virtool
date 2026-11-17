@@ -2,7 +2,7 @@
 import ActionRequired from "@components/ActionRequired.astro";
 import Note from "@components/Note.astro";
 import ReleaseNotes from "@components/ReleaseNotes.astro";
-import type { Release } from "@utils/changelog";
+import type { Release } from "@virtool/changelog";
 import { formatDate } from "@utils/date";
 
 type Props = {
@@ -22,14 +22,14 @@ const { date, actions, body, maintenance } = release;
 {
   posts.map(({ slug, title }) => (
     <Note color="blue">
-      <a href={`/posts/${slug}`}>Read the post: {title}</a>
+      <a href={`/blog/${slug}`}>Read the post: {title}</a>
     </Note>
   ))
 }
 <ReleaseNotes markdown={body} />
 {
   maintenance && (
-    <div data-maintenance={!alwaysShowMaintenance || undefined}>
+    <div data-maintenance={!alwaysShowMaintenance || undefined} data-pagefind-ignore="all">
       <ReleaseNotes markdown={maintenance} />
     </div>
   )

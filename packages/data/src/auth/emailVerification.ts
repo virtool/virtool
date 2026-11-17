@@ -38,7 +38,7 @@ export type QueueEmailVerificationInput = {
 	userId: number;
 	candidateEmail: string;
 	sourceEmail: string;
-	handle: string;
+	username: string;
 	getVerificationUrl: (token: string) => string;
 	keyring: Keyring;
 };
@@ -61,7 +61,7 @@ export async function queueEmailVerificationInTransaction(
 		setupTokenId: issued.tokenId,
 		template: {
 			type: "email_verification",
-			username: input.handle,
+			username: input.username,
 			verifyUrl: input.getVerificationUrl(issued.token),
 			expiresInHours: EMAIL_VERIFICATION_LIFETIME_MS / (60 * 60 * 1000),
 		},
@@ -106,8 +106,8 @@ export async function beginEmailVerification(
 				authMigratedAt: users.authMigratedAt,
 				email: users.email,
 				emailVerified: users.emailVerified,
-				handle: users.handle,
 				lifecycleState: users.lifecycleState,
+				username: users.username,
 			})
 			.from(users)
 			.where(eq(users.id, input.userId))
@@ -116,7 +116,8 @@ export async function beginEmailVerification(
 		if (
 			!user?.active ||
 			!user.authMigratedAt ||
-			user.lifecycleState !== "normal"
+			user.lifecycleState !== "normal" ||
+			user.username === null
 		) {
 			throw new EmailVerificationError();
 		}
@@ -151,7 +152,7 @@ export async function beginEmailVerification(
 			userId: input.userId,
 			candidateEmail,
 			sourceEmail: user.email,
-			handle: user.handle,
+			username: user.username,
 			getVerificationUrl: input.getVerificationUrl,
 			keyring: input.keyring,
 		});
@@ -251,8 +252,8 @@ export async function completeEmailVerification(
 				authMigratedAt: users.authMigratedAt,
 				email: users.email,
 				emailVerified: users.emailVerified,
-				handle: users.handle,
 				lifecycleState: users.lifecycleState,
+				username: users.username,
 			})
 			.from(users)
 			.where(eq(users.id, consumed.userId))
@@ -262,6 +263,7 @@ export async function completeEmailVerification(
 			!user?.active ||
 			!user.authMigratedAt ||
 			user.lifecycleState !== "normal" ||
+			user.username === null ||
 			user.email !== challenge?.sourceEmail
 		) {
 			throw new SetupCredentialError();
@@ -287,7 +289,11 @@ export async function completeEmailVerification(
 				supersedeSetupTokens(tx, consumed.userId, "password_recovery"),
 				supersedeSetupTokens(tx, consumed.userId, "administrator_recovery"),
 			]);
-			await queueEmailChangedEmail(tx, consumed.userId, user);
+			await queueEmailChangedEmail(tx, consumed.userId, {
+				email: user.email,
+				emailVerified: user.emailVerified,
+				username: user.username,
+			});
 		}
 		return consumed.userId;
 	});

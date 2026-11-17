@@ -8,6 +8,10 @@ import { CLIENT_ERROR_NAME } from "@virtool/contracts";
  * control flow, not an incident, so `dropExpectedClientErrors` keeps it out of
  * Sentry — throw this rather than a plain `Error` for any deliberate status, or it
  * is reported as an incident.
+ *
+ * Map expected domain failures in one module-local
+ * `rethrowAsHttp(err: unknown): never` per `functions.ts`, and throw unknown
+ * failures unchanged so that error reporting still sees them.
  */
 export class ClientError extends Error {
 	/**

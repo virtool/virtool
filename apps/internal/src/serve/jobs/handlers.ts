@@ -5,9 +5,11 @@ import {
 	fromStoredJobStep,
 	getJobTerminalRefusal,
 	Job,
-	type JobClaimed,
+	type JobClaimedResponse,
 	type JobPing,
 	type JobStepStarted,
+	type JobsApiJobResponse,
+	toJobsApiUserResponse,
 	toStoredJobClaim,
 } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
@@ -62,8 +64,11 @@ export type JobHandlerDeps = {
  * Only the two job shapes are parsed on the way out. A blanket
  * response-validation layer would tax every response in the service for a
  * looseness that exists on this one column.
+ *
+ * The user's `handle` is sent beside `username` because runners built before
+ * the rename require it.
  */
-function toJob(record: JobRecord): Job {
+function toJob(record: JobRecord): JobsApiJobResponse {
 	const parsed = Job.safeParse({
 		id: record.id,
 		args: record.args,
@@ -88,17 +93,20 @@ function toJob(record: JobRecord): Job {
 		);
 	}
 
-	return parsed.data;
+	return { ...parsed.data, user: toJobsApiUserResponse(parsed.data.user) };
 }
 
 // `workflow` is the claim's own parsed query parameter rather than the claimed
 // row's `string`, so nothing here re-narrows a value the handler already holds
 // correctly typed. Every other field is either a literal or already narrow, so
 // this shape needs no parse of its own.
+//
+// The user's `handle` is sent beside `username` because runners built before
+// the rename require it.
 function toJobClaimed(
 	claimed: ClaimedJob,
 	workflow: ClaimableJobWorkflow,
-): JobClaimed {
+): JobClaimedResponse {
 	return {
 		id: claimed.id,
 		acquired: true,
@@ -108,7 +116,7 @@ function toJobClaimed(
 		key: claimed.key,
 		state: "running",
 		steps: claimed.steps.map(fromStoredJobStep),
-		user: claimed.user,
+		user: toJobsApiUserResponse(claimed.user),
 		workflow,
 	};
 }

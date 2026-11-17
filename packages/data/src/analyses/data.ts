@@ -38,6 +38,7 @@ import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
 import { type SampleActor, sampleReadableFilter } from "../samples/data";
+import { selectSetUpUsername } from "../users/username";
 import { formatAnalysis } from "./format";
 
 /** Which column an analysis list is ordered by, and in which direction. */
@@ -174,7 +175,7 @@ type MinimalRow = {
 	indexVersion: number | null;
 	referenceName: string | null;
 	sampleName: string | null;
-	userHandle: string | null;
+	username: string | null;
 };
 
 async function getSubtractionsByAnalysis(
@@ -279,7 +280,7 @@ function mapMinimal(
 		throw new AnalysisIntegrityError(`Sample not found for analysis ${row.id}`);
 	}
 
-	const user: UserNested = { id: row.user_id, handle: row.userHandle ?? "" };
+	const user: UserNested = { id: row.user_id, username: row.username ?? "" };
 
 	return {
 		createdAt: row.created_at,
@@ -335,7 +336,7 @@ export async function listAnalysisUsers(
 		: undefined;
 
 	return db
-		.select({ id: users.id, handle: users.handle })
+		.select({ id: users.id, username: selectSetUpUsername(users.username) })
 		.from(users)
 		.innerJoin(analyses, eq(analyses.user_id, users.id))
 		.where(
@@ -347,13 +348,13 @@ export async function listAnalysisUsers(
 				workflow,
 			),
 		)
-		.groupBy(users.id, users.handle)
-		.orderBy(asc(sql`lower(${users.handle})`));
+		.groupBy(users.id, users.username)
+		.orderBy(asc(users.username));
 }
 
 const SORT_COLUMNS = {
 	createdAt: analyses.created_at,
-	user: users.handle,
+	user: selectSetUpUsername(users.username),
 	workflow: analyses.workflow,
 } as const;
 
@@ -414,7 +415,7 @@ export async function findAnalyses(
 				indexVersion: indexes.version,
 				referenceName: legacyReferences.name,
 				sampleName: legacySamples.name,
-				userHandle: users.handle,
+				username: users.username,
 			})
 			.from(analyses)
 			.leftJoin(indexes, eq(indexes.id, analyses.index_id))
@@ -518,7 +519,7 @@ export async function findRecentlyViewedAnalyses(
 				indexVersion: indexes.version,
 				referenceName: legacyReferences.name,
 				sampleName: legacySamples.name,
-				userHandle: users.handle,
+				username: users.username,
 			})
 			.from(analysisViews)
 			.innerJoin(analyses, eq(analyses.id, analysisViews.analysis_id))
@@ -579,7 +580,7 @@ export async function getAnalysis(
 			indexVersion: indexes.version,
 			referenceName: legacyReferences.name,
 			sampleName: legacySamples.name,
-			userHandle: users.handle,
+			username: users.username,
 		})
 		.from(analyses)
 		.leftJoin(indexes, eq(indexes.id, analyses.index_id))

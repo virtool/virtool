@@ -2,7 +2,7 @@ import type { Db } from "@virtool/data/db/pg";
 import {
 	attachInstallTask,
 	fetchAndUpdateRelease,
-	getUserHandle,
+	getInstallerUsername,
 	HMM_INSTALL_TASK_TYPE,
 	HmmInstallConflictError,
 	type HmmInstalled,
@@ -49,7 +49,7 @@ export async function installUpdate(
 		return attachInstallTask(tx, taskId, release, userId);
 	});
 
-	const handle = await getUserHandle(db, userId);
+	const username = await getInstallerUsername(db, userId);
 
-	return { ...update, user: { id: userId, handle } };
+	return { ...update, user: { id: userId, username } };
 }

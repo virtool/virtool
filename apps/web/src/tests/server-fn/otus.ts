@@ -4,7 +4,7 @@ import { createFakeOtuIsolate, createFakeOtuSequence } from "../fake/otus";
 
 /**
  * Mock handles for the `@server/otus/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test rendering a view that lists,
+ * globally from `tests/serverFnMocks.ts` so any test rendering a view that lists,
  * reads, or mutates OTUs, isolates, or sequences can stub them without
  * per-file `vi.mock` boilerplate.
  */

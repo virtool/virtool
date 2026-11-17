@@ -4,12 +4,13 @@ import { eq } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
 import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
+import { selectSetUpUsername } from "../users/username";
 
 /** The recipient of a security notice, as the account held it before the change. */
 export type SecurityEmailRecipient = {
 	email: string;
 	emailVerified: boolean;
-	handle: string;
+	username: string;
 };
 
 async function queueSecurityEmail(
@@ -26,7 +27,7 @@ async function queueSecurityEmail(
 	await enqueueEmail(tx, {
 		idempotencyKey: `${type}/${userId}/${randomUUID()}`,
 		recipient: recipient.email,
-		template: { type, username: recipient.handle },
+		template: { type, username: recipient.username },
 	});
 }
 
@@ -39,7 +40,7 @@ export async function queuePasswordChangedEmail(
 		.select({
 			email: users.email,
 			emailVerified: users.emailVerified,
-			handle: users.handle,
+			username: selectSetUpUsername(users.username),
 		})
 		.from(users)
 		.where(eq(users.id, userId))

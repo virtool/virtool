@@ -97,10 +97,7 @@ function createTerminableRunSignals(logger: Logger): TerminableRunSignals {
 /**
  * Initialise Sentry and describe the run.
  *
- * The DSN is passed in rather than read from the environment, because it has
- * already been through `<KEY>_FILE` resolution in `parseWorkflowRunConfig` and
- * `readDsn` would go straight back to `process.env` and miss it. No DSN means no
- * `init`, so dev and unconfigured deploys are untouched.
+ * No DSN means no `init`, so dev and unconfigured deploys are untouched.
  */
 function initSentry(
 	config: WorkflowRunConfig,
@@ -109,8 +106,7 @@ function initSentry(
 ): boolean {
 	if (config.sentryDsn) {
 		Sentry.init({
-			...getCommonOptions(config.workflow),
-			dsn: config.sentryDsn,
+			...getCommonOptions(config.workflow, config.sentryDsn),
 			release: workflowVersion,
 		});
 	}
@@ -132,7 +128,7 @@ function buildRunnerId(): string {
 /**
  * Run one workflow, from claiming a job to reporting how it ended.
  *
- * This is what a workflow app's `main.ts` calls. It owns everything
+ * This is what a workflow app's entry point calls. It owns everything
  * `runWorkflow` deliberately does not: the network, the signal handler, and the
  * process exit code.
  */

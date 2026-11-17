@@ -1,8 +1,12 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount, createFakeApiKey } from "@tests/fake/account";
 import { createFakePermissions } from "@tests/fake/permissions";
-import { mockCreateApiKey, mockFindApiKeys } from "@tests/server-fn/account";
+import {
+	mockCreateApiKey,
+	mockFindApiKeys,
+	mockUpdateApiKey,
+} from "@tests/server-fn/account";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
@@ -10,15 +14,6 @@ import ApiKeys from "../ApiKeys";
 
 describe("<ApiKeys />", () => {
 	const basePath = "/account/api";
-
-	it("should render correctly when keys === null", async () => {
-		await renderWithRouter(<ApiKeys />, basePath);
-
-		expect(screen.getByLabelText("loading")).toBeInTheDocument();
-		expect(
-			screen.queryByText("Manage API keys for accessing the"),
-		).not.toBeInTheDocument();
-	});
 
 	it("should render and function when loaded", async () => {
 		const user = userEvent.setup();
@@ -30,9 +25,9 @@ describe("<ApiKeys />", () => {
 		);
 		mockFindApiKeys([]);
 
-		mockCreateApiKey("testKey", createFakePermissions({ remove_job: true }));
+		mockCreateApiKey("testKey", createFakePermissions({ modify_hmm: true }));
 
-		await renderWithRouter(<ApiKeys />, "/account/api");
+		await renderWithRouter(<ApiKeys />, basePath);
 
 		await screen.findByRole("heading", { name: "API Keys" });
 
@@ -42,6 +37,18 @@ describe("<ApiKeys />", () => {
 
 		const dialog = screen.getByRole("dialog", { name: "Create API Key" });
 		const input = within(dialog).getByLabelText("Name");
+
+		expect(
+			within(dialog).getByText(/The key can read all the data that you can/),
+		).toBeInTheDocument();
+		expect(
+			within(dialog).getByText(/You are an administrator/),
+		).toBeInTheDocument();
+		expect(
+			within(dialog).getByText(
+				/If your administrator role is reduced or removed, this API/,
+			),
+		).toBeInTheDocument();
 
 		// Check that submission without a name fails.
 		await user.click(screen.getByRole("button", { name: "Save" }));
@@ -53,7 +60,7 @@ describe("<ApiKeys />", () => {
 		expect(input).toHaveValue("Key A");
 
 		const checkbox = screen.getByRole("checkbox", {
-			name: "remove_job",
+			name: "modify_hmm",
 		});
 		await user.click(checkbox);
 		expect(checkbox).toBeChecked();
@@ -63,7 +70,7 @@ describe("<ApiKeys />", () => {
 		mockFindApiKeys([
 			createFakeApiKey({
 				name: "Key A",
-				permissions: createFakePermissions({ remove_job: true }),
+				permissions: createFakePermissions({ modify_hmm: true }),
 			}),
 		]);
 
@@ -86,37 +93,18 @@ describe("<ApiKeys />", () => {
 		expect(screen.getByText("1 permission")).toBeInTheDocument();
 	});
 
-	it("should show administrator notice when appropriate", async () => {
-		mockGetAccount(
-			createFakeAccount({
-				administratorRole: "full",
-			}),
-		);
-		mockFindApiKeys([]);
-
-		await renderWithRouter(<ApiKeys />, basePath);
-
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Create" }),
-		);
-
-		expect(
-			await screen.findByText(/You are an administrator/),
-		).toBeInTheDocument();
-		expect(
-			screen.getByText(
-				/If your administrator role is reduced or removed, this API/,
-			),
-		).toBeInTheDocument();
-	});
-
-	it("should be able to edit keys", async () => {
+	it("should save edited key permissions", async () => {
 		const key = createFakeApiKey();
+		const permissions = {
+			...key.permissions,
+			create_ref: false,
+			upload_file: true,
+		};
+		const updateApiKey = mockUpdateApiKey({ ...key, permissions });
 
 		mockGetAccount(
 			createFakeAccount({
 				permissions: createFakePermissions({
-					cancel_job: true,
 					create_ref: true,
 					upload_file: true,
 				}),
@@ -124,7 +112,7 @@ describe("<ApiKeys />", () => {
 		);
 		mockFindApiKeys([key]);
 
-		await renderWithRouter(<ApiKeys />, "/account/api");
+		await renderWithRouter(<ApiKeys />, basePath);
 
 		await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
 
@@ -139,6 +127,9 @@ describe("<ApiKeys />", () => {
 			name: "upload_file",
 		});
 
+		expect(
+			within(dialog).getByText(/Permissions limit what the key can change/),
+		).toBeInTheDocument();
 		expect(createRefCheckbox).toBeChecked();
 		expect(uploadFileCheckbox).not.toBeChecked();
 
@@ -146,5 +137,13 @@ describe("<ApiKeys />", () => {
 		await userEvent.click(uploadFileCheckbox);
 
 		expect(uploadFileCheckbox).toBeChecked();
+
+		await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+
+		await waitFor(() =>
+			expect(updateApiKey).toHaveBeenCalledWith({
+				data: { keyId: key.id, permissions },
+			}),
+		);
 	});
 });

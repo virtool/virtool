@@ -3,7 +3,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/groups/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test importing this helper can stub
+ * globally from `tests/serverFnMocks.ts` so any test importing this helper can stub
  * the groups server functions without per-file `vi.mock` boilerplate.
  */
 export const groupServerFnMocks = {

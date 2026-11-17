@@ -10,13 +10,16 @@ import {
 	REFERENCE_EXPORT_FASTA_HEADERS,
 	REFERENCE_EXPORT_TABLE_FORMATS,
 	SORT_DIRECTIONS,
+	TIME_FORMATS,
 	USER_ROLE_FILTERS,
 	USER_SORT_FIELDS,
 	USER_STATUSES,
 } from "@virtool/contracts";
 import { EmailInUseError } from "@virtool/data/auth/email";
 import {
+	AccessRevocationForbiddenError,
 	resetUserTotp,
+	revokeUserAccess,
 	TotpNotEnrolledError,
 } from "@virtool/data/auth/lifecycle";
 import {
@@ -48,7 +51,6 @@ import {
 import { z } from "zod";
 import { recordAccountLifecycle } from "../accountLifecycleTelemetry";
 import { PROTECTED_OPERATIONS } from "../auth/freshness";
-import { checkHandle, checkReservedHandle } from "../auth/handle";
 import { requireAdminRole } from "../auth/middleware";
 import {
 	adminRole,
@@ -57,6 +59,8 @@ import {
 } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { createReplacementSession } from "../auth/sessionActions";
+import { checkReservedUsername, checkUsername } from "../auth/username";
+import { getReleaseDate } from "../changelog/release";
 import { db, keyring } from "../composition";
 import { config } from "../config";
 import { isEmailDeliveryAvailable } from "../email/delivery";
@@ -87,7 +91,7 @@ const findUsersSchema = z
 			.array(z.enum(USER_ROLE_FILTERS))
 			.max(USER_ROLE_FILTERS.length)
 			.default([]),
-		sort: z.enum(USER_SORT_FIELDS).default("handle"),
+		sort: z.enum(USER_SORT_FIELDS).default("username"),
 		direction: z.enum(SORT_DIRECTIONS).default("ascending"),
 	})
 	.optional();
@@ -116,6 +120,7 @@ const accountSettingsSchema = z
 		showIds: z.boolean(),
 		showVersions: z.boolean(),
 		skipQuickAnalyzeDialog: z.boolean(),
+		timeFormat: z.enum(TIME_FORMATS),
 		avatarSource: z.enum(AVATAR_SOURCES),
 	})
 	.partial();
@@ -133,13 +138,13 @@ const createUserSchema = z.object({
 
 const updateUserSchema = userIdSchema.extend({
 	active: z.boolean().optional(),
-	handle: z.string().trim().min(1).optional(),
+	username: z.string().trim().min(1).optional(),
 	groups: z.array(rowIdSchema).optional(),
 	primaryGroup: rowIdSchema.nullable().optional(),
 });
 
-const accountHandleSchema = z.object({
-	handle: z.string().trim().min(1),
+const accountUsernameSchema = z.object({
+	username: z.string().trim().min(1),
 });
 
 // Password length is enforced by checkConfiguredPasswordLength in the handler,
@@ -177,6 +182,9 @@ function rethrowAsHttp(err: unknown): never {
 	}
 	if (err instanceof PendingAccountError) {
 		throw new ClientError("User has not completed account setup.", 409);
+	}
+	if (err instanceof AccessRevocationForbiddenError) {
+		throw new ClientError("Forbidden", 403);
 	}
 	if (err instanceof TotpNotEnrolledError) {
 		throw new ClientError("User has no two-factor authentication.", 409);
@@ -281,6 +289,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 				administratorRole: data.administratorRole,
 				groups: data.groups,
 				primaryGroup: data.primaryGroup,
+				lastSeenChangelogAt: getReleaseDate(),
 				deliveryIntent: data.deliveryIntent,
 				deliveryAvailable: await isEmailDeliveryAvailable(),
 				issuerUserId: context.principal.userId,
@@ -406,9 +415,9 @@ export const updateUserFn = createServerFn({ method: "POST" })
 		}
 
 		const { userId, ...values } = data;
-		if (values.handle !== undefined) {
-			checkHandle(values.handle);
-			checkReservedHandle(values.handle);
+		if (values.username !== undefined) {
+			checkUsername(values.username);
+			checkReservedUsername(values.username);
 		}
 		try {
 			return await updateUser(db, userId, values);
@@ -417,16 +426,24 @@ export const updateUserFn = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateAccountHandleFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
-	.validator(accountHandleSchema)
+/**
+ * Change the signed-in user's username.
+ *
+ * The username is the password sign-in identifier, so the change needs a
+ * recent authentication.
+ */
+export const updateAccountUsernameFn = createServerFn({ method: "POST" })
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.accountUsernameChange),
+	])
+	.validator(accountUsernameSchema)
 	.handler(async ({ context, data }) => {
-		checkHandle(data.handle);
-		checkReservedHandle(data.handle);
+		checkUsername(data.username);
+		checkReservedUsername(data.username);
 
 		try {
 			return await updateUser(db, context.principal.userId, {
-				handle: data.handle,
+				username: data.username,
 			});
 		} catch (err) {
 			throw rethrowAsHttp(err);
@@ -493,6 +510,10 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
  * For a user who has lost both their authenticator and their recovery codes.
  * An administrator resets their own factor through the account settings
  * instead, so this refuses the caller's own account.
+ *
+ * A factor row without `users.two_factor_enabled` is an abandoned enrollment.
+ * It doesn't lock the user out, because the next enrollment replaces it, so
+ * there is nothing to reset.
  */
 export const resetUserTotpFn = createServerFn({ method: "POST" })
 	.middleware([
@@ -521,6 +542,53 @@ export const resetUserTotpFn = createServerFn({ method: "POST" })
 				outcome: "failure",
 				message: "user totp reset failed",
 				userId: data.userId,
+			});
+			throw rethrowAsHttp(err);
+		}
+	});
+
+/**
+ * Remove every credential and session a user holds.
+ *
+ * For a compromised account. An administrator target needs the `full` role.
+ * This refuses the caller's own account.
+ */
+export const revokeUserAccessFn = createServerFn({ method: "POST" })
+	.middleware([
+		adminRole("users"),
+		recentlyAuthenticated(PROTECTED_OPERATIONS.accessRevoke),
+	])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		if (context.principal.userId === data.userId) {
+			throw new ClientError("Cannot revoke own access", 400);
+		}
+
+		if (await getAdministratorRole(db, data.userId)) {
+			await requireAdminRole(context.principal, "full");
+		}
+
+		try {
+			const user = await revokeUserAccess(
+				db,
+				data.userId,
+				context.principal.userId,
+			);
+			recordAccountLifecycle({
+				operation: "access_revoke",
+				outcome: "success",
+				message: "user access revoked",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return user;
+		} catch (err) {
+			recordAccountLifecycle({
+				operation: "access_revoke",
+				outcome: "failure",
+				message: "user access revocation failed",
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
 			});
 			throw rethrowAsHttp(err);
 		}

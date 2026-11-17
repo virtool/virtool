@@ -1,19 +1,40 @@
 ---
+import Search, { type SearchSection } from "@components/Search.astro";
 import Layout from "./Layout.astro";
 
-const { title }: { title: string } = Astro.props;
+type Props = { title: string; search?: SearchSection };
+
+const { title, search } = Astro.props;
 ---
 
-<Layout title={title} fullWidth>
-  <div class="grid grid-cols-[13rem_minmax(0,56rem)] gap-x-8 pr-6">
-    <div
-      class="sticky top-24 max-h-[calc(100vh-7rem)] self-start overflow-y-auto pl-12 pr-4"
-      data-sidebar
-    >
-      <slot name="sidebar" />
+<Layout title={title}>
+  <div class="lg:flex lg:gap-12">
+    <div class="mb-8 flex flex-col lg:sticky lg:top-sticky lg:mb-0 lg:max-h-[calc(100dvh-var(--spacing-sticky)-1rem)] lg:w-40 lg:shrink-0 lg:self-start">
+      <input id="sidebar-toggle" type="checkbox" class="peer sr-only" />
+      <div class="mb-6 flex items-center gap-3 peer-focus-visible:[&>label]:outline-2">
+        <div class="min-w-0 flex-1">
+          {search && <Search section={search} />}
+        </div>
+        <label
+          for="sidebar-toggle"
+          class="cursor-pointer rounded border border-zinc-300 px-3 py-1.5 font-medium text-stone-600 select-none hover:text-stone-900 lg:hidden"
+        >
+          Menu
+        </label>
+      </div>
+      <div
+        class="relative hidden min-h-0 overflow-y-auto peer-checked:block lg:block"
+        data-sidebar
+      >
+        <slot name="sidebar" />
+      </div>
     </div>
-    <div class="prose max-w-none">
+    <div class="prose max-w-none min-w-0 flex-1">
       <slot />
+    </div>
+    <!-- Always present, so the body has the same width with or without a table of contents. -->
+    <div class="sticky top-sticky hidden max-h-[calc(100dvh-var(--spacing-sticky)-1rem)] w-64 shrink-0 self-start overflow-y-auto xl:block">
+      <slot name="toc" />
     </div>
   </div>
 </Layout>

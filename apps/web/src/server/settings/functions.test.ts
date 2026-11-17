@@ -9,7 +9,7 @@ import {
 	type Keyring,
 } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
-import { authSessions } from "@virtool/data/db/schema/auth";
+import { authPasskeys, authSessions } from "@virtool/data/db/schema/auth";
 import { cacheUsageSnapshots } from "@virtool/data/db/schema/cacheUsageSnapshots";
 import { settings } from "@virtool/data/db/schema/settings";
 import { users } from "@virtool/data/db/schema/users";
@@ -492,12 +492,30 @@ describe("setMfaPolicy", () => {
 			call("setMfaPolicyFn", { mfaPolicy: "required" }),
 		).rejects.toMatchObject({
 			name: CLIENT_ERROR_NAME,
-			message: "Set up two-factor authentication before requiring it.",
+			message:
+				"Set up two-factor authentication or add a passkey before requiring two-factor authentication.",
 			status: 409,
 		});
 		await expect(call("getSettingsFn")).resolves.toMatchObject({
 			mfaPolicy: "optional",
 		});
+	});
+
+	it("lets an administrator with a passkey require MFA", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
+		await db.insert(authPasskeys).values({
+			userId,
+			publicKey: "public-key",
+			credentialID: "credential-1",
+			counter: 0,
+			deviceType: "singleDevice",
+			backedUp: false,
+		});
+		await seedSettings(db);
+
+		await expect(
+			call("setMfaPolicyFn", { mfaPolicy: "required" }),
+		).resolves.toMatchObject({ mfaPolicy: "required" });
 	});
 
 	it("restricts an unenrolled administrator while MFA is required", async () => {

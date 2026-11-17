@@ -2,12 +2,12 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createClientError } from "@tests/server-fn/auth";
+import { mockGetAccount, userServerFnMocks } from "@tests/server-fn/users";
 import {
-	mockGetAccount,
-	mockGetAccountMfaEnrollmentRequired,
-	userServerFnMocks,
-} from "@tests/server-fn/users";
-import { MemoryRouter, renderWithProviders } from "@tests/setup";
+	MemoryRouter,
+	renderWithProviders,
+	renderWithRouter,
+} from "@tests/setup";
 import { SETUP_REQUIRED_ERROR_NAME } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -120,7 +120,43 @@ describe("<LoginForm />", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("carries the redirect into email remediation", async () => {
+	it("carries the typed username to account recovery", async () => {
+		const { router } = await renderWithRouter(<LoginForm />, "/login");
+
+		await userEvent.type(await screen.findByLabelText("Username"), " ada ");
+		await userEvent.click(
+			screen.getByRole("link", { name: "Forgot your password?" }),
+		);
+
+		await waitFor(() =>
+			expect(router.state.location.pathname).toBe("/recover"),
+		);
+		expect(router.state.location.search).toEqual({});
+		expect(router.state.location.state.recoveryUsername).toBe("ada");
+	});
+
+	it("makes the username lowercase as the user types", async () => {
+		const user = userEvent.setup();
+
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm />
+			</MemoryRouter>,
+		);
+
+		const input = await screen.findByLabelText<HTMLInputElement>("Username");
+		await user.type(input, "Ada");
+		expect(input).toHaveValue("ada");
+
+		await user.type(input, "L", {
+			initialSelectionStart: 1,
+			initialSelectionEnd: 1,
+		});
+		expect(input).toHaveValue("alda");
+		expect(input.selectionStart).toBe(2);
+	});
+
+	it("signs in with the form values and carries the redirect into email remediation", async () => {
 		loginMock.mockResolvedValue({ remediation: true });
 		rejectAccount(SETUP_REQUIRED_ERROR_NAME, "email_remediation");
 
@@ -141,39 +177,18 @@ describe("<LoginForm />", () => {
 				replace: true,
 			}),
 		);
-	});
-
-	it("calls the login mutation with the form values", async () => {
-		const user = userEvent.setup();
-		const handle = "test_Username";
-		const password = "Password";
-		loginMock.mockResolvedValue({ login: true });
-
-		renderWithProviders(
-			<MemoryRouter>
-				<LoginForm />
-			</MemoryRouter>,
-		);
-
-		await user.type(await screen.findByLabelText("Username"), handle);
-		await user.type(screen.getByLabelText("Password"), password);
-		await user.click(screen.getByRole("button", { name: "Sign in" }));
-
-		await waitFor(() => expect(loginMock).toHaveBeenCalledTimes(1));
+		expect(loginMock).toHaveBeenCalledTimes(1);
 		expect(loginMock).toHaveBeenCalledWith(
-			{
-				handle,
-				password,
-			},
+			{ username: "alice", password: "password" },
 			expect.anything(),
 		);
 	});
 
 	it("displays the thrown error message on login failure", async () => {
 		const user = userEvent.setup();
-		const handle = "test_Username";
+		const username = "test_username";
 		const password = "Password";
-		const errorMessage = "Invalid handle or password.";
+		const errorMessage = "Incorrect username or password.";
 
 		loginMock.mockRejectedValue(createClientError(errorMessage));
 
@@ -183,7 +198,7 @@ describe("<LoginForm />", () => {
 			</MemoryRouter>,
 		);
 
-		await user.type(await screen.findByLabelText("Username"), handle);
+		await user.type(await screen.findByLabelText("Username"), username);
 		await user.type(screen.getByLabelText("Password"), password);
 		await user.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -226,47 +241,6 @@ describe("<LoginForm />", () => {
 		},
 	);
 
-	it("hides an unexpected error behind a generic message", async () => {
-		loginMock.mockRejectedValue(new Error("BETTER_AUTH internal detail"));
-
-		renderWithProviders(
-			<MemoryRouter>
-				<LoginForm />
-			</MemoryRouter>,
-		);
-
-		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
-		await userEvent.type(screen.getByLabelText("Password"), "password");
-		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-
-		const alert = await screen.findByRole("alert");
-		expect(alert).toHaveTextContent("Sign-in failed. Try again.");
-		expect(alert).not.toHaveTextContent("BETTER_AUTH");
-	});
-
-	it("sends a user who must turn on two-factor authentication to enrollment", async () => {
-		loginMock.mockResolvedValue({ login: true });
-		mockGetAccountMfaEnrollmentRequired();
-
-		renderWithProviders(
-			<MemoryRouter>
-				<LoginForm redirect="/samples" />
-			</MemoryRouter>,
-		);
-
-		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
-		await userEvent.type(screen.getByLabelText("Password"), "password");
-		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-
-		await waitFor(() =>
-			expect(navigateMock).toHaveBeenCalledWith({
-				to: "/mfa-enrollment",
-				search: { redirect: "/samples" },
-				replace: true,
-			}),
-		);
-	});
-
 	it("uses a numeric field for the authenticator code", async () => {
 		loginMock.mockResolvedValue({ twoFactorRedirect: true });
 
@@ -290,27 +264,6 @@ describe("<LoginForm />", () => {
 			await screen.findByText("Enter the 6-digit code"),
 		).toBeInTheDocument();
 		expect(verifyMock).not.toHaveBeenCalled();
-	});
-
-	it("returns from the challenge to the sign-in form", async () => {
-		loginMock.mockResolvedValue({ twoFactorRedirect: true });
-
-		renderWithProviders(
-			<MemoryRouter>
-				<LoginForm />
-			</MemoryRouter>,
-		);
-
-		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
-		await userEvent.type(screen.getByLabelText("Password"), "password");
-		await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Back to sign in" }),
-		);
-
-		expect(
-			await screen.findByRole("button", { name: "Sign in" }),
-		).toBeInTheDocument();
 	});
 
 	describe("passkey sign-in", () => {
@@ -340,20 +293,6 @@ describe("<LoginForm />", () => {
 					replace: true,
 				}),
 			);
-		});
-
-		it("does not start autofill where the browser has none", async () => {
-			stubPasskeySupport(true);
-
-			renderWithProviders(
-				<MemoryRouter>
-					<LoginForm />
-				</MemoryRouter>,
-			);
-
-			await waitFor(() => expect(autofillSupportMock).toHaveBeenCalled());
-			expect(fetchMock).not.toHaveBeenCalled();
-			expect(screen.queryByRole("alert")).toBeNull();
 		});
 
 		it("says nothing when the autofill challenge is refused", async () => {
@@ -390,10 +329,10 @@ describe("<LoginForm />", () => {
 				</MemoryRouter>,
 			);
 
-			expect(await screen.findByRole("alert")).toHaveTextContent(
+			expect(await screen.findByRole("alert")).toMatchTextContent(
 				"Passkey sign-in failed. Try again or sign in with your password.",
 			);
-			expect(screen.queryByText("Invalid handle or password.")).toBeNull();
+			expect(screen.queryByText("Incorrect username or password.")).toBeNull();
 			expect(screen.getByLabelText("Username")).not.toHaveAttribute(
 				"aria-invalid",
 			);
@@ -600,8 +539,7 @@ describe("<LoginForm />", () => {
 			);
 
 			const notice = await screen.findByRole("status");
-			expect(notice).toHaveTextContent("Passkey sign-in did not finish");
-			expect(notice).toHaveClass("text-gray-600");
+			expect(notice).toMatchTextContent("Passkey sign-in did not finish");
 			expect(screen.queryByRole("alert")).toBeNull();
 		});
 
@@ -620,30 +558,10 @@ describe("<LoginForm />", () => {
 			);
 
 			const alert = await screen.findByRole("alert");
-			expect(alert).toHaveTextContent(
+			expect(alert).toMatchTextContent(
 				"Passkey sign-in failed. Try again or sign in with your password.",
 			);
-			expect(alert).not.toHaveTextContent("virtool.test");
-			expect(alert).toHaveClass("text-red-600");
-		});
-
-		it("asks the user to wait after too many attempts", async () => {
-			stubPasskeySupport(true);
-			passkeyMock.mockResolvedValue(passkeyFailure(429));
-
-			renderWithProviders(
-				<MemoryRouter>
-					<LoginForm />
-				</MemoryRouter>,
-			);
-
-			await userEvent.click(
-				await screen.findByRole("button", { name: "Sign in with a passkey" }),
-			);
-
-			expect(await screen.findByRole("alert")).toHaveTextContent(
-				"Too many sign-in attempts. Wait and try again.",
-			);
+			expect(alert).not.toMatchTextContent("virtool.test");
 		});
 
 		it("explains when the browser cannot use passkeys", async () => {

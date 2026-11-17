@@ -96,12 +96,12 @@ beforeEach(async () => {
 	);
 });
 
-// Handles are unique case-insensitively, so every signed-in user needs its own.
-let handleCounter = 0;
+// Usernames are unique, so every signed-in user needs its own.
+let userCounter = 0;
 
 function signInAsNewUser(): Promise<number> {
-	handleCounter += 1;
-	return signIn(db, getRequest, { handle: `user-${handleCounter}` });
+	userCounter += 1;
+	return signIn(db, getRequest, { username: `user-${userCounter}` });
 }
 
 // A reference the caller may build: one verified OTU and one unbuilt change,
@@ -298,7 +298,7 @@ describe("createIndexFn", () => {
 		expect(index.version).toBe(0);
 		expect(index.ready).toBe(false);
 		// The integer id, not a stringified one — the client's `SseMessageSchema`
-		// rejects a string here and would drop the invalidation (VIR-2794).
+		// rejects a string here and would drop the invalidation.
 		expect(emit).toHaveBeenCalledWith("indexes", index.id, "create");
 	});
 

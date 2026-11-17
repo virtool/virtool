@@ -26,6 +26,7 @@ import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+import { silenceLogs } from "../test/silenceLogs";
 
 const cookies = new Map<string, string>();
 let clientIp: string | undefined;
@@ -120,7 +121,6 @@ it("signs in with a persistent seven-day rolling session", async () => {
 		.update(users)
 		.set({
 			username: "alice",
-			displayUsername: "Alice",
 			authMigratedAt: new Date(),
 		})
 		.where(eq(users.id, userId));
@@ -133,7 +133,7 @@ it("signs in with a persistent seven-day rolling session", async () => {
 		updatedAt: new Date(),
 	});
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ login: true });
 	const [session] = await db.select().from(authSessions);
 	expect(
@@ -152,6 +152,7 @@ it("signs in with a persistent seven-day rolling session", async () => {
 });
 
 it("replaces a bcrypt hash with Argon2id after a successful sign-in", async () => {
+	silenceLogs();
 	const userId = await seedUser(db, {
 		password: Buffer.from(hash),
 		email: "alice@virtool.test",
@@ -160,7 +161,6 @@ it("replaces a bcrypt hash with Argon2id after a successful sign-in", async () =
 		.update(users)
 		.set({
 			username: "alice",
-			displayUsername: "Alice",
 			authMigratedAt: new Date(),
 		})
 		.where(eq(users.id, userId));
@@ -174,12 +174,12 @@ it("replaces a bcrypt hash with Argon2id after a successful sign-in", async () =
 	});
 
 	await expect(
-		callServerFn(handlers, "loginFn", { handle: "alice", password: "wrong" }),
+		callServerFn(handlers, "loginFn", { username: "alice", password: "wrong" }),
 	).rejects.toThrow();
 	const [unchanged] = await db.select().from(authAccounts);
 	expect(unchanged?.password).toBe(hash);
 
-	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	await callServerFn(handlers, "loginFn", { username: "alice", password });
 	const [[user], [account]] = await Promise.all([
 		db.select().from(users).where(eq(users.id, userId)),
 		db.select().from(authAccounts),
@@ -189,7 +189,7 @@ it("replaces a bcrypt hash with Argon2id after a successful sign-in", async () =
 
 	cookies.clear();
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ login: true });
 });
 
@@ -197,7 +197,7 @@ it("replaces an unmigrated user's bcrypt hash at the remediation sign-in", async
 	const userId = await seedUser(db, { password: Buffer.from(hash) });
 
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ remediation: true });
 
 	const [user] = await db.select().from(users).where(eq(users.id, userId));
@@ -255,13 +255,13 @@ it("rejects an expired session without reviving it", async () => {
 it("completes offline remediation with an unverified email and one session", async () => {
 	const userId = await seedUser(db, {
 		email: "",
-		handle: "Alice",
+		username: "alice",
 		password: Buffer.from(hash),
 	});
 
 	expect(
 		await callServerFn(handlers, "loginFn", {
-			handle: "alice",
+			username: "Alice",
 			password,
 		}),
 	).toEqual({ remediation: true });
@@ -293,7 +293,7 @@ it("completes offline remediation with an unverified email and one session", asy
 it("drops an unsafe redirect from the remediation verification link", async () => {
 	const userId = await seedUser(db, {
 		email: "",
-		handle: "Alice",
+		username: "alice",
 		password: Buffer.from(hash),
 	});
 	const encrypted = keyring.encrypt("resend_api_key", "re_secret");
@@ -322,7 +322,7 @@ it("drops an unsafe redirect from the remediation verification link", async () =
 it("requires the emailed token before marking a remediated email verified", async () => {
 	const userId = await seedUser(db, {
 		email: "",
-		handle: "Alice",
+		username: "alice",
 		password: Buffer.from(hash),
 	});
 	const encrypted = keyring.encrypt("resend_api_key", "re_secret");
@@ -380,7 +380,7 @@ it("requires the emailed token before marking a remediated email verified", asyn
 it("verifies cross-browser without authentication and lets the original browser continue", async () => {
 	const userId = await seedUser(db, {
 		email: "",
-		handle: "Alice",
+		username: "alice",
 		password: Buffer.from(hash),
 	});
 	const encrypted = keyring.encrypt("resend_api_key", "re_secret");
@@ -449,9 +449,7 @@ async function enroll() {
 	const [user] = await db
 		.insert(users)
 		.values({
-			handle: "Alice",
 			username: "alice",
-			displayUsername: "Alice",
 			name: "Alice",
 			email: "alice@virtool.test",
 			password: Buffer.from(hash),
@@ -492,7 +490,7 @@ async function enroll() {
 it("completes the pending TOTP challenge", async () => {
 	const { totpURI, userId } = await enroll();
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ twoFactorRedirect: true });
 	expect(await db.select().from(authSessions)).toEqual([]);
 	expect(
@@ -516,7 +514,7 @@ it("asks for TOTP at sign-in from a browser that holds a trust cookie", async ()
 	cookies.set(trust.name, trust.value);
 
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ twoFactorRedirect: true });
 	expect(await db.select().from(authSessions)).toEqual([]);
 	expect(
@@ -529,7 +527,7 @@ it("asks for TOTP at sign-in from a browser that holds a trust cookie", async ()
 
 it("refuses to trust the device when the second factor is verified", async () => {
 	const { totpURI } = await enroll();
-	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	await callServerFn(handlers, "loginFn", { username: "alice", password });
 
 	await expect(
 		auth.api.verifyTOTP({
@@ -545,7 +543,7 @@ it("refuses to trust the device when the second factor is verified", async () =>
 
 it("keeps invalid codes unauthenticated and permits recovery-code continuation", async () => {
 	const { backupCodes, userId } = await enroll();
-	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	await callServerFn(handlers, "loginFn", { username: "alice", password });
 	await expect(
 		callServerFn(handlers, "verifyTwoFactorFn", {
 			code: "invalid",
@@ -586,7 +584,7 @@ it("rejects verification without a pending challenge", async () => {
 
 it("refuses an incorrect recovery code with its own message", async () => {
 	await enroll();
-	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	await callServerFn(handlers, "loginFn", { username: "alice", password });
 
 	await expect(
 		callServerFn(handlers, "verifyTwoFactorFn", {
@@ -602,7 +600,7 @@ it("refuses an incorrect recovery code with its own message", async () => {
 
 it("expires the challenge after five incorrect codes", async () => {
 	const { totpURI } = await enroll();
-	await callServerFn(handlers, "loginFn", { handle: "alice", password });
+	await callServerFn(handlers, "loginFn", { username: "alice", password });
 	for (let attempt = 0; attempt < 5; attempt++) {
 		await expect(
 			callServerFn(handlers, "verifyTwoFactorFn", {
@@ -625,9 +623,9 @@ it("expires the challenge after five incorrect codes", async () => {
 	expect(await db.select().from(authSessions)).toEqual([]);
 });
 
-async function expectRateLimited(handle: string, attempt: string) {
+async function expectRateLimited(username: string, attempt: string) {
 	await expect(
-		callServerFn(handlers, "loginFn", { handle, password: attempt }),
+		callServerFn(handlers, "loginFn", { username, password: attempt }),
 	).rejects.toMatchObject({
 		name: CLIENT_ERROR_NAME,
 		message: expect.stringContaining("Too many sign-in attempts"),
@@ -635,14 +633,14 @@ async function expectRateLimited(handle: string, attempt: string) {
 	});
 }
 
-async function failLogin(handle: string) {
+async function failLogin(username: string) {
 	await expect(
-		callServerFn(handlers, "loginFn", { handle, password: "wrong-password" }),
-	).rejects.toThrow("Invalid handle or password.");
+		callServerFn(handlers, "loginFn", { username, password: "wrong-password" }),
+	).rejects.toThrow("Incorrect username or password.");
 }
 
 it("limits password sign-in attempts from one address", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 
 	clientIp = "198.51.100.1";
 	for (let attempt = 0; attempt < 3; attempt++) {
@@ -654,12 +652,12 @@ it("limits password sign-in attempts from one address", async () => {
 
 	clientIp = "198.51.100.2";
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ remediation: true });
 });
 
 it("doesn't spend an account's budget on a blocked address", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 
 	clientIp = "198.51.100.1";
 	for (let attempt = 0; attempt < 3; attempt++) {
@@ -671,12 +669,12 @@ it("doesn't spend an account's budget on a blocked address", async () => {
 
 	clientIp = "198.51.100.2";
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ remediation: true });
 });
 
 it("limits failed attempts for one account across addresses", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 
 	for (let attempt = 0; attempt < 10; attempt++) {
 		clientIp = `198.51.100.${attempt}`;
@@ -688,7 +686,7 @@ it("limits failed attempts for one account across addresses", async () => {
 	expect(await db.select().from(setupSessions)).toEqual([]);
 });
 
-it("limits a handle with no account like an existing one", async () => {
+it("limits a username with no account like an existing one", async () => {
 	for (let attempt = 0; attempt < 10; attempt++) {
 		clientIp = `198.51.100.${attempt}`;
 		await failLogin("nobody");
@@ -699,7 +697,7 @@ it("limits a handle with no account like an existing one", async () => {
 });
 
 it("clears an account's failures after a correct password", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 
 	for (let round = 0; round < 2; round++) {
 		for (let attempt = 0; attempt < 9; attempt++) {
@@ -708,7 +706,7 @@ it("clears an account's failures after a correct password", async () => {
 		}
 		clientIp = `203.0.113.${round}`;
 		expect(
-			await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+			await callServerFn(handlers, "loginFn", { username: "alice", password }),
 		).toEqual({ remediation: true });
 		cookies.clear();
 	}
@@ -717,7 +715,7 @@ it("clears an account's failures after a correct password", async () => {
 async function signInFromDevice(): Promise<string> {
 	clientIp = "192.0.2.1";
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ remediation: true });
 	const device = cookies.get("login_device");
 	expect(device).toMatch(/^\d+\.\d+\.[\w-]+$/);
@@ -735,19 +733,19 @@ async function lockOutAlice() {
 }
 
 it("lets a known browser sign in while the account is locked", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 	const device = await signInFromDevice();
 	await lockOutAlice();
 
 	cookies.set("login_device", device);
 	clientIp = "192.0.2.2";
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ remediation: true });
 });
 
 it("limits failed attempts from a known browser on its own budget", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 	const device = await signInFromDevice();
 
 	for (let attempt = 0; attempt < 5; attempt++) {
@@ -762,17 +760,17 @@ it("limits failed attempts from a known browser on its own budget", async () => 
 	cookies.clear();
 	clientIp = "203.0.113.2";
 	expect(
-		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+		await callServerFn(handlers, "loginFn", { username: "alice", password }),
 	).toEqual({ remediation: true });
 });
 
 it("ignores a known browser after a password change", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 	const device = await signInFromDevice();
 	await db
 		.update(users)
 		.set({ lastPasswordChange: new Date(Date.now() + 1000) })
-		.where(eq(users.handle, "alice"));
+		.where(eq(users.username, "alice"));
 	await lockOutAlice();
 
 	cookies.set("login_device", device);
@@ -781,7 +779,7 @@ it("ignores a known browser after a password change", async () => {
 });
 
 it("ignores a tampered device", async () => {
-	await seedUser(db, { handle: "alice", password: Buffer.from(hash) });
+	await seedUser(db, { username: "alice", password: Buffer.from(hash) });
 	const device = await signInFromDevice();
 	await lockOutAlice();
 

@@ -7,19 +7,13 @@ import { getCommonOptions } from "@virtool/sentry";
 // (set in `getCommonOptions`) is what lets `@virtool/logger` forward records via
 // `Sentry.logger`. No DSN means no init, so dev and unconfigured deploys are
 // untouched.
-const options = getCommonOptions("web");
-
-// The DSN comes from `config`, not from `options.dsn`. `getCommonOptions` reads
-// it with `readDsn`, which goes straight to `process.env` and so cannot see a
-// `VT_SENTRY_DSN_FILE` mount — a deployment following the `<KEY>_FILE`
-// convention would have had Sentry silently disabled. Imported dynamically for
-// the same reason `@server/logger` is below: a top-level import front-loads the
-// module graph before the SDK installs its hooks.
 //
-// The browser DSN is a separate value, baked in at build time by Vite from
-// `import.meta.env`, and cannot be file-backed at all.
+// `@server/config` is imported dynamically for the same reason `@server/logger`
+// is below: a top-level import front-loads the module graph before the SDK
+// installs its hooks.
 const { config } = await import("@server/config");
 const dsn = config.sentryDsn;
+const options = getCommonOptions("web", dsn);
 
 if (dsn) {
 	// Import the profiler lazily and only when configured. `@sentry/profiling-node`
@@ -29,7 +23,6 @@ if (dsn) {
 	const { nodeProfilingIntegration } = await import("@sentry/profiling-node");
 	Sentry.init({
 		...options,
-		dsn,
 		integrations: [nodeProfilingIntegration()],
 		beforeSend: dropExpectedClientErrors,
 	});

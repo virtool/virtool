@@ -21,7 +21,13 @@ export default defineConfig({
 		alwaysBundle: [/^@virtool\//],
 		// Externals must appear verbatim as strings: knip's tsdown plugin reads
 		// them as declared dependencies, which is what keeps them out of the
-		// unused-dependency report without a knip.json entry.
+		// unused-dependency report without a knip.json entry. A regular expression
+		// is invisible to knip.
+		//
+		// The bundle imports each external at its top level, so the app must declare
+		// it directly, even when only a workspace package imports it. `pino` resolves
+		// its transport workers by path at run time. Everything else is inlined, so
+		// the deployed `node_modules` holds only what must be real files on disk.
 		neverBundle: ["pino", "postgres", "tar-stream"],
 	},
 });

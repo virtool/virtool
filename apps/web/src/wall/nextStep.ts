@@ -9,7 +9,8 @@ import { rootQueryKeys } from "@wall/keys";
  * which step comes next.
  *
  * Call this after each sign-in or setup transition. Local success is not proof
- * that a restriction has lifted.
+ * that a restriction has lifted. The route guards read the same mapping, so a
+ * restricted principal never renders the application shell.
  */
 export async function resolveAuthNextStep(
 	queryClient: QueryClient,

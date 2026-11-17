@@ -18,9 +18,17 @@
  * still `v2alpha`, it takes two calls — `dataset_report` for the ranked
  * lineage and `name_report` for acronyms and synonyms — to cover what one
  * `efetch(taxonomy)` returns in a single response, and it has no subtree
- * search at all, only a taxon's direct `children`. EMBL-EBI's ENA is not used
- * either: it serves INSDC accessions but rejects RefSeq ones outright, and
- * RefSeq is what Virtool's default-isolate rules are built on.
+ * search at all, only a taxon's direct `children`, so a subtree would need a
+ * recursive walk. EMBL-EBI's ENA is not used either: it serves INSDC
+ * accessions but rejects RefSeq ones outright, and RefSeq is what Virtool's
+ * default-isolate rules are built on. A test against ENA confirmed this. ENA
+ * stays available as a fallback for INSDC records if NCBI rate limiting makes
+ * that worth building.
+ *
+ * Requests share process-wide queues, keyed by `fetch` and credential tier,
+ * so a client created for each server request still counts against one limit.
+ * This package does not cache, read settings, or build lineage objects. The
+ * caller does each of those.
  */
 
 import { USER_AGENT } from "@virtool/contracts/userAgent";
@@ -178,6 +186,8 @@ function createLimiter(intervalMs: number) {
 		signal?: AbortSignal,
 	): Promise<T> {
 		const run = tail.then(async () => {
+			// A request cancelled before it reaches the front must not take a
+			// pacing slot, or it would delay the live requests behind it.
 			signal?.throwIfAborted();
 
 			const wait = last + intervalMs - Date.now();

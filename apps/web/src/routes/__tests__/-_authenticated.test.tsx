@@ -10,6 +10,7 @@ import {
 	userServerFnMocks,
 } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
+import { silenceExpectedLogs } from "@tests/silenceExpectedLogs";
 import {
 	CLIENT_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
@@ -79,6 +80,7 @@ describe("<AuthenticatedLayout />", () => {
 	});
 
 	it("keeps a signed-in user in place while the database is down", async () => {
+		silenceExpectedLogs();
 		userServerFnMocks.getAccountFn.mockRejectedValue(
 			Object.assign(new Error("Virtool is temporarily unavailable."), {
 				name: CLIENT_ERROR_NAME,
@@ -101,7 +103,10 @@ describe("<AuthenticatedLayout />", () => {
 	});
 
 	it("offers a retry instead of the login page when the account fetch fails", async () => {
-		mockGetAccount(createFakeAccount()).mockRejectedValueOnce(
+		silenceExpectedLogs();
+		// Fail every load until the retry: the router loads once before mounting
+		// and again on mount, and each load runs the guard.
+		userServerFnMocks.getAccountFn.mockRejectedValue(
 			new TypeError("Failed to fetch"),
 		);
 
@@ -114,6 +119,7 @@ describe("<AuthenticatedLayout />", () => {
 		const retry = await screen.findByRole("button", { name: "Try again" });
 		expect(router.state.location.pathname).toBe("/samples");
 
+		mockGetAccount(createFakeAccount());
 		await userEvent.click(retry);
 
 		await waitFor(() => {

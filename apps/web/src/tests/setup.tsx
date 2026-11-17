@@ -1,266 +1,21 @@
 import { accountQueryKeys } from "@account/keys";
 import { RecentAuthenticationProvider } from "@app/recentAuthentication";
-import { faker } from "@faker-js/faker";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createMemoryHistory,
 	createRootRoute,
 	createRoute,
 	createRouter,
+	type HistoryState,
 	Outlet,
 	RouterProvider,
 } from "@tanstack/react-router";
+import { act, render as rtlRender } from "@testing-library/react";
 import type { Account } from "@virtool/contracts";
 import { rootQueryKeys } from "@wall/keys";
-import "@testing-library/jest-dom/vitest";
-import {
-	fireEvent,
-	renderHook,
-	render as rtlRender,
-} from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { createContext, type ReactNode, useContext, useState } from "react";
-import { beforeEach, vi } from "vitest";
+import { vi } from "vitest";
 import { createFakeAccount } from "./fake/account";
-import { accountServerFnMocks } from "./server-fn/account";
-import { analysisServerFnMocks } from "./server-fn/analyses";
-import { authServerFnMocks } from "./server-fn/auth";
-import { emailServerFnMocks } from "./server-fn/email";
-import { groupServerFnMocks } from "./server-fn/groups";
-import { hmmServerFnMocks } from "./server-fn/hmm";
-import { indexServerFnMocks } from "./server-fn/indexes";
-import { jobServerFnMocks } from "./server-fn/jobs";
-import { labelServerFnMocks } from "./server-fn/labels";
-import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
-import { recentAuthenticationServerFnMocks } from "./server-fn/recentAuthentication";
-import { recoveryServerFnMocks } from "./server-fn/recovery";
-import { referenceServerFnMocks } from "./server-fn/references";
-import { rootServerFnMocks } from "./server-fn/root";
-import { sampleServerFnMocks } from "./server-fn/samples";
-import {
-	mockGetPasswordPolicy,
-	settingsServerFnMocks,
-} from "./server-fn/settings";
-import { subtractionServerFnMocks } from "./server-fn/subtractions";
-import { taskServerFnMocks } from "./server-fn/tasks";
-import { uploadServerFnMocks } from "./server-fn/uploads";
-import { userServerFnMocks } from "./server-fn/users";
-
-vi.mock("@server/groups/functions", () => groupServerFnMocks);
-vi.mock("@server/analyses/functions", async () => {
-	const { analysisServerFnMocks } = await import("./server-fn/analyses");
-	return analysisServerFnMocks;
-});
-vi.mock("@server/account/functions", async () => {
-	const { accountServerFnMocks } = await import("./server-fn/account");
-	return accountServerFnMocks;
-});
-// See the users mock below for why this resolves the mock via dynamic import.
-vi.mock("@server/auth/functions", async () => {
-	const { authServerFnMocks } = await import("./server-fn/auth");
-	return authServerFnMocks;
-});
-vi.mock("@server/auth/recoveryFunctions", async () => {
-	const { recoveryServerFnMocks } = await import("./server-fn/recovery");
-	return recoveryServerFnMocks;
-});
-vi.mock("@server/auth/recentAuthentication", async () => {
-	const { recentAuthenticationServerFnMocks } = await import(
-		"./server-fn/recentAuthentication"
-	);
-	return recentAuthenticationServerFnMocks;
-});
-// Resolve the mock lazily via dynamic import. A direct reference to the
-// imported `userServerFnMocks` binding races route modules (pulled in by
-// `routeTree`) that import the mocked module before this binding initializes.
-vi.mock("@server/users/functions", async () => {
-	const { userServerFnMocks } = await import("./server-fn/users");
-	return userServerFnMocks;
-});
-vi.mock("@server/root/functions", async () => {
-	const { rootServerFnMocks } = await import("./server-fn/root");
-	return rootServerFnMocks;
-});
-vi.mock("@server/hmm/functions", async () => {
-	const { hmmServerFnMocks } = await import("./server-fn/hmm");
-	return hmmServerFnMocks;
-});
-vi.mock("@server/jobs/functions", async () => {
-	const { jobServerFnMocks } = await import("./server-fn/jobs");
-	return jobServerFnMocks;
-});
-vi.mock("@server/tasks/functions", async () => {
-	const { taskServerFnMocks } = await import("./server-fn/tasks");
-	return taskServerFnMocks;
-});
-vi.mock("@server/email/functions", async () => {
-	const { emailServerFnMocks } = await import("./server-fn/email");
-	return emailServerFnMocks;
-});
-vi.mock("@server/settings/functions", async () => {
-	const { settingsServerFnMocks } = await import("./server-fn/settings");
-	return settingsServerFnMocks;
-});
-vi.mock("@server/labels/functions", async () => {
-	const { labelServerFnMocks } = await import("./server-fn/labels");
-	return labelServerFnMocks;
-});
-vi.mock("@server/uploads/functions", async () => {
-	const { uploadServerFnMocks } = await import("./server-fn/uploads");
-	return uploadServerFnMocks;
-});
-vi.mock("@server/subtraction/functions", async () => {
-	const { subtractionServerFnMocks } = await import("./server-fn/subtractions");
-	return subtractionServerFnMocks;
-});
-
-vi.mock("@server/references/functions", async () => {
-	const { referenceServerFnMocks } = await import("./server-fn/references");
-	return referenceServerFnMocks;
-});
-
-vi.mock("@server/samples/functions", async () => {
-	const { sampleServerFnMocks } = await import("./server-fn/samples");
-	return sampleServerFnMocks;
-});
-
-vi.mock("@server/otus/functions", async () => {
-	const { otuServerFnMocks } = await import("./server-fn/otus");
-	return otuServerFnMocks;
-});
-
-vi.mock("@server/genbank/functions", async () => {
-	const { genbankServerFnMocks } = await import("./server-fn/otus");
-	return genbankServerFnMocks;
-});
-
-vi.mock("@server/indexes/functions", async () => {
-	const { indexServerFnMocks } = await import("./server-fn/indexes");
-	return indexServerFnMocks;
-});
-
-beforeEach(() => {
-	for (const fn of Object.values(groupServerFnMocks)) {
-		fn.mockReset();
-	}
-	for (const fn of [
-		...Object.values(userServerFnMocks),
-		...Object.values(accountServerFnMocks),
-		...Object.values(jobServerFnMocks),
-		...Object.values(taskServerFnMocks),
-		...Object.values(hmmServerFnMocks),
-		...Object.values(authServerFnMocks),
-		...Object.values(recoveryServerFnMocks),
-		...Object.values(recentAuthenticationServerFnMocks),
-		...Object.values(labelServerFnMocks),
-		...Object.values(rootServerFnMocks),
-		uploadServerFnMocks.findUploadsFn,
-		uploadServerFnMocks.deleteUploadFn,
-		subtractionServerFnMocks.findSubtractionsFn,
-		subtractionServerFnMocks.getSubtractionFn,
-		subtractionServerFnMocks.listSubtractionsShortlistFn,
-		referenceServerFnMocks.findReferencesFn,
-		referenceServerFnMocks.getReferenceFn,
-		sampleServerFnMocks.findSamplesFn,
-		sampleServerFnMocks.findRecentlyViewedSamplesFn,
-		sampleServerFnMocks.getSampleFn,
-		sampleServerFnMocks.listSampleGroupsFn,
-		analysisServerFnMocks.findAnalysesFn,
-		analysisServerFnMocks.findRecentlyViewedAnalysesFn,
-		analysisServerFnMocks.getAnalysisFn,
-		analysisServerFnMocks.getAnalysisResultsFn,
-		analysisServerFnMocks.listAnalysisUsersFn,
-		settingsServerFnMocks.getSettingsFn,
-		settingsServerFnMocks.getCacheUsageFn,
-		emailServerFnMocks.getEmailSettingsFn,
-		...Object.values(indexServerFnMocks),
-		otuServerFnMocks.findOtusFn,
-		otuServerFnMocks.getOtuFn,
-		otuServerFnMocks.listOtuHistoryFn,
-	]) {
-		fn.mockReset();
-		// Default to a pending promise so an un-stubbed query renders its loading
-		// state instead of resolving to `undefined`.
-		fn.mockReturnValue(new Promise(() => {}));
-	}
-
-	for (const fn of [
-		subtractionServerFnMocks.createSubtractionFn,
-		subtractionServerFnMocks.updateSubtractionFn,
-		subtractionServerFnMocks.deleteSubtractionFn,
-		referenceServerFnMocks.createReferenceFn,
-		referenceServerFnMocks.updateReferenceFn,
-		referenceServerFnMocks.archiveReferenceFn,
-		referenceServerFnMocks.unarchiveReferenceFn,
-		referenceServerFnMocks.addReferenceUserFn,
-		referenceServerFnMocks.addReferenceGroupFn,
-		referenceServerFnMocks.updateReferenceUserFn,
-		referenceServerFnMocks.updateReferenceGroupFn,
-		referenceServerFnMocks.removeReferenceUserFn,
-		referenceServerFnMocks.removeReferenceGroupFn,
-		uploadServerFnMocks.finalizeChunkedUploadFn,
-		uploadServerFnMocks.cancelChunkedUploadFn,
-		sampleServerFnMocks.createSampleFn,
-		sampleServerFnMocks.updateSampleFn,
-		sampleServerFnMocks.deleteSampleFn,
-		sampleServerFnMocks.updateSampleRightsFn,
-		sampleServerFnMocks.recordSampleViewFn,
-		analysisServerFnMocks.createAnalysisFn,
-		analysisServerFnMocks.deleteAnalysisFn,
-		analysisServerFnMocks.recordAnalysisViewFn,
-		analysisServerFnMocks.blastNuvsFn,
-		settingsServerFnMocks.updateSettingsFn,
-		settingsServerFnMocks.clearNcbiApiKeyFn,
-		settingsServerFnMocks.setNcbiApiKeyFn,
-		emailServerFnMocks.clearEmailApiKeyFn,
-		emailServerFnMocks.sendTestEmailFn,
-		emailServerFnMocks.setEmailApiKeyFn,
-		emailServerFnMocks.updateEmailSettingsFn,
-		otuServerFnMocks.createOtuFn,
-		otuServerFnMocks.updateOtuFn,
-		otuServerFnMocks.deleteOtuFn,
-		otuServerFnMocks.createIsolateFn,
-		otuServerFnMocks.updateIsolateFn,
-		otuServerFnMocks.setIsolateAsDefaultFn,
-		otuServerFnMocks.deleteIsolateFn,
-		otuServerFnMocks.createSequenceFn,
-		otuServerFnMocks.updateSequenceFn,
-		otuServerFnMocks.deleteSequenceFn,
-		genbankServerFnMocks.getGenbankFn,
-	]) {
-		fn.mockReset();
-	}
-
-	// Unlike the mocks above, the password policy defaults to resolving. Every
-	// password form queries it, and leaving it pending would silently exercise
-	// the fallback minimum in tests that mean to assert the configured one.
-	settingsServerFnMocks.getPasswordPolicyFn.mockReset();
-	mockGetPasswordPolicy();
-
-	// Resolving fresh lets route tests render the administration views rather
-	// than the authentication gate in front of them.
-	recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
-		15 * 60 * 1000,
-	);
-
-	// The security view lists passkeys, so any test rendering it needs a list.
-	accountServerFnMocks.findPasskeysFn.mockResolvedValue([]);
-
-	// Every upload begins by asking the server which transport to take. Default
-	// to the proxied path so a test that just exercises uploading does not have
-	// to stub it; tests for the chunked path override this.
-	uploadServerFnMocks.initUploadFn.mockReset();
-	uploadServerFnMocks.initUploadFn.mockResolvedValue({
-		uploadId: 1,
-		url: "https://storage.test/blob?sig=test",
-		blockSize: 16 * 1024 * 1024,
-		concurrency: 1,
-	});
-});
-
-process.env.TZ = "UTC";
-
-faker.seed(1);
 
 /**
  * A `QueryClient` configured for tests: retries are off so an error-state test
@@ -297,6 +52,12 @@ export function wrapWithProviders(ui: ReactNode) {
 	);
 }
 
+/**
+ * Render `ui` with the application's providers.
+ *
+ * No HTTP interceptor runs in tests. A missing mock of a server function or of
+ * the module that starts a raw request can cause a real request.
+ */
 export function renderWithProviders(ui: ReactNode) {
 	// The client is built once and reused, so `rerender` re-renders the same tree
 	// instead of handing React a new provider on every call.
@@ -318,7 +79,11 @@ export function renderWithProviders(ui: ReactNode) {
 	return { ...rest, rerender: (node: ReactNode) => rerender(wrap(node)) };
 }
 
-export async function renderWithRouter(ui: ReactNode, path?: string) {
+export async function renderWithRouter(
+	ui: ReactNode,
+	path?: string,
+	state?: HistoryState,
+) {
 	const rootRoute = createRootRoute();
 	const catchAllRoute = createRoute({
 		getParentRoute: () => rootRoute,
@@ -330,6 +95,9 @@ export async function renderWithRouter(ui: ReactNode, path?: string) {
 	const memoryHistory = createMemoryHistory({
 		initialEntries: [path || "/"],
 	});
+	if (state) {
+		memoryHistory.replace(path || "/", state);
+	}
 
 	const router = createRouter({
 		routeTree: rootRoute,
@@ -339,7 +107,11 @@ export async function renderWithRouter(ui: ReactNode, path?: string) {
 
 	await router.load();
 
-	const result = renderWithProviders(<RouterProvider router={router} />);
+	// Async `act` also covers effects that fetch on mount, whose updates would
+	// otherwise land after this function returns.
+	const result = await act(async () =>
+		renderWithProviders(<RouterProvider router={router} />),
+	);
 	return { ...result, router };
 }
 
@@ -379,32 +151,6 @@ export function MemoryRouter({
 	);
 }
 
-export async function renderHookWithRouter<T>(hook: () => T, path?: string) {
-	const rootRoute = createRootRoute({ component: () => <Outlet /> });
-	const catchAllRoute = createRoute({
-		getParentRoute: () => rootRoute,
-		path: "$",
-		component: MemoryRouterCatchAll,
-	});
-	rootRoute.addChildren([catchAllRoute]);
-
-	const router = createRouter({
-		routeTree: rootRoute,
-		history: createMemoryHistory({ initialEntries: [path || "/"] }),
-		defaultPendingMinMs: 0,
-	});
-
-	await router.load();
-
-	return renderHook(hook, {
-		wrapper: ({ children }: { children: ReactNode }) => (
-			<MemoryRouterChildrenContext value={children}>
-				<RouterProvider router={router} />
-			</MemoryRouterChildrenContext>
-		),
-	});
-}
-
 type RenderRouteOptions = {
 	account?: Account;
 	seed?: (queryClient: QueryClient) => void;
@@ -414,7 +160,14 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 	// Imported lazily so the ~1,449-line route tree — and the route modules it
 	// pulls in — only loads for the handful of tests that render a real route,
 	// not every test file that imports this shared setup.
-	const { routeTree } = await import("@/routeTree.gen");
+	const [{ routeTree }, { default: ShellErrorBoundary }] = await Promise.all([
+		import("@/routeTree.gen"),
+		import("@base/ShellErrorBoundary"),
+	]);
+
+	// The real shell renders `<html>`, which can only sit at the document root.
+	// Testing Library mounts into a `<div>`.
+	Object.assign(routeTree.options, { shellComponent: ShellErrorBoundary });
 
 	const queryClient = createTestQueryClient();
 
@@ -439,70 +192,36 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 
 	await router.load();
 
-	const result = rtlRender(
-		<QueryClientProvider client={queryClient}>
-			<RouterProvider router={router} />
-		</QueryClientProvider>,
+	const result = await act(async () =>
+		rtlRender(
+			<QueryClientProvider client={queryClient}>
+				<RouterProvider router={router} />
+			</QueryClientProvider>,
+		),
+	);
+
+	// Two things finish after the render, and in a browser they can finish
+	// after the test's assertions. Waiting for them inside `act` keeps their
+	// updates in the test's scope:
+	//
+	// - On mount, `RouterProvider` writes the search defaults into the URL, and
+	//   that starts a second load. The route modules that `beforeLoad` imports
+	//   arrive over the network.
+	// - The authenticated layout renders `UploadOverlay` through `React.lazy`.
+	//   An import of a module settles after the earlier imports of that module,
+	//   so when this one settles, React's has too.
+	await act(() =>
+		Promise.all([
+			import("@uploads/components/UploadOverlay"),
+			vi.waitFor(() => {
+				const { matches, status } = router.state;
+
+				if (status !== "idle" || matches.some((match) => match.isFetching)) {
+					throw new Error("the router is still loading");
+				}
+			}),
+		]),
 	);
 
 	return { ...result, router, queryClient };
 }
-
-// jsdom does not implement EventSource; the SSE bridge constructs one when the
-// authenticated layout mounts, so any route-level test that renders it would
-// throw. A noop stand-in keeps the connection inert during tests. The
-// readyState constants are part of the surface: SseConnection reads
-// `window.EventSource.CLOSED` to tell a rejected handshake from a dropped
-// transport.
-class FakeEventSource {
-	static readonly CONNECTING = 0;
-	static readonly OPEN = 1;
-	static readonly CLOSED = 2;
-
-	readyState: number = FakeEventSource.CONNECTING;
-
-	close() {
-		this.readyState = FakeEventSource.CLOSED;
-	}
-	addEventListener() {}
-	removeEventListener() {}
-	dispatchEvent() {
-		return true;
-	}
-	onopen: ((this: EventSource, ev: Event) => unknown) | null = null;
-	onmessage: ((this: EventSource, ev: MessageEvent) => unknown) | null = null;
-	onerror: ((this: EventSource, ev: Event) => unknown) | null = null;
-}
-// @ts-expect-error FakeEventSource only implements the surface SseConnection touches.
-window.EventSource = FakeEventSource;
-
-//mocks HTML element prototypes that are not implemented in jsdom
-window.HTMLElement.prototype.scrollIntoView = vi.fn();
-window.HTMLElement.prototype.releasePointerCapture = vi.fn();
-window.HTMLElement.prototype.hasPointerCapture = vi.fn();
-window.scrollTo = vi.fn();
-document.elementFromPoint = vi.fn(() => null);
-
-class ResizeObserver {
-	observe() {}
-	unobserve() {}
-	disconnect() {}
-}
-
-function attachResizeObserver() {
-	window.ResizeObserver = ResizeObserver;
-}
-
-attachResizeObserver();
-
-// Globals are defined here to limit import redundancies.
-const testGlobals = globalThis as typeof globalThis & {
-	fireEvent: typeof fireEvent;
-	userEvent: typeof userEvent;
-	renderWithProviders: typeof renderWithProviders;
-	wrapWithProviders: typeof wrapWithProviders;
-};
-testGlobals.fireEvent = fireEvent;
-testGlobals.userEvent = userEvent;
-testGlobals.renderWithProviders = renderWithProviders;
-testGlobals.wrapWithProviders = wrapWithProviders;

@@ -18,24 +18,6 @@ describe("<DeleteSample />", () => {
 		};
 	});
 
-	it("should render delete button when sample is ready", async () => {
-		await renderWithRouter(<DeleteSample {...props} />);
-
-		expect(screen.getByRole("button")).toBeInTheDocument();
-	});
-
-	it("should render delete button when sample has failed job", async () => {
-		await renderWithRouter(
-			<DeleteSample
-				{...props}
-				job={createFakeJobNested({ state: "failed" })}
-				ready={false}
-			/>,
-		);
-
-		expect(screen.getByRole("button")).toBeInTheDocument();
-	});
-
 	it("does not render when sample has running job", async () => {
 		await renderWithRouter(
 			<DeleteSample

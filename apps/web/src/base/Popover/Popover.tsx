@@ -10,6 +10,9 @@ type PopoverProps = {
 
 	children: ReactNode;
 
+	/** Called when the popover opens or closes */
+	onOpenChange?: (open: boolean) => void;
+
 	/** How far the content sits from the trigger */
 	sideOffset?: number;
 
@@ -23,11 +26,12 @@ export default function Popover({
 	align = "end",
 	alignOffset = -20,
 	children,
+	onOpenChange,
 	sideOffset = 15,
 	trigger,
 }: PopoverProps) {
 	return (
-		<PopoverPrimitive.Root>
+		<PopoverPrimitive.Root onOpenChange={onOpenChange}>
 			<PopoverPrimitive.Trigger asChild>{trigger}</PopoverPrimitive.Trigger>
 			<PopoverPrimitive.Portal>
 				<PopoverPrimitive.Content

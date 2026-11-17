@@ -155,7 +155,7 @@ function SamplesTable({ children, samples }: SamplesTableProps) {
 					<DashboardTableCell>
 						<WorkflowTags id={sample.id} workflows={sample.workflows} />
 					</DashboardTableCell>
-					<DashboardTableUserCell handle={sample.user.handle} />
+					<DashboardTableUserCell username={sample.user.username} />
 					<DashboardTableCreatedCell time={sample.createdAt} />
 				</DashboardTableRow>
 			))}

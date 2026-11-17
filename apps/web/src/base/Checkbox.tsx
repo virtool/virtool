@@ -19,6 +19,7 @@ type CheckboxProps = {
 function Checkbox({
 	ariaLabel,
 	checked = false,
+	disabled,
 	id,
 	label,
 	labelComponent,
@@ -37,6 +38,7 @@ function Checkbox({
 				id={controlId}
 				aria-label={ariaLabel || label}
 				checked={checked}
+				disabled={disabled}
 				className={cn(
 					{
 						"bg-cyan-700": !isEmpty,
@@ -48,6 +50,8 @@ function Checkbox({
 						"border-cyan-700": !isEmpty,
 					},
 					"cursor-pointer",
+					"disabled:cursor-not-allowed",
+					"disabled:opacity-50",
 					"inline-flex",
 					"items-center",
 					"justify-center",

@@ -82,7 +82,7 @@ export const SAMPLE_UPLOAD_FILENAMES = [
 	"sample_R2.fastq.gz",
 ] as const;
 
-const HANDLES = ["bob", "fred", "leeashley", "zclark", "kmiller"];
+const USERNAMES = ["bob", "fred", "leeashley", "zclark", "kmiller"];
 
 /**
  * A storage key in the shape `mintStorageKey` produces, drawn from the seed.
@@ -123,7 +123,7 @@ export function createFakeUser(
 
 	return {
 		id: random.int(1, 999),
-		handle: random.pick(HANDLES),
+		username: random.pick(USERNAMES),
 		...overrides,
 	};
 }

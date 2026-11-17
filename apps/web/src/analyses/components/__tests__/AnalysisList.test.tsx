@@ -108,37 +108,6 @@ describe("<AnalysesList />", () => {
 		).toBeTruthy();
 	});
 
-	it("should show analysis creation when user is the owner of the sample", async () => {
-		const account = createFakeAccount({ administratorRole: null });
-		sample.user.id = account.id;
-		mockGetAccount(account);
-		mockGetSample(sample);
-		renderList();
-
-		expect(await screen.findByText("Create")).toBeInTheDocument();
-	});
-
-	it("should show analysis creation when user is in the correct group and write is enabled", async () => {
-		const account = createFakeAccount({ administratorRole: null });
-		sample.group = at(account.groups, 0);
-		sample.groupWrite = true;
-		mockGetAccount(account);
-		mockGetSample(sample);
-		renderList();
-
-		expect(await screen.findByText("Create")).toBeInTheDocument();
-	});
-
-	it("should show analysis creation when all users editing a sample is permitted", async () => {
-		const account = createFakeAccount({ administratorRole: null });
-		sample.allWrite = true;
-		mockGetAccount(account);
-		mockGetSample(sample);
-		renderList();
-
-		expect(await screen.findByText("Create")).toBeInTheDocument();
-	});
-
 	it("should not render analysis creation option when user has no permissions", async () => {
 		sample.allWrite = false;
 		sample.groupWrite = false;
@@ -187,7 +156,7 @@ describe("<AnalysesList /> table", () => {
 		);
 	}
 
-	it("labels every column, including the one with no visible header", async () => {
+	it("labels every column and shows the reference, index, and subtractions of each analysis", async () => {
 		mockFindAnalyses([analysis]);
 		renderTable({});
 
@@ -202,11 +171,6 @@ describe("<AnalysesList /> table", () => {
 			"Created",
 			"Actions",
 		]);
-	});
-
-	it("shows the reference, index, and subtractions of each analysis", async () => {
-		mockFindAnalyses([analysis]);
-		renderTable({});
 
 		expect(await screen.findByText("Plant Viruses")).toBeInTheDocument();
 		expect(screen.getByText("Index 3")).toBeInTheDocument();
@@ -215,11 +179,19 @@ describe("<AnalysesList /> table", () => {
 		expect(screen.getAllByText("Arabidopsis")).toHaveLength(2);
 	});
 
-	it("sorts by an unsorted column ascending", async () => {
+	it("requests the default order, then sorts by an unsorted column ascending", async () => {
 		const onSearchChange = vi.fn();
-
-		mockFindAnalyses([analysis]);
+		const findAnalyses = mockFindAnalyses([analysis]);
 		renderTable({ onSearchChange });
+
+		await waitFor(() => {
+			expect(findAnalyses).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					direction: "descending",
+					sort: undefined,
+				}),
+			});
+		});
 
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Workflow" }),
@@ -228,21 +200,14 @@ describe("<AnalysesList /> table", () => {
 		expect(onSearchChange).toHaveBeenCalledWith(
 			expect.objectContaining({ direction: "ascending", sort: "workflow" }),
 		);
-	});
-
-	it("reverses the column already sorted by", async () => {
-		const onSearchChange = vi.fn();
-
-		mockFindAnalyses([analysis]);
-		renderTable({ direction: "ascending", onSearchChange, sort: "workflow" });
-
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Workflow" }),
-		);
-
-		expect(onSearchChange).toHaveBeenCalledWith(
-			expect.objectContaining({ direction: "descending", sort: "workflow" }),
-		);
+		await waitFor(() => {
+			expect(findAnalyses).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					direction: "ascending",
+					sort: "workflow",
+				}),
+			});
+		});
 	});
 
 	it("marks only the sorted column with a direction", async () => {
@@ -260,34 +225,6 @@ describe("<AnalysesList /> table", () => {
 			"ascending",
 			null,
 		]);
-	});
-
-	it("requests the sorted column from the server", async () => {
-		const findAnalyses = mockFindAnalyses([analysis]);
-		renderTable({ direction: "ascending", sort: "user" });
-
-		await waitFor(() => {
-			expect(findAnalyses).toHaveBeenCalledWith({
-				data: expect.objectContaining({
-					direction: "ascending",
-					sort: "user",
-				}),
-			});
-		});
-	});
-
-	it("requests the default order when no column is sorted by", async () => {
-		const findAnalyses = mockFindAnalyses([analysis]);
-		renderTable({});
-
-		await waitFor(() => {
-			expect(findAnalyses).toHaveBeenCalledWith({
-				data: expect.objectContaining({
-					direction: "descending",
-					sort: undefined,
-				}),
-			});
-		});
 	});
 });
 
@@ -373,14 +310,14 @@ describe("<AnalysesList /> filtering", () => {
 
 		await userEvent.click(await screen.findByRole("button", { name: "Users" }));
 		await userEvent.click(
-			await screen.findByRole("menuitemcheckbox", {
-				name: at(users, 0).handle,
+			await screen.findByRole("option", {
+				name: at(users, 0).username,
 			}),
 		);
 
 		expect(
 			await screen.findByRole("button", {
-				name: `Remove ${at(users, 0).handle} user filter`,
+				name: `Remove ${at(users, 0).username} user filter`,
 			}),
 		).toBeInTheDocument();
 

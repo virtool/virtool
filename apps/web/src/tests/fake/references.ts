@@ -53,6 +53,7 @@ export function createFakeReference(overrides?: Partial<Reference>): Reference {
 		users: [
 			{
 				...createFakeUserNested(),
+				lifecycleState: "normal",
 				build: true,
 				createdAt: faker.date.past(),
 				modify: true,

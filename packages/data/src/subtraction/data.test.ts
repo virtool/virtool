@@ -54,7 +54,7 @@ beforeEach(async () => {
 	await db.delete(uploads);
 	await db.delete(users);
 
-	userId = await seedUser(db, { handle: "bob" });
+	userId = await seedUser(db, { username: "bob" });
 });
 
 async function seedUpload(): Promise<number> {
@@ -209,7 +209,7 @@ describe("findSubtractions", () => {
 		});
 
 		const [item] = result.items;
-		expect(item?.user).toEqual({ id: userId, handle: "bob" });
+		expect(item?.user).toEqual({ id: userId, username: "bob" });
 		expect(item?.job).toMatchObject({
 			id: jobId,
 			progress: 50,

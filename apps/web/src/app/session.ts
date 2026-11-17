@@ -1,4 +1,5 @@
 import { type AuthNextStep, getAuthNextStep } from "@wall/authStep";
+import { getPagePath, loadPage } from "./navigation";
 
 const WALL_PATHS = {
 	email_remediation: "/email-remediation",
@@ -131,7 +132,7 @@ async function confirmAuthStep(): Promise<boolean> {
 }
 
 function leaveFor(step: AuthNextStep): boolean {
-	const { pathname, search } = window.location;
+	const { pathname, search } = getPagePath();
 	const returnPath = `${pathname}${search}`;
 
 	if (step.type === "mfa_enrollment" || step.type === "email_remediation") {
@@ -145,11 +146,11 @@ function leaveFor(step: AuthNextStep): boolean {
 
 		// The session outlives MFA enrollment, so a draft is still its owner's.
 		if (step.type === "email_remediation") {
-			window.sessionStorage.clear();
+			sessionStorage.clear();
 		}
 
 		const params = new URLSearchParams({ redirect: returnPath });
-		window.location.assign(`${path}?${params.toString()}`);
+		loadPage(`${path}?${params.toString()}`);
 		return true;
 	}
 
@@ -161,7 +162,7 @@ function leaveFor(step: AuthNextStep): boolean {
 		params.set("redirect", returnPath);
 	}
 
-	window.sessionStorage.clear();
-	window.location.assign(`/login?${params.toString()}`);
+	sessionStorage.clear();
+	loadPage(`/login?${params.toString()}`);
 	return true;
 }

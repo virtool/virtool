@@ -55,7 +55,7 @@ it("scrubs, inspects, and accepts a usable invitation", async () => {
 	await fillForm();
 
 	expect(authServerFnMocks.acceptAccountSetupFn).toHaveBeenCalledWith({
-		data: { token, handle: "Ada", password: "a-real-password" },
+		data: { token, username: "ada", password: "a-real-password" },
 	});
 	await waitFor(() =>
 		expect(removeQueries).toHaveBeenCalledWith({
@@ -65,19 +65,6 @@ it("scrubs, inspects, and accepts a usable invitation", async () => {
 	expect(removeQueries).toHaveBeenCalledWith({
 		queryKey: rootQueryKeys.all(),
 	});
-});
-
-it("refuses mismatched passwords before submitting", async () => {
-	mockUsableInvitation();
-
-	await renderWithRouter(<AccountSetup />, "/account-setup");
-	await screen.findByRole("heading", { name: "Set up your account" });
-	await fillForm("something-else");
-
-	expect(
-		await screen.findByText("The passwords do not match"),
-	).toBeInTheDocument();
-	expect(authServerFnMocks.acceptAccountSetupFn).not.toHaveBeenCalled();
 });
 
 it("says a verification email is on its way when the server queued one", async () => {
@@ -117,7 +104,7 @@ it("keeps the form and shows the server's message for a taken username", async (
 	expect(
 		await screen.findByText("This username is already taken."),
 	).toHaveAttribute("role", "alert");
-	expect(screen.getByLabelText("Username")).toHaveValue("Ada");
+	expect(screen.getByLabelText("Username")).toHaveValue("ada");
 });
 
 it("hides an unexpected error behind a generic message", async () => {

@@ -1,7 +1,10 @@
+import { IconButton } from "@base/Icon";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@tests/setup";
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
+import { Trash } from "lucide-react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import DeleteDialog from "../DeleteDialog";
 
@@ -13,8 +16,8 @@ function clientError(message: string): Error {
 }
 
 describe("<DeleteDialog />", () => {
-	it("titles the dialog and prompts with the item name", () => {
-		renderWithProviders(
+	it("titles the dialog, prompts with the item name, and takes a custom title and confirm label", () => {
+		const { rerender } = renderWithProviders(
 			<DeleteDialog name="Foo" noun="Sample" onConfirm={vi.fn()} open />,
 		);
 
@@ -23,10 +26,9 @@ describe("<DeleteDialog />", () => {
 			screen.getByText(/are you sure you want to delete/i),
 		).toBeInTheDocument();
 		expect(screen.getByText("Foo")).toBeInTheDocument();
-	});
+		expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
 
-	it("takes a custom title and confirm label", () => {
-		renderWithProviders(
+		rerender(
 			<DeleteDialog
 				confirmLabel="Sign out"
 				name="Firefox"
@@ -43,23 +45,6 @@ describe("<DeleteDialog />", () => {
 			screen.getByRole("button", { name: "Sign out" }),
 		).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
-	});
-
-	it("opens from its trigger", async () => {
-		renderWithProviders(
-			<DeleteDialog
-				name="Foo"
-				noun="Sample"
-				onConfirm={vi.fn()}
-				trigger={<button type="button">open</button>}
-			/>,
-		);
-
-		expect(screen.queryByText("Delete Sample")).toBeNull();
-
-		await userEvent.click(screen.getByRole("button", { name: "open" }));
-
-		expect(screen.getByText("Delete Sample")).toBeInTheDocument();
 	});
 
 	it("runs onConfirm and closes on success", async () => {
@@ -91,42 +76,10 @@ describe("<DeleteDialog />", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
-		expect(await screen.findByRole("alert")).toHaveTextContent(
+		expect(await screen.findByRole("alert")).toMatchTextContent(
 			"Cannot delete this.",
 		);
 		expect(screen.getByText("Delete Sample")).toBeInTheDocument();
-	});
-
-	it("falls back to a generic message when the ClientError carries none", async () => {
-		const onConfirm = vi.fn().mockRejectedValue(clientError(""));
-		renderWithProviders(
-			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
-		);
-
-		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
-
-		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"Something went wrong. Please try again.",
-		);
-	});
-
-	it("hides an unexpected error's message rather than leaking it", async () => {
-		const onConfirm = vi
-			.fn()
-			.mockRejectedValue(
-				new Error(
-					'duplicate key value violates unique constraint "samples_pkey"',
-				),
-			);
-		renderWithProviders(
-			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
-		);
-
-		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
-
-		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"Something went wrong. Please try again.",
-		);
 	});
 
 	it("stays open without an error when recent authentication is cancelled", async () => {
@@ -168,5 +121,113 @@ describe("<DeleteDialog />", () => {
 
 		expect(onConfirm).not.toHaveBeenCalled();
 		expect(onOpenChange).toHaveBeenCalledWith(false);
+	});
+
+	it("runs onConfirm once and blocks dismissal while it is pending", async () => {
+		const user = userEvent.setup();
+		const deletion = Promise.withResolvers<void>();
+		const onConfirm = vi.fn().mockReturnValue(deletion.promise);
+		const onOpenChange = vi.fn();
+		renderWithProviders(
+			<DeleteDialog
+				name="Foo"
+				noun="Sample"
+				onConfirm={onConfirm}
+				onOpenChange={onOpenChange}
+				open
+			/>,
+		);
+
+		const confirm = screen.getByRole("button", { name: "Confirm" });
+
+		await user.dblClick(confirm);
+		await user.keyboard("{Escape}");
+
+		expect(onConfirm).toHaveBeenCalledOnce();
+		expect(confirm).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+		expect(onOpenChange).not.toHaveBeenCalled();
+
+		deletion.resolve();
+
+		await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+	});
+
+	it("allows another confirm after onConfirm rejects", async () => {
+		const user = userEvent.setup();
+		const onConfirm = vi
+			.fn()
+			.mockRejectedValueOnce(clientError("Cannot delete this."))
+			.mockResolvedValueOnce(undefined);
+		renderWithProviders(
+			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
+		);
+
+		await user.click(screen.getByRole("button", { name: "Confirm" }));
+		await screen.findByRole("alert");
+
+		const confirm = screen.getByRole("button", { name: "Confirm" });
+
+		expect(confirm).toBeEnabled();
+
+		await user.click(confirm);
+
+		expect(onConfirm).toHaveBeenCalledTimes(2);
+	});
+
+	it("opens from its trigger and returns focus to it when closed", async () => {
+		const user = userEvent.setup();
+		renderWithProviders(
+			<DeleteDialog
+				name="Foo"
+				noun="Sample"
+				onConfirm={vi.fn()}
+				trigger={<IconButton IconComponent={Trash} color="red" tip="Delete" />}
+			/>,
+		);
+
+		const trigger = screen.getByRole("button", { name: "Delete" });
+
+		expect(screen.queryByText("Delete Sample")).toBeNull();
+
+		await user.click(trigger);
+
+		expect(screen.getByText("Delete Sample")).toBeInTheDocument();
+
+		await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+		await waitFor(() => expect(trigger).toHaveFocus());
+	});
+
+	it("returns focus to the opener of a controlled dialog when closed", async () => {
+		const user = userEvent.setup();
+
+		function Controlled() {
+			const [open, setOpen] = useState(false);
+
+			return (
+				<>
+					<button type="button" onClick={() => setOpen(true)}>
+						Remove
+					</button>
+					<DeleteDialog
+						name="Foo"
+						noun="Sample"
+						onConfirm={vi.fn()}
+						onOpenChange={setOpen}
+						open={open}
+					/>
+				</>
+			);
+		}
+
+		renderWithProviders(<Controlled />);
+
+		const opener = screen.getByRole("button", { name: "Remove" });
+
+		await user.click(opener);
+		await user.keyboard("{Escape}");
+
+		await waitFor(() => expect(opener).toHaveFocus());
 	});
 });

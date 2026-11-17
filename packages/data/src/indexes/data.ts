@@ -58,6 +58,7 @@ import {
 	visibleReferenceFilter,
 } from "../references/data";
 import { createTask } from "../tasks/data";
+import { selectSetUpUsername } from "../users/username";
 import { type OtuChunk, streamArtifact } from "./artifact";
 import { toSnapshotOtu, writeIndexSnapshot } from "./snapshot";
 
@@ -121,7 +122,7 @@ function selectIndexes(db: DbOrTx) {
 			referenceId: legacyReferences.id,
 			referenceName: legacyReferences.name,
 			userId: users.id,
-			userHandle: users.handle,
+			username: selectSetUpUsername(users.username),
 		})
 		.from(indexes)
 		.innerJoin(legacyReferences, eq(indexes.reference_id, legacyReferences.id))
@@ -137,7 +138,7 @@ type IndexJoinRow = {
 	referenceId: number;
 	referenceName: string;
 	userId: number;
-	userHandle: string;
+	username: string;
 };
 
 /** The change and modified-OTU counts for one build. */
@@ -154,7 +155,7 @@ function mapMinimal(row: IndexJoinRow, counts: IndexCounts): IndexMinimal {
 		modifiedOtuCount: counts.modifiedOtuCount,
 		ready: row.ready,
 		reference: { id: row.referenceId, name: row.referenceName },
-		user: { id: row.userId, handle: row.userHandle },
+		user: { id: row.userId, username: row.username },
 	};
 }
 
@@ -348,13 +349,13 @@ async function getContributors(
 	const rows = await db
 		.select({
 			id: users.id,
-			handle: users.handle,
+			username: selectSetUpUsername(users.username),
 			count: count(),
 		})
 		.from(users)
 		.innerJoin(legacyHistory, eq(legacyHistory.user_id, users.id))
 		.where(eq(legacyHistory.index_id, indexId))
-		.groupBy(users.id, users.handle)
+		.groupBy(users.id, users.username)
 		.orderBy(asc(users.id));
 
 	return rows;

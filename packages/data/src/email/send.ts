@@ -143,7 +143,12 @@ export function formatSender(name: string, address: string): string {
 	return `"${quoted}" <${address}>`;
 }
 
-/** Send one email through Resend and classify the result. */
+/**
+ * Send one email through Resend and classify the result.
+ *
+ * This is the only function that talks to Resend. Keep the SDK, provider errors,
+ * and retries behind the email package.
+ */
 export async function sendEmailViaResend(
 	request: EmailSendRequest,
 ): Promise<EmailSendOutcome> {

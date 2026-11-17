@@ -148,6 +148,8 @@ async function finalize(
 	analysisId: number,
 	results: JsonObject,
 ): Promise<void> {
+	// No result file: the `results` blob already holds every figure a report would,
+	// so the manifest is empty.
 	const body: FinalizeAnalysisRequest = { results, files: [], workflowVersion };
 
 	await client.request({

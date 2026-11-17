@@ -30,6 +30,9 @@ RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN \
     if [ -n "${RELEASE}" ]; then export SENTRY_RELEASE="${RELEASE}"; fi \
     && pnpm --filter "${APP}" build
 
+# `pnpm deploy` packs only what the `files` field of an app lists, so each
+# bundled app sets `"files": ["dist"]`. Without it, the deployed tree has the
+# dependencies and none of the code.
 FROM build AS deploy
 ARG APP
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \

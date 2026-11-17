@@ -29,14 +29,21 @@ export const Route = createFileRoute("/login")({
 	beforeLoad: async ({ context, search }) => {
 		const { queryClient } = context;
 		const [
+			{ rootQueryOptions },
 			{ accountQueryOptions },
 			{ getAuthNextStep },
 			{ getAuthNextStepRoute },
 		] = await Promise.all([
+			import("@nav/queries"),
 			import("@account/account"),
 			import("@wall/authStep"),
 			import("@wall/nextStep"),
 		]);
+
+		const root = await queryClient.ensureQueryData(rootQueryOptions());
+		if (root.firstUser) {
+			throw redirect({ to: "/setup", replace: true });
+		}
 
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());

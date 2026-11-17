@@ -79,8 +79,7 @@ describe("SseMessageSchema", () => {
 
 	// Every domain but `roles` is keyed by a Postgres integer. Typing one as a
 	// string rejects every frame published for it and drops the invalidation it
-	// carried — which is what happened to `samples` (VIR-2794), and to `indexes`
-	// and `references` until they were corrected too.
+	// carried.
 	it("accepts the integer ids emitted for indexes and references", () => {
 		for (const domain of ["indexes", "references"]) {
 			const result = SseMessageSchema.safeParse({

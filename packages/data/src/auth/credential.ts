@@ -1,5 +1,6 @@
-import { and, eq, sql } from "drizzle-orm";
-import type { Db, DbOrTx } from "../db/pg";
+import { normalizeUsername } from "@virtool/contracts";
+import { and, eq } from "drizzle-orm";
+import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
 import { users } from "../db/schema/users";
 import { hashPassword, needsRehash, verifyPassword } from "./password";
@@ -7,41 +8,9 @@ import { hashPassword, needsRehash, verifyPassword } from "./password";
 /** The `provider_id` Better Auth gives a password account. */
 export const CREDENTIAL_PROVIDER_ID = "credential";
 
-/**
- * The `account_id` a migrated user's credential carries.
- *
- * Better Auth uses the user's id for credential accounts. The database's
- * provider/account unique constraint enforces one credential per user.
- */
-export function credentialAccountId(userId: number): string {
-	return String(userId);
-}
-
-/**
- * Copy a new password hash onto a user's existing credential account.
- *
- * Runs in the transaction that updates `users.password`. It never creates an
- * account, leaving backfill to the migration.
- */
-export async function syncCredentialPassword(
-	tx: DbOrTx,
-	userId: number,
-	hash: Buffer,
-): Promise<void> {
-	await tx
-		.update(authAccounts)
-		.set({ password: hash.toString("utf8"), updatedAt: new Date() })
-		.where(
-			and(
-				eq(authAccounts.userId, userId),
-				eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
-			),
-		);
-}
-
 /** The sign-in credentials whose stored hash {@link upgradePasswordHash} replaces. */
 export type UpgradePasswordHashInput = {
-	handle: string;
+	username: string;
 	password: string;
 };
 
@@ -57,12 +26,12 @@ export type UpgradePasswordHashInput = {
  */
 export async function upgradePasswordHash(
 	db: Db,
-	{ handle, password }: UpgradePasswordHashInput,
+	{ username, password }: UpgradePasswordHashInput,
 ): Promise<boolean> {
 	const [user] = await db
 		.select({ id: users.id, password: users.password })
 		.from(users)
-		.where(sql`lower(${users.handle}) = ${handle.toLowerCase()}`)
+		.where(eq(users.username, normalizeUsername(username)))
 		.limit(1);
 
 	if (

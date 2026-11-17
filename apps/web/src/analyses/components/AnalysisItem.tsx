@@ -1,18 +1,23 @@
-import { useCheckAdminRole } from "@administration/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
+import DeleteDialog from "@base/DeleteDialog";
 import Icon, { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
-import RelativeTime from "@base/RelativeTime";
 import SlashList from "@base/SlashList";
 import { TableActionsCell } from "@base/Table";
+import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { BaseSampleLabel } from "@samples/components/Label/BaseSampleLabel";
-import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
+import { useCheckCanEditSample } from "@samples/hooks";
+import type { AnalysisMinimal } from "@virtool/contracts";
 import { BadgeMinus, Trash, Virus } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
-import { checkSupportedWorkflow, getWorkflowVersionLabel } from "../utils";
+import {
+	checkCanRemoveAnalysis,
+	checkSupportedWorkflow,
+	getWorkflowVersionLabel,
+} from "../utils";
 
 type AnalysisItemProps = {
 	analysis: AnalysisMinimal;
@@ -30,21 +35,20 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 		subtractions,
 		createdAt,
 	} = analysis;
-	const { hasPermission: canModify } = useCheckAdminRole("users");
-	const onDelete = useDeleteAnalysis(id);
+	const { hasPermission: canModify } = useCheckCanEditSample(
+		analysis.sample.id,
+	);
+	const mutation = useDeleteAnalysis();
 
 	const { data: job } = useFetchJob(
 		analysis.job?.id ?? Number.NaN,
 		analysis.job ?? undefined,
 	);
 
-	// The same predicate `deleteAnalysis` applies, and deliberately not `ready`.
-	// It reads both ways: an unready analysis whose pod was OOM-killed or evicted
-	// stays removable rather than stranding the user, and a finished analysis
-	// whose job has not been marked terminal yet does not advertise a button the
-	// server would answer with a 409.
-	const state = job?.state ?? analysis.job?.state;
-	const canDelete = state === undefined || isJobStateTerminal(state);
+	const canDelete = checkCanRemoveAnalysis(analysis, job);
+
+	const workflowName = getWorkflowDisplayName(workflow);
+	const sampleName = analysis.sample.name;
 
 	return (
 		<tr>
@@ -57,11 +61,11 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 							analysisId: String(id),
 						}}
 					>
-						{getWorkflowDisplayName(workflow)}
+						{workflowName}
 					</Link>
 				) : (
 					<>
-						{getWorkflowDisplayName(workflow)}
+						{workflowName}
 						<span className="block text-gray-500 text-sm font-normal">
 							Workflow unavailable
 						</span>
@@ -133,10 +137,10 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 				))}
 			</td>
 			<td>
-				<UserLabel handle={user.handle} />
+				<UserLabel username={user.username} />
 			</td>
 			<td className="whitespace-nowrap">
-				<RelativeTime time={createdAt} />
+				<Time time={createdAt} />
 			</td>
 			<TableActionsCell>
 				{!ready && (
@@ -148,11 +152,26 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 					</span>
 				)}
 				{canDelete && canModify && (
-					<IconButton
-						IconComponent={Trash}
-						color="red"
-						tip="Delete"
-						onClick={onDelete}
+					<DeleteDialog
+						name={workflowName}
+						noun="Analysis"
+						message={
+							<>
+								Are you sure you want to delete the{" "}
+								<strong>{workflowName}</strong> analysis
+								{sampleName && (
+									<>
+										{" "}
+										of <strong>{sampleName}</strong>
+									</>
+								)}
+								? You can't undo this action.
+							</>
+						}
+						onConfirm={() => mutation.mutateAsync({ analysisId: id })}
+						trigger={
+							<IconButton IconComponent={Trash} color="red" tip="Delete" />
+						}
 					/>
 				)}
 			</TableActionsCell>

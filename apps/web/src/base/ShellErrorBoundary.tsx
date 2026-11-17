@@ -1,3 +1,4 @@
+import { reloadPage } from "@app/navigation";
 import Button from "@base/Button";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
@@ -104,7 +105,7 @@ export default class ShellErrorBoundary extends Component<
 
 		return (
 			<ErrorState message="Virtool ran into a problem and couldn't continue">
-				<Button color="blue" onClick={() => window.location.reload()}>
+				<Button color="blue" onClick={reloadPage}>
 					Reload
 				</Button>
 			</ErrorState>

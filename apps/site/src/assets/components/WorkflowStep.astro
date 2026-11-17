@@ -1,0 +1,26 @@
+---
+import { ArrowDown } from "@lucide/astro";
+
+type Props = { title: string; tool?: string; removed?: string };
+
+const { title, tool, removed } = Astro.props;
+---
+
+<li class="group">
+  <div class="flex justify-center py-1 text-stone-400 group-first:hidden sm:w-72" aria-hidden="true">
+    <ArrowDown class="size-5" />
+  </div>
+  <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+    <div class="rounded-md border border-stone-300 bg-white px-4 py-2 sm:w-72 sm:shrink-0">
+      <div class="font-medium text-stone-900">{title}</div>
+      {tool && <div class="text-sm text-stone-600">{tool}</div>}
+    </div>
+    {
+      removed && (
+        <p class="min-w-0 text-sm text-stone-600">
+          <span class="font-medium">Removed:</span> {removed}
+        </p>
+      )
+    }
+  </div>
+</li>

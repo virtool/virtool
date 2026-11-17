@@ -9,20 +9,11 @@ import { useQuery } from "@tanstack/react-query";
 import type { AccountSecurity } from "@virtool/contracts";
 import { TriangleAlert } from "lucide-react";
 import { useState } from "react";
-import { accountSecurityQueryOptions } from "../queries";
+import { accountSecurityQueryOptions, passkeysQueryOptions } from "../queries";
+import { getRecoveryCodesWarning } from "../recoveryCodes";
 import TwoFactorDisable from "./TwoFactorDisable";
 import TwoFactorRegenerate from "./TwoFactorRegenerate";
 import TwoFactorSetup from "./TwoFactorSetup";
-
-const LOW_RECOVERY_CODES = 3;
-
-function getRecoveryCodesWarning(remaining: number): string {
-	if (remaining === 0) {
-		return "You have no recovery codes left. Make new codes so that you can sign in if you lose your authenticator app.";
-	}
-
-	return `Only ${remaining} recovery ${remaining === 1 ? "code is" : "codes are"} left. Make new codes so that you can sign in if you lose your authenticator app.`;
-}
 
 type TwoFactorStatusProps = {
 	onSetUp: () => void;
@@ -30,17 +21,21 @@ type TwoFactorStatusProps = {
 };
 
 function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
-	const { mfaRequired, recoveryCodesRemaining, twoFactorEnabled } = security;
+	const { mfaRequired, twoFactorEnabled } = security;
+	const recoveryCodesWarning = getRecoveryCodesWarning(security);
+	const { data: passkeys } = useQuery(passkeysQueryOptions());
+
+	// A passkey also satisfies the required policy. While the list is unknown,
+	// assume that turning TOTP off restricts the session.
+	const disableRestrictsSession = mfaRequired && !passkeys?.length;
 
 	return (
 		<>
-			{twoFactorEnabled &&
-				recoveryCodesRemaining !== null &&
-				recoveryCodesRemaining <= LOW_RECOVERY_CODES && (
-					<Alert color="orange" icon={TriangleAlert}>
-						{getRecoveryCodesWarning(recoveryCodesRemaining)}
-					</Alert>
-				)}
+			{recoveryCodesWarning && (
+				<Alert color="orange" icon={TriangleAlert}>
+					{recoveryCodesWarning}
+				</Alert>
+			)}
 			<BoxGroup>
 				<BoxGroupSection className="flex items-center justify-between gap-4">
 					<div className="flex flex-col gap-1">
@@ -52,7 +47,8 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 						</div>
 						{mfaRequired && (
 							<span className="text-gray-600 text-sm">
-								This Virtool instance requires two-factor authentication.
+								This Virtool instance requires two-factor authentication or a
+								passkey.
 							</span>
 						)}
 					</div>
@@ -60,7 +56,7 @@ function TwoFactorStatus({ onSetUp, security }: TwoFactorStatusProps) {
 						{twoFactorEnabled ? (
 							<>
 								<TwoFactorRegenerate />
-								<TwoFactorDisable mfaRequired={mfaRequired} />
+								<TwoFactorDisable restrictsSession={disableRestrictsSession} />
 							</>
 						) : (
 							<Button color="blue" size="medium" onClick={onSetUp}>

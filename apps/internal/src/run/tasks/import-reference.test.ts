@@ -82,7 +82,7 @@ beforeEach(async () => {
 	storage = new MemoryStorage();
 	ctx = createTaskTestContext({ db, storage });
 
-	userId = await seedUser(db, { handle: "curator" });
+	userId = await seedUser(db, { username: "curator" });
 	referenceId = await seedReference(userId);
 });
 

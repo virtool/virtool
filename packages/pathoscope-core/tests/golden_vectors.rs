@@ -8,6 +8,15 @@
 //! text. "Equivalent within tolerance" is not the bar for a diagnostic
 //! workflow, and comparing the rendered text would fail on a harmless
 //! difference between float formatters while saying nothing about the values.
+//! This catches a one-ULP drift.
+//!
+//! The corpus stores coverage arrays sparsely, as a length plus the non-zero
+//! positions. A dense array is almost all zeros and makes the corpus much larger.
+//! The encoding is lossless.
+//!
+//! Without `bowtie2` and `bowtie2-build` on `PATH` the `candidates` vectors are
+//! skipped with a warning. Building needs `libclang-dev`, because `hts-sys`
+//! runs bindgen against htslib's headers.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

@@ -84,7 +84,12 @@ async function insertTask(
 	};
 }
 
-/** Insert a pending task of `type` and return its id. */
+/**
+ * Insert a pending task of `type` and return its id.
+ *
+ * When a domain row points at the task, create and attach both in one
+ * transaction, so neither can be published without the other.
+ */
 export async function createTask(
 	db: DbOrTx,
 	type: OnDemandTaskName,

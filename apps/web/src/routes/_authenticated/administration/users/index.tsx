@@ -20,7 +20,7 @@ function validateUsersSearch(
 		...paginated(input),
 		direction: oneOf(input.direction, SORT_DIRECTIONS, "ascending"),
 		roles: oneOfArray(input.roles, USER_ROLE_FILTERS, []),
-		sort: oneOf(input.sort, USER_SORT_FIELDS, "handle"),
+		sort: oneOf(input.sort, USER_SORT_FIELDS, "username"),
 		statuses: oneOfArray(input.statuses, USER_STATUSES, []),
 		term: str(input.term, ""),
 	};

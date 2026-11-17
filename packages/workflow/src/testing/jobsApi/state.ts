@@ -30,13 +30,21 @@ export type FinalizeCall =
 
 /** Everything the jobs API harness knows and everything it records. */
 export type JobsApiState = {
-	/** The one job this fixture serves. Flip `state` to drive cancellation. */
+	/**
+	 * The one job this fixture serves. Flip `state` to drive cancellation.
+	 *
+	 * @example
+	 * state.job.state = "cancelled";
+	 *
+	 * await expect(client.ping()).rejects.toThrow(UnauthorizedError);
+	 * await expect(client.ping()).rejects.toThrow("Job is cancelled.");
+	 */
 	job: Job;
 
 	/** The runner key `POST /jobs/claim` hands out and every call authenticates with. */
 	key: string;
 
-	/** Whether the job has been claimed. A second claim is answered 404. */
+	/** Whether the job has been claimed. A second claim, or one naming another workflow, gets a 404. */
 	acquired: boolean;
 
 	/**

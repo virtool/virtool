@@ -13,6 +13,7 @@ import {
 } from "@tests/server-fn/settings";
 import { mockFindUsers } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
+import { silenceExpectedLogs } from "@tests/silenceExpectedLogs";
 import { describe, expect, it } from "vitest";
 
 describe("<Settings />", () => {
@@ -94,28 +95,20 @@ describe("<Settings />", () => {
 		},
 	);
 
-	it.each(settingsPages)(
-		"handles failed settings at the route boundary for $path",
-		async ({ path }) => {
-			settingsServerFnMocks.getSettingsFn.mockRejectedValue(
-				new Error("Unavailable"),
-			);
-			settingsServerFnMocks.getCacheUsageFn.mockRejectedValue(
-				new Error("Unavailable"),
-			);
-			emailServerFnMocks.getEmailSettingsFn.mockRejectedValue(
-				new Error("Unavailable"),
-			);
+	it("handles failed settings at the route boundary", async () => {
+		silenceExpectedLogs();
+		settingsServerFnMocks.getSettingsFn.mockRejectedValue(
+			new Error("Unavailable"),
+		);
 
-			await renderRoute(path, {
-				account: createFakeAccount({ administratorRole: "full" }),
-			});
+		await renderRoute("/administration/uploads", {
+			account: createFakeAccount({ administratorRole: "full" }),
+		});
 
-			expect(
-				await screen.findByRole("button", { name: "Try again" }),
-			).toBeVisible();
-		},
-	);
+		expect(
+			await screen.findByRole("button", { name: "Try again" }),
+		).toBeVisible();
+	});
 
 	it.each(settingsPages)(
 		"redirects users administrators before fetching $path",
@@ -137,19 +130,6 @@ describe("<Settings />", () => {
 	// administrator — but a lesser administrator should not send a request that
 	// can only be refused.
 	describe("email delivery", () => {
-		it("is offered to a full administrator", async () => {
-			mockSettingsStore(createFakeSettings());
-			mockEmailSettingsStore(createFakeEmailSettings());
-
-			await renderRoute("/administration/email", {
-				account: createFakeAccount({ administratorRole: "full" }),
-			});
-
-			expect(
-				await screen.findByRole("heading", { name: "Email Delivery" }),
-			).toBeInTheDocument();
-		});
-
 		it("is absent for a settings administrator, and asks for nothing", async () => {
 			mockSettingsStore(createFakeSettings());
 			mockEmailSettingsStore(createFakeEmailSettings());

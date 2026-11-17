@@ -6,11 +6,12 @@ import { banners } from "../db/schema/banners";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
+import { selectSetUpUsername } from "../users/username";
 
 /** The author reference attached to a banner. */
 type BannerUser = {
 	id: number;
-	handle: string;
+	username: string;
 };
 
 /** An administrative banner displayed to all logged-in users. */
@@ -51,7 +52,7 @@ const bannerSelect = {
 	updatedAt: banners.updatedAt,
 	user: {
 		id: users.id,
-		handle: users.handle,
+		username: selectSetUpUsername(users.username),
 	},
 } as const;
 

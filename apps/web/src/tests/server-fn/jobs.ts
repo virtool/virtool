@@ -18,7 +18,7 @@ const NO_JOB_COUNTS: JobCounts = {
 
 /**
  * Mock handles for the `@server/jobs/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test importing this helper can stub
+ * globally from `tests/serverFnMocks.ts` so any test importing this helper can stub
  * the jobs server functions without per-file `vi.mock` boilerplate.
  */
 export const jobServerFnMocks = {

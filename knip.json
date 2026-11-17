@@ -10,7 +10,11 @@
 			"entry": ["scripts/write-renovate-change-file.mjs", "scripts/*.test.mjs"]
 		},
 		"apps/create-sample": {
-			"ignoreDependencies": ["@virtool/image-build", "@virtool/quality-core", "@virtool/workflow-tools"]
+			"ignoreDependencies": [
+				"@virtool/image-build",
+				"@virtool/quality-core",
+				"@virtool/workflow-tools"
+			]
 		},
 		"apps/create-subtraction": {
 			"ignoreDependencies": ["@virtool/image-build", "@virtool/workflow-tools"]
@@ -22,7 +26,11 @@
 			"ignoreDependencies": ["@virtool/image-build", "@virtool/workflow-tools"]
 		},
 		"apps/pathoscope": {
-			"ignoreDependencies": ["@virtool/image-build", "@virtool/pathoscope-core", "@virtool/workflow-tools"]
+			"ignoreDependencies": [
+				"@virtool/image-build",
+				"@virtool/pathoscope-core",
+				"@virtool/workflow-tools"
+			]
 		},
 		"apps/web": {
 			"entry": [
@@ -33,9 +41,16 @@
 				"src/tests/postgresGuard.ts"
 			],
 			"project": ["src/**/*.{ts,tsx,css}"],
-			"ignoreDependencies": ["@node-rs/argon2", "@virtool/image-build", "bcrypt"]
+			"ignoreDependencies": [
+				"@node-rs/argon2",
+				"@virtool/image-build",
+				"bcrypt"
+			]
 		},
 		"packages/bio": {
+			"entry": ["src/**/*.test.ts"]
+		},
+		"packages/changelog": {
 			"entry": ["src/**/*.test.ts"]
 		},
 		"packages/contracts": {

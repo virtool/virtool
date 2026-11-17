@@ -33,14 +33,10 @@ async function openMenu(): Promise<void> {
 }
 
 describe("<LabelSelector>", () => {
-	it("exposes an accessible combobox labelled 'Labels'", async () => {
+	it("exposes a labelled combobox that lists the available labels when opened", async () => {
 		await renderWithRouter(<Harness />);
 
 		expect(screen.getByRole("combobox", { name: "Labels" })).toBeVisible();
-	});
-
-	it("lists the available labels as options when opened", async () => {
-		await renderWithRouter(<Harness />);
 
 		await openMenu();
 
@@ -52,20 +48,7 @@ describe("<LabelSelector>", () => {
 		]);
 	});
 
-	it("adds a label when its option is chosen", async () => {
-		await renderWithRouter(<Harness />);
-
-		await openMenu();
-		await userEvent.click(screen.getByRole("option", { name: "Fungi" }));
-
-		// Selected labels become removable chips and drop out of the option list.
-		expect(
-			screen.getByRole("button", { name: "Remove Fungi" }),
-		).toBeInTheDocument();
-		expect(screen.queryByRole("option", { name: "Fungi" })).toBeNull();
-	});
-
-	it("renders pre-selected labels as chips and hides them from the menu", async () => {
+	it("maps the selected ids to chips and chip changes back to ids", async () => {
 		await renderWithRouter(<Harness initialSelected={[3]} />);
 
 		expect(
@@ -73,23 +56,17 @@ describe("<LabelSelector>", () => {
 		).toBeInTheDocument();
 
 		await openMenu();
-		expect(screen.queryByRole("option", { name: "Virus" })).toBeNull();
-	});
-
-	it("removes a label when its chip close button is clicked", async () => {
-		await renderWithRouter(<Harness initialSelected={[1]} />);
-
-		await userEvent.click(
-			screen.getByRole("button", { name: "Remove Bacteria" }),
-		);
+		await userEvent.click(screen.getByRole("option", { name: "Fungi" }));
 
 		expect(
-			screen.queryByRole("button", { name: "Remove Bacteria" }),
-		).toBeNull();
+			screen.getByRole("button", { name: "Remove Fungi" }),
+		).toBeInTheDocument();
 
-		await openMenu();
+		await userEvent.click(screen.getByRole("button", { name: "Remove Virus" }));
+
+		expect(screen.queryByRole("button", { name: "Remove Virus" })).toBeNull();
 		expect(
-			screen.getByRole("option", { name: "Bacteria" }),
+			screen.getByRole("button", { name: "Remove Fungi" }),
 		).toBeInTheDocument();
 	});
 

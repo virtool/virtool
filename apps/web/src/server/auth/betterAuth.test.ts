@@ -2,6 +2,7 @@ import { type AccountLifecycleState, AUTH_BASE_PATH } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
+	authPasskeys,
 	authRateLimits,
 	authSessions,
 	authTwoFactors,
@@ -14,7 +15,7 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { symmetricDecrypt } from "better-auth/crypto";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -28,6 +29,7 @@ import {
 	BrowserSessionEndedError,
 	revokeOtherActiveBrowserSessions,
 } from "../account/service";
+import { silenceLogs } from "../test/silenceLogs";
 import { createAuth, createAuthRequestHandler } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
@@ -100,16 +102,16 @@ async function seedMigratedUser(
 		lifecycleState?: AccountLifecycleState;
 	} = {},
 ): Promise<number> {
-	// A pending row carries no legacy password — `pending_has_no_password`
-	// refuses the pair — so the credential exists only on the Better Auth side,
-	// which is the state a half-finished completion would leave behind.
+	// A pending row carries no legacy password or username — the
+	// `pending_has_no_password` and `pending_has_no_username`
+	// constraints refuse them — so the credential exists only on the Better
+	// Auth side, which is the state a half-finished completion would leave
+	// behind.
 	const pending = state.lifecycleState === "pending";
 	const [user] = await db
 		.insert(users)
 		.values({
-			handle: "Alice",
-			username: "alice",
-			displayUsername: "Alice",
+			username: pending ? null : "alice",
 			name: "Alice",
 			email: "alice@virtool.test",
 			password: pending ? null : Buffer.from(hash, "utf8"),
@@ -134,11 +136,50 @@ async function seedMigratedUser(
 	return userId;
 }
 
-describe("legacy bcrypt credentials", () => {
+describe("configuration", () => {
+	function build(publicOrigin = ORIGIN) {
+		return createAuth({
+			db,
+			publicOrigin,
+			webauthnRpId: "virtool.test",
+			secret: AUTH_SECRET,
+		});
+	}
+
 	it("configures the explicit recent-authentication window", () => {
 		expect(auth.options.session?.freshAge).toBe(SESSION_FRESH_AGE_SECONDS);
 	});
 
+	it("states the session lifetime", () => {
+		expect(auth.options.session?.expiresIn).toBe(7 * 24 * 60 * 60);
+		expect(auth.options.session?.updateAge).toBe(24 * 60 * 60);
+	});
+
+	it("leaves cookies insecure for an http origin", async () => {
+		await seedMigratedUser();
+
+		const response = await build("http://localhost:5173").handler(
+			new Request(`http://localhost:5173${AUTH_BASE_PATH}/sign-in/username`, {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					origin: "http://localhost:5173",
+				},
+				body: JSON.stringify({
+					username: "alice",
+					password: LEGACY_PASSWORD,
+				}),
+			}),
+		);
+
+		const cookie = response.headers.get("set-cookie");
+
+		expect(cookie).toContain("HttpOnly");
+		expect(cookie).not.toContain("Secure");
+	});
+});
+
+describe("legacy bcrypt credentials", () => {
 	it("authenticates a copied production hash without rehashing it", async () => {
 		const userId = await seedMigratedUser();
 
@@ -195,7 +236,7 @@ describe("legacy bcrypt credentials", () => {
 		expect(session?.userAgent).toHaveLength(512);
 	});
 
-	it("matches the handle case-insensitively", async () => {
+	it("signs in a user stored as alice with ALICE", async () => {
 		await seedMigratedUser();
 
 		const response = await auth.handler(
@@ -209,6 +250,7 @@ describe("legacy bcrypt credentials", () => {
 	});
 
 	it("refuses the wrong password", async () => {
+		silenceLogs();
 		await seedMigratedUser();
 
 		const response = await auth.handler(
@@ -220,6 +262,7 @@ describe("legacy bcrypt credentials", () => {
 	});
 
 	it("refuses a corrupt hash without saying the account exists", async () => {
+		silenceLogs();
 		await seedMigratedUser("not-a-bcrypt-hash");
 
 		const corrupt = await auth.handler(
@@ -479,9 +522,33 @@ describe("the mounted handler", () => {
 
 			expect(response.status).not.toBe(403);
 		});
+
+		it("lifts the restriction for a user with a passkey", async () => {
+			const cookie = await signInUnenrolled();
+			const handler = createAuthRequestHandler(db, auth);
+			const [user] = await db.select({ id: users.id }).from(users);
+			if (!user) {
+				throw new Error("no seeded user");
+			}
+			await db.insert(authPasskeys).values({
+				userId: user.id,
+				publicKey: "public-key",
+				credentialID: "credential-1",
+				counter: 0,
+				deviceType: "singleDevice",
+				backedUp: false,
+			});
+
+			const response = await handler(
+				authRequest("/passkey/verify-registration", cookie, {}),
+			);
+
+			expect(response.status).not.toBe(403);
+		});
 	});
 
 	it("refuses a cross-origin request from a cookie-bearing browser", async () => {
+		silenceLogs();
 		await seedMigratedUser();
 
 		const response = await auth.handler(
@@ -778,6 +845,120 @@ describe("step-up session replacement", () => {
 		expect((await auth.handler(request)).status).toBe(429);
 	});
 
+	function challenge(cookie: string, body: unknown, ip: string) {
+		const request = post("/virtool-session/challenge", body);
+		request.headers.set("cookie", cookie);
+		request.headers.set("x-forwarded-for", ip);
+		return auth.handler(request);
+	}
+
+	async function spendFailures(cookie: string, count: number): Promise<void> {
+		for (let attempt = 0; attempt < count; attempt++) {
+			const response = await challenge(
+				cookie,
+				{ method: "password", password: "wrong-password" },
+				`198.51.100.${attempt}`,
+			);
+			expect(response.status).toBe(400);
+		}
+	}
+
+	it("locks password and TOTP challenges after failures from any address", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		await spendFailures(cookie, 10);
+
+		const password = await challenge(
+			cookie,
+			{ method: "password", password: LEGACY_PASSWORD },
+			"203.0.113.1",
+		);
+		expect(password.status).toBe(429);
+		expect(await password.json()).toMatchObject({ code: "STEP_UP_LOCKED" });
+
+		const totp = await challenge(
+			cookie,
+			{ method: "totp", code: await getCurrentTotpCode() },
+			"203.0.113.2",
+		);
+		expect(totp.status).toBe(429);
+	});
+
+	it("releases the lock after the window", async () => {
+		const { cookie } = await signInForReplacement();
+		await spendFailures(cookie, 10);
+		await db.update(authRateLimits).set({ lastRequest: Date.now() - 901_000 });
+
+		const response = await challenge(
+			cookie,
+			{ method: "password", password: LEGACY_PASSWORD },
+			"203.0.113.1",
+		);
+		expect(response.status).toBe(200);
+	});
+
+	it("gives the failure budget back after a correct proof", async () => {
+		const { cookie } = await signInForReplacement();
+		await spendFailures(cookie, 1);
+		// Each failure costs a password hash, so the budget is set, not spent.
+		await db
+			.update(authRateLimits)
+			.set({ count: 9 })
+			.where(like(authRateLimits.key, "virtool:step-up:user:%"));
+
+		const response = await challenge(
+			cookie,
+			{ method: "password", password: LEGACY_PASSWORD },
+			"203.0.113.1",
+		);
+		expect(response.status).toBe(200);
+
+		await spendFailures(cookie, 1);
+	});
+
+	it("refuses a TOTP code that step-up already accepted", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		const body = { method: "totp", code: await getCurrentTotpCode() };
+
+		expect((await challenge(cookie, body, "203.0.113.1")).status).toBe(200);
+
+		const reused = await challenge(cookie, body, "203.0.113.2");
+		expect(reused.status).toBe(401);
+		expect(await reused.json()).toMatchObject({ code: "INVALID_CODE" });
+	});
+
+	it("accepts one of two concurrent uses of a TOTP code", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		const body = { method: "totp", code: await getCurrentTotpCode() };
+
+		const responses = await Promise.all([
+			challenge(cookie, body, "203.0.113.1"),
+			challenge(cookie, body, "203.0.113.2"),
+		]);
+		expect(responses.map((response) => response.status).sort()).toEqual([
+			200, 401,
+		]);
+	});
+
+	it("counts a reused TOTP code as a failure", async () => {
+		const { cookie } = await signInForReplacement();
+		await startTotpEnrollment(cookie);
+		await db.update(authTwoFactors).set({ verified: true });
+		const body = { method: "totp", code: await getCurrentTotpCode() };
+		await challenge(cookie, body, "203.0.113.1");
+
+		await spendFailures(cookie, 9);
+		expect((await challenge(cookie, body, "203.0.113.2")).status).toBe(401);
+
+		const locked = await challenge(cookie, body, "203.0.113.3");
+		expect(locked.status).toBe(429);
+	});
+
 	it("creates a fresh replacement and revokes the old session", async () => {
 		const { cookie, session: oldSession } = await signInForReplacement();
 
@@ -868,6 +1049,7 @@ describe("step-up session replacement", () => {
 
 describe("virtool account state", () => {
 	it("refuses a deactivated user with the wrong-password response", async () => {
+		silenceLogs();
 		await seedMigratedUser(LEGACY_HASH, { active: false });
 
 		const response = await auth.handler(
@@ -890,6 +1072,7 @@ describe("virtool account state", () => {
 	});
 
 	it("refuses a wrong password with the invalid username or password code", async () => {
+		silenceLogs();
 		await seedMigratedUser(LEGACY_HASH);
 
 		const response = await auth.handler(

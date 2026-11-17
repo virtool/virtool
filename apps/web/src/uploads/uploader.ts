@@ -16,7 +16,7 @@ const COMPLETED_LINGER_MS = 4000;
 
 type UploaderState = {
 	/** The ID of the interval that tracks the upload progress. */
-	intervalId?: number;
+	intervalId?: ReturnType<typeof setInterval>;
 
 	/** Whether the detail card is shown. The nav indicator toggles it. */
 	open: boolean;
@@ -70,7 +70,7 @@ type UploaderState = {
  */
 export const useUploaderStore = create<UploaderState>()(
 	subscribeWithSelector((set) => ({
-		intervalId: 0,
+		intervalId: undefined,
 		open: false,
 		uploads: [],
 		remaining: 0,
@@ -202,7 +202,7 @@ function runUpload(localId: string, file: File, fileType: UploadType): void {
 		.then(() => {
 			tracked.delete(localId);
 			useUploaderStore.getState().setComplete(localId);
-			window.setTimeout(() => {
+			setTimeout(() => {
 				useUploaderStore.getState().removeUpload(localId);
 			}, COMPLETED_LINGER_MS);
 		})
@@ -362,9 +362,9 @@ useUploaderStore.subscribe(
 		const { getState, setState } = useUploaderStore;
 
 		if (uploadsLength === 0) {
-			window.clearInterval(getState().intervalId);
+			clearInterval(getState().intervalId);
 			setState({
-				intervalId: 0,
+				intervalId: undefined,
 				open: false,
 				remaining: 0,
 				samples: [],
@@ -372,10 +372,7 @@ useUploaderStore.subscribe(
 				speed: 0,
 			});
 		} else if (previousUploadsLength === 0) {
-			const intervalId = window.setInterval(
-				watchUploadTiming,
-				SAMPLE_INTERVAL_MS,
-			);
+			const intervalId = setInterval(watchUploadTiming, SAMPLE_INTERVAL_MS);
 
 			setState({ intervalId, open: true });
 		}

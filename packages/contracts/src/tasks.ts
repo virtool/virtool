@@ -24,6 +24,9 @@ export type PeriodicTaskName = z.infer<typeof PeriodicTaskName>;
 
 /**
  * A task created on demand in response to a request.
+ *
+ * The names don't record which feature creates a task. Producers keep their
+ * domain-specific lifecycle local.
  */
 export const OnDemandTaskName = z.enum([
 	"clone_reference",

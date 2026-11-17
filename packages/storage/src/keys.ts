@@ -10,6 +10,7 @@
 
 import { randomUUID } from "node:crypto";
 
+// No hyphens, to match the UUID leaves of the keys already in the bucket.
 function uuidHex(): string {
 	return randomUUID().replaceAll("-", "");
 }

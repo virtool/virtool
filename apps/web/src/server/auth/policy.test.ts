@@ -73,7 +73,7 @@ function browser(userId: number) {
 		kind: "browser" as const,
 		sessionId: 1,
 		createdAt: new Date(),
-		handle: "alice",
+		username: "alice",
 		userId,
 	};
 }
@@ -154,7 +154,7 @@ describe("hasPermission", () => {
 				await hasPermission(
 					{
 						kind: "api_key",
-						handle: "alice",
+						username: "alice",
 						keyId: 1,
 						userId,
 						permissions: keyPermissions({ upload_file: true }),
@@ -173,7 +173,7 @@ describe("hasPermission", () => {
 				await hasPermission(
 					{
 						kind: "api_key",
-						handle: "alice",
+						username: "alice",
 						keyId: 1,
 						userId,
 						permissions: keyPermissions({ create_sample: true }),
@@ -190,7 +190,7 @@ describe("hasPermission", () => {
 				await hasPermission(
 					{
 						kind: "api_key",
-						handle: "alice",
+						username: "alice",
 						keyId: 1,
 						userId,
 						permissions: keyPermissions({ upload_file: true }),
@@ -209,7 +209,7 @@ describe("hasPermission", () => {
 				await hasPermission(
 					{
 						kind: "api_key",
-						handle: "alice",
+						username: "alice",
 						keyId: 1,
 						userId,
 						permissions: keyPermissions({ create_sample: true }),
@@ -221,7 +221,7 @@ describe("hasPermission", () => {
 				await hasPermission(
 					{
 						kind: "api_key",
-						handle: "alice",
+						username: "alice",
 						keyId: 1,
 						userId,
 						permissions: keyPermissions({ upload_file: true }),

@@ -1,26 +1,14 @@
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "@tests/setup";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import NuvsSequence from "../NuvsSequence";
-
-/**
- * jsdom does not lay out elements, so `offsetWidth` is always zero. The ruler
- * measures its container to size the axis, so stub a realistic width.
- */
-function mockElementWidth(width: number) {
-	vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(width);
-}
-
-afterEach(() => {
-	vi.restoreAllMocks();
-});
 
 describe("<NuvsSequence />", () => {
 	it("should render an accessible ruler with a data-informed label", () => {
-		mockElementWidth(400);
-
 		renderWithProviders(
-			<NuvsSequence maxSequenceLength={20} sequence="ATCGATCG" />,
+			<div style={{ width: 400 }}>
+				<NuvsSequence maxSequenceLength={20} sequence="ATCGATCG" />
+			</div>,
 		);
 
 		const svg = screen.getByRole("img");

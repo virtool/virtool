@@ -56,8 +56,8 @@ export async function authenticateAs(
 /**
  * Seed a user and authenticate the next call as them. Returns the new user's id.
  *
- * `handle` is unique case-insensitively, so a suite signing in more than one
- * user must pass a distinct one.
+ * `username` is unique, so a suite signing in more than one user must pass a
+ * distinct one.
  */
 export async function signIn(
 	db: Db,
@@ -69,9 +69,9 @@ export async function signIn(
 	return userId;
 }
 
-/** Encode `handle` and `key` as an HTTP Basic `Authorization` header value. */
-export function basicAuthHeader(handle: string, key: string): string {
-	return `Basic ${Buffer.from(`${handle}:${key}`, "utf8").toString("base64")}`;
+/** Encode `username` and `key` as an HTTP Basic `Authorization` header value. */
+export function basicAuthHeader(username: string, key: string): string {
+	return `Basic ${Buffer.from(`${username}:${key}`, "utf8").toString("base64")}`;
 }
 
 /**

@@ -3,7 +3,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/analyses/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test importing this helper can stub the
+ * globally from `tests/serverFnMocks.ts` so any test importing this helper can stub the
  * analysis server functions without per-file `vi.mock` boilerplate.
  */
 export const analysisServerFnMocks = {
@@ -20,7 +20,7 @@ export const analysisServerFnMocks = {
 
 /** Sets up listAnalysisUsers to resolve with the given users. */
 export function mockListAnalysisUsers(
-	users: Array<{ handle: string; id: number }>,
+	users: Array<{ username: string; id: number }>,
 ): Mock {
 	analysisServerFnMocks.listAnalysisUsersFn.mockResolvedValue(users);
 	return analysisServerFnMocks.listAnalysisUsersFn;
@@ -81,6 +81,13 @@ export function mockCreateAnalysis(analysis: AnalysisMinimal): Mock {
 	analysisServerFnMocks.createAnalysisFn.mockResolvedValue(analysis);
 
 	return analysisServerFnMocks.createAnalysisFn;
+}
+
+/** Sets up deleteAnalysis to resolve. */
+export function mockDeleteAnalysis(): Mock {
+	analysisServerFnMocks.deleteAnalysisFn.mockResolvedValue(null);
+
+	return analysisServerFnMocks.deleteAnalysisFn;
 }
 
 /** Sets up blastNuvs to resolve with a freshly created, unfinished BLAST. */

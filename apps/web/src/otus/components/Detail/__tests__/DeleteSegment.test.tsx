@@ -15,44 +15,6 @@ describe("<DeleteSegment />", () => {
 		segmentName = at(otu.schema, 0).name;
 	});
 
-	it("should render when [open=true]", () => {
-		renderWithProviders(
-			<DeleteSegment
-				acronym={otu.acronym}
-				name={otu.name}
-				open
-				otuId={otu.id}
-				schema={otu.schema}
-				segmentName={segmentName}
-				setOpen={vi.fn()}
-			/>,
-		);
-
-		expect(screen.getByText("Delete Segment")).toBeInTheDocument();
-		expect(
-			screen.getByText(/Are you sure you want to delete/),
-		).toBeInTheDocument();
-		expect(screen.getByText(segmentName)).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
-	});
-
-	it("should not render when [open=false]", () => {
-		renderWithProviders(
-			<DeleteSegment
-				acronym={otu.acronym}
-				name={otu.name}
-				otuId={otu.id}
-				schema={otu.schema}
-				segmentName={segmentName}
-				setOpen={vi.fn()}
-			/>,
-		);
-
-		expect(screen.queryByText("Delete Segment")).toBeNull();
-		expect(screen.queryByText(/Are you sure you want to delete/)).toBeNull();
-		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
-	});
-
 	it("should call the server and close the dialog when Confirm is clicked", async () => {
 		const schema = otu.schema.filter((s) => s.name !== segmentName);
 		const updateOtu = mockUpdateOtu({ ...otu, schema });
@@ -70,6 +32,7 @@ describe("<DeleteSegment />", () => {
 			/>,
 		);
 
+		expect(screen.getByText(segmentName)).toBeInTheDocument();
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
 		await waitFor(() => expect(setOpen).toHaveBeenCalledWith(false));
@@ -81,25 +44,5 @@ describe("<DeleteSegment />", () => {
 				schema,
 			},
 		});
-	});
-
-	it("should call setOpen(false) when dialog is dismissed", async () => {
-		const setOpen = vi.fn();
-
-		renderWithProviders(
-			<DeleteSegment
-				acronym={otu.acronym}
-				name={otu.name}
-				open
-				otuId={otu.id}
-				schema={otu.schema}
-				segmentName={segmentName}
-				setOpen={setOpen}
-			/>,
-		);
-
-		await userEvent.keyboard("{Escape}");
-
-		await waitFor(() => expect(setOpen).toHaveBeenCalledWith(false));
 	});
 });

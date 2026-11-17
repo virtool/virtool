@@ -23,7 +23,11 @@ export type NcbiApiKeyState = {
  * authentication tag — collapses to `configuration_error`. The distinction
  * matters to an operator, not to a caller, and reporting it would tell a
  * client something about the stored value. Nothing here writes, so a stored
- * key survives a bad encryption key untouched.
+ * key survives a bad encryption key untouched, and lookups use the anonymous
+ * rate limit.
+ *
+ * Use the plaintext only to build a client. Neither it nor its envelope may
+ * cross a transport boundary or reach a log. A caller shows only `availability`.
  */
 export function resolveNcbiApiKey(
 	envelope: EncryptedValue | null,

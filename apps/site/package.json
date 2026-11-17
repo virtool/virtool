@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro build && wrangler dev",
+    "build": "astro build && pagefind --site dist --glob 'docs/**/*.html' --output-subdir docs/pagefind && pagefind --site dist --glob 'changelog/**/*.html' --output-subdir changelog/pagefind",
+    "preview": "pnpm run build && wrangler dev",
     "preview:astro": "astro preview",
-    "deploy": "astro build && wrangler deploy",
+    "deploy": "pnpm run build && wrangler deploy",
     "astro": "astro",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "typecheck": "astro sync && tsc --noEmit"
   },
@@ -23,18 +25,21 @@
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.6",
-    "astro": "^7.4.4",
+    "@virtool/changelog": "workspace:*",
+    "@virtool/contracts": "workspace:*",
+    "astro": "^7.4.7",
     "micromark": "^4.0.3",
     "micromark-extension-gfm": "^3.0.0",
     "node-cache": "^5.1.2",
-    "prettier": "^3.9.10",
     "prismjs": "^1.30.0",
     "satteri": "^0.11.6",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "vitest": "^5.0.5",
-    "wrangler": "^4.156.1"
+    "pagefind": "^1.6.0",
+    "prettier": "^3.9.10",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.158.0"
   }
 }

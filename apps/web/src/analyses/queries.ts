@@ -164,13 +164,12 @@ export function useRecordAnalysisView(analysisId: number) {
 /**
  * Initializes a mutator for deleting an analysis
  *
- * @param analysisId - The id of the analysis to delete
  * @returns A mutator for deleting an analysis
  */
-export function useDeleteAnalysis(analysisId: number) {
+export function useDeleteAnalysis() {
 	const queryClient = useQueryClient();
 
-	const mutation = useMutation<null, Error, { analysisId: number }>({
+	return useMutation<null, Error, { analysisId: number }>({
 		mutationFn: ({ analysisId }) => deleteAnalysisFn({ data: { analysisId } }),
 
 		onSuccess: (_data, { analysisId }) => {
@@ -181,8 +180,6 @@ export function useDeleteAnalysis(analysisId: number) {
 			});
 		},
 	});
-
-	return () => mutation.mutate({ analysisId });
 }
 
 export function analysisQueryOptions(analysisId: number) {

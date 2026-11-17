@@ -1,3 +1,5 @@
+import { pluralize } from "@app/format";
+
 type NuvsValuesProps = {
 	e: number | null;
 	orfCount: number;
@@ -9,9 +11,13 @@ type NuvsValuesProps = {
 export default function NuvsValues({ e, orfCount }: NuvsValuesProps) {
 	return (
 		<span className="pt-1">
-			<span className="text-rose-700">{orfCount} ORFs</span>
-			<span> / </span>
-			<span className="text-emerald-700">E = {e}</span>
+			<span className="text-rose-700">{pluralize(orfCount, "ORF")}</span>
+			{e !== null && (
+				<>
+					<span> / </span>
+					<span className="text-emerald-700">E = {e}</span>
+				</>
+			)}
 		</span>
 	);
 }

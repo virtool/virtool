@@ -9,7 +9,7 @@ import {
 	onTestFinished,
 } from "vitest";
 import type { Db } from "../db/pg";
-import { authSessions } from "../db/schema/auth";
+import { authPasskeys, authSessions } from "../db/schema/auth";
 import { settings } from "../db/schema/settings";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
@@ -91,6 +91,30 @@ describe("resolveBrowserSession", () => {
 			.set({ twoFactorEnabled: true })
 			.where(eq(users.id, userId));
 		expect(await isRestricted()).toBe(false);
+	});
+
+	it("treats a passkey as satisfying the required MFA policy", async () => {
+		const userId = await seedUser(db);
+		const session = await seedSession(db, userId);
+		await seedSettings(db, { mfaPolicy: "required" });
+
+		async function isRestricted() {
+			return (await resolveBrowserSession(db, session.sessionId, userId))
+				?.mfaEnrollmentRequired;
+		}
+
+		await db.insert(authPasskeys).values({
+			userId,
+			publicKey: "public-key",
+			credentialID: "credential-1",
+			counter: 0,
+			deviceType: "singleDevice",
+			backedUp: false,
+		});
+		expect(await isRestricted()).toBe(false);
+
+		await db.delete(authPasskeys).where(eq(authPasskeys.userId, userId));
+		expect(await isRestricted()).toBe(true);
 	});
 });
 
@@ -198,7 +222,7 @@ describe("resolveBrowserSessionForUpdate", () => {
 describe("active browser sessions", () => {
 	it("lists only the user's live sessions with current first and stable ordering", async () => {
 		const userId = await seedUser(db);
-		const otherUserId = await seedUser(db, { handle: "bob" });
+		const otherUserId = await seedUser(db, { username: "bob" });
 		const current = await seedSession(db, userId, {
 			updatedAt: minutesFromNow(-20),
 		});
@@ -231,7 +255,7 @@ describe("active browser sessions", () => {
 
 	it("revokes only a live session owned by the user", async () => {
 		const userId = await seedUser(db);
-		const otherUserId = await seedUser(db, { handle: "bob" });
+		const otherUserId = await seedUser(db, { username: "bob" });
 		const owned = await seedSession(db, userId);
 		const expired = await seedSession(db, userId, {
 			expiresAt: minutesFromNow(-1),

@@ -1,17 +1,9 @@
 # `@virtool/contracts`
 
-The framework-independent types, schemas, and constants shared across Virtool
-wire boundaries. Import public contracts from the package root.
+The shared types, schemas, and constants for Virtool wire boundaries.
 
-Types written by a server and consumed by a client belong here so neither side
-depends on the other's implementation modules. Search this package before
-declaring a wire shape, import its names directly, and don't re-export them
-through an app feature. Keep client-only request state in the app and
-data-layer options, values, errors, and row types in `@virtool/data`.
-
-The `@virtool/contracts/bearer` subpath is server-only because it depends on
-Node APIs. Keeping it out of the root barrel prevents native dependencies from
-entering the browser graph.
+- Import public contracts from `@virtool/contracts`.
+- Import server-only helpers from a subpath, such as `@virtool/contracts/bearer`.
 
 ## Commands
 

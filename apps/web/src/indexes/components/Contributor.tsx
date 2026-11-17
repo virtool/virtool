@@ -5,17 +5,17 @@ import { UserAvatar } from "@base/Icon";
 type ContributorProps = {
 	id: number;
 	count: number;
-	handle: string;
+	username: string;
 };
 
 /**
  * A condensed contributor item for use in a list of contributors
  */
-export default function Contributor({ id, count, handle }: ContributorProps) {
+export default function Contributor({ id, count, username }: ContributorProps) {
 	return (
 		<BoxGroupSection className="flex items-center" key={id}>
-			<UserAvatar handle={handle} size="md" className="mr-1" />
-			{handle}
+			<UserAvatar username={username} size="md" className="mr-1" />
+			{username}
 			<Badge className="ml-auto">
 				{count} change{count === 1 ? "" : "s"}
 			</Badge>

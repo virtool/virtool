@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import {
 	accountServerFnMocks,
 	mockFindPasskeys,
+	mockGetAccountSecurity,
 } from "@tests/server-fn/account";
 import { recentAuthenticationServerFnMocks } from "@tests/server-fn/recentAuthentication";
 import { renderWithProviders } from "@tests/setup";
@@ -12,10 +13,18 @@ import {
 } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { addPasskey } = vi.hoisted(() => ({ addPasskey: vi.fn() }));
+const { addPasskey, resetClient } = vi.hoisted(() => ({
+	addPasskey: vi.fn(),
+	resetClient: vi.fn(),
+}));
 
 vi.mock("@app/authClient", () => ({
 	authClient: { passkey: { addPasskey } },
+}));
+
+vi.mock("@app/utils", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@app/utils")>()),
+	resetClient,
 }));
 
 vi.mock("@simplewebauthn/browser", () => ({
@@ -53,6 +62,8 @@ function stubPasskeySupport(available: boolean) {
 describe("<AccountPasskeys />", () => {
 	beforeEach(() => {
 		stubPasskeySupport(true);
+		resetClient.mockClear();
+		mockGetAccountSecurity();
 		recentAuthenticationServerFnMocks.getRecentAuthenticationRemainingFn.mockResolvedValue(
 			10 * 60 * 1000,
 		);
@@ -117,33 +128,29 @@ describe("<AccountPasskeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Add" }));
 
 		const notice = await screen.findByRole("status");
-		expect(notice).toHaveTextContent("The passkey was not added. Try again.");
+		expect(notice).toMatchTextContent("The passkey was not added. Try again.");
 		expect(notice.firstElementChild).toHaveClass("bg-gray-100");
 		expect(screen.queryByRole("alert")).toBeNull();
 		expect(screen.getByRole("button", { name: "Add" })).toBeEnabled();
 	});
 
-	it.each([
-		["the browser", "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"],
-		["the server", "PASSKEY_ALREADY_REGISTERED"],
-	])(
-		"shows a red alert when %s says the passkey is already registered",
-		async (_, code) => {
-			const user = userEvent.setup();
-			mockFindPasskeys([]);
-			addPasskey.mockResolvedValue(failure(400, code));
+	it("shows a red alert when the passkey is already registered", async () => {
+		const user = userEvent.setup();
+		mockFindPasskeys([]);
+		addPasskey.mockResolvedValue(
+			failure(400, "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"),
+		);
 
-			renderWithProviders(<AccountPasskeys />);
-			await screen.findByText("You have not added any passkeys.");
-			await user.click(screen.getByRole("button", { name: "Add" }));
+		renderWithProviders(<AccountPasskeys />);
+		await screen.findByText("You have not added any passkeys.");
+		await user.click(screen.getByRole("button", { name: "Add" }));
 
-			const alert = await screen.findByRole("alert");
-			expect(alert).toHaveTextContent("This passkey is already registered.");
-			expect(alert).not.toHaveTextContent("virtool.test");
-			expect(alert.firstElementChild).toHaveClass("bg-red-100");
-			expect(screen.queryByRole("status")).toBeNull();
-		},
-	);
+		const alert = await screen.findByRole("alert");
+		expect(alert).toMatchTextContent("This passkey is already registered.");
+		expect(alert).not.toMatchTextContent("virtool.test");
+		expect(alert.firstElementChild).toHaveClass("bg-red-100");
+		expect(screen.queryByRole("status")).toBeNull();
+	});
 
 	async function passChallenge(user: ReturnType<typeof userEvent.setup>) {
 		const challenge = await screen.findByRole("dialog", {
@@ -178,7 +185,7 @@ describe("<AccountPasskeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Add" }));
 		await passChallenge(user);
 
-		expect(await screen.findByRole("status")).toHaveTextContent(
+		expect(await screen.findByRole("status")).toMatchTextContent(
 			"Your identity is confirmed. Select Add again to add the passkey.",
 		);
 		expect(addPasskey).not.toHaveBeenCalled();
@@ -203,7 +210,7 @@ describe("<AccountPasskeys />", () => {
 		await user.click(screen.getByRole("button", { name: "Add" }));
 		await passChallenge(user);
 
-		expect(await screen.findByRole("status")).toHaveTextContent(
+		expect(await screen.findByRole("status")).toMatchTextContent(
 			"Your identity is confirmed. Select Add again to add the passkey.",
 		);
 		expect(addPasskey).toHaveBeenCalledTimes(1);
@@ -255,6 +262,50 @@ describe("<AccountPasskeys />", () => {
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 	});
 
+	it("removes a passkey without reloading the app", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({ mfaRequired: true, twoFactorEnabled: true });
+		mockFindPasskeys([passkey()]);
+		accountServerFnMocks.removePasskeyFn.mockResolvedValue(null);
+
+		renderWithProviders(<AccountPasskeys />);
+		await user.click(
+			await screen.findByRole("button", { name: "Remove Work laptop" }),
+		);
+		const dialog = screen.getByRole("alertdialog");
+		expect(dialog).toMatchTextContent("current session are not affected");
+		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
+
+		await waitFor(() =>
+			expect(accountServerFnMocks.removePasskeyFn).toHaveBeenCalledWith({
+				data: { managementId: 1 },
+			}),
+		);
+		await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+		expect(resetClient).not.toHaveBeenCalled();
+	});
+
+	it("warns and reloads the app after removing the last passkey that satisfies the policy", async () => {
+		const user = userEvent.setup();
+		mockGetAccountSecurity({ mfaRequired: true });
+		mockFindPasskeys([passkey()]);
+		accountServerFnMocks.removePasskeyFn.mockResolvedValue(null);
+
+		renderWithProviders(<AccountPasskeys />);
+		await user.click(
+			await screen.findByRole("button", { name: "Remove Work laptop" }),
+		);
+		const dialog = screen.getByRole("alertdialog");
+		await waitFor(() =>
+			expect(dialog).toMatchTextContent(
+				"You must set up two-factor authentication before you can use Virtool again.",
+			),
+		);
+		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
+
+		await waitFor(() => expect(resetClient).toHaveBeenCalled());
+	});
+
 	it("keeps the dialog open with the server's refusal to remove a passkey", async () => {
 		const user = userEvent.setup();
 		mockFindPasskeys([passkey()]);
@@ -267,10 +318,10 @@ describe("<AccountPasskeys />", () => {
 			await screen.findByRole("button", { name: "Remove Work laptop" }),
 		);
 		const dialog = screen.getByRole("alertdialog");
-		expect(dialog).toHaveTextContent("Your password");
+		expect(dialog).toMatchTextContent("Your password");
 		await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
-		expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+		expect(await within(dialog).findByRole("alert")).toMatchTextContent(
 			"Passkey not found.",
 		);
 		expect(accountServerFnMocks.findPasskeysFn).toHaveBeenCalledTimes(1);

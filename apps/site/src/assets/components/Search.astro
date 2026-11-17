@@ -1,0 +1,19 @@
+---
+/** A site section that has its own search index. */
+export type SearchSection = "docs" | "changelog";
+
+type Props = { section: SearchSection };
+
+const { section } = Astro.props;
+
+// The build writes each section's index under its path after Astro finishes,
+// so `astro dev` has no search. The indexed URLs are already absolute, so
+// `base-url` stops Pagefind from prefixing the bundle's parent path again.
+const bundlePath = `/${section}/pagefind/`;
+---
+
+<link href={`${bundlePath}pagefind-component-ui.css`} rel="stylesheet" />
+<script is:inline type="module" src={`${bundlePath}pagefind-component-ui.js`}></script>
+<pagefind-config bundle-path={bundlePath} base-url="/"></pagefind-config>
+<pagefind-modal-trigger placeholder="Search"></pagefind-modal-trigger>
+<pagefind-modal reset-on-close></pagefind-modal>

@@ -4,8 +4,8 @@ import DeleteDialog from "@base/DeleteDialog";
 import Label from "@base/Label";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
-import RelativeTime from "@base/RelativeTime";
 import SectionHeader from "@base/SectionHeader";
+import Time from "@base/Time";
 import type { ActiveBrowserSession } from "@virtool/contracts";
 import {
 	useFetchActiveBrowserSessions,
@@ -34,8 +34,8 @@ function SessionItem({ session }: SessionItemProps) {
 				</div>
 				<span className="text-gray-600 text-sm">
 					{session.ipAddress ?? "IP address unknown"} · Signed in{" "}
-					<RelativeTime time={session.createdAt} /> · Last active{" "}
-					<RelativeTime time={session.lastActivityAt} />
+					<Time sentence time={session.createdAt} /> · Last active{" "}
+					<Time sentence time={session.lastActivityAt} />
 				</span>
 			</div>
 			{!session.isCurrent && (

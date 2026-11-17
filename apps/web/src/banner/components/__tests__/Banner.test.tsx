@@ -16,30 +16,19 @@ beforeEach(() => {
 });
 
 describe("Banner", () => {
-	it("shows the banner when it is active", () => {
-		useFetchBannerMock.mockReturnValue({
-			data: createFakeBanner({ active: true, message: "Maintenance tonight" }),
-			isPending: false,
-		} as ReturnType<typeof useFetchBanner>);
-
-		renderWithProviders(<Banner />);
-
-		expect(screen.getByText("Maintenance tonight")).toBeInTheDocument();
-	});
-
-	it("applies the configured color class to the banner", () => {
+	it("shows an active banner in its configured color", () => {
 		useFetchBannerMock.mockReturnValue({
 			data: createFakeBanner({
 				active: true,
 				color: "blue",
-				message: "Heads up",
+				message: "Maintenance tonight",
 			}),
 			isPending: false,
 		} as ReturnType<typeof useFetchBanner>);
 
 		renderWithProviders(<Banner />);
 
-		expect(screen.getByText("Heads up")).toHaveClass("bg-blue-500");
+		expect(screen.getByText("Maintenance tonight")).toHaveClass("bg-blue-500");
 	});
 
 	it("hides the banner when it is inactive", () => {

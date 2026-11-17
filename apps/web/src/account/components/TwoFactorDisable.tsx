@@ -14,13 +14,13 @@ import { useDisableTotp } from "../queries";
 import TwoFactorPassword from "./TwoFactorPassword";
 
 type TwoFactorDisableProps = {
-	/** Whether the instance requires every user to use TOTP */
-	mfaRequired: boolean;
+	/** Whether turning TOTP off restricts the session to TOTP enrollment */
+	restrictsSession: boolean;
 };
 
 /** A dialog that turns TOTP off after a password check. */
 export default function TwoFactorDisable({
-	mfaRequired,
+	restrictsSession,
 }: TwoFactorDisableProps) {
 	const mutation = useDisableTotp();
 	const [open, setOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function TwoFactorDisable({
 				onSuccess: () => {
 					// The required policy now restricts this session to enrollment,
 					// which only a full page load routes to.
-					if (mfaRequired) {
+					if (restrictsSession) {
 						resetClient();
 					} else {
 						handleOpenChange(false);
@@ -60,10 +60,11 @@ export default function TwoFactorDisable({
 					Your authenticator app and recovery codes stop working. Enter your
 					password to continue.
 				</DialogDescription>
-				{mfaRequired && (
+				{restrictsSession && (
 					<Alert color="orange" icon={TriangleAlert}>
-						This Virtool instance requires two-factor authentication. You must
-						set it up again before you can use Virtool.
+						This Virtool instance requires two-factor authentication or a
+						passkey. You must set up two-factor authentication again before you
+						can use Virtool.
 					</Alert>
 				)}
 				<TwoFactorPassword

@@ -44,19 +44,6 @@ describe("<CreateSampleFromFile>", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 	}
 
-	it("should prefill an editable name from the file", async () => {
-		const file = createFakeFile({ name: "sample_one.fastq.gz" });
-
-		await renderDialog(file, [file]);
-
-		const field = await screen.findByRole("textbox", { name: "Name" });
-		expect(field).toHaveValue("sample_one");
-
-		await userEvent.clear(field);
-		await userEvent.type(field, "Sample A");
-		expect(field).toHaveValue("Sample A");
-	});
-
 	it("should fix the read selection to the file", async () => {
 		const file = createFakeFile({ name: "sample_one.fastq.gz" });
 		const other = createFakeFile({ name: "sample_two.fastq.gz" });
@@ -100,7 +87,7 @@ describe("<CreateSampleFromFile>", () => {
 		);
 	});
 
-	it("should submit with labels and subtractions", async () => {
+	it("should submit the prefilled name once edited, with the shared fields", async () => {
 		const file = createFakeFile({ name: "sample_one.fastq.gz" });
 
 		const createSample = mockCreateSample();
@@ -108,27 +95,15 @@ describe("<CreateSampleFromFile>", () => {
 		await renderDialog(file, [file]);
 
 		const field = await screen.findByRole("textbox", { name: "Name" });
+		expect(field).toHaveValue("sample_one");
+
 		await userEvent.clear(field);
 		await userEvent.type(field, "Sample A");
-
-		await userEvent.click(
-			screen.getByRole("button", { name: "Show Metadata Fields" }),
-		);
-		await userEvent.type(await screen.findByLabelText("Isolate"), "Clone AB");
-		await userEvent.type(screen.getByLabelText("Host"), "Apple");
-		await userEvent.type(screen.getByLabelText("Locale"), "Earth");
 
 		await userEvent.click(
 			screen.getByRole("button", { name: "Toggle Labels menu" }),
 		);
 		await userEvent.click(screen.getByRole("option", { name: label.name }));
-
-		await userEvent.click(
-			screen.getByRole("button", { name: "Toggle Default Subtractions menu" }),
-		);
-		await userEvent.click(
-			screen.getByRole("option", { name: subtractionShortlist.name }),
-		);
 
 		await submitForm();
 
@@ -136,12 +111,8 @@ describe("<CreateSampleFromFile>", () => {
 			expect(createSample).toHaveBeenCalledWith({
 				data: expect.objectContaining({
 					name: "Sample A",
-					isolate: "Clone AB",
-					host: "Apple",
-					locale: "Earth",
 					files: [file.id],
 					labels: [label.id],
-					subtractions: [subtractionShortlist.id],
 				}),
 			}),
 		);

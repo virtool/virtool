@@ -4,7 +4,8 @@
  * `validateSearch` is a critical route export: the router calls it synchronously
  * while matching, so whatever it imports lands in the eager bundle every page
  * load pays for. Zod schemas here cost ~108 KB of that bundle, so search params
- * are validated with these dependency-free helpers instead.
+ * are validated with these dependency-free helpers instead. Keep this module
+ * free of dependencies for the same reason.
  *
  * The router parses each raw param with `JSON.parse`, so `?page=2` arrives as
  * the number `2` and `?labels=[1,2]` as an array. Every helper takes `unknown`

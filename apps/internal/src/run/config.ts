@@ -96,10 +96,6 @@ const TasksEnv = z.object({
 		z.coerce.number().int().positive().optional(),
 	),
 	VT_METRICS_TOKEN: optional(),
-	// Listed here so it picks up the `<KEY>_FILE` resolution every other key
-	// gets. `@virtool/sentry`'s `readDsn` goes straight to `process.env` and
-	// would miss a `VT_SENTRY_DSN_FILE` mount, so the DSN is resolved here and
-	// passed to `Sentry.init` explicitly instead.
 	VT_SENTRY_DSN: optional(),
 	VT_ENCRYPTION_KEY: optional(),
 	VT_ENCRYPTION_KEY_PREVIOUS: optional(),

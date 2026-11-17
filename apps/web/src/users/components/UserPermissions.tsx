@@ -4,13 +4,11 @@ import type { Permissions } from "@virtool/contracts";
 import { Check, X } from "lucide-react";
 
 const permissionDescriptions: Record<keyof Permissions, string> = {
-	cancel_job: "Cancel running jobs",
 	create_ref: "Create new references",
 	create_sample: "Create new samples",
 	modify_hmm: "Install and manage HMM data",
 	modify_subtraction: "Create and modify subtractions",
 	remove_file: "Delete uploaded files",
-	remove_job: "Delete job records",
 	upload_file: "Upload files",
 };
 

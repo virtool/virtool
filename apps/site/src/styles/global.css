@@ -1,7 +1,30 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+@theme {
+  --spacing-header: 4rem;
+  --spacing-sticky: calc(var(--spacing-header) + 2rem);
+}
+
 .prose code::before,
 .prose code::after {
   content: none;
+}
+
+.prose :not(pre) > code {
+  @apply rounded bg-zinc-200 px-1 py-0.5 font-normal;
+}
+
+.prose :is(h2, h3)[id] {
+  scroll-margin-top: var(--spacing-sticky);
+}
+
+:root {
+  --pf-font: inherit;
+  --pf-text: var(--color-stone-900);
+  --pf-text-secondary: var(--color-stone-600);
+  --pf-text-muted: var(--color-stone-500);
+  --pf-border: var(--color-zinc-300);
+  --pf-hover: var(--color-zinc-100);
+  --pf-modal-max-width: 40rem;
 }

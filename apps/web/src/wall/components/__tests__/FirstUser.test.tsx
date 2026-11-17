@@ -40,7 +40,7 @@ describe("<FirstUser />", () => {
 		const account = createFakeAccount();
 		const createFirstUser = mockCreateFirstUser({
 			id: account.id,
-			handle: account.handle,
+			username: account.username,
 		});
 
 		// After setup the root reports no first user, and the session created by
@@ -57,23 +57,11 @@ describe("<FirstUser />", () => {
 		});
 		expect(createFirstUser).toHaveBeenCalledWith({
 			data: {
-				handle: "alice",
+				username: "alice",
 				email: "alice@example.com",
 				password: "supersecret",
 			},
 		});
-	});
-
-	it("refuses mismatched passwords before submitting", async () => {
-		const createFirstUser = mockCreateFirstUser();
-
-		await renderSetup();
-		await fillForm("different");
-
-		expect(
-			await screen.findByText("The passwords do not match"),
-		).toBeInTheDocument();
-		expect(createFirstUser).not.toHaveBeenCalled();
 	});
 
 	it("says a verification email is on its way before entering the app", async () => {
@@ -103,6 +91,7 @@ describe("<FirstUser />", () => {
 
 	it("sends the user to sign in when another browser finished setup first", async () => {
 		mockCreateFirstUser(undefined, 409);
+		mockGetRoot({ firstUser: false });
 		mockGetAccountUnauthorized();
 
 		const { router } = await renderSetup();

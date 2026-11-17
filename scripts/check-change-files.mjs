@@ -7,7 +7,8 @@
 // Knope ignores a change file with a quoted or unknown package name, deletes
 // one with an unknown type without an entry, and accepts one with no summary,
 // so this check rejects them itself. Knope ends the summary at the first line
-// break, so a wrapped summary becomes a cut-off heading.
+// break, so a wrapped summary becomes a cut-off heading. A change that users
+// can see must have details, or it becomes a bullet with no explanation.
 //
 // The workspace graph is coarse: a change to any module of a shared package
 // marks every app that depends on the package, even when the app bundles none

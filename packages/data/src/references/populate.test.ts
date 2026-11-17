@@ -43,7 +43,7 @@ beforeEach(async () => {
 	await db.delete(legacyReferences);
 	await db.delete(users);
 
-	userId = await seedUser(db, { handle: "curator" });
+	userId = await seedUser(db, { username: "curator" });
 	sourceId = await seedSourceReference("Source", new Date("2020-01-01"));
 	cloneId = await seedSourceReference("Clone of Source", CLONE_CREATED_AT);
 });

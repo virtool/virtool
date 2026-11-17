@@ -15,21 +15,6 @@ describe("<DeleteSubtraction />", () => {
 		props = { subtraction };
 	});
 
-	it("should render trigger and keep dialog closed initially", async () => {
-		await renderWithRouter(<DeleteSubtraction {...props} />);
-
-		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
-		expect(screen.queryByText("Delete Subtraction")).toBeNull();
-	});
-
-	it("should open dialog when trigger is clicked", async () => {
-		await renderWithRouter(<DeleteSubtraction {...props} />);
-
-		await userEvent.click(screen.getByRole("button", { name: "Delete" }));
-
-		expect(screen.getByText("Delete Subtraction")).toBeInTheDocument();
-	});
-
 	it("should delete subtraction when confirm button is clicked", async () => {
 		const deleteSubtraction = mockDeleteSubtraction();
 		await renderWithRouter(<DeleteSubtraction {...props} />);

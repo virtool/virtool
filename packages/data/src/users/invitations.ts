@@ -48,11 +48,13 @@ export type CreatePendingInvitationInput = InvitationIssueOptions & {
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
 	primaryGroup?: number | null;
+	/** The start of the user's changelog watermark. */
+	lastSeenChangelogAt: Date;
 };
 
 async function issueInvitationInTransaction(
 	tx: DbOrTx,
-	user: { id: number; handle: string; email: string },
+	user: { id: number; email: string },
 	generation: number,
 	options: InvitationIssueOptions,
 ): Promise<{
@@ -131,7 +133,13 @@ const invitationSelection = {
 	outboxStatus: emailOutbox.status,
 };
 
-/** Create a pending account, identity, invitation, and optional mail atomically. */
+/**
+ * Create a pending account, identity, invitation, and optional mail atomically.
+ *
+ * The plaintext token comes back only for a copy-only invitation. An emailed
+ * invitation exposes metadata only, so acceptance proves control of the mailbox.
+ * A copied invitation leaves the assigned address unverified.
+ */
 export async function createPendingInvitation(
 	db: Db,
 	input: CreatePendingInvitationInput,
@@ -143,7 +151,6 @@ export async function createPendingInvitation(
 				tx,
 				{
 					id: userId,
-					handle: "",
 					email: normalizeEmail(input.email),
 				},
 				1,
@@ -195,7 +202,12 @@ export async function getInvitation(
 	return toInvitation(row);
 }
 
-/** Revoke the current link and mint a new one, returning its secret once. */
+/**
+ * Revoke the current link and mint a new one, returning its secret once.
+ *
+ * This holds the user's setup lock, as deletion does, so a regeneration cannot
+ * race either deletion or acceptance.
+ */
 export async function regenerateInvitation(
 	db: Db,
 	userId: number,
@@ -206,7 +218,6 @@ export async function regenerateInvitation(
 		const [user] = await tx
 			.select({
 				id: users.id,
-				handle: users.handle,
 				email: users.email,
 				active: users.active,
 				lifecycleState: users.lifecycleState,

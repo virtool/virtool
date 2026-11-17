@@ -85,6 +85,10 @@ export function pluralize(
  * Converts a ``number`` to a scientific notation string.
  */
 export function toScientificNotation(num: number): string {
+	if (num === 0) {
+		return "0";
+	}
+
 	if (num < 0.01 || num > 1000) {
 		const [coefficient, exponent] = num.toExponential().split("e");
 		return `${coefficientFormatter.format(Number(coefficient))}E${(exponent ?? "").replace("+", "")}`;

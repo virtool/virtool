@@ -35,7 +35,7 @@ describe("checkConfiguredPasswordLength", () => {
 
 		await expect(
 			checkConfiguredPasswordLength(db, "a".repeat(11)),
-		).rejects.toThrow("Password does not meet minimum length requirement (12)");
+		).rejects.toThrow("Password must have at least 12 characters.");
 	});
 
 	it("accepts a password of exactly the configured minimum", async () => {
@@ -71,7 +71,7 @@ describe("checkConfiguredPasswordLength", () => {
 				"a".repeat(DEFAULT_MINIMUM_PASSWORD_LENGTH - 1),
 			),
 		).rejects.toThrow(
-			`Password does not meet minimum length requirement (${DEFAULT_MINIMUM_PASSWORD_LENGTH})`,
+			`Password must have at least ${DEFAULT_MINIMUM_PASSWORD_LENGTH} characters.`,
 		);
 	});
 });

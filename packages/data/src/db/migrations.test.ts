@@ -165,6 +165,21 @@ it("find drops that remove schema from the mirror in the same migration", () => 
 	).toEqual([]);
 });
 
+// Drizzle names every declared column in whole-row selects and in inserts, so a
+// running server fails as soon as a column that it declares is dropped. The
+// `migrate` job runs before the rollout, so a drop takes two releases:
+//
+// 1. Remove the column from the mirror and run `db:generate`. Replace the
+//    generated SQL with a no-op and keep the snapshot. Add the column and its
+//    constraints to the retired schema in the test database fixture, so test
+//    databases still match migrated ones. The column must be nullable or have
+//    a default, because the new release does not write it.
+// 2. After that release is on every server, run
+//    `pnpm --filter @virtool/data db:generate --custom --name <name>`, write
+//    the drop by hand, and remove the retired schema entries.
+//
+// This test cannot tell if the first release is on every server. Confirm that
+// before you merge the second step.
 it("keep drops out of the migration that removes schema from the mirror", () => {
 	const journal = JSON.parse(readFileSync(JOURNAL_PATH, "utf8")) as {
 		entries: JournalEntry[];
@@ -189,7 +204,7 @@ it("keep drops out of the migration that removes schema from the mirror", () => 
 				readSnapshot(idx),
 				readFileSync(`${MIGRATIONS_FOLDER}/${tag}.sql`, "utf8"),
 			),
-			`${tag} must not drop schema that the previous release declares. See "Dropping a column" in the @virtool/data README`,
+			`${tag} must not drop schema that the previous release declares. Remove it from the mirror in one release and drop it in the next, as the comment above this test describes`,
 		).toEqual([]);
 	}
 });

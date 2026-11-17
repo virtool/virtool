@@ -3,6 +3,7 @@
  */
 import { formatIsolateName as formatCanonicalIsolateName } from "@virtool/contracts";
 import { get, sampleSize, startCase } from "es-toolkit/compat";
+import { reloadPage } from "./navigation";
 
 export { formatRoundedDuration } from "./date";
 
@@ -100,6 +101,6 @@ export function getWorkflowDisplayName(workflow: string): string {
  * the same browser picks up the stale value.
  */
 export function resetClient() {
-	window.sessionStorage.clear();
-	window.location.reload();
+	sessionStorage.clear();
+	reloadPage();
 }

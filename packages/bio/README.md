@@ -1,52 +1,21 @@
 # `@virtool/bio`
 
-Sequence utilities (complement, translation, ORF finding, FASTA/FASTQ) and the
-pure text parsers the workflows need: `hmmscan --tblout`
-(`@virtool/bio/hmmer`) and paired-end quality averaging
-(`@virtool/bio/fastqc`): `compositeQuality`, which `apps/create-sample` uses
-to reduce two `packages/quality-core` reports into the one blob a sample
-stores, and `roundHalfEven`, the half-to-even rounding both that averaging and
-`quality-core` are specified to use.
+Sequence utilities (complement, translation, ORF finding, FASTA and FASTQ) and
+the pure text parsers that workflows need.
 
-`@virtool/bio/illumina` reads Illumina run identity. It has parsers for
-CASAVA 1.8+ FASTQ headers, BCL Convert filenames, and v1 (IEM) and v2
-(BCL Convert) sample sheets. It also infers an instrument model from the
-serial prefix. That inference is a heuristic to pre-fill a form. Never use it
-to override a model that the user chose. Header and filename parsers return
-`null` for input that is not from Illumina, because the upload must not fail
-on such input. The sample sheet parser throws, because the user supplies a
-sheet on purpose and must know why it was rejected.
+- Import sequence utilities from `@virtool/bio/bio`.
+- Import the `hmmscan --tblout` parser from `@virtool/bio/hmmer`.
+- Import paired-end quality averaging from `@virtool/bio/fastqc`.
+- Import Illumina run identity parsers from `@virtool/bio/illumina`.
 
-Nothing here touches the filesystem, the network, or the database. Callers read
-the bytes and hand over text. Walking a results directory or joining an HMM
-hit to its annotation belongs to the workflow that does the IO.
+Output must match data that Virtool stored earlier, including its quirks. A
+failing golden test is a finding, not a test to re-baseline.
 
-## Byte-identity with the stored data is the governing constraint
+## Commands
 
-Virtool runs in certified lab settings. A parser that produces _equivalent but
-differently rounded_ output is a failure, not a nit. Analysis documents already
-written sit in the same table as the ones written today and are rendered by the
-same UI.
+Run from the monorepo root.
 
-The rule for everything in this package is: **match the stored and golden
-output exactly, including its bugs.** `roundHalfEven` exists because
-`Math.round` rounds ties toward positive infinity rather than half to even;
-`parseHmmerTblout` reads the best-domain score and bias from each other's
-columns; `findOrfs` emits a negative coordinate. None of those are defects to
-be tidied up.
-
-Don't "fix" a quirk in this package alone. A fix means a coordinated change to
-the stored documents and the UI. Until both move, a correction here is
-a silent disagreement with every record written so far.
-
-Where a divergence is deliberate it's commented at the site and pinned by a
-test.
-
-## Expected values come from the goldens
-
-Tests here write their expectations out rather than capturing them from a
-fixture, so a diff shows the number that changed. Those numbers are recorded in
-the committed golden fixtures and in existing analysis documents. **Never edit
-a golden fixture merely to make a failing comparison pass.**
-
-Treat a failure as a finding, not as a test to re-baseline.
+| Command                                | Action                  |
+| -------------------------------------- | ----------------------- |
+| `pnpm --filter @virtool/bio test`      | Run tests.              |
+| `pnpm --filter @virtool/bio typecheck` | Type-check the package. |

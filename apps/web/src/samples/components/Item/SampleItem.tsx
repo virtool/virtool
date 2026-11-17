@@ -2,7 +2,7 @@
 // biome-ignore-all lint/a11y/useSemanticElements: Grid layout requires div elements with explicit table roles.
 import Checkbox from "@base/Checkbox";
 import Link from "@base/Link";
-import RelativeTime from "@base/RelativeTime";
+import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import type { SampleMinimal } from "@virtool/contracts";
@@ -80,10 +80,10 @@ export default function SampleItem({
 					)}
 				</div>
 				<div className="whitespace-nowrap" role="cell">
-					<RelativeTime time={sample.createdAt} />
+					<Time time={sample.createdAt} />
 				</div>
 				<div className="min-w-0" role="cell">
-					<UserLabel handle={sample.user.handle} />
+					<UserLabel username={sample.user.username} />
 				</div>
 				<div className="flex items-center justify-end pr-4" role="cell">
 					<EndIcon

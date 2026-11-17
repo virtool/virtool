@@ -180,13 +180,24 @@ export async function executeDataMigration(
 			logger.warn({ err: drainErr }, "failed to record pending findings");
 		});
 
-		const error = describeError(err);
+		// A body cut short by shutdown usually throws whatever the abort broke, so
+		// the signal, not the error, says whether the attempt was interrupted.
+		// The stored status stays `errored`: the status constraint that would
+		// admit another value is applied only after every earlier data migration.
+		const interrupted = signal.aborted;
+		const error = interrupted ? INTERRUPTED_ERROR : describeError(err);
 
 		const finished = await finishDataMigration(db, row.id, {
 			status: "errored",
 			error,
 			summary: { findings: sink.found(), recorded: sink.written() },
 		});
+
+		if (interrupted) {
+			logger.warn({ err }, "a data migration attempt was interrupted");
+
+			return finished;
+		}
 
 		Sentry.captureException(err, {
 			tags: { data_migration: key, data_migration_version: version },
@@ -197,8 +208,9 @@ export async function executeDataMigration(
 	}
 }
 
-/** Thrown when an attempt is cut short by the process shutting down. */
-class DataMigrationAbortedError extends Error {}
+/** The recorded error of an attempt cut short by the process shutting down. */
+export const INTERRUPTED_ERROR =
+	"interrupted before the data migration finished";
 
 /** Run an audit body to completion. */
 async function runAudit(
@@ -242,11 +254,7 @@ async function runBackfill(
 	}
 
 	for (;;) {
-		if (args.signal.aborted) {
-			throw new DataMigrationAbortedError(
-				"interrupted before the data migration finished",
-			);
-		}
+		args.signal.throwIfAborted();
 
 		const result = await definition.runBatch({
 			...args,

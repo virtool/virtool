@@ -2,6 +2,7 @@ import {
 	type ApiKeyPrincipal,
 	type BrowserSessionPrincipal,
 	emptyPermissions,
+	normalizeUsername,
 } from "@virtool/contracts";
 import { resolveBrowserSession } from "@virtool/data/auth/session";
 import { hashToken } from "@virtool/data/auth/tokens";
@@ -9,7 +10,7 @@ import { hashToken } from "@virtool/data/auth/tokens";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
 import { users } from "@virtool/data/db/schema/users";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { assertDatabaseReachable } from "./probe";
 
 async function getBetterAuthSession(headers: Headers) {
@@ -62,7 +63,7 @@ export async function verifyBrowserPrincipal(
 
 	const identity = {
 		userId,
-		handle: row.handle,
+		username: row.username,
 		sessionId,
 		createdAt: row.createdAt,
 	};
@@ -111,7 +112,7 @@ function decodeCookieValue(value: string): string {
 
 /** The login and password carried by an HTTP Basic `Authorization` header. */
 export type BasicCredentials = {
-	handle: string;
+	username: string;
 	key: string;
 };
 
@@ -144,32 +145,32 @@ export function parseBasicAuthHeader(header: string): BasicCredentials | null {
 		return null;
 	}
 
-	return { handle: decoded.slice(0, idx), key: decoded.slice(idx + 1) };
+	return { username: decoded.slice(0, idx), key: decoded.slice(idx + 1) };
 }
 
 /**
- * Resolve an identity from a user handle and a raw API key. Returns `null` for
- * any failure — unknown handle, deactivated user, an account that has not
+ * Resolve an identity from a username and a raw API key. Returns `null` for
+ * any failure — unknown username, deactivated user, an account that has not
  * completed setup, or a key that is not that user's — so callers answer a
  * single 401 without saying which check failed.
  *
- * Handles are matched case-insensitively, as they are at login. Only the key's
+ * Usernames are matched in any case, as they are at login. Only the key's
  * SHA-256 is stored, so the lookup hashes the supplied secret and matches on
  * that; the digest is indexed and unique, and scoping it to the user keeps one
- * account's key from authenticating another's handle.
+ * account's key from authenticating another's username.
  */
 export async function verifyApiKey(
 	db: Db,
-	handle: string,
+	username: string,
 	key: string,
 ): Promise<ApiKeyPrincipal | null> {
-	// The lookup below matches the handle case-insensitively, so the prefix check
-	// has to as well — otherwise `JOB-1` would slip past a guard that `job-1`
-	// trips and then resolve to the very same row.
-	const normalized = handle.toLowerCase();
+	// The lookup below matches the normalized username, so the prefix check has
+	// to as well — otherwise `JOB-1` would slip past a guard that `job-1` trips
+	// and then resolve to the very same row.
+	const normalized = normalizeUsername(username);
 
 	// Job keys use this same header format against the separate jobs API. They
-	// are refused here rather than resolved as a `job-{id}` user handle, so a job
+	// are refused here rather than resolved as a `job-{id}` username, so a job
 	// key can never authenticate against this API.
 	if (!normalized || normalized.startsWith("job")) {
 		return null;
@@ -179,7 +180,7 @@ export async function verifyApiKey(
 		.select({
 			keyId: apiKeys.id,
 			userId: users.id,
-			handle: users.handle,
+			username: users.username,
 			active: users.active,
 			lifecycleState: users.lifecycleState,
 			permissions: apiKeys.permissions,
@@ -187,17 +188,18 @@ export async function verifyApiKey(
 		.from(users)
 		.innerJoin(apiKeys, eq(apiKeys.userId, users.id))
 		.where(
-			and(
-				sql`lower(${users.handle}) = ${normalized}`,
-				eq(apiKeys.hashed, hashToken(key)),
-			),
+			and(eq(users.username, normalized), eq(apiKeys.hashed, hashToken(key))),
 		)
 		.limit(1);
 
 	// A pending account has no keys to find, so this is a floor rather than a
 	// live case: a restricted setup credential must never turn into a machine
 	// one, and the rule belongs where it can be read off the code.
-	if (!row?.active || row.lifecycleState !== "normal") {
+	if (
+		!row?.active ||
+		row.lifecycleState !== "normal" ||
+		row.username === null
+	) {
 		return null;
 	}
 
@@ -207,7 +209,7 @@ export async function verifyApiKey(
 		kind: "api_key",
 		keyId: row.keyId,
 		userId: row.userId,
-		handle: row.handle,
+		username: row.username,
 		permissions: { ...emptyPermissions(), ...row.permissions },
 	};
 }

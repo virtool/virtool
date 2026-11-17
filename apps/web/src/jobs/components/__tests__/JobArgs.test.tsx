@@ -9,23 +9,12 @@ import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 import JobArgs from "../JobArgs";
 
-const workflows = [
-	{
-		workflow: "build_index",
-		args: { index_id: "41", ref_id: "ref1" },
-		links: [
-			{ name: "41", href: "/refs/ref1/indexes/41" },
-			{ name: "ref1", href: "/refs/ref1" },
-		],
-	},
-];
-
 describe("<JobArgs />", () => {
-	it("should render basics correctly", async () => {
+	it("should describe and link the arguments of build_index jobs", async () => {
 		await renderWithRouter(
 			<JobArgs
 				workflow="build_index"
-				args={{ index_id: "41", ref_id: "ref1" }}
+				args={{ index_id: "41", ref_id: "ref1", extra_param: "extra_param" }}
 			/>,
 		);
 
@@ -39,27 +28,16 @@ describe("<JobArgs />", () => {
 		).toBeInTheDocument();
 		expect(screen.getByText("Index")).toBeInTheDocument();
 		expect(screen.getByText("Index built by this job")).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "41" })).toHaveAttribute(
+			"href",
+			"/refs/ref1/indexes/41",
+		);
+		expect(screen.getByRole("link", { name: "ref1" })).toHaveAttribute(
+			"href",
+			"/refs/ref1",
+		);
+		expect(screen.queryByText("extra_param")).not.toBeInTheDocument();
 	});
-
-	it.each(workflows)(
-		"should render $workflow jobs correctly",
-		async ({ workflow, args, links }) => {
-			await renderWithRouter(
-				<JobArgs
-					workflow={workflow}
-					args={{ ...args, extra_param: "extra_param" }}
-				/>,
-			);
-
-			for (const { name, href } of links) {
-				expect(screen.getByRole("link", { name })).toHaveAttribute(
-					"href",
-					href,
-				);
-			}
-			expect(screen.queryByText("extra_param")).not.toBeInTheDocument();
-		},
-	);
 
 	it.each<"pathoscope" | "nuvs">(["pathoscope", "nuvs"])(
 		"should render the analysis item for %s jobs",

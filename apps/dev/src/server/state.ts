@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import {
 	checkAccountCredentials,
 	DEFAULT_MINIMUM_PASSWORD_LENGTH,
+	normalizeUsername,
 } from "@virtool/contracts";
 import type {
 	DefaultAdministrator,
@@ -148,6 +149,38 @@ export class StateStore {
 					`ALTER TABLE environments ADD COLUMN ${column} INTEGER NOT NULL DEFAULT 1`,
 				);
 			}
+		}
+		this.renameDefaultAdministratorHandle();
+	}
+
+	/**
+	 * Move a default administrator saved under the old `handle` key to the
+	 * `username` key, in lowercase.
+	 *
+	 * The state database persists across daemon upgrades. Without this step, an
+	 * existing developer loses the saved default administrator, and new
+	 * environments start with no user.
+	 */
+	private renameDefaultAdministratorHandle(): void {
+		const handle = this.getMeta("default_administrator_handle");
+		if (handle === null) {
+			return;
+		}
+		this.database.exec("BEGIN IMMEDIATE");
+		try {
+			if (this.getMeta("default_administrator_username") === null) {
+				this.setMeta(
+					"default_administrator_username",
+					normalizeUsername(handle),
+				);
+			}
+			this.database
+				.prepare("DELETE FROM meta WHERE key = ?")
+				.run("default_administrator_handle");
+			this.database.exec("COMMIT");
+		} catch (error) {
+			this.database.exec("ROLLBACK");
+			throw error;
 		}
 	}
 
@@ -494,15 +527,15 @@ export class StateStore {
 	getDefaultAdministrator(): DefaultAdministrator | null {
 		const credentials = this.getDefaultAdministratorCredentials();
 		return credentials
-			? { email: credentials.email, handle: credentials.handle }
+			? { email: credentials.email, username: credentials.username }
 			: null;
 	}
 
 	getDefaultAdministratorCredentials(): DefaultAdministratorCredentials | null {
-		const handle = this.getMeta("default_administrator_handle");
+		const username = this.getMeta("default_administrator_username");
 		const email = this.getMeta("default_administrator_email");
 		const password = this.getMeta("default_administrator_password");
-		return handle && email && password ? { email, handle, password } : null;
+		return username && email && password ? { email, password, username } : null;
 	}
 
 	/**
@@ -513,23 +546,23 @@ export class StateStore {
 	 */
 	setDefaultAdministrator(input: {
 		email: string;
-		handle: string;
 		password: string;
+		username: string;
 	}): void {
-		const handle = input.handle.trim();
+		const username = normalizeUsername(input.username);
 		const email = input.email.trim();
 		const password =
 			input.password || this.getMeta("default_administrator_password");
-		if (!handle || !email || !password) {
-			throw new Error("Handle, email, and password are required");
+		if (!username || !email || !password) {
+			throw new Error("Username, email, and password are required");
 		}
 		checkAccountCredentials(
-			{ email, handle, password },
+			{ email, password, username },
 			DEFAULT_MINIMUM_PASSWORD_LENGTH,
 		);
 		this.database.exec("BEGIN IMMEDIATE");
 		try {
-			this.setMeta("default_administrator_handle", handle);
+			this.setMeta("default_administrator_username", username);
 			this.setMeta("default_administrator_email", email);
 			this.setMeta("default_administrator_password", password);
 			this.database.exec("COMMIT");
@@ -544,8 +577,8 @@ export class StateStore {
 			.prepare("DELETE FROM meta WHERE key IN (?, ?, ?)")
 			.run(
 				"default_administrator_email",
-				"default_administrator_handle",
 				"default_administrator_password",
+				"default_administrator_username",
 			);
 	}
 

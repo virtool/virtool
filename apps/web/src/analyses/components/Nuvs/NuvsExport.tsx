@@ -143,7 +143,7 @@ function downloadData(
 	suffix: string,
 ) {
 	return followDynamicDownload(
-		`nuvs.${sampleName.replace(" ", "_")}.${analysisId}.${suffix}.fa`,
+		`nuvs.${sampleName.replaceAll(" ", "_")}.${analysisId}.${suffix}.fa`,
 		content.join("\n"),
 	);
 }

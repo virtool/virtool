@@ -19,31 +19,11 @@ describe("<DeleteIsolate />", () => {
 		};
 	});
 
-	it("should render with [show=true]", () => {
-		renderWithProviders(<DeleteIsolate {...props} />);
-
-		expect(screen.getByText("Delete Isolate")).toBeInTheDocument();
-		expect(
-			screen.getByText(/Are you sure you want to delete/),
-		).toBeInTheDocument();
-		expect(screen.getByText(/Foo?/)).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
-	});
-
-	it("should render with [show=false]", () => {
-		props.show = false;
-		renderWithProviders(<DeleteIsolate {...props} />);
-
-		expect(screen.queryByText("Delete Isolate")).toBeNull();
-		expect(screen.queryByText(/Are you sure you want to delete/)).toBeNull();
-		expect(screen.queryByText(/Foo?/)).toBeNull();
-		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
-	});
-
 	it("should handle submit when the confirm button is clicked", async () => {
 		const deleteIsolate = mockDeleteIsolate();
 		renderWithProviders(<DeleteIsolate {...props} />);
 
+		expect(screen.getByText(/Foo/)).toBeInTheDocument();
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 		await waitFor(() => expect(props.onHide).toHaveBeenCalled());
 

@@ -87,10 +87,8 @@ export const AdministratorPermissions: Record<
 	Permission,
 	AdministratorRoleName
 > = {
-	cancel_job: "base",
 	create_ref: "base",
 	modify_hmm: "base",
-	remove_job: "base",
 	upload_file: "full",
 	create_sample: "full",
 	modify_subtraction: "full",

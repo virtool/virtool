@@ -1,6 +1,6 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 
-/** Sign in with a Virtool handle and copy Better Auth's cookie to the response. */
+/** Sign in with a Virtool username and copy Better Auth's cookie to the response. */
 export const signInUsername = createServerOnlyFn(
 	async (username: string, password: string) => {
 		const [{ getRequest }, { auth }] = await Promise.all([

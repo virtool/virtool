@@ -4,8 +4,13 @@
 //! wrote, in the shape a sample stores. They are frozen references: **never
 //! edit a golden to make a failing comparison pass, and never regenerate one
 //! from this crate** — that converts a caught divergence into a permanent one.
-//! `README.md` records where they came from and what producing another would
-//! take.
+//!
+//! To re-derive a golden, run FastQC 0.11.9 over the committed synthetic input
+//! with `-f fastq --extract`. FastQC needs a JRE and the full `perl` package,
+//! because its launcher uses `FindBin`. Then compute the expected `quality`
+//! and `baseGroups` from the raw report by hand, using the field mapping in
+//! `src/profile.rs`. Do not use this crate's parser to produce the expected
+//! values.
 //!
 //! Three of the four cases assert exact equality, down to the bit. The fourth
 //! is the one place the two are meant to disagree — see `binned_case` — and it

@@ -1,15 +1,24 @@
 import AnalysisItem from "@analyses/components/AnalysisItem";
-import { screen } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
+import { createFakeSample } from "@tests/fake/samples";
+import { mockDeleteAnalysis } from "@tests/server-fn/analyses";
+import { mockGetSample } from "@tests/server-fn/samples";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
-import type { AnalysisMinimal, JobState } from "@virtool/contracts";
+import {
+	type AnalysisMinimal,
+	CLIENT_ERROR_NAME,
+	type JobState,
+} from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<AnalysisItem />", () => {
 	beforeEach(() => {
 		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+		mockGetSample(createFakeSample());
 	});
 
 	function renderItem(overrides: Partial<AnalysisMinimal>) {
@@ -59,44 +68,101 @@ describe("<AnalysisItem />", () => {
 		},
 	);
 
-	// The workflow writes its analysis result before the job is marked terminal,
-	// so `ready` alone would advertise a button the server answers with a 409.
-	it("withholds removal from a ready analysis whose job is still running", async () => {
-		renderItem(withJob("running", true));
+	describe("deletion", () => {
+		async function openDialog(overrides: Partial<AnalysisMinimal> = {}) {
+			renderItem({ id: 42, workflow: "pathoscope", ...overrides });
 
-		await expectNoRemoveButton();
-	});
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Delete" }),
+			);
 
-	// An OOM-killed or evicted pod leaves the analysis unready forever. It has to
-	// stay removable, or the user is stuck looking at it.
-	it.each<JobState>(["cancelled", "failed", "succeeded"])(
-		"offers removal for an unready analysis whose job is %s",
-		async (state) => {
-			renderItem(withJob(state, false));
+			return screen.findByRole("alertdialog");
+		}
+
+		it("opens a dialog without deleting", async () => {
+			const deleteAnalysis = mockDeleteAnalysis();
+
+			const dialog = await openDialog({
+				sample: { id: 7, name: "Grapevine 12" },
+			});
 
 			expect(
-				await screen.findByRole("button", { name: "Delete" }),
+				within(dialog).getByRole("heading", { name: "Delete Analysis" }),
 			).toBeInTheDocument();
-			// The failure itself stays on screen alongside the remove button.
-			expect(screen.getByRole("progressbar")).toBeInTheDocument();
+			expect(dialog).toMatchTextContent(
+				"Are you sure you want to delete the Pathoscope analysis of Grapevine 12? You can't undo this action.",
+			);
+			expect(deleteAnalysis).not.toHaveBeenCalled();
+		});
+
+		it("leaves out the sample when it has no name", async () => {
+			const dialog = await openDialog({ sample: { id: 7, name: "" } });
+
+			expect(dialog).toMatchTextContent(
+				"Are you sure you want to delete the Pathoscope analysis? You can't undo this action.",
+			);
+		});
+
+		it("deletes the analysis and closes when confirmed", async () => {
+			const deleteAnalysis = mockDeleteAnalysis();
+
+			const dialog = await openDialog();
+			await userEvent.click(
+				within(dialog).getByRole("button", { name: "Confirm" }),
+			);
+
+			await waitFor(() =>
+				expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+			);
+			expect(deleteAnalysis).toHaveBeenCalledOnce();
+			expect(deleteAnalysis).toHaveBeenCalledWith({
+				data: { analysisId: 42 },
+			});
+		});
+
+		it("does not delete when cancelled", async () => {
+			const deleteAnalysis = mockDeleteAnalysis();
+
+			const dialog = await openDialog();
+			await userEvent.click(
+				within(dialog).getByRole("button", { name: "Cancel" }),
+			);
+
+			await waitFor(() =>
+				expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+			);
+			expect(deleteAnalysis).not.toHaveBeenCalled();
+		});
+
+		it("shows a refusal from the server and stays open", async () => {
+			const refusal = new Error("Analysis is still running");
+			refusal.name = CLIENT_ERROR_NAME;
+			mockDeleteAnalysis().mockRejectedValue(refusal);
+
+			const dialog = await openDialog();
+			await userEvent.click(
+				within(dialog).getByRole("button", { name: "Confirm" }),
+			);
+
+			expect(await within(dialog).findByRole("alert")).toMatchTextContent(
+				"Analysis is still running",
+			);
+			expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+		});
+	});
+
+	it.each([
+		[false, "Pending", "not recorded"],
+		[true, "not recorded", "Pending"],
+	])(
+		"labels a missing version when ready is %s as %s",
+		async (ready, label, other) => {
+			renderItem({ ready, workflowVersion: null });
+
+			expect(await screen.findByText(label)).toBeInTheDocument();
+			expect(screen.queryByText(other)).not.toBeInTheDocument();
 		},
 	);
-
-	it("offers removal for an unready analysis with no job", async () => {
-		renderItem({ ready: false, job: null });
-
-		expect(
-			await screen.findByRole("button", { name: "Delete" }),
-		).toBeInTheDocument();
-	});
-
-	it("withholds removal from a user without the users role", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: null }));
-
-		renderItem(withJob("succeeded", true));
-
-		await expectNoRemoveButton();
-	});
 
 	it("links the reference and subtraction badges", async () => {
 		renderItem({
@@ -113,18 +179,5 @@ describe("<AnalysisItem />", () => {
 				.getAllByRole("link", { name: "Arabidopsis thaliana" })
 				.map((link) => link.getAttribute("href")),
 		).toEqual(["/subtractions/5", "/subtractions/5"]);
-	});
-
-	it("labels the version of an unready analysis as pending", async () => {
-		renderItem({ ready: false, workflowVersion: null });
-
-		expect(await screen.findByText("Pending")).toBeInTheDocument();
-		expect(screen.queryByText("not recorded")).not.toBeInTheDocument();
-	});
-
-	it("labels a ready analysis with no version as not recorded", async () => {
-		renderItem({ ready: true, workflowVersion: null });
-
-		expect(await screen.findByText("not recorded")).toBeInTheDocument();
 	});
 });

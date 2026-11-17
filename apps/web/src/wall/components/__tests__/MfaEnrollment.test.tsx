@@ -3,6 +3,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { authServerFnMocks } from "@tests/server-fn/auth";
+import { mockGetRoot } from "@tests/server-fn/root";
 import {
 	mockGetAccount,
 	mockGetAccountMfaEnrollmentRequired,
@@ -125,6 +126,7 @@ describe("<MfaEnrollment />", () => {
 	});
 
 	it("sends a signed-out visitor to sign in", async () => {
+		mockGetRoot({ firstUser: false });
 		mockGetAccountUnauthorized();
 
 		const { router } = await renderRoute(

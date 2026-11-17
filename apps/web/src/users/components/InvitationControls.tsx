@@ -3,8 +3,8 @@ import { useNow } from "@app/hooks";
 import Alert from "@base/Alert";
 import Badge from "@base/Badge";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import RelativeTime from "@base/RelativeTime";
 import SectionHeader from "@base/SectionHeader";
+import Time from "@base/Time";
 import type { PaletteColor } from "@base/types";
 import { useQuery } from "@tanstack/react-query";
 import { invitationQueryOptions } from "@users/queries";
@@ -118,7 +118,7 @@ export function InvitationControls({ userId }: InvitationControlsProps) {
 							{getDeliveryDescription(data)}
 						</InvitationFact>
 						<InvitationFact label="Sent">
-							<RelativeTime time={data.createdAt} />
+							<Time time={data.createdAt} />
 						</InvitationFact>
 						{(state === "pending" || state === "expired") && (
 							<InvitationFact

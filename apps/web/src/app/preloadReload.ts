@@ -1,3 +1,5 @@
+import { reloadPage } from "./navigation";
+
 const PRELOAD_RELOAD_KEY = "vt-preload-reloaded";
 
 /**
@@ -18,13 +20,13 @@ export function handlePreloadError() {
 	// policies. If it does, skip the guard and reload anyway rather than swallow
 	// the error and leave the user on a broken page.
 	try {
-		if (window.sessionStorage.getItem(PRELOAD_RELOAD_KEY) === __APP_VERSION__) {
+		if (sessionStorage.getItem(PRELOAD_RELOAD_KEY) === __APP_VERSION__) {
 			return;
 		}
-		window.sessionStorage.setItem(PRELOAD_RELOAD_KEY, __APP_VERSION__);
+		sessionStorage.setItem(PRELOAD_RELOAD_KEY, __APP_VERSION__);
 	} catch {
 		// Ignore and fall through to the reload.
 	}
 
-	window.location.reload();
+	reloadPage();
 }

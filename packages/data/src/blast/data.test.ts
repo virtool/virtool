@@ -86,7 +86,7 @@ beforeEach(async () => {
 	await db.delete(legacyReferences);
 	await db.delete(users);
 
-	userId = await seedUser(db, { handle: "owner" });
+	userId = await seedUser(db, { username: "owner" });
 	referenceId = await seedReference(db, userId);
 	indexId = await seedIndex(db, { referenceId, userId, version: 1 });
 });

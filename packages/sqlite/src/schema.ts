@@ -9,6 +9,11 @@
  * What is specified is the *schema*, not any particular DDL text: the tables
  * are declared explicitly and never reflected, so only the columns,
  * constraints and indexes have to agree.
+ *
+ * The server writes artifacts and workflows read and write them, so this is a
+ * package of its own. In `@virtool/workflow` it would pull the workflow runtime
+ * into `@virtool/data`, and a copy of the DDL in the data package would give
+ * one binary format two definitions.
  */
 
 import { DatabaseSync } from "node:sqlite";

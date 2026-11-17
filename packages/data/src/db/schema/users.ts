@@ -17,7 +17,7 @@ import {
 	unique,
 	uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { lower, lowerTrim } from "./sql";
+import { lowerTrim } from "./sql";
 
 const bytea = customType<{ data: Buffer; default: false }>({
 	dataType() {
@@ -38,12 +38,10 @@ export const users = pgTable(
 		createdAt: timestamp("created_at")
 			.notNull()
 			.default(sql`timezone('utc', now())`),
-		displayUsername: text("display_username"),
 		email: text("email")
 			.$defaultFn(() => "")
 			.notNull(),
 		emailVerified: boolean("email_verified").notNull().default(false),
-		handle: text("handle").notNull(),
 		image: text("image"),
 		lastPasswordChange: timestamp("last_password_change").notNull(),
 		// Holds the date of the newest changelog entry the user has seen, not the
@@ -55,6 +53,10 @@ export const users = pgTable(
 		// A real database default rather than a `$defaultFn`, because the
 		// migration that adds the column has to backfill every existing row and
 		// because an account is pending only when something says so.
+		//
+		// This is not `active`. Activation is the administrator's switch: a
+		// deactivated account is unusable in any state, and completing setup
+		// activates nobody. A reader that assumes a usable account checks both.
 		lifecycleState: text("lifecycle_state")
 			.$type<AccountLifecycleState>()
 			.notNull()
@@ -69,15 +71,17 @@ export const users = pgTable(
 		updatedAt: timestamp("updated_at")
 			.notNull()
 			.default(sql`timezone('utc', now())`),
+		// The only name a user has, stored lowercase. Null exactly while an
+		// account is pending, so the plain unique constraint never sees two
+		// pending accounts as a collision.
 		username: text("username"),
 	},
 	(table) => [
 		unique("users_legacy_id_key").on(table.legacyId),
 		unique("users_username_key").on(table.username),
-		// Pending invitations have no handle until acceptance.
-		uniqueIndex("users_handle_lower_unique")
-			.on(lower(table.handle))
-			.where(sql`${table.handle} <> ''`),
+		// Better Auth declares its email field unique, but this column is not
+		// globally unique.
+		//
 		// Normalized email is unique among migrated identities only. A plain
 		// unique index could not be created: legacy rows share the empty string
 		// and hold duplicate addresses, which is the population the audit exists
@@ -92,6 +96,17 @@ export const users = pgTable(
 		check(
 			"administrator_role_valid",
 			sql`${table.administratorRole} in ('full', 'settings', 'users', 'base')`,
+		),
+		check(
+			"username_lowercase",
+			sql`${table.username} = lower(${table.username})`,
+		),
+		// Only the pending half of the username invariant is a database rule.
+		// Servers from earlier releases complete an account in two statements,
+		// leaving a set-up account without a username until the second runs.
+		check(
+			"pending_has_no_username",
+			sql`${table.lifecycleState} <> 'pending' or ${table.username} is null`,
 		),
 		check(
 			"lifecycle_state_valid",

@@ -1,0 +1,6 @@
+# Prettier formats only the Markdown and MDX content. Biome does not format
+# Markdown, and the rest of the site keeps its current formatting.
+*
+!*/
+!src/content/**/*.md
+!src/content/**/*.mdx

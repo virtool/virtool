@@ -22,17 +22,12 @@ function Harness() {
 }
 
 describe("<WorkflowSelector>", () => {
-	it("renders each workflow as an accessible radio option", () => {
+	it("renders each workflow as an accessible radio option that says what it finds", () => {
 		renderWithProviders(<Harness />);
 
 		expect(screen.getByRole("group", { name: "Workflow" })).toBeVisible();
 		expect(screen.getByRole("radio", { name: pathoscopeName })).toBeChecked();
 		expect(screen.getByRole("radio", { name: nuvsName })).not.toBeChecked();
-	});
-
-	it("describes what each workflow finds", () => {
-		renderWithProviders(<Harness />);
-
 		expect(
 			screen.getByRole("radio", { name: pathoscopeName }),
 		).toHaveAccessibleDescription("Find known viruses.");
@@ -41,22 +36,14 @@ describe("<WorkflowSelector>", () => {
 		).toHaveAccessibleDescription("Find novel viruses.");
 	});
 
-	it("selects a workflow when its option is chosen", async () => {
-		renderWithProviders(<Harness />);
-
-		await userEvent.click(screen.getByRole("radio", { name: nuvsName }));
-
-		expect(screen.getByRole("radio", { name: nuvsName })).toBeChecked();
-		expect(
-			screen.getByRole("radio", { name: pathoscopeName }),
-		).not.toBeChecked();
-	});
-
 	it("selects a workflow when its name is clicked", async () => {
 		renderWithProviders(<Harness />);
 
 		await userEvent.click(screen.getByText(nuvsWorkflow.name));
 
 		expect(screen.getByRole("radio", { name: nuvsName })).toBeChecked();
+		expect(
+			screen.getByRole("radio", { name: pathoscopeName }),
+		).not.toBeChecked();
 	});
 });

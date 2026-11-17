@@ -50,7 +50,14 @@ export default function IsolateItem({
 				<span className="truncate font-medium">
 					{formatIsolateName(isolate)}
 				</span>
-				{isolate.default && <Icon icon={Star} className="ml-2" />}
+				{isolate.default && (
+					<Icon
+						aria-label="Default isolate"
+						className="ml-2"
+						icon={Star}
+						role="img"
+					/>
+				)}
 			</Link>
 			{canDelete && (
 				<IconButton

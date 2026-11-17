@@ -10,6 +10,7 @@ import {
 	listUsersFn,
 	regenerateInvitationFn,
 	resetUserTotpFn,
+	revokeUserAccessFn,
 	searchUsersFn,
 	setAdministratorRoleFn,
 	updateUserFn,
@@ -44,7 +45,7 @@ export function useInvitationEmailAvailability() {
 /**
  * Fetch every active user, for populating selectors and filters
  *
- * @returns A list of users with their ids and handles
+ * @returns A list of users with their ids and usernames
  */
 export function useListUsers() {
 	return useQuery<UserNested[]>({
@@ -231,7 +232,7 @@ export function useSuspenseUser(userId: number) {
 /** Values accepted when updating a user from the administration views. */
 export type UserUpdate = {
 	active?: boolean;
-	handle?: string;
+	username?: string;
 	groups?: number[];
 	primaryGroup?: number | null;
 };
@@ -290,6 +291,24 @@ export function useSetAdministratorRole() {
 				domain: "users",
 				operation: "update",
 				id: user_id,
+			});
+		},
+	});
+}
+
+/** Remove every credential and session a user holds. */
+export function useRevokeUserAccess() {
+	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation((userId: number) =>
+		revokeUserAccessFn({ data: { userId } }),
+	);
+	return useMutation({
+		mutationFn,
+		onSuccess: (_data, userId) => {
+			invalidateChange(queryClient, {
+				domain: "users",
+				operation: "update",
+				id: userId,
 			});
 		},
 	});

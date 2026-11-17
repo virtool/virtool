@@ -5,7 +5,8 @@ import { createIsomorphicFn } from "@tanstack/react-start";
  */
 export const SENTRY_DSN_META_NAME = "vt-sentry-dsn";
 
-function readDsnFromMeta(): string {
+/** Read the DSN back from the `<meta>` tag in the document head. */
+export function readDsnFromMeta(): string {
 	return (
 		document
 			.querySelector(`meta[name="${SENTRY_DSN_META_NAME}"]`)
@@ -13,26 +14,22 @@ function readDsnFromMeta(): string {
 	);
 }
 
-// `process` has no type in the app TypeScript project (DOM lib, no Node types),
-// and this module is client-reachable. Reach the runtime env through `globalThis`
-// with a local shape so the read type-checks without dragging Node globals in;
-// the `.server` body below is stripped from the client bundle regardless.
-function readDsnFromEnv(): string {
-	const proc = (
-		globalThis as { process?: { env?: Record<string, string | undefined> } }
-	).process;
-	return proc?.env?.VT_SENTRY_DSN ?? "";
+// `@server/config` reads `process.env` and `node:fs` when it loads, so a dynamic
+// import keeps it out of the browser graph.
+async function readDsnFromConfig(): Promise<string> {
+	const { config } = await import("@server/config");
+	return config.sentryDsn ?? "";
 }
 
 /**
- * The runtime Sentry DSN. On the server it is read from `process.env` at
- * request time; on the client it is read back from the `<meta>` tag the server
- * rendered into the document head. Reading it this way — rather than from a
- * build-time `import.meta.env.VT_SENTRY_DSN` inline — keeps the DSN out of the
- * client bundle, so a single image picks up whatever DSN the runtime env
+ * The runtime Sentry DSN. On the server it comes from the parsed configuration;
+ * on the client it is read back from the `<meta>` tag the server rendered into
+ * the document head. Reading it this way — rather than from a build-time
+ * `import.meta.env.VT_SENTRY_DSN` inline — keeps the DSN out of the client
+ * bundle, so a single image picks up whatever DSN the runtime configuration
  * provides, and yields an identical value on server and client (no hydration
  * mismatch).
  */
 export const readSentryDsn = createIsomorphicFn()
-	.server(readDsnFromEnv)
+	.server(readDsnFromConfig)
 	.client(readDsnFromMeta);

@@ -14,17 +14,18 @@ import { hasSufficientAdminRole } from "@virtool/contracts";
 import { Info } from "lucide-react";
 import { useState } from "react";
 import AboutDialog from "./AboutDialog";
+import ChangelogPopover from "./ChangelogPopover";
 import { NavLink } from "./NavLink";
 
 type NavBarProps = {
 	administratorRole: AdministratorRoleName | null;
-	handle: string;
+	username: string;
 };
 
 /**
  * Display the main navigation bar with links too root level views.
  */
-export default function Nav({ administratorRole, handle }: NavBarProps) {
+export default function Nav({ administratorRole, username }: NavBarProps) {
 	const mutation = useLogout();
 	const [aboutOpen, setAboutOpen] = useState(false);
 
@@ -55,6 +56,8 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 			<div className="flex gap-2 items-center pr-4">
 				<UploadIndicator />
 
+				<ChangelogPopover />
+
 				<IconButton
 					onClick={() => setAboutOpen(true)}
 					IconComponent={Info}
@@ -65,12 +68,12 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 				<Dropdown>
 					<DropdownMenuTrigger aria-label="User menu">
 						<div className="bg-transparent flex items-center">
-							<UserAvatar handle={handle} size="md" />
+							<UserAvatar username={username} size="md" />
 						</div>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuLink to="/account">
-							Signed in as <strong>{handle}</strong>
+							Signed in as <strong>{username}</strong>
 						</DropdownMenuLink>
 
 						<DropdownMenuSeparator />
@@ -81,7 +84,7 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 								Administration{" "}
 							</DropdownMenuLink>
 						)}
-						<DropdownMenuItem onSelect={onLogout}>Logout</DropdownMenuItem>
+						<DropdownMenuItem onSelect={onLogout}>Sign out</DropdownMenuItem>
 					</DropdownMenuContent>
 				</Dropdown>
 			</div>

@@ -1,19 +1,29 @@
+import { randomBytes } from "node:crypto";
+
 import {
 	type AccountSetupInspection,
 	EMAIL_REMEDIATION_RESEND_DELAY_SECONDS,
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	type EmailRemediationState,
-	isReservedHandle,
+	isReservedUsername,
 	isValidEmail,
-	isValidHandle,
+	isValidUsername,
 	normalizeEmail,
+	normalizeUsername,
 	type User,
 } from "@virtool/contracts";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, like, notLike, or, sql } from "drizzle-orm";
 import type { Keyring } from "../crypto/keyring";
 import { isUniqueViolation } from "../db/errors";
 import type { Db, DbOrTx } from "../db/pg";
-import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
+import { apiKeys } from "../db/schema/apiKeys";
+import {
+	authAccounts,
+	authPasskeys,
+	authSessions,
+	authTwoFactors,
+	authVerifications,
+} from "../db/schema/auth";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
@@ -21,14 +31,15 @@ import { nowUtc } from "../db/time";
 import { enqueueLinkEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-import { getUser, UserNotFoundError } from "../users/data";
+import { getUser, PendingAccountError, UserNotFoundError } from "../users/data";
 import { claimEmail, EmailInUseError } from "./email";
 import { queueEmailVerificationInTransaction } from "./emailVerification";
-import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
+import { CREDENTIAL_PROVIDER_ID } from "./identity";
 import { hashPassword } from "./password";
 import {
 	consumeSetupToken,
 	invalidateUserSetupSessions,
+	invalidateUserSetupTokens,
 	issueSetupTokenInTransaction,
 	lockUserSetupCredentials,
 	SetupCredentialError,
@@ -39,8 +50,8 @@ import { hashToken } from "./tokens";
 /** Thrown when a completion is aimed at an account that is not eligible. */
 export class SetupNotEligibleError extends AppError {}
 
-/** Thrown when a chosen account handle is already in use. */
-export class AccountSetupHandleInUseError extends AppError {}
+/** Thrown when a chosen account username is already in use. */
+export class AccountSetupUsernameInUseError extends AppError {}
 
 export { EmailInUseError } from "./email";
 
@@ -50,27 +61,26 @@ export class EmailRemediationRateLimitedError extends AppError {}
 /** Thrown when a user has no TOTP enrollment to act on. */
 export class TotpNotEnrolledError extends AppError {}
 
+/** Thrown when an issuer lacks the role to revoke an administrator's access. */
+export class AccessRevocationForbiddenError extends AppError {}
+
 /**
  * Give a user the Better Auth credential identity that lets the interactive
  * endpoints authenticate them.
  *
- * Four things together make an identity: the `auth_accounts` row holding the
- * password, the `username`/`display_username` pair the `username` plugin
- * matches a sign-in against, and `auth_migrated_at`, which admits the address
- * to the normalized uniqueness index. They are established in one transaction.
+ * Three things together make an identity: the `auth_accounts` row holding the
+ * password, the `username` the `username` plugin matches a sign-in against,
+ * and `auth_migrated_at`, which admits the address to the normalized
+ * uniqueness index. The caller writes the username; the rest is established
+ * here, in its transaction.
  *
  * `onConflictDoNothing` rather than an insert: a completion retried after its
  * transaction already committed must not mint a second identity, and the
  * `(provider_id, account_id)` constraint is what it lands on.
- *
- * `username` is the lower-cased handle and `display_username` the handle as
- * typed, which is the split the plugin draws and the same one
- * `users_handle_lower_unique` already holds.
  */
 async function establishAuthIdentity(
 	tx: DbOrTx,
 	userId: number,
-	handle: string,
 	passwordHash: string,
 ): Promise<void> {
 	const now = new Date();
@@ -124,7 +134,6 @@ async function establishAuthIdentity(
 		}
 	}
 
-	await updateAuthUsername(tx, userId, handle);
 	await tx
 		.update(users)
 		.set({
@@ -139,8 +148,8 @@ export type CompleteAccountSetupInput = {
 	token: string;
 	/** The password the holder chose. Never one an administrator picked. */
 	password: string;
-	/** The handle selected by the invitation holder. */
-	handle?: string;
+	/** The username the invitation holder chose, in any case. */
+	username: string;
 	/** Whether mailbox verification mail can be queued for a copied link. */
 	deliveryAvailable?: boolean;
 	/** Build a public verification URL if copied-link acceptance needs one. */
@@ -165,13 +174,11 @@ export type CompletedAccountSetup = {
  * revoked. A failure anywhere rolls the whole transition back, so a spent
  * token never outlives the account change it paid for.
  *
- * The password is written twice on purpose. `users.password` is what
- * `login()` in the web app still reads, and `auth_accounts.password` is what
- * Better Auth reads; both boundaries are live during the migration, and an
- * account completed against only one of them cannot sign in at all under the
- * other. Both hold the same hash, because `@virtool/data/auth/password` is
- * the one place the algorithm is stated and Better Auth is configured to use
- * it.
+ * The password is written twice on purpose. `users.password` stays part of
+ * Virtool's account and password-change transactions, and Better Auth verifies
+ * `auth_accounts.password`. Both hold the same hash, because
+ * `@virtool/data/auth/password` is the one place the algorithm is stated and
+ * Better Auth is configured to use it.
  *
  * No session is minted here. Which session a completed holder gets is the
  * calling flow's decision, and the web app owns cookies.
@@ -181,7 +188,7 @@ export async function completeAccountSetup(
 	{
 		token,
 		password,
-		handle: requestedHandle,
+		username: requestedUsername,
 		deliveryAvailable = false,
 		getVerificationUrl = () => "",
 		keyring,
@@ -230,7 +237,6 @@ export async function completeAccountSetup(
 				.select({
 					active: users.active,
 					email: users.email,
-					handle: users.handle,
 					lifecycleState: users.lifecycleState,
 				})
 				.from(users)
@@ -248,8 +254,8 @@ export async function completeAccountSetup(
 			) {
 				throw new SetupNotEligibleError();
 			}
-			const handle = requestedHandle?.trim() || row.handle;
-			if (!isValidHandle(handle) || isReservedHandle(handle)) {
+			const username = normalizeUsername(requestedUsername);
+			if (!isValidUsername(username) || isReservedUsername(username)) {
 				throw new SetupNotEligibleError();
 			}
 			const [conflict] = await tx
@@ -257,13 +263,13 @@ export async function completeAccountSetup(
 				.from(users)
 				.where(
 					and(
-						sql`lower(${users.handle}) = ${handle.toLowerCase()}`,
+						eq(users.username, username),
 						sql`${users.id} <> ${consumed.userId}`,
 					),
 				)
 				.limit(1);
 			if (conflict) {
-				throw new AccountSetupHandleInUseError();
+				throw new AccountSetupUsernameInUseError();
 			}
 
 			const email = normalizeEmail(consumed.candidateEmail);
@@ -278,7 +284,7 @@ export async function completeAccountSetup(
 			await tx
 				.update(users)
 				.set({
-					handle,
+					username,
 					password: hashed,
 					email,
 					emailVerified: verified,
@@ -287,12 +293,7 @@ export async function completeAccountSetup(
 				})
 				.where(eq(users.id, consumed.userId));
 
-			await establishAuthIdentity(
-				tx,
-				consumed.userId,
-				handle,
-				hashed.toString("utf8"),
-			);
+			await establishAuthIdentity(tx, consumed.userId, hashed.toString("utf8"));
 
 			// The token just spent is gone, but a second outstanding link for the
 			// same purpose would still work. Completion has to close every door it
@@ -318,7 +319,7 @@ export async function completeAccountSetup(
 					userId: consumed.userId,
 					candidateEmail: email,
 					sourceEmail: email,
-					handle,
+					username,
 					getVerificationUrl,
 					keyring,
 				});
@@ -328,13 +329,8 @@ export async function completeAccountSetup(
 			return { userId: consumed.userId, emailVerificationRequired };
 		})
 		.catch((error: unknown) => {
-			if (
-				isUniqueViolation(error, [
-					"users_handle_lower_unique",
-					"users_username_key",
-				])
-			) {
-				throw new AccountSetupHandleInUseError();
+			if (isUniqueViolation(error, ["users_username_key"])) {
+				throw new AccountSetupUsernameInUseError();
 			}
 			throw error;
 		});
@@ -404,7 +400,7 @@ export type PrepareEmailRemediationInput = {
 /** The staged identity facts needed to address a verification message. */
 export type PreparedEmailRemediation = {
 	email: string;
-	handle: string;
+	username: string;
 };
 
 /** What {@link startEmailRemediation} accepts. */
@@ -546,9 +542,9 @@ async function prepareEmailRemediationInTransaction(
 		.select({
 			active: users.active,
 			authMigratedAt: users.authMigratedAt,
-			handle: users.handle,
 			lifecycleState: users.lifecycleState,
 			password: users.password,
+			username: users.username,
 		})
 		.from(users)
 		.where(eq(users.id, userId))
@@ -559,14 +555,15 @@ async function prepareEmailRemediationInTransaction(
 		!row?.active ||
 		row.authMigratedAt !== null ||
 		row.lifecycleState !== "normal" ||
-		row.password === null
+		row.password === null ||
+		row.username === null
 	) {
 		throw new SetupNotEligibleError();
 	}
 
 	await claimEmail(tx, userId, normalized, { mailboxVerified });
 
-	return { email: normalized, handle: row.handle };
+	return { email: normalized, username: row.username };
 }
 
 /** Atomically stage an address, replace its token, and enqueue its challenge. */
@@ -620,7 +617,7 @@ async function startEmailRemediationInTransaction(
 		setupTokenId: issued.tokenId,
 		template: {
 			type: "email_verification",
-			username: prepared.handle,
+			username: prepared.username,
 			verifyUrl: getVerificationUrl(issued.token),
 			expiresInHours: EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 		},
@@ -702,6 +699,10 @@ export async function cancelEmailRemediation(
  * The existing password hash moves across rather than being re-derived: the
  * holder is proving control of an address, not setting a new credential, and
  * asking them for their password again would make this a reset.
+ *
+ * Other completions revoke setup credentials at once. This one keeps the
+ * restricted session until the initiating browser claims promotion, so a token
+ * verified in another browser does not authenticate that browser.
  */
 export async function completeEmailRemediation(
 	db: Db,
@@ -734,7 +735,6 @@ export async function completeEmailRemediation(
 			.select({
 				active: users.active,
 				authMigratedAt: users.authMigratedAt,
-				handle: users.handle,
 				lifecycleState: users.lifecycleState,
 				password: users.password,
 			})
@@ -768,7 +768,6 @@ export async function completeEmailRemediation(
 		await establishAuthIdentity(
 			tx,
 			consumed.userId,
-			row.handle,
 			row.password.toString("utf8"),
 		);
 
@@ -951,6 +950,118 @@ export async function resetUserTotp(db: Db, userId: number): Promise<User> {
 				.set({ twoFactorEnabled: false })
 				.where(eq(users.id, userId)),
 			tx.delete(authSessions).where(eq(authSessions.userId, userId)),
+		]);
+	});
+
+	await emit("users", userId, "update");
+
+	return getUser(db, userId);
+}
+
+/**
+ * Remove every credential and session a user holds, in one transaction.
+ *
+ * The administrator response to a compromised account. Afterward only an
+ * administrator recovery link restores access, and the user then enrolls their
+ * second factors again.
+ *
+ * The password becomes a hash of a secret nobody keeps, because a null password
+ * makes an account ineligible for recovery. The address stops being verified
+ * because an attacker may have changed it, and a verified address is what
+ * self-service recovery and emailed administrator links trust. No notice is
+ * mailed to that address for the same reason.
+ *
+ * `issuerUserId` is checked here as well as at the boundary, so a target
+ * promoted to administrator after that check can't be revoked by an issuer
+ * without the `full` role.
+ *
+ * A deactivated user is eligible, because their API keys and passkeys remain
+ * until an administrator removes them. Throws {@link UserNotFoundError} for an
+ * unknown user, {@link PendingAccountError} for an account that has not
+ * completed setup, and {@link AccessRevocationForbiddenError} for an issuer
+ * without the required role.
+ */
+export async function revokeUserAccess(
+	db: Db,
+	userId: number,
+	issuerUserId: number,
+): Promise<User> {
+	// Hashing is CPU-bound and slow by design, so it happens before the
+	// transaction opens rather than holding one idle for the duration.
+	const hashed = await hashPassword(randomBytes(32).toString("base64url"));
+
+	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
+
+		const [user] = await tx
+			.select({
+				administratorRole: users.administratorRole,
+				lifecycleState: users.lifecycleState,
+			})
+			.from(users)
+			.where(eq(users.id, userId))
+			.for("update");
+
+		if (!user) {
+			throw new UserNotFoundError();
+		}
+		if (user.lifecycleState === "pending") {
+			throw new PendingAccountError();
+		}
+		if (user.administratorRole !== null) {
+			const [issuer] = await tx
+				.select({ administratorRole: users.administratorRole })
+				.from(users)
+				.where(eq(users.id, issuerUserId))
+				.limit(1);
+			if (issuer?.administratorRole !== "full") {
+				throw new AccessRevocationForbiddenError();
+			}
+		}
+
+		await Promise.all([
+			tx.delete(authSessions).where(eq(authSessions.userId, userId)),
+			invalidateUserSetupSessions(tx, userId),
+			invalidateUserSetupTokens(tx, userId),
+			tx.delete(apiKeys).where(eq(apiKeys.userId, userId)),
+			tx.delete(authPasskeys).where(eq(authPasskeys.userId, userId)),
+			tx.delete(authTwoFactors).where(eq(authTwoFactors.userId, userId)),
+			// Better Auth holds trusted devices and pending two-factor sign-ins here
+			// with the user id as the value. Its attempt and OTP rows share the
+			// `2fa-` prefix but hold a count or a code, which can equal a user id.
+			tx
+				.delete(authVerifications)
+				.where(
+					and(
+						eq(authVerifications.value, String(userId)),
+						or(
+							like(authVerifications.identifier, "trust-device-%"),
+							and(
+								like(authVerifications.identifier, "2fa-%"),
+								notLike(authVerifications.identifier, "2fa-attempts-%"),
+								notLike(authVerifications.identifier, "2fa-otp-%"),
+							),
+						),
+					),
+				),
+			tx
+				.update(authAccounts)
+				.set({ password: hashed.toString("utf8"), updatedAt: new Date() })
+				.where(
+					and(
+						eq(authAccounts.userId, userId),
+						eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
+					),
+				),
+			tx
+				.update(users)
+				.set({
+					emailVerified: false,
+					lastPasswordChange: new Date(),
+					password: hashed,
+					twoFactorEnabled: false,
+				})
+				.where(eq(users.id, userId)),
 		]);
 	});
 

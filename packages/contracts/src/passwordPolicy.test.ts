@@ -10,7 +10,7 @@ import {
 describe("formatMinimumPasswordLengthMessage", () => {
 	it("quotes the minimum it was given", () => {
 		expect(formatMinimumPasswordLengthMessage(12)).toBe(
-			"Password does not meet minimum length requirement (12)",
+			"Password must have at least 12 characters.",
 		);
 	});
 });
@@ -46,7 +46,7 @@ describe("checkPasswordLength", () => {
 			expect(err).toBeInstanceOf(PasswordTooShortError);
 			expect((err as PasswordTooShortError).minimum).toBe(12);
 			expect((err as PasswordTooShortError).message).toBe(
-				"Password does not meet minimum length requirement (12)",
+				"Password must have at least 12 characters.",
 			);
 		}
 	});

@@ -16,17 +16,6 @@ describe("<OtuCreate />", () => {
 		mockGetReference(reference);
 	});
 
-	it("should render", () => {
-		renderWithProviders(
-			<OtuCreate open refId={reference.id} setOpen={vi.fn()} />,
-		);
-
-		expect(screen.getByText("Create OTU")).toBeInTheDocument();
-		expect(screen.getByLabelText("Name")).toBeInTheDocument();
-		expect(screen.getByLabelText("Acronym")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
-	});
-
 	it("should render error once submitted with no name", async () => {
 		renderWithProviders(
 			<OtuCreate open refId={reference.id} setOpen={vi.fn()} />,
@@ -36,52 +25,33 @@ describe("<OtuCreate />", () => {
 		expect(await screen.findByText("Name required")).toBeInTheDocument();
 	});
 
-	it("should create OTU without acronym", async () => {
-		const createOtu = mockCreateOtu(
-			createFakeOtu({ name: "TestName", acronym: "" }),
-		);
+	it.each(["", "TestAcronym"])(
+		"should create OTU with acronym %j",
+		async (acronym) => {
+			const createOtu = mockCreateOtu(
+				createFakeOtu({ name: "TestName", acronym }),
+			);
 
-		renderWithProviders(
-			<OtuCreate open refId={reference.id} setOpen={vi.fn()} />,
-		);
+			renderWithProviders(
+				<OtuCreate open refId={reference.id} setOpen={vi.fn()} />,
+			);
 
-		await userEvent.type(screen.getByLabelText("Name"), "TestName");
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+			await userEvent.type(screen.getByLabelText("Name"), "TestName");
+			if (acronym) {
+				await userEvent.type(screen.getByLabelText("Acronym"), acronym);
+			}
+			await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-		await waitFor(() =>
-			expect(createOtu).toHaveBeenCalledWith({
-				data: {
-					referenceId: reference.id,
-					name: "TestName",
-					acronym: "",
-					schema: [],
-				},
-			}),
-		);
-	});
-
-	it("should create OTU with acronym", async () => {
-		const createOtu = mockCreateOtu(
-			createFakeOtu({ name: "TestName", acronym: "TestAcronym" }),
-		);
-
-		renderWithProviders(
-			<OtuCreate open refId={reference.id} setOpen={vi.fn()} />,
-		);
-
-		await userEvent.type(screen.getByLabelText("Name"), "TestName");
-		await userEvent.type(screen.getByLabelText("Acronym"), "TestAcronym");
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-		await waitFor(() =>
-			expect(createOtu).toHaveBeenCalledWith({
-				data: {
-					referenceId: reference.id,
-					name: "TestName",
-					acronym: "TestAcronym",
-					schema: [],
-				},
-			}),
-		);
-	});
+			await waitFor(() =>
+				expect(createOtu).toHaveBeenCalledWith({
+					data: {
+						referenceId: reference.id,
+						name: "TestName",
+						acronym,
+						schema: [],
+					},
+				}),
+			);
+		},
+	);
 });

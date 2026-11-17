@@ -44,7 +44,7 @@ export default function SamplePeek({ sampleId }: SamplePeekProps) {
 				</div>
 				<Attribution
 					className="col-span-2 font-normal"
-					user={user.handle}
+					user={user.username}
 					time={createdAt}
 				/>
 			</div>

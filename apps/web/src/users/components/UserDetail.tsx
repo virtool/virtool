@@ -10,16 +10,17 @@ import {
 	useSuspenseUser,
 	useUpdateUser,
 } from "@users/queries";
-import { hasSufficientAdminRole } from "@virtool/contracts";
+import { checkCanResetTotp, checkCanRevokeAccess } from "@users/utils";
 import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
 import { DeletePendingUser } from "./DeletePendingUser";
-import Handle from "./Handle";
 import { InvitationControls } from "./InvitationControls";
 import RecoveryLink from "./RecoveryLink";
 import { ResetUserTotp } from "./ResetUserTotp";
+import { RevokeUserAccess } from "./RevokeUserAccess";
 import { UserActivationBanner } from "./UserActivationBanner";
 import UserAdministratorRole from "./UserAdministratorRole";
 import UserGroups from "./UserGroups";
+import Username from "./Username";
 import UserPermissions from "./UserPermissions";
 
 type UserDetailProps = {
@@ -45,11 +46,8 @@ export default function UserDetail({ userId }: UserDetailProps) {
 
 	const mutation = useUpdateUser();
 
-	const canResetTotp =
-		data.twoFactorEnabled &&
-		account !== undefined &&
-		account.id !== userId &&
-		hasSufficientAdminRole("full", account.administratorRole);
+	const canResetTotp = checkCanResetTotp(account, data);
+	const canRevokeAccess = checkCanRevokeAccess(account, userId);
 
 	if (!canEdit) {
 		return (
@@ -63,8 +61,7 @@ export default function UserDetail({ userId }: UserDetailProps) {
 		);
 	}
 
-	const { handle, administratorRole, id, groups, primaryGroup, permissions } =
-		data;
+	const { administratorRole, id, groups, primaryGroup, permissions } = data;
 
 	return (
 		<div>
@@ -80,8 +77,8 @@ export default function UserDetail({ userId }: UserDetailProps) {
 							</>
 						) : (
 							<>
-								<UserAvatar size="xl" handle={handle} />
-								<span>{handle}</span>
+								<UserAvatar size="xl" username={data.username} />
+								<span>{data.username}</span>
 							</>
 						)}
 					</h2>
@@ -102,7 +99,7 @@ export default function UserDetail({ userId }: UserDetailProps) {
 			) : (
 				<>
 					<UserAdministratorRole id={id} role={administratorRole} />
-					<Handle key={`handle-${id}`} id={id} handle={handle} />
+					<Username key={`username-${id}`} id={id} username={data.username} />
 					<RecoveryLink userId={id} />
 				</>
 			)}
@@ -126,7 +123,12 @@ export default function UserDetail({ userId }: UserDetailProps) {
 					<DeletePendingUser userId={id} email={invitation?.email} />
 				) : (
 					<>
-						{canResetTotp && <ResetUserTotp userId={id} handle={handle} />}
+						{canResetTotp && (
+							<ResetUserTotp userId={id} username={data.username} />
+						)}
+						{canRevokeAccess && (
+							<RevokeUserAccess userId={id} username={data.username} />
+						)}
 						<UserActivationBanner
 							onClick={() =>
 								mutation.mutate({

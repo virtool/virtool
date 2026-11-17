@@ -137,7 +137,7 @@ export default function EmailVerificationWall() {
 						title="Email verified"
 						subtitle="Your email address has been confirmed."
 					/>
-					<Link to="/login">Continue to login</Link>
+					<Link to="/login">Continue to sign in</Link>
 				</>
 			)}
 			{state.status === "unusable" && (
@@ -146,7 +146,7 @@ export default function EmailVerificationWall() {
 						title="Verification link unavailable"
 						subtitle="This link cannot be used. Request another link from your account settings or contact an administrator."
 					/>
-					<Link to="/login">Return to login</Link>
+					<Link to="/login">Return to sign in</Link>
 				</>
 			)}
 			{state.status === "sign_in_required" && (

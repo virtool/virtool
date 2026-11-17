@@ -15,6 +15,7 @@ import {
 	it,
 	vi,
 } from "vitest";
+import { silenceLogs } from "../test/silenceLogs";
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -63,7 +64,7 @@ beforeEach(async () => {
 	await db.delete(authSessions);
 	await db.delete(users);
 
-	viewerId = await seedUser(db, { handle: "viewer" });
+	viewerId = await seedUser(db, { username: "viewer" });
 });
 
 afterEach(() => {
@@ -73,7 +74,7 @@ afterEach(() => {
 async function seedGravatarUser(avatarSource = "gravatar"): Promise<void> {
 	await seedUser(db, {
 		email: "alice@example.com",
-		handle: "alice",
+		username: "alice",
 		settings: { avatar_source: avatarSource },
 	});
 }
@@ -143,6 +144,7 @@ describe("handleAvatar", () => {
 	});
 
 	it("answers 502 when Gravatar does not return an image", async () => {
+		silenceLogs();
 		await seedGravatarUser();
 		fetchMock.mockResolvedValue(new Response("down", { status: 500 }));
 

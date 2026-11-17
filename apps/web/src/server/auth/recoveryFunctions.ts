@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 
 import { createServerFn } from "@tanstack/react-start";
-import { PasswordTooShortError } from "@virtool/contracts";
+import { normalizeUsername, PasswordTooShortError } from "@virtool/contracts";
 import {
 	beginEmailVerification,
 	completeEmailVerification,
@@ -48,7 +48,9 @@ import {
 import { checkConfiguredPasswordLength } from "./service";
 
 const tokenSchema = z.string().max(256);
-const recoveryRequestSchema = z.object({ handle: z.string().trim().max(128) });
+const recoveryRequestSchema = z.object({
+	username: z.string().trim().max(128),
+});
 const recoveryCompletionSchema = z.object({
 	token: tokenSchema,
 	password: z.string(),
@@ -178,15 +180,15 @@ export const requestPasswordRecoveryFn = createServerFn({ method: "POST" })
 	.middleware([open()])
 	.validator(recoveryRequestSchema)
 	.handler(async ({ data }) => {
-		const handle = data.handle.trim().toLowerCase();
+		const username = normalizeUsername(data.username);
 		const requesterDigest = digestRecoveryBudget(`requester:${getClientIp()}`);
-		const targetDigest = digestRecoveryBudget(`target:${handle}`);
+		const targetDigest = digestRecoveryBudget(`target:${username}`);
 		const [allowed, deliveryAvailable] = await Promise.all([
 			checkRecoveryRequestBudget(db, requesterDigest, targetDigest),
 			isEmailDeliveryAvailable(),
 		]);
 		if (allowed && deliveryAvailable) {
-			const userId = await getSelfServiceRecoveryTarget(db, handle);
+			const userId = await getSelfServiceRecoveryTarget(db, username);
 			if (userId !== null) {
 				try {
 					await issueRecoveryLink(db, {
@@ -221,13 +223,17 @@ export const completePasswordRecoveryFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
-			await completePasswordRecovery(
+			const { emailVerificationCancelled } = await completePasswordRecovery(
 				db,
 				data.token,
 				data.purpose,
 				data.password,
 			);
-			return { status: "password_changed" as const, next: "login" as const };
+			return {
+				status: "password_changed" as const,
+				next: "login" as const,
+				emailVerificationCancelled,
+			};
 		} catch (error) {
 			if (error instanceof PasswordTooShortError) {
 				throw new ClientError(error.message, 400);

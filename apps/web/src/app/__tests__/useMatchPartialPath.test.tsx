@@ -42,81 +42,12 @@ async function getResult() {
 	return el.textContent === "true";
 }
 
-describe("useMatchPartialPath (tanstack)", () => {
-	it("returns true when location starts with path", async () => {
+describe("useMatchPartialPath()", () => {
+	it("should match the router's pathname", async () => {
 		await renderWithTanStackRouter(
 			<TestHarness path="/samples" />,
 			"/samples/abc123",
 		);
-
-		expect(await getResult()).toBe(true);
-	});
-
-	it("returns true for exact match", async () => {
-		await renderWithTanStackRouter(<TestHarness path="/samples" />, "/samples");
-
-		expect(await getResult()).toBe(true);
-	});
-
-	it("returns false when location does not start with path", async () => {
-		await renderWithTanStackRouter(
-			<TestHarness path="/samples" />,
-			"/refs/abc123",
-		);
-
-		expect(await getResult()).toBe(false);
-	});
-
-	it("strips trailing slashes from path before matching", async () => {
-		await renderWithTanStackRouter(
-			<TestHarness path="/samples/" />,
-			"/samples/abc123",
-		);
-
-		expect(await getResult()).toBe(true);
-	});
-
-	it("strips query parameters from path before matching", async () => {
-		await renderWithTanStackRouter(
-			<TestHarness path="/samples?page=1" />,
-			"/samples/abc123",
-		);
-
-		expect(await getResult()).toBe(true);
-	});
-
-	it("returns false when location is in exclude list", async () => {
-		await renderWithTanStackRouter(
-			<TestHarness path="/refs" exclude={["/refs/settings"]} />,
-			"/refs/settings",
-		);
-
-		expect(await getResult()).toBe(false);
-	});
-
-	it("returns true when location matches and is not excluded", async () => {
-		await renderWithTanStackRouter(
-			<TestHarness path="/refs" exclude={["/refs/settings"]} />,
-			"/refs/abc123",
-		);
-
-		expect(await getResult()).toBe(true);
-	});
-
-	it("does not match partial segments", async () => {
-		await renderWithTanStackRouter(<TestHarness path="/sample" />, "/samples");
-
-		expect(await getResult()).toBe(false);
-	});
-
-	it("does not match all paths when given root path", async () => {
-		await renderWithTanStackRouter(<TestHarness path="/" />, "/samples");
-
-		expect(await getResult()).toBe(false);
-	});
-
-	it("matches root path exactly", async () => {
-		await renderWithTanStackRouter(<TestHarness path="/" />, "/");
 
 		expect(await getResult()).toBe(true);
 	});

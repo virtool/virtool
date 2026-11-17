@@ -7,7 +7,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/settings/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` because every password form queries the
+ * globally from `tests/serverFnMocks.ts` because every password form queries the
  * policy, including the unauthenticated ones.
  */
 export const settingsServerFnMocks = {

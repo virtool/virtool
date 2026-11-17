@@ -1,4 +1,9 @@
-import { Job, JobPing, type JsonValue } from "@virtool/contracts";
+import {
+	type Job,
+	JobPing,
+	JobsApiJob,
+	type JsonValue,
+} from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { Agent, fetch } from "undici";
 import type { ZodType } from "zod";
@@ -211,7 +216,7 @@ export function createJobsApiClient({
 		request,
 
 		getJob: () =>
-			request({ method: "GET", path: `/jobs/${jobId}`, schema: Job }),
+			request({ method: "GET", path: `/jobs/${jobId}`, schema: JobsApiJob }),
 
 		// Retries are disabled so the ping loop owns the give-up window end to
 		// end. A ping that retried internally would spend minutes of hidden

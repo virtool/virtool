@@ -5,14 +5,6 @@ import { describe, expect, it } from "vitest";
 import { CreateReference } from "../CreateReference";
 
 describe("<CreateReference />", () => {
-	it("should not render dialog content when closed", async () => {
-		await renderWithRouter(
-			<CreateReference open={false} onOpenChange={() => {}} />,
-		);
-
-		expect(screen.queryByText("Create Reference")).not.toBeInTheDocument();
-	});
-
 	it("should default to the Empty mode when opened", async () => {
 		await renderWithRouter(
 			<CreateReference open={true} onOpenChange={() => {}} />,

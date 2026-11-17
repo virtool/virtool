@@ -28,3 +28,11 @@ export function usePasswordRules(): PasswordRules {
 		minLength: { value: data.minimumPasswordLength, message },
 	};
 }
+
+/** The error for a password confirmation that differs from the password, if it does. */
+export function getPasswordMismatchError(
+	password: string,
+	confirmation: string,
+): string | null {
+	return password === confirmation ? null : "The passwords do not match";
+}

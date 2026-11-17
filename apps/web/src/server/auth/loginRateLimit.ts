@@ -1,12 +1,19 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { normalizeUsername } from "@virtool/contracts";
+import {
+	clearRateLimit,
+	getRateLimitKey,
+	spendRateLimit,
+} from "@virtool/data/auth/rateLimits";
 import type { Db } from "@virtool/data/db/pg";
-import { authRateLimits } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logger } from "../logger";
-import { createRateLimitStorage } from "./rateLimitStorage";
 
-const LOGIN_KEY_PREFIX = "virtool:login:";
+// An attempt spends from the requester, then from the account or the browser's
+// device, before any password check. An attempt that the requester budget
+// refuses spends nothing else. Usernames without an account get the same budget,
+// so a refusal doesn't reveal which usernames exist.
 
 // Matches Better Auth's own `/sign-in` rule.
 const REQUESTER_RULE = { window: 10, max: 3 };
@@ -21,8 +28,6 @@ export const LOGIN_DEVICE_LIFETIME_SECONDS = 30 * 24 * 60 * 60;
 
 // Bounds the cookie size for a browser shared by several accounts.
 const MAX_LOGIN_DEVICES = 5;
-
-const storages = new WeakMap<Db, ReturnType<typeof createRateLimitStorage>>();
 
 /** Thrown when a password sign-in exceeds its requester or account budget. */
 export class LoginRateLimitedError extends Error {
@@ -39,7 +44,7 @@ export type LoginBudget = {
 /** What a password sign-in attempt is counted against. */
 export type LoginAttempt = {
 	ip: string;
-	handle: string;
+	username: string;
 	devices: string | undefined;
 	secret: string;
 };
@@ -51,25 +56,16 @@ type LoginDevice = {
 	raw: string;
 };
 
-function getStorage(db: Db) {
-	let storage = storages.get(db);
-	if (!storage) {
-		storage = createRateLimitStorage(db);
-		storages.set(db, storage);
-	}
-	return storage;
-}
-
-function normalizeHandle(handle: string): string {
-	return handle.trim().toLowerCase();
-}
-
 function digest(value: string): string {
 	return createHash("sha256").update(value).digest("hex");
 }
 
-function getTargetKey(handle: string): string {
-	return `${LOGIN_KEY_PREFIX}handle:${digest(normalizeHandle(handle))}`;
+function getTargetKey(username: string): string {
+	return getRateLimitKey(
+		"login",
+		"username",
+		digest(normalizeUsername(username)),
+	);
 }
 
 function signLoginDevice(
@@ -113,18 +109,18 @@ function parseLoginDevices(value: string | undefined): LoginDevice[] {
 		});
 }
 
-async function findUser(db: Db, handle: string) {
+async function findUser(db: Db, username: string) {
 	const [user] = await db
 		.select({ id: users.id, lastPasswordChange: users.lastPasswordChange })
 		.from(users)
-		.where(sql`lower(${users.handle}) = ${normalizeHandle(handle)}`)
+		.where(eq(users.username, normalizeUsername(username)))
 		.limit(1);
 
 	return user;
 }
 
 /**
- * Find a device the browser holds for the handle's account. A password change
+ * Find a device the browser holds for the username's account. A password change
  * invalidates every device issued before it.
  */
 async function findLoginDevice(
@@ -136,7 +132,7 @@ async function findLoginDevice(
 		return undefined;
 	}
 
-	const user = await findUser(db, attempt.handle);
+	const user = await findUser(db, attempt.username);
 	if (!user) {
 		return undefined;
 	}
@@ -178,25 +174,26 @@ export async function checkLoginBudget(
 	db: Db,
 	attempt: LoginAttempt,
 ): Promise<LoginBudget> {
-	const storage = getStorage(db);
-	const requester = await storage.consume(
-		`${LOGIN_KEY_PREFIX}ip:${attempt.ip || UNRESOLVED_IP}`,
+	const requesterAllowed = await spendRateLimit(
+		db,
+		getRateLimitKey("login", "ip", attempt.ip || UNRESOLVED_IP),
 		REQUESTER_RULE,
 	);
-	if (!requester.allowed) {
+	if (!requesterAllowed) {
 		throw new LoginRateLimitedError();
 	}
 
 	const device = await findLoginDevice(db, attempt);
 	const budget = device
-		? { key: `${LOGIN_KEY_PREFIX}device:${digest(device.raw)}` }
-		: { key: getTargetKey(attempt.handle) };
+		? { key: getRateLimitKey("login", "device", digest(device.raw)) }
+		: { key: getTargetKey(attempt.username) };
 
-	const result = await storage.consume(
+	const allowed = await spendRateLimit(
+		db,
 		budget.key,
 		device ? DEVICE_RULE : TARGET_RULE,
 	);
-	if (!result.allowed) {
+	if (!allowed) {
 		throw new LoginRateLimitedError();
 	}
 
@@ -214,14 +211,14 @@ export async function clearLoginFailures(
 	budget: LoginBudget,
 ): Promise<void> {
 	try {
-		await db.delete(authRateLimits).where(eq(authRateLimits.key, budget.key));
+		await clearRateLimit(db, budget.key);
 	} catch (err) {
 		logger.warn({ err }, "could not clear login failures");
 	}
 }
 
 /**
- * Add or renew the browser's device for the handle's account after a correct
+ * Add or renew the browser's device for the username's account after a correct
  * password, and return the new cookie value.
  *
  * Returns `undefined` when the device can't be issued. The session already
@@ -229,10 +226,10 @@ export async function clearLoginFailures(
  */
 export async function rememberLoginDevice(
 	db: Db,
-	attempt: Pick<LoginAttempt, "handle" | "devices" | "secret">,
+	attempt: Pick<LoginAttempt, "username" | "devices" | "secret">,
 ): Promise<string | undefined> {
 	try {
-		const user = await findUser(db, attempt.handle);
+		const user = await findUser(db, attempt.username);
 		if (!user) {
 			return undefined;
 		}

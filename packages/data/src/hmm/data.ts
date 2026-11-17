@@ -34,6 +34,7 @@ import { tasks } from "../db/schema/tasks";
 import { users } from "../db/schema/users";
 import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
+import { selectSetUpUsername } from "../users/username";
 
 /** The task type the runner matches to run an HMM install. */
 export const HMM_INSTALL_TASK_TYPE = "install_hmms";
@@ -66,7 +67,7 @@ export type HmmInstalled = {
 	published_at: string;
 	ready: boolean;
 	size: number;
-	user: { id: number; handle: string };
+	user: { id: number; username: string };
 };
 
 /** Filters and pagination accepted by {@link findHmms}. */
@@ -462,14 +463,17 @@ export async function attachInstallTask(
 	return update;
 }
 
-/** Read a user's handle for attaching to an install response. */
-export async function getUserHandle(db: Db, userId: number): Promise<string> {
+/** Read the installing user's username for attaching to an install response. */
+export async function getInstallerUsername(
+	db: Db,
+	userId: number,
+): Promise<string> {
 	const [row] = await db
-		.select({ handle: users.handle })
+		.select({ username: selectSetUpUsername(users.username) })
 		.from(users)
 		.where(eq(users.id, userId));
 
-	return row?.handle ?? "";
+	return row?.username ?? "";
 }
 
 /** What {@link installHmms} needs to install a release. */

@@ -13,6 +13,11 @@ import {
 	vi,
 } from "vitest";
 
+vi.mock("@server/tasks/functions", async () => {
+	const { taskServerFnMocks } = await import("@tests/server-fn/tasks");
+	return taskServerFnMocks;
+});
+
 const FLUSH_MS = 500;
 
 function createTask(id: number, overrides?: Partial<Task>): Task {

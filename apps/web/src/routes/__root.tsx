@@ -23,13 +23,13 @@ type RouterContext = {
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-	head: () => {
+	head: async () => {
 		// The browser Sentry SDK reads its DSN from this tag (see
 		// `@app/sentryDsn`). Rendering it here — from the server's runtime
-		// `process.env` — is what carries the DSN to the client without baking it
+		// configuration — is what carries the DSN to the client without baking it
 		// into the build. Omitted entirely when unset so dev and unconfigured
 		// deploys render nothing and the SDK stays off.
-		const sentryDsn = readSentryDsn();
+		const sentryDsn = await readSentryDsn();
 		return {
 			meta: [
 				{ charSet: "utf-8" },

@@ -48,6 +48,7 @@ import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getSettings } from "../settings/data";
 import { createTask } from "../tasks/data";
+import { getUserIdentity, selectSetUpUsername } from "../users/username";
 
 /** Filters and pagination accepted by {@link findReferences}. */
 export type FindReferencesOptions = {
@@ -106,7 +107,7 @@ function selectReferences(db: DbOrTx) {
 			restrict_source_types: legacyReferences.restrict_source_types,
 			source_types: legacyReferences.source_types,
 			ownerId: ownerUser.id,
-			ownerHandle: ownerUser.handle,
+			ownerUsername: ownerUser.username,
 			clonedFromId: legacyReferences.cloned_from_id,
 			clonedFromName: clonedRef.name,
 			taskId: tasks.id,
@@ -121,7 +122,7 @@ function selectReferences(db: DbOrTx) {
 			uploadCreatedAt: uploads.createdAt,
 			uploadSize: uploads.size,
 			uploadUserId: uploadUser.id,
-			uploadUserHandle: uploadUser.handle,
+			uploadUsername: uploadUser.username,
 		})
 		.from(legacyReferences)
 		.leftJoin(ownerUser, eq(legacyReferences.user_id, ownerUser.id))
@@ -164,7 +165,7 @@ function mapMinimal(
 					user:
 						row.uploadUserId == null
 							? null
-							: { id: row.uploadUserId, handle: row.uploadUserHandle ?? "" },
+							: { id: row.uploadUserId, username: row.uploadUsername ?? "" },
 				};
 
 	return {
@@ -185,7 +186,7 @@ function mapMinimal(
 		user:
 			row.ownerId == null
 				? null
-				: { id: row.ownerId, handle: row.ownerHandle ?? "" },
+				: { id: row.ownerId, username: row.ownerUsername ?? "" },
 	};
 }
 
@@ -223,7 +224,7 @@ async function getLatestBuilds(
 			version: indexes.version,
 			createdAt: indexes.created_at,
 			userId: users.id,
-			userHandle: users.handle,
+			username: selectSetUpUsername(users.username),
 		})
 		.from(indexes)
 		.innerJoin(users, eq(indexes.user_id, users.id))
@@ -244,7 +245,7 @@ async function getLatestBuilds(
 				id: row.id,
 				version: row.version ?? 0,
 				createdAt: row.createdAt ?? new Date(),
-				user: { id: row.userId, handle: row.userHandle },
+				user: { id: row.userId, username: row.username },
 			});
 		}
 	}
@@ -257,16 +258,20 @@ async function getContributors(
 	referenceId: number,
 ): Promise<ReferenceContributor[]> {
 	const rows = await db
-		.select({ id: users.id, handle: users.handle, value: count() })
+		.select({
+			id: users.id,
+			username: selectSetUpUsername(users.username),
+			value: count(),
+		})
 		.from(legacyHistory)
 		.innerJoin(users, eq(legacyHistory.user_id, users.id))
 		.where(eq(legacyHistory.reference_id, referenceId))
-		.groupBy(users.id, users.handle)
+		.groupBy(users.id, users.username)
 		.orderBy(asc(users.id));
 
 	return rows.map((row) => ({
 		id: row.id,
-		handle: row.handle,
+		username: row.username,
 		count: row.value,
 	}));
 }
@@ -281,7 +286,8 @@ async function getReferenceUsers(
 	const rows = await db
 		.select({
 			id: users.id,
-			handle: users.handle,
+			lifecycleState: users.lifecycleState,
+			username: users.username,
 			build: legacyReferenceUsers.build,
 			modify: legacyReferenceUsers.modify,
 			modifyOtu: legacyReferenceUsers.modify_otu,
@@ -291,7 +297,13 @@ async function getReferenceUsers(
 		.where(eq(legacyReferenceUsers.reference_id, referenceId))
 		.orderBy(asc(users.id));
 
-	return rows.map((row) => ({ ...row, createdAt }));
+	return rows.map((row) => ({
+		...getUserIdentity(row),
+		build: row.build,
+		modify: row.modify,
+		modifyOtu: row.modifyOtu,
+		createdAt,
+	}));
 }
 
 async function getReferenceGroups(
@@ -798,14 +810,25 @@ export async function addReferenceUser(
 ): Promise<ReferenceUser> {
 	const reference = await getReferenceRow(db, referenceId);
 
-	const [user] = await db
-		.select({ id: users.id, handle: users.handle })
+	const [row] = await db
+		.select({
+			id: users.id,
+			lifecycleState: users.lifecycleState,
+			username: users.username,
+		})
 		.from(users)
 		.where(eq(users.id, userId))
 		.limit(1);
 
-	if (!user) {
+	if (!row) {
 		throw new ReferenceMemberConflictError("User does not exist.");
+	}
+
+	const user = getUserIdentity(row);
+	if (user.lifecycleState === "pending") {
+		throw new ReferenceMemberConflictError(
+			"User has not set up their account.",
+		);
 	}
 
 	const resolved: ReferenceRights = {
@@ -835,8 +858,7 @@ export async function addReferenceUser(
 	await emit("references", referenceId, "update");
 
 	return {
-		id: user.id,
-		handle: user.handle,
+		...user,
 		...resolved,
 		createdAt: reference.created_at,
 	};
@@ -906,7 +928,9 @@ export async function updateReferenceUser(
 
 	const [row] = await db
 		.select({
-			handle: users.handle,
+			id: users.id,
+			lifecycleState: users.lifecycleState,
+			username: users.username,
 			build: legacyReferenceUsers.build,
 			modify: legacyReferenceUsers.modify,
 			modifyOtu: legacyReferenceUsers.modify_otu,
@@ -949,8 +973,7 @@ export async function updateReferenceUser(
 	await emit("references", referenceId, "update");
 
 	return {
-		id: userId,
-		handle: row.handle,
+		...getUserIdentity(row),
 		...merged,
 		createdAt: reference.created_at,
 	};

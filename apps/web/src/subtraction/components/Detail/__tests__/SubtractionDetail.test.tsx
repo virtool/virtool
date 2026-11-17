@@ -26,9 +26,11 @@ describe("<SubtractionDetail />", () => {
 		path = formatSubtractionPath(subtraction);
 	});
 
-	it("should render", async () => {
-		const getSubtraction = mockGetSubtraction(subtraction);
-		await renderRoute(path);
+	it("should render the subtraction and its controls when [canModify=true]", async () => {
+		const permissions = createFakePermissions({ modify_subtraction: true });
+		const account = createFakeAccount({ permissions });
+		mockGetSubtraction(subtraction);
+		await renderRoute(path, { account });
 
 		expect(await screen.findByText(subtraction.name)).toBeInTheDocument();
 		expect(await screen.findByText(subtraction.nickname)).toBeInTheDocument();
@@ -39,15 +41,8 @@ describe("<SubtractionDetail />", () => {
 		const fastaName = getSubtractionFastaName(subtraction.name);
 		const download = await screen.findByRole("link", { name: fastaName });
 		expect(download).toHaveAttribute("href", subtraction.files[0]?.downloadUrl);
-
-		expect(getSubtraction).toHaveBeenCalled();
-	});
-
-	it("should render loading when [detail=null]", async () => {
-		await renderRoute(path);
-
-		expect(screen.getByLabelText("loading")).toBeInTheDocument();
-		expect(screen.queryByText(subtraction.name)).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "modify" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
 	});
 
 	it("should render pending message when subtraction is not ready", async () => {
@@ -58,14 +53,12 @@ describe("<SubtractionDetail />", () => {
 				workflow: "create_subtraction",
 			}),
 		});
-		const getSubtraction = mockGetSubtraction(unreadySubtraction);
+		mockGetSubtraction(unreadySubtraction);
 		await renderRoute(formatSubtractionPath(unreadySubtraction));
 
 		expect(
 			await screen.findByText("Subtraction is still being imported"),
 		).toBeInTheDocument();
-
-		expect(getSubtraction).toHaveBeenCalled();
 	});
 
 	it.each([
@@ -81,7 +74,7 @@ describe("<SubtractionDetail />", () => {
 				workflow: "create_subtraction",
 			});
 			const failedSubtraction = createFakeSubtraction({ ready: false, job });
-			const getSubtraction = mockGetSubtraction(failedSubtraction);
+			mockGetSubtraction(failedSubtraction);
 
 			await renderRoute(formatSubtractionPath(failedSubtraction), { account });
 
@@ -104,8 +97,6 @@ describe("<SubtractionDetail />", () => {
 			expect(
 				screen.queryByText("Subtraction is still being imported"),
 			).toBeNull();
-
-			expect(getSubtraction).toHaveBeenCalled();
 		},
 	);
 
@@ -149,31 +140,16 @@ describe("<SubtractionDetail />", () => {
 		expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
 	});
 
-	it("should not render icons when [canModify=true]", async () => {
-		const permissions = createFakePermissions({ modify_subtraction: true });
-		const account = createFakeAccount({ permissions });
-		const getSubtraction = mockGetSubtraction(subtraction);
-		await renderRoute(path, { account });
-
-		expect(await screen.findByText(subtraction.name)).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "modify" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
-
-		expect(getSubtraction).toHaveBeenCalled();
-	});
-
-	it("should not render icons when [canModify=false]", async () => {
+	it("should render no controls when [canModify=false]", async () => {
 		const permissions = createFakePermissions({
 			modify_subtraction: false,
 		});
 		const account = createFakeAccount({ permissions });
-		const getSubtraction = mockGetSubtraction(subtraction);
+		mockGetSubtraction(subtraction);
 		await renderRoute(path, { account });
 
 		expect(await screen.findByText(subtraction.name)).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "modify" })).toBeNull();
 		expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
-
-		expect(getSubtraction).toHaveBeenCalled();
 	});
 });

@@ -2,14 +2,11 @@ import { writeToClipboard } from "@app/clipboard";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 function stubClipboard(clipboard: unknown) {
-	Object.defineProperty(navigator, "clipboard", {
-		configurable: true,
-		value: clipboard,
-	});
+	vi.stubGlobal("navigator", { clipboard });
 }
 
 afterEach(() => {
-	stubClipboard(undefined);
+	vi.unstubAllGlobals();
 });
 
 describe("writeToClipboard()", () => {

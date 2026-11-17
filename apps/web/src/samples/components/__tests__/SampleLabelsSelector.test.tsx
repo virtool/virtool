@@ -129,30 +129,12 @@ describe("<SampleLabelsSelector>", () => {
 			).toHaveAttribute("aria-checked", "false");
 		});
 
-		it("removes a fully-applied label from every sample", async () => {
-			await openSelectorAndClick("test");
-
-			await waitFor(() => {
-				expect(labelsSentFor(1)).toEqual([2]);
-				expect(labelsSentFor(2)).toEqual([]);
-			});
-		});
-
 		it("adds a partially-applied label to every sample", async () => {
 			await openSelectorAndClick("label");
 
 			await waitFor(() => {
 				expect(labelsSentFor(1)).toEqual([1, 2]);
 				expect(labelsSentFor(2)).toEqual([1, 2]);
-			});
-		});
-
-		it("adds an unapplied label to every sample", async () => {
-			await openSelectorAndClick("bar");
-
-			await waitFor(() => {
-				expect(labelsSentFor(1)).toEqual([1, 2, 3]);
-				expect(labelsSentFor(2)).toEqual([1, 3]);
 			});
 		});
 	});

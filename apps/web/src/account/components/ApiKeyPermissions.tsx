@@ -1,6 +1,7 @@
 import { useFetchAccount } from "@account/account";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Checkbox from "@base/Checkbox";
+import { FieldDescription } from "@base/Field";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import type { Permission, Permissions } from "@virtool/contracts";
@@ -68,5 +69,13 @@ export default function ApiKeyPermissions({
 		},
 	);
 
-	return <BoxGroup className={className}>{rowComponents}</BoxGroup>;
+	return (
+		<div className={className}>
+			<FieldDescription className="mt-0 mb-2">
+				Permissions limit what the key can change. The key can read all the data
+				that you can read.
+			</FieldDescription>
+			<BoxGroup>{rowComponents}</BoxGroup>
+		</div>
+	);
 }

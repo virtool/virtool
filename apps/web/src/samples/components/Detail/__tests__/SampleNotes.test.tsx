@@ -9,7 +9,7 @@ describe("<SampleNotes />", () => {
 			<SampleNotes notes={"## Sequencing\n\nRan on Friday."} />,
 		);
 
-		expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+		expect(screen.getByRole("heading", { level: 2 })).toMatchTextContent(
 			"Sequencing",
 		);
 		expect(screen.getByText("Ran on Friday.")).toBeInTheDocument();

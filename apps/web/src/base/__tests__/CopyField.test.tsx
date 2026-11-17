@@ -18,7 +18,7 @@ describe("<CopyField />", () => {
 		await user.click(screen.getByRole("button", { name: "Copy" }));
 
 		expect(clipboard).toHaveBeenLastCalledWith("https://example.com");
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Copied to clipboard.",
 		);
 		expect(onCopy).toHaveBeenCalledOnce();
@@ -34,7 +34,7 @@ describe("<CopyField />", () => {
 
 		await user.click(screen.getByRole("button", { name: "Copy" }));
 
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Could not copy. Select the text and copy it manually.",
 		);
 		expect(onCopy).not.toHaveBeenCalled();
@@ -45,7 +45,7 @@ describe("<CopyField />", () => {
 		const { rerender } = render(<CopyField label="Link" value="first" />);
 
 		await user.click(screen.getByRole("button", { name: "Copy" }));
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Copied to clipboard.",
 		);
 

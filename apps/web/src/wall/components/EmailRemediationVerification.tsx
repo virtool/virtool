@@ -124,7 +124,7 @@ export default function EmailRemediationVerification() {
 					subtitle={
 						state.authenticated
 							? "Your account is ready."
-							: "Your email is verified. Log in to continue."
+							: "Your email is verified. Sign in to continue."
 					}
 				/>
 				<Alert color="green" icon={CircleCheck}>
@@ -134,7 +134,7 @@ export default function EmailRemediationVerification() {
 				</Alert>
 				<div className="flex justify-end">
 					<Button color="blue" onClick={continueJourney}>
-						{state.authenticated ? "Continue" : "Log in"}
+						{state.authenticated ? "Continue" : "Sign in"}
 					</Button>
 				</div>
 			</WallContainer>
@@ -158,7 +158,7 @@ export default function EmailRemediationVerification() {
 			</Alert>
 			<div className="flex justify-end">
 				<Button color="blue" onClick={state.canRetry ? retry : continueJourney}>
-					{state.canRetry ? "Return to email setup" : "Log in"}
+					{state.canRetry ? "Return to email setup" : "Sign in"}
 				</Button>
 			</div>
 		</WallContainer>

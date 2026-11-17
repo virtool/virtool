@@ -46,7 +46,9 @@ function isWallPath(pathname: string): boolean {
 /**
  * Return a normalized local post-authentication redirect, or discard it.
  *
- * Wall paths are discarded because sign-in would return to the wall.
+ * Wall paths are discarded because sign-in would return to the wall. The
+ * result is a full path with a query and a fragment, so navigate to it with
+ * `href`, not `to`.
  */
 export function safeRedirect(value: unknown): string | undefined {
 	if (

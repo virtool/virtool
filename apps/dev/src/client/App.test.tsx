@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -77,7 +75,6 @@ async function renderApp() {
 
 beforeEach(() => {
 	window.history.replaceState(null, "", "/");
-	vi.stubGlobal("scrollTo", vi.fn());
 	Object.assign(snapshot, structuredClone(initial));
 	connection = "live";
 	vi.stubGlobal(
@@ -160,7 +157,7 @@ it("shows actions for ready, stopped, and failed environments", async () => {
 		.click(screen.getByRole("link", { name: "← Back to worktrees" }));
 	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
-	expect(screen.getByRole("alert")).toHaveTextContent("Build failed");
+	expect(screen.getByRole("alert")).toMatchTextContent("Build failed");
 	expect(screen.getByRole("link", { name: "View logs" })).toHaveAttribute(
 		"href",
 		"/logs?environment=worktree",
@@ -205,8 +202,8 @@ it("retains the failed startup stage and final elapsed time", async () => {
 	await renderApp();
 	await openEnvironmentDetails();
 	const timeline = screen.getByRole("region", { name: "Startup timeline" });
-	expect(timeline).toHaveTextContent("5s elapsed");
-	expect(timeline).toHaveTextContent("Run migrations (failed)");
+	expect(timeline).toMatchTextContent("5s elapsed");
+	expect(timeline).toMatchTextContent("Run migrations (failed)");
 });
 
 it("marks disconnected snapshots and disables mutations until reconnected", async () => {
@@ -347,7 +344,7 @@ it("loads environment detail URLs directly", async () => {
 it("shows a not-found message for unknown URLs", async () => {
 	window.history.replaceState(null, "", "/unknown");
 	await renderApp();
-	expect(screen.getByRole("alert")).toHaveTextContent("Page not found.");
+	expect(screen.getByRole("alert")).toMatchTextContent("Page not found.");
 });
 
 it("keeps the shared tab compatible with older daemon snapshots", async () => {
@@ -368,11 +365,11 @@ it("shows infrastructure failures even after initialization", async () => {
 	expect(screen.getByText("Needs attention")).toBeVisible();
 	expect(
 		screen.getByRole("article", { name: "postgres service" }),
-	).toHaveTextContent("postgresVolume usage: 1.5 MBunhealthy");
+	).toMatchTextContent("postgresVolume usage: 1.5 MBunhealthy");
 	expect(
 		screen.getByRole("article", { name: "caddy service" }),
-	).toHaveTextContent("caddyhealthy");
-	expect(screen.getByRole("alert")).toHaveTextContent("Postgres unavailable");
+	).toMatchTextContent("caddyhealthy");
+	expect(screen.getByRole("alert")).toMatchTextContent("Postgres unavailable");
 });
 
 it("reports rejected mutations", async () => {
@@ -387,7 +384,7 @@ it("reports rejected mutations", async () => {
 		screen.getByRole("link", { name: "View details for feature/test" }),
 	);
 	await user.click(screen.getByRole("button", { name: "Stop" }));
-	expect(await screen.findByRole("alert")).toHaveTextContent("Unable to stop");
+	expect(await screen.findByRole("alert")).toMatchTextContent("Unable to stop");
 	expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled();
 });
 
@@ -524,16 +521,16 @@ it("lists uncreated worktrees in their own section", async () => {
 it("saves the default administrator without showing the saved password", async () => {
 	snapshot.defaultAdministrator = {
 		email: "admin@example.com",
-		handle: "admin",
+		username: "admin",
 	};
 	const user = userEvent.setup();
 	await renderApp();
 	await user.click(screen.getByRole("link", { name: "Shared" }));
 
-	expect(screen.getByLabelText("Handle")).toHaveValue("admin");
+	expect(screen.getByLabelText("Username")).toHaveValue("admin");
 	expect(screen.getByLabelText("Password")).toHaveValue("");
-	await user.clear(screen.getByLabelText("Handle"));
-	await user.type(screen.getByLabelText("Handle"), "boss");
+	await user.clear(screen.getByLabelText("Username"));
+	await user.type(screen.getByLabelText("Username"), "boss");
 	await user.click(screen.getByRole("button", { name: "Save" }));
 
 	expect(fetch).toHaveBeenCalledWith(
@@ -541,8 +538,8 @@ it("saves the default administrator without showing the saved password", async (
 		expect.objectContaining({
 			body: JSON.stringify({
 				email: "admin@example.com",
-				handle: "boss",
 				password: "",
+				username: "boss",
 			}),
 		}),
 	);
@@ -553,7 +550,7 @@ it("requires a password before the first default administrator save", async () =
 	const user = userEvent.setup();
 	await renderApp();
 	await user.click(screen.getByRole("link", { name: "Shared" }));
-	await user.type(screen.getByLabelText("Handle"), "admin");
+	await user.type(screen.getByLabelText("Username"), "admin");
 	await user.type(screen.getByLabelText("Email"), "admin@example.com");
 
 	expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
@@ -574,32 +571,23 @@ it("warns that the default administrator password is plain text", async () => {
 
 it("shows why the daemon rejects a default administrator", async () => {
 	vi.mocked(fetch).mockResolvedValueOnce(
-		new Response("Reserved user name: virtool", { status: 422 }),
+		new Response("Reserved username: virtool", { status: 422 }),
 	);
 	const user = userEvent.setup();
 	await renderApp();
 	await user.click(screen.getByRole("link", { name: "Shared" }));
-	await user.type(screen.getByLabelText("Handle"), "virtool");
+	await user.type(screen.getByLabelText("Username"), "virtool");
 	await user.type(screen.getByLabelText("Email"), "admin@example.com");
 	await user.type(screen.getByLabelText("Password"), "hello world");
 	await user.click(screen.getByRole("button", { name: "Save" }));
 
-	expect(await screen.findByRole("alert")).toHaveTextContent(
-		"Reserved user name: virtool",
+	expect(await screen.findByRole("alert")).toMatchTextContent(
+		"Reserved username: virtool",
 	);
 });
 
 describe("create options", () => {
 	beforeEach(() => {
-		Object.assign(HTMLDialogElement.prototype, {
-			close(this: HTMLDialogElement) {
-				this.removeAttribute("open");
-				this.dispatchEvent(new Event("close"));
-			},
-			showModal(this: HTMLDialogElement) {
-				this.setAttribute("open", "");
-			},
-		});
 		snapshot.environments = [
 			{
 				...getEnvironment(),
@@ -613,7 +601,7 @@ describe("create options", () => {
 		];
 		snapshot.defaultAdministrator = {
 			email: "admin@example.com",
-			handle: "admin",
+			username: "admin",
 		};
 	});
 

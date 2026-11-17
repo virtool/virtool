@@ -13,39 +13,6 @@ describe("<OtuDelete />", () => {
 		otu = createFakeOtu();
 	});
 
-	it("should render when [open=true]", () => {
-		renderWithProviders(
-			<OtuDelete
-				id={otu.id}
-				name={otu.name}
-				open
-				onDeleted={vi.fn()}
-				setOpen={vi.fn()}
-			/>,
-		);
-
-		expect(screen.getByText("Delete OTU")).toBeInTheDocument();
-		expect(
-			screen.getByText(/Are you sure you want to delete/),
-		).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
-	});
-
-	it("should not render when [open=false]", () => {
-		renderWithProviders(
-			<OtuDelete
-				id={otu.id}
-				name={otu.name}
-				onDeleted={vi.fn()}
-				setOpen={vi.fn()}
-			/>,
-		);
-
-		expect(screen.queryByText("Delete OTU")).toBeNull();
-		expect(screen.queryByText(/Are you sure you want to delete/)).toBeNull();
-		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
-	});
-
 	it("should call onDeleted after successful removal", async () => {
 		const deleteOtu = mockDeleteOtu();
 		const onDeleted = vi.fn();

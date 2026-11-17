@@ -107,6 +107,18 @@ async function doMigrate(env: MigrateEnvValues, logger: Logger): Promise<void> {
 				registry: DATA_MIGRATIONS,
 			});
 
+			if (result.interrupted) {
+				logger.warn(
+					{
+						applied_through: result.appliedThrough,
+						...(result.blockedAt && { blocked_at: result.blockedAt }),
+					},
+					"migrations were interrupted; rerun migrate to continue",
+				);
+				process.exitCode = 1;
+				return;
+			}
+
 			if (result.blockedAt === undefined) {
 				logger.info(
 					{ applied_through: result.appliedThrough },

@@ -1,6 +1,7 @@
 import { cn } from "@app/cn";
 import { CircleAlert } from "lucide-react";
 import type { ReactNode } from "react";
+import { getErrorMessages } from "./errorMessages";
 import { useFieldContext, useRegisterFieldPart } from "./FieldContext";
 
 /** Props for a `FieldError`. Pass either a message as children or react-hook-form errors. */
@@ -28,13 +29,7 @@ export default function FieldError({
 }: FieldErrorProps) {
 	const field = useFieldContext();
 
-	const messages = [
-		...new Set(
-			(errors ?? [])
-				.map((error) => error?.message)
-				.filter((message): message is string => Boolean(message)),
-		),
-	];
+	const messages = getErrorMessages(errors);
 
 	const content =
 		children ??

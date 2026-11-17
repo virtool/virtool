@@ -15,45 +15,6 @@ describe("<EditSubtraction />", () => {
 		props = { subtraction };
 	});
 
-	it("should render trigger and keep dialog closed initially", () => {
-		renderWithProviders(<EditSubtraction {...props} />);
-
-		expect(screen.getByRole("button", { name: "modify" })).toBeInTheDocument();
-		expect(screen.queryByLabelText("Name")).toBeNull();
-		expect(screen.queryByLabelText("Nickname")).toBeNull();
-	});
-
-	it("should open dialog when trigger is clicked", async () => {
-		renderWithProviders(<EditSubtraction {...props} />);
-
-		await userEvent.click(screen.getByRole("button", { name: "modify" }));
-
-		expect(screen.getByLabelText("Name")).toHaveValue(subtraction.name);
-		expect(screen.getByLabelText("Nickname")).toHaveValue(subtraction.nickname);
-	});
-
-	it("should render after name is changed", async () => {
-		renderWithProviders(<EditSubtraction {...props} />);
-
-		await userEvent.click(screen.getByRole("button", { name: "modify" }));
-
-		const nameInput = screen.getByLabelText("Name");
-		await userEvent.clear(nameInput);
-		await userEvent.type(nameInput, "test");
-		expect(nameInput).toHaveValue("test");
-	});
-
-	it("should render after nickname is changed", async () => {
-		renderWithProviders(<EditSubtraction {...props} />);
-
-		await userEvent.click(screen.getByRole("button", { name: "modify" }));
-
-		const nicknameInput = screen.getByLabelText("Nickname");
-		await userEvent.clear(nicknameInput);
-		await userEvent.type(nicknameInput, "test");
-		expect(nicknameInput).toHaveValue("test");
-	});
-
 	it("should update subtraction and close dialog when form is submitted", async () => {
 		const updateSubtraction = mockUpdateSubtraction(subtraction);
 		renderWithProviders(<EditSubtraction {...props} />);
@@ -61,6 +22,8 @@ describe("<EditSubtraction />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "modify" }));
 
 		const nameInput = screen.getByLabelText("Name");
+		expect(nameInput).toHaveValue(subtraction.name);
+		expect(screen.getByLabelText("Nickname")).toHaveValue(subtraction.nickname);
 		await userEvent.clear(nameInput);
 		await userEvent.type(nameInput, "newName");
 
@@ -78,16 +41,5 @@ describe("<EditSubtraction />", () => {
 				nickname: "newNickname",
 			},
 		});
-	});
-
-	it("should close dialog on escape", async () => {
-		renderWithProviders(<EditSubtraction {...props} />);
-
-		await userEvent.click(screen.getByRole("button", { name: "modify" }));
-		expect(screen.getByLabelText("Name")).toBeInTheDocument();
-
-		await userEvent.keyboard("{Escape}");
-
-		await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
 	});
 });

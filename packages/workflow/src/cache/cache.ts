@@ -195,7 +195,12 @@ export type RestoreOrBuildOptions = {
 	/** The artifact's namespace, for logs and errors. */
 	kind: string;
 	params: CacheParams;
-	/** The artifact's directory, which the blob archives whole. */
+	/**
+	 * The artifact's directory, which the blob archives whole.
+	 *
+	 * Its basename is the blob's top-level entry, so a workflow's work-path layout
+	 * is part of its cache contract.
+	 */
 	directory: string;
 	logger: Logger;
 	/** Write the artifact into `directory`, called only once the cache has missed. */
@@ -204,6 +209,8 @@ export type RestoreOrBuildOptions = {
 
 /**
  * Restore an artifact directory from the cache, or build it and cache it.
+ *
+ * Use this for every cached artifact.
  *
  * The blob is restored into the directory's parent, so its one top-level entry
  * recreates the directory itself.

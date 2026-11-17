@@ -13,6 +13,11 @@ import {
 	vi,
 } from "vitest";
 
+vi.mock("@server/jobs/functions", async () => {
+	const { jobServerFnMocks } = await import("@tests/server-fn/jobs");
+	return jobServerFnMocks;
+});
+
 const FLUSH_MS = 500;
 
 function createJob(id: number, overrides?: Partial<Job>): Job {
@@ -26,7 +31,7 @@ function createJob(id: number, overrides?: Partial<Job>): Job {
 		progress: 50,
 		state: "running",
 		steps: null,
-		user: { id: 7, handle: "bob" },
+		user: { id: 7, username: "bob" },
 		workflow: "pathoscope",
 		...overrides,
 	};
@@ -142,6 +147,37 @@ describe("createJobRefreshQueue", () => {
 		await vi.advanceTimersByTimeAsync(FLUSH_MS);
 
 		expect(jobServerFnMocks.getJobsFn).not.toHaveBeenCalled();
+	});
+
+	it("refetches an unmounted job's detail when it mounts again", async () => {
+		mockGetJobs([createJob(1, { state: "succeeded" })]);
+		watch(1);
+
+		for (const unsubscribe of unsubscribes.splice(0)) {
+			unsubscribe();
+		}
+
+		const queue = createJobRefreshQueue(queryClient);
+		queue(1);
+
+		await vi.advanceTimersByTimeAsync(FLUSH_MS);
+
+		expect(jobServerFnMocks.getJobsFn).not.toHaveBeenCalled();
+
+		const queryFn = vi.fn(async () => createJob(1, { state: "succeeded" }));
+		const observer = new QueryObserver(queryClient, {
+			queryKey: jobQueryKeys.detail(1),
+			queryFn,
+			staleTime: Number.POSITIVE_INFINITY,
+		});
+		unsubscribes.push(observer.subscribe(() => {}));
+
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(queryFn).toHaveBeenCalledOnce();
+		expect(queryClient.getQueryData(jobQueryKeys.detail(1))).toMatchObject({
+			state: "succeeded",
+		});
 	});
 
 	it("marks a cached jobs list stale so its counts and ordering catch up", async () => {

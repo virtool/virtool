@@ -1,6 +1,22 @@
 import { defineConfig } from "drizzle-kit";
 
 /*
+ To create a migration:
+
+ 1. Change the schema mirror.
+ 2. Run `pnpm --filter @virtool/data db:generate --name <name>`.
+ 3. Edit the SQL only for what generation cannot express, such as a
+    data-migration assertion.
+ 4. Commit the SQL, `meta/_journal.json`, and the matching snapshot together.
+    Generation diffs against the latest snapshot, so an entry with no snapshot
+    makes the next generation emit duplicate DDL.
+ 5. Run `db:generate` again. It must report no schema changes.
+
+ `drizzle-orm` and `drizzle-kit` share schema-generation internals. Keep them on
+ compatible versions, and read the release notes of both when you update either.
+*/
+
+/*
  `generate` reads the schema and never connects, so an unset URL is not an
  error here. Only `migrate`, `push`, `pull` and `studio` connect, and they fail
  on the empty string with a connection error that names it.

@@ -51,11 +51,11 @@ afterAll(async () => {
 });
 
 async function seedMigratedUser(
-	options: { handle?: string; email?: string; emailVerified?: boolean } = {},
+	options: { username?: string; email?: string; emailVerified?: boolean } = {},
 ) {
 	const password = await hashPassword("current-password-123");
 	const userId = await seedUser(db, {
-		handle: options.handle ?? "ada",
+		username: options.username ?? "ada",
 		email: options.email ?? "ada@example.com",
 		password,
 	});
@@ -290,7 +290,7 @@ describe("password recovery", () => {
 	it("rechecks issuer authority after target role changes", async () => {
 		const userId = await seedMigratedUser();
 		const issuerUserId = await seedUser(db, {
-			handle: "issuer",
+			username: "issuer",
 			administratorRole: "users",
 		});
 		await setAdministratorRole(db, userId, "full");
@@ -325,14 +325,18 @@ describe("password recovery", () => {
 		const [storedToken] = await db.select().from(setupTokens);
 		expect(storedToken?.tokenHash).not.toBe(issued.token);
 		const [mail] = await db.select().from(emailOutbox);
-		expect(mail?.template.type).toBe("password_recovery");
+		expect(mail?.template).toMatchObject({
+			type: "password_recovery",
+			expiresInHours: 7,
+		});
 
-		await completePasswordRecovery(
+		const completed = await completePasswordRecovery(
 			db,
 			issued.token,
 			"password_recovery",
 			"replacement-password-123",
 		);
+		expect(completed).toEqual({ userId, emailVerificationCancelled: false });
 		const [user] = await db.select().from(users).where(eq(users.id, userId));
 		expect(
 			await verifyPassword(
@@ -355,6 +359,35 @@ describe("password recovery", () => {
 				"another-password-123",
 			),
 		).rejects.toBeInstanceOf(SetupCredentialError);
+	});
+
+	it("reports a pending email verification that recovery cancels", async () => {
+		const userId = await seedMigratedUser();
+		await beginEmailVerification(db, {
+			userId,
+			email: "new@example.com",
+			deliveryAvailable: true,
+			keyring,
+			getVerificationUrl: (token) =>
+				`https://virtool.test/verify-email#token=${token}`,
+		});
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "password_recovery",
+			deliveryAvailable: true,
+			keyring,
+			getRecoveryUrl: (token) => `https://virtool.test/recover#token=${token}`,
+		});
+
+		const completed = await completePasswordRecovery(
+			db,
+			issued.token,
+			"password_recovery",
+			"replacement-password-123",
+		);
+
+		expect(completed.emailVerificationCancelled).toBe(true);
+		expect(await db.select().from(setupTokens)).toHaveLength(0);
 	});
 
 	it("issues copy-only administrator recovery while mail is disabled", async () => {

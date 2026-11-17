@@ -62,7 +62,7 @@ function job(overrides: Record<string, unknown> = {}) {
 		progress: 0,
 		state: "running",
 		steps: null,
-		user: { id: 1, handle: "bob", administrator_role: null },
+		user: { id: 1, username: "bob", administrator_role: null },
 		workflow: "create_subtraction",
 		...overrides,
 	};
@@ -231,6 +231,20 @@ describe("response parsing", () => {
 			progress: 42,
 			args: { sample_id: "foo" },
 		});
+	});
+
+	it("reads the username from a jobs API that sends only the handle", async () => {
+		const client = await setup((_, response) =>
+			respondJson(
+				response,
+				200,
+				job({ user: { id: 1, handle: "bob", administrator_role: null } }),
+			),
+		);
+
+		const read = await client.getJob();
+
+		expect(read.user.username).toBe("bob");
 	});
 
 	it("rejects a body the schema does not accept", async () => {

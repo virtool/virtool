@@ -5,26 +5,9 @@ import { mockGetAccount, userServerFnMocks } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 import AccountSettings from "../AccountSettings";
-import { moveColumn } from "../PathoscopeColumns";
 
 describe("<AccountSettings />", () => {
-	it("should show the current acronym preference", async () => {
-		const account = createFakeAccount();
-		mockGetAccount({
-			...account,
-			settings: { ...account.settings, preferAcronym: true },
-		});
-
-		renderWithProviders(<AccountSettings />);
-
-		expect(
-			await screen.findByRole("switch", {
-				name: "Prefer acronym",
-			}),
-		).toBeChecked();
-	});
-
-	it("should save the acronym preference when toggled", async () => {
+	it("should show and save the acronym preference when toggled", async () => {
 		const account = createFakeAccount();
 		const settings = { ...account.settings, preferAcronym: false };
 		mockGetAccount({ ...account, settings });
@@ -48,6 +31,34 @@ describe("<AccountSettings />", () => {
 			}),
 		);
 		expect(toggle).toBeChecked();
+	});
+
+	it("should save the time format when one is chosen", async () => {
+		const account = createFakeAccount();
+		mockGetAccount(account);
+		const saved = { ...account.settings, timeFormat: "absolute" as const };
+		userServerFnMocks.updateAccountSettingsFn.mockResolvedValue(saved);
+
+		renderWithProviders(<AccountSettings />);
+
+		const group = await screen.findByRole("group", {
+			name: "Time format",
+		});
+		expect(within(group).getByRole("radio", { checked: true })).toHaveValue(
+			"relative",
+		);
+
+		mockGetAccount({ ...account, settings: saved });
+
+		await userEvent.click(
+			within(group).getByRole("radio", { name: /Date and time/ }),
+		);
+
+		await waitFor(() =>
+			expect(userServerFnMocks.updateAccountSettingsFn).toHaveBeenCalledWith({
+				data: { timeFormat: "absolute" },
+			}),
+		);
 	});
 
 	it("should list the copied columns in order and the hidden ones apart", async () => {
@@ -80,51 +91,5 @@ describe("<AccountSettings />", () => {
 			),
 		).toEqual([false, false, true, true]);
 		expect(within(divider).getByText("Hidden columns")).toBeInTheDocument();
-	});
-});
-
-describe("moveColumn()", () => {
-	const order = ["name", "weight", "coverage", "divider", "depth"] as const;
-
-	it("should reorder within the copied columns", () => {
-		expect(moveColumn([...order], "coverage", "name")).toEqual([
-			"coverage",
-			"name",
-			"weight",
-			"divider",
-			"depth",
-		]);
-	});
-
-	it("should hide a column moved below the divider", () => {
-		expect(moveColumn([...order], "weight", "depth")).toEqual([
-			"name",
-			"coverage",
-			"divider",
-			"depth",
-			"weight",
-		]);
-	});
-
-	it("should show a column moved above the divider", () => {
-		expect(moveColumn([...order], "depth", "weight")).toEqual([
-			"name",
-			"depth",
-			"weight",
-			"coverage",
-			"divider",
-		]);
-	});
-
-	it("should never hide the last shown column", () => {
-		const current = [
-			"weight",
-			"divider",
-			"name",
-			"coverage",
-			"depth",
-		] as Parameters<typeof moveColumn>[0];
-
-		expect(moveColumn(current, "weight", "name")).toBe(current);
 	});
 });

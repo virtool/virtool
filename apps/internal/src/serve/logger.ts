@@ -10,9 +10,7 @@ import { createSentryLogStream } from "@virtool/sentry/log";
  * string identifies the service across logs, errors and pool metrics.
  *
  * With a DSN configured, records at `info` and above are fanned out to Sentry's
- * structured logging API alongside stdout; `debug` and `trace` stay local. The
- * DSN is passed in rather than read here because it has already been through
- * the `<KEY>_FILE` resolution in `config.ts`, which `readDsn` would skip. No
+ * structured logging API alongside stdout; `debug` and `trace` stay local. No
  * DSN means no stream at all, so dev and CI log to stdout only.
  */
 export function createAppLogger(sentryDsn: string | undefined): Logger {

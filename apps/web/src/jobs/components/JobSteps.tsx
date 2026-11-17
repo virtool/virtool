@@ -1,6 +1,6 @@
 import { useNow } from "@app/hooks";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
-import RelativeTime from "@base/RelativeTime";
+import Time from "@base/Time";
 import type { JobState, JobStep } from "@virtool/contracts";
 import JobStateIcon from "./JobStateIcon";
 import JobStepItem from "./JobStep";
@@ -36,7 +36,7 @@ function JobStatus({ finishedAt, state }: JobStatusProps) {
 					"A runner has claimed this job. Its steps will appear as they start."
 				) : finishedAt ? (
 					<>
-						This job finished <RelativeTime time={finishedAt} />.
+						This job finished <Time sentence time={finishedAt} />.
 					</>
 				) : null}
 			</p>

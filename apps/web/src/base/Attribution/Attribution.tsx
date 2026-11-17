@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import { UserAvatar } from "@base/Icon";
-import RelativeTime from "@base/RelativeTime";
+import Time from "@base/Time";
 import { capitalize } from "es-toolkit";
 
 type AttributionProps = {
@@ -28,13 +28,13 @@ export default function Attribution({
 }: AttributionProps) {
 	return (
 		<span className={cn(className, "inline-flex", "items-center gap-2")}>
-			{user ? <UserAvatar size="md" handle={user} /> : null}
+			{user ? <UserAvatar size="md" username={user} /> : null}
 			<span>
 				{user} {user ? verb : capitalize(verb)}
 				{time === null ? null : (
 					<>
 						{" "}
-						<RelativeTime time={time} />
+						<Time sentence time={time} />
 					</>
 				)}
 			</span>

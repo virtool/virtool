@@ -1,97 +1,86 @@
 ---
 title: "Subtractions"
 description: "Create and view subtractions."
+order: 9
 ---
 
 ## Overview
 
-Subtractions are whole genome references used for eliminating reads from analyses that are
-likely to have originated from the host genome or non-pathogenic organisms associated with
-the host such as insects or fungi.
+A subtraction is a whole genome that Virtool uses to remove reads from analyses. Use it
+for reads that are likely to come from the host, or from non-pathogenic organisms that
+live on the host, such as insects or fungi.
 
-A list of subtractions made can be found on the Subtraction Overview page.
-![Subtraction Overview](./subtraction_overview.png?url)
+To see your subtractions, click **Subtractions** in the main navigation bar. You can
+search the list by name.
+
+The subtraction pages are in the sidebar:
+
+- **Browse**: the list of subtractions.
+- **Files**: the FASTA files that you can use to make subtractions.
+
+To create, edit, or delete a subtraction, you must have the `modify_subtraction`
+[permission](/docs/guide/users#permissions).
+
+## Upload a FASTA file
+
+1. Get a FASTA file that contains the genome sequences.
+
+   For example, you can download the
+   [_Arabidopsis thaliana_ genome](ftp://ftp.ensemblgenomes.org/pub/plants/release-37/fasta/arabidopsis_thaliana/dna/).
+   Make sure that the file includes the mitochondrial and chloroplast sequences.
+
+2. Go to **Files**.
+3. Drag the file onto the upload bar, or click **Browse Files** and select the file.
+
+Virtool accepts plain or gzipped FASTA files that end in `.fa`, `.fasta`, `.fa.gz`, or
+`.fasta.gz`. Your Virtool instance can set a maximum file size.
+
+You must have the `upload_file` permission to upload files. To see the progress of an
+upload, refer to [Track uploads](/docs/guide/samples#track-uploads).
 
 ## Create a subtraction
 
-1. Find a FASTA file containing the sequences to subtract.
+1. Go to **Browse**.
+2. Click **Create**.
+3. Type a **Name**.
+4. Optional: type a **Nickname**. The nickname is an alternative name for the
+   subtraction.
+5. Under **Files**, select the FASTA file.
+6. Click **Save**.
 
-   For example, you can download the [_Arabidopsis thaliana_ genome](ftp://ftp.ensemblgenomes.org/pub/plants/release-37/fasta/arabidopsis_thaliana/dna/).
-   Make sure mitochondrial and chloroplast sequences are included.
+Virtool starts a Create Subtraction [job](/docs/guide/jobs). The list shows the progress
+of the job beside the subtraction. When the job is complete, the progress indicator goes
+away and you can use the subtraction.
 
-2. Go to the **Subtraction** view via the main navigation bar. You should see the
-   following:
-
-   ![Main subtraction view](./empty.png?url)
-
-3. Click the **Files** link in the left sidebar to go to the subtraction file manager.
-
-   Upload the FASTA file.
-
-   ![Subtraction file manager](./upload_manager.png?url)
-
-4. Click <DummyButton icon="plus-square" /> in the **Subtractions** view
-
-   You see the subtraction creation dialog.
-
-   ![Create Subtraction](./create.png?url)
-
-5. Enter a unique name and an optional nickname, select the FASTA file, and click <DummyButton icon="play">Start</DummyButton>
-   to start the job.
-
-   ![Filled create subtraction dialog box](./create_filled.png?url)
-
-6. Wait for the subtraction to be <Icon name="check" color="green" /> **Ready** before you
-   try to use it.
-
-   While the subtraction is being created it has an **Importing** label.
-   ![Importing](./importing.png?url)
-
-   Wait for the job to complete before trying to use the new subtraction. You can view its
-   progress by going to the **Jobs** view.
-   ![Jobs View](./job.png?url)
-
-   The subtraction has the **Ready** label when it's ready to use.
-   ![Subtraction Ready](./ready.png?url)
+If the job fails or is cancelled, the list shows **Failed** or **Cancelled** beside the
+subtraction. You can't use this subtraction. Delete it and create a new one.
 
 ## View a subtraction
 
-1. Click a subtraction to view its details.
+Click a subtraction in the list to see its details:
 
-   ![Subtraction Details](./detail.png?url)
+- **Nickname**: the alternative name of the subtraction.
+- **File**: the FASTA file of the subtraction. Click the file name to download it.
+- **Sequence Count**: the number of sequences in the subtraction.
+- **GC Estimate**: the estimated GC content of the genome.
+- **Linked Samples**: the number of samples that use this subtraction.
+
+While the job runs, the page shows **Subtraction is still being imported**.
 
 ## Edit a subtraction
 
-1. Click **Subtractions** in the main navigation bar, then click the subtraction
-   to edit.
+You can change the name and nickname of a subtraction.
 
-   ![Overview of Subtraction](./edit1.png?url)
-
-2. Click the <Icon name="pencil-alt" color="orange" /> icon to open the
-   **Edit Subtraction** dialog.
-   ![Edit a Subtraction](./edit.png?url)
-
-3. Update the field and click <DummySaveButton /> to save the changes.
-
-   ![Edit Subtraction](./edit_filled.png?url)
-
-4. See your edits reflected in the subtraction detail view.
-
-   ![Edits Shown on Subtractions Detail Page](./text_filled.png?url)
+1. Open the subtraction.
+2. Click the pencil icon (**modify**) beside the name.
+3. Change the **Name** or **Nickname**.
+4. Click **Save**.
 
 ## Delete a subtraction
 
-1. Navigate to the detailed view for the subtraction you wish to delete.
+1. Open the subtraction.
+2. Click the trash icon (**Delete**) beside the name.
+3. Click **Confirm**.
 
-2. To delete the subtraction click the <Icon name="trash" color="red" /> icon on the
-   subtraction details page.
-
-   ![Delete Subtraction](./red_trash_can.png?url)
-
-3. Click <DummyButton color="red" icon="check">Confirm</DummyButton> in the confirmation
-   dialog to delete the subtraction.
-
-   ![Confirm Deletion of Subtraction](./confirm.png?url)
-
-   After confirming the deletion of a subtraction, it's no longer shown on the
-   subtraction overview page.
+Virtool removes the subtraction from the samples that use it. Analyses that already used
+the subtraction keep their results.

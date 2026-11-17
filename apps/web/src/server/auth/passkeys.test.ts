@@ -20,6 +20,7 @@ import {
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { silenceLogs } from "../test/silenceLogs";
 import { createAuth, createAuthRequestHandler } from "./betterAuth";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { sessionCookie } from "./test/fixtures";
@@ -185,10 +186,10 @@ async function passkeyRows() {
 }
 
 describe("registration", () => {
-	it("asks for a verified, discoverable credential labelled with the handle", async () => {
+	it("asks for a verified, discoverable credential labelled with the username", async () => {
 		const userId = await seedUser(db, {
 			email: "alice@example.com",
-			handle: "Alice",
+			username: "alice",
 		});
 		const options = await registrationOptions(
 			await signedInBrowser(userId),
@@ -196,7 +197,7 @@ describe("registration", () => {
 		);
 
 		expect(options.rp).toEqual({ id: RP_ID, name: "Virtool" });
-		expect(options.user.name).toBe("Alice");
+		expect(options.user.name).toBe("alice");
 		expect(options.authenticatorSelection).toMatchObject({
 			residentKey: "required",
 			userVerification: "required",
@@ -265,7 +266,7 @@ describe("registration", () => {
 
 		expect(response.status).toBe(400);
 		expect(await response.json()).toMatchObject({
-			code: "USER_VERIFICATION_REQUIRED",
+			code: "FAILED_TO_VERIFY_REGISTRATION",
 		});
 		expect(await passkeyRows()).toEqual([]);
 	});
@@ -274,6 +275,7 @@ describe("registration", () => {
 		["another origin", { origin: "https://evil.test" }],
 		["another RP ID", { rpId: "evil.test" }],
 	])("refuses a response bound to %s", async (_, ceremony) => {
+		silenceLogs();
 		const userId = await seedUser(db);
 
 		const response = await register(userId, authenticator(), ceremony);
@@ -321,8 +323,8 @@ describe("registration", () => {
 	});
 
 	it("refuses a credential id another user already holds", async () => {
-		const alice = await seedUser(db, { handle: "alice" });
-		const bob = await seedUser(db, { handle: "bob" });
+		const alice = await seedUser(db, { username: "alice" });
+		const bob = await seedUser(db, { username: "bob" });
 		const credentialId = new Uint8Array(32).fill(7);
 
 		await register(alice, authenticator(credentialId));
@@ -390,7 +392,7 @@ describe("sign-in", () => {
 
 		expect(await response.json()).toMatchObject({
 			rpId: RP_ID,
-			userVerification: "preferred",
+			userVerification: "required",
 		});
 	});
 
@@ -399,6 +401,7 @@ describe("sign-in", () => {
 		["from another origin", { origin: "https://evil.test" }],
 		["for another RP ID", { rpId: "evil.test" }],
 	])("refuses an assertion %s", async (_, ceremony) => {
+		silenceLogs();
 		const { key } = await enroll();
 
 		const { response } = await signIn(key, ceremony);
@@ -416,7 +419,10 @@ describe("sign-in", () => {
 
 	it.each([
 		["deactivated", { active: false }],
-		["pending", { lifecycleState: "pending" as const, password: null }],
+		[
+			"pending",
+			{ lifecycleState: "pending" as const, password: null, username: null },
+		],
 	])(
 		"refuses a %s user with the invalid-credentials response",
 		async (_, state) => {
@@ -478,21 +484,18 @@ describe("sign-in", () => {
 		expect(browser.has("__Secure-better-auth.two_factor")).toBe(false);
 	});
 
-	it("restricts a user the MFA policy requires to enroll, as a password sign-in would", async () => {
+	it("does not restrict a passkey user without TOTP under the required MFA policy", async () => {
 		const { key } = await enroll();
 		await seedSettings(db, { mfaPolicy: "required" });
 
 		const { browser } = await signIn(key);
-		const restricted = await browser.send(
+		const response = await browser.send(
 			"POST",
 			"/passkey/verify-registration",
 			{},
 		);
 
-		expect(restricted.status).toBe(403);
-		expect(await restricted.json()).toMatchObject({
-			code: "MFA_ENROLLMENT_REQUIRED",
-		});
+		expect(response.status).not.toBe(403);
 	});
 
 	it.each([
@@ -560,8 +563,8 @@ describe("recent authentication", () => {
 	}
 
 	it("asks only for the session user's passkeys, with user verification", async () => {
-		const alice = await enroll({ handle: "alice" });
-		await enroll({ handle: "bob" });
+		const alice = await enroll({ username: "alice" });
+		await enroll({ username: "bob" });
 		const browser = await signedInBrowser(alice.userId);
 
 		const options = await stepUpOptions(browser);
@@ -607,6 +610,25 @@ describe("recent authentication", () => {
 		expect(await db.select().from(authVerifications)).toEqual([]);
 	});
 
+	it("accepts a passkey while password and TOTP attempts are locked", async () => {
+		const { key, userId } = await enroll();
+		const browser = await signedInBrowser(userId);
+		await db.insert(authRateLimits).values({
+			key: `virtool:step-up:user:${userId}`,
+			count: 10,
+			lastRequest: Date.now(),
+		});
+
+		const locked = await browser.send("POST", CHALLENGE_PATH, {
+			method: "password",
+			password: "any-password",
+		});
+		expect(locked.status).toBe(429);
+
+		const { response } = await stepUp(browser, key);
+		expect(response.status).toBe(200);
+	});
+
 	it("does not create a session", async () => {
 		const { key, userId } = await enroll();
 		const browser = await signedInBrowser(userId);
@@ -617,8 +639,8 @@ describe("recent authentication", () => {
 	});
 
 	it("refuses a passkey that belongs to another user", async () => {
-		const alice = await enroll({ handle: "alice" });
-		const bob = await enroll({ handle: "bob" });
+		const alice = await enroll({ username: "alice" });
+		const bob = await enroll({ username: "bob" });
 		const browser = await signedInBrowser(alice.userId);
 
 		const { response } = await stepUp(browser, bob.key);
@@ -630,8 +652,8 @@ describe("recent authentication", () => {
 	});
 
 	it("refuses options issued to another user's session", async () => {
-		const alice = await enroll({ handle: "alice" });
-		const bob = await enroll({ handle: "bob" });
+		const alice = await enroll({ username: "alice" });
+		const bob = await enroll({ username: "bob" });
 		const aliceBrowser = await signedInBrowser(alice.userId);
 		const bobBrowser = await signedInBrowser(bob.userId);
 		const options = await stepUpOptions(bobBrowser);

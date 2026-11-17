@@ -9,16 +9,12 @@ import { describe, expect, it, vi } from "vitest";
 type Field = "name" | "size";
 
 type HeadersProps = {
-	direction?: SortDirection;
-	onSort?: (field: Field) => void;
+	direction: SortDirection;
+	onSort: (field: Field) => void;
 	sort: Field | undefined;
 };
 
-function Headers({
-	direction = "ascending",
-	onSort = vi.fn(),
-	sort,
-}: HeadersProps) {
+function Headers({ direction, onSort, sort }: HeadersProps) {
 	return (
 		<table>
 			<thead>
@@ -60,69 +56,41 @@ function HeadersEnvironment() {
 	return <Headers direction={direction} onSort={handleSort} sort={sort} />;
 }
 
+function getHeader(name: string) {
+	return screen.getByRole("columnheader", { name });
+}
+
 describe("<SortableHead />", () => {
-	it("marks only the active column as sorted", () => {
-		renderWithProviders(<Headers direction="ascending" sort="name" />);
+	// The arrow only ever describes the column it sits in, and `aria-sort`
+	// already announces that, so it must not reach the accessible name.
+	it("marks only the active column with its direction", () => {
+		renderWithProviders(
+			<Headers direction="descending" onSort={vi.fn()} sort="size" />,
+		);
 
-		expect(screen.getByRole("columnheader", { name: "Name" })).toHaveAttribute(
-			"aria-sort",
-			"ascending",
-		);
-		expect(screen.getByRole("columnheader", { name: "Size" })).toHaveAttribute(
-			"aria-sort",
-			"none",
-		);
+		expect(getHeader("Size")).toHaveAttribute("aria-sort", "descending");
+		expect(getHeader("Name")).toHaveAttribute("aria-sort", "none");
+		expect(screen.getByRole("button", { name: "Size" })).toBeInTheDocument();
 	});
 
-	it("carries the direction of the active column", () => {
-		renderWithProviders(<Headers direction="descending" sort="size" />);
+	it("sorts by a clicked column, then reverses it on the next click", async () => {
+		renderWithProviders(<HeadersEnvironment />);
 
-		expect(screen.getByRole("columnheader", { name: "Size" })).toHaveAttribute(
-			"aria-sort",
-			"descending",
-		);
-	});
+		expect(getHeader("Name")).toHaveAttribute("aria-sort", "none");
+		expect(getHeader("Size")).toHaveAttribute("aria-sort", "none");
 
-	it("leaves every column unsorted when there is no active column", () => {
-		renderWithProviders(<Headers sort={undefined} />);
+		await userEvent.click(screen.getByRole("button", { name: "Name" }));
 
-		for (const name of ["Name", "Size"]) {
-			expect(screen.getByRole("columnheader", { name })).toHaveAttribute(
-				"aria-sort",
-				"none",
-			);
-		}
-	});
+		expect(getHeader("Name")).toHaveAttribute("aria-sort", "ascending");
+		expect(getHeader("Size")).toHaveAttribute("aria-sort", "none");
 
-	it("reports its own field when clicked", async () => {
-		const onSort = vi.fn();
+		await userEvent.click(screen.getByRole("button", { name: "Name" }));
 
-		renderWithProviders(<Headers onSort={onSort} sort="name" />);
+		expect(getHeader("Name")).toHaveAttribute("aria-sort", "descending");
 
 		await userEvent.click(screen.getByRole("button", { name: "Size" }));
 
-		expect(onSort).toHaveBeenCalledWith("size");
-	});
-
-	it("sorts by a new column, then reverses it on the next click", async () => {
-		renderWithProviders(<HeadersEnvironment />);
-
-		const name = () => screen.getByRole("columnheader", { name: "Name" });
-
-		expect(name()).toHaveAttribute("aria-sort", "none");
-
-		await userEvent.click(screen.getByRole("button", { name: "Name" }));
-		expect(name()).toHaveAttribute("aria-sort", "ascending");
-
-		await userEvent.click(screen.getByRole("button", { name: "Name" }));
-		expect(name()).toHaveAttribute("aria-sort", "descending");
-	});
-
-	// The arrow only ever describes the column it sits in, and `aria-sort`
-	// already announces that, so it must not reach the accessible name.
-	it("keeps the direction arrow out of the header's accessible name", () => {
-		renderWithProviders(<Headers direction="ascending" sort="name" />);
-
-		expect(screen.getByRole("button", { name: "Name" })).toBeInTheDocument();
+		expect(getHeader("Size")).toHaveAttribute("aria-sort", "ascending");
+		expect(getHeader("Name")).toHaveAttribute("aria-sort", "none");
 	});
 });

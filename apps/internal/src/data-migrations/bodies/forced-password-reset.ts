@@ -93,7 +93,14 @@ async function runBatch({
 	});
 }
 
-/** Replace the password of every user flagged for a forced reset. */
+/**
+ * Replace the password of every user flagged for a forced reset.
+ *
+ * An earlier SQL migration adds a `NOT VALID` check that keeps `force_reset`
+ * false for new writes, so a server from an earlier release can't flag a user
+ * behind the cursor during a rolling deploy. The paired SQL validates the check
+ * after this backfill passes.
+ */
 export const forcedPasswordReset = defineBackfill({
 	key: "forced_password_reset",
 	version: 1,

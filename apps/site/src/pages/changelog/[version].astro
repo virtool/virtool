@@ -32,11 +32,16 @@ const { newer, older, posts, release, sections } = Astro.props;
   heading={release.version}
   sections={sections}
 >
-  <ReleaseContent
-    release={release}
-    posts={posts}
-    alwaysShowMaintenance={isMaintenanceOnly(release)}
-  />
+  <div
+    data-pagefind-body
+    data-pagefind-meta={`title:Virtool ${release.version}`}
+  >
+    <ReleaseContent
+      release={release}
+      posts={posts}
+      alwaysShowMaintenance={isMaintenanceOnly(release)}
+    />
+  </div>
   <nav class="not-prose mt-12 flex items-center justify-between text-stone-600">
     {
       newer ? (

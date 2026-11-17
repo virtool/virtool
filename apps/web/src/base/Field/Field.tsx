@@ -14,7 +14,11 @@ export type FieldProps = ComponentProps<"div"> & {
  * Child `FieldLabel`, `FieldTitle`, `FieldDescription`, `FieldError`, and form
  * controls read the generated ids from context, so they connect without manual
  * `id`, `htmlFor`, `aria-invalid`, `aria-describedby`, or `aria-labelledby`
- * props.
+ * props. A control built on a new primitive gets these props from
+ * `useFieldControl`.
+ *
+ * Use `orientation="horizontal"` for a checkbox, switch, or radio row. Put a
+ * checkbox or radio before its label, and a switch after its label.
  */
 export default function Field({
 	className,

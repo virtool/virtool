@@ -13,9 +13,9 @@ import {
 import FadeOut from "@base/FadeOut";
 import Field, { FieldError, FieldLabel } from "@base/Field";
 import { InputPassword } from "@base/Input";
-import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
+import Time from "@base/Time";
 import { usePasswordRules } from "@forms/password";
 import { Check } from "lucide-react";
 import { useState } from "react";
@@ -119,7 +119,7 @@ export default function AccountPassword({
 				<BoxGroupSection className="flex items-center justify-between gap-4">
 					<div className="flex flex-col gap-1">
 						<span>
-							Last changed <RelativeTime time={lastPasswordChange} />
+							Last changed <Time sentence time={lastPasswordChange} />
 						</span>
 						<FadeOut className="text-green-700 text-sm" role="status">
 							{mutation.isSuccess ? (

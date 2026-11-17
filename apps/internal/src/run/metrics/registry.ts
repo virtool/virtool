@@ -103,6 +103,8 @@ const EMAIL_ATTEMPT_OUTCOMES: EmailAttemptOutcome[] = [
  *
  * The wire contract has no `disabled` state: the settings UI derives it from
  * `enabled`. An operator watching the gauge needs the distinction directly.
+ * While `disabled`, no new mail enters the outbox and queued mail still sends,
+ * so the outbox gauge falls to zero.
  */
 export type EmailAvailabilityLabel = EmailAvailability | "disabled";
 

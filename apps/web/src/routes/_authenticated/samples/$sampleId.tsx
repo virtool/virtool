@@ -81,7 +81,7 @@ function SampleDetailLayout() {
 						)}
 					</ViewHeaderIcons>
 				</ViewHeaderTitle>
-				<ViewHeaderAttribution time={createdAt} user={user.handle} />
+				<ViewHeaderAttribution time={createdAt} user={user.username} />
 			</ViewHeader>
 
 			<NavTabs>

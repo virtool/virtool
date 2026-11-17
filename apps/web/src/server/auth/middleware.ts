@@ -114,7 +114,7 @@ export function attributePrincipal(principal: AuthenticationPrincipal): void {
 	Sentry.setUser(
 		isSetupPrincipal(principal)
 			? { id: principal.userId }
-			: { id: principal.userId, username: principal.handle },
+			: { id: principal.userId, username: principal.username },
 	);
 	Sentry.setContext("credential", {
 		kind: principal.kind,
@@ -133,7 +133,7 @@ function clearPrincipalAttribution(): void {
  * `Response` on failure so the caller can `return` it directly.
  *
  * Either credential works: an HTTP Basic `Authorization` header carrying a user
- * handle and API key, or a Better Auth session cookie. Raw routes are the only
+ * username and API key, or a Better Auth session cookie. Raw routes are the only
  * endpoints a script can reach without the generated RPC client, so they are
  * where key authentication has to live; server functions stay cookie-only.
  *
@@ -155,7 +155,7 @@ export const requireAuthenticatedRequest = createServerOnlyFn(
 		const header = request.headers.get("authorization");
 		const credentials = header ? parseBasicAuthHeader(header) : null;
 		const apiKey = credentials
-			? await verifyApiKey(db, credentials.handle, credentials.key)
+			? await verifyApiKey(db, credentials.username, credentials.key)
 			: null;
 		const browser = apiKey ? null : await verifyBrowserPrincipal(db, request);
 		const principal = apiKey ?? (browser?.kind === "browser" ? browser : null);

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 import { createFixture } from "./testing.mjs";
 
 function valid(...names) {
-	return `---\n${names.map((name) => `${name}: patch`).join("\n")}\n---\n\nFix a bug.\n`;
+	return `---\n${names.map((name) => `${name}: patch`).join("\n")}\n---\n\nFix a bug.\n\nThe bug is gone.\n`;
 }
 
 describe("check-change-files", () => {
@@ -150,12 +150,43 @@ describe("check-change-files", () => {
 		assert.match(result.stderr, /summary must be one line/);
 	});
 
+	test("rejects a summary with no details, even with the waiver", () => {
+		fixture.write(".changeset/bad.md", "---\nvirtool: patch\n---\n\nFix.\n");
+
+		const result = check({ GITHUB_EVENT_PATH: writeEvent(["no-release"]) });
+
+		assert.notEqual(result.status, 0);
+		assert.match(result.stderr, /bad\.md/);
+		assert.match(result.stderr, /needs details/);
+	});
+
+	test("rejects a mix of types with no details", () => {
+		fixture.write(
+			".changeset/bad.md",
+			"---\nvirtool: maintenance\nnuvs: patch\n---\n\nFix.\n",
+		);
+
+		const result = check();
+
+		assert.notEqual(result.status, 0);
+		assert.match(result.stderr, /needs details/);
+	});
+
+	test("passes a maintenance change with only a summary", () => {
+		fixture.write(
+			".changeset/fix.md",
+			"---\nvirtool: maintenance\n---\n\nPrepare the schema\n",
+		);
+
+		assert.equal(check().status, 0);
+	});
+
 	test("passes a maintenance change and a mix of types", () => {
 		fixture.write("apps/web/src/x.ts", "export const x = 1;\n");
 		fixture.write("apps/nuvs/src/x.ts", "export const x = 1;\n");
 		fixture.write(
 			".changeset/fix.md",
-			"---\nvirtool: maintenance\nnuvs: minor\n---\n\nPrepare the schema\n",
+			"---\nvirtool: maintenance\nnuvs: minor\n---\n\nPrepare the schema\n\nDetails.\n",
 		);
 
 		assert.equal(check().status, 0);

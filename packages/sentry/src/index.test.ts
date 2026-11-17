@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getCommonOptions, type SentrySamplingContext } from "./index";
+
+const DSN = "https://public@sentry.example.com/1";
 
 function sample(
 	attributes: Record<string, unknown> | undefined,
@@ -10,8 +12,24 @@ function sample(
 		inheritOrSampleWith: (fallback) => inherited ?? fallback,
 	};
 
-	return getCommonOptions("web").tracesSampler(context);
+	return getCommonOptions("web", undefined).tracesSampler(context);
 }
+
+describe("getCommonOptions", () => {
+	afterEach(() => {
+		vi.unstubAllEnvs();
+	});
+
+	it("uses the DSN from the caller", () => {
+		expect(getCommonOptions("web", DSN).dsn).toBe(DSN);
+	});
+
+	it("does not read the DSN from the environment", () => {
+		vi.stubEnv("VT_SENTRY_DSN", DSN);
+
+		expect(getCommonOptions("web", undefined).dsn).toBeUndefined();
+	});
+});
 
 describe("tracesSampler", () => {
 	it.each(["/health/live", "/health/ready", "/metrics"])("drops %s", (path) => {

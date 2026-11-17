@@ -15,6 +15,7 @@ const linkTemplates: EmailTemplate[] = [
 		verifyUrl: "https://virtool.example/verify?token=abc",
 	},
 	{
+		expiresInHours: 7,
 		type: "password_recovery",
 		username: "alice",
 		recoveryUrl: "https://virtool.example/recover?token=abc",
@@ -63,6 +64,32 @@ describe("renderEmailTemplate", () => {
 				verifyUrl: "https://virtool.example/verify?token=abc",
 			} as EmailTemplate,
 			1,
+		);
+
+		expect(rendered.text).not.toContain("undefined");
+		expect(rendered.text).not.toContain("expires");
+	});
+
+	it("renders the recovery link expiry", () => {
+		const rendered = renderEmailTemplate({
+			expiresInHours: 7,
+			type: "password_recovery",
+			username: "alice",
+			recoveryUrl: "https://virtool.example/recover?token=abc",
+		});
+
+		expect(rendered.text).toContain("This link expires in 7 hours.");
+		expect(rendered.html).toContain("This link expires in 7 hours.");
+	});
+
+	it("renders queued version-four recovery payloads without an expiry", () => {
+		const rendered = renderEmailTemplate(
+			{
+				type: "password_recovery",
+				username: "alice",
+				recoveryUrl: "https://virtool.example/recover?token=abc",
+			} as EmailTemplate,
+			4,
 		);
 
 		expect(rendered.text).not.toContain("undefined");

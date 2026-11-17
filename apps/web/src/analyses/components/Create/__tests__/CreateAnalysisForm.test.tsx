@@ -45,22 +45,6 @@ async function selectReference() {
 }
 
 describe("<CreateAnalysisForm>", () => {
-	it("closes the dialog after creating when 'Create more' is off", async () => {
-		const { onClose, sample } = await renderForm();
-
-		const createAnalysis = mockCreateAnalysis(
-			createFakeAnalysisMinimal({
-				sample: { id: sample.id, name: sample.name },
-			}),
-		);
-
-		await selectReference();
-		await userEvent.click(screen.getByRole("button", { name: "Create" }));
-
-		await waitFor(() => expect(onClose).toHaveBeenCalled());
-		expect(createAnalysis).toHaveBeenCalled();
-	});
-
 	it("registers the selection when the server sends an integer index id", async () => {
 		// The API returns the index id as an integer, but a Radix Select only
 		// matches string values, so an unconverted numeric id silently fails to
@@ -78,7 +62,7 @@ describe("<CreateAnalysisForm>", () => {
 		const trigger = screen
 			.getAllByRole("combobox")
 			.find((element) => element.tagName === "BUTTON");
-		expect(trigger).toHaveTextContent("Plant Viruses");
+		expect(trigger).toMatchTextContent("Plant Viruses");
 
 		await userEvent.click(screen.getByRole("button", { name: "Create" }));
 

@@ -27,11 +27,11 @@ export default function UserTableHead({
 		<TableHead>
 			<SortableHead
 				direction={direction}
-				field="handle"
+				field="username"
 				onSort={onSort}
 				sort={sort}
 			>
-				Handle
+				Username
 			</SortableHead>
 			<SortableHead
 				direction={direction}

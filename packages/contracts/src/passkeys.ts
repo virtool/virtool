@@ -40,7 +40,12 @@ export const passkeyNameSchema = z
 			}),
 	);
 
-/** A redacted, display-only summary of one of the current user's passkeys. */
+/**
+ * A redacted, display-only summary of one of the current user's passkeys.
+ *
+ * It never carries the credential id, public key, counter, or AAGUID. Its flags
+ * describe the credential, not a device: a synced passkey can be on many devices.
+ */
 export type PasskeySummary = {
 	/** Opaque database identity used only to manage the passkey. */
 	managementId: number;

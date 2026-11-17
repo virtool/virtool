@@ -21,42 +21,6 @@ describe("<DeleteSequence />", () => {
 		isolateName = `${sourceType} ${isolate.sourceName}`;
 	});
 
-	it("should render when [open=true]", () => {
-		renderWithProviders(
-			<DeleteSequence
-				isolateId={isolate.id}
-				isolateName={isolateName}
-				otuId={otu.id}
-				open
-				sequence={sequence}
-				setOpen={vi.fn()}
-			/>,
-		);
-
-		expect(screen.getByText("Delete Sequence")).toBeInTheDocument();
-		expect(
-			screen.getByText(/Are you sure you want to delete the sequence/),
-		).toBeInTheDocument();
-		expect(screen.getByText(sequence.accession)).toBeInTheDocument();
-		expect(screen.getByText(isolateName)).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
-	});
-
-	it("should not render when [open=false]", () => {
-		renderWithProviders(
-			<DeleteSequence
-				isolateId={isolate.id}
-				isolateName={isolateName}
-				otuId={otu.id}
-				sequence={sequence}
-				setOpen={vi.fn()}
-			/>,
-		);
-
-		expect(screen.queryByText("Delete Sequence")).toBeNull();
-		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
-	});
-
 	it("should call the server and close the dialog when Confirm is clicked", async () => {
 		const deleteSequence = mockDeleteSequence();
 		const setOpen = vi.fn();
@@ -72,6 +36,8 @@ describe("<DeleteSequence />", () => {
 			/>,
 		);
 
+		expect(screen.getByText(sequence.accession)).toBeInTheDocument();
+		expect(screen.getByText(isolateName)).toBeInTheDocument();
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
 		await waitFor(() => expect(setOpen).toHaveBeenCalledWith(false));

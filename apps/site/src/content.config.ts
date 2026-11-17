@@ -1,5 +1,6 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
+import { postSchema } from "@virtool/changelog";
 
 const manual = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/manual" }),
@@ -10,22 +11,14 @@ const manual = defineCollection({
   }),
 });
 
-const postFields = { title: z.string(), summary: z.string() };
-
+// The glob reads the posts through the package link, so the site follows the
+// package wherever the workspace keeps it.
 const posts = defineCollection({
-  loader: glob({ pattern: "**/*.mdx", base: "./src/content/posts" }),
-  schema: z.discriminatedUnion("type", [
-    z.object({
-      ...postFields,
-      type: z.literal("release"),
-      pr: z.number().int().positive(),
-    }),
-    z.object({
-      ...postFields,
-      type: z.literal("research"),
-      date: z.coerce.date().transform((date) => date.toISOString().slice(0, 10)),
-    }),
-  ]),
+  loader: glob({
+    pattern: "**/*.mdx",
+    base: "./node_modules/@virtool/changelog/posts",
+  }),
+  schema: postSchema,
 });
 
 export const collections = { manual, posts };

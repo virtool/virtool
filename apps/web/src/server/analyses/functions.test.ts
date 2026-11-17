@@ -105,14 +105,14 @@ beforeEach(async () => {
 		new Request("https://virtool.test/_serverFn/test"),
 	);
 
-	ownerId = await seedUser(db, { handle: "owner" });
+	ownerId = await seedUser(db, { username: "owner" });
 	referenceId = await seedReference();
 	indexId = await seedIndex({ referenceId, ready: true });
 });
 
 /** Authenticate the next call as a new user with no administrator role. */
 function signInAsNewUser(): Promise<number> {
-	return signIn(db, getRequest, { handle: `caller-${Math.random()}` });
+	return signIn(db, getRequest, { username: `caller-${Math.random()}` });
 }
 
 async function seedReference(
@@ -236,8 +236,8 @@ function call(name: string, data?: unknown) {
 describe("listAnalysisUsers", () => {
 	it("lists users with analyses matching the sample and workflow scope", async () => {
 		await signInAsNewUser();
-		const matchingUser = await seedUser(db, { handle: "matching" });
-		const otherUser = await seedUser(db, { handle: "other" });
+		const matchingUser = await seedUser(db, { username: "matching" });
+		const otherUser = await seedUser(db, { username: "other" });
 		const sampleId = await seedSample({ all_read: true });
 
 		await seedAnalysis({
@@ -261,7 +261,7 @@ describe("listAnalysisUsers", () => {
 				sampleId,
 				workflows: ["pathoscope"],
 			}),
-		).toEqual([{ id: matchingUser, handle: "matching" }]);
+		).toEqual([{ id: matchingUser, username: "matching" }]);
 	});
 });
 

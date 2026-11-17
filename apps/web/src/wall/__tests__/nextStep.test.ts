@@ -7,10 +7,15 @@ import {
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { getAuthNextStep } from "../authStep";
 import { rootQueryKeys } from "../keys";
 import { getAuthNextStepRoute, resolveAuthNextStep } from "../nextStep";
+
+vi.mock("@server/users/functions", async () => {
+	const { userServerFnMocks } = await import("@tests/server-fn/users");
+	return userServerFnMocks;
+});
 
 function namedError(name: string, purpose?: string) {
 	return Object.assign(new Error(name), { name, purpose });
@@ -61,9 +66,9 @@ describe("resolveAuthNextStep", () => {
 		queryClient.setQueryData(rootQueryKeys.all(), { firstUser: true });
 		queryClient.setQueryData(
 			accountQueryKeys.all(),
-			createFakeAccount({ handle: "previous" }),
+			createFakeAccount({ username: "previous" }),
 		);
-		const account = createFakeAccount({ handle: "current" });
+		const account = createFakeAccount({ username: "current" });
 		const getAccount = mockGetAccount(account);
 
 		await expect(resolveAuthNextStep(queryClient)).resolves.toEqual({

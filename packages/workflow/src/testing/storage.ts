@@ -9,9 +9,8 @@
  *
  * No helper composes a key from a row id, a legacy id, or a filename, because
  * nothing on either side of the real system does. A row records its complete key
- * and every read path reads that column, so the per-domain key builders this
- * harness was first sketched against no longer exist — `mintStorageKey`,
- * `mintRootStorageKey` and the two fixed HMM constants are all that is left.
+ * and every read path reads that column. `mintStorageKey`, `mintRootStorageKey`
+ * and the two fixed HMM constants are the only key sources.
  *
  * That makes this a **stronger** guarantee than seeding through shared builders.
  * A shared builder only catches a divergence between two builders; a minted key
@@ -53,7 +52,12 @@ export type SeededFile = {
 export type TestStorage = {
 	storage: MemoryStorage;
 
-	/** Write `contents` at `key` exactly. For a legacy-shaped key a test supplies. */
+	/**
+	 * Write `contents` at `key` exactly.
+	 *
+	 * A migrated row keeps the prefix its object was written under, so keep at
+	 * least one fixture at a legacy-shaped key that matches no current pattern.
+	 */
 	seedAtKey: (key: string, contents: SeedContents) => Promise<SeededFile>;
 
 	/** One upload, under a root key — an upload is the resource, not a child of one. */

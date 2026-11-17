@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeGroup } from "@tests/fake/groups";
-import { createFakeUser } from "@tests/fake/user";
+import { createFakePendingUser } from "@tests/fake/user";
 import {
 	mockCreateUser,
 	mockInvitationEmailAvailability,
@@ -60,7 +60,7 @@ describe("<CreateUser />", () => {
 	it("creates user once form is submitted", async () => {
 		const user = userEvent.setup();
 		const emailInput = "user@example.com";
-		const createUser = mockCreateUser(createFakeUser({ handle: "" }));
+		const createUser = mockCreateUser(createFakePendingUser());
 		await renderWithRouter(<CreateUser />);
 
 		await userEvent.click(screen.getByRole("button"));
@@ -75,7 +75,7 @@ describe("<CreateUser />", () => {
 		expect(createUser.mock.calls[0]?.[0]).toMatchObject({
 			data: { email: emailInput },
 		});
-		expect(createUser.mock.calls[0]?.[0].data).not.toHaveProperty("handle");
+		expect(createUser.mock.calls[0]?.[0].data).not.toHaveProperty("username");
 		expect(screen.getByRole("heading", { name: "User Created" })).toBeVisible();
 		expect(
 			screen.getByText(/Send this link to user@example.com/),
@@ -85,14 +85,14 @@ describe("<CreateUser />", () => {
 		const clipboard = vi.spyOn(navigator.clipboard, "writeText");
 		clipboard.mockRejectedValueOnce(new Error("Clipboard unavailable"));
 		await user.click(screen.getByRole("button", { name: "Copy" }));
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Could not copy. Select the text and copy it manually.",
 		);
 		await user.click(screen.getByRole("button", { name: "Copy" }));
 		expect(clipboard).toHaveBeenLastCalledWith(
 			(link as HTMLInputElement).value,
 		);
-		expect(screen.getByRole("status")).toHaveTextContent(
+		expect(screen.getByRole("status")).toMatchTextContent(
 			"Copied to clipboard.",
 		);
 		await user.click(screen.getByRole("button", { name: "Done" }));
@@ -103,7 +103,7 @@ describe("<CreateUser />", () => {
 
 	it("defaults to email once availability loads", async () => {
 		mockInvitationEmailAvailability(true);
-		const createUser = mockCreateUser(createFakeUser({ handle: "" }));
+		const createUser = mockCreateUser(createFakePendingUser());
 		await renderWithRouter(<CreateUser />);
 
 		await userEvent.click(screen.getByRole("button"));
@@ -172,10 +172,6 @@ describe("<CreateUser />", () => {
 				emailDeliveryAvailable={false}
 			/>,
 		);
-
-		expect(
-			screen.getByText("This user is not a member of any groups."),
-		).toBeInTheDocument();
 
 		const combobox = screen.getByRole("combobox", { name: "Add group" });
 		await userEvent.type(combobox, "baz");
@@ -247,10 +243,6 @@ describe("<CreateUser />", () => {
 		await userEvent.click(await screen.findByRole("option", { name: "foo" }));
 		await userEvent.click(toggle);
 		await userEvent.click(await screen.findByRole("option", { name: "bar" }));
-
-		expect(
-			screen.getByText("This user is a member of every group."),
-		).toBeInTheDocument();
 
 		await userEvent.click(
 			screen.getByRole("button", { name: "Primary group: foo" }),

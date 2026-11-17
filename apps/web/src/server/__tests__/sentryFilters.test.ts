@@ -58,7 +58,10 @@ describe("dropExpectedClientErrors", () => {
 		const result = dropExpectedClientErrors(
 			{} as ErrorEvent,
 			{
-				originalException: new ClientError("Invalid handle or password.", 401),
+				originalException: new ClientError(
+					"Incorrect username or password.",
+					401,
+				),
 			} as EventHint,
 		);
 

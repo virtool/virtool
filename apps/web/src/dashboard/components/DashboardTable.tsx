@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import { BoxGroup } from "@base/Box";
-import RelativeTime from "@base/RelativeTime";
+import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import { createContext, type ReactNode, use } from "react";
 import { useDashboardCardHeadingId } from "./DashboardCard";
@@ -109,7 +109,7 @@ export function DashboardTableCreatedCell({
 	return (
 		<DashboardTableCell align="end">
 			<span className="text-gray-600 text-sm">
-				<RelativeTime time={time} />
+				<Time time={time} />
 			</span>
 		</DashboardTableCell>
 	);
@@ -141,17 +141,17 @@ export function DashboardTableMore({ children }: DashboardTableMoreProps) {
 }
 
 type DashboardTableUserCellProps = {
-	/** The account's handle. */
-	handle: string;
+	/** The account's username. */
+	username: string;
 };
 
 /** A column naming the account attached to the record. */
 export function DashboardTableUserCell({
-	handle,
+	username,
 }: DashboardTableUserCellProps) {
 	return (
 		<DashboardTableCell>
-			<UserLabel handle={handle} />
+			<UserLabel username={username} />
 		</DashboardTableCell>
 	);
 }

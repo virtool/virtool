@@ -23,6 +23,9 @@
  * `StatementSync.iterate()` and hands the event loop a turn every batch, so the
  * ping loop keeps the job alive while a long scan runs. Reaching for `.all()`
  * on any of these puts the whole index in the heap.
+ *
+ * In a benchmark on a synthetic artifact, a full scan did not increase peak
+ * memory.
  */
 
 import { createWriteStream } from "node:fs";

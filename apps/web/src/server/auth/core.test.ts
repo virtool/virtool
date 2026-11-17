@@ -19,6 +19,7 @@ import {
 	it,
 	vi,
 } from "vitest";
+import { getReleaseDate } from "../changelog/release";
 import type { CookieAdapter } from "./cookies";
 import {
 	createFirstUser,
@@ -60,14 +61,14 @@ describe("loginLegacyIdentity", () => {
 		const password = await hashPassword("legacy-password-123");
 		const userId = await seedUser(db, {
 			email: "",
-			handle: "LegacyUser",
+			username: "legacyuser",
 			password,
 		});
 		const cookies = fakeCookies();
 
 		await expect(
 			loginLegacyIdentity(db, cookies, {
-				handle: "legacyuser",
+				username: "LegacyUser",
 				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
@@ -91,28 +92,28 @@ describe("loginLegacyIdentity", () => {
 
 		await expect(
 			loginLegacyIdentity(db, fakeCookies(), {
-				handle: "alice",
+				username: "alice",
 				password: "wrong-password",
 				ip: "127.0.0.1",
 			}),
 		).rejects.toBeInstanceOf(InvalidCredentialsError);
 	});
 
-	it.each(["invalid-handle", "invalid-password"] as const)(
+	it.each(["invalid-username", "invalid-password"] as const)(
 		"generically refuses an ineligible legacy identity with %s",
 		async (reason) => {
 			const identity =
-				reason === "invalid-handle"
+				reason === "invalid-username"
 					? {
-							handle: "bad handle",
+							username: "bad username",
 							password: await hashPassword("legacy-password-123"),
 						}
-					: { handle: "alice", password: Buffer.from("not-bcrypt") };
+					: { username: "alice", password: Buffer.from("not-bcrypt") };
 			await seedUser(db, identity);
 
 			await expect(
 				loginLegacyIdentity(db, fakeCookies(), {
-					handle: identity.handle,
+					username: identity.username,
 					password: "legacy-password-123",
 					ip: "127.0.0.1",
 				}),
@@ -128,7 +129,7 @@ describe("loginLegacyIdentity", () => {
 
 		await expect(
 			loginLegacyIdentity(db, cookies, {
-				handle: "alice",
+				username: "alice",
 				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
@@ -147,7 +148,7 @@ describe("loginLegacyIdentity", () => {
 
 		await expect(
 			loginLegacyIdentity(db, fakeCookies(), {
-				handle: "alice",
+				username: "alice",
 				password: "any-password",
 				ip: "127.0.0.1",
 			}),
@@ -158,7 +159,7 @@ describe("loginLegacyIdentity", () => {
 describe("createFirstUser", () => {
 	it("creates the full administrator and Better Auth credential", async () => {
 		const result = await createFirstUser(db, {
-			handle: "alice",
+			username: "alice",
 			email: "alice@example.com",
 			password: "a-real-password",
 			deliveryAvailable: false,
@@ -170,11 +171,28 @@ describe("createFirstUser", () => {
 		expect(await db.select().from(authAccounts)).toHaveLength(1);
 	});
 
+	it("starts the watermark at this build's release date", async () => {
+		const { user } = await createFirstUser(db, {
+			username: "alice",
+			email: "alice@example.com",
+			password: "a-real-password",
+			deliveryAvailable: false,
+			keyring,
+			getVerificationUrl: () => "https://virtool.test/verify-email",
+		});
+
+		const [row] = await db
+			.select({ lastSeenChangelogAt: users.lastSeenChangelogAt })
+			.from(users)
+			.where(eq(users.id, user.id));
+		expect(row?.lastSeenChangelogAt).toEqual(getReleaseDate());
+	});
+
 	it("refuses a second first user", async () => {
 		await seedUser(db);
 		await expect(
 			createFirstUser(db, {
-				handle: "bob",
+				username: "bob",
 				email: "bob@example.com",
 				password: "a-real-password",
 				deliveryAvailable: false,
@@ -189,7 +207,7 @@ describe("createFirstUser", () => {
 		try {
 			const results = await Promise.allSettled([
 				createFirstUser(db, {
-					handle: "alice",
+					username: "alice",
 					email: "alice@example.com",
 					password: "a-real-password",
 					deliveryAvailable: false,
@@ -197,7 +215,7 @@ describe("createFirstUser", () => {
 					getVerificationUrl: () => "https://virtool.test/verify-email",
 				}),
 				createFirstUser(other.db, {
-					handle: "bob",
+					username: "bob",
 					email: "bob@example.com",
 					password: "another-real-password",
 					deliveryAvailable: false,

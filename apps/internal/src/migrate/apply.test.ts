@@ -34,6 +34,7 @@ import {
 	getDataMigrationAssertion,
 } from "../data-migrations/pairs";
 import { DATA_MIGRATIONS } from "../data-migrations/registry";
+import { INTERRUPTED_ERROR } from "../data-migrations/run";
 import { applyGatedMigrations } from "./apply";
 import { createMigrationDb } from "./connection";
 
@@ -372,9 +373,31 @@ it("stops after cancellation and leaves the SQL boundary pending", async () => {
 			f.controller.abort();
 		},
 	});
-	expect((await f.apply()).outcome?.status).toBe("errored");
+	expect(await f.apply()).toEqual({
+		appliedThrough: "0024_legacy",
+		interrupted: true,
+		blockedAt: B_TAG,
+		outcome: {
+			key: "b",
+			version: 1,
+			status: "errored",
+			error: INTERRUPTED_ERROR,
+		},
+	});
 	expect(await f.hasTable("marker")).toBe(false);
 	expect(await f.client`select value from legacy`).toHaveLength(3);
+});
+
+it("reports an interruption at a SQL boundary instead of throwing", async () => {
+	const f = await fixture();
+	await f.prefix();
+	f.controller.abort();
+	expect(await f.apply()).toEqual({
+		appliedThrough: "0024_legacy",
+		interrupted: true,
+	});
+	expect(f.calls).toEqual([]);
+	expect(await f.hasTable("marker")).toBe(false);
 });
 
 it("does not run when a competing connection owns the lock", async () => {

@@ -52,7 +52,10 @@ export default function JobDetail() {
 		<ContainerNarrow className="pb-8">
 			<ViewHeader title={workflow}>
 				<ViewHeaderTitle>{workflow}</ViewHeaderTitle>
-				<ViewHeaderAttribution time={data.createdAt} user={data.user.handle} />
+				<ViewHeaderAttribution
+					time={data.createdAt}
+					user={data.user.username}
+				/>
 			</ViewHeader>
 			<JobArgs workflow={data.workflow} args={args} />
 			<JobSteps

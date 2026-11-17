@@ -31,7 +31,7 @@ it("gives an existing user a watermark at the time of the migration", async () =
 	);
 
 	const [row] = await database.client.unsafe(
-		`INSERT INTO users (active, email, handle, last_password_change, settings)
+		`INSERT INTO users (active, email, username, last_password_change, settings)
 		 VALUES (true, '', 'alice', '2020-01-01', '{}')
 		 RETURNING id`,
 	);

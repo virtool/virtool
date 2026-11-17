@@ -3,7 +3,7 @@ import { type Mock, vi } from "vitest";
 
 /**
  * Mock handles for the `@server/uploads/functions` server-fn module. Wired in
- * globally from `tests/setup.tsx` so any test rendering a view that lists or
+ * globally from `tests/serverFnMocks.ts` so any test rendering a view that lists or
  * deletes uploads can stub them without per-file `vi.mock` boilerplate.
  *
  * Uploading itself is not a server function — it posts to the `/uploads` route

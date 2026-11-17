@@ -10,6 +10,7 @@ it("keeps the protected-operation inventory explicit", () => {
 	expect(Object.values(PROTECTED_OPERATIONS).sort()).toEqual(
 		[
 			"account.email.change",
+			"account.username.change",
 			"administrator_role.set",
 			"account.password.change",
 			"api_key.create",
@@ -28,6 +29,7 @@ it("keeps the protected-operation inventory explicit", () => {
 			"setup_link.issue",
 			"totp.disable",
 			"totp.reset",
+			"access.revoke",
 			"user.update",
 		].sort(),
 	);

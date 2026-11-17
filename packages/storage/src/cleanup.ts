@@ -16,9 +16,13 @@ export type DeleteFailure = {
  * orphans stay observable.
  *
  * Callers pass the keys recorded on the rows they are deleting, which must be
- * read before those rows go, so only objects a row names are removed. Objects
+ * read before those rows go, so only objects a row names are removed. That
+ * includes the keys of child rows that a database cascade removes. Objects
  * written before keys were recorded are unreachable this way and are left for a
  * separate sweep.
+ *
+ * A data function that removes stored objects takes the database, the storage
+ * backend, and the logger, in that order, before its domain arguments.
  */
 export async function deleteKeys(
 	storage: StorageBackend,

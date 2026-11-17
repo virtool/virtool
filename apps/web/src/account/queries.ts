@@ -32,8 +32,8 @@ import {
 } from "@server/auth/recoveryFunctions";
 import {
 	changePasswordFn,
-	updateAccountHandleFn,
 	updateAccountSettingsFn,
+	updateAccountUsernameFn,
 } from "@server/users/functions";
 import {
 	type QueryClient,
@@ -92,19 +92,23 @@ export function useUpdateAccount() {
 }
 
 /**
- * Initializes a mutator for changing the current account's handle
+ * Initializes a mutator for changing the current account's username
  *
- * @returns A mutator for changing the account handle
+ * @returns A mutator for changing the account username
  */
-export function useUpdateHandle() {
+export function useUpdateUsername() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ username }: { username: string }) =>
+			updateAccountUsernameFn({ data: { username } }),
+	);
 
 	return useMutation<
-		Awaited<ReturnType<typeof updateAccountHandleFn>>,
+		Awaited<ReturnType<typeof updateAccountUsernameFn>>,
 		Error,
-		{ handle: string }
+		{ username: string }
 	>({
-		mutationFn: ({ handle }) => updateAccountHandleFn({ data: { handle } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},
@@ -292,6 +296,9 @@ export function passkeysQueryOptions() {
 // Better Auth checks freshness again when the ceremony is verified, and the
 // registration challenge it issues lives for 5 minutes. With this much left,
 // the session cannot go stale while the authenticator creates the passkey.
+// Registration doesn't retry on its own after a challenge: a retry can lose the
+// browser's user activation, and a retry after a rejected verification leaves
+// an orphaned passkey on the authenticator.
 const PASSKEY_REGISTRATION_FRESHNESS_MS = 5 * 60 * 1000;
 
 /** The result of one request to add a passkey. */

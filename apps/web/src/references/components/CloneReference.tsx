@@ -79,7 +79,7 @@ export default function CloneReference({
 									<Attribution
 										className="ml-auto"
 										time={reference.createdAt}
-										user={reference.user?.handle}
+										user={reference.user?.username}
 									/>
 								</Box>
 							)}

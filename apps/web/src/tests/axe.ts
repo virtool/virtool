@@ -26,20 +26,14 @@ export function formatViolations(violations: Result[]): string {
  * barrier can be fixed incrementally. Pass the element returned by a render
  * helper — usually `baseElement` — or any subtree to scope the check.
  *
- * `color-contrast` needs a layout engine to compute rendered colours, and
- * jsdom has none — the rule either throws or reports noise, so it is disabled
- * by default here. The browser `a11y` project (`*.a11y.test.tsx`) re-enables it
- * through `options.rules` to check contrast for real; other options merge over
- * the defaults.
+ * Every rule runs, `color-contrast` included, because the tests render in
+ * Chromium with the app stylesheet. `options` passes through to `axe.run`.
  */
 export async function expectNoViolations(
 	container: Element,
 	options: RunOptions = {},
 ): Promise<void> {
-	const { violations } = await axe.run(container, {
-		...options,
-		rules: { "color-contrast": { enabled: false }, ...options.rules },
-	});
+	const { violations } = await axe.run(container, options);
 
 	if (violations.length > 0) {
 		throw new Error(

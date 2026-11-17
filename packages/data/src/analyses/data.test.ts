@@ -73,7 +73,7 @@ beforeEach(async () => {
 	await db.delete(groups);
 	await db.delete(users);
 
-	ownerId = await seedUser(db, { handle: "owner" });
+	ownerId = await seedUser(db, { username: "owner" });
 	referenceId = await seedReference();
 	indexId = await seedIndex({ referenceId, version: 1, ready: true });
 });
@@ -217,9 +217,12 @@ const page = { page: 1, perPage: 25 };
 describe("listAnalysisUsers", () => {
 	it("lists distinct active users with analyses in the sample and workflow scope", async () => {
 		const sampleId = await seedSample();
-		const abe = await seedUser(db, { handle: "abe" });
-		const zoe = await seedUser(db, { handle: "zoe" });
-		const inactive = await seedUser(db, { active: false, handle: "inactive" });
+		const abe = await seedUser(db, { username: "abe" });
+		const zoe = await seedUser(db, { username: "zoe" });
+		const inactive = await seedUser(db, {
+			active: false,
+			username: "inactive",
+		});
 
 		await seedAnalysis({ sample_id: sampleId, user_id: zoe, workflow: "nuvs" });
 		await seedAnalysis({ sample_id: sampleId, user_id: abe, workflow: "nuvs" });
@@ -243,15 +246,15 @@ describe("listAnalysisUsers", () => {
 				adminActor,
 			),
 		).toEqual([
-			{ id: abe, handle: "abe" },
-			{ id: zoe, handle: "zoe" },
+			{ id: abe, username: "abe" },
+			{ id: zoe, username: "zoe" },
 		]);
 	});
 
 	it("only lists users with analyses the caller may read", async () => {
-		const caller = await seedUser(db, { handle: "caller" });
-		const visible = await seedUser(db, { handle: "visible" });
-		const hidden = await seedUser(db, { handle: "hidden" });
+		const caller = await seedUser(db, { username: "caller" });
+		const visible = await seedUser(db, { username: "visible" });
+		const hidden = await seedUser(db, { username: "hidden" });
 
 		await seedAnalysis({
 			sample_id: await seedSample({ all_read: true }),
@@ -265,7 +268,7 @@ describe("listAnalysisUsers", () => {
 		const actor = await resolveSampleActor(db, caller);
 
 		expect(await listAnalysisUsers(db, {}, actor)).toEqual([
-			{ id: visible, handle: "visible" },
+			{ id: visible, username: "visible" },
 		]);
 	});
 });
@@ -273,7 +276,7 @@ describe("listAnalysisUsers", () => {
 describe("findAnalyses", () => {
 	it("scopes a non-admin to analyses on samples they may read", async () => {
 		const groupId = await seedGroup(db, { name: "techs" });
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		await addToGroup(db, other, groupId);
 
 		const own = await seedAnalysis({
@@ -349,7 +352,7 @@ describe("findAnalyses", () => {
 	});
 
 	it("restricts the page to the given users", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 
 		const wanted = await seedAnalysisOnNewSample({ user_id: other });
 		await seedAnalysisOnNewSample();
@@ -381,7 +384,7 @@ describe("findAnalyses", () => {
 	});
 
 	it("intersects the user and workflow filters", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 
 		const wanted = await seedAnalysisOnNewSample({
 			user_id: other,
@@ -402,7 +405,7 @@ describe("findAnalyses", () => {
 	});
 
 	it("intersects a user filter with the caller's readable samples", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 
 		await seedAnalysis({
 			sample_id: await seedSample({ all_read: false }),
@@ -468,10 +471,10 @@ describe("findAnalyses", () => {
 		expect(descending.items.map((item) => item.id)).toEqual([pathoscope, nuvs]);
 	});
 
-	it("orders by the handle of the user who started the analysis", async () => {
+	it("orders by the username of the user who started the analysis", async () => {
 		const sampleId = await seedSample();
-		const zoe = await seedUser(db, { handle: "zoe" });
-		const abe = await seedUser(db, { handle: "abe" });
+		const zoe = await seedUser(db, { username: "zoe" });
+		const abe = await seedUser(db, { username: "abe" });
 
 		const byZoe = await seedAnalysis({ sample_id: sampleId, user_id: zoe });
 		const byAbe = await seedAnalysis({ sample_id: sampleId, user_id: abe });
@@ -562,7 +565,7 @@ describe("findAnalyses", () => {
 			id: jobId,
 			progress: 0,
 			state: "running",
-			user: { id: ownerId, handle: "owner" },
+			user: { id: ownerId, username: "owner" },
 			workflow: "nuvs",
 		});
 	});
@@ -616,7 +619,7 @@ describe("getAnalysis", () => {
 		expect(analysis.sample).toEqual({ id: sampleId, name: "Parent sample" });
 		expect(analysis.reference).toEqual({ id: referenceId, name: "Reference" });
 		expect(analysis.index).toEqual({ id: indexId, version: 1 });
-		expect(analysis.user).toEqual({ id: ownerId, handle: "owner" });
+		expect(analysis.user).toEqual({ id: ownerId, username: "owner" });
 		expect(analysis.job?.id).toBe(jobId);
 		// `ready` is read off the row, not defaulted: this subtraction was seeded
 		// built, and the two above were not.
@@ -1205,7 +1208,7 @@ describe("findRecentlyViewedAnalyses", () => {
 	});
 
 	it("excludes an analysis on a sample the viewer may no longer read", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		const hidden = await seedAnalysis({ sample_id: await seedSample() });
 
 		await seedAnalysisView(other, hidden, new Date("2020-01-01T00:00:00.000Z"));
@@ -1218,7 +1221,7 @@ describe("findRecentlyViewedAnalyses", () => {
 	});
 
 	it("scopes the list to the given user's own views", async () => {
-		const other = await seedUser(db, { handle: "other" });
+		const other = await seedUser(db, { username: "other" });
 		const mine = await seedAnalysis({
 			sample_id: await seedSample({ all_read: true }),
 		});
