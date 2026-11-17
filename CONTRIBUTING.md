@@ -82,6 +82,8 @@ that ship nothing affect no app. To release a change that users can't see, use
   change type, no summary on one line, or no details for a change that is not
   `maintenance`;
 - a change file that uses `maintenance` contains `**Action required:**`;
+- a line in a change file is wider than 80 characters and can wrap, outside a
+  fenced code block;
 - an image app that the pull request affects has no change file that names it.
 
 When a pull request affects an app but needs no release, such as a refactor, add
@@ -97,8 +99,9 @@ The text of a change file becomes its entry in the changelog and in the
 GitHub Release. Write it for users, not reviewers. Tell users what they will
 see that is different, not how the code changed.
 
-The first line is the summary. Keep it on one line, and leave a blank line
-before any details: `Knope / Check` fails a summary that wraps. Text after the
+The first line is the summary. Keep it on one line of 80 characters or fewer,
+and leave a blank line before any details: `Knope / Check` fails a summary that
+wraps. Wrap the details at 80 characters. Text after the
 summary becomes the details: the summary becomes a heading, and the details go
 below it.
 

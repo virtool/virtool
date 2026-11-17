@@ -1,5 +1,39 @@
 export const actionMarker = "**Action required:**";
 
+const width = 80;
+
+// Reports each body line that is wider than `width`. A line that can't wrap,
+// because it has no space past the limit, such as one that ends in a long URL,
+// passes, and so do lines in fenced code blocks. `first` is the file line
+// number of the first body line, and `summary` is the summary's body index.
+function getWidthErrors(body, first, summary) {
+	const errors = [];
+	let fenced = false;
+
+	for (const [index, line] of body.entries()) {
+		if (/^\s*(```|~~~)/.test(line)) {
+			fenced = !fenced;
+			continue;
+		}
+
+		if (fenced || line.length <= width || !line.includes(" ", width)) {
+			continue;
+		}
+
+		if (index === summary) {
+			errors.push(
+				`the summary is ${line.length} characters; shorten it to ${width} or fewer`,
+			);
+		} else {
+			errors.push(
+				`line ${first + index} is ${line.length} characters; wrap it at ${width}`,
+			);
+		}
+	}
+
+	return errors;
+}
+
 // Parses a Knope change file: front matter of `name: type` lines, a one-line
 // summary, and optional details. `packages` holds every name, and `maintenance`
 // holds the names with the `maintenance` type.
@@ -78,6 +112,8 @@ export function parseChangeFile(text, names) {
 			);
 		}
 	}
+
+	errors.push(...getWidthErrors(body, end + 3, start));
 
 	// Only `maintenance` entries are bullets. Every other entry is a heading with
 	// text below it, so a reader learns what changed.

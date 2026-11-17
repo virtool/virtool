@@ -150,6 +150,40 @@ describe("check-change-files", () => {
 		assert.match(result.stderr, /summary must be one line/);
 	});
 
+	test("rejects a summary wider than 80 characters", () => {
+		fixture.write(
+			".changeset/bad.md",
+			`---\nvirtool: patch\n---\n\n${"word ".repeat(17)}\n\nDetails.\n`,
+		);
+
+		const result = check();
+
+		assert.notEqual(result.status, 0);
+		assert.match(result.stderr, /the summary is 85 characters/);
+	});
+
+	test("rejects a details line wider than 80 characters", () => {
+		fixture.write(
+			".changeset/bad.md",
+			`---\nvirtool: patch\n---\n\nFix a bug.\n\n${"word ".repeat(17)}\n`,
+		);
+
+		const result = check();
+
+		assert.notEqual(result.status, 0);
+		assert.match(result.stderr, /line 7 is 85 characters; wrap it at 80/);
+	});
+
+	test("passes a wide line that can't wrap or is in a code block", () => {
+		fixture.write("apps/web/src/x.ts", "export const x = 1;\n");
+		fixture.write(
+			".changeset/fix.md",
+			`---\nvirtool: patch\n---\n\nFix a bug.\n\nSee https://example.com/${"a".repeat(80)}\n\n\`\`\`sh\n${"word ".repeat(17)}\n\`\`\`\n`,
+		);
+
+		assert.equal(check().status, 0);
+	});
+
 	test("rejects a summary with no details, even with the waiver", () => {
 		fixture.write(".changeset/bad.md", "---\nvirtool: patch\n---\n\nFix.\n");
 
