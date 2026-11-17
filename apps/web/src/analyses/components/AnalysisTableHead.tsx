@@ -36,8 +36,12 @@ export default function AnalysisTableHead({
 				Workflow
 			</SortableHead>
 			<th scope="col">Version</th>
-			<th scope="col">Reference</th>
-			<th scope="col">Subtractions</th>
+			<th className="hidden 2xl:table-cell" scope="col">
+				Reference
+			</th>
+			<th className="hidden 2xl:table-cell" scope="col">
+				Subtractions
+			</th>
 			<SortableHead
 				className="w-40"
 				direction={direction}

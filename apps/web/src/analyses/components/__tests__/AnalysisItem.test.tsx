@@ -163,4 +163,19 @@ describe("<AnalysisItem />", () => {
 			expect(screen.queryByText(other)).not.toBeInTheDocument();
 		},
 	);
+
+	it("links the reference and subtraction badges", async () => {
+		renderItem({
+			index: { id: 7, version: 2 },
+			reference: { id: 3, name: "Plant Viruses" },
+			subtractions: [{ id: 5, name: "Arabidopsis thaliana", ready: true }],
+		});
+
+		expect(
+			await screen.findByRole("link", { name: "Plant Viruses v2" }),
+		).toHaveAttribute("href", "/refs/3/indexes/7");
+		expect(
+			screen.getByRole("link", { name: "Arabidopsis thaliana" }),
+		).toHaveAttribute("href", "/subtractions/5");
+	});
 });

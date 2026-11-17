@@ -160,7 +160,9 @@ describe("<AnalysesList /> table", () => {
 		mockFindAnalyses([analysis]);
 		renderTable({});
 
-		const headers = await screen.findAllByRole("columnheader");
+		const headers = await screen.findAllByRole("columnheader", {
+			hidden: true,
+		});
 
 		expect(headers.map((header) => header.textContent)).toEqual([
 			"Workflow",
@@ -174,7 +176,9 @@ describe("<AnalysesList /> table", () => {
 
 		expect(await screen.findByText("Plant Viruses")).toBeInTheDocument();
 		expect(screen.getByText("Index 3")).toBeInTheDocument();
-		expect(screen.getByText("Arabidopsis")).toBeInTheDocument();
+		expect(screen.getByText("Plant Viruses v3")).toBeInTheDocument();
+		// Once in the column and once in the badge. CSS picks one by viewport.
+		expect(screen.getAllByText("Arabidopsis")).toHaveLength(2);
 	});
 
 	it("requests the default order, then sorts by an unsorted column ascending", async () => {
@@ -212,7 +216,9 @@ describe("<AnalysesList /> table", () => {
 		mockFindAnalyses([analysis]);
 		renderTable({ direction: "ascending", sort: "createdAt" });
 
-		const headers = await screen.findAllByRole("columnheader");
+		const headers = await screen.findAllByRole("columnheader", {
+			hidden: true,
+		});
 
 		expect(headers.map((header) => header.getAttribute("aria-sort"))).toEqual([
 			"none",

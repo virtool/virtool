@@ -10,13 +10,14 @@ import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { useCheckCanEditSample } from "@samples/hooks";
 import type { AnalysisMinimal } from "@virtool/contracts";
-import { Trash } from "lucide-react";
+import { Library, Sprout, Trash } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
 import {
 	checkCanRemoveAnalysis,
 	checkSupportedWorkflow,
 	getWorkflowVersionLabel,
 } from "../utils";
+import AnalysisBadge from "./AnalysisBadge";
 
 type AnalysisItemProps = {
 	analysis: AnalysisMinimal;
@@ -70,11 +71,33 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 						</span>
 					</>
 				)}
+				<div className="mt-1 flex flex-wrap items-center gap-1 2xl:hidden">
+					<AnalysisBadge
+						to="/refs/$refId/indexes/$indexId"
+						params={{
+							refId: String(reference.id),
+							indexId: String(index.id),
+						}}
+						icon={Library}
+					>
+						{reference.name} v{index.version}
+					</AnalysisBadge>
+					{subtractions.map((subtraction) => (
+						<AnalysisBadge
+							key={subtraction.id}
+							to="/subtractions/$subtractionId"
+							params={{ subtractionId: String(subtraction.id) }}
+							icon={Sprout}
+						>
+							{subtraction.name}
+						</AnalysisBadge>
+					))}
+				</div>
 			</td>
 			<td className="text-gray-600 text-sm">
 				{getWorkflowVersionLabel(analysis)}
 			</td>
-			<td>
+			<td className="hidden 2xl:table-cell">
 				<SlashList className="m-0">
 					<li>
 						<Link to="/refs/$refId" params={{ refId: String(reference.id) }}>
@@ -94,7 +117,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 					</li>
 				</SlashList>
 			</td>
-			<td>
+			<td className="hidden 2xl:table-cell">
 				{subtractions.map((subtraction, subtractionIndex) => (
 					<span key={subtraction.id}>
 						{subtractionIndex > 0 && ", "}
