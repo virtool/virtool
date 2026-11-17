@@ -175,9 +175,7 @@ describe("<AnalysisItem />", () => {
 			await screen.findByRole("link", { name: "Plant Viruses v2" }),
 		).toHaveAttribute("href", "/refs/3/indexes/7");
 		expect(
-			screen
-				.getAllByRole("link", { name: "Arabidopsis thaliana" })
-				.map((link) => link.getAttribute("href")),
-		).toEqual(["/subtractions/5", "/subtractions/5"]);
+			screen.getByRole("link", { name: "Arabidopsis thaliana" }),
+		).toHaveAttribute("href", "/subtractions/5");
 	});
 });

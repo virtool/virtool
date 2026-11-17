@@ -1,6 +1,6 @@
 import { getWorkflowDisplayName } from "@app/utils";
 import DeleteDialog from "@base/DeleteDialog";
-import Icon, { IconButton } from "@base/Icon";
+import { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import SlashList from "@base/SlashList";
@@ -8,16 +8,16 @@ import { TableActionsCell } from "@base/Table";
 import Time from "@base/Time";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
-import { BaseSampleLabel } from "@samples/components/Label/BaseSampleLabel";
 import { useCheckCanEditSample } from "@samples/hooks";
 import type { AnalysisMinimal } from "@virtool/contracts";
-import { BadgeMinus, Trash, Virus } from "lucide-react";
+import { Library, Sprout, Trash } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
 import {
 	checkCanRemoveAnalysis,
 	checkSupportedWorkflow,
 	getWorkflowVersionLabel,
 } from "../utils";
+import AnalysisBadge from "./AnalysisBadge";
 
 type AnalysisItemProps = {
 	analysis: AnalysisMinimal;
@@ -72,31 +72,25 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 					</>
 				)}
 				<div className="mt-1 flex flex-wrap items-center gap-1 2xl:hidden">
-					<Link
+					<AnalysisBadge
 						to="/refs/$refId/indexes/$indexId"
 						params={{
 							refId: String(reference.id),
 							indexId: String(index.id),
 						}}
+						icon={Library}
 					>
-						<BaseSampleLabel size="sm">
-							<Icon className="size-4" icon={Virus} strokeWidth={1.5} />
-							<span>
-								{reference.name} v{index.version}
-							</span>
-						</BaseSampleLabel>
-					</Link>
+						{reference.name} v{index.version}
+					</AnalysisBadge>
 					{subtractions.map((subtraction) => (
-						<Link
+						<AnalysisBadge
 							key={subtraction.id}
 							to="/subtractions/$subtractionId"
 							params={{ subtractionId: String(subtraction.id) }}
+							icon={Sprout}
 						>
-							<BaseSampleLabel size="sm">
-								<Icon className="size-4" icon={BadgeMinus} strokeWidth={1.5} />
-								<span>{subtraction.name}</span>
-							</BaseSampleLabel>
-						</Link>
+							{subtraction.name}
+						</AnalysisBadge>
 					))}
 				</div>
 			</td>
