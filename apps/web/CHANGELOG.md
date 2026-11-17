@@ -1,3 +1,20 @@
+## 42.67.1 (2026-11-17)
+
+### Fixes
+
+#### Fix spacing in the sample sidebar labels card ([#4241](https://github.com/virtool/virtool/pull/4241))
+
+The **Labels** and **Default Subtractions** cards in the sample sidebar now have
+even spacing. The chips are the same size as the chips in the sample list, and
+each colour dot has a gap before the label name.
+
+#### Show analysis references and subtractions as badges on narrow screens ([#4240](https://github.com/virtool/virtool/pull/4240))
+
+On narrow screens, the reference and subtraction columns no longer crowd the
+analysis list. Virtool now shows the reference and each subtraction as a badge
+under the workflow name. Select a badge to open that reference index or
+subtraction.
+
 ## 42.67.0 (2026-11-16)
 
 ### Features
