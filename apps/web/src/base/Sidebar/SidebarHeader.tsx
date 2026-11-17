@@ -13,7 +13,7 @@ export default function SidebarHeader({
 	return (
 		<h3
 			className={cn(
-				"flex items-center justify-between text-base font-medium mt-1 mb-2.5 h-8",
+				"flex items-center justify-between text-base font-medium mb-2.5 h-8",
 				className,
 			)}
 		>

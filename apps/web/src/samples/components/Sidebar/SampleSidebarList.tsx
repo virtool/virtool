@@ -13,12 +13,12 @@ type SampleSidebarListProps = {
 export default function SampleSidebarList({ items }: SampleSidebarListProps) {
 	const sampleItemComponents = items.map((item) => (
 		<SampleLabel
-			className="bg-white inline m-0 mr-1 mb-1"
 			key={item.id}
 			color={"color" in item ? item.color : undefined}
 			name={item.name}
+			size="sm"
 		/>
 	));
 
-	return <div className="flex flex-wrap">{sampleItemComponents}</div>;
+	return <div className="flex flex-wrap gap-1">{sampleItemComponents}</div>;
 }
