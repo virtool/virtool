@@ -2,7 +2,7 @@
 virtool: patch
 ---
 
-Fix the layout of the analysis list on narrow screens by showing the reference and subtractions as badges under the workflow name
+Show analysis references and subtractions as badges on narrow screens
 
 On narrow screens, the reference and subtraction columns no longer crowd the
 analysis list. Virtool now shows the reference and each subtraction as a badge
